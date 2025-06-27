@@ -20,14 +20,15 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismVerdictDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
@@ -52,6 +53,9 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private Course course;
 
     private TextExercise textExercise;
@@ -72,11 +76,11 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
 
         // We need at least 3 cases
-        textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         coursePlagiarismCases = createPlagiarismCases(numberOfPlagiarismCases, textExercise);
         plagiarismCase1 = coursePlagiarismCases.getFirst();
 
-        examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examPlagiarismCases = createPlagiarismCases(2, examTextExercise);
     }
 
@@ -92,11 +96,11 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         for (int i = 0; i < numberOfPlagiarismCases; i++) {
             PlagiarismCase plagiarismCase = new PlagiarismCase();
             User student = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
-            PlagiarismResult<TextSubmissionElement> textPlagiarismResult = textExerciseUtilService.createTextPlagiarismResultForExercise(exercise);
-            PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
+            PlagiarismResult textPlagiarismResult = textExerciseUtilService.createPlagiarismResultForExercise(exercise);
+            var plagiarismComparison = new PlagiarismComparison();
 
-            PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission1 = new PlagiarismSubmission<>();
-            PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission2 = new PlagiarismSubmission<>();
+            PlagiarismSubmission plagiarismSubmission1 = new PlagiarismSubmission();
+            PlagiarismSubmission plagiarismSubmission2 = new PlagiarismSubmission();
 
             plagiarismCase.setExercise(exercise);
             plagiarismCase.setStudent(student);
@@ -358,7 +362,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    void testPlagiarismCase_getStudents() throws Exception {
+    void testPlagiarismCase_getStudents() {
 
         var individualPlagiarismCase = new PlagiarismCase();
         assertThat(individualPlagiarismCase.getStudents()).as("should return empty set if neither student or team has been set").isEmpty();

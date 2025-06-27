@@ -390,7 +390,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         StudentParticipation studentParticipation;
         SecurityUtils.setAuthorizationObject();
         if (isTeamTest) {
-            studentParticipation = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentId(idOfTeamTextExercise, idOfStudent1).getFirst();
+            studentParticipation = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(idOfTeamTextExercise, idOfStudent1)
+                    .getFirst();
         }
         else {
             studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1).getFirst();

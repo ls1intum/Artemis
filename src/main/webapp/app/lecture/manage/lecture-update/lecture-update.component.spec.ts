@@ -224,7 +224,7 @@ describe('LectureUpdateComponent', () => {
         expect(proceedToUnitSplitSpy).toHaveBeenCalledOnce();
         expect(lectureUpdateComponent.processUnitMode).toBeTrue();
 
-        const expectedPath = ['course-management', 1, 'lectures', 3, 'unit-management', 'attachment-units', 'process'];
+        const expectedPath = ['course-management', 1, 'lectures', 3, 'unit-management', 'attachment-video-units', 'process'];
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName } });
     }));
 
@@ -363,7 +363,7 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponent.isEditMode.set(true);
             lectureUpdateComponent.titleSection = signal({
                 titleChannelNameComponent: () => ({
-                    isFormValidSignal: () => true,
+                    isValid: () => true,
                 }),
             } as any);
             lectureUpdateComponent.lecturePeriodSection = signal({
@@ -390,7 +390,7 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponent.isEditMode.set(false);
             lectureUpdateComponent.titleSection = signal({
                 titleChannelNameComponent: () => ({
-                    isFormValidSignal: () => false,
+                    isValid: () => false,
                 }),
             } as any);
             lectureUpdateComponent.lecturePeriodSection = signal({
@@ -409,7 +409,7 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponent.isEditMode.set(true);
             lectureUpdateComponent.titleSection = signal({
                 titleChannelNameComponent: () => ({
-                    isFormValidSignal: () => false,
+                    isValid: () => false,
                 }),
             } as any);
             lectureUpdateComponent.lecturePeriodSection = signal({

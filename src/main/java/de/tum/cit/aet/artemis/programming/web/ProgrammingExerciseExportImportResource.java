@@ -23,6 +23,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -61,7 +62,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.CourseService;
+import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -79,7 +80,7 @@ import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
@@ -89,6 +90,7 @@ import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
  */
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
+@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseExportImportResource {
@@ -132,7 +134,7 @@ public class ProgrammingExerciseExportImportResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
@@ -140,7 +142,7 @@ public class ProgrammingExerciseExportImportResource {
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, Optional<ExamAccessApi> examAccessApi, CourseRepository courseRepository,
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService, Optional<AthenaApi> athenaApi,
-            Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseService programmingExerciseService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseValidationService programmingExerciseValidationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -157,7 +159,7 @@ public class ProgrammingExerciseExportImportResource {
         this.consistencyCheckService = consistencyCheckService;
         this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
     }
 
     /**
@@ -204,7 +206,7 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
         newExercise.validateSettingsForFeedbackRequest();
-        programmingExerciseService.validateDockerFlags(newExercise);
+        programmingExerciseValidationService.validateDockerFlags(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();

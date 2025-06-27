@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * Service for managing competencies.
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class CourseCompetencyService {
 
@@ -249,11 +251,6 @@ public class CourseCompetencyService {
         }
         courseCompetencyRepository.saveAll(idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).toList());
 
-        if (course.getLearningPathsEnabled()) {
-            var importedCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).toList();
-            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, course.getId());
-        }
-
         if (importOptions.importRelations()) {
             var originalCompetencyIds = idToImportedCompetency.keySet();
             var relations = competencyRelationRepository.findAllByHeadCompetencyIdInAndTailCompetencyIdIn(originalCompetencyIds, originalCompetencyIds);
@@ -308,16 +305,11 @@ public class CourseCompetencyService {
 
         List<CourseCompetency> importedCompetencies = courseCompetencyRepository.saveAll(competenciesToCreate);
 
-        if (course.getLearningPathsEnabled()) {
-            learningPathService.linkCompetenciesToLearningPathsOfCourse(importedCompetencies, course.getId());
-        }
-
         return importedCompetencies;
     }
 
     /**
      * Creates a new competency and links it to a course and lecture units.
-     * If learning paths are enabled, the competency is also linked to the learning paths of the course.
      *
      * @param competencyToCreate the competency to create
      * @param course             the course to link the competency to
@@ -327,10 +319,6 @@ public class CourseCompetencyService {
     public <C extends CourseCompetency> C createCourseCompetency(C competencyToCreate, Course course) {
         competencyToCreate.setCourse(course);
         var persistedCompetency = courseCompetencyRepository.save(competencyToCreate);
-
-        if (course.getLearningPathsEnabled()) {
-            learningPathService.linkCompetencyToLearningPathsOfCourse(persistedCompetency, course.getId());
-        }
 
         return persistedCompetency;
     }
@@ -353,10 +341,6 @@ public class CourseCompetencyService {
             createdCompetency = courseCompetencyRepository.save(createdCompetency);
 
             createdCompetencies.add(createdCompetency);
-        }
-
-        if (course.getLearningPathsEnabled()) {
-            learningPathService.linkCompetenciesToLearningPathsOfCourse(createdCompetencies, course.getId());
         }
 
         return createdCompetencies;
@@ -444,10 +428,6 @@ public class CourseCompetencyService {
 
         exerciseService.removeCompetency(courseCompetency.getExerciseLinks(), courseCompetency);
         removeCompetencyLectureUnitLinks(courseCompetency.getLectureUnitLinks(), courseCompetency);
-
-        if (course.getLearningPathsEnabled()) {
-            learningPathService.removeLinkedCompetencyFromLearningPathsOfCourse(courseCompetency, course.getId());
-        }
 
         courseCompetencyRepository.deleteById(courseCompetency.getId());
     }

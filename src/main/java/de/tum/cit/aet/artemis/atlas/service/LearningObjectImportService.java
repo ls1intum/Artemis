@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.function.ThrowingBiFunction;
 
@@ -44,7 +45,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.lecture.api.LectureApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureImportApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
@@ -70,6 +71,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Service for importing learning objects related to competencies.
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class LearningObjectImportService {
 
@@ -99,7 +101,7 @@ public class LearningObjectImportService {
 
     private final Optional<LectureUnitApi> lectureUnitApi;
 
-    private final Optional<LectureApi> lectureApi;
+    private final Optional<LectureImportApi> lectureImportApi;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
@@ -116,7 +118,7 @@ public class LearningObjectImportService {
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseImportService modelingExerciseImportService,
             Optional<TextExerciseImportApi> textExerciseImportApi, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<LectureUnitApi> lectureUnitApi,
-            Optional<LectureApi> lectureApi, CourseCompetencyRepository courseCompetencyRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            Optional<LectureImportApi> lectureImportApi, CourseCompetencyRepository courseCompetencyRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             GradingCriterionRepository gradingCriterionRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository,
             CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
         this.exerciseRepository = exerciseRepository;
@@ -131,7 +133,7 @@ public class LearningObjectImportService {
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.lectureUnitApi = lectureUnitApi;
-        this.lectureApi = lectureApi;
+        this.lectureImportApi = lectureImportApi;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
@@ -361,14 +363,14 @@ public class LearningObjectImportService {
     }
 
     private Lecture importOrLoadLecture(Lecture sourceLecture, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures) throws NoUniqueQueryException {
-        LectureApi api = lectureApi.orElseThrow(() -> new LectureApiNotPresentException(LectureApi.class));
+        LectureImportApi importApi = lectureImportApi.orElseThrow(() -> new LectureApiNotPresentException(LectureImportApi.class));
         LectureRepositoryApi repositoryApi = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
 
         Optional<Lecture> foundLecture = Optional.ofNullable(titleToImportedLectures.get(sourceLecture.getTitle()));
         if (foundLecture.isEmpty()) {
             foundLecture = repositoryApi.findUniqueByTitleAndCourseIdWithLectureUnitsElseThrow(sourceLecture.getTitle(), courseToImportInto.getId());
         }
-        Lecture importedLecture = foundLecture.orElseGet(() -> api.importLecture(sourceLecture, courseToImportInto, false));
+        Lecture importedLecture = foundLecture.orElseGet(() -> importApi.importLecture(sourceLecture, courseToImportInto, false));
         titleToImportedLectures.put(importedLecture.getTitle(), importedLecture);
 
         return importedLecture;

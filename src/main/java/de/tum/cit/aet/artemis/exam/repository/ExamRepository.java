@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * Spring Data JPA repository for the ExamRepository entity.
  */
 @Conditional(ExamEnabled.class)
+@Lazy
 @Repository
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
@@ -229,11 +231,21 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 LEFT JOIN FETCH ex.quizQuestions
                 LEFT JOIN FETCH ex.templateParticipation tp
                 LEFT JOIN FETCH ex.solutionParticipation sp
-                LEFT JOIN FETCH tp.results tpr
-                LEFT JOIN FETCH sp.results spr
+                LEFT JOIN FETCH tp.submissions tps
+                LEFT JOIN FETCH tps.results tpr
+                LEFT JOIN FETCH sp.submissions sps
+                LEFT JOIN FETCH sps.results spr
             WHERE e.id = :examId
-                AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
-                AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
+                AND (tpr.id = (
+                        SELECT MAX(r1.id)
+                        FROM Submission s1 JOIN s1.results r1
+                        WHERE s1.participation = tp
+                    ) OR tpr.id IS NULL)
+                AND (spr.id = (
+                        SELECT MAX(r2.id)
+                        FROM Submission s2 JOIN s2.results r2
+                        WHERE s2.participation = sp
+                    ) OR spr.id IS NULL)
             """)
     Optional<Exam> findWithExerciseGroupsAndExercisesAndDetailsById(@Param("examId") long examId);
 
@@ -397,6 +409,14 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @Cacheable(cacheNames = "examTitle", key = "#examId", unless = "#result == null")
     String getExamTitle(@Param("examId") long examId);
 
+    @Query("""
+            SELECT e
+            FROM Exam e
+            WHERE e.course.id = :courseId
+                AND e.visibleDate <= :now
+            """)
+    Set<Exam> findAllVisibleByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+
     /**
      * Get one exam by id with exercise groups.
      *
@@ -468,7 +488,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * @return only the visible exams
      */
     default Set<Exam> filterVisibleExams(Set<Exam> exams) {
-        return exams.stream().filter(exam -> Boolean.TRUE.equals(exam.isVisibleToStudents())).collect(Collectors.toSet());
+        return exams.stream().filter(Exam::isVisibleToStudents).collect(Collectors.toSet());
     }
 
     /**

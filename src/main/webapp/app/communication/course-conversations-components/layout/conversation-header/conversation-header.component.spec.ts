@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
 import { Location } from '@angular/common';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -52,13 +53,7 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                declarations: [
-                    ConversationHeaderComponent,
-                    MockComponent(ChannelIconComponent),
-                    MockComponent(ProfilePictureComponent),
-                    MockComponent(FaIconComponent),
-                    MockPipe(ArtemisTranslatePipe),
-                ],
+                imports: [MockComponent(ChannelIconComponent), MockComponent(ProfilePictureComponent), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
                 providers: [
                     provideRouter([
                         { path: 'courses/:courseId/lectures/:lectureId', component: CourseLectureDetailsComponent },
@@ -236,12 +231,14 @@ examples.forEach((activeConversation) => {
             it(
                 'should navigate to ' + activeConversation.subType,
                 fakeAsync(() => {
-                    const button = fixture.debugElement.nativeElement.querySelector('.sub-type-reference');
+                    const button = fixture.debugElement.query(By.css('#subTypeReferenceRouterLink')).nativeElement;
                     button.click();
                     tick();
-
-                    // Assert that the router has navigated to the correct link
-                    expect(location.path()).toBe('/courses/1/' + activeConversation.subType + 's/1');
+                    discardPeriodicTasks();
+                    fixture.whenStable().then(() => {
+                        // Assert that the router has navigated to the correct link
+                        expect(location.path()).toBe('/courses/1/' + activeConversation.subType + 's/1');
+                    });
                 }),
             );
         }

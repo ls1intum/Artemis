@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
  * REST controller for managing QuizSubmission.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizSubmissionResource {
@@ -173,7 +175,7 @@ public class QuizSubmissionResource {
 
         quizExercise.setQuizPointStatistic(null);
 
-        resultWebsocketService.broadcastNewResult(result.getParticipation(), result);
+        resultWebsocketService.broadcastNewResult(result.getSubmission().getParticipation(), result);
 
         quizExercise.setCourse(null);
         // return result with quizSubmission, participation and quiz exercise (including the solution)
@@ -208,7 +210,7 @@ public class QuizSubmissionResource {
         StudentParticipation participation = new StudentParticipation().exercise(quizExercise);
 
         // create result
-        Result result = new Result().participation(participation).submission(quizSubmission);
+        Result result = new Result().submission(quizSubmission);
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());

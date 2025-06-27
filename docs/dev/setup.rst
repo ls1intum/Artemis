@@ -78,6 +78,7 @@ After completing the server setup, proceed with setting up the Artemis client by
    setup/aeolus
    setup/common-problems
    setup/docker-compose
+   setup/docker-debugging
    setup/local-database-tests
 
 Production Setup and Extension Services

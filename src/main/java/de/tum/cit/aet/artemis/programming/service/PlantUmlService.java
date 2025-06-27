@@ -12,19 +12,21 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import net.sourceforge.plantuml.FileFormat;
 import net.sourceforge.plantuml.FileFormatOption;
 import net.sourceforge.plantuml.SourceStringReader;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class PlantUmlService {
 
@@ -34,6 +36,7 @@ public class PlantUmlService {
 
     private static final String LIGHT_THEME_FILE_NAME = "puml-theme-artemislight.puml";
 
+    // TODO: we should use a different directory and not the tmp directory
     private static final Path PATH_TMP_THEME = Path.of(System.getProperty("java.io.tmpdir"), "artemis-puml-theme");
 
     private final ResourceLoaderService resourceLoaderService;
@@ -50,7 +53,7 @@ public class PlantUmlService {
      *
      * @throws IOException if an I/O error occurs during file deletion
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void applicationReady() throws IOException {
         // Delete on first launch to ensure updates
         Files.deleteIfExists(PATH_TMP_THEME.resolve(DARK_THEME_FILE_NAME));

@@ -8,14 +8,19 @@ import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
 
+@Lazy
 @Service
 @Profile(PROFILE_APOLLON)
 public class ApollonConversionService {
@@ -42,11 +47,17 @@ public class ApollonConversionService {
      * @return an input stream that is coming from apollon conversion server
      */
     public InputStream convertModel(String model) {
-
         log.info("Calling Remote Service to convert for model.");
         try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
             var apollonModel = new ApollonModelDTO(model);
-            var response = restTemplate.postForEntity(apollonConversionUrl + "/pdf", apollonModel, Resource.class);
+
+            HttpEntity<ApollonModelDTO> requestEntity = new HttpEntity<>(apollonModel, headers);
+
+            var response = restTemplate.postForEntity(apollonConversionUrl + "/api/converter/pdf", requestEntity, Resource.class);
+
             if (response.getBody() != null) {
                 return response.getBody().getInputStream();
             }
@@ -58,7 +69,5 @@ public class ApollonConversionService {
             log.error(ex.getMessage(), ex);
         }
         return null;
-
     }
-
 }

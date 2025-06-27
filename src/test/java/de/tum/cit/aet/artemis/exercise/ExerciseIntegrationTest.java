@@ -17,7 +17,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -43,12 +42,14 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
@@ -107,7 +108,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetStatsForExerciseAssessmentDashboardWithSubmissions() throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course = courses.getFirst();
-        TextExercise textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         List<Submission> submissions = new ArrayList<>();
 
         userUtilService.addStudents(TEST_PREFIX, 4, 7);
@@ -141,7 +142,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetStatsForExamExerciseAssessmentDashboard() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Course course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(user);
+        Course course = courseUtilService.createCourse();
+        course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, user);
         course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
         var exam = examRepository.findByCourseId(course.getId()).getFirst();
         var textExercise = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).stream().filter(ex -> ex instanceof TextExercise).findFirst().orElseThrow();
@@ -298,7 +300,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void getExamExercise() throws Exception {
-        TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise textExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         request.get("/api/exercise/exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
         request.get("/api/exercise/exercises/" + textExercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
@@ -405,7 +407,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "TA")
     void testGetExamExerciseForExampleSolution() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Course course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(user);
+        Course course = courseUtilService.createCourse();
+        course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, user);
         Exam exam = course.getExams().stream().findFirst().orElseThrow();
         exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
         TextExercise exercise = (TextExercise) exam.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
@@ -429,24 +432,19 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
-                        exercise.getStudentParticipations().iterator().next());
+                addResultToSubmissionAndParticipation(exercise);
             }
-
-            var results = resultRepository.findLatestResultsForParticipation(exercise.getStudentParticipations().iterator().next().getId(), PageRequest.of(0, 20));
-            // Note: this loads results linked to a participation over a submission, therefore there is only 1 result
-            assertThat(results).hasSize(1);
-
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
             for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
+                Set<Result> results = participationUtilService.getResultsForParticipation(participation);
                 // Programming exercises should only have one automatic result
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(participation.getResults()).hasSize(1);
-                    assertThat(participation.getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+                    assertThat(results).hasSize(1);
+                    assertThat(results.iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
                 }
                 else {
                     // All other exercises should not display a result at all
-                    assertThat(participation.getResults()).isEmpty();
+                    assertThat(results).isEmpty();
                 }
             }
         }
@@ -459,32 +457,32 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             int resultSize = 1;
-            var participation = exercise.getStudentParticipations().iterator().next();
             if (exercise instanceof ProgrammingExercise) {
-                var submission = participation.getSubmissions().iterator().next();
-                var result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), participation);
-                result.setSubmission(submission);
-                resultRepository.save(result);
+                addResultToSubmissionAndParticipation(exercise);
                 resultSize = 2;
             }
 
-            var results = resultRepository.findLatestResultsForParticipation(participation.getId(), PageRequest.of(0, 20));
-            assertThat(results).hasSize(resultSize);
-
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
             for (var studentParticipation : exerciseWithDetails.exercise().getStudentParticipations()) {
+                Set<Result> results = participationUtilService.getResultsForParticipation(studentParticipation);
                 // Programming exercises should now how two results and the latest one is the manual result.
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(studentParticipation.getResults()).hasSize(resultSize);
-                    assertThat(studentParticipation.getResults().stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
+                    assertThat(results).hasSize(resultSize);
+                    assertThat(results.stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
                             .isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                 }
                 else {
                     // All other exercises have only one visible result now
-                    assertThat(studentParticipation.getResults()).hasSize(1);
+                    assertThat(results).hasSize(1);
                 }
             }
         }
+    }
+
+    private void addResultToSubmissionAndParticipation(Exercise exercise) {
+        var participation = exercise.getStudentParticipations().iterator().next();
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), submission);
     }
 
     @Test
@@ -508,23 +506,23 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                exercise.getStudentParticipations().iterator().next().setResults(Set.of(participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC,
-                        ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
+                addResultToSubmissionAndParticipation(exercise);
             }
             exerciseService.filterExerciseForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
 
             StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
+            Set<Result> results = participationUtilService.getResultsForParticipation(participation);
             if (exercise instanceof ProgrammingExercise) {
                 var submission = participation.getSubmissions().iterator().next();
                 // Programming exercises should only have one automatic result
-                assertThat(participation.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
+                assertThat(results).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
                 assertThat(participation.getSubmissions()).hasSize(1);
                 assertThat(submission.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
             }
             else {
                 // All other exercises have no visible result, and therefore no submission to transmit the result
-                assertThat(participation.getSubmissions()).isNull();
-                assertThat(participation.getResults()).isEmpty();
+                assertThat(participation.getSubmissions()).isEmpty();
+                assertThat(results).isEmpty();
             }
         }
     }
@@ -536,18 +534,15 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                Result result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
-                        exercise.getStudentParticipations().iterator().next());
-                exercise.getStudentParticipations().iterator().next().setResults(Set.of(result));
-                exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().setResults(new ArrayList<>());
-                exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().addResult(result);
+                addResultToSubmissionAndParticipation(exercise);
             }
             exerciseService.filterExerciseForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
+            Set<Result> results = participationUtilService.getResultsForParticipation(exercise.getStudentParticipations().iterator().next());
             // All exercises have one result
-            assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
+            assertThat(results).hasSize(1);
             // Programming exercises should now have one manual result
             if (exercise instanceof ProgrammingExercise) {
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+                assertThat(results.iterator().next().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
             }
         }
     }
@@ -556,7 +551,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student11", roles = "USER")
     void testGetExercise_forbidden() throws Exception {
         var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        var exercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
         request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
@@ -599,7 +594,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetExerciseForAssessmentDashboard_submissionsWithoutAssessments() throws Exception {
         var validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         var course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        var exercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         var exampleSubmission = participationUtilService.generateExampleSubmission(validModel, exercise, true);
         participationUtilService.addExampleSubmission(exampleSubmission);
         Exercise receivedExercise = request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
@@ -777,7 +772,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void testGetExamExerciseTitle() throws Exception {
-        TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise textExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         final String expectedTitle = textExercise.getExerciseGroup().getTitle();
         final String title = request.get("/api/exercise/exercises/" + textExercise.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(expectedTitle);

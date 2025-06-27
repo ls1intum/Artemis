@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.connectors.ldap;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP_ONLY;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 
 import java.util.HashSet;
 import java.util.Locale;
@@ -9,7 +9,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -19,6 +19,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.codec.Utf8;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -33,9 +34,9 @@ import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Component
-@Profile(PROFILE_LDAP_ONLY)
+@Profile(PROFILE_LDAP)
+@Lazy
 @Primary
-@ComponentScan("de.tum.cit.aet.artemis.*")
 public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
 
     private static final Logger log = LoggerFactory.getLogger(LdapAuthenticationProvider.class);
@@ -146,8 +147,11 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
                 saveNeeded = true;
             }
             if (!Objects.equals(user.getRegistrationNumber(), ldapUserDto.getRegistrationNumber())) {
-                user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
-                saveNeeded = true;
+                // an empty string is considered as null to satisfy the unique constraint on registration number
+                if (StringUtils.hasText(ldapUserDto.getRegistrationNumber())) {
+                    user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
+                    saveNeeded = true;
+                }
             }
             // only save the user in the database in case it has changed
             if (saveNeeded) {

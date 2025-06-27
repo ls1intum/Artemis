@@ -5,6 +5,10 @@ Pyris Setup Guide
 
 .. contents::
 
+.. important::
+   Pyris is now part of the EduTelligence suite. Please check the `compatibility matrix <https://github.com/ls1intum/edutelligence#-artemis-compatibility>`_
+   to ensure you're using compatible versions of Artemis and EduTelligence.
+
 Prerequisites
 -------------
 
@@ -22,15 +26,16 @@ Prerequisites
 Local Environment Setup
 -----------------------
 
-1. **Clone the Pyris Repository**
+1. **Clone the EduTelligence Repository**
 
-   To get started with Pyris development, you need to clone the Pyris repository (`https://github.com/ls1intum/Pyris`) into a directory on your machine. For example, you can clone the repository into a folder called ``Pyris``.
+   To get started with Pyris development, you need to clone the EduTelligence repository (`https://github.com/ls1intum/edutelligence`) into a directory on your machine. Pyris is located in the `iris` subdirectory of the monorepo.
 
    Example command:
 
    .. code-block:: bash
 
-      git clone https://github.com/ls1intum/Pyris.git Pyris
+      git clone https://github.com/ls1intum/edutelligence.git
+      cd edutelligence/iris
 
 2. **Install Dependencies**
 
@@ -38,7 +43,7 @@ Local Environment Setup
 
    .. code-block:: bash
 
-      cd Pyris
+      cd iris
 
    Install the required Python packages:
 
@@ -50,13 +55,13 @@ Local Environment Setup
 
    - **Create an Application Configuration File**
 
-     Create an ``application.local.yml`` file in the root directory. This file includes configurations used by the application.
+     Create an ``application.local.yml`` file in the iris directory. This file includes configurations used by the application.
 
      Example command:
 
      .. code-block:: bash
 
-        cp Pyris/application.example.yml application.local.yml
+        cp application.example.yml application.local.yml
 
      Example ``application.local.yml``:
 
@@ -78,13 +83,18 @@ Local Environment Setup
 
    - **Create LLM Config File**
 
-     Create an ``llm_config.local.yml`` file in the root directory. This file includes a list of models with their configurations.
+     Create an ``llm_config.local.yml`` file in the iris directory. This file includes a list of models with their configurations.
 
      Example command:
 
      .. code-block:: bash
 
-        cp Pyris/llm_config.example.yml llm_config.local.yml
+        cp llm_config.example.yml llm_config.local.yml
+
+
+     .. warning::
+
+         The OpenAI configuration examples are intended solely for development and testing purposes and should not be used in production environments. For production use, we recommend configuring a GDPR-compliant solution.
 
      **Example OpenAI Configuration**
 
@@ -113,8 +123,8 @@ Local Environment Setup
      .. code-block:: yaml
 
         - id: "azure-gpt-4-omni"
-          name: "GPT 4 Omni"
-          description: "GPT 4 Omni on Azure"
+          name: "GPT 4o"
+          description: "GPT 4o on Azure"
           type: "azure_chat"
           endpoint: "<your_azure_model_endpoint>"
           api_version: "2024-02-15-preview"
@@ -123,8 +133,8 @@ Local Environment Setup
           api_key: "<your_azure_api_key>"
           tools: []
           capabilities:
-            input_cost: 5
-            output_cost: 15
+            input_cost: 2.5
+            output_cost: 10
             gpt_version_equivalent: 4.5  # Equivalent GPT version of the model
             context_length: 128000
             vendor: "OpenAI"
@@ -135,26 +145,28 @@ Local Environment Setup
 
      **Explanation of Configuration Parameters**
 
-     The configuration parameters are utilized through the capability system by pipelines in Pyris to select the appropriate model for a task. The parameter values under capabilities are mostly subjective and do not have any standard values.
-     In the example configuration above, we orient the values based on the official documentation of the models.
+     The configuration parameters are used by pipelines in Pyris through the capability system to select the appropriate model for a given task. The parameter values under ``capabilities`` are mostly subjective and do not follow any standardized values.
 
-     One can adjust the capabilities as the following example workflow:
+     In the example configuration above, the values are based on the official documentation of the models.
+
+     You can adjust the capabilities using the following example workflow:
 
         On their official website, OpenAI provides the following information about the `GPT-4o model <https://platform.openai.com/docs/models/gpt-4o>`_:
 
-            - The model can process 128,000 tokens in a single request. So, we set the context_length to 128000.
-            - The models is supposed to be better than GPT-4 in terms of its capabilities. So, we set the gpt_version_equivalent to 4.5.
-            - The model is developed by OpenAI. So, we set the vendor to OpenAI.
-            - We can not assume the if the service that provides the model, e.g. official OpenAI API or Azure, is compatible with the privacy regulations of the organisation. So, we set the privacy_compliance to false.
-            - The model is not self-hosted. So, we set the self_hosted to false.
-            - The model supports image recognition. So, we set the image_recognition to true.
-            - The model supports structured JSON output mode. So, we set the json_mode to true.
-            - The cost of input tokens for the model is 5$/1M tokens. So, we set the input_cost to 5.
-            - The cost of output tokens for the model is 15$/1M tokens. So, we set the output_cost to 15.
+            - The model can process 128,000 tokens in a single request, so we set ``context_length`` to ``128k``.
+            - The model is expected to outperform GPT-4 in terms of capabilities, so we set ``gpt_version_equivalent`` to ``4.5``.
+            - The model is developed by OpenAI, so we set ``vendor`` to ``OpenAI``.
+            - We cannot assume that the service providing the model (e.g., the official OpenAI API or Azure OpenAI) complies with the organization’s privacy regulations, so we set ``privacy_compliance`` to ``false``.
+            - The model is not self-hosted, so we set ``self_hosted`` to ``false``.
+            - The model supports image recognition, so we set ``image_recognition`` to ``true``.
+            - The model supports structured JSON output mode, so we set ``json_mode`` to ``true``.
+            - The input token cost is $2.50 per 1M tokens, so we set ``input_cost`` to ``2.5``.
+            - The output token cost is $10.00 per 1M tokens, so we set ``output_cost`` to ``10``.
 
-     One thing to keep in mind regarding the parameter values under capabilities is that the values are used to compare and rank models based on the required capabilities specified by a pipeline to select an appropriate model for the task, the pipeline is performing.
+     .. note::
+        The parameter values under ``capabilities`` are used to compare and rank models according to the requirements defined by a pipeline in order to select the most suitable model for a given task.
 
-     Next section provides a more detailed explanation of the parameters used in the configuration file.
+     The next section provides a more detailed explanation of the parameters used in the configuration file.
 
      **Parameter Descriptions:**
 
@@ -186,8 +198,8 @@ Local Environment Setup
 
      The ``gpt_version_equivalent`` field is subjective and used to compare capabilities of different models using GPT models as a reference. For example:
 
-     - GPT-4 Omni equivalent: 4.5
-     - GPT-4 Omni Mini equivalent: 4.25
+     - GPT-4o equivalent: 4.5
+     - GPT-4o Mini equivalent: 4.25
      - GPT-4 equivalent: 4.0
      - GPT-3.5 equivalent: 3.5
 
@@ -241,7 +253,7 @@ Using Docker
 **Prerequisites**
 
 - Ensure Docker and Docker Compose are installed on your machine.
-- Clone the Pyris repository to your local machine.
+- Clone the EduTelligence repository to your local machine.
 - Create the necessary configuration files as described in the previous section.
 
 **Docker Compose Files**

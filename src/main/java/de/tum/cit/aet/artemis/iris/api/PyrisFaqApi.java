@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.api;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -10,6 +11,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_IRIS)
 @Controller
+@Lazy
 public class PyrisFaqApi extends AbstractIrisApi {
 
     private final PyrisWebhookService pyrisWebhookService;
@@ -26,7 +28,7 @@ public class PyrisFaqApi extends AbstractIrisApi {
         pyrisWebhookService.deleteFaq(faq);
     }
 
-    public void autoUpdateFaqInPyris(long courseId, Faq faq) {
-        pyrisWebhookService.autoUpdateFaqInPyris(courseId, faq);
+    public void autoUpdateFaqInPyris(Faq faq) {
+        pyrisWebhookService.autoUpdateFaqInPyris(faq);
     }
 }

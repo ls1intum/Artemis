@@ -3,16 +3,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PROFILE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/shared/util/download.util';
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardTeacher, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ScienceEventType } from 'app/shared/science/science.model';
@@ -24,8 +24,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass, UpperCasePipe } from '@angular/common';
 import { ExerciseUnitComponent } from '../exercise-unit/exercise-unit.component';
-import { AttachmentUnitComponent } from '../attachment-unit/attachment-unit.component';
-import { VideoUnitComponent } from '../video-unit/video-unit.component';
+import { AttachmentVideoUnitComponent } from '../attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from '../text-unit/text-unit.component';
 import { OnlineUnitComponent } from '../online-unit/online-unit.component';
 import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
@@ -37,6 +36,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
+import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared/information-box/information-box.component';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -51,8 +51,7 @@ export interface LectureUnitCompletionEvent {
         TranslateDirective,
         NgClass,
         ExerciseUnitComponent,
-        AttachmentUnitComponent,
-        VideoUnitComponent,
+        AttachmentVideoUnitComponent,
         TextUnitComponent,
         OnlineUnitComponent,
         CompetenciesPopoverComponent,
@@ -63,6 +62,7 @@ export interface LectureUnitCompletionEvent {
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
         IrisExerciseChatbotButtonComponent,
+        InformationBoxComponent,
     ],
 })
 export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
@@ -85,23 +85,33 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     hasPdfLectureUnit: boolean;
     irisSettings?: IrisSettings;
     paramsSubscription: Subscription;
+    courseParamsSubscription: Subscription;
     isProduction = true;
     isTestServer = false;
-    endsSameDay = false;
     irisEnabled = false;
+    informationBoxData: InformationBox[] = [];
 
     readonly LectureUnitType = LectureUnitType;
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly ChatServiceMode = ChatServiceMode;
 
-    // Icons
-    faSpinner = faSpinner;
+    readonly faSpinner = faSpinner;
+    readonly faChalkboardTeacher = faChalkboardTeacher;
 
     ngOnInit(): void {
         this.isProduction = this.profileService.isProduction();
         this.isTestServer = this.profileService.isTestServer();
         this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+
+        // As defined in courses.route.ts, the courseId is in the grand parent route of the lectureId route.
+        const grandParentRoute = this.activatedRoute.parent?.parent;
+        if (grandParentRoute) {
+            this.courseParamsSubscription = grandParentRoute.params.subscribe((params) => {
+                // Note: if courseId is not found, sub components cannot navigate properly
+                this.courseId = +params.courseId;
+            });
+        }
 
         this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
             this.lectureId = +params.lectureId;
@@ -135,15 +145,25 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         if (this.lectureUnits?.length) {
                             // Check if PDF attachments exist in lecture units
                             this.hasPdfLectureUnit =
-                                (<AttachmentUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT)).filter(
+                                (<AttachmentVideoUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO)).filter(
                                     (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
                                 ).length > 0;
                         }
-                        this.endsSameDay = !!this.lecture?.startDate && !!this.lecture.endDate && dayjs(this.lecture.startDate).isSame(this.lecture.endDate, 'day');
                         if (this.irisEnabled && this.lecture?.course?.id) {
                             this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((irisSettings) => {
                                 this.irisSettings = irisSettings;
                             });
+                        }
+                        this.informationBoxData = [];
+                        if (this.lecture?.startDate) {
+                            const startDateInfoBoxTitle = 'artemisApp.courseOverview.lectureDetails.startDate';
+                            const infoBoxStartDate = this.createDateInfoBox(this.lecture!.startDate, startDateInfoBoxTitle);
+                            this.informationBoxData.push(infoBoxStartDate);
+                        }
+                        if (this.lecture?.endDate) {
+                            const endDateInfoBoxTitle = 'artemisApp.courseOverview.lectureDetails.endDate';
+                            const infoBoxEndDate = this.createDateInfoBox(this.lecture!.endDate, endDateInfoBoxTitle);
+                            this.informationBoxData.push(infoBoxEndDate);
                         }
                     },
                     error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -193,7 +213,20 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         this.lectureUnitService.completeLectureUnit(this.lecture!, event);
     }
 
+    createDateInfoBox(date: Dayjs, contentStringName: string): InformationBox {
+        const boxContentStartDate: InformationBoxContent = {
+            type: 'dateTime',
+            value: date,
+        };
+        return {
+            title: contentStringName,
+            content: boxContentStartDate,
+            isContentComponent: true,
+        };
+    }
+
     ngOnDestroy() {
         this.paramsSubscription?.unsubscribe();
+        this.courseParamsSubscription?.unsubscribe();
     }
 }

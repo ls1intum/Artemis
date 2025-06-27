@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class IrisFaqIngestionSubSettings extends IrisSubSettings {
 
     @Column(name = "auto_ingest_on_faq_creation")
-    private boolean autoIngestOnFaqCreation;
+    private boolean autoIngestOnFaqCreation = true;
 
     public boolean getAutoIngestOnFaqCreation() {
         return autoIngestOnFaqCreation;

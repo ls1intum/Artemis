@@ -76,7 +76,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
         course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        exercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
 
         for (int i = 1; i <= 3; ++i) {
             var submission = ParticipationFactory.generateModelingSubmission(String.format("model%d", i), true);

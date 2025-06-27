@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.iris.utils.IrisLLMMock.getMockLLMCosts;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
@@ -81,7 +83,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     void initTestCase() throws GitAPIException, IOException, URISyntaxException {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
@@ -124,7 +126,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     void testTokenTrackingHandledExerciseChat() throws Exception {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = createDefaultMockMessage(irisSession);
-        var tokens = getMockLLMCosts();
+        var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         List<PyrisStageDTO> doneStage = new ArrayList<>();
         doneStage.add(new PyrisStageDTO("DoneTest", 10, PyrisStageState.DONE, "Done"));
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
@@ -159,7 +161,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var irisMessage = createDefaultMockMessage(irisSession);
         irisMessageRepository.save(irisMessage);
-        var tokens = getMockLLMCosts();
+        var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         LLMTokenUsageTrace tokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(tokens, LLMServiceType.IRIS,
                 builder -> builder.withIrisMessageID(irisMessage.getId()).withExercise(exercise.getId()).withUser(irisSession.getUserId()).withCourse(course.getId()));
         assertThat(tokenUsageTrace.getServiceType()).isEqualTo(LLMServiceType.IRIS);
@@ -174,7 +176,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     void testTokenTrackingExerciseChatWithPipelineFail() throws Exception {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = createDefaultMockMessage(irisSession);
-        var tokens = getMockLLMCosts();
+        var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         List<PyrisStageDTO> failedStages = new ArrayList<>();
         failedStages.add(new PyrisStageDTO("TestTokenFail", 10, PyrisStageState.ERROR, "Failed running pipeline"));
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
@@ -204,14 +206,6 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         }
     }
 
-    private List<LLMRequest> getMockLLMCosts() {
-        List<LLMRequest> costs = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            costs.add(new LLMRequest("test-llm", i * 10 + 5, i * 0.5f, i * 3 + 5, i * 0.12f, "IRIS_CHAT_EXERCISE_MESSAGE"));
-        }
-        return costs;
-    }
-
     private IrisMessage createDefaultMockMessage(IrisSession irisSession) {
         var messageToSend = irisSession.newMessage();
         messageToSend.addContent(createMockTextContent(), createMockTextContent(), createMockTextContent());
@@ -225,7 +219,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, List<LLMRequest> tokens) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobId))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/tutor-chat/runs/" + jobId + "/status", new PyrisChatStatusUpdateDTO(result, stages, null, tokens),
-                HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/programming-exercise-chat/runs/" + jobId + "/status",
+                new PyrisChatStatusUpdateDTO(result, stages, null, tokens), HttpStatus.OK, headers);
     }
 }

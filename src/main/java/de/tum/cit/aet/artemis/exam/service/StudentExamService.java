@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -78,6 +79,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Service Implementation for managing StudentExam.
  */
 @Conditional(ExamEnabled.class)
+@Lazy
 @Service
 public class StudentExamService {
 
@@ -473,8 +475,8 @@ public class StudentExamService {
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam.getId());
         Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(unsubmittedStudentExams);
         for (final var user : exercisesOfUser.keySet()) {
-            // fetch all studentParticipations of a user, with submissions and results eagerly loaded
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            // fetch all studentParticipations of a user, with latest submission and results eagerly loaded
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
 
             for (final var studentParticipation : studentParticipations) {
@@ -509,7 +511,7 @@ public class StudentExamService {
         studentExams = studentExams.stream().filter(studentExam -> !excludeStudentExams.contains(studentExam)).collect(Collectors.toSet());
         Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(studentExams);
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (var studentParticipation : studentParticipations) {
                 // even if the student did not submit anything for a specific exercise (the InitializationState is therefore only INITIALIZED)
@@ -518,7 +520,7 @@ public class StudentExamService {
                     studentParticipation.setInitializationState(InitializationState.FINISHED);
                     studentParticipationRepository.save(studentParticipation);
                 }
-                var latestSubmission = studentParticipation.findLatestSubmission();
+                Optional<Submission> latestSubmission = studentParticipation.getSubmissions().stream().findFirst();
                 boolean wasEmptyProgrammingParticipation = false;
                 if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise) {
                     wasEmptyProgrammingParticipation = true;
@@ -642,7 +644,7 @@ public class StudentExamService {
             // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
             // those participations exist in Java, however this might lead to memory issues and might be more difficult to program (and more difficult to understand)
             // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
-            var studentParticipations = participationService.findByExerciseAndStudentId(exercise, student.getId());
+            var studentParticipations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), student.getId());
             // we start the exercise if no participation was found that was already fully initialized
             if (studentExam.isTestExam() || studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
                     && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {

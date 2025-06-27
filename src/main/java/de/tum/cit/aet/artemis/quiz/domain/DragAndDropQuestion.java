@@ -30,8 +30,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyDragAndDropAllOrNothing;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyDragAndDropProportionalWithPenalty;
@@ -185,7 +185,7 @@ public class DragAndDropQuestion extends QuizQuestion {
         // delete old file if necessary
         try {
             if (backgroundFilePath != null) {
-                fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(URI.create(backgroundFilePath), FilePathType.DRAG_AND_DROP_BACKGROUND), 0);
+                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(backgroundFilePath), FilePathType.DRAG_AND_DROP_BACKGROUND), 0);
             }
         }
         catch (FilePathParsingException e) {

@@ -61,6 +61,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -81,7 +82,6 @@ import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -89,6 +89,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -140,7 +141,6 @@ import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
@@ -154,6 +154,7 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService.MockFileRepository
  * 1) Jenkins + LocalVC
  * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseTestService {
@@ -254,6 +255,9 @@ public class ProgrammingExerciseTestService {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
+
+    @Autowired
     private ParticipationUtilService participationUtilService;
 
     @Autowired
@@ -297,10 +301,7 @@ public class ProgrammingExerciseTestService {
     // Injected in the constructor
     private VersionControlService versionControlService;
 
-    private LocalVCGitBranchService localVCGitBranchService;
-
     // Injected in the constructor
-
     private MockDelegate mockDelegate;
 
     private String userPrefix;
@@ -316,7 +317,7 @@ public class ProgrammingExerciseTestService {
         userUtilService.addUsers(userPrefix, NUMBER_OF_STUDENTS + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
     }
 
-    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, LocalVCGitBranchService localVCGitBranchService) throws Exception {
+    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
         mockDelegate.resetMockProvider();
         exerciseRepo = new LocalRepository(defaultBranch);
         testRepo = new LocalRepository(defaultBranch);
@@ -330,7 +331,6 @@ public class ProgrammingExerciseTestService {
         studentTeamRepo = new LocalRepository(defaultBranch);
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
-        this.localVCGitBranchService = localVCGitBranchService;
 
         course = courseUtilService.addEmptyCourse();
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
@@ -597,8 +597,8 @@ public class ProgrammingExerciseTestService {
     public void importFromFile_embeddedFiles_embeddedFilesCopied() throws Exception {
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
-        Path fileSystemPathEmbeddedFile1 = FilePathService.getMarkdownFilePath().resolve(embeddedFileName1);
-        Path fileSystemPathEmbeddedFile2 = FilePathService.getMarkdownFilePath().resolve(embeddedFileName2);
+        Path fileSystemPathEmbeddedFile1 = FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName1);
+        Path fileSystemPathEmbeddedFile2 = FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName2);
         // clean up to make sure the test doesn't pass because it has passed previously
         if (Files.exists(fileSystemPathEmbeddedFile1)) {
             Files.delete(fileSystemPathEmbeddedFile1);
@@ -614,7 +614,7 @@ public class ProgrammingExerciseTestService {
 
         request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
-        assertThat(FilePathService.getMarkdownFilePath()).isDirectoryContaining(path -> embeddedFileName1.equals(path.getFileName().toString()))
+        assertThat(FilePathConverter.getMarkdownFilePath()).isDirectoryContaining(path -> embeddedFileName1.equals(path.getFileName().toString()))
                 .isDirectoryContaining(path -> embeddedFileName2.equals(path.getFileName().toString()));
 
     }
@@ -1294,8 +1294,8 @@ public class ProgrammingExerciseTestService {
         exercise.setMode(exerciseMode);
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         return course;
     }
 
@@ -1563,8 +1563,8 @@ public class ProgrammingExerciseTestService {
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         // delete the files to not only make a test pass because a previous test run succeeded
-        Path embeddedFilePath1 = FilePathService.getMarkdownFilePath().resolve(embeddedFileName1);
-        Path embeddedFilePath2 = FilePathService.getMarkdownFilePath().resolve(embeddedFileName2);
+        Path embeddedFilePath1 = FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName1);
+        Path embeddedFilePath2 = FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName2);
         if (Files.exists(embeddedFilePath1)) {
             Files.delete(embeddedFilePath1);
         }
@@ -1735,8 +1735,8 @@ public class ProgrammingExerciseTestService {
         exercise.setProblemStatement(null);
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
     }
 
@@ -1754,17 +1754,17 @@ public class ProgrammingExerciseTestService {
                 """, embeddedFileName1, embeddedFileName2));
         if (saveEmbeddedFiles) {
             FileUtils.copyToFile(new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream(),
-                    FilePathService.getMarkdownFilePath().resolve(embeddedFileName1).toFile());
+                    FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName1).toFile());
             FileUtils.copyToFile(new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream(),
-                    FilePathService.getMarkdownFilePath().resolve(embeddedFileName2).toFile());
+                    FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName2).toFile());
         }
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
         if (shouldIncludeBuildPlan) {
             buildPlanRepository.setBuildPlanForExercise("my build plan", exercise);
         }
-        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
 
     }
@@ -1788,8 +1788,8 @@ public class ProgrammingExerciseTestService {
         // Create a programming exercise with solution, template, tests participation and build config
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise.setProblemStatement("Lorem Ipsum");
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
 
@@ -1885,8 +1885,8 @@ public class ProgrammingExerciseTestService {
 
         // Create a programming exercise with solution, template, and tests participations
         exercise = programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
 
         // Add student participation
@@ -2144,7 +2144,6 @@ public class ProgrammingExerciseTestService {
         var participantRepoTestUrl = ParticipationFactory.getMockFileRepositoryUri(studentTeamRepo);
         final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
-        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfExercise(exercise);
         doThrow(new CanceledException("Checkout got interrupted!")).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
         // the local repo should exist before startExercise()
@@ -2179,8 +2178,8 @@ public class ProgrammingExerciseTestService {
         exercise.setMode(TEAM);
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
     }
 
     // TEST
@@ -2285,7 +2284,7 @@ public class ProgrammingExerciseTestService {
         var programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true, "abcde", SubmissionType.MANUAL);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(exercise, programmingSubmission, userPrefix + studentLogin);
         if (withResult) {
-            participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission.getParticipation(), score >= 100D, true, 100D);
+            participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission, score >= 100D, true, 100D);
         }
         return (ProgrammingExerciseStudentParticipation) programmingSubmission.getParticipation();
     }

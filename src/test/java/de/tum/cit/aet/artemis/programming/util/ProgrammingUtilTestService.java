@@ -18,6 +18,7 @@ import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
  * <p>
  * In the future this service will be extended to make testing of the code hint generation easier.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ProgrammingUtilTestService {
@@ -64,7 +66,7 @@ public class ProgrammingUtilTestService {
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -122,7 +124,7 @@ public class ProgrammingUtilTestService {
         doNothing().when(gitService).pullIgnoreConflicts(any(Repository.class));
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         var savedExercise = exerciseRepository.save(exercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
         templateParticipation.setRepositoryUri(templateRepoUri.toString());
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
@@ -183,7 +185,7 @@ public class ProgrammingUtilTestService {
         exercise.setBuildConfig(buildConfig);
         var savedExercise = exerciseRepository.save(exercise);
         savedExercise.setBuildConfig(buildConfig);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
         solutionParticipation.setRepositoryUri(solutionRepoUri.toString());
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);

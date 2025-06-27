@@ -7,6 +7,7 @@
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
+            "externalLLMUsage": "External LLM Usage",
             "accountInformation": "Account Information",
             "learnerProfile": "Learner Profile",
             "notificationSettings": "Notifications",
@@ -18,6 +19,10 @@
                 "description": "Choose the IDEs you want to use for opening programming exercises.",
                 "default": "Default",
                 "jetbrainsHelp": "To use JetBrains IDEs, please install the JetBrains Toolbox."
+            },
+            "externalLLMUsageSettingsPage": {
+                "accepted": "You have accepted the usage of external LLMs on {{acceptedDate}}.",
+                "declined": "You have not accepted the usage of external LLMs."
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",
@@ -115,7 +120,7 @@
                 "title": "Stay Secure with Passkeys",
                 "description": {
                     "howItWorks": "Your passkey is stored on your device and secured with biometrics or a PIN, making login fast and safe — without the need to remember a password.",
-                    "recommendation": "We recommend setting up a passkey now to enhance your account’s security and enjoy a seamless, passwordless login experience."
+                    "recommendation": "We recommend setting up a passkey now to enhance your account's security and enjoy a seamless, passwordless login experience."
                 },
                 "setupLater": "Set Up Later",
                 "setupPasskey": "Set Up Passkey",
@@ -132,12 +137,14 @@
                 "sshKey": "Public SSH Key"
             },
             "categories": {
+                "externalLLMUsage": "External LLM Usage Settings",
                 "NOTIFICATION_SETTINGS": "Notification Settings",
                 "SCIENCE_SETTINGS": "Science Settings",
                 "SSH_SETTINGS": "SSH Settings",
                 "VCS_TOKEN_SETTINGS": "VCS Token Settings",
                 "PASSKEYS": "Passkey Settings",
-                "IDE_PREFERENCES": "IDE Preferences"
+                "IDE_PREFERENCES": "IDE Preferences",
+                "GLOBAL_NOTIFICATIONS": "Notifications"
             },
             "settingGroupNames": {
                 "weeklySummary": "Weekly Summary",
@@ -205,6 +212,20 @@
                 "tutorialGroupUpdateDeleteDescription": "Get notified when a tutorial group for which you are registered or a tutor was updated or deleted",
                 "assignUnassignTutorialGroupDescription": "Get notified when you were assigned or unassigned to lead a tutorial group",
                 "activityDescription": "Share which features of Artemis you utilize and how you interact with them. The information is only accessible for administrators."
+            },
+            "globalNotificationSettings": {
+                "title": "Notifications",
+                "description": "You'll receive email notifications for the following security-related activities. Manage your preferences below.",
+                "options": {
+                    "NEW_LOGIN": "New Login",
+                    "NEW_PASSKEY_ADDED": "New Passkey Added",
+                    "VCS_TOKEN_EXPIRED": "VCS Token Expired",
+                    "SSH_KEY_EXPIRED": "SSH Key Expired"
+                },
+                "viewPasskeySettings": "View Passkey Settings",
+                "viewVcsTokenSettings": "View VCS Token Settings",
+                "viewSshKeySettings": "View SSH Key Settings",
+                "updateSuccess": "Notification setting updated successfully."
             }
         }
     }

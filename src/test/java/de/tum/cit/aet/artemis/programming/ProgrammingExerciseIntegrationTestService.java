@@ -53,6 +53,7 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -91,8 +92,8 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -118,6 +119,7 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingUtilTestService;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -126,6 +128,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
  * 1) LocalVC + LocalCI
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseIntegrationTestService {
@@ -178,6 +181,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;
@@ -256,7 +262,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         userUtilService.addUsers(userPrefix, 3, 2, 2, 2);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(programmingExercise.getId()).orElseThrow();
         programmingExerciseInExam = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         programmingExerciseInExam = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseInExam.getId())
@@ -334,7 +340,8 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, userPrefix + "student1");
-        participationUtilService.addResultToParticipation(null, null, participation);
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        participationUtilService.addResultToSubmission(null, null, submission);
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state",
                 HttpStatus.OK, ProgrammingExerciseTestCaseStateDTO.class);
@@ -347,7 +354,8 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, userPrefix + "student1");
-        participationUtilService.addResultToParticipation(null, null, participation);
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        participationUtilService.addResultToSubmission(null, null, submission);
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state",
                 HttpStatus.OK, ProgrammingExerciseTestCaseStateDTO.class);
@@ -817,13 +825,13 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), false, false);
         request.putAndExpectError("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
     }
 
     void updateProgrammingExercise_idIsNull_badRequest() throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise.setId(null);
         request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
     }
@@ -882,7 +890,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), false);
 
@@ -890,8 +898,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_invalidSolutionBuildPlan_badRequest() throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), false, false);
@@ -900,8 +908,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_invalidSolutionRepository_badRequest() throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
         mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
@@ -911,7 +919,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, true);
         mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), programmingExercise.getProjectKey(), true);
         request.putAndExpectError("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
@@ -1638,7 +1646,7 @@ public class ProgrammingExerciseIntegrationTestService {
     void testCheckPlagiarism() throws Exception {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
+                .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
         prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/check-plagiarism";
@@ -1650,7 +1658,7 @@ public class ProgrammingExerciseIntegrationTestService {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
 
         var programmingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
+                .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
         programmingExercise.setMode(ExerciseMode.TEAM);
         programmingExerciseRepository.save(programmingExercise);
 
@@ -1664,7 +1672,7 @@ public class ProgrammingExerciseIntegrationTestService {
     void testCheckPlagiarismJplagReport() throws Exception {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
+                .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
         prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/check-plagiarism-jplag-report";
@@ -1684,12 +1692,12 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    private void assertPlagiarismResult(ProgrammingExercise programmingExercise, PlagiarismResultDTO<?> result, double expectedSimilarity) {
+    private void assertPlagiarismResult(ProgrammingExercise programmingExercise, PlagiarismResultDTO result, double expectedSimilarity) {
         // verify plagiarism result
         assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
         assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(programmingExercise.getId());
 
-        PlagiarismComparison<?> comparison = result.plagiarismResult().getComparisons().iterator().next();
+        PlagiarismComparison comparison = result.plagiarismResult().getComparisons().iterator().next();
         assertThat(comparison.getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
         assertThat(comparison.getMatches()).hasSize(1);
@@ -1785,10 +1793,10 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testGetPlagiarismResult() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(programmingExercise.getId()).orElseThrow();
 
-        TextPlagiarismResult expectedResult = textExerciseUtilService.createTextPlagiarismResultForExercise(programmingExercise);
+        PlagiarismResult expectedResult = textExerciseUtilService.createPlagiarismResultForExercise(programmingExercise);
 
         var result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, PlagiarismResultDTO.class);
         assertThat(result.plagiarismResult().getId()).isEqualTo(expectedResult.getId());
@@ -1796,13 +1804,13 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testGetPlagiarismResultWithoutResult() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
         assertThat(result).isNullOrEmpty();
     }
 
     void testGetPlagiarismResultWithoutExercise() throws Exception {
-        TextPlagiarismResult result = request.get("/api/programming/programming-exercises/-1/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
+        PlagiarismResult result = request.get("/api/programming/programming-exercises/-1/plagiarism-result", HttpStatus.NOT_FOUND, PlagiarismResult.class);
         assertThat(result).isNull();
     }
 

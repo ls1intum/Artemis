@@ -43,6 +43,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -79,6 +81,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  */
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExportService {
 
@@ -226,7 +229,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId()
                 + "-" + timestamp + ".zip";
-        String cleanFilename = FileService.sanitizeFilename(exportedExerciseZipFileName);
+        String cleanFilename = FileUtil.sanitizeFilename(exportedExerciseZipFileName);
         Path pathToZippedExercise = exportDir.resolve(cleanFilename);
         // Create the zip folder of the exported programming exercise and return the path to the created folder
         zipFileService.createTemporaryZipFile(pathToZippedExercise, pathsToBeZipped, 5);
@@ -282,13 +285,13 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         // Setup path to store the zip file for the exported repositories
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
-        String cleanFilename = FileService.sanitizeFilename(filename);
+        String cleanFilename = FileUtil.sanitizeFilename(filename);
         Path pathToZippedExercise = Path.of(outputDir.toString(), cleanFilename);
 
         // Remove null elements and get the file path of each file to be included, i.e. each entry in the pathsToBeZipped list
         List<Path> includedFilePathsNotNull = pathsToBeZipped.stream().filter(Objects::nonNull).toList();
 
-        String cleanProjectName = FileService.sanitizeFilename(exercise.getProjectName());
+        String cleanProjectName = FileUtil.sanitizeFilename(exercise.getProjectName());
         // Add report entry, programming repositories cannot be skipped
         reportData.add(new ArchivalReportEntry(exercise, cleanProjectName, pathsToBeZipped.size(), includedFilePathsNotNull.size(), 0));
 
@@ -485,7 +488,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private String getZippedRepoName(ProgrammingExercise exercise, String repositoryName) {
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        return FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + repositoryName);
+        return FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + repositoryName);
     }
 
     /**
@@ -745,8 +748,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             if (repositoryExportOptions.normalizeCodeStyle()) {
                 try {
                     log.debug("Normalizing code style for participation {}", participation);
-                    fileService.normalizeLineEndingsDirectory(repository.getLocalPath());
-                    fileService.convertFilesInDirectoryToUtf8(repository.getLocalPath());
+                    FileUtil.normalizeLineEndingsDirectory(repository.getLocalPath());
+                    FileUtil.convertFilesInDirectoryToUtf8(repository.getLocalPath());
                 }
                 catch (IOException ex) {
                     log.warn("Cannot normalize code style in the repository {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());

@@ -13,15 +13,13 @@ import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -29,6 +27,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -47,17 +46,17 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 
 @Profile(PROFILE_LOCALCI)
+@Lazy
 @Service
 public class LocalCIResultProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
 
     private static final int BUILD_STATISTICS_UPDATE_THRESHOLD = 10;
-
-    private final HazelcastInstance hazelcastInstance;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
@@ -77,13 +76,15 @@ public class LocalCIResultProcessingService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
+    private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
+
     private UUID listenerId;
 
-    public LocalCIResultProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
-            ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
-            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService) {
-        this.hazelcastInstance = hazelcastInstance;
+    public LocalCIResultProcessingService(ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
+            BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
+            ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
+            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService,
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -93,14 +94,15 @@ public class LocalCIResultProcessingService {
         this.buildLogEntryService = buildLogEntryService;
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
     }
 
     /**
      * Initializes the result queue, build agent information map and the locks.
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void init() {
-        this.listenerId = distributedDataAccessService.getDistributedResultQueue().addItemListener(new ResultQueueListener(), true);
+        this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addItemListener(new ResultQueueListener(), true);
     }
 
     /**
@@ -111,8 +113,8 @@ public class LocalCIResultProcessingService {
     public void removeListener() {
         // check if Hazelcast is still active, before invoking this
         try {
-            if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
-                distributedDataAccessService.getDistributedResultQueue().removeItemListener(this.listenerId);
+            if (distributedDataAccessService.isInstanceRunning()) {
+                distributedDataAccessService.getDistributedBuildResultQueue().removeItemListener(this.listenerId);
             }
         }
         catch (HazelcastInstanceNotActiveException e) {
@@ -126,7 +128,7 @@ public class LocalCIResultProcessingService {
     public void processResult() {
 
         // set lock to prevent multiple nodes from processing the same build job
-        ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedResultQueue().poll();
+        ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedBuildResultQueue().poll();
 
         if (resultQueueItem == null) {
             return;
@@ -196,7 +198,7 @@ public class LocalCIResultProcessingService {
                         programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
                     }
                     else {
-                        programmingMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
+                        programmingSubmissionMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
                                 new BuildTriggerWebsocketError("Result could not be processed", programmingExerciseParticipation.getId()));
                     }
 

@@ -7,14 +7,13 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
+import { countSubmissions, getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
-import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -96,7 +95,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
                 this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
                     this.exercise,
                     this.course.maxComplaintTimeDays,
-                    this.studentParticipation?.results?.last(),
+                    getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).last(),
                     this.studentParticipation,
                 );
             }
@@ -120,11 +119,12 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         if (this.submissionPolicy?.active) {
             this.countSubmissions();
         }
-        if (this.studentParticipation?.results?.length) {
+        const results = getAllResultsOfAllSubmissions(this.studentParticipation?.submissions);
+        if (results?.length) {
             // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
-            this.sortService.sortByProperty(this.studentParticipation.results, 'id', false);
+            this.sortService.sortByProperty(results, 'id', false);
 
-            const latestRatedResult = this.studentParticipation.results.filter((result) => result.rated).first();
+            const latestRatedResult = results.filter((result) => result.rated).first();
             if (latestRatedResult) {
                 this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course);
             }
@@ -190,14 +190,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     }
 
     private countSubmissions() {
-        const commitHashSet = new Set<string>();
-
-        this.studentParticipation?.results
-            ?.map((result) => result.submission)
-            .filter((submission) => submission?.type === SubmissionType.MANUAL)
-            .map((submission) => (submission as ProgrammingSubmission).commitHash)
-            .forEach((commitHash: string) => commitHashSet.add(commitHash));
-
-        this.numberOfSubmissions = commitHashSet.size;
+        this.numberOfSubmissions = countSubmissions(this.studentParticipation);
     }
 }

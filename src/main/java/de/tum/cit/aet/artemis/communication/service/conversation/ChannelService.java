@@ -12,6 +12,7 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -23,7 +24,6 @@ import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.errors.ChannelNameDuplicateException;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ChannelService {
 
@@ -51,16 +52,13 @@ public class ChannelService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, ConversationService conversationService,
-            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, SingleUserNotificationService singleUserNotificationService) {
+            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.conversationService = conversationService;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**

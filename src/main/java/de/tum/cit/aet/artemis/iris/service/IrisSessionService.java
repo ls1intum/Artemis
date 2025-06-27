@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import jakarta.annotation.Nullable;
 import jakarta.ws.rs.BadRequestException;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -13,8 +14,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionSer
 /**
  * Service for managing Iris sessions.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisSessionService {
@@ -150,7 +152,7 @@ public class IrisSessionService {
     private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
         return switch (session) {
             case IrisTextExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisTextExerciseChatSessionService, chatSession);
-            case IrisExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisExerciseChatSessionService, chatSession);
+            case IrisProgrammingExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisExerciseChatSessionService, chatSession);
             case IrisCourseChatSession courseChatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCourseChatSessionService, courseChatSession);
             case IrisLectureChatSession lectureChatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisLectureChatSessionService, lectureChatSession);
             case IrisTutorSuggestionSession tutorSuggestionSession ->

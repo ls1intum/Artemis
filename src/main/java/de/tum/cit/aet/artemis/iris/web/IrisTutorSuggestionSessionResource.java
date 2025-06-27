@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -19,7 +20,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionRepository;
-import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 @Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/iris/tutor-suggestion/")
+@Lazy
 public class IrisTutorSuggestionSessionResource {
 
     private final PostRepository postRepository;
@@ -38,7 +39,7 @@ public class IrisTutorSuggestionSessionResource {
 
     private final IrisTutorSuggestionSessionRepository irisTutorSuggestionSessionRepository;
 
-    protected IrisTutorSuggestionSessionResource(PostRepository postRepository, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, UserRepository userRepository,
+    protected IrisTutorSuggestionSessionResource(PostRepository postRepository, UserRepository userRepository,
             IrisTutorSuggestionSessionRepository irisTutorSuggestionSessionRepository, IrisSettingsService irisSettingsService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;

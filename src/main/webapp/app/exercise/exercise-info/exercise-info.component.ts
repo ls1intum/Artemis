@@ -9,11 +9,12 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-exercise-info',
     templateUrl: './exercise-info.component.html',
-    styleUrls: ['../../shared/side-panel/side-panel.scss'],
+    styleUrls: ['./exercise-info.component.scss'],
     imports: [TranslateDirective, NgTemplateOutlet, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class ExerciseInfoComponent implements OnInit {
@@ -30,7 +31,7 @@ export class ExerciseInfoComponent implements OnInit {
             this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
                 this.exercise,
                 this.exercise.course.maxComplaintTimeDays,
-                this.studentParticipation?.results?.last(),
+                getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).last(),
                 this.studentParticipation,
             );
         }

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.support.ParameterDeclarations;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.util.InvalidExerciseConfiguration;
@@ -19,7 +20,7 @@ import de.tum.cit.aet.artemis.exercise.util.InvalidExerciseConfiguration;
 public class InvalidExamExerciseDatesArgumentProvider implements ArgumentsProvider {
 
     @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
+    public Stream<? extends Arguments> provideArguments(ParameterDeclarations parameters, ExtensionContext context) {
         ZonedDateTime releaseDate = ZonedDateTime.now().plusHours(1);
         ZonedDateTime dueDate = releaseDate.plusHours(1);
         ZonedDateTime assessmentDueDate = dueDate.plusHours(1);

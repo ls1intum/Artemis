@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import java.util.Comparator;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureInterface<IrisTextExerciseChatSession>, IrisRateLimitedFeatureInterface {
@@ -93,7 +95,8 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise)) {
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisTextExerciseChatSettings();
+        if (!settings.enabled()) {
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -112,10 +115,10 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "text-exercise-chat",
-                "default",
+                settings.selectedVariant(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),
-                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(dto, PyrisTextExerciseDTO.of(exercise), conversation, latestSubmissionText),
+                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(dto, PyrisTextExerciseDTO.of(exercise), conversation, latestSubmissionText, settings.customInstructions()),
                 stages -> irisChatWebsocketService.sendMessage(session, null, stages)
         );
         // @formatter:on
