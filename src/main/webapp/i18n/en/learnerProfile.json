@@ -21,13 +21,6 @@
                     "label": "Repetition Intensity",
                     "description": "Choose how much you are willing to repeat the course content."
                 },
-                "proficiency": {
-                    "label": "Proficiency",
-                    "description": "Artemis' estimation of your proficiency in this course.",
-                    "minLabel": "Beginner",
-                    "maxLabel": "Expert",
-                    "tooltip": "The initial value of the calculation is displayed by the grey dot. If you disagree with Artemis' calculation, you can manually set it with the blue button."
-                },
                 "profileSaved": "Learner profile saved",
                 "invalidRange": "Values must be between 1 and 5",
                 "level": {
