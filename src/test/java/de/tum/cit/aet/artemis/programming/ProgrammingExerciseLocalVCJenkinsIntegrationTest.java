@@ -476,8 +476,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportAuxiliaryRepository_shouldReturnFile() throws Exception {
         programmingExerciseTestService.exportInstructorAuxiliaryRepository_shouldReturnFile();
-        // once for the temp directory and once for the directory with the zip file
-        verify(fileService, times(2)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
     @Test

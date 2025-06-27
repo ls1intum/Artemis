@@ -408,24 +408,20 @@ public class ProgrammingExerciseExportImportResource {
         AuxiliaryRepository auxiliaryRepository = optionalAuxiliaryRepository.get();
 
         long start = System.nanoTime();
-        Optional<File> zipFile = programmingExerciseExportService.exportInstructorAuxiliaryRepositoryForExercise(programmingExercise.getId(), auxiliaryRepository,
-                new ArrayList<>());
-        return returnZipFileForRepositoryExport(zipFile, auxiliaryRepository.getName(), programmingExercise, start);
-    }
 
-    private ResponseEntity<Resource> returnZipFileForRepositoryExport(Optional<File> zipFile, String repositoryName, ProgrammingExercise exercise, long startTime)
-            throws IOException {
-        if (zipFile.isEmpty()) {
+        InputStreamResource resource = programmingExerciseExportService.exportInstructorAuxiliaryRepositoryForExerciseInMemory(programmingExercise, auxiliaryRepository,
+                Collections.synchronizedList(new ArrayList<>()));
+
+        if (resource == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
-        InputStreamResource resource = new InputStreamResource(Files.newInputStream(zipFile.get().toPath()));
+        log.info("Export of auxiliary repository {} for programming exercise {} with title '{}' was successful in {}.", auxiliaryRepository.getName(), programmingExercise.getId(),
+                programmingExercise.getTitle(), formatDurationFrom(start));
 
-        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryName, exercise.getId(), exercise.getTitle(),
-                formatDurationFrom(startTime));
-
-        return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName()).body(resource);
+        return ResponseEntity.ok().contentLength(resource.contentLength()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", resource.getFilename())
+                .body(resource);
     }
 
     /**
@@ -610,11 +606,18 @@ public class ProgrammingExerciseExportImportResource {
         }
         List<String> exportErrors = new ArrayList<>();
         long start = System.nanoTime();
-        Optional<File> zipFile = programmingExerciseExportService.exportStudentRepository(exerciseId, studentParticipation, exportErrors);
-        if (zipFile.isEmpty()) {
+
+        InputStreamResource resource = programmingExerciseExportService.exportStudentRepositoryInMemory(programmingExercise, studentParticipation, exportErrors);
+
+        if (resource == null) {
             throw new InternalServerErrorException("Could not export the student repository of participation " + participationId + ". Logged errors: " + exportErrors);
         }
-        return returnZipFileForRepositoryExport(zipFile, RepositoryType.USER.getName(), programmingExercise, start);
+
+        log.info("Export of student repository for participation {} in programming exercise {} with title '{}' was successful in {}.", participationId, programmingExercise.getId(),
+                programmingExercise.getTitle(), formatDurationFrom(start));
+
+        return ResponseEntity.ok().contentLength(resource.contentLength()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", resource.getFilename())
+                .body(resource);
     }
 
     /**
