@@ -94,7 +94,7 @@ describe('CourseConversationComponent with communication disabled', () => {
     });
 
     it.each([true, false])('should call service method to enable communication', async (withMessaging: boolean) => {
-        const serviceSpy = jest.spyOn(metisService, 'enableCommunication').mockReturnValue(of(undefined));
+        const serviceSpy = jest.spyOn(metisService, 'enable').mockReturnValue(of(undefined));
         const alertSpy = jest.spyOn(alertService, 'error');
         const eventManagerSpy = jest.spyOn(eventManager, 'broadcast').mockImplementation(() => {});
         fixture.detectChanges();
@@ -110,7 +110,7 @@ describe('CourseConversationComponent with communication disabled', () => {
     });
 
     it('should call alert service on error', async () => {
-        jest.spyOn(metisService, 'enableCommunication').mockImplementation(() => {
+        jest.spyOn(metisService, 'enable').mockImplementation(() => {
             throw new Error('Test error');
         });
         const alertSpy = jest.spyOn(alertService, 'error');
