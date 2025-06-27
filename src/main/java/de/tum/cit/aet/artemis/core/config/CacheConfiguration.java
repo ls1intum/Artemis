@@ -11,16 +11,15 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
@@ -66,17 +65,15 @@ public class CacheConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
 
-    @Nullable
-    private final GitProperties gitProperties;
+    private final Optional<GitProperties> gitProperties;
 
-    @Nullable
-    private final BuildProperties buildProperties;
+    private final Optional<BuildProperties> buildProperties;
 
     private final ServerProperties serverProperties;
 
     // the service registry, in our current deployment this is the jhipster registry which offers a Eureka Server under the hood
-    @Nullable
-    private final Registration registration;
+
+    private final Optional<Registration> registration;
 
     private final ApplicationContext applicationContext;
 
@@ -94,10 +91,8 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    // NOTE: the registration is optional
-    public CacheConfiguration(ApplicationContext applicationContext, @Autowired(required = false) @Nullable GitProperties gitProperties,
-            @Autowired(required = false) @Nullable BuildProperties buildProperties, ServerProperties serverProperties,
-            @Autowired(required = false) @Nullable Registration registration, Environment env) {
+    public CacheConfiguration(ApplicationContext applicationContext, Optional<GitProperties> gitProperties, Optional<BuildProperties> buildProperties,
+            ServerProperties serverProperties, Optional<Registration> registration, Environment env) {
         this.applicationContext = applicationContext;
         this.gitProperties = gitProperties;
         this.buildProperties = buildProperties;
@@ -179,14 +174,14 @@ public class CacheConfiguration {
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
         // Configure all Hazelcast properties, but do not connect yet to other instances
-        if (registration == null) {
+        if (registration.isEmpty()) {
             log.info("No discovery service is set up, Hazelcast cannot create a multi-node cluster.");
             hazelcastBindOnlyOnInterface("127.0.0.1", config);
         }
         else {
             // The serviceId is by default the application's name,
             // see the "spring.application.name" standard Spring property
-            String serviceId = registration.getServiceId();
+            String serviceId = registration.get().getServiceId();
             log.info("Configuring Hazelcast clustering for instanceId: {}", serviceId);
 
             // Bind to the interface specified in the config if the value is set
@@ -206,13 +201,13 @@ public class CacheConfiguration {
 
                 // In the local configuration, the hazelcast port is the http-port + the hazelcastPort as offset
                 config.getNetworkConfig().setPort(serverProperties.getPort() + hazelcastPort); // Own port
-                registration.getMetadata().put("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
+                registration.get().getMetadata().put("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
             }
             else { // Production configuration, one host per instance all using the configured port
                 config.setClusterName("prod");
                 config.setInstanceName(instanceName);
                 config.getNetworkConfig().setPort(hazelcastPort); // Own port
-                registration.getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
+                registration.get().getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
             }
         }
 
@@ -282,7 +277,7 @@ public class CacheConfiguration {
 
     @Bean
     public KeyGenerator keyGenerator() {
-        return new PrefixedKeyGenerator(this.gitProperties, this.buildProperties);
+        return new PrefixedKeyGenerator(this.gitProperties.orElse(null), this.buildProperties.orElse(null));
     }
 
     // config for files in the files system

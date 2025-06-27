@@ -5,13 +5,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.UnknownHostException;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-
-import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
@@ -38,8 +36,8 @@ public class HazelcastConnection {
     private final DiscoveryClient discoveryClient;
 
     // the service registry, in our current deployment this is the jhipster registry which offers a Eureka Server under the hood
-    @Nullable
-    private final Registration registration;
+
+    private final Optional<Registration> registration;
 
     private final Environment env;
 
@@ -49,7 +47,7 @@ public class HazelcastConnection {
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
-    public HazelcastConnection(DiscoveryClient discoveryClient, @Autowired(required = false) @Nullable Registration registration, Environment env) {
+    public HazelcastConnection(DiscoveryClient discoveryClient, Optional<Registration> registration, Environment env) {
         this.discoveryClient = discoveryClient;
         this.registration = registration;
         this.env = env;
@@ -61,7 +59,7 @@ public class HazelcastConnection {
      */
     @Scheduled(fixedRate = 2, initialDelay = 1, timeUnit = TimeUnit.MINUTES)
     public void connectToAllMembers() {
-        if (registration == null || env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+        if (registration.isEmpty() || env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return;
         }
         var thisHazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
@@ -79,7 +77,7 @@ public class HazelcastConnection {
             }
         }).toList();
 
-        var instances = discoveryClient.getInstances(registration.getServiceId());
+        var instances = discoveryClient.getInstances(registration.orElseThrow().getServiceId());
         log.debug("Current {} Registry members: {}", instances.size(), instances.stream().map(ServiceInstance::getHost).toList());
         log.debug("Current {} Hazelcast members: {}", hazelcastMemberAddresses.size(), hazelcastMemberAddresses);
 
@@ -97,11 +95,11 @@ public class HazelcastConnection {
         var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
         var config = hazelcastInstance.getConfig();
 
-        if (registration == null) {
+        if (registration.isEmpty()) {
             // If there is no registration, we are not running in a clustered environment and cannot connect Hazelcast nodes.
             return;
         }
-        String serviceId = registration.getServiceId();
+        String serviceId = registration.orElseThrow().getServiceId();
         for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
             addHazelcastClusterMember(instance, config);
         }

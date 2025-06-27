@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -71,13 +72,13 @@ public class CourseLearnerProfileService {
         // Ensure that all users have a learner profile (lazy creation)
         users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
 
-        var learnerProfiles = learnerProfileRepository.findAllByUserIn(users);
+        Set<LearnerProfile> learnerProfiles = learnerProfileRepository.findAllByUserIn(users);
 
         Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course).orElseGet(() -> {
 
-            var courseProfile = new CourseLearnerProfile();
+            CourseLearnerProfile courseProfile = new CourseLearnerProfile();
             courseProfile.setCourse(course);
-            var learnerProfile = learnerProfiles.stream().filter(profile -> profile.getUser().equals(user)).findFirst()
+            LearnerProfile learnerProfile = learnerProfiles.stream().filter(profile -> profile.getUser().equals(user)).findFirst()
                     .orElseThrow(() -> new IllegalStateException("Learner profile for user " + user.getLogin() + " not found"));
 
             courseProfile.setLearnerProfile(learnerProfile);
