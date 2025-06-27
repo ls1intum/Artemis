@@ -549,7 +549,8 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportStudentRequestedRepository(@PathVariable long exerciseId, @RequestParam() boolean includeTests) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
         if (programmingExercise.isExamExercise()) {
             ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
             api.checkExamExerciseForExampleSolutionAccessElseThrow(programmingExercise);
