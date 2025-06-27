@@ -137,6 +137,17 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         request.put("/api/atlas/courses/" + course.getId() + "/learning-paths/enable", null, HttpStatus.OK);
     }
 
+    private void assertAverageProgress(long courseId, HttpStatus status, Double expectedAverage) throws Exception {
+        var response = request.get("/api/atlas/courses/" + courseId + "/learning-path/average-progress", status, LearningPathAverageProgressDTO.class);
+        if (expectedAverage == null) {
+            assertThat(response).isNull();
+        }
+        else {
+            assertThat(response).isNotNull();
+            assertThat(response.averageProgress()).isEqualTo(expectedAverage);
+        }
+    }
+
     private Competency createCompetencyRESTCall() throws Exception {
         final var competencyToCreate = new Competency();
         competencyToCreate.setTitle("CompetencyToCreateTitle");
@@ -324,7 +335,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
-    void testGetAverageProgressForCourse() throws Exception {
+    void testGetAverageProgressForCourse_successfulCalculation() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
         var students = userTestRepository.getStudents(course);
@@ -336,21 +347,16 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
             learningPathRepository.save(learningPath);
         }
 
-        var response = request.get("/api/atlas/courses/" + course.getId() + "/learning-path/average-progress", HttpStatus.OK, LearningPathAverageProgressDTO.class);
         double expectedAverage = Arrays.stream(progresses).average().orElse(0);
+        assertAverageProgress(course.getId(), HttpStatus.OK, expectedAverage);
+    }
 
-        assertThat(response).isNotNull();
-        assertThat(response.averageProgress()).isEqualTo(expectedAverage);
-
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testGetAverageProgressForCourse_emptyCalculation() throws Exception {
         course = courseUtilService.createCourse();
-        response = request.get("/api/atlas/courses/" + course.getId() + "/learning-path/average-progress", HttpStatus.OK, LearningPathAverageProgressDTO.class);
-
-        assertThat(response).isNotNull();
-        assertThat(response.averageProgress()).isEqualTo(0.0);
-
-        response = request.get("/api/atlas/courses/99999/learning-path/average-progress", HttpStatus.FORBIDDEN, LearningPathAverageProgressDTO.class);
-
-        assertThat(response).isNull();
+        assertAverageProgress(course.getId(), HttpStatus.OK, 0.0);
+        assertAverageProgress(99999L, HttpStatus.FORBIDDEN, null);
     }
 
     /**
