@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.domain.session;
 
+/**
+ * This enum represents the different types of Iris chats.
+ */
 public enum IrisChatMode {
 
     TEXT_EXERCISE("text-exercise-chat"), PROGRAMMING_EXERCISE("programming-exercise-chat"), COURSE("course-chat"), LECTURE("lecture-chat"), TUTOR_SUGGESTION("tutor-suggestion");
@@ -14,6 +17,13 @@ public enum IrisChatMode {
         return value;
     }
 
+    /**
+     * Returns the {@code IrisChatMode} matching the given string value.
+     *
+     * @param value the string value to match
+     * @return the corresponding {@code IrisChatMode}
+     * @throws IllegalArgumentException if no matching mode is found
+     */
     public static IrisChatMode fromValue(String value) {
         for (IrisChatMode mode : values()) {
             if (mode.getValue().equals(value)) {
