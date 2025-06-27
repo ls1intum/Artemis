@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
-import de.tum.cit.aet.edutelligence.hyperion.ReviewAndRefineGrpc;
+import de.tum.cit.aet.artemis.hyperion.proto.ReviewAndRefineGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;

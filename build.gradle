@@ -25,6 +25,7 @@ plugins {
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.1.3"
     id "org.springframework.boot" version "${spring_boot_version}"
+    id "com.google.protobuf" version "${protobuf_plugin_version}"
 }
 
 group = "de.tum.cit.aet.artemis"
@@ -93,14 +94,6 @@ repositories {
     maven {
         url = "https://build.shibboleth.net/maven/releases"
     }
-    // required for Edutelligence Hyperion Java Client snapshots
-    maven {
-        url = "https://maven.pkg.github.com/ls1intum/edutelligence"
-        credentials {
-            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-            password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
-        }
-    }
 }
 
 configurations.configureEach {
@@ -157,6 +150,23 @@ configurations.configureEach {
     exclude group: "xom", module: "xom"
 
     exclude group: "commons-configuration", module: "commons-configuration"
+}
+
+// Protobuf Configuration for gRPC Integration
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:${protobuf_version}"
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:${grpc_version}"
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
 }
 
 dependencies {
@@ -289,9 +299,13 @@ dependencies {
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version {strictly "2.5.2" } }
 
-    // Edutelligence Hyperion Java Client - using property for consistent versioning
-    implementation "de.tum.cit.aet.edutelligence:hyperion:${hyperion_version}"
-
+    // gRPC Client Dependencies
+    implementation platform("io.grpc:grpc-bom:${grpc_version}")
+    implementation 'io.grpc:grpc-protobuf'
+    implementation 'io.grpc:grpc-stub'
+    implementation 'io.grpc:grpc-netty-shaded'
+    implementation "com.google.protobuf:protobuf-java:${protobuf_version}"
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
 
     // Required for synchronization between nodes and build agents (LocalCI)
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
@@ -411,13 +425,7 @@ dependencies {
 
 
     implementation "com.google.errorprone:error_prone_annotations:2.38.0"
-
-    // Hyperion gRPC client dependencies
-    implementation "de.tum.cit.aet.edutelligence:hyperion:${hyperion_version}"
-    implementation "io.grpc:grpc-netty-shaded:1.71.0"
-    implementation "io.grpc:grpc-protobuf:1.71.0"
-    implementation "io.grpc:grpc-services:1.71.0"
-    implementation "io.grpc:grpc-stub:1.71.0"
+    implementation "io.grpc:grpc-services:${grpc_services_version}"
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") { version {              strictly byte_buddy_version } }
@@ -462,8 +470,8 @@ dependencies {
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 
     // gRPC testing dependencies
-    testImplementation "io.grpc:grpc-inprocess:1.71.0"
-    testImplementation "io.grpc:grpc-services:1.71.0"
+    testImplementation "io.grpc:grpc-inprocess:${grpc_services_version}"
+    testImplementation "io.grpc:grpc-services:${grpc_services_version}"
 
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"

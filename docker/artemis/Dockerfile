@@ -24,12 +24,6 @@ ARG WAR_FILE_STAGE="builder"
 #-----------------------------------------------------------------------------------------------------------------------
 FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:21-jdk AS builder
 
-# Set GitHub authentication for Maven repositories
-ARG GITHUB_ACTOR
-ARG GITHUB_TOKEN
-ENV GITHUB_ACTOR=${GITHUB_ACTOR}
-ENV GITHUB_TOKEN=${GITHUB_TOKEN}
-
 # some Apple M1 (arm64) builds need python3 and build-essential(make+gcc) for node-gyp to not fail
 RUN echo "Installing build dependencies" \
   && apt-get update && apt-get install -y --no-install-recommends python3 build-essential \

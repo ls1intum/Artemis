@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 
-import de.tum.cit.aet.edutelligence.hyperion.ReviewAndRefineGrpc;
+import de.tum.cit.aet.artemis.hyperion.proto.ReviewAndRefineGrpc;
 import io.grpc.ManagedChannel;
 
 /**

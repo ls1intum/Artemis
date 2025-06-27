@@ -16,17 +16,17 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionConfigurationProperties;
+import de.tum.cit.aet.artemis.hyperion.proto.InconsistencyCheckRequest;
+import de.tum.cit.aet.artemis.hyperion.proto.Repository;
+import de.tum.cit.aet.artemis.hyperion.proto.RepositoryFile;
+import de.tum.cit.aet.artemis.hyperion.proto.ReviewAndRefineGrpc;
+import de.tum.cit.aet.artemis.hyperion.proto.RewriteProblemStatementRequest;
 import de.tum.cit.aet.artemis.hyperion.service.grpc.AbstractHyperionGrpcService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import de.tum.cit.aet.edutelligence.hyperion.InconsistencyCheckRequest;
-import de.tum.cit.aet.edutelligence.hyperion.Repository;
-import de.tum.cit.aet.edutelligence.hyperion.RepositoryFile;
-import de.tum.cit.aet.edutelligence.hyperion.ReviewAndRefineGrpc;
-import de.tum.cit.aet.edutelligence.hyperion.RewriteProblemStatementRequest;
 import io.grpc.StatusRuntimeException;
 
 /**

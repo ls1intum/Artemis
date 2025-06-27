@@ -1,9 +1,5 @@
 name: Test
 
-permissions:
-  contents: read
-  packages: read  # Required for downloading from GitHub Packages
-
 on:
   pull_request:
     paths-ignore:
@@ -72,9 +68,6 @@ jobs:
   server-tests:
     runs-on: aet-large-ubuntu
     timeout-minutes: 80
-    env:
-      GITHUB_ACTOR: ${{ github.actor }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
     - uses: actions/checkout@v4
@@ -167,9 +160,6 @@ jobs:
   server-style:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      GITHUB_ACTOR: ${{ github.actor }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - uses: actions/checkout@v4
     - name: Setup Java
