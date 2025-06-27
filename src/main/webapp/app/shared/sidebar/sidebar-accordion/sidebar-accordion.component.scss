@@ -3,7 +3,10 @@
 }
 
 hr {
-    border-top: 2px solid var(--body-bg);
+    all: unset;
+    display: block;
+    border-top: 1px solid var(--body-bg);
+    transition: border-color 0.2s ease;
 }
 
 .unread-count {
@@ -23,11 +26,4 @@ hr {
 .icon-container {
     display: flex;
     align-items: center;
-}
-
-.sidebar-divider {
-    border-width: 1px !important;
-    border-style: solid;
-    border-top: var(--overview-light-border-color);
-    transition: border-color 0.2s ease;
 }
