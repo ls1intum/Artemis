@@ -17,7 +17,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
-import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -26,7 +25,10 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { ActivatedRouteSnapshot } from '@angular/router';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -35,6 +37,7 @@ describe('TextExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -192,6 +195,15 @@ describe('TextExercise Management Update Component', () => {
             const route = TestBed.inject(ActivatedRoute);
             route.url = of([{ path: 'new' } as UrlSegment]);
             route.data = of({ textExercise });
+            route.snapshot = {
+                paramMap: {
+                    get: (key: string) => 'mockValue',
+                },
+            } as ActivatedRouteSnapshot;
+
+            global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                return new MockResizeObserver(callback);
+            });
         });
 
         it('should not be in exam mode', fakeAsync(() => {
@@ -205,7 +217,7 @@ describe('TextExercise Management Update Component', () => {
 
         it('should calculate valid sections', () => {
             const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
-            comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
+            comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
             comp.exerciseUpdatePlagiarismComponent = {
                 formValidChanges: new Subject(),
                 formValid: true,
@@ -216,10 +228,9 @@ describe('TextExercise Management Update Component', () => {
 
             comp.ngOnInit();
             comp.ngAfterViewInit();
-            expect(comp.titleChannelNameComponentSubscription).toBeDefined();
 
-            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValid = true;
-            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(true);
+            comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(true);
+            fixture.detectChanges();
             expect(calculateValidSpy).toHaveBeenCalledOnce();
             expect(comp.formSectionStatus).toBeDefined();
             expect(comp.formSectionStatus[0].valid).toBeTrue();
@@ -228,7 +239,6 @@ describe('TextExercise Management Update Component', () => {
             expect(calculateValidSpy).toHaveBeenCalledTimes(2);
 
             comp.ngOnDestroy();
-            expect(comp.titleChannelNameComponentSubscription?.closed).toBeTrue();
         });
     });
 

@@ -23,11 +23,11 @@ public class PlagiarismResultApi extends AbstractPlagiarismApi {
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
     }
 
-    public PlagiarismResult<?> findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
+    public PlagiarismResult findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
         return plagiarismResultRepository.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(exerciseId);
     }
 
-    public void prepareResultForClient(PlagiarismResult<?> plagiarismResult) {
+    public void prepareResultForClient(PlagiarismResult plagiarismResult) {
         plagiarismResultRepository.prepareResultForClient(plagiarismResult);
     }
 }

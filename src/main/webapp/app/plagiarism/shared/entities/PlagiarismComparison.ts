@@ -1,13 +1,12 @@
 import { PlagiarismStatus } from './PlagiarismStatus';
 import { PlagiarismSubmission } from './PlagiarismSubmission';
 import { PlagiarismMatch } from './PlagiarismMatch';
-import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 
 /**
  * Pair of compared student submissions whose similarity is above a certain threshold.
  */
-export class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
+export class PlagiarismComparison {
     /**
      * Unique identifier of the comparison.
      */
@@ -16,17 +15,17 @@ export class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
     /**
      * The plagiarism result
      */
-    plagiarismResult?: PlagiarismResult<PlagiarismSubmissionElement>;
+    plagiarismResult?: PlagiarismResult;
 
     /**
      * First submission involved in this comparison.
      */
-    submissionA: PlagiarismSubmission<E>;
+    submissionA: PlagiarismSubmission;
 
     /**
      * Second submission involved in this comparison.
      */
-    submissionB: PlagiarismSubmission<E>;
+    submissionB: PlagiarismSubmission;
 
     /**
      * List of matches between both submissions involved in this comparison.
