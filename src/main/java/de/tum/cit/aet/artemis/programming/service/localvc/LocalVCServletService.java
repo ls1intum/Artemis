@@ -558,6 +558,7 @@ public class LocalVCServletService {
             ProgrammingExercise exercise) throws LocalVCInternalException {
         ProgrammingExerciseParticipation participation;
         try {
+            log.info("Trying to find a participation for uri {} in exercise {}", localVCRepositoryUri, exercise.getId());
             if (usingSSH) {
                 participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString(),
                         exercise);

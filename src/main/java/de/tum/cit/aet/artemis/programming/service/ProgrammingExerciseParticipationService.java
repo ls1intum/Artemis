@@ -315,6 +315,19 @@ public class ProgrammingExerciseParticipationService {
         if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
             return templateParticipationRepository.findByRepositoryUriElseThrow(repositoryURL);
         }
+
+        log.warn("Fetching participation for user {} and uri {} in exercise {}", repositoryTypeOrUserName, repositoryURL, exercise.getId());
+        var participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), repositoryTypeOrUserName);
+        if (participation.isEmpty()) {
+            log.warn("Database contains no participation for user {} in exercise {}", repositoryTypeOrUserName, exercise.getId());
+        }
+        else {
+            log.warn("Database contains repo uri {}", participation.get().getRepositoryUri());
+        }
+
+        var uris = studentParticipationRepository.getAllRepoUris(exercise.getId());
+        log.warn("Found URIs: {}", uris);
+
         return studentParticipationRepository.findByRepositoryUriElseThrow(repositoryURL);
     }
 
