@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.UnknownHostException;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.Nullable;
@@ -14,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
@@ -29,12 +27,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 
-@Configuration
-@Lazy
 @Profile({ PROFILE_BUILDAGENT, PROFILE_CORE })
-public class HazelcastConfiguration {
+@Lazy
+@Configuration
+public class HazelcastConnection {
 
-    private static final Logger log = LoggerFactory.getLogger(HazelcastConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(HazelcastConnection.class);
 
     // the discovery service client that connects against the registration (jhipster registry) so that multiple server nodes can find each other to synchronize using Hazelcast
     private final DiscoveryClient discoveryClient;
@@ -43,27 +41,17 @@ public class HazelcastConfiguration {
     @Nullable
     private final Registration registration;
 
-    private final ServerProperties serverProperties;
-
     private final Environment env;
-
-    @Value("${spring.hazelcast.interface:}")
-    private String hazelcastInterface;
 
     @Value("${spring.hazelcast.port:5701}")
     private int hazelcastPort;
 
-    @Value("${spring.hazelcast.localInstances:true}")
-    private boolean hazelcastLocalInstances;
-
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
-    public HazelcastConfiguration(DiscoveryClient discoveryClient, @Autowired(required = false) @Nullable Registration registration, ServerProperties serverProperties,
-            Environment env) {
+    public HazelcastConnection(DiscoveryClient discoveryClient, @Autowired(required = false) @Nullable Registration registration, Environment env) {
         this.discoveryClient = discoveryClient;
         this.registration = registration;
-        this.serverProperties = serverProperties;
         this.env = env;
     }
 
@@ -110,48 +98,12 @@ public class HazelcastConfiguration {
         var config = hazelcastInstance.getConfig();
 
         if (registration == null) {
-            log.info("No discovery service is set up, Hazelcast cannot create a multi-node cluster.");
-            hazelcastBindOnlyOnInterface("127.0.0.1", config);
+            // If there is no registration, we are not running in a clustered environment and cannot connect Hazelcast nodes.
+            return;
         }
-        else {
-            // The serviceId is by default the application's name,
-            // see the "spring.application.name" standard Spring property
-            String serviceId = registration.getServiceId();
-            log.info("Configuring Hazelcast clustering for serviceId {}, instanceId {} and instanceName {}", serviceId, registration.getInstanceId(), instanceName);
-
-            // Bind to the interface specified in the config if the value is set
-            if (hazelcastInterface != null && !hazelcastInterface.isEmpty()) {
-                // We should not prefer IPv4, this will ensure that both IPv4 and IPv6 work as none is preferred
-                System.setProperty("hazelcast.prefer.ipv4.stack", "false");
-                hazelcastBindOnlyOnInterface(hazelcastInterface, config);
-            }
-            else {
-                log.info("Binding Hazelcast to default interface");
-                hazelcastBindOnlyOnInterface("127.0.0.1", config);
-            }
-
-            // In the local setting (e.g. for development), everything goes through 127.0.0.1, with a different port
-            if (hazelcastLocalInstances) {
-                log.info("Application is running with the \"localInstances\" setting, Hazelcast cluster will only work with localhost instances");
-
-                // In the local configuration, the hazelcast port is the http-port + the hazelcastPort as offset
-                config.getNetworkConfig().setPort(serverProperties.getPort() + hazelcastPort); // Own port
-                registration.getMetadata().put("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
-
-                for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-                    addHazelcastClusterMember(instance, config);
-                }
-            }
-            else { // Production configuration, one host per instance all using the configured port
-                config.setClusterName("prod");
-                config.setInstanceName(instanceName);
-                config.getNetworkConfig().setPort(hazelcastPort); // Own port
-                registration.getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
-
-                for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-                    addHazelcastClusterMember(instance, config);
-                }
-            }
+        String serviceId = registration.getServiceId();
+        for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
+            addHazelcastClusterMember(instance, config);
         }
     }
 
@@ -160,18 +112,5 @@ public class HazelcastConfiguration {
         var clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
         log.info("Adding Hazelcast cluster member {}", clusterMemberAddress);
         config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
-    }
-
-    private void hazelcastBindOnlyOnInterface(String hazelcastInterface, Config config) {
-        // Hazelcast should bind to the interface and use it as local and public address
-        log.debug("Binding Hazelcast to interface {}", hazelcastInterface);
-        System.setProperty("hazelcast.local.localAddress", hazelcastInterface);
-        System.setProperty("hazelcast.local.publicAddress", hazelcastInterface);
-        config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(hazelcastInterface));
-
-        // Hazelcast should only bind to the interface provided, not to any interface
-        config.setProperty("hazelcast.socket.bind.any", "false");
-        config.setProperty("hazelcast.socket.server.bind.any", "false");
-        config.setProperty("hazelcast.socket.client.bind.any", "false");
     }
 }

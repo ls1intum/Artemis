@@ -10,6 +10,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,11 +23,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.KeyGenerator;
+import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -69,6 +72,12 @@ public class CacheConfiguration {
     @Nullable
     private final BuildProperties buildProperties;
 
+    private final ServerProperties serverProperties;
+
+    // the service registry, in our current deployment this is the jhipster registry which offers a Eureka Server under the hood
+    @Nullable
+    private final Registration registration;
+
     private final ApplicationContext applicationContext;
 
     private final Environment env;
@@ -76,12 +85,24 @@ public class CacheConfiguration {
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
+    @Value("${spring.hazelcast.interface:}")
+    private String hazelcastInterface;
+
+    @Value("${spring.hazelcast.port:5701}")
+    private int hazelcastPort;
+
+    @Value("${spring.hazelcast.localInstances:true}")
+    private boolean hazelcastLocalInstances;
+
     // NOTE: the registration is optional
     public CacheConfiguration(ApplicationContext applicationContext, @Autowired(required = false) @Nullable GitProperties gitProperties,
-            @Autowired(required = false) @Nullable BuildProperties buildProperties, Environment env) {
+            @Autowired(required = false) @Nullable BuildProperties buildProperties, ServerProperties serverProperties,
+            @Autowired(required = false) @Nullable Registration registration, Environment env) {
         this.applicationContext = applicationContext;
         this.gitProperties = gitProperties;
         this.buildProperties = buildProperties;
+        this.serverProperties = serverProperties;
+        this.registration = registration;
         this.env = env;
     }
 
@@ -145,7 +166,6 @@ public class CacheConfiguration {
         Config config = new Config();
         config.setInstanceName(instanceName);
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-
         config.getNetworkConfig().getJoin().getAutoDetectionConfig().setEnabled(false);
 
         // Always enable TcpIp config: There has to be at least one join-config and we can not use multicast as this creates unwanted clusters
@@ -157,6 +177,44 @@ public class CacheConfiguration {
         config.setClassLoader(applicationContext.getClassLoader());
 
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
+
+        // Configure all Hazelcast properties, but do not connect yet to other instances
+        if (registration == null) {
+            log.info("No discovery service is set up, Hazelcast cannot create a multi-node cluster.");
+            hazelcastBindOnlyOnInterface("127.0.0.1", config);
+        }
+        else {
+            // The serviceId is by default the application's name,
+            // see the "spring.application.name" standard Spring property
+            String serviceId = registration.getServiceId();
+            log.info("Configuring Hazelcast clustering for instanceId: {}", serviceId);
+
+            // Bind to the interface specified in the config if the value is set
+            if (hazelcastInterface != null && !hazelcastInterface.isEmpty()) {
+                // We should not prefer IPv4, this will ensure that both IPv4 and IPv6 work as none is preferred
+                System.setProperty("hazelcast.prefer.ipv4.stack", "false");
+                hazelcastBindOnlyOnInterface(hazelcastInterface, config);
+            }
+            else {
+                log.info("Binding Hazelcast to default interface");
+                hazelcastBindOnlyOnInterface("127.0.0.1", config);
+            }
+
+            // In the local setting (e.g. for development), everything goes through 127.0.0.1, with a different port
+            if (hazelcastLocalInstances) {
+                log.info("Application is running with the \"localInstances\" setting, Hazelcast cluster will only work with localhost instances");
+
+                // In the local configuration, the hazelcast port is the http-port + the hazelcastPort as offset
+                config.getNetworkConfig().setPort(serverProperties.getPort() + hazelcastPort); // Own port
+                registration.getMetadata().put("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
+            }
+            else { // Production configuration, one host per instance all using the configured port
+                config.setClusterName("prod");
+                config.setInstanceName(instanceName);
+                config.getNetworkConfig().setPort(hazelcastPort); // Own port
+                registration.getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
+            }
+        }
 
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
         config.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
@@ -186,6 +244,19 @@ public class CacheConfiguration {
         }
 
         return Hazelcast.newHazelcastInstance(config);
+    }
+
+    private void hazelcastBindOnlyOnInterface(String hazelcastInterface, Config config) {
+        // Hazelcast should bind to the interface and use it as local and public address
+        log.debug("Binding Hazelcast to interface {}", hazelcastInterface);
+        System.setProperty("hazelcast.local.localAddress", hazelcastInterface);
+        System.setProperty("hazelcast.local.publicAddress", hazelcastInterface);
+        config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(hazelcastInterface));
+
+        // Hazelcast should only bind to the interface provided, not to any interface
+        config.setProperty("hazelcast.socket.bind.any", "false");
+        config.setProperty("hazelcast.socket.server.bind.any", "false");
+        config.setProperty("hazelcast.socket.client.bind.any", "false");
     }
 
     private void configureQueueCluster(Config config, JHipsterProperties jHipsterProperties) {
