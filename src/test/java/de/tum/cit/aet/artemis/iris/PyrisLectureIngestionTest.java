@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -62,6 +63,9 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     private Attachment attachment;
 
     private Lecture lecture1;
+
+    @Autowired
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitTestRepository;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -307,13 +311,14 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         activateIrisFor(lecture1.getCourse());
 
         AttachmentVideoUnit testUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        String attachmentLink = testUnit.getAttachment().getLink();
         testUnit.setLecture(lecture1);
-        testUnit.getAttachment().setLink("attachments/attachment-unit/%s/student/test.pdf".formatted(testUnit.getId()));
         lecture1.getLectureUnits().add(testUnit);
+        lecture1 = lectureRepository.save(lecture1);
+        testUnit = attachmentVideoUnitTestRepository.save(testUnit);
 
         String expectedBaseUrl = "http://localhost:8080"; // Default test server URL
         ReflectionTestUtils.setField(pyrisWebhookService, "artemisBaseUrl", expectedBaseUrl);
-        String attachmentLink = testUnit.getAttachment().getLink();
         String expectedUrl = expectedBaseUrl + ARTEMIS_FILE_PATH_PREFIX + attachmentLink;
 
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
