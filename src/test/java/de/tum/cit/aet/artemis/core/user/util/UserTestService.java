@@ -259,8 +259,7 @@ public class UserTestService {
         final var newLastName = "Wayne";
         final var newImageUrl = "foobar.png";
         final var newLangKey = "DE";
-        final var newAuthorities = Stream.of(Role.TEACHING_ASSISTANT.getAuthority()).map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get)
-                .collect(Collectors.toSet());
+        final var newAuthorities = Stream.of(Role.TEACHING_ASSISTANT.getAuthority()).map(authorityRepository::findById).flatMap(Optional::stream).collect(Collectors.toSet());
         final var oldGroups = student.getGroups();
         student.setAuthorities(newAuthorities);
         student.setEmail(newEmail);

@@ -79,8 +79,7 @@ public class OracleGenerator {
         Map<JavaClass, JavaClass> solutionToTemplateMapping = generateSolutionToTemplateMapping(solutionProjectPath, templateProjectPath);
         ArrayNode structureOracleJSON = mapper.createArrayNode();
 
-        solutionToTemplateMapping.entrySet().stream().map(entry -> generateDiffJSON(entry.getKey(), entry.getValue())).filter(Optional::isPresent).map(Optional::get)
-                .forEach(structureOracleJSON::add);
+        solutionToTemplateMapping.entrySet().stream().map(entry -> generateDiffJSON(entry.getKey(), entry.getValue())).flatMap(Optional::stream).forEach(structureOracleJSON::add);
 
         return prettyPrint(structureOracleJSON);
     }

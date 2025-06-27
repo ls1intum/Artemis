@@ -164,8 +164,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      * @return a TCP client with a round-robin use
      */
     private ReactorNettyTcpClient<byte[]> createTcpClient() {
-        final List<InetSocketAddress> brokerAddressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).filter(Optional::isPresent).map(Optional::get)
-                .toList();
+        final List<InetSocketAddress> brokerAddressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).flatMap(Optional::stream).toList();
 
         // Return null if no valid addresses can be found. This is e.g. due to an invalid config or a development setup without a broker.
         if (!brokerAddressList.isEmpty()) {

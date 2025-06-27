@@ -77,7 +77,7 @@ class ObjectMethodTest {
      */
     Optional<DynamicNode> generateTestContainerForClasses(ClassPathNode classPathStructure) {
         return classPathStructure.mapTree(this::generateTestsForClass, (packageNode, dynamicNodes) -> {
-            var tests = dynamicNodes.filter(Optional::isPresent).map(Optional::get).toList();
+            var tests = dynamicNodes.flatMap(Optional::stream).toList();
             if (tests.isEmpty()) {
                 return Optional.empty();
             }

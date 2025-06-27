@@ -69,7 +69,7 @@ public class TextPlagiarismDetectionService {
      */
     public List<TextSubmission> textSubmissionsForComparison(TextExercise exerciseWithParticipationsAndSubmissions, int minimumScore, int minimumSize) {
         var textSubmissions = exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().filter(plagiarismService.filterForStudents())
-                .map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof TextSubmission)
+                .map(Participation::findLatestSubmission).flatMap(Optional::stream).filter(submission -> submission instanceof TextSubmission)
                 .map(submission -> (TextSubmission) submission).filter(submission -> minimumSize == 0 || submission.getText() != null && submission.countWords() >= minimumSize)
                 .filter(submission -> hasMinimumScore(submission, minimumScore)).toList();
 

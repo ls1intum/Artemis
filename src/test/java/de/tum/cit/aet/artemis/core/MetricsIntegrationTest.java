@@ -195,7 +195,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 var expectedScores = exercises.stream()
                         .map(exercise -> studentScoreRepository.findByExercise_IdAndUser_Id(exercise.getId(), userID)
                                 .map(studentScore -> Map.entry(exercise.getId(), studentScore.getLastRatedScore())))
-                        .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                        .flatMap(Optional::stream).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
                 assertThat(score).isEqualTo(expectedScores);
             }, context).run();
@@ -259,7 +259,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                         .flatMap(participation -> participation.getSubmissions().stream()).max(Comparator.comparing(Submission::getSubmissionDate));
 
                 return latestSubmission.map(submission -> new ResourceTimestampDTO(exercise.getId(), submission.getSubmissionDate(), submission.getParticipation().getId()));
-            }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
+            }).flatMap(Optional::stream).collect(Collectors.toSet());
 
             Set<ResourceTimestampDTO> result = exerciseMetricsRepository.findLatestSubmissionDates(exerciseIds);
             assertThat(result).isEqualTo(expectedSet);

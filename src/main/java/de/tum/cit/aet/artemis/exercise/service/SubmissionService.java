@@ -191,7 +191,7 @@ public class SubmissionService {
         List<T> submissions;
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
-            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
+            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).flatMap(Optional::stream).map(submission -> (T) submission)
                     .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null)
                     .collect(Collectors.toCollection(ArrayList::new));
         }
@@ -222,7 +222,7 @@ public class SubmissionService {
                     ZonedDateTime.now());
         }
 
-        var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
+        var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).flatMap(Optional::stream).toList();
 
         if (correctionRound > 0) {
             // remove submission if user already assessed first correction round
@@ -828,7 +828,7 @@ public class SubmissionService {
         String searchTerm = search.getSearchTerm();
         Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndResultsByExerciseId(exerciseId, searchTerm, pageable);
 
-        var latestSubmissions = studentParticipationPage.getContent().stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
+        var latestSubmissions = studentParticipationPage.getContent().stream().map(Participation::findLatestSubmission).flatMap(Optional::stream).toList();
         final Page<Submission> submissionPage = new PageImpl<>(latestSubmissions, pageable, latestSubmissions.size());
         return new SearchResultPageDTO<>(submissionPage.getContent(), studentParticipationPage.getTotalPages());
     }

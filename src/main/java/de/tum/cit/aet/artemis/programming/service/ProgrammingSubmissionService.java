@@ -366,7 +366,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (examMode) {
             var participations = studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             // Latest submission might be illegal
-            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).flatMap(Optional::stream)
                     // filter out the submissions that don't have a result (but a null value) for the correctionRound
                     .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).toList();
         }
