@@ -8,10 +8,10 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="user_id" type="bigint">
-                <constraints nullable="false" foreignKeyName="fk_quiz_question_progress_user" referencedTableName="jhi_user" referencedColumnNames="id"/>
+                <constraints nullable="false"/>
             </column>
             <column name="quiz_question_id" type="bigint">
-                <constraints nullable="false" foreignKeyName="fk_quiz_question_progress_quiz_question" referencedTableName="quiz_question" referencedColumnNames="id"/>
+                <constraints nullable="false"/>
             </column>
             <column name="answered_correctly" type="boolean"/>
             <column name="times_answered" type="int"/>
@@ -20,5 +20,20 @@
             <column name="last_answered_at" type="datetime(3)"/>
             <column name="last_answered_correct_at" type="datetime(3)"/>
         </createTable>
+        <addForeignKeyConstraint
+                baseTableName="quiz_question_progress"
+                baseColumnNames="user_id"
+                referencedTableName="jhi_user"
+                referencedColumnNames="id"
+                constraintName="fk_quiz_question_progress_user"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="quiz_question_progress"
+                baseColumnNames="quiz_question_id"
+                referencedTableName="quiz_question"
+                referencedColumnNames="id"
+                constraintName="fk_quiz_question_progress_quiz_question"
+                onDelete="CASCADE"/>
     </changeSet>
 </databaseChangeLog>
