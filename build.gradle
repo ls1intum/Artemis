@@ -224,7 +224,7 @@ dependencies {
     // required by Saml2, should NOT be used in other places, we explicitly use the newest version to avoid security vulnerabilities
     implementation "org.apache.santuario:xmlsec:4.0.4"
 
-    implementation "org.jsoup:jsoup:1.20.1"
+    implementation "org.jsoup:jsoup:1.21.1"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
     implementation "commons-codec:commons-codec:1.18.0"
 
@@ -407,7 +407,7 @@ dependencies {
     checkstyle "commons-beanutils:commons-beanutils:1.11.0"
 
 
-    implementation "com.google.errorprone:error_prone_annotations:2.38.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.39.0"
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") { version {              strictly byte_buddy_version } }
@@ -444,7 +444,7 @@ dependencies {
     }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.179"
+    testImplementation "io.github.classgraph:classgraph:4.8.180"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:8.14.2"
