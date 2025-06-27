@@ -6,6 +6,7 @@ import java.util.Set;
 
 import jakarta.validation.Valid;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class GroupChatService {
 

@@ -26,6 +26,14 @@ export const routes: Routes = [
                 },
             },
             {
+                path: 'external-data',
+                loadComponent: () =>
+                    import('app/core/user/settings/external-llm-usage-settings/external-llm-usage-settings.component').then((m) => m.ExternalLlmUsageSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.externalLLMUsage',
+                },
+            },
+            {
                 path: 'profile',
                 loadComponent: () => import('app/core/user/settings/learner-profile/learner-profile.component').then((m) => m.LearnerProfileComponent),
                 data: {
@@ -92,6 +100,14 @@ export const routes: Routes = [
                 loadComponent: () => import('app/core/user/settings/ide-preferences/ide-settings.component').then((m) => m.IdeSettingsComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.IDE_PREFERENCES',
+                },
+            },
+            {
+                path: 'notifications',
+                loadComponent: () =>
+                    import('app/core/user/settings/global-notifications-settings/global-notifications-settings.component').then((m) => m.GlobalNotificationsSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.GLOBAL_NOTIFICATIONS',
                 },
             },
         ],

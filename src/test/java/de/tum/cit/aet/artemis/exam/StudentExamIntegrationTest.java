@@ -97,7 +97,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -177,7 +177,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     private QuizSubmissionTestRepository quizSubmissionTestRepository;
 
     @Autowired
-    private ParticipationService participationService;
+    private ParticipationDeletionService participationDeletionService;
 
     @Autowired
     private StudentExamService studentExamService;
@@ -550,7 +550,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 var submission = participation.getSubmissions().iterator().next();
                 assertThat(participation.getParticipant()).isEqualTo(user);
                 assertThat(submission.isSubmitted()).isFalse();
-                assertThat(participation.getResults()).as(exercise.getClass().getName() + " should have no results").isNullOrEmpty();
                 assertThat(submission.getResults()).as(exercise.getClass().getName() + " should have no results").isNullOrEmpty();
             }
             assertThat(exercise.getGradingCriteria()).isNullOrEmpty();
@@ -1079,7 +1078,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
         Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(unsubmittedStudentExams);
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
@@ -1114,7 +1113,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
         Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(unsubmittedStudentExams);
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
@@ -1157,7 +1156,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(new HashSet<>(studentExams));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
@@ -1198,7 +1197,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(new HashSet<>(studentExams));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
@@ -1656,7 +1655,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // check that all relevant information is visible to the student
         for (final var exercise : studentExamSummary.getExercises()) {
-            assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isEmpty();
+            assertThat(participationUtilService.getResultsForParticipation(exercise.getStudentParticipations().iterator().next())).isEmpty();
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getGradingCriteria()).isEmpty();
 
@@ -1696,7 +1695,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             }
             else {
                 var participation = exercise.getStudentParticipations().iterator().next();
-                assertThat(participation.getResults()).isEmpty();
+                assertThat(participationUtilService.getResultsForParticipation(participation)).isEmpty();
                 assertThat(participation.getSubmissions().iterator().next().getResults()).isEmpty();
             }
         }
@@ -1715,7 +1714,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // check that all relevant information is visible to the student
         for (final var exercise : studentExamSummary.getExercises()) {
-            assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isNotEmpty();
+            assertThat(participationUtilService.getResultsForParticipation(exercise.getStudentParticipations().iterator().next())).isNotEmpty();
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getGradingCriteria()).isEmpty();
 
@@ -1755,8 +1754,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             }
             else {
                 var participation = exercise.getStudentParticipations().iterator().next();
-                assertThat(participation.getResults()).hasSize(1);
-                var result = participation.getResults().iterator().next();
+                Set<Result> results = participationUtilService.getResultsForParticipation(participation);
+                assertThat(results).hasSize(1);
+                var result = results.iterator().next();
                 assertThat(result.getAssessor()).as("no sensitive inforation get leaked").isNull();
             }
         }
@@ -2040,9 +2040,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         gradingScale.setExam(exam2);
         gradingScaleRepository.save(gradingScale);
 
-        studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+        studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(),
+                studentExam.getExercises());
         List<StudentParticipation> participations = studentParticipationRepository
-                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+                .findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
         var latestResults = participations.stream().flatMap(participation -> participation.getSubmissions().stream().map(Submission::getLatestResult)).toList();
         for (var result : latestResults) {
             // First set all results to 0 since we don't want any additions to affect the manually assigned results below.
@@ -2140,7 +2141,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         StudentParticipation participationWithLatestResult = studentParticipationRepository
                 .findByExerciseIdAndStudentIdAndTestRunWithLatestResult(finalStudentExam.getExercises().getFirst().getId(), finalStudentExam.getUser().getId(), false)
                 .orElseThrow();
-        Result result = participationWithLatestResult.getResults().iterator().next();
+        Result result = participationUtilService.getResultsForParticipation(participationWithLatestResult).iterator().next();
         result.setScore(0.0); // To reduce grade to a grade lower than the max grade.
         resultRepository.save(result);
         return finalExam;
@@ -2354,7 +2355,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(testRun.getExercises().getFirst().getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
-        participationService.delete(participations.getFirst().getId(), true);
+        participationDeletionService.delete(participations.getFirst().getId(), true);
         request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
     }
 
@@ -2772,7 +2773,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(quizExercise.getQuizQuestions()).hasSize(3);
 
         Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(Set.of(studentExamForConduction));
-        final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(),
+        final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(student1.getId(),
                 exercisesOfUser.get(student1));
         for (StudentParticipation studentParticipation : studentParticipations) {
             // Acceptance range, initialization Date is to be set to now()
