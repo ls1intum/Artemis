@@ -65,7 +65,7 @@ public class ArtemisSuccessfulLoginService {
     }
 
     /**
-     * Ensures that the password reset link is initialized properly.
+     * Returns a non-empty, non-placeholder reset link.
      *
      * @param resetLink The configured reset link.
      * @return The reset link, or if the configured link is empty or set to a placeholder, it uses the default link.
