@@ -178,7 +178,7 @@ describe('DiffUtils', () => {
             const result = await processRepositoryDiff(originalFiles, modifiedFiles);
 
             expect(result.diffInformations).toHaveLength(2);
-            expect(result.diffInformations.every((info) => info.fileStatus === FileStatus.RENAMED)).toBeTrue();
+            expect(result.diffInformations).toSatisfyAll((info) => info.fileStatus === FileStatus.RENAMED);
         });
     });
 
@@ -193,6 +193,17 @@ describe('DiffUtils', () => {
 
             expect(result.totalLineChange.addedLineCount).toBe(0);
             expect(result.totalLineChange.removedLineCount).toBe(0);
+        });
+
+        it('should handle Monaco editor disposal properly', async () => {
+            const originalFiles = new Map([['test.txt', 'content']]);
+            const modifiedFiles = new Map([['test.txt', 'modified']]);
+
+            setupMonacoMocks([]);
+            await processRepositoryDiff(originalFiles, modifiedFiles);
+
+            expect(mockDiffListener.dispose).toHaveBeenCalled();
+            expect(mockDiffEditor.dispose).toHaveBeenCalled();
         });
 
         it('should handle files with mixed changes', async () => {
@@ -238,7 +249,7 @@ describe('DiffUtils', () => {
             expect(result.diffInformations[1].fileStatus).toBe(FileStatus.UNCHANGED);
         });
 
-        it('should handle Monaco editor disposal properly', async () => {
+        it('should handle Monaco editor cleanup after processing', async () => {
             const originalFiles = new Map([['test.txt', 'content']]);
             const modifiedFiles = new Map([['test.txt', 'modified']]);
 

@@ -416,6 +416,80 @@ describe('ProgrammingExercise Service', () => {
         tick();
     }));
 
+    it('should update problem statement', fakeAsync(() => {
+        const exerciseId = 123;
+        const problemStatement = 'Updated problem statement';
+        const expected = new ProgrammingExercise(undefined, undefined);
+        expected.id = exerciseId;
+        expected.studentParticipations = [];
+
+        service.updateProblemStatement(exerciseId, problemStatement).subscribe((response) => {
+            expect(response.body).toEqual(expected);
+        });
+
+        const url = `${resourceUrl}/${exerciseId}/problem-statement`;
+        const req = httpMock.expectOne({ method: 'PATCH', url });
+        req.flush(expected);
+        tick();
+    }));
+
+    it('should reevaluate and update exercise', fakeAsync(() => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 123;
+        const expected = { ...exercise, studentParticipations: [] };
+
+        service.reevaluateAndUpdate(exercise).subscribe((response) => {
+            expect(response.body).toEqual(expected);
+        });
+
+        const url = `${resourceUrl}/${exercise.id}/re-evaluate`;
+        const req = httpMock.expectOne({ method: 'PUT', url });
+        req.flush(expected);
+        tick();
+    }));
+
+    it('should get theia config', fakeAsync(() => {
+        const exerciseId = 123;
+        const expectedConfig = { dockerImage: 'theia:latest' };
+
+        service.getTheiaConfig(exerciseId).subscribe((config) => {
+            expect(config).toEqual(expectedConfig);
+        });
+
+        const url = `${resourceUrl}/${exerciseId}/theia-config`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(expectedConfig);
+        tick();
+    }));
+
+    it('should get checkout directories for programming language', fakeAsync(() => {
+        const programmingLanguage = 'JAVA';
+        const checkoutSolution = true;
+        const expectedDirectories = { directories: ['src', 'test'] };
+
+        service.getCheckoutDirectoriesForProgrammingLanguage(programmingLanguage as any, checkoutSolution).subscribe((directories) => {
+            expect(directories).toEqual(expectedDirectories);
+        });
+
+        const url = `${resourceUrl}/repository-checkout-directories?programmingLanguage=JAVA&checkoutSolution=true`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(expectedDirectories);
+        tick();
+    }));
+
+    it('should test convertDataFromClient method', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs();
+        exercise.templateParticipation = new TemplateProgrammingExerciseParticipation();
+        exercise.solutionParticipation = new SolutionProgrammingExerciseParticipation();
+
+        const convertedExercise = service.convertDataFromClient(exercise);
+
+        expect(convertedExercise).toBeDefined();
+        expect(convertedExercise.templateParticipation).toBeDefined();
+        expect(convertedExercise.solutionParticipation).toBeDefined();
+    });
+
     afterEach(() => {
         httpMock.verify();
     });
