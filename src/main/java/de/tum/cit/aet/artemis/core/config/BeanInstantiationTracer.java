@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayDeque;
@@ -11,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -18,8 +21,7 @@ import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
 import de.tum.cit.aet.artemis.core.util.Pair;
 
 @Component
-// TODO: activate the following line after debugging
-// @Profile(SPRING_PROFILE_DEVELOPMENT)
+@Profile(SPRING_PROFILE_DEVELOPMENT)
 @Lazy
 public class BeanInstantiationTracer implements InstantiationAwareBeanPostProcessor {
 
