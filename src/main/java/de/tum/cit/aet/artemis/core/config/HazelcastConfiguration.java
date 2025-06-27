@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.UnknownHostException;
@@ -18,6 +20,7 @@ import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -28,6 +31,7 @@ import com.hazelcast.core.Hazelcast;
 
 @Configuration
 @Lazy
+@Profile({ PROFILE_BUILDAGENT, PROFILE_CORE })
 public class HazelcastConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastConfiguration.class);
