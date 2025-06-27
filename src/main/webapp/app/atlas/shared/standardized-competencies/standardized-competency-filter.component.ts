@@ -1,4 +1,4 @@
-import { Component, DestroyRef, effect, inject, input, output } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, model, output } from '@angular/core';
 import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { Subject, debounceTime } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -10,8 +10,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective],
 })
 export class StandardizedCompetencyFilterComponent {
-    competencyTitleFilter = input<string>();
-    knowledgeAreaFilter = input<KnowledgeAreaDTO>();
+    competencyTitleFilter = model<string>();
+    knowledgeAreaFilter = model<KnowledgeAreaDTO>();
     knowledgeAreasForSelect = input<KnowledgeAreaDTO[]>([]);
 
     competencyTitleFilterChange = output<string>();
