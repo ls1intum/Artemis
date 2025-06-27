@@ -169,7 +169,7 @@ public class LearningPathResource {
     public ResponseEntity<LearningPathAverageProgressDTO> getAverageProgressForCourse(@PathVariable long courseId) {
         log.debug("REST request to get average learning path progress for course: {}", courseId);
 
-        var averageProgressDto = learningPathService.getAverageProgressForCourse(courseId);
+        LearningPathAverageProgressDTO averageProgressDto = learningPathService.getAverageProgressForCourse(courseId);
         return ResponseEntity.ok(averageProgressDto);
     }
 
