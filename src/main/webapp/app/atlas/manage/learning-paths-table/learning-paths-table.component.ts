@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LearningPathAverageProgressDTO, LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
@@ -54,9 +54,9 @@ export class LearningPathsTableComponent {
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            untracked(async () => {
+            (async () => {
                 await Promise.all([this.loadLearningPaths(courseId), this.loadAverageProgress(courseId)]);
-            });
+            })();
         });
     }
 
@@ -98,7 +98,6 @@ export class LearningPathsTableComponent {
     async setPage(pageNumber: number): Promise<void> {
         this.page.set(pageNumber);
         await this.loadLearningPaths(this.courseId());
-        await this.loadAverageProgress(this.courseId());
     }
 
     openCompetencyGraph(learningPathId: number, name: string | undefined): void {
