@@ -71,7 +71,7 @@ public class PlagiarismService {
      */
     public long getNumberOfPotentialPlagiarismCasesForExercise(long exerciseId) {
         var comparisons = plagiarismComparisonRepository.findAllByPlagiarismResultExerciseId(exerciseId);
-        Set<PlagiarismSubmission<?>> submissionsWithoutDeletedUsers = new HashSet<>();
+        Set<PlagiarismSubmission> submissionsWithoutDeletedUsers = new HashSet<>();
         for (var comparison : comparisons) {
             addSubmissionsIfUserHasNotBeenDeleted(comparison, submissionsWithoutDeletedUsers);
         }
@@ -84,7 +84,7 @@ public class PlagiarismService {
      * @param comparison                     the comparison for which we want check if the user of the submission has been deleted.
      * @param submissionsWithoutDeletedUsers a set of plagiarism submissions for which the user still exists.
      */
-    private void addSubmissionsIfUserHasNotBeenDeleted(PlagiarismComparison<?> comparison, Set<PlagiarismSubmission<?>> submissionsWithoutDeletedUsers) {
+    private void addSubmissionsIfUserHasNotBeenDeleted(PlagiarismComparison comparison, Set<PlagiarismSubmission> submissionsWithoutDeletedUsers) {
         var plagiarismSubmissionA = comparison.getSubmissionA();
         var plagiarismSubmissionB = comparison.getSubmissionB();
         var submissionA = submissionRepository.findById(plagiarismSubmissionA.getSubmissionId()).orElseThrow();
