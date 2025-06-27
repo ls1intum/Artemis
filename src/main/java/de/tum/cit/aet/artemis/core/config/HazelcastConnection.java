@@ -27,6 +27,23 @@ import org.springframework.scheduling.annotation.Scheduled;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 
+/**
+ * Establishes and maintains connections between Hazelcast cluster members across different instances
+ * of the application using a service discovery mechanism (e.g., JHipster Registry with Eureka).
+ *
+ * <p>
+ * This class ensures dynamic membership configuration for the Hazelcast cluster based on registered
+ * service instances, enabling inter-node communication and synchronization across distributed deployments.
+ *
+ * <p>
+ * <strong>Separation of Concerns:</strong> This class is solely responsible for establishing runtime
+ * connectivity between Hazelcast nodes after full application startup. The actual Hazelcast configuration (e.g., cache regions,
+ * eviction policies, serialization settings) is defined separately in {@link CacheConfiguration}.
+ *
+ * <p>
+ * The class avoids connection logic in test environments and handles potential split-brain scenarios
+ * by periodically verifying and initiating connections to all expected cluster members.
+ */
 @Profile({ PROFILE_BUILDAGENT, PROFILE_CORE })
 @Lazy
 @Configuration
@@ -92,6 +109,20 @@ public class HazelcastConnection {
         }
     }
 
+    /**
+     * Connects the local Hazelcast instance to other known service instances after the application
+     * has fully started. This enables dynamic TCP/IP cluster membership by resolving peers via
+     * the service registry (e.g., Eureka).
+     *
+     * <p>
+     * Executed only if a {@link Registration} is available, indicating a clustered environment.
+     * This method uses the {@link DiscoveryClient} to retrieve other instances of the same service
+     * and registers them in the Hazelcast configuration for joining the cluster.
+     *
+     * <p>
+     * Called once after the {@link FullStartupEvent} is fired to avoid premature initialization
+     * before all services are available.
+     */
     @EventListener(FullStartupEvent.class)
     private void connectHazelcast() {
         var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
@@ -107,6 +138,18 @@ public class HazelcastConnection {
         }
     }
 
+    /**
+     * Adds a given service instance as a TCP/IP cluster member to the Hazelcast configuration.
+     * Extracts the Hazelcast port from instance metadata (or uses a default fallback) and
+     * constructs the full address of the peer node for inclusion in the cluster.
+     *
+     * <p>
+     * This method is invoked during initial cluster formation to ensure the Hazelcast
+     * instance knows about its peers, enabling them to form a single logical cluster.
+     *
+     * @param instance the service instance to be added to the Hazelcast cluster
+     * @param config   the Hazelcast configuration to which the new member will be added
+     */
     private void addHazelcastClusterMember(ServiceInstance instance, Config config) {
         var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
         var clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected

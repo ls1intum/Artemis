@@ -58,6 +58,36 @@ import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueCo
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
+/**
+ * Configures and initializes the Hazelcast-based distributed caching system for Artemis instances,
+ * including default cache maps, file caching, serialization, clustering behavior, and split-brain protection.
+ *
+ * <p>
+ * Establishes a Hazelcast cluster that supports synchronization and scalability in both local development and production
+ * deployments. It also enables shared job queues for local continuous integration (CI) setups and supports
+ * role-based membership (e.g., lite members for build agents).
+ *
+ * <p>
+ * <strong>Responsibilities:</strong>
+ * <ul>
+ * <li>Defines Hazelcast cache maps with specific eviction and backup policies for domain objects and files.</li>
+ * <li>Manages Hazelcast instance creation based on Spring profiles and environment-specific properties.</li>
+ * <li>Registers a custom serializer for {@link java.nio.file.Path} to enable file caching across nodes.</li>
+ * <li>Supports isolation in test environments to avoid interference between test executions by randomizing cluster names and ports.</li>
+ * <li>Provides cluster configuration options for discovery-based and local-only deployments, using either
+ * service registration metadata or loopback interfaces.</li>
+ * <li>Sets up split-brain protection and conditions for when clustering should be enabled or disabled.</li>
+ * <li>Registers Hazelcast-aware Spring beans such as {@link org.springframework.cache.CacheManager}
+ * and {@link org.springframework.cache.interceptor.KeyGenerator}.</li>
+ * </ul>
+ *
+ * <p>
+ * <strong>Separation of Concerns:</strong>
+ * This class encapsulates all Hazelcast configuration aspects, including topology, caching behavior,
+ * and serialization. It is distinct from {@link HazelcastConnection}, which is responsible for
+ * dynamically connecting cluster nodes at runtime based on service discovery. By decoupling static
+ * configuration from runtime coordination, the system ensures better modularity, testability, and maintainability.
+ */
 @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Lazy(value = false)
 @Configuration
@@ -120,6 +150,7 @@ public class CacheConfiguration {
 
     /**
      * Setup the hazelcast instance based on the given jHipster properties and the enabled spring profiles.
+     * Note: It does not connect to other instances, this is done in {@link HazelcastConnection#connectToAllMembers()}.
      *
      * @param jHipsterProperties the jhipster properties
      * @return the created HazelcastInstance
@@ -246,6 +277,18 @@ public class CacheConfiguration {
         return Hazelcast.newHazelcastInstance(config);
     }
 
+    /**
+     * Binds the Hazelcast instance strictly to the given network interface by setting it
+     * as the local and public address. This ensures that Hazelcast does not bind to or listen on
+     * unintended interfaces, preventing undesired cluster formation or exposure.
+     *
+     * <p>
+     * Additionally, this method sets internal Hazelcast system properties to disable
+     * fallback bindings to any available interface (server/client), enforcing strict network boundaries.
+     *
+     * @param hazelcastInterface the IP address or hostname of the network interface to bind to (e.g. {@code "127.0.0.1"} or {@code "eth0"})
+     * @param config             the Hazelcast configuration object to apply the network settings to
+     */
     private void hazelcastBindOnlyOnInterface(String hazelcastInterface, Config config) {
         // Hazelcast should bind to the interface and use it as local and public address
         log.debug("Binding Hazelcast to interface {}", hazelcastInterface);
@@ -259,6 +302,18 @@ public class CacheConfiguration {
         config.setProperty("hazelcast.socket.client.bind.any", "false");
     }
 
+    /**
+     * Configures a shared job queue named {@code buildJobQueue} for synchronizing tasks
+     * between nodes in a local continuous integration (CI) setup using Hazelcast.
+     *
+     * <p>
+     * This queue is configured with a backup count to ensure fault tolerance and a
+     * priority-based comparator to control job scheduling order. It is only activated
+     * when specific profiles (e.g., {@code localci}, {@code buildagent}) are enabled.
+     *
+     * @param config             the Hazelcast configuration to which the queue configuration will be added
+     * @param jHipsterProperties the JHipster properties used to extract cache-related parameters such as backup count
+     */
     private void configureQueueCluster(Config config, JHipsterProperties jHipsterProperties) {
         // Queue specific configurations
         log.debug("Configure Build Job Queue synchronization in Hazelcast for Local CI");
