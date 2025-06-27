@@ -234,21 +234,20 @@ public abstract class Participation extends DomainObject implements Participatio
     }
 
     /**
-     * Finds the latest legal submission for the participation. Checks if the participation has any submissions. If there are no submissions, return null.
-     * Otherwise sort the submissions by submission date and return the first. WARNING: The submissions of the participation might not be loaded because of Hibernate and
+     * Finds the latest submission for the participation. Checks if the participation has any submissions. If there are no submissions, return null.
+     * Otherwise, sort the submissions by submission date and return the first. WARNING: The submissions of the participation might not be loaded because of Hibernate and
      * therefore, the function might return null, although the participation has submissions. This might not be high-performance, so use it at your own risk.
      *
      * @param <T> submission type
      * @return the latest submission or null
      */
-    @SuppressWarnings("unchecked")
     @Override
-    public <T extends Submission> Optional<T> findLatestSubmission() {
+    public Optional<Submission> findLatestSubmission() {
         Set<Submission> submissions = this.submissions;
         if (submissions == null || submissions.isEmpty()) {
             return Optional.empty();
         }
-        return (Optional<T>) submissions.stream().max(Comparator.naturalOrder());
+        return submissions.stream().max(Comparator.naturalOrder()).stream().findFirst();
     }
 
     /**
