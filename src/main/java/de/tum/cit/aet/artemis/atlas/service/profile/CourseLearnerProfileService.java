@@ -41,6 +41,7 @@ public class CourseLearnerProfileService {
      */
     public CourseLearnerProfile createCourseLearnerProfile(Course course, User user) {
 
+        // Ensure that the user has a learner profile (lazy creation)
         if (user.getLearnerProfile() == null) {
             learnerProfileService.createProfile(user);
         }
@@ -67,13 +68,19 @@ public class CourseLearnerProfileService {
      */
     public void createCourseLearnerProfiles(Course course, Set<User> users) {
 
+        // Ensure that all users have a learner profile (lazy creation)
         users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
+
+        var learnerProfiles = learnerProfileRepository.findAllByUserIn(users);
 
         Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course).orElseGet(() -> {
 
             var courseProfile = new CourseLearnerProfile();
             courseProfile.setCourse(course);
-            courseProfile.setLearnerProfile(learnerProfileRepository.findByUserElseThrow(user));
+            var learnerProfile = learnerProfiles.stream().filter(profile -> profile.getUser().equals(user)).findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Learner profile for user " + user.getLogin() + " not found"));
+
+            courseProfile.setLearnerProfile(learnerProfile);
 
             // Initialize values in the middle of Likert scale
             courseProfile.setAimForGradeOrBonus(3);
