@@ -8,12 +8,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
 import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/core/user/settings/learner-profile/entities/course-learner-profile-options.model';
-import { DoubleSliderComponent } from 'app/shared/double-slider/double-slider.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 /**
  * Component for managing course-specific learner profiles.
@@ -24,7 +18,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
     styleUrls: ['../learner-profile.component.scss'],
-    imports: [TranslateDirective, NgClass, SegmentedToggleComponent, DoubleSliderComponent, FaIconComponent, HelpIconComponent, NgbTooltip, ArtemisTranslatePipe],
+    imports: [TranslateDirective, NgClass, SegmentedToggleComponent],
 })
 export class CourseLearnerProfileComponent implements OnInit {
     private readonly alertService = inject(AlertService);
@@ -39,12 +33,6 @@ export class CourseLearnerProfileComponent implements OnInit {
 
     /** Flag indicating whether the profile editing is disabled */
     disabled = true;
-
-    /** Flag indicating whether any numeric value was changed */
-    editing = false;
-
-    // Icons
-    faSave = faSave;
 
     /**
      * Options mapped from shared options with translated labels.
@@ -69,8 +57,6 @@ export class CourseLearnerProfileComponent implements OnInit {
     aimForGradeOrBonus = signal<number>(this.defaultProfileValue);
     timeInvestment = signal<number>(this.defaultProfileValue);
     repetitionIntensity = signal<number>(this.defaultProfileValue);
-    proficiency = signal<number>(CourseLearnerProfileDTO.MIN_VALUE);
-    initialProficiency = CourseLearnerProfileDTO.MIN_VALUE;
 
     async ngOnInit(): Promise<void> {
         await this.loadProfiles();
@@ -84,8 +70,6 @@ export class CourseLearnerProfileComponent implements OnInit {
     courseChanged(event: Event): void {
         const select = event.target as HTMLSelectElement;
         const courseId = select.value;
-        // Changing the active course. Discarding all unsaved changes.
-        this.editing = false;
 
         if (courseId === '-1') {
             this.activeCourseId = null;
@@ -119,8 +103,6 @@ export class CourseLearnerProfileComponent implements OnInit {
         this.aimForGradeOrBonus.set(courseLearnerProfile.aimForGradeOrBonus);
         this.timeInvestment.set(courseLearnerProfile.timeInvestment);
         this.repetitionIntensity.set(courseLearnerProfile.repetitionIntensity);
-        this.initialProficiency = courseLearnerProfile.initialProficiency;
-        this.proficiency.set(courseLearnerProfile.proficiency);
     }
 
     /**
@@ -146,27 +128,6 @@ export class CourseLearnerProfileComponent implements OnInit {
     }
 
     /**
-     * Handles changes to any of the numeric profile values.
-     * Validates and saves the updated profile.
-     */
-    async onProfileSave(): Promise<void> {
-        if (!this.activeCourseId) return;
-
-        const courseLearnerProfile = this.getCourseLearnerProfile(this.activeCourseId);
-        if (!courseLearnerProfile) return;
-
-        // Create a new CourseLearnerProfileDTO object with the updated values
-        const updatedProfile = new CourseLearnerProfileDTO();
-        Object.assign(updatedProfile, {
-            ...courseLearnerProfile,
-            initialProficiency: this.proficiency(),
-            proficiency: this.proficiency(),
-        });
-
-        return this.updateAndValidateProfile(updatedProfile);
-    }
-
-    /**
      * Handles changes to any of the profile toggles.
      * Validates and saves the updated profile if valid.
      */
@@ -185,10 +146,6 @@ export class CourseLearnerProfileComponent implements OnInit {
             repetitionIntensity: this.repetitionIntensity(),
         });
 
-        return this.updateAndValidateProfile(updatedProfile);
-    }
-
-    private async updateAndValidateProfile(updatedProfile: CourseLearnerProfileDTO) {
         if (!updatedProfile.isValid()) {
             this.alertService.addAlert({
                 type: AlertType.DANGER,
@@ -200,9 +157,6 @@ export class CourseLearnerProfileComponent implements OnInit {
         // Save the updated profile
         try {
             const savedProfile = await this.learnerProfileAPIService.putUpdatedCourseLearnerProfile(updatedProfile);
-
-            // Changes successfully saved, therefore editing has ended.
-            this.editing = false;
 
             // Update the profiles array using signal's update method
             this.courseLearnerProfiles.update((profiles) => profiles.map((profile) => (profile.id === savedProfile.id ? savedProfile : profile)));
@@ -239,6 +193,4 @@ export class CourseLearnerProfileComponent implements OnInit {
             disableTranslation: true,
         });
     }
-
-    protected readonly CourseLearnerProfileDTO = CourseLearnerProfileDTO;
 }

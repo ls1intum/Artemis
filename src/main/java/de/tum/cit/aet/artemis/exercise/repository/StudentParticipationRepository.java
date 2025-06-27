@@ -322,58 +322,50 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             @Param("testRun") boolean testRun);
 
     /**
-     * Get all participations for an exercise with each manual and latest results (determined by id).
-     * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
+     * Get all participations for an exercise with the latest submission
      *
      * @param exerciseId Exercise id.
      * @return participations for exercise.
      */
     @Query("""
+
             SELECT DISTINCT p
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.assessmentNote
-            WHERE p.exercise.id = :exerciseId
-                AND (
-                    r.id = (
-                        SELECT MAX(r2.id)
-                        FROM Submission s2 JOIN s2.results r2
-                        WHERE s2.participation = p
-                    )
-                    OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                    OR r IS NULL
-                )
+                LEFT  JOIN FETCH p.submissions s
+            WHERE  p.exercise.id = :exerciseId
+               AND ( s.id IS NULL
+                   OR s.id = (
+                    SELECT MAX(s2.id)
+                    FROM   Submission s2
+                    WHERE  s2.participation = p
+                        )
+                      )
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestAndManualResultsAndAssessmentNote(@Param("exerciseId") long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestSubmission(@Param("exerciseId") long exerciseId);
 
     /**
-     * Get all participations for a team exercise with each manual and latest results (determined by id).
+     * Get all participations for a team exercise with the latest submission and team information.
      * As the students of a team are lazy loaded, they are explicitly included into the query
-     * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
      *
      * @param exerciseId Exercise id.
      * @return participations for exercise.
      */
     @Query("""
-            SELECT DISTINCT p
+             SELECT DISTINCT p
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH p.team t
-                LEFT JOIN FETCH t.students
-            WHERE p.exercise.id = :exerciseId
-                AND (
-                    r.id = (
-                        SELECT MAX(r2.id)
-                        FROM Submission s2 JOIN s2.results r2
-                        WHERE s2.participation = p
-                    )
-                    OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                    OR r IS NULL
-                )
+                LEFT  JOIN FETCH p.team t
+                LEFT  JOIN FETCH t.students
+                LEFT  JOIN FETCH p.submissions s
+            WHERE  p.exercise.id = :exerciseId
+               AND ( s.id IS NULL
+                   OR s.id = (
+                    SELECT MAX(s2.id)
+                    FROM   Submission s2
+                    WHERE  s2.participation = p
+                        )
+                      )
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestAndManualResultsWithTeamInformation(@Param("exerciseId") long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestSubmissionWithTeamInformation(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT p
