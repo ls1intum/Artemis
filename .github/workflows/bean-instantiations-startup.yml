@@ -42,7 +42,7 @@ jobs:
           done
           if ! curl -s $URL | grep -q '"status":"UP"'; then
             echo "❌ Health check failed; dumping last 50 lines:"
-            tail app.log
+            cat app.log
             exit 1
           fi
 
