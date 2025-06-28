@@ -21,7 +21,7 @@ jobs:
           java-version: '21'
 
       - name: Build application
-        run: ./gradlew clean assemble -x test -x webapp
+        run: ./gradlew clean bootJar -x test -x webapp
 
       - name: Start Spring Boot app
         run: |
