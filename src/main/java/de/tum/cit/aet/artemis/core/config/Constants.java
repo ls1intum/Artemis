@@ -348,6 +348,11 @@ public final class Constants {
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
 
     /**
+     * Profile combination for one primary node, where LTI AND scheduling is active
+     */
+    public static final String PROFILE_LTI_AND_SCHEDULING = PROFILE_LTI + " & " + PROFILE_SCHEDULING;
+
+    /**
      * The name of the Spring profile used for Theia as an external online IDE.
      */
     public static final String PROFILE_THEIA = "theia";

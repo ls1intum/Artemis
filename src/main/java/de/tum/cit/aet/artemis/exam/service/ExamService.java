@@ -887,7 +887,6 @@ public class ExamService {
             case QuizExercise ignored -> {
                 // NOTE: due to performance concerns, this is handled differently, search for quizSubmittedAnswerCounts to find out more
                 return true;
-                // NOTE: due to performance concerns, this is handled differently, search for quizSubmittedAnswerCounts to find out more
             }
             case null, default -> throw new IllegalArgumentException("The exercise type of the exercise with id " + exercise.getId() + " is not supported");
         }

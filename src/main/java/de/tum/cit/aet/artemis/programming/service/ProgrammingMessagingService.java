@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.api.PyrisEventApi;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
@@ -51,22 +50,19 @@ public class ProgrammingMessagingService {
 
     private final Optional<PyrisEventApi> pyrisEventApi;
 
-    private final Optional<IrisSettingsApi> irisSettingsApi;
-
     private final ParticipationRepository participationRepository;
 
     // The GroupNotificationService has many dependencies. We cannot refactor it to avoid that. Therefore, we lazily inject it here, so it's only instantiated when needed, or our
     // DeferredEagerInitialization kicks, but not on startup.
     public ProgrammingMessagingService(@Lazy GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
             ResultWebsocketService resultWebsocketService, Optional<LtiApi> ltiApi, TeamRepository teamRepository, Optional<PyrisEventApi> pyrisEventApi,
-            Optional<IrisSettingsApi> irisSettingsApi, ParticipationRepository participationRepository) {
+            ParticipationRepository participationRepository) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
         this.ltiApi = ltiApi;
         this.teamRepository = teamRepository;
         this.pyrisEventApi = pyrisEventApi;
-        this.irisSettingsApi = irisSettingsApi;
         this.participationRepository = participationRepository;
     }
 
@@ -92,23 +88,6 @@ public class ProgrammingMessagingService {
         websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.COMPLETED);
         // Send a notification to the client to inform the instructor about the completed builds.
         groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
-    }
-
-    /**
-     * Notifies editors and instructors about test case changes for the updated programming exercise
-     *
-     * @param testCasesChanged           whether tests have been changed or not
-     * @param updatedProgrammingExercise the programming exercise for which tests have been changed
-     */
-    public void notifyUserAboutTestCaseChanged(boolean testCasesChanged, ProgrammingExercise updatedProgrammingExercise) {
-        websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(updatedProgrammingExercise.getId()), testCasesChanged);
-        // Send a notification to the client to inform the instructor about the test case update.
-        if (testCasesChanged) {
-            groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
-        }
-        else {
-            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise);
-        }
     }
 
     /**
