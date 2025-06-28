@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
@@ -1362,5 +1363,54 @@ public class ExamService {
     private interface ExamBonusCalculator {
 
         BonusResultDTO calculateStudentGradesWithBonus(Long studentId, Double bonusToAchievedPoints);
+    }
+
+    /**
+     * Derives a set of {@link CalendarEventDTO}s from the {@link Exam}s associated to the given courseId.
+     * <p>
+     * Whether events are included in the result depends on the visibleDate of the given exam and whether the
+     * logged-in user is a student of the {@link Course})
+     *
+     * @param courseId      the ID of the course
+     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @return the set of results
+     */
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(Long courseId, boolean userIsStudent) {
+        List<Exam> exams = examRepository.findByCourseId(courseId);
+        return exams.stream().flatMap(exam -> deriveEvents(exam, !userIsStudent).stream()).collect(Collectors.toSet());
+    }
+
+    /**
+     * Derives the following events for a given {@link Exam}:
+     * <ul>
+     * <li>One event representing the actual working time (starts on start date and ends on end date of the exam, both are always not noll)</li>
+     * <li>One event representing the point in them when results are published if not null</li>
+     * <li>Two events representing the start and end of the student review period (only available as a pair and if result publish date is not null)</li>
+     * </ul>
+     *
+     * The events are only derived given that either the exam is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     *
+     * @param exam              the exam for which to derive the events
+     * @param userIsCourseStaff indicates whether the logged-in user is a course staff member
+     * @return the derived events
+     */
+    private Set<CalendarEventDTO> deriveEvents(Exam exam, boolean userIsCourseStaff) {
+        Set<CalendarEventDTO> events = new HashSet<>();
+        if (userIsCourseStaff || (exam.getVisibleDate() != null && exam.getVisibleDate().isBefore(now()))) {
+            events.add(new CalendarEventDTO("exam-" + exam.getId() + "-startAndEndDate", exam.getTitle(), exam.getCourse().getTitle(), exam.getStartDate(), exam.getEndDate(), null,
+                    exam.getExaminer()));
+            if (exam.getPublishResultsDate() != null) {
+                events.add(new CalendarEventDTO("exam-" + exam.getId() + "-publishResultsDate", exam.getTitle(), exam.getCourse().getTitle(), exam.getPublishResultsDate(), null,
+                        null, null));
+                if (exam.getExamStudentReviewStart() != null) {
+                    events.add(new CalendarEventDTO("exam-" + exam.getId() + "-studentReviewStartDate", exam.getTitle(), exam.getCourse().getTitle(),
+                            exam.getExamStudentReviewStart(), null, null, null));
+                    events.add(new CalendarEventDTO("exam-" + exam.getId() + "-studentReviewEndDate", exam.getTitle(), exam.getCourse().getTitle(), exam.getExamStudentReviewEnd(),
+                            null, null, null));
+                }
+            }
+        }
+        return events;
     }
 }

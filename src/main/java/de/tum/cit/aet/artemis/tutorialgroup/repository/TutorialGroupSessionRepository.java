@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
@@ -42,6 +43,24 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
             WHERE session.tutorialGroup.id = :tutorialGroupId
             """)
     Set<TutorialGroupSession> findAllByTutorialGroupId(@Param("tutorialGroupId") Long tutorialGroupId);
+
+    @Query("""
+                SELECT new de.tum.cit.aet.artemis.core.dto.CalendarEventDTO(
+                    CONCAT('tutorial-', CAST(session.id AS string)),
+                    "Tutorial Session",
+                    course.title,
+                    session.start,
+                    session.end,
+                    session.location,
+                    CONCAT(teachingAssistant.firstName, ' ', teachingAssistant.lastName)
+                )
+                FROM TutorialGroupSession session
+                    JOIN session.tutorialGroup tutorialGroup
+                    JOIN tutorialGroup.course course
+                    JOIN tutorialGroup.teachingAssistant teachingAssistant
+                WHERE tutorialGroup.id IN :tutorialGroupIds AND session.status = 'ACTIVE'
+            """)
+    Set<CalendarEventDTO> getCalendarEventDTOsFromActiveSessionsForTutorialGroupIds(@Param("tutorialGroupIds") Set<Long> tutorialGroupIds);
 
     @Query("""
             SELECT session

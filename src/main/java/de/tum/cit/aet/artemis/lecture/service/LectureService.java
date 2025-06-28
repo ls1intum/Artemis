@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -316,5 +317,45 @@ public class LectureService {
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
         return lecture;
+    }
+
+    /**
+     * Derives a set of {@link CalendarEventDTO}s from the {@link Lecture}s associated to the given courseId.
+     * <p>
+     * Whether events are included in the result depends on the visibleDate of the given lecture and whether the
+     * logged-in user is a student of the {@link Course})
+     *
+     * @param courseId      the ID of the course
+     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @return the set of results
+     */
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(Long courseId, boolean userIsStudent) {
+        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWhereStartDateOrEndDateIsNotNull(courseId);
+        return lectures.stream().map(lecture -> deriveEvent(lecture, userIsStudent)).flatMap(Optional::stream).collect(Collectors.toSet());
+    }
+
+    /**
+     * Derives events for a given {@link Lecture} that represent both startDate and endDate.
+     * <p>
+     * The event is only derived given that either the lecture is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     *
+     * @param lecture       the lecture from which to derive the event
+     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @return the derived event
+     */
+    private Optional<CalendarEventDTO> deriveEvent(Lecture lecture, boolean userIsStudent) {
+        if (userIsStudent && lecture.getVisibleDate() != null && ZonedDateTime.now().isBefore(lecture.getVisibleDate()))
+            return Optional.empty();
+        if (lecture.getStartDate() == null && lecture.getEndDate() != null) {
+            return Optional
+                    .of(new CalendarEventDTO("lecture-" + lecture.getId() + "endDate", lecture.getTitle(), lecture.getCourse().getTitle(), lecture.getEndDate(), null, null, null));
+        }
+        if (lecture.getStartDate() != null && lecture.getEndDate() == null) {
+            return Optional.of(
+                    new CalendarEventDTO("lecture-" + lecture.getId() + "startDate", lecture.getTitle(), lecture.getCourse().getTitle(), lecture.getStartDate(), null, null, null));
+        }
+        return Optional.of(
+                new CalendarEventDTO("lecture-" + lecture.getId(), lecture.getTitle(), lecture.getCourse().getTitle(), lecture.getStartDate(), lecture.getEndDate(), null, null));
     }
 }

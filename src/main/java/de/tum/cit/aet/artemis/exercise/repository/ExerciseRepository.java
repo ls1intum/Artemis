@@ -663,4 +663,11 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     default Set<Exercise> findByCourseIdWithFutureDueDatesAndCategories(Long courseId) {
         return findByCourseIdWithFutureDueDatesAndCategories(courseId, ZonedDateTime.now());
     }
+
+    @Query("""
+            SELECT exercise
+            FROM Exercise exercise
+            WHERE exercise.course.id = :courseId AND TYPE(exercise) IN (ModelingExercise, FileUploadExercise, TextExercise, ProgrammingExercise)
+            """)
+    List<Exercise> findFileUploadAndTextAndModellingExercisesByCourseId(@Param("courseId") Long courseId);
 }

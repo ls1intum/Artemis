@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificat
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
@@ -71,12 +72,15 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Service Implementation for managing Exercise.
@@ -798,4 +802,57 @@ public class ExerciseService {
         exercise.getCompetencyLinks().forEach(link -> link.setExercise(exercise));
     }
 
+    /**
+     * Derives a set of {@link CalendarEventDTO}s from {@link FileUploadExercise}s, {@link TextExercise}s,
+     * {@link ModelingExercise}s and {@link ProgrammingExercise}s associated to the given courseId.
+     * <p>
+     * Whether events are included in the result depends on the releaseDate of the given exercise and whether the
+     * logged-in user is course staff member (either tutor, editor ot student of the {@link Course})
+     *
+     * @param courseId      the ID of the course
+     * @param userIsStudent indicates whether the logged-in user is a course staff member
+     * @return the set of results
+     */
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromFileUploadAndTextAndModellingAndProgrammingExercises(Long courseId, boolean userIsStudent) {
+        List<Exercise> exercises = exerciseRepository.findFileUploadAndTextAndModellingExercisesByCourseId(courseId);
+        return exercises.stream().flatMap(exercise -> deriveEvents(exercise, !userIsStudent).stream()).collect(Collectors.toSet());
+    }
+
+    /**
+     * Derives the following events for a given {@link Exercise}:
+     * <ul>
+     * <li>One event representing the start date if available</li>
+     * <li>One event representing the due date if available</li>
+     * <li>One event representing the assessment due date if available</li>
+     * </ul>
+     *
+     * The events are only derived given that either the exercise is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     *
+     * @param exercise          the exam for which to derive the events
+     * @param userIsCourseStaff indicates whether the logged-in user is a course staff member
+     * @return the derived events
+     */
+    private Set<CalendarEventDTO> deriveEvents(Exercise exercise, boolean userIsCourseStaff) {
+        if (!(exercise instanceof FileUploadExercise || exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof ProgrammingExercise))
+            return new HashSet<>();
+        Set<CalendarEventDTO> events = new HashSet<>();
+        if (userIsCourseStaff || (exercise.getReleaseDate() != null && exercise.getReleaseDate().isBefore(now()))) {
+            String idPrefix = exercise instanceof FileUploadExercise ? "fileUploadExercise-"
+                    : exercise instanceof TextExercise ? "textExercise-" : exercise instanceof ModelingExercise ? "modelingExercise-" : "programmingExercise-";
+            if (exercise.getStartDate() != null) {
+                events.add(new CalendarEventDTO(idPrefix + exercise.getId() + "-startDate", exercise.getTitle(), exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
+                        exercise.getStartDate(), null, null, null));
+            }
+            if (exercise.getDueDate() != null) {
+                events.add(new CalendarEventDTO(idPrefix + exercise.getId() + "-dueDate", exercise.getTitle(), exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
+                        exercise.getDueDate(), null, null, null));
+            }
+            if (exercise.getAssessmentDueDate() != null) {
+                events.add(new CalendarEventDTO(idPrefix + exercise.getId() + "-assessmentDueDate", exercise.getTitle(),
+                        exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getAssessmentDueDate(), null, null, null));
+            }
+        }
+        return events;
+    }
 }

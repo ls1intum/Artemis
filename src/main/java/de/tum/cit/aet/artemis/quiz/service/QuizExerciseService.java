@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static java.time.ZonedDateTime.now;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -36,7 +38,9 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -528,5 +532,100 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         return newQuizExercise;
+    }
+
+    /**
+     * Derives a set of {@link CalendarEventDTO}s from the {@link QuizExercise}s associated to the given courseId.
+     * <p>
+     * Whether events are included in the result depends on the quizMode of the given exercise and whether the
+     * logged-in user is a student of the {@link Course})
+     *
+     * @param courseId      the ID of the course
+     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @return the set of results
+     */
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromQuizExercises(Long courseId, boolean userIsStudent) {
+        Set<QuizExercise> quizExercises = quizExerciseRepository.findByCourseIdWithBatches(courseId);
+        return quizExercises.stream().flatMap(quizExercise -> deriveEvents(quizExercise, userIsStudent).stream()).collect(Collectors.toSet());
+    }
+
+    private Set<CalendarEventDTO> deriveEvents(QuizExercise quizExercise, boolean userIsStudent) {
+        if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+            Set<CalendarEventDTO> events = new HashSet<>();
+            deriveEventForSynchronizedQuizExercise(quizExercise, userIsStudent).ifPresent(events::add);
+            return events;
+        }
+        else {
+            return deriveEventsForIndividualAndBatchedQuizExercises(quizExercise, !userIsStudent);
+        }
+    }
+
+    /**
+     * Derives one event represents the working time period of the given {@link QuizExercise}.
+     * <p>
+     * The events are only derived given that either the exercise is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     * <p>
+     * Context: <br>
+     * The startDate and dueDate properties of {@link QuizExercise}s in {@code QuizMode.SYNCHRONIZED} are always null. Instead, such quizzes have exactly one {@link QuizBatch}.
+     * for which the startTime property is set. The end of the quiz can be calculated by adding the duration property of the exercise to the startTime of the batch.
+     *
+     * @param quizExercise  the exercise from which to derive the event
+     * @param userIsStudent indicates whether the logged-in user is a student of the course related to the exercise
+     * @return one event representing the working time period of the exercise
+     */
+    private Optional<CalendarEventDTO> deriveEventForSynchronizedQuizExercise(QuizExercise quizExercise, boolean userIsStudent) {
+        if (userIsStudent && quizExercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(quizExercise.getReleaseDate()))
+            return Optional.empty();
+
+        Optional<QuizBatch> synchronizedBatchOptional = quizExercise.getQuizBatches().stream().findFirst();
+        if (synchronizedBatchOptional.isEmpty() || synchronizedBatchOptional.get().getStartTime() == null)
+            return Optional.empty();
+        QuizBatch synchronizedBatch = synchronizedBatchOptional.get();
+
+        return Optional.of(new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-startAndEndDate", quizExercise.getTitle(),
+                quizExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), synchronizedBatch.getStartTime(),
+                synchronizedBatch.getStartTime().plusSeconds(quizExercise.getDuration()), null, null));
+    }
+
+    /**
+     * Derives one event for start/end of the duration during which the user can choose to participate in the given {@link QuizExercise}.
+     * <p>
+     * The events are only derived given that either the exercise is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     * <p>
+     * Context:
+     * <ul>
+     * <li>
+     * For {@link QuizExercise}s in {@code QuizMode.INDIVIDUAL} the user can decide when to start the quiz himself.
+     * If set, the releaseDate constrains the duration during which the user can participate in the quiz by defining a start.
+     * If set, the dueDate constrains the duration during which the user can participate in the quiz by defining an end.
+     * The dueDate and startDate can be set independent of each other.
+     * </li>
+     * <li>
+     * For {@link QuizExercise}s in {@code QuizMode.BATCHED} the user can join a quiz by using a password. The instructor can then start the quiz manually.
+     * If set, the releaseDate constrains the duration during which the user can join the quiz by defining a start.
+     * If set, the dueDate constrains the duration during which the user can join the quiz by defining an end.
+     * The dueDate and startDate can be set independent of each other.
+     * </li>
+     * </ul>
+     *
+     * @param quizExercise      the quiz from which to derive the events
+     * @param userIsCourseStaff indicates whether the logged-in user is a course staff member
+     * @return the derived events
+     */
+    private Set<CalendarEventDTO> deriveEventsForIndividualAndBatchedQuizExercises(QuizExercise quizExercise, boolean userIsCourseStaff) {
+        Set<CalendarEventDTO> events = new HashSet<>();
+        if (userIsCourseStaff || (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isBefore(now()))) {
+            if (quizExercise.getReleaseDate() != null) {
+                events.add(new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(),
+                        quizExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), quizExercise.getReleaseDate(), null, null, null));
+            }
+            if (quizExercise.getDueDate() != null) {
+                events.add(new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-dueDate", quizExercise.getTitle(),
+                        quizExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), quizExercise.getDueDate(), null, null, null));
+            }
+        }
+        return events;
     }
 }
