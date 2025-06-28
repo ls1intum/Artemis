@@ -1,4 +1,4 @@
-name: Verify Bean Instantiation Metrics
+name: Check Bean Instantiations on Startup
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
 #      - 'src/main/java/**'
 
 jobs:
-  check-beans:
+  check-bean-instantiations-startup:
     runs-on: ubuntu-latest
 
     steps:
