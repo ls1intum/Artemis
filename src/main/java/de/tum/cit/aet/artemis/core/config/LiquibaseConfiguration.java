@@ -68,7 +68,7 @@ public class LiquibaseConfiguration {
         this.dataSource = dataSourceObjectProvider.getIfUnique();
         this.currentVersionString = buildProperties.getVersion();
 
-        if (!env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+        if (!env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST)) && !env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_NO_LIQUIBASE))) {
             this.databaseMigration = new DatabaseMigration(currentVersionString, dataSource);
             databaseMigration.checkMigrationPath();
         }
