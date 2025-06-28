@@ -26,7 +26,7 @@ jobs:
       - name: Start Spring Boot app
         run: |
           PROFILES=dev,localci,lti,aeolus,theia,iris,localvc,artemis,scheduling,buildagent,core,ldap
-          nohup ./gradlew bootRun --args="--spring.profiles.active=$PROFILES --artemis.user-management.passkey.enabled=true" > app.log 2>&1 &
+          nohup ./gradlew bootRun -x webapp --args="--spring.profiles.active=$PROFILES --artemis.user-management.passkey.enabled=true" > app.log 2>&1 &
           echo $! > app.pid
 
       - name: Wait for health endpoint
