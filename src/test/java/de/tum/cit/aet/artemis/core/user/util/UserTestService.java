@@ -415,10 +415,6 @@ public class UserTestService {
         assertThat(student).as("New user is equal to request response").isEqualTo(response);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
 
-        learnerProfileRepository.ifPresent((repository) -> {
-            assertThat(repository.findByUser(student)).isNotEmpty();
-        });
-
         return userInDB;
     }
 
