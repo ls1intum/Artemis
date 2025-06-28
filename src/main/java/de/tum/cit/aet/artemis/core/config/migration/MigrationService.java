@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config.migration;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_NO_LIQUIBASE;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.nio.charset.StandardCharsets;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -62,7 +64,8 @@ public class MigrationService {
      * @param entryClassMap The changelog to be executed
      */
     public void execute(ApplicationReadyEvent event, SortedMap<Integer, Class<? extends MigrationEntry>> entryClassMap) throws MigrationIntegrityException {
-        if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+        Environment env = event.getApplicationContext().getEnvironment();
+        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST)) || env.acceptsProfiles(Profiles.of(SPRING_PROFILE_NO_LIQUIBASE))) {
             return;
         }
 

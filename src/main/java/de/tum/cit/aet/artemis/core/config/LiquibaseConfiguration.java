@@ -115,7 +115,7 @@ public class LiquibaseConfiguration {
     @EventListener
     public void storeCurrentVersionToDatabase(ApplicationReadyEvent event) {
         if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST)) || env.acceptsProfiles(Profiles.of(SPRING_PROFILE_NO_LIQUIBASE))) {
-            return; // Do not perform any operations if the application is running in the test profile.
+            return; // Do not perform any operations if the application is running in the test or no-liquibase profile.
         }
 
         String sqlStatement = this.databaseMigration.getPreviousVersionString() == null ? "INSERT INTO artemis_version (latest_version) VALUES(?);"
