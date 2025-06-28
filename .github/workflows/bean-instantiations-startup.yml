@@ -6,7 +6,8 @@ on:
 #      - 'src/main/java/**'
 
 jobs:
-  check-bean-instantiations-startup:
+  build:
+    name: Check Bean Instantiations on Startup
     runs-on: ubuntu-latest
 
     steps:
@@ -20,7 +21,7 @@ jobs:
           java-version: '21'
 
       - name: Build application
-        run: ./gradlew clean assemble -x test
+        run: ./gradlew clean assemble -x test -x webapp
 
       - name: Start Spring Boot app
         run: |
