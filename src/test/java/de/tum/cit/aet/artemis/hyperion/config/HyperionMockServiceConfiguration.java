@@ -6,11 +6,11 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 
-import de.tum.cit.aet.artemis.hyperion.proto.InconsistencyCheckRequest;
-import de.tum.cit.aet.artemis.hyperion.proto.InconsistencyCheckResponse;
-import de.tum.cit.aet.artemis.hyperion.proto.ReviewAndRefineGrpc;
-import de.tum.cit.aet.artemis.hyperion.proto.RewriteProblemStatementRequest;
-import de.tum.cit.aet.artemis.hyperion.proto.RewriteProblemStatementResponse;
+import de.tum.cit.aet.artemis.hyperion.generated.InconsistencyCheckRequest;
+import de.tum.cit.aet.artemis.hyperion.generated.InconsistencyCheckResponse;
+import de.tum.cit.aet.artemis.hyperion.generated.ReviewAndRefineGrpc;
+import de.tum.cit.aet.artemis.hyperion.generated.RewriteProblemStatementRequest;
+import de.tum.cit.aet.artemis.hyperion.generated.RewriteProblemStatementResponse;
 import io.grpc.health.v1.HealthCheckRequest;
 import io.grpc.health.v1.HealthCheckResponse;
 import io.grpc.health.v1.HealthGrpc;

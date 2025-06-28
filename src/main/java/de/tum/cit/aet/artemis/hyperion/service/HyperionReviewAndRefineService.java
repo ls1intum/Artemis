@@ -16,12 +16,11 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionConfigurationProperties;
-import de.tum.cit.aet.artemis.hyperion.proto.InconsistencyCheckRequest;
-import de.tum.cit.aet.artemis.hyperion.proto.Repository;
-import de.tum.cit.aet.artemis.hyperion.proto.RepositoryFile;
-import de.tum.cit.aet.artemis.hyperion.proto.ReviewAndRefineGrpc;
-import de.tum.cit.aet.artemis.hyperion.proto.RewriteProblemStatementRequest;
-import de.tum.cit.aet.artemis.hyperion.service.grpc.AbstractHyperionGrpcService;
+import de.tum.cit.aet.artemis.hyperion.generated.InconsistencyCheckRequest;
+import de.tum.cit.aet.artemis.hyperion.generated.Repository;
+import de.tum.cit.aet.artemis.hyperion.generated.RepositoryFile;
+import de.tum.cit.aet.artemis.hyperion.generated.ReviewAndRefineGrpc;
+import de.tum.cit.aet.artemis.hyperion.generated.RewriteProblemStatementRequest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;

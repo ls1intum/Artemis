@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.service.grpc;
+package de.tum.cit.aet.artemis.hyperion.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 

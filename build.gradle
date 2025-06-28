@@ -154,6 +154,8 @@ configurations.configureEach {
 
 // Protobuf Configuration for gRPC Integration
 protobuf {
+    generatedFilesBaseDir = "$projectDir/src"
+
     protoc {
         artifact = "com.google.protobuf:protoc:${protobuf_version}"
     }
@@ -163,11 +165,57 @@ protobuf {
         }
     }
     generateProtoTasks {
-        all()*.plugins {
-            grpc {}
+        all().each { task ->
+            task.builtins {
+                java {
+                    outputSubDir = 'main/java'
+                }
+            }
+            task.plugins {
+                grpc {
+                    outputSubDir = 'main/java'
+                }
+            }
         }
     }
 }
+
+// Task to move generated files to correct location
+tasks.register("moveGeneratedFiles") {
+    doLast {
+        // Find all generated directories under src/main/main/java/de/tum/cit/aet/artemis/*/generated
+        def incorrectMainDir = file("src/main/main")
+        if (incorrectMainDir.exists()) {
+            def artemisPath = file("src/main/main/java/de/tum/cit/aet/artemis")
+            if (artemisPath.exists()) {
+                artemisPath.listFiles().each { moduleDir ->
+                    if (moduleDir.isDirectory()) {
+                        def generatedDir = new File(moduleDir, "generated")
+                        if (generatedDir.exists()) {
+                            def moduleName = moduleDir.name
+                            def targetDir = file("src/main/java/de/tum/cit/aet/artemis/${moduleName}/generated")
+
+                            println "Moving generated files for module: ${moduleName}"
+                            targetDir.parentFile.mkdirs()
+                            ant.move(todir: targetDir) {
+                                fileset(dir: generatedDir)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Clean up the incorrect main directory after moving all files
+            incorrectMainDir.deleteDir()
+        }
+    }
+}
+
+// Make sure generated files are moved after generation
+generateProto.finalizedBy moveGeneratedFiles
+
+compileJava.dependsOn generateProto
+compileTestJava.dependsOn generateProto
 
 dependencies {
 
@@ -477,7 +525,8 @@ dependencies {
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 
     // gRPC testing dependencies
-    testImplementation "io.grpc:grpc-inprocess:${grpc_services_version}"
+    testImplementation "io.grpc:grpc-testing:${grpc_version}"
+    testImplementation "io.grpc:grpc-inprocess:${grpc_version}"
     testImplementation "io.grpc:grpc-services:${grpc_services_version}"
 
     testImplementation "com.tngtech.archunit:archunit:1.4.1"

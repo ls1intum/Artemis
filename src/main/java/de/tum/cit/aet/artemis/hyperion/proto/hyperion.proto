@@ -3,7 +3,7 @@ syntax = "proto3";
 package de.tum.cit.aet.artemis.hyperion;
 
 // --- Java-specific file-level options ---
-option java_package        = "de.tum.cit.aet.artemis.hyperion.proto";
+option java_package        = "de.tum.cit.aet.artemis.hyperion.generated";
 option java_outer_classname = "HyperionServiceProto";
 option java_multiple_files = true;
 option java_generic_services = false;
