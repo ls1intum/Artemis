@@ -26,7 +26,7 @@ export const routes: Routes = [
                 },
             },
             {
-                path: 'externalLLMUsage',
+                path: 'external-data',
                 loadComponent: () =>
                     import('app/core/user/settings/external-llm-usage-settings/external-llm-usage-settings.component').then((m) => m.ExternalLlmUsageSettingsComponent),
                 data: {
