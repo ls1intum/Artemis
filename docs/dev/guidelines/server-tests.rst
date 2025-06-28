@@ -6,9 +6,13 @@ This section covers recommended practices for writing Artemis server tests. If y
 
 You can execute server tests with the following commands:
 
-* Execute tests with coverage report:          ``./gradlew test jacocoTestReport -x webapp``
-* Execute tests without coverage report:       ``./gradlew test -x webapp``
-* Run a single test:                           ``./gradlew test --tests ExamIntegrationTest -x webapp`` or ``./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp``
+* Execute tests with coverage report:                   ``./gradlew test jacocoTestReport -x webapp``
+* Execute tests without coverage report:                ``./gradlew test -x webapp``
+* Execute tests with coverage report and verification:  ``./gradlew test jacocoTestReport -x webapp jacocoTestCoverageVerification``
+* Run a single test:                                    ``./gradlew test --tests ExamIntegrationTest -x webapp`` or ``./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp``
+* Verify code coverage (after tests):                   ``./gradlew jacocoTestCoverageVerification -x webapp``
+
+The code coverage thresholds are defined in `jacoco.gradle <https://github.com/ls1intum/Artemis/blob/develop/gradle/jacoco.gradle>`__.
 
 To run the server tests against a real database in a Docker test container, use:
 

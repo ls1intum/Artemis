@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 
 /**
@@ -82,6 +83,67 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     OR r.rated = TRUE)
             """)
     List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") long courseId);
+
+    // NOTE: we have an edge case for quizzes where we need to take the first submission and not the last one
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore)
+            FROM StudentParticipation p
+                JOIN p.student u
+                JOIN p.exercise ex
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE ex.course.id = :courseId
+                AND TYPE(ex) = QuizExercise
+                AND p.testRun = FALSE
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.score IS NOT NULL
+                AND s.submissionDate = (SELECT MIN(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+            """)
+    List<GradeScoreDTO> findIndividualQuizGradesByCourseId(@Param("courseId") long courseId);
+
+    // NOTE: we add a minimal grace period of 1 second because processing a commit can take a bit of time
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore)
+            FROM StudentParticipation p
+                JOIN p.student u
+                JOIN p.exercise ex
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE ex.course.id = :courseId
+                AND TYPE(ex) <> QuizExercise
+                AND p.testRun = FALSE
+                AND p.student IS NOT NULL
+                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd', SECOND, 1, ex.dueDate))
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.score IS NOT NULL
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+            """)
+    List<GradeScoreDTO> findIndividualGradesByCourseId(@Param("courseId") long courseId);
+
+    // Quizzes do not support team exercises, so we can safely ignore them here
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore)
+            FROM StudentParticipation p
+                JOIN p.team t
+                JOIN t.students u
+                JOIN p.exercise ex
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE ex.course.id = :courseId
+                AND p.testRun = FALSE
+                AND p.team IS NOT NULL
+                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd', SECOND, 1, ex.dueDate))
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.score IS NOT NULL
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+            """)
+    List<GradeScoreDTO> findTeamGradesByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT DISTINCT p
@@ -260,58 +322,50 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             @Param("testRun") boolean testRun);
 
     /**
-     * Get all participations for an exercise with each manual and latest results (determined by id).
-     * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
+     * Get all participations for an exercise with the latest submission
      *
      * @param exerciseId Exercise id.
      * @return participations for exercise.
      */
     @Query("""
+
             SELECT DISTINCT p
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.assessmentNote
-            WHERE p.exercise.id = :exerciseId
-                AND (
-                    r.id = (
-                        SELECT MAX(r2.id)
-                        FROM Submission s2 JOIN s2.results r2
-                        WHERE s2.participation = p
-                    )
-                    OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                    OR r IS NULL
-                )
+                LEFT  JOIN FETCH p.submissions s
+            WHERE  p.exercise.id = :exerciseId
+               AND ( s.id IS NULL
+                   OR s.id = (
+                    SELECT MAX(s2.id)
+                    FROM   Submission s2
+                    WHERE  s2.participation = p
+                        )
+                      )
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestAndManualResultsAndAssessmentNote(@Param("exerciseId") long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestSubmission(@Param("exerciseId") long exerciseId);
 
     /**
-     * Get all participations for a team exercise with each manual and latest results (determined by id).
+     * Get all participations for a team exercise with the latest submission and team information.
      * As the students of a team are lazy loaded, they are explicitly included into the query
-     * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
      *
      * @param exerciseId Exercise id.
      * @return participations for exercise.
      */
     @Query("""
-            SELECT DISTINCT p
+             SELECT DISTINCT p
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH p.team t
-                LEFT JOIN FETCH t.students
-            WHERE p.exercise.id = :exerciseId
-                AND (
-                    r.id = (
-                        SELECT MAX(r2.id)
-                        FROM Submission s2 JOIN s2.results r2
-                        WHERE s2.participation = p
-                    )
-                    OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                    OR r IS NULL
-                )
+                LEFT  JOIN FETCH p.team t
+                LEFT  JOIN FETCH t.students
+                LEFT  JOIN FETCH p.submissions s
+            WHERE  p.exercise.id = :exerciseId
+               AND ( s.id IS NULL
+                   OR s.id = (
+                    SELECT MAX(s2.id)
+                    FROM   Submission s2
+                    WHERE  s2.participation = p
+                        )
+                      )
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestAndManualResultsWithTeamInformation(@Param("exerciseId") long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestSubmissionWithTeamInformation(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT p
@@ -1473,4 +1527,18 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailTexts") List<String> detailTexts,
             @Param("testCaseName") String testCaseName);
 
+    /**
+     * Finds all grade scores for all exercises in a course, including individual and team exercises.
+     * Need special handling for quiz exercises, as the submission date is stored in reverse order compared to all other exercise types.
+     *
+     * @param courseId the id of the course for which to find all grade scores
+     * @return a list of {@link GradeScoreDTO}
+     */
+    default List<GradeScoreDTO> findGradeScoresForAllExercisesForCourse(long courseId) {
+        // Distinguish between individual and team participations for performance reasons
+        List<GradeScoreDTO> individualGradeScores = findIndividualGradesByCourseId(courseId);
+        List<GradeScoreDTO> individualQuizGradeScores = findIndividualQuizGradesByCourseId(courseId);
+        List<GradeScoreDTO> teamGradeScores = findTeamGradesByCourseId(courseId);
+        return Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).toList();
+    }
 }
