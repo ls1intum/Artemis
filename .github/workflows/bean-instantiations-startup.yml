@@ -44,7 +44,7 @@ jobs:
 
       - name: Wait for health endpoint
         run: |
-          URL=http://localhost:8080/management/health/
+          URL=http://localhost:8080/management/health
           echo "Waiting for $URL → HTTP 200"
           for i in {1..30}; do
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $URL)
