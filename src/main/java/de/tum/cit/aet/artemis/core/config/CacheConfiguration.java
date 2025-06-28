@@ -102,7 +102,6 @@ public class CacheConfiguration {
     private final ServerProperties serverProperties;
 
     // the service registry, in our current deployment this is the jhipster registry which offers a Eureka Server under the hood
-
     private final Optional<Registration> registration;
 
     private final ApplicationContext applicationContext;
@@ -112,7 +111,7 @@ public class CacheConfiguration {
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
-    @Value("${spring.hazelcast.interface:}")
+    @Value("${spring.hazelcast.interface:}")    // if not specified, it will be an empty string
     private String hazelcastInterface;
 
     @Value("${spring.hazelcast.port:5701}")

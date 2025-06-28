@@ -79,13 +79,13 @@ public class HazelcastConnection {
         if (registration.isEmpty() || env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return;
         }
-        var thisHazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
-        if (thisHazelcastInstance == null) {
-            log.warn("Hazelcast instance not found, cannot connect to cluster members");
+        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
+        if (hazelcastInstance == null) {
+            log.error("Hazelcast instance not found, cannot connect to cluster members");
             return;
         }
 
-        var hazelcastMemberAddresses = thisHazelcastInstance.getCluster().getMembers().stream().map(member -> {
+        var hazelcastMemberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> {
             try {
                 return member.getAddress().getInetAddress().getHostAddress();
             }
@@ -94,7 +94,7 @@ public class HazelcastConnection {
             }
         }).toList();
 
-        var instances = discoveryClient.getInstances(registration.orElseThrow().getServiceId());
+        var instances = discoveryClient.getInstances(registration.get().getServiceId());
         log.debug("Current {} Registry members: {}", instances.size(), instances.stream().map(ServiceInstance::getHost).toList());
         log.debug("Current {} Hazelcast members: {}", hazelcastMemberAddresses.size(), hazelcastMemberAddresses);
 
@@ -102,7 +102,7 @@ public class HazelcastConnection {
             // Workaround for IPv6 addresses, as they are enclosed in brackets
             var instanceHostClean = instance.getHost().replace("[", "").replace("]", "");
             if (hazelcastMemberAddresses.stream().noneMatch(member -> member.equals(instanceHostClean))) {
-                addHazelcastClusterMember(instance, thisHazelcastInstance.getConfig());
+                addHazelcastClusterMember(instance, hazelcastInstance.getConfig());
             }
         }
     }
@@ -123,14 +123,18 @@ public class HazelcastConnection {
      */
     @EventListener(FullStartupEvent.class)
     private void connectHazelcast() {
-        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
-        var config = hazelcastInstance.getConfig();
-
         if (registration.isEmpty()) {
             // If there is no registration, we are not running in a clustered environment and cannot connect Hazelcast nodes.
             return;
         }
-        String serviceId = registration.orElseThrow().getServiceId();
+        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
+        if (hazelcastInstance == null) {
+            log.error("Hazelcast instance not found, cannot connect to cluster members");
+            return;
+        }
+        var config = hazelcastInstance.getConfig();
+
+        String serviceId = registration.get().getServiceId();
         for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
             addHazelcastClusterMember(instance, config);
         }
