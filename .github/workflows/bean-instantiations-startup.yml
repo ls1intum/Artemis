@@ -1,12 +1,9 @@
 name: Verify Bean Instantiation Metrics
 
 on:
-  push:
-    paths:
-      - 'src/main/java/**'
   pull_request:
-    paths:
-      - 'src/main/java/**'
+#    paths:
+#      - 'src/main/java/**'
 
 jobs:
   check-beans:
