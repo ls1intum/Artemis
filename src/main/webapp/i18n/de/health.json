@@ -27,7 +27,7 @@
             "hazelcast": "Hazelcast",
             "websocketBroker": "Websocket Broker (Server -> Broker)",
             "athena": "Athena",
-            "hyperion": "Hyperion",
+            "grpcChannel": "Edutelligence (gRPC)",
             "apollon": "Apollon Conversion Server",
             "pyris": "Pyris",
             "ssl": "SSL",

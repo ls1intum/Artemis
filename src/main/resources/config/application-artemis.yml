@@ -85,16 +85,6 @@ artemis:
     url: http://localhost:5100
     secret: abcdef12345
     restricted-modules: module_text_llm,module_programming_llm
-  hyperion:
-    host: localhost
-    port: 50051
-    use-tls: false  # Set to true for production environments with mTLS
-    # mTLS client certificate authentication (required when TLS is enabled)
-    client-cert-path: ""    # Path to client certificate (.crt or .pem)
-    client-key-path: ""     # Path to client private key (.key or .pem)
-    server-ca-path: ""      # Path to server CA certificate for validation
-    default-timeout-seconds: 60
-    consistency-check-timeout-seconds: 300
   apollon:
     conversion-service-url: http://localhost:8080
 
@@ -112,3 +102,15 @@ artemis:
   science: # The science module is used for research purposes such as the collection of data.
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
+
+# gRPC client configuration for Hyperion integration
+grpc:
+  client:
+    hyperion:
+      address: static://localhost:50051  # Default for development
+      negotiationType: PLAINTEXT  # Override to TLS in production profiles
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      keepAliveTime: 30s
+      keepAliveTimeout: 5s
+      maxInboundMessageSize: 16MB

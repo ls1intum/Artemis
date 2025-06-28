@@ -350,13 +350,19 @@ dependencies {
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version {strictly "2.5.2" } }
 
-    // gRPC Client Dependencies
+    // gRPC Client Dependencies - Spring Boot starter provides most functionality
+    implementation 'net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE'
+
+    // gRPC Server Dependencies - for testing only (official pattern for client testing)
+    testImplementation 'net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE'
+
+    // Additional gRPC dependencies for protobuf and compatibility
     implementation platform("io.grpc:grpc-bom:${grpc_version}")
     implementation 'io.grpc:grpc-protobuf'
     implementation 'io.grpc:grpc-stub'
     implementation 'io.grpc:grpc-netty-shaded'
-    implementation "com.google.protobuf:protobuf-java:${protobuf_version}"
-    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+
+    compileOnly 'jakarta.annotation:jakarta.annotation-api:1.3.5' // Java 9+ compatibility - Do NOT update to 2.0.0
 
     // Required for synchronization between nodes and build agents (LocalCI)
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
@@ -524,9 +530,10 @@ dependencies {
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.3"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 
-    // gRPC testing dependencies
-    testImplementation "io.grpc:grpc-testing:${grpc_version}"
-    testImplementation "io.grpc:grpc-inprocess:${grpc_version}"
+    // gRPC testing dependencies - production ready, minimal dependencies
+    testImplementation platform("io.grpc:grpc-bom:${grpc_version}")
+    testImplementation "io.grpc:grpc-testing"
+    testImplementation "io.grpc:grpc-inprocess"
     testImplementation "io.grpc:grpc-services:${grpc_services_version}"
 
     testImplementation "com.tngtech.archunit:archunit:1.4.1"

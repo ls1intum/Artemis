@@ -47,17 +47,6 @@ artemis:
     # More information about the TUM hosted hermes service can be found here: https://github.com/ls1intum/Hermes
     # push-notification-relay: https://hermes.artemis.cit.tum.de
 
-  # TODO: REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    hyperion:
-      host: hyperion.aet.cit.tum.de
-      port: 8080
-      use-tls: false
-      client-cert-path: ""
-      client-key-path: ""
-      server-ca-path: ""
-      default-timeout-seconds: 60
-      consistency-check-timeout-seconds: 300
-
     continuous-integration:
         # Defines the used docker images for certain programming languages.
         # For each language at least the `default` image has to be defined.
@@ -377,3 +366,15 @@ eureka:
             git-version: ${git.commit.id.describe:}
             git-commit: ${git.commit.id.abbrev:}
             git-branch: ${git.branch:}
+
+# TODO: REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!
+grpc:
+  client:
+    hyperion:
+      address: hyperion.aet.cit.tum.de:8080  # Default for development
+      negotiationType: PLAINTEXT  # Override to TLS in production profiles
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      keepAliveTime: 30s
+      keepAliveTimeout: 5s
+      maxInboundMessageSize: 16MB

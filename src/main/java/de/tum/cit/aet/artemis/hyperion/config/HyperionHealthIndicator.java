@@ -29,12 +29,9 @@ public class HyperionHealthIndicator implements HealthIndicator {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionHealthIndicator.class);
 
-    private final HyperionConfigurationProperties properties;
-
     private final ManagedChannel grpcChannel;
 
-    public HyperionHealthIndicator(HyperionConfigurationProperties properties, ManagedChannel grpcChannel) {
-        this.properties = properties;
+    public HyperionHealthIndicator(ManagedChannel grpcChannel) {
         this.grpcChannel = grpcChannel;
     }
 
@@ -45,7 +42,8 @@ public class HyperionHealthIndicator implements HealthIndicator {
      */
     @Override
     public Health health() {
-        var additionalInfo = Map.<String, Object>of("host", properties.getHost(), "port", properties.getPort(), "useTls", properties.isUseTls());
+        // Connection details are now managed by gRPC Spring Boot starter configuration
+        var additionalInfo = Map.<String, Object>of("service", "Hyperion gRPC");
 
         ConnectorHealth connectorHealth;
         try {

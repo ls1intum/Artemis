@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.hyperion.config.HyperionConfigurationProperties;
 import io.grpc.StatusRuntimeException;
 
 /**
@@ -21,12 +20,6 @@ import io.grpc.StatusRuntimeException;
 public abstract class AbstractHyperionGrpcService {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractHyperionGrpcService.class);
-
-    protected final HyperionConfigurationProperties properties;
-
-    protected AbstractHyperionGrpcService(HyperionConfigurationProperties properties) {
-        this.properties = properties;
-    }
 
     /**
      * Handles common gRPC exceptions and converts them to HyperionServiceException.

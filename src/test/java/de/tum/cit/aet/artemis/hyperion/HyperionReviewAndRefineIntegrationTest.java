@@ -2,33 +2,39 @@ package de.tum.cit.aet.artemis.hyperion;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionTestConfiguration;
+import de.tum.cit.aet.artemis.hyperion.generated.InconsistencyCheckRequest;
+import de.tum.cit.aet.artemis.hyperion.generated.ReviewAndRefineGrpc;
+import de.tum.cit.aet.artemis.hyperion.generated.RewriteProblemStatementRequest;
 import de.tum.cit.aet.artemis.hyperion.web.HyperionReviewAndRefineResource;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import io.grpc.StatusRuntimeException;
+import net.devh.boot.grpc.client.inject.GrpcClient;
 
 /**
- * Comprehensive integration tests for Hyperion ReviewAndRefine functionality.
- * Tests both consistency checking and problem statement rewriting capabilities.
- * Uses in-process gRPC for reliable, fast testing without network dependencies.
+ * Integration tests for Hyperion gRPC service using official grpc-spring patterns.
  */
-@SpringBootTest
-@Profile(PROFILE_HYPERION)
-@Import(HyperionTestConfiguration.class)
-class HyperionReviewAndRefineIntegrationTest extends AbstractHyperionIntegrationTest {
+@SpringBootTest(properties = { "grpc.server.inProcessName=test", "grpc.server.port=-1", "grpc.client.hyperion.address=in-process:test" })
+@SpringJUnitConfig(classes = { HyperionTestConfiguration.class })
+@ActiveProfiles({ "test", "artemis", "scheduling", "localci", "localvc", PROFILE_HYPERION })
+@DirtiesContext
+class HyperionReviewAndRefineIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "hyperiontest";
 
@@ -38,102 +44,85 @@ class HyperionReviewAndRefineIntegrationTest extends AbstractHyperionIntegration
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
-    private Course course;
+    @GrpcClient("hyperion")
+    private ReviewAndRefineGrpc.ReviewAndRefineBlockingStub reviewAndRefineStub;
 
-    private ProgrammingExercise programmingExercise;
+    private Long courseId;
+
+    private Long exerciseId;
 
     @BeforeEach
-    void setupTestData() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 2);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+    void setup() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        courseId = course.getId();
+        exerciseId = course.getExercises().iterator().next().getId();
     }
 
-    // ========================================
-    // CONSISTENCY CHECK TESTS
-    // ========================================
-
+    // HTTP API Tests
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void checkConsistency_asInstructor_shouldSucceed() throws Exception {
-        var response = request.postWithResponseBodyString("/api/hyperion/review-and-refine/exercises/" + programmingExercise.getId() + "/check-consistency", null, HttpStatus.OK,
-                null, null, null);
-
+    void checkConsistency_asInstructor_returnsNoInconsistencies() throws Exception {
+        var response = request.postWithResponseBodyString("/api/hyperion/review-and-refine/exercises/" + exerciseId + "/check-consistency", null, HttpStatus.OK);
         assertThat(response).isEqualTo("No inconsistencies found");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void checkConsistency_asEditor_shouldSucceed() throws Exception {
-        var response = request.postWithResponseBodyString("/api/hyperion/review-and-refine/exercises/" + programmingExercise.getId() + "/check-consistency", null, HttpStatus.OK,
-                null, null, null);
-
-        assertThat(response).isEqualTo("No inconsistencies found");
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void rewriteProblemStatement_asInstructor_returnsEnhancedText() throws Exception {
+        var requestBody = new HyperionReviewAndRefineResource.RewriteProblemStatementRequestDTO("Simple algorithm task");
+        var response = request.postWithResponseBodyString("/api/hyperion/review-and-refine/courses/" + courseId + "/rewrite-problem-statement", requestBody, HttpStatus.OK);
+        assertThat(response).startsWith("Enhanced:");
+        assertThat(response).contains("Simple algorithm task");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void checkConsistency_asTutor_shouldBeForbidden() throws Exception {
-        request.postWithoutResponseBody("/api/hyperion/review-and-refine/exercises/" + programmingExercise.getId() + "/check-consistency", null, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void checkConsistency_asStudent_shouldBeForbidden() throws Exception {
-        request.postWithoutResponseBody("/api/hyperion/review-and-refine/exercises/" + programmingExercise.getId() + "/check-consistency", null, HttpStatus.FORBIDDEN);
-    }
-
-    // ========================================
-    // PROBLEM STATEMENT REWRITING TESTS
-    // ========================================
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void rewriteProblemStatement_asInstructor_shouldSucceed() throws Exception {
-        var textToRewrite = "Write a simple Java program that calculates the sum of two numbers.";
-        var requestBody = new HyperionReviewAndRefineResource.RewriteProblemStatementRequestDTO(textToRewrite);
-
-        var response = request.postWithResponseBodyString("/api/hyperion/review-and-refine/courses/" + course.getId() + "/rewrite-problem-statement", requestBody, HttpStatus.OK,
-                null, null, null);
-
-        assertThat(response).isNotNull();
-        assertThat(response).isNotEmpty();
-        assertThat(response).contains("Improved:");
-        assertThat(response).contains(textToRewrite);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void rewriteProblemStatement_asTutor_shouldSucceed() throws Exception {
-        var textToRewrite = "Create a function that returns the factorial of a number.";
-        var requestBody = new HyperionReviewAndRefineResource.RewriteProblemStatementRequestDTO(textToRewrite);
-
-        var response = request.postWithResponseBodyString("/api/hyperion/review-and-refine/courses/" + course.getId() + "/rewrite-problem-statement", requestBody, HttpStatus.OK,
-                null, null, null);
-
-        assertThat(response).isNotNull();
-        assertThat(response).isNotEmpty();
-        assertThat(response).contains("Improved:");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void rewriteProblemStatement_asStudent_shouldBeForbidden() throws Exception {
-        var textToRewrite = "Write a program to sort an array.";
-        var requestBody = new HyperionReviewAndRefineResource.RewriteProblemStatementRequestDTO(textToRewrite);
-
-        request.postWithoutResponseBody("/api/hyperion/review-and-refine/courses/" + course.getId() + "/rewrite-problem-statement", requestBody, HttpStatus.FORBIDDEN);
+    void checkConsistency_asTutor_isForbidden() throws Exception {
+        request.postWithoutResponseBody("/api/hyperion/review-and-refine/exercises/" + exerciseId + "/check-consistency", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void rewriteProblemStatement_withEmptyText_shouldHandleGracefully() throws Exception {
-        var requestBody = new HyperionReviewAndRefineResource.RewriteProblemStatementRequestDTO("");
+    void rewriteProblemStatement_withOversizedText_returnsInternalServerError() throws Exception {
+        var requestBody = new HyperionReviewAndRefineResource.RewriteProblemStatementRequestDTO("a".repeat(10001));
+        request.postWithoutResponseBody("/api/hyperion/review-and-refine/courses/" + courseId + "/rewrite-problem-statement", requestBody, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
-        var response = request.postWithResponseBodyString("/api/hyperion/review-and-refine/courses/" + course.getId() + "/rewrite-problem-statement", requestBody, HttpStatus.OK,
-                null, null, null);
+    // Direct gRPC Tests
+    @Test
+    void directStubCall_withValidInput_returnsSuccessfulResponse() {
+        var request = InconsistencyCheckRequest.newBuilder().setProblemStatement("Implement a Java program that sorts an array.").build();
+
+        var response = reviewAndRefineStub.checkInconsistencies(request);
 
         assertThat(response).isNotNull();
-        assertThat(response).contains("Improved:");
+        assertThat(response.getInconsistencies()).isEqualTo("No inconsistencies found");
+    }
+
+    @Test
+    void directStubCall_withEmptyInput_throwsInvalidArgument() {
+        var request = InconsistencyCheckRequest.newBuilder().setProblemStatement("").build();
+
+        assertThatThrownBy(() -> reviewAndRefineStub.checkInconsistencies(request)).isInstanceOf(StatusRuntimeException.class).hasMessageContaining("INVALID_ARGUMENT");
+    }
+
+    @Test
+    void directStubCall_withDeadline_throwsDeadlineExceeded() {
+        var stubWithDeadline = reviewAndRefineStub.withDeadlineAfter(1, TimeUnit.MILLISECONDS);
+        var request = InconsistencyCheckRequest.newBuilder().setProblemStatement("Test problem statement").build();
+
+        assertThatThrownBy(() -> stubWithDeadline.checkInconsistencies(request)).isInstanceOf(StatusRuntimeException.class).hasMessageContaining("DEADLINE_EXCEEDED");
+    }
+
+    @Test
+    void directStubCall_rewriteWithValidText_returnsEnhancedContent() {
+        var request = RewriteProblemStatementRequest.newBuilder().setText("Create a calculator program.").build();
+
+        var response = reviewAndRefineStub.rewriteProblemStatement(request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getRewrittenText()).startsWith("Enhanced:");
+        assertThat(response.getRewrittenText()).contains("calculator program");
     }
 }

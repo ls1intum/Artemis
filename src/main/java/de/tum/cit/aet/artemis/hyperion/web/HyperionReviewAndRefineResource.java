@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewAndRefineService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -78,7 +78,7 @@ public class HyperionReviewAndRefineResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the rewritten problem statement
      */
-    @EnforceAtLeastTutor
+    @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/rewrite-problem-statement")
     public ResponseEntity<String> rewriteProblemStatement(@RequestBody RewriteProblemStatementRequestDTO request, @PathVariable Long courseId) {
         log.debug("REST request to rewrite problem statement via Hyperion: {}", request.text());

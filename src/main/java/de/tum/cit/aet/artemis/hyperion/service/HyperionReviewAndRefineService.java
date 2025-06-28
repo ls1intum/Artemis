@@ -15,11 +15,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.hyperion.config.HyperionConfigurationProperties;
 import de.tum.cit.aet.artemis.hyperion.generated.InconsistencyCheckRequest;
 import de.tum.cit.aet.artemis.hyperion.generated.Repository;
 import de.tum.cit.aet.artemis.hyperion.generated.RepositoryFile;
-import de.tum.cit.aet.artemis.hyperion.generated.ReviewAndRefineGrpc;
+import de.tum.cit.aet.artemis.hyperion.generated.ReviewAndRefineGrpc.ReviewAndRefineBlockingStub;
 import de.tum.cit.aet.artemis.hyperion.generated.RewriteProblemStatementRequest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -27,6 +26,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import io.grpc.StatusRuntimeException;
+import net.devh.boot.grpc.client.inject.GrpcClient;
 
 /**
  * Service for reviewing and refining programming exercises using Hyperion.
@@ -39,14 +39,17 @@ public class HyperionReviewAndRefineService extends AbstractHyperionGrpcService 
 
     private static final Logger log = LoggerFactory.getLogger(HyperionReviewAndRefineService.class);
 
-    private final ReviewAndRefineGrpc.ReviewAndRefineBlockingStub reviewAndRefineStub;
+    private static final int CONSISTENCY_CHECK_TIMEOUT = 300;
+
+    private static final int REWRITE_PROBLEM_STATEMENT_TIMEOUT = 60;
+
+    @GrpcClient("hyperion")
+    private ReviewAndRefineBlockingStub reviewAndRefineStub;
 
     private final RepositoryService repositoryService;
 
-    public HyperionReviewAndRefineService(HyperionConfigurationProperties properties, ReviewAndRefineGrpc.ReviewAndRefineBlockingStub reviewAndRefineStub,
-            RepositoryService repositoryService) {
-        super(properties);
-        this.reviewAndRefineStub = reviewAndRefineStub;
+    public HyperionReviewAndRefineService(RepositoryService repositoryService) {
+        super();
         this.repositoryService = repositoryService;
     }
 
@@ -65,7 +68,7 @@ public class HyperionReviewAndRefineService extends AbstractHyperionGrpcService 
         try {
             var request = buildConsistencyCheckRequest(exercise);
 
-            var response = reviewAndRefineStub.withDeadlineAfter(properties.getConsistencyCheckTimeoutSeconds(), TimeUnit.SECONDS).checkInconsistencies(request);
+            var response = reviewAndRefineStub.withDeadlineAfter(CONSISTENCY_CHECK_TIMEOUT, TimeUnit.SECONDS).checkInconsistencies(request);
 
             log.info("Consistency check completed for exercise {}", exercise.getId());
             return response.getInconsistencies();
@@ -92,7 +95,7 @@ public class HyperionReviewAndRefineService extends AbstractHyperionGrpcService 
         try {
             var request = RewriteProblemStatementRequest.newBuilder().setText(problemStatement).build();
 
-            var response = reviewAndRefineStub.withDeadlineAfter(30, TimeUnit.SECONDS).rewriteProblemStatement(request);
+            var response = reviewAndRefineStub.withDeadlineAfter(REWRITE_PROBLEM_STATEMENT_TIMEOUT, TimeUnit.SECONDS).rewriteProblemStatement(request);
 
             log.info("Problem statement rewriting completed successfully for user {}", user.getLogin());
             return response.getRewrittenText();
