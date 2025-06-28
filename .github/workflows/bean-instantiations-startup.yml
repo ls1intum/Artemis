@@ -1,0 +1,75 @@
+name: Verify Bean Instantiation Metrics
+
+on:
+  push:
+    paths:
+      - 'src/main/java/**'
+  pull_request:
+    paths:
+      - 'src/main/java/**'
+
+jobs:
+  check-beans:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build application
+        run: ./gradlew clean assemble -x test
+
+      - name: Start Spring Boot app
+        run: |
+          PROFILES=dev,localci,lti,aeolus,theia,iris,localvc,artemis,scheduling,buildagent,core,ldap
+          nohup ./gradlew bootRun --args="--spring.profiles.active=$PROFILES --artemis.user-management.passkey.enabled=true" > app.log 2>&1 &
+          echo $! > app.pid
+
+      - name: Wait for health endpoint
+        run: |
+          URL=http://localhost:8080/management/health/liveness
+          echo "Waiting for $URL → UP"
+          for i in {1..30}; do
+            if curl -s $URL | grep -q '"status":"UP"'; then
+              echo "✅ Actuator is UP (after $i attempts)"
+              break
+            fi
+            sleep 2
+          done
+          if ! curl -s $URL | grep -q '"status":"UP"'; then
+            echo "❌ Health check failed; dumping last 50 lines:"
+            tail -n50 app.log
+            exit 1
+          fi
+
+      - name: Extract and validate metrics
+        run: |
+          LINE=$(grep 'Bean instantiation graph exported' app.log) \
+            || { echo "❌ No metrics line"; cat app.log; exit 1; }
+          echo "✅ Metrics line: $LINE"
+          if [[ "$LINE" =~ \(([0-9]+)\ edges,\ max\ call\ stack\ size:\ ([0-9]+)\) ]]; then
+            EDGES=${BASH_REMATCH[1]}
+            MAXSTACK=${BASH_REMATCH[2]}
+          else
+            echo "❌ Failed to parse numbers"; exit 1
+          fi
+          echo "• Number of edges = $EDGES"
+          echo "• Max call stack size = $MAXSTACK"
+          MIN_EDGES=20
+          MAX_EDGES=86
+          MAX_STACK_SIZE_THRESHOLD=10
+          (( EDGES < MIN_EDGES )) && { echo "❌ < $MIN_EDGES edges"; exit 1; }
+          (( EDGES > MAX_EDGES ))   && { echo "❌ > $MAX_EDGES edges"; exit 1; }
+          (( MAXSTACK > MAX_STACK_SIZE_THRESHOLD )) && { echo "❌ stack > $MAX_STACK_SIZE_THRESHOLD"; exit 1; }
+          echo "✅ Final values → Edges: $EDGES; Max call stack size: $MAXSTACK"
+          echo "🎉 Bean metrics within expected ranges"
+
+      - name: Stop application
+        if: always()
+        run: kill $(<app.pid) || true
