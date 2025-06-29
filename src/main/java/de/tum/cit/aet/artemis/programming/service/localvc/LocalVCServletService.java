@@ -717,29 +717,18 @@ public class LocalVCServletService {
 
     /**
      * Create a submission, trigger the respective build, and process the results.
-     *
-     * @param commitHash the hash of the last commit.
-     * @param repository the remote repository which was pushed to.
-     * @throws ContinuousIntegrationException if something goes wrong with the CI configuration.
-     * @throws VersionControlException        if the commit belongs to the wrong branch (i.e. not the default branch of the participation).
-     */
-    public void processNewPush(String commitHash, Repository repository) {
-        processNewPush(commitHash, repository, Optional.empty(), Optional.empty(), Optional.empty());
-    }
-
-    /**
-     * Create a submission, trigger the respective build, and process the results.
      * This method can be called with some values, to avoid loading them again from the database
      *
      * @param commitHash          the hash of the last commit.
      * @param repository          the remote repository which was pushed to.
+     * @param user                the user who pushed the commit, used for logging and access control.
      * @param cachedExercise      the exercise which is potentially already loaded
      * @param cachedParticipation the participation which is potentially already loaded
      * @param vcsAccessLog        the vcsAccessLog which is potentially already loaded
      * @throws ContinuousIntegrationException if something goes wrong with the CI configuration.
      * @throws VersionControlException        if the commit belongs to the wrong branch (i.e. not the default branch of the participation).
      */
-    public void processNewPush(String commitHash, Repository repository, Optional<ProgrammingExercise> cachedExercise,
+    public void processNewPush(String commitHash, Repository repository, User user, Optional<ProgrammingExercise> cachedExercise,
             Optional<ProgrammingExerciseParticipation> cachedParticipation, Optional<VcsAccessLog> vcsAccessLog) {
         long timeNanoStart = System.nanoTime();
 
@@ -786,7 +775,7 @@ public class LocalVCServletService {
             Commit commit = extractCommitInfo(commitHash, repository);
 
             // Process push to any repository other than the test repository.
-            processNewPushToRepository(participation, commit);
+            processNewPushToRepository(participation, commit, user);
 
             // For push the correct commitHash is only available here, therefore the preliminary value is overwritten
             String finalCommitHash = commitHash;
@@ -917,15 +906,16 @@ public class LocalVCServletService {
      *
      * @param participation the participation for which the push was made
      * @param commit        the commit that was pushed
+     * @param user          the user who pushed the commit, used for logging and access control
      * @throws VersionControlException if the commit belongs to the wrong branch (i.e. not the default branch of the participation)
      */
-    private void processNewPushToRepository(ProgrammingExerciseParticipation participation, Commit commit) {
+    private void processNewPushToRepository(ProgrammingExerciseParticipation participation, Commit commit, User user) {
         // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
         // Therefore, a mock auth object has to be created.
         SecurityUtils.setAuthorizationObject();
         ProgrammingSubmission submission;
         try {
-            submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit);
+            submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit, user);
         }
         catch (EntityNotFoundException | IllegalStateException | IllegalArgumentException e) {
             throw new VersionControlException("Could not process submission for participation: " + e.getMessage(), e);
