@@ -1588,7 +1588,7 @@ public class GitService extends AbstractGitService {
                 else if (Files.isRegularFile(path)) {
                     // Add file entry
                     zipOutputStream.putNextEntry(new ZipEntry(zipEntryName));
-                    Files.copy(path, zipOutputStream);
+                    FileUtils.copyFile(path.toFile(), zipOutputStream);
                 }
                 zipOutputStream.closeEntry();
             }

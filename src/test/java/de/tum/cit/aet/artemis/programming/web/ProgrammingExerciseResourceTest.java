@@ -8,7 +8,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -489,12 +488,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         // Create build/reports/performance-test directory if it doesn't exist
         Path reportsDir = Path.of("build", "reports", "performance-test");
-        Files.createDirectories(reportsDir);
+        FileUtils.forceMkdir(reportsDir.toFile());
 
         // Generate timestamp for unique filename
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
         Path reportPath = reportsDir.resolve("export_performance_report_" + timestamp + ".txt");
-        Files.write(reportPath, report, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        FileUtils.writeLines(reportPath.toFile(), report);
 
         log.info("Performance report written to: {}", reportPath.toAbsolutePath());
         log.info(String.format("%s: %.1fms avg, %.1fKB avg", snapshot.name, snapshot.avgTime, snapshot.avgFileSize / 1024.0));
