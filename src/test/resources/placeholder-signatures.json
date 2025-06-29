@@ -305,15 +305,6 @@
     "fieldType" : "java.lang.String"
   } ]
 }, {
-  "notificationType" : "ILLEGAL_SUBMISSION",
-  "fieldDescriptions" : [ {
-    "fieldName" : "courseTitle",
-    "fieldType" : "java.lang.String"
-  }, {
-    "fieldName" : "exerciseTitle",
-    "fieldType" : "java.lang.String"
-  } ]
-}, {
   "notificationType" : "NEW_ANNOUNCEMENT_POST",
   "fieldDescriptions" : [ {
     "fieldName" : "courseTitle",
