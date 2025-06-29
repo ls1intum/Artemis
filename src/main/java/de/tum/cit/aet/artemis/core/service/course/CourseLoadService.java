@@ -24,6 +24,9 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
+/**
+ * Service for loading courses with a lot of related entities that's best not done in a single query.
+ */
 @Service
 @Profile(PROFILE_CORE)
 @Lazy
@@ -52,6 +55,12 @@ public class CourseLoadService {
         this.examRepositoryApi = examRepositoryApi;
     }
 
+    /**
+     * Loads a course with all its exercises, lectures, lecture units, competencies, prerequisites and exams.
+     *
+     * @param courseId the ID of the course to load
+     * @return the course with all its related entities loaded
+     */
     public Course loadCourseWithExercisesLecturesLectureUnitsCompetenciesPrerequisitesAndExams(long courseId) {
         ZonedDateTime now = ZonedDateTime.now();
         Course course = loadCourseWithExercisesLecturesLectureUnitsCompetenciesAndPrerequisites(courseId);
@@ -63,6 +72,12 @@ public class CourseLoadService {
         return course;
     }
 
+    /**
+     * Loads a course with all its exercises, lectures, lecture units, competencies and prerequisites.
+     *
+     * @param courseId the ID of the course to load
+     * @return the course with all its related entities loaded
+     */
     public Course loadCourseWithExercisesLecturesLectureUnitsCompetenciesAndPrerequisites(long courseId) {
         ZonedDateTime now = ZonedDateTime.now();
         Course course = courseRepository.findByIdElseThrow(courseId);

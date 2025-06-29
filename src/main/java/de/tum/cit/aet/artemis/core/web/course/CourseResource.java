@@ -114,17 +114,9 @@ public class CourseResource {
 
     private final CourseLoadService courseLoadService;
 
-    private final UserRepository userRepository;
-
     private final CourseService courseService;
 
     private final AuthorizationCheckService authCheckService;
-
-    private final Optional<LtiApi> ltiApi;
-
-    private final CourseRepository courseRepository;
-
-    private final TutorParticipationRepository tutorParticipationRepository;
 
     private final SubmissionService submissionService;
 
@@ -132,17 +124,21 @@ public class CourseResource {
 
     private final Optional<CIUserManagementService> optionalCiUserManagementService;
 
-    private final ExerciseRepository exerciseRepository;
-
     private final FileService fileService;
-
-    private final Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi;
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
-    private final GradingScaleRepository gradingScaleRepository;
-
     private final ConductAgreementService conductAgreementService;
+
+    private final ComplaintService complaintService;
+
+    private final CourseForUserGroupService courseForUserGroupService;
+
+    private final CourseOverviewService courseOverviewService;
+
+    private final Optional<LtiApi> ltiApi;
+
+    private final Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi;
 
     private final Optional<AthenaApi> athenaApi;
 
@@ -152,13 +148,17 @@ public class CourseResource {
 
     private final Optional<ExamRepositoryApi> examRepositoryApi;
 
-    private final ComplaintService complaintService;
+    private final UserRepository userRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final TutorParticipationRepository tutorParticipationRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final GradingScaleRepository gradingScaleRepository;
 
     private final TeamRepository teamRepository;
-
-    private final CourseForUserGroupService courseForUserGroupService;
-
-    private final CourseOverviewService courseOverviewService;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, Optional<LtiApi> ltiApi,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService,
@@ -192,6 +192,16 @@ public class CourseResource {
         this.courseForUserGroupService = courseForUserGroupService;
         this.courseOverviewService = courseOverviewService;
         this.courseLoadService = courseLoadService;
+    }
+
+    private static Set<String> getChangedGroupNames(Course courseUpdate, Course existingCourse) {
+        Set<String> existingGroupNames = new HashSet<>(List.of(existingCourse.getStudentGroupName(), existingCourse.getTeachingAssistantGroupName(),
+                existingCourse.getEditorGroupName(), existingCourse.getInstructorGroupName()));
+        Set<String> newGroupNames = new HashSet<>(List.of(courseUpdate.getStudentGroupName(), courseUpdate.getTeachingAssistantGroupName(), courseUpdate.getEditorGroupName(),
+                courseUpdate.getInstructorGroupName()));
+        Set<String> changedGroupNames = new HashSet<>(newGroupNames);
+        changedGroupNames.removeAll(existingGroupNames);
+        return changedGroupNames;
     }
 
     /**
@@ -320,16 +330,6 @@ public class CourseResource {
             tutorialGroupChannelManagementApi.get().onTimeZoneUpdate(result);
         }
         return ResponseEntity.ok(result);
-    }
-
-    private static Set<String> getChangedGroupNames(Course courseUpdate, Course existingCourse) {
-        Set<String> existingGroupNames = new HashSet<>(List.of(existingCourse.getStudentGroupName(), existingCourse.getTeachingAssistantGroupName(),
-                existingCourse.getEditorGroupName(), existingCourse.getInstructorGroupName()));
-        Set<String> newGroupNames = new HashSet<>(List.of(courseUpdate.getStudentGroupName(), courseUpdate.getTeachingAssistantGroupName(), courseUpdate.getEditorGroupName(),
-                courseUpdate.getInstructorGroupName()));
-        Set<String> changedGroupNames = new HashSet<>(newGroupNames);
-        changedGroupNames.removeAll(existingGroupNames);
-        return changedGroupNames;
     }
 
     /**
@@ -474,10 +474,6 @@ public class CourseResource {
         final var response = courses.stream().map(course -> new CourseDropdownDTO(course.getId(), course.getTitle(), course.getCourseIcon())).collect(Collectors.toSet());
         log.info("GET /courses/for-dropdown took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
         return ResponseEntity.ok(response);
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CourseDropdownDTO(Long id, String title, String courseIcon) {
     }
 
     /**
@@ -796,5 +792,9 @@ public class CourseResource {
         }));
 
         return ResponseEntity.ok(new CourseExistingExerciseDetailsDTO(alreadyTakenExerciseNames, alreadyTakenShortNames));
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record CourseDropdownDTO(Long id, String title, String courseIcon) {
     }
 }
