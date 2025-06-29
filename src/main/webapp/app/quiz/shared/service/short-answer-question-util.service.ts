@@ -427,6 +427,14 @@ export class ShortAnswerQuestionUtil {
             delete value.id;
             delete value.shortAnswerSpotIndex;
             delete value.shortAnswerSolutionIndex;
+            delete value.solution?.tempID;
+            delete value.spot?.tempID;
+        });
+        question.spots?.forEach((value) => {
+            delete value.tempID;
+        });
+        question.solutions?.forEach((value) => {
+            delete value.tempID;
         });
     }
 }

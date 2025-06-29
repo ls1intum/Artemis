@@ -550,7 +550,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.quizExercise = quizExercise;
         this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
-        this.savedEntity = cloneDeep(quizExercise);
+        this.savedEntity = cloneDeep(this.quizExercise);
         this.changeDetector.detectChanges();
 
         // Navigate back only if it's an import
