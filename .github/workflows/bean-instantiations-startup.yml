@@ -44,7 +44,7 @@ jobs:
 
       - name: Wait for health endpoint
         run: |
-          URL=http://localhost:8080/management/health
+          URL=http://localhost:8080/management/health/readiness
           echo "Waiting up to 60s for $URL → HTTP 200"
 
           # allow curl to fail without exiting
