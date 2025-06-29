@@ -54,7 +54,7 @@ describe('ProgrammingExerciseResolve', () => {
 
         const result = await resolver.resolve(route).toPromise();
         expect(result).toBeInstanceOf(ProgrammingExercise);
-        expect(result.id).toBeUndefined();
+        expect(result?.id).toBeUndefined();
         expect(mockProgrammingExerciseService.find).not.toHaveBeenCalled();
     });
 
@@ -65,7 +65,7 @@ describe('ProgrammingExerciseResolve', () => {
 
         const result = await resolver.resolve(route).toPromise();
         expect(result).toBeInstanceOf(ProgrammingExercise);
-        expect(result.id).toBeUndefined();
+        expect(result?.id).toBeUndefined();
         expect(mockProgrammingExerciseService.find).not.toHaveBeenCalled();
     });
 });

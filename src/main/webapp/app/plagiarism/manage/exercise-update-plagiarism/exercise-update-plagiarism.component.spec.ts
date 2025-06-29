@@ -95,12 +95,10 @@ describe('Exercise Update Plagiarism Component', () => {
     });
 
     it('should get correct minimumSizeLabel for programming exercises', () => {
-        comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
         expect(comp.getMinimumSizeLabel()).toBe('artemisApp.plagiarism.minimumTokenCount');
     });
 
     it('should get correct minimumSizeLabel for text exercises', () => {
-        comp.exercise = { type: ExerciseType.TEXT } as Exercise;
         expect(comp.getMinimumSizeLabel()).toBe('artemisApp.plagiarism.minimumSize');
     });
 
