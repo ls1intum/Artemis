@@ -12,8 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 })
 export class PlagiarismCaseVerdictComponent {
     plagiarismCase = input.required<PlagiarismCase>();
-    hideDetails = input.required<PlagiarismCase>();
-
+    hideDetails = input<boolean>(false);
     readonly plagiarismVerdict = PlagiarismVerdict;
 
     get verdictTranslationString(): string {

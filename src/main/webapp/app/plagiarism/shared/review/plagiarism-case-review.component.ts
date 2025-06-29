@@ -11,8 +11,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, PlagiarismSplitViewComponent, NgbNavOutlet, ArtemisTranslatePipe],
 })
 export class PlagiarismCaseReviewComponent {
-    forStudent = input<boolean>({ initialValue: true });
     plagiarismCase = input.required<PlagiarismCase>();
+    forStudent = input<boolean>(true);
 
     /**
      * Subject to be passed into PlagiarismSplitViewComponent to control the split view.
