@@ -93,4 +93,17 @@ export class AttachmentVideoUnitService {
             })
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
+
+    startTranscription(lectureId: number, lectureUnitId: number, videoUrl: string): Observable<HttpResponse<string>> {
+        const body = {
+            videoUrl,
+            lectureId,
+            lectureUnitId,
+        };
+
+        return this.httpClient.post(`/api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/nebula-transcriber`, body, {
+            observe: 'response',
+            responseType: 'text',
+        });
+    }
 }

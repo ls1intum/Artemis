@@ -167,7 +167,16 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
+        const {
+            description,
+            name,
+            releaseDate,
+            videoSource,
+            updateNotificationText,
+            competencyLinks,
+            generateTranscript, // <-- new field
+        } = attachmentVideoUnitFormData.formProperties;
+
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
         const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
         if (!name || (!fileName && !videoSource)) {
@@ -187,7 +196,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
 
         let notificationText: string | undefined;
-
         if (updateNotificationText) {
             notificationText = updateNotificationText;
         }
@@ -341,5 +349,32 @@ export class LectureUpdateUnitsComponent implements OnInit {
                         break;
                 }
             });
+    }
+
+    private triggerTranscriptionIfEnabled(unit: AttachmentVideoUnit | undefined, generateTranscript: boolean | undefined): void {
+        if (!this.isEditingLectureUnit && generateTranscript && unit?.id && unit?.videoSource) {
+            // eslint-disable-next-line no-undef
+            console.log('[DEBUG] Starting transcription with:', {
+                lectureId: this.lecture.id,
+                unitId: unit.id,
+                videoSource: unit.videoSource,
+            });
+
+            this.attachmentVideoUnitService.startTranscription(this.lecture.id!, unit.id, unit.videoSource).subscribe({
+                next: (res) => {
+                    if (res.status === 200) {
+                        this.alertService.success('Transcript generation started.');
+                    } else {
+                        this.alertService.error('Transcript request did not succeed. Status: ' + res.status);
+                    }
+                },
+                error: (err) => {
+                    this.alertService.error('Transcript failed to start: ' + err.message);
+                },
+            });
+        } else {
+            // eslint-disable-next-line no-undef
+            console.log('[INFO] Transcription not triggered. Either editing, disabled, or missing data.');
+        }
     }
 }
