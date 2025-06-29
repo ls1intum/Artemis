@@ -47,7 +47,7 @@ jobs:
           echo "Waiting up to 60s for 'Artemis is running!' to appear in app.log..."
 
           for i in {1..30}; do
-            if grep -q "Artemis is running!" app.log; then
+            if grep -q "'Artemis' is running!" app.log; then
               echo "✅ Found 'Artemis is running!' in app.log after $i attempts"
               break
             fi
