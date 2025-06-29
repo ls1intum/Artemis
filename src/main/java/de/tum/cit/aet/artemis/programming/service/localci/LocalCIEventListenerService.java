@@ -89,7 +89,7 @@ public class LocalCIEventListenerService {
      */
     @Scheduled(fixedRateString = "${artemis.continuous-integration.check-job-status-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.check-job-status-delay-seconds:60}", timeUnit = TimeUnit.SECONDS)
     public void checkPendingBuildJobsStatus() {
-        log.info("Checking pending build jobs status");
+        log.debug("Checking pending build jobs status");
         List<BuildJob> pendingBuildJobs = buildJobRepository.findAllByBuildStatusIn(List.of(BuildStatus.QUEUED, BuildStatus.BUILDING));
         ZonedDateTime now = ZonedDateTime.now();
         final int buildJobExpirationInMinutes = 5; // If a build job is older than 5 minutes, and it's status can't be determined, set it to missing
