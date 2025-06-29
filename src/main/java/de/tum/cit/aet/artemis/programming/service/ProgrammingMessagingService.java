@@ -17,13 +17,11 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.api.PyrisEventApi;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
@@ -52,22 +50,19 @@ public class ProgrammingMessagingService {
 
     private final Optional<PyrisEventApi> pyrisEventApi;
 
-    private final Optional<IrisSettingsApi> irisSettingsApi;
-
     private final ParticipationRepository participationRepository;
 
     // The GroupNotificationService has many dependencies. We cannot refactor it to avoid that. Therefore, we lazily inject it here, so it's only instantiated when needed, or our
     // DeferredEagerInitialization kicks, but not on startup.
     public ProgrammingMessagingService(@Lazy GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
             ResultWebsocketService resultWebsocketService, Optional<LtiApi> ltiApi, TeamRepository teamRepository, Optional<PyrisEventApi> pyrisEventApi,
-            Optional<IrisSettingsApi> irisSettingsApi, ParticipationRepository participationRepository) {
+            ParticipationRepository participationRepository) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
         this.ltiApi = ltiApi;
         this.teamRepository = teamRepository;
         this.pyrisEventApi = pyrisEventApi;
-        this.irisSettingsApi = irisSettingsApi;
         this.participationRepository = participationRepository;
     }
 
@@ -96,23 +91,6 @@ public class ProgrammingMessagingService {
     }
 
     /**
-     * Notifies editors and instructors about test case changes for the updated programming exercise
-     *
-     * @param testCasesChanged           whether tests have been changed or not
-     * @param updatedProgrammingExercise the programming exercise for which tests have been changed
-     */
-    public void notifyUserAboutTestCaseChanged(boolean testCasesChanged, ProgrammingExercise updatedProgrammingExercise) {
-        websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(updatedProgrammingExercise.getId()), testCasesChanged);
-        // Send a notification to the client to inform the instructor about the test case update.
-        if (testCasesChanged) {
-            groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
-        }
-        else {
-            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise);
-        }
-    }
-
-    /**
      * Notify user about new result.
      *
      * @param result        the result created from the result returned from the CI system.
@@ -127,39 +105,29 @@ public class ProgrammingMessagingService {
             // do not try to report results for template or solution participations
             ltiApi.ifPresent(api -> api.onNewResult(studentParticipation));
             // Inform Iris about the submission status (when certain conditions are met)
-            notifyIrisAboutSubmissionStatus(result, studentParticipation);
+            notifyIrisAboutSubmissionStatus(result);
         }
     }
 
     /**
      * Notify Iris about the submission status for the given result and student participation.
-     * Only notifies if the user has accepted Iris, the exercise is not an exam exercise, and the exercise chat is enabled in the exercise settings
-     * NOTE: we check those settings early to prevent unnecessary database queries and exceptions later on in most cases. More sophisticated checks are done in the Iris service.
      * <p>
      * If the submission was successful, Iris will be informed about the successful submission.
      * If the submission failed, Iris will be informed about the submission failure.
      * Iris will only be informed about the submission status if the participant is a user.
      *
-     * @param result               the result for which Iris should be informed about the submission status
-     * @param studentParticipation the student participation for which Iris should be informed about the submission status
+     * @param result the result for which Iris should be informed about the submission status
      */
-    private void notifyIrisAboutSubmissionStatus(Result result, ProgrammingExerciseStudentParticipation studentParticipation) {
-        if (studentParticipation.getParticipant() instanceof User user) {
-            pyrisEventApi.ifPresent(eventApi -> {
-                final var exercise = studentParticipation.getExercise();
-                if (user.hasAcceptedExternalLLMUsage() && !exercise.isExamExercise()
-                        && irisSettingsApi.map(api -> api.isProgrammingExerciseChatEnabled(exercise.getId())).orElse(false)) {
-                    // Inform event service about the new result
-                    try {
-                        // This is done asynchronously to prevent blocking the current thread
-                        eventApi.trigger(new NewResultEvent(result));
-                    }
-                    catch (Exception e) {
-                        log.error("Could not trigger service for result {}", result.getId(), e);
-                    }
-                }
-            });
-        }
+    private void notifyIrisAboutSubmissionStatus(Result result) {
+        pyrisEventApi.ifPresent(eventApi -> {
+            // Inform event service about the new result
+            try {
+                eventApi.trigger(new NewResultEvent(result));
+            }
+            catch (Exception e) {
+                log.error("Could not trigger service for result {}", result.getId(), e);
+            }
+        });
     }
 
     /**
