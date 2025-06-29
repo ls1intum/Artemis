@@ -142,7 +142,7 @@ describe('FeedbackLearnerProfileComponent', () => {
 
             // Assert
             expect(component.learnerProfile()).toBeUndefined();
-            expect(component.disabled).toBeTrue();
+            expect(component.disabled).toBeTruthy();
         });
 
         it('should handle non-HTTP errors with generic message', async () => {
@@ -156,7 +156,7 @@ describe('FeedbackLearnerProfileComponent', () => {
 
             // Assert
             expect(component.learnerProfile()).toBeUndefined();
-            expect(component.disabled).toBeTrue();
+            expect(component.disabled).toBeTruthy();
         });
 
         it('should handle HTTP errors during profile update', async () => {
@@ -172,7 +172,7 @@ describe('FeedbackLearnerProfileComponent', () => {
 
             // Assert
             expect(component.learnerProfile()).toEqual(mockProfile); // Profile should remain unchanged
-            expect(component.disabled).toBeFalse(); // Component should remain enabled
+            expect(component.disabled).toBeFalsy(); // Component should remain enabled
         });
     });
 
@@ -232,7 +232,7 @@ describe('FeedbackLearnerProfileComponent', () => {
 
         // Assert
         expect(component.learnerProfile()).toEqual(mockProfile); // Profile should remain unchanged
-        expect(component.disabled).toBeFalse(); // Component should remain enabled
+        expect(component.disabled).toBeFalsy(); // Component should remain enabled
     });
 
     it('should handle HTTP error with specific message during profile update', async () => {
@@ -252,7 +252,7 @@ describe('FeedbackLearnerProfileComponent', () => {
 
         // Assert
         expect(component.learnerProfile()).toEqual(mockProfile); // Profile should remain unchanged
-        expect(component.disabled).toBeFalse(); // Component should remain enabled
+        expect(component.disabled).toBeFalsy(); // Component should remain enabled
     });
 
     describe('Profile validation', () => {
@@ -329,7 +329,59 @@ describe('FeedbackLearnerProfileComponent', () => {
             expect(component.feedbackAlternativeStandard()).toBe(profile.feedbackAlternativeStandard);
             expect(component.feedbackFollowupSummary()).toBe(profile.feedbackFollowupSummary);
             expect(component.feedbackBriefDetailed()).toBe(profile.feedbackBriefDetailed);
-            expect(component.disabled).toBeFalse();
+            expect(component.disabled).toBeFalsy();
+        });
+
+        it('should test updateProfileValues method directly', () => {
+            // Arrange
+            const testProfile = new LearnerProfileDTO({
+                id: 1,
+                feedbackAlternativeStandard: 3,
+                feedbackFollowupSummary: 2,
+                feedbackBriefDetailed: 1,
+            });
+
+            // Act
+            (component as any).updateProfileValues(testProfile);
+
+            // Assert
+            expect(component.feedbackAlternativeStandard()).toBe(3);
+            expect(component.feedbackFollowupSummary()).toBe(2);
+            expect(component.feedbackBriefDetailed()).toBe(1);
+        });
+
+        it('should test loadProfile method directly', async () => {
+            // Arrange
+            const testProfile = new LearnerProfileDTO({
+                id: 1,
+                feedbackAlternativeStandard: 3,
+                feedbackFollowupSummary: 2,
+                feedbackBriefDetailed: 1,
+            });
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(testProfile);
+
+            // Act
+            await (component as any).loadProfile();
+
+            // Assert
+            expect(component.learnerProfile()).toEqual(testProfile);
+            expect(component.disabled).toBeFalsy();
+            expect(component.feedbackAlternativeStandard()).toBe(3);
+            expect(component.feedbackFollowupSummary()).toBe(2);
+            expect(component.feedbackBriefDetailed()).toBe(1);
+        });
+
+        it('should test loadProfile method with error handling', async () => {
+            // Arrange
+            const error = new Error('Load failed');
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(error);
+            const handleErrorSpy = jest.spyOn(component as any, 'handleError');
+
+            // Act
+            await (component as any).loadProfile();
+
+            // Assert
+            expect(handleErrorSpy).toHaveBeenCalledWith(error);
         });
     });
 });

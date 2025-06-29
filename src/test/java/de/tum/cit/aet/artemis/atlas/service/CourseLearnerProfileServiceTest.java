@@ -64,8 +64,10 @@ class CourseLearnerProfileServiceTest {
         course.setId(1L);
         User user1 = new User();
         user1.setId(2L);
+        user1.setLogin("user1");
         User user2 = new User();
         user2.setId(3L);
+        user2.setLogin("user2");
         LearnerProfile lp1 = new LearnerProfile();
         LearnerProfile lp2 = new LearnerProfile();
         user1.setLearnerProfile(lp1);
@@ -77,6 +79,7 @@ class CourseLearnerProfileServiceTest {
         users.add(user2);
         when(learnerProfileRepository.findByUserElseThrow(user1)).thenReturn(lp1);
         when(learnerProfileRepository.findByUserElseThrow(user2)).thenReturn(lp2);
+        when(learnerProfileRepository.findAllByUserIn(users)).thenReturn(Set.of(lp1, lp2));
         when(courseLearnerProfileRepository.findByLoginAndCourse(user1.getLogin(), course)).thenReturn(Optional.empty());
         when(courseLearnerProfileRepository.findByLoginAndCourse(user2.getLogin(), course)).thenReturn(Optional.empty());
         when(courseLearnerProfileRepository.saveAll(any())).thenAnswer(invocation -> {

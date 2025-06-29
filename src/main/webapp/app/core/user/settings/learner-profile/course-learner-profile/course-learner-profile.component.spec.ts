@@ -339,7 +339,7 @@ describe('CourseLearnerProfileComponent', () => {
 
             // Assert
             expect(component.activeCourseId).toBeNull();
-            expect(component.disabled).toBeTrue();
+            expect(component.disabled).toBeTruthy();
         });
 
         it('should load profile when course is selected', () => {
@@ -353,7 +353,7 @@ describe('CourseLearnerProfileComponent', () => {
 
             // Assert
             expect(component.activeCourseId).toBe(courseId);
-            expect(component.disabled).toBeFalse();
+            expect(component.disabled).toBeFalsy();
             expect(component.aimForGradeOrBonus()).toBe(clp1.aimForGradeOrBonus);
             expect(component.timeInvestment()).toBe(clp1.timeInvestment);
             expect(component.repetitionIntensity()).toBe(clp1.repetitionIntensity);
@@ -503,6 +503,127 @@ describe('CourseLearnerProfileComponent', () => {
             expect(component.aimForGradeOrBonus()).toBe(newProfile.aimForGradeOrBonus);
             expect(component.timeInvestment()).toBe(newProfile.timeInvestment);
             expect(component.repetitionIntensity()).toBe(newProfile.repetitionIntensity);
+        });
+
+        it('should test updateProfileValues method directly', () => {
+            // Arrange
+            const testProfile = new CourseLearnerProfileDTO();
+            testProfile.aimForGradeOrBonus = 3;
+            testProfile.timeInvestment = 4;
+            testProfile.repetitionIntensity = 5;
+
+            // Act
+            (component as any).updateProfileValues(testProfile);
+
+            // Assert
+            expect(component.aimForGradeOrBonus()).toBe(3);
+            expect(component.timeInvestment()).toBe(4);
+            expect(component.repetitionIntensity()).toBe(5);
+        });
+
+        it('should test getCourseLearnerProfile method with existing course', () => {
+            // Arrange
+            component.courseLearnerProfiles.set(profiles);
+
+            // Act
+            const result = (component as any).getCourseLearnerProfile(1);
+
+            // Assert
+            expect(result).toEqual(clp1);
+        });
+
+        it('should test getCourseLearnerProfile method with non-existing course', () => {
+            // Arrange
+            component.courseLearnerProfiles.set(profiles);
+
+            // Act
+            const result = (component as any).getCourseLearnerProfile(999);
+
+            // Assert
+            expect(result).toBeUndefined();
+        });
+
+        it('should test loadProfileForCourse method with existing course', () => {
+            // Arrange
+            component.courseLearnerProfiles.set(profiles);
+            const updateProfileValuesSpy = jest.spyOn(component as any, 'updateProfileValues');
+
+            // Act
+            (component as any).loadProfileForCourse(1);
+
+            // Assert
+            expect(updateProfileValuesSpy).toHaveBeenCalledWith(clp1);
+        });
+
+        it('should test loadProfileForCourse method with non-existing course', () => {
+            // Arrange
+            component.courseLearnerProfiles.set(profiles);
+            const updateProfileValuesSpy = jest.spyOn(component as any, 'updateProfileValues');
+
+            // Act
+            (component as any).loadProfileForCourse(999);
+
+            // Assert
+            expect(updateProfileValuesSpy).not.toHaveBeenCalled();
+        });
+
+        it('should test loadProfiles method directly', async () => {
+            // Arrange
+            const testProfiles = [clp1, clp2];
+            jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockResolvedValue(testProfiles);
+
+            // Act
+            await (component as any).loadProfiles();
+
+            // Assert
+            expect(component.courseLearnerProfiles()).toEqual(testProfiles);
+        });
+
+        it('should test loadProfiles method with error handling', async () => {
+            // Arrange
+            const error = new Error('Load failed');
+            jest.spyOn(learnerProfileApiService, 'getCourseLearnerProfilesForCurrentUser').mockRejectedValue(error);
+            const handleErrorSpy = jest.spyOn(component as any, 'handleError');
+
+            // Act
+            await (component as any).loadProfiles();
+
+            // Assert
+            expect(handleErrorSpy).toHaveBeenCalledWith(error);
+        });
+
+        it('should test courseChanged method with valid course selection', () => {
+            // Arrange
+            const mockEvent = {
+                target: {
+                    value: '1',
+                },
+            } as unknown as Event;
+            const loadProfileForCourseSpy = jest.spyOn(component as any, 'loadProfileForCourse');
+
+            // Act
+            component.courseChanged(mockEvent);
+
+            // Assert
+            expect(component.activeCourseId).toBe(1);
+            expect(component.disabled).toBeFalsy();
+            expect(loadProfileForCourseSpy).toHaveBeenCalledWith(1);
+        });
+
+        it('should test courseChanged method with no course selection', () => {
+            // Arrange
+            const mockEvent = {
+                target: {
+                    value: '-1',
+                },
+            } as unknown as Event;
+
+            // Act
+            component.courseChanged(mockEvent);
+
+            // Assert
+            expect(component.activeCourseId).toBeNull();
+            expect(component.disabled).toBeTruthy();
         });
     });
 });
