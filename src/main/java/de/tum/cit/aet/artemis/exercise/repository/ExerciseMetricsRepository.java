@@ -102,7 +102,7 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * @return a set of ResourceTimestampDTO objects containing the exercise id and the latest submission date for the user
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate)), p.id
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate), p.id)
             FROM Submission s
                 LEFT JOIN StudentParticipation p ON s.participation.id = p.id
                 LEFT JOIN p.exercise e
@@ -125,7 +125,7 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * @return a set of ResourceTimestampDTO objects containing the exercise id and the latest submission date for the user
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate)), p.id
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate), p.id)
             FROM Submission s
                 LEFT JOIN StudentParticipation p ON s.participation.id = p.id
                 LEFT JOIN p.exercise e
@@ -149,7 +149,7 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * @return a set of ResourceTimestampDTO objects containing the exercise id and the latest submission date for each exercise
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate)), p.id
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate), p.id)
             FROM Submission s
                 LEFT JOIN Participation p ON s.participation.id = p.id
                 LEFT JOIN p.exercise e

@@ -7,7 +7,9 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -154,8 +156,11 @@ public class ProgrammingExerciseParticipationResource {
         hasAccessToParticipationElseThrow(participation);
         filterParticipationSubmissionResults(participation);
 
+        Optional<Submission> latestSubmission = participation.getSubmissions().stream().findFirst();
+        Optional<Result> latestResult = latestSubmission.flatMap(submission -> submission.getResults().stream().findFirst());
+        Set<Result> results = latestResult.map(Set::of).orElseGet(Set::of);
         // hide details that should not be shown to the students
-        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
+        resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
         return ResponseEntity.ok(participation);
     }
 
@@ -183,8 +188,9 @@ public class ProgrammingExerciseParticipationResource {
         hasAccessToParticipationElseThrow(participation);
         filterParticipationSubmissionResults(participation);
 
+        Set<Result> results = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull)).collect(Collectors.toSet());
         // hide details that should not be shown to the students
-        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
+        resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
         return ResponseEntity.ok(participation);
     }
 
