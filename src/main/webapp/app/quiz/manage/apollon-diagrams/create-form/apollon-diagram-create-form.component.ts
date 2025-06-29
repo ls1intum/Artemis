@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, viewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
@@ -21,7 +21,7 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
 
     apollonDiagram: ApollonDiagram;
     isSaving: boolean;
-    @ViewChild('titleInput', { static: false }) titleInput: ElementRef;
+    readonly titleInput = viewChild.required<ElementRef>('titleInput');
 
     // Icons
     faSave = faSave;
@@ -30,7 +30,7 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
      * Adds focus on the title input field
      */
     ngAfterViewInit() {
-        this.titleInput.nativeElement.focus();
+        this.titleInput().nativeElement.focus();
     }
 
     /**
