@@ -65,4 +65,6 @@ export const PROFILE_APOLLON = 'apollon';
 
 export const PROFILE_ATHENA = 'athena';
 
+export const PROFILE_HYPERION = 'hyperion';
+
 export const PROFILE_THEIA = 'theia';

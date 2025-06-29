@@ -91,6 +91,12 @@ iris:
   - \b(?<!\S)ai(?!\S)\b
   - caseSensitive: false
 
+hyperion:
+  - hyperion
+  - consistency check
+  - exercise generation
+  - caseSensitive: false
+
 lecture:
   - lecture
   - attachment

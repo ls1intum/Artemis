@@ -25,6 +25,7 @@ plugins {
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.1.3"
     id "org.springframework.boot" version "${spring_boot_version}"
+    id "com.google.protobuf" version "${protobuf_plugin_version}"
 }
 
 group = "de.tum.cit.aet.artemis"
@@ -150,6 +151,71 @@ configurations.configureEach {
 
     exclude group: "commons-configuration", module: "commons-configuration"
 }
+
+// Protobuf Configuration for gRPC Integration
+protobuf {
+    generatedFilesBaseDir = "$projectDir/src"
+
+    protoc {
+        artifact = "com.google.protobuf:protoc:${protobuf_version}"
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:${grpc_version}"
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {
+                    outputSubDir = 'main/java'
+                }
+            }
+            task.plugins {
+                grpc {
+                    outputSubDir = 'main/java'
+                }
+            }
+        }
+    }
+}
+
+// Task to move generated files to correct location
+tasks.register("moveGeneratedFiles") {
+    doLast {
+        // Find all generated directories under src/main/main/java/de/tum/cit/aet/artemis/*/generated
+        def incorrectMainDir = file("src/main/main")
+        if (incorrectMainDir.exists()) {
+            def artemisPath = file("src/main/main/java/de/tum/cit/aet/artemis")
+            if (artemisPath.exists()) {
+                artemisPath.listFiles().each { moduleDir ->
+                    if (moduleDir.isDirectory()) {
+                        def generatedDir = new File(moduleDir, "generated")
+                        if (generatedDir.exists()) {
+                            def moduleName = moduleDir.name
+                            def targetDir = file("src/main/java/de/tum/cit/aet/artemis/${moduleName}/generated")
+
+                            println "Moving generated files for module: ${moduleName}"
+                            targetDir.parentFile.mkdirs()
+                            ant.move(todir: targetDir) {
+                                fileset(dir: generatedDir)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Clean up the incorrect main directory after moving all files
+            incorrectMainDir.deleteDir()
+        }
+    }
+}
+
+// Make sure generated files are moved after generation
+generateProto.finalizedBy moveGeneratedFiles
+
+compileJava.dependsOn generateProto
+compileTestJava.dependsOn generateProto
 
 dependencies {
 
@@ -284,6 +350,19 @@ dependencies {
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version {strictly "2.5.2" } }
 
+    // gRPC Client Dependencies - Spring Boot starter provides most functionality
+    implementation 'net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE'
+
+    // gRPC Server Dependencies - for testing only (official pattern for client testing)
+    testImplementation 'net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE'
+
+    // Additional gRPC dependencies for protobuf and compatibility
+    implementation platform("io.grpc:grpc-bom:${grpc_version}")
+    implementation 'io.grpc:grpc-protobuf'
+    implementation 'io.grpc:grpc-stub'
+    implementation 'io.grpc:grpc-netty-shaded'
+
+    compileOnly 'jakarta.annotation:jakarta.annotation-api:1.3.5' // Java 9+ compatibility - Do NOT update to 2.0.0
 
     // Required for synchronization between nodes and build agents (LocalCI)
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
@@ -406,8 +485,8 @@ dependencies {
     runtimeOnly "commons-beanutils:commons-beanutils:1.11.0"
     checkstyle "commons-beanutils:commons-beanutils:1.11.0"
 
-
     implementation "com.google.errorprone:error_prone_annotations:2.39.0"
+    implementation "io.grpc:grpc-services:${grpc_services_version}"
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") { version {              strictly byte_buddy_version } }
@@ -450,6 +529,12 @@ dependencies {
     testImplementation "org.gradle:gradle-tooling-api:8.14.2"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.3"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
+
+    // gRPC testing dependencies - production ready, minimal dependencies
+    testImplementation platform("io.grpc:grpc-bom:${grpc_version}")
+    testImplementation "io.grpc:grpc-testing"
+    testImplementation "io.grpc:grpc-inprocess"
+    testImplementation "io.grpc:grpc-services:${grpc_services_version}"
 
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"

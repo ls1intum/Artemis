@@ -73,6 +73,7 @@ Artemis integrates with the [EduTelligence suite](https://github.com/ls1intum/ed
 
 * **Iris** - AI Virtual Tutor powered by Pyris for intelligent student assistance
 * **Athena** - Automated assessment system for text, modeling, and programming exercises
+* **Hyperion** - AI-powered programming exercise creation assistance
 
 Additional services are available in the EduTelligence suite for advanced deployments. For detailed information about all available services, please refer to the [EduTelligence repository](https://github.com/ls1intum/edutelligence).
 
@@ -145,6 +146,7 @@ The following members of the project management team are responsible for specifi
 | Atlas                 | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
 | Iris                  | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
 | Athena                | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
+| Hyperion              | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
 | Tutorial Groups       | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork))                  |
 | Plagiarism checks     | Markus Paulsen ([@MarkusPaulsen](https://github.com/MarkusPaulsen))                |
 | LTI                   | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |

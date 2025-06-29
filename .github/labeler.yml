@@ -104,6 +104,13 @@ iris:
           - src/test/java/de/tum/cit/aet/artemis/iris/**/*
           - src/main/webapp/app/iris/**/*
 
+hyperion:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/hyperion/**/*
+          - src/test/java/de/tum/cit/aet/artemis/hyperion/**/*
+          - src/main/webapp/app/hyperion/**/*
+
 lecture:
   - changed-files:
       - any-glob-to-any-file:

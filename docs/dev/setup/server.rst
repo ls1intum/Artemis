@@ -70,6 +70,13 @@ You only need to modify them if your specific work or production environments re
        athena:
             # If you want to use Athena, refer to the dedicated configuration section. Under Administration Guide, Setup of Extension Services.
 
+       hyperion:
+            # If you want to use Hyperion for programming exercise creation assistance, configure the service connection below.
+            # For production, enable TLS and configure certificates. See Hyperion Service section below.
+            host: localhost
+            port: 50051
+            use-tls: false
+
 **Note:**
 If you use a password for authentication, update it in ``gradle/liquibase.gradle``.
 
@@ -106,6 +113,8 @@ module replacement in the client.
   ``dev,jenkins,localvc,artemis,scheduling,core,atlas,local``.
 * **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with ``athena`` profile and Local VC / CI enabled
   (see `Athena Service <#athena-service>`__).
+* **Artemis (Server, LocalVC & LocalCI, Hyperion):** The server will be started separated from the client with ``hyperion`` profile and Local VC / CI enabled
+  (see `Hyperion Service <#hyperion-service>`__).
 * **Artemis (Server, LocalVC & LocalCI, Theia):** The server will be started separated from the client with ``theia`` profile and Local VC / CI enabled.
 * **Artemis (BuildAgent):** The server will be started separated from the client with the profiles ``buildagent,local``.
   This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
@@ -250,3 +259,52 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 .. code:: bash
 
    ./gradlew bootRun --args='--spring.profiles.active=dev,jenkins,localvc,artemis,scheduling'
+
+.. _hyperion-service:
+
+Hyperion Service
+^^^^^^^^^^^^^^^^
+
+Hyperion is an AI-powered Edutelligence microservice for programming exercise creation assistance. To enable Hyperion:
+
+1. **Setup Hyperion Service** (external dependency)
+
+   - Deploy Hyperion service separately (see Hyperion documentation)
+   - Ensure it's accessible from Artemis server
+
+2. **Configure Connection**
+
+   Update ``application-local.yml`` (for development):
+
+   .. code-block:: yaml
+
+      artemis:
+        hyperion:
+          host: localhost         # Hyperion service host  
+          port: 50051             # Hyperion gRPC port
+          use-tls: false          # Disable TLS for development
+
+   For production, enable TLS in ``application-artemis.yml``:
+
+   .. code-block:: yaml
+
+      artemis:
+        hyperion:
+          host: hyperion.domain.com
+          port: 50051
+          use-tls: true
+          client-cert-path: "/certs/artemis-client.crt"
+          client-key-path: "/certs/artemis-client.key"  
+          server-ca-path: "/certs/hyperion-ca.crt"
+
+3. **Enable Profile**
+
+   Add ``hyperion`` to active profiles:
+
+   .. code-block:: bash
+
+      ./gradlew bootRun --args='--spring.profiles.active=dev,localci,localvc,artemis,hyperion'
+
+4. **Verify Setup**
+
+   Check health endpoint: ``http://localhost:8080/actuator/health/hyperion``
