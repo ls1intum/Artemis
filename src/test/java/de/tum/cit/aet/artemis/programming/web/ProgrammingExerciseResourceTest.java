@@ -5,8 +5,15 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -383,6 +390,140 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         // Clean up
         localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testRepositoryExportPerformance() throws Exception {
+        final int PERFORMANCE_TEST_ITERATIONS = 30;
+
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        course.setInstructorGroupName(instructor.getGroups().iterator().next());
+        courseRepository.save(course);
+
+        var localRepo = new LocalRepository(defaultBranch);
+        var originRepoPath = Files.createTempDirectory("testOriginRepo");
+        localRepo.configureRepos("testLocalRepo", originRepoPath);
+
+        createTestRepositoryContent(localRepo);
+
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
+
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(), any());
+
+        var snapshotStats = testEndpointWithWarmup("Repository Snapshot",
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-snapshot/" + RepositoryType.TEMPLATE.name(),
+                PERFORMANCE_TEST_ITERATIONS);
+
+        var fullHistoryStats = testEndpointWithWarmup("Repository with Full History",
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-with-full-history/" + RepositoryType.TEMPLATE.name(),
+                PERFORMANCE_TEST_ITERATIONS);
+
+        var bundleStats = testEndpointWithWarmup("Repository Bundle",
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-bundle/" + RepositoryType.TEMPLATE.name(),
+                PERFORMANCE_TEST_ITERATIONS);
+
+        generateSimpleReport(snapshotStats, fullHistoryStats, bundleStats, PERFORMANCE_TEST_ITERATIONS);
+
+        assertThat(fullHistoryStats.avgFileSize).isGreaterThan(snapshotStats.avgFileSize);
+
+        localRepo.resetLocalRepo();
+    }
+
+    private void createTestRepositoryContent(LocalRepository localRepo) throws Exception {
+        createAndCommitFile(localRepo, "README.md", "# Test Repository\nThis is a test repository for performance testing.\n", "Initial README");
+        createAndCommitFile(localRepo, "src/main/java/Main.java",
+                "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello World!\");\n    }\n}\n", "Add Main class");
+        createAndCommitFile(localRepo, "config/application.properties", "config.property1=value1\nconfig.property2=value2\n", "Add configuration");
+    }
+
+    private SimpleStats testEndpointWithWarmup(String endpointName, String url, int iterations) throws Exception {
+        // Warmup phase - 3 calls to eliminate first-call overhead
+        log.info("Warming up {} endpoint (3 rounds)...", endpointName);
+        for (int i = 0; i < 3; i++) {
+            request.get(url, HttpStatus.OK, byte[].class);
+        }
+        log.info("Warmup completed for {}", endpointName);
+
+        List<Long> times = new ArrayList<>();
+        List<Long> sizes = new ArrayList<>();
+
+        log.info("Testing {} endpoint ({} iterations)...", endpointName, iterations);
+        for (int i = 0; i < iterations; i++) {
+            long startTime = System.nanoTime();
+            byte[] result = request.get(url, HttpStatus.OK, byte[].class);
+            long endTime = System.nanoTime();
+
+            times.add((endTime - startTime) / 1_000_000); // Convert to milliseconds
+            sizes.add((long) result.length);
+
+            assertThat(result).isNotNull();
+            assertThat(result.length).isGreaterThan(0);
+        }
+
+        var timeStats = times.stream().mapToLong(Long::longValue).summaryStatistics();
+        var sizeStats = sizes.stream().mapToLong(Long::longValue).summaryStatistics();
+
+        return new SimpleStats(endpointName, timeStats.getMin(), timeStats.getMax(), timeStats.getAverage(), sizeStats.getAverage());
+    }
+
+    private void generateSimpleReport(SimpleStats snapshot, SimpleStats fullHistory, SimpleStats bundle, int iterations) throws IOException {
+        List<String> report = new ArrayList<>();
+
+        report.add("Repository Export Performance Test Report");
+        report.add("Iterations: " + iterations);
+        report.add("=" + "=".repeat(50));
+        report.add("");
+
+        addSimpleResults(report, snapshot);
+        addSimpleResults(report, fullHistory);
+        addSimpleResults(report, bundle);
+
+        // Create build/reports/performance-test directory if it doesn't exist
+        Path reportsDir = Path.of("build", "reports", "performance-test");
+        Files.createDirectories(reportsDir);
+
+        // Generate timestamp for unique filename
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        Path reportPath = reportsDir.resolve("export_performance_report_" + timestamp + ".txt");
+        Files.write(reportPath, report, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+
+        log.info("Performance report written to: {}", reportPath.toAbsolutePath());
+        log.info(String.format("%s: %.1fms avg, %.1fKB avg", snapshot.name, snapshot.avgTime, snapshot.avgFileSize / 1024.0));
+        log.info(String.format("%s: %.1fms avg, %.1fKB avg", fullHistory.name, fullHistory.avgTime, fullHistory.avgFileSize / 1024.0));
+        log.info(String.format("%s: %.1fms avg, %.1fKB avg", bundle.name, bundle.avgTime, bundle.avgFileSize / 1024.0));
+    }
+
+    private void addSimpleResults(List<String> report, SimpleStats stats) {
+        report.add(stats.name + ":");
+        report.add(String.format("  Time: min=%dms, max=%dms, avg=%.1fms", stats.minTime, stats.maxTime, stats.avgTime));
+        report.add(String.format("  Size: avg=%.1fKB", stats.avgFileSize / 1024.0));
+        report.add("");
+    }
+
+    private static class SimpleStats {
+
+        final String name;
+
+        final long minTime, maxTime;
+
+        final double avgTime, avgFileSize;
+
+        SimpleStats(String name, long minTime, long maxTime, double avgTime, double avgFileSize) {
+            this.name = name;
+            this.minTime = minTime;
+            this.maxTime = maxTime;
+            this.avgTime = avgTime;
+            this.avgFileSize = avgFileSize;
+        }
     }
 
     private void createAndCommitFile(LocalRepository localRepository, String filename, String content, String commitMessage) throws Exception {
