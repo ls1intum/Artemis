@@ -63,7 +63,7 @@ jobs:
 
       - name: Extract and validate bean instantiation metrics
         run: |
-          LINE=$(grep 'Bean instantiation graph exported' app.log) \
+          LINE=$(grep -q 'Bean instantiation graph exported' app.log) \
             || { echo "❌ No metrics line"; cat app.log; exit 1; }
           echo "✅ Metrics line: $LINE"
           if [[ "$LINE" =~ \(([0-9]+)\ edges,\ max\ call\ stack\ size:\ ([0-9]+)\) ]]; then
@@ -75,8 +75,9 @@ jobs:
           echo "• Number of edges = $EDGES"
           echo "• Max call stack size = $MAXSTACK"
           MIN_EDGES=20
-          MAX_EDGES=95
+          MAX_EDGES=94
           MAX_STACK_SIZE_THRESHOLD=9
+          echo "Validating against thresholds: MIN_EDGES=$MIN_EDGES, MAX_EDGES=$MAX_EDGES, MAX_STACK_SIZE_THRESHOLD=$MAX_STACK_SIZE_THRESHOLD"
           (( EDGES < MIN_EDGES )) && { echo "❌ < $MIN_EDGES edges. Something seems to be wrong as usually more beans are instantiated"; exit 1; }
           (( EDGES > MAX_EDGES ))   && { echo "❌ > $MAX_EDGES edges"; exit 1; }
           (( MAXSTACK > MAX_STACK_SIZE_THRESHOLD )) && { echo "❌ stack > $MAX_STACK_SIZE_THRESHOLD"; exit 1; }
