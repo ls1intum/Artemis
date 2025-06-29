@@ -92,9 +92,12 @@ public class AdminLtiConfigurationResource {
      */
     @DeleteMapping("lti-platform/{platformId}")
     public ResponseEntity<Void> deleteLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
-        log.debug("REST request to configured lti platform");
+        log.debug("REST request to delete configured LTI platform");
         LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(Long.parseLong(platformId));
+
         ltiPlatformConfigurationRepository.delete(platform);
+        oAuth2JWKSService.updateKey(platform.getRegistrationId());
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, platformId)).build();
     }
 
@@ -107,26 +110,31 @@ public class AdminLtiConfigurationResource {
      */
     @PutMapping("lti-platform")
     public ResponseEntity<Void> updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
-        log.debug("REST request to update configured lti platform");
+        log.debug("REST request to update configured LTI platform");
 
         if (platform.getId() == null) {
             return ResponseEntity.badRequest().build();
         }
 
+        LtiPlatformConfiguration existingPlatform = ltiPlatformConfigurationRepository.findByIdElseThrow(platform.getId());
+        if (!existingPlatform.getRegistrationId().equals(platform.getRegistrationId())) {
+            return ResponseEntity.badRequest().build();
+        }
+
         ltiPlatformConfigurationRepository.save(platform);
+
         return ResponseEntity.ok().build();
     }
 
     /**
-     * Updates an existing LTI platform configuration.
+     * Adds a new LTI platform configuration.
      *
-     * @param platform the updated LTI platform configuration to be saved.
-     * @return a {@link ResponseEntity} with status 200 (OK) if the update was successful,
-     *         or with status 400 (Bad Request) if the provided platform configuration is invalid (e.g., missing ID)
+     * @param platform the new LTI platform configuration to be saved.
+     * @return a {@link ResponseEntity} with status 200 (OK) if the creation was successful
      */
     @PostMapping("lti-platform")
     public ResponseEntity<Void> addLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
-        log.debug("REST request to add new lti platform");
+        log.debug("REST request to add new LTI platform");
 
         String clientRegistrationId = "artemis-" + UUID.randomUUID();
         platform.setRegistrationId(clientRegistrationId);
