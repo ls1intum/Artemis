@@ -6,7 +6,6 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { of } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseLearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/course-learner-profile-dto.model';
-import { MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -57,7 +56,6 @@ describe('CourseLearnerProfileComponent', () => {
         await TestBed.configureTestingModule({
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                MockProvider(AlertService),
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),

@@ -8,11 +8,14 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { HttpErrorResponse } from '@angular/common/http';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 
 describe('FeedbackLearnerProfileComponent', () => {
     let component: FeedbackLearnerProfileComponent;
     let fixture: ComponentFixture<FeedbackLearnerProfileComponent>;
     let learnerProfileApiService: LearnerProfileApiService;
+    let alertService: AlertService;
 
     const mockProfile = new LearnerProfileDTO({
         id: 1,
@@ -24,12 +27,19 @@ describe('FeedbackLearnerProfileComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FeedbackLearnerProfileComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(LearnerProfileApiService), provideHttpClient(), provideHttpClientTesting()],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AlertService, useClass: MockAlertService },
+                MockProvider(LearnerProfileApiService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackLearnerProfileComponent);
         component = fixture.componentInstance;
         learnerProfileApiService = TestBed.inject(LearnerProfileApiService);
+        alertService = TestBed.inject(AlertService);
 
         jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(mockProfile);
         jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile');
@@ -66,6 +76,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             component.feedbackBriefDetailed.set(newProfile.feedbackBriefDetailed);
 
             const putSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(newProfile);
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            const closeAllSpy = jest.spyOn(alertService, 'closeAll');
 
             // Act
             await component.onToggleChange();
@@ -75,6 +87,11 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Assert
             expect(putSpy).toHaveBeenCalledWith(newProfile);
             expect(component.learnerProfile()).toEqual(newProfile);
+            expect(closeAllSpy).toHaveBeenCalled();
+            expect(addAlertSpy).toHaveBeenCalledWith({
+                type: AlertType.SUCCESS,
+                message: 'artemisApp.learnerProfile.feedbackLearnerProfile.profileSaved',
+            });
         });
 
         it('should error on bad request', async () => {
@@ -133,7 +150,12 @@ describe('FeedbackLearnerProfileComponent', () => {
 
         it('should handle HTTP errors with specific message', async () => {
             // Arrange
-            const httpError = new HttpErrorResponse({ error: 'Server Error', status: 500 });
+            const httpError = new HttpErrorResponse({
+                error: 'Server Error',
+                status: 500,
+                statusText: 'Internal Server Error',
+            });
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
             jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(httpError);
 
             // Act
@@ -143,11 +165,16 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Assert
             expect(component.learnerProfile()).toBeUndefined();
             expect(component.disabled).toBeTruthy();
+            expect(addAlertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'Http failure response for (unknown url): 500 Internal Server Error',
+            });
         });
 
         it('should handle non-HTTP errors with generic message', async () => {
             // Arrange
             const genericError = new Error('Network error');
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
             jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(genericError);
 
             // Act
@@ -157,13 +184,22 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Assert
             expect(component.learnerProfile()).toBeUndefined();
             expect(component.disabled).toBeTruthy();
+            expect(addAlertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'artemisApp.learnerProfile.feedbackLearnerProfile.error',
+            });
         });
 
         it('should handle HTTP errors during profile update', async () => {
             // Arrange
             component.learnerProfile.set(mockProfile);
             component.disabled = false;
-            const httpError = new HttpErrorResponse({ error: 'Update Failed', status: 500 });
+            const httpError = new HttpErrorResponse({
+                error: 'Update Failed',
+                status: 500,
+                statusText: 'Internal Server Error',
+            });
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
             jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(httpError);
 
             // Act
@@ -173,6 +209,10 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Assert
             expect(component.learnerProfile()).toEqual(mockProfile); // Profile should remain unchanged
             expect(component.disabled).toBeFalsy(); // Component should remain enabled
+            expect(addAlertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'Http failure response for (unknown url): 500 Internal Server Error',
+            });
         });
     });
 
@@ -224,6 +264,7 @@ describe('FeedbackLearnerProfileComponent', () => {
         component.learnerProfile.set(mockProfile);
         component.disabled = false;
         const genericError = new Error('Network error');
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(genericError);
 
         // Act
@@ -233,6 +274,10 @@ describe('FeedbackLearnerProfileComponent', () => {
         // Assert
         expect(component.learnerProfile()).toEqual(mockProfile); // Profile should remain unchanged
         expect(component.disabled).toBeFalsy(); // Component should remain enabled
+        expect(addAlertSpy).toHaveBeenCalledWith({
+            type: AlertType.DANGER,
+            message: 'artemisApp.learnerProfile.feedbackLearnerProfile.error',
+        });
     });
 
     it('should handle HTTP error with specific message during profile update', async () => {
@@ -244,6 +289,7 @@ describe('FeedbackLearnerProfileComponent', () => {
             status: 400,
             statusText: 'Bad Request',
         });
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(httpError);
 
         // Act
@@ -253,6 +299,10 @@ describe('FeedbackLearnerProfileComponent', () => {
         // Assert
         expect(component.learnerProfile()).toEqual(mockProfile); // Profile should remain unchanged
         expect(component.disabled).toBeFalsy(); // Component should remain enabled
+        expect(addAlertSpy).toHaveBeenCalledWith({
+            type: AlertType.DANGER,
+            message: 'Http failure response for (unknown url): 400 Bad Request',
+        });
     });
 
     describe('Profile validation', () => {
@@ -272,6 +322,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             component.feedbackBriefDetailed.set(newProfile.feedbackBriefDetailed);
 
             const putSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(newProfile);
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            const closeAllSpy = jest.spyOn(alertService, 'closeAll');
 
             // Act
             await component.onToggleChange();
@@ -280,6 +332,12 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Assert
             expect(putSpy).toHaveBeenCalledWith(newProfile);
             expect(component.learnerProfile()).toEqual(newProfile);
+            expect(closeAllSpy).toHaveBeenCalled();
+
+            expect(addAlertSpy).toHaveBeenCalledWith({
+                type: AlertType.SUCCESS,
+                message: 'artemisApp.learnerProfile.feedbackLearnerProfile.profileSaved',
+            });
         });
 
         it('should update profile values in component state after successful update', async () => {
@@ -332,8 +390,12 @@ describe('FeedbackLearnerProfileComponent', () => {
             expect(component.disabled).toBeFalsy();
         });
 
-        it('should test updateProfileValues method directly', () => {
-            // Arrange
+        it('should update profile values when profile is set', async () => {
+            // Arrange - Create a new component instance to avoid conflicts with beforeEach
+            const newFixture = TestBed.createComponent(FeedbackLearnerProfileComponent);
+            const newComponent = newFixture.componentInstance;
+            const newLearnerProfileApiService = TestBed.inject(LearnerProfileApiService);
+
             const testProfile = new LearnerProfileDTO({
                 id: 1,
                 feedbackAlternativeStandard: 3,
@@ -341,16 +403,19 @@ describe('FeedbackLearnerProfileComponent', () => {
                 feedbackBriefDetailed: 1,
             });
 
-            // Act
-            (component as any).updateProfileValues(testProfile);
+            jest.spyOn(newLearnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(testProfile);
+
+            // Act - Initialize the new component
+            await newComponent.ngOnInit();
+            await newFixture.whenStable();
 
             // Assert
-            expect(component.feedbackAlternativeStandard()).toBe(3);
-            expect(component.feedbackFollowupSummary()).toBe(2);
-            expect(component.feedbackBriefDetailed()).toBe(1);
+            expect(newComponent.feedbackAlternativeStandard()).toBe(3);
+            expect(newComponent.feedbackFollowupSummary()).toBe(2);
+            expect(newComponent.feedbackBriefDetailed()).toBe(1);
         });
 
-        it('should test loadProfile method directly', async () => {
+        it('should load profile and update component state through ngOnInit', async () => {
             // Arrange
             const testProfile = new LearnerProfileDTO({
                 id: 1,
@@ -360,8 +425,9 @@ describe('FeedbackLearnerProfileComponent', () => {
             });
             jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(testProfile);
 
-            // Act
-            await (component as any).loadProfile();
+            // Act - This calls loadProfile internally
+            await component.ngOnInit();
+            await fixture.whenStable();
 
             // Assert
             expect(component.learnerProfile()).toEqual(testProfile);
@@ -371,17 +437,22 @@ describe('FeedbackLearnerProfileComponent', () => {
             expect(component.feedbackBriefDetailed()).toBe(1);
         });
 
-        it('should test loadProfile method with error handling', async () => {
-            // Arrange
+        it('should handle errors during profile loading through ngOnInit', async () => {
+            // Arrange - Create a new component instance to avoid conflicts with beforeEach
+            const newFixture = TestBed.createComponent(FeedbackLearnerProfileComponent);
+            const newComponent = newFixture.componentInstance;
+            const newLearnerProfileApiService = TestBed.inject(LearnerProfileApiService);
+
             const error = new Error('Load failed');
-            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(error);
-            const handleErrorSpy = jest.spyOn(component as any, 'handleError');
+            jest.spyOn(newLearnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(error);
 
-            // Act
-            await (component as any).loadProfile();
+            // Act - This calls loadProfile internally which calls handleError on failure
+            await newComponent.ngOnInit();
+            await newFixture.whenStable();
 
-            // Assert
-            expect(handleErrorSpy).toHaveBeenCalledWith(error);
+            // Assert - Component should remain in error state
+            expect(newComponent.learnerProfile()).toBeUndefined();
+            expect(newComponent.disabled).toBeTruthy();
         });
     });
 });
