@@ -241,6 +241,22 @@ public class FaqResource {
     }
 
     /**
+     * PUT courses/:courseId/faqs/enable : Enables faqs for a course.
+     *
+     * @param courseId the id of the course for which the faq should be enabled
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("courses/{courseId}/faqs/enable")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> enableFaqForCourse(@PathVariable long courseId) {
+        log.debug("REST request to enable faq for course with id: {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        course.setFaqEnabled(true);
+        courseRepository.save(course);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * @param courseId the id of the course the faq belongs to
      * @param role     the required role of the user
      * @throws AccessForbiddenException if the user does not have at least role
