@@ -55,7 +55,7 @@ jobs:
             sleep 2
           done
 
-          if ! grep -q "Artemis is running!" app.log; then
+          if ! grep -q "'Artemis' is running!" app.log; then
             echo "❌ Timeout: 'Artemis is running!' not found in app.log"
             cat app.log
             exit 1
