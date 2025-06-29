@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, input } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, input, output } from '@angular/core';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { Subject, Subscription } from 'rxjs';
 import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
@@ -23,14 +23,14 @@ export type FileWithHasMatch = {
     imports: [NgbDropdown, NgClass, FaIconComponent, NgbDropdownItem, TranslateDirective, ArtemisTranslatePipe],
 })
 export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
-    @Input() files: FileWithHasMatch[];
-    @Input() studentLogin: string;
+    readonly files = input<FileWithHasMatch[]>([]);
+    readonly studentLogin = input.required<string>();
     fileSelectedSubject = input<Subject<PlagiarismFileElement>>();
     isLockFilesEnabled = input<boolean>();
     showFilesSubject = input<Subject<boolean>>();
     dropdownHoverSubject = input<Subject<PlagiarismFileElement>>();
 
-    @Output() selectFile = new EventEmitter<string>();
+    readonly selectFile = output<string>();
 
     public showFiles = false;
     public activeFileIndex = 0;
@@ -62,7 +62,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     private handleLockedFileSelection(file: FileWithHasMatch, idx: number): void {
-        const index = this.files[idx]?.file === file.file ? idx : this.getIndexOf(file);
+        const index = this.files()[idx]?.file === file.file ? idx : this.getIndexOf(file);
 
         if (index >= 0) {
             this.handleFileSelect(file, index, false);
@@ -96,7 +96,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     private handleDropdownHover(file: FileWithHasMatch, idx: number): void {
-        const index = this.files[idx]?.file === file.file ? idx : this.getIndexOf(file);
+        const index = this.files()[idx]?.file === file.file ? idx : this.getIndexOf(file);
 
         this.hoveredFileIndex = index >= 0 ? index : -1;
     }
@@ -120,11 +120,11 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     hasActiveFile(): boolean {
-        return this.hasFiles() && this.activeFileIndex < this.files.length;
+        return this.hasFiles() && this.activeFileIndex < this.files().length;
     }
 
     getActiveFile(): string {
-        return this.files[this.activeFileIndex].file;
+        return this.files()[this.activeFileIndex].file;
     }
 
     /**
@@ -144,7 +144,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     hasFiles(): boolean {
-        return !!this.files?.length;
+        return !!this.files()?.length;
     }
 
     /**
@@ -175,6 +175,6 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
      * @returns index if found, -1 otherwise
      */
     private getIndexOf(file: FileWithHasMatch): number {
-        return this.files.findIndex((f) => f.file === file.file);
+        return this.files().findIndex((f) => f.file === file.file);
     }
 }

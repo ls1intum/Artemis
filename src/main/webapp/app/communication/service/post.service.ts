@@ -32,9 +32,9 @@ export class PostService extends PostingService<Post> {
             title: (post as Post).title,
             hasForwardedMessages: post.hasForwardedMessages,
             conversation: post.conversation ? { id: post.conversation.id } : undefined,
+            plagiarismCase: post.plagiarismCase ? { id: post.plagiarismCase.id } : undefined,
             creationDate: post.creationDate,
             updatedDate: post.updatedDate,
-            plagiarismCase: post.plagiarismCase ? { id: post.plagiarismCase.id } : undefined,
         };
         const copy = this.convertPostingDateFromClient(postDTO);
         return this.http.post<Post>(`${this.getResourceEndpoint(courseId, undefined, post)}`, copy, { observe: 'response' }).pipe(map(this.convertPostingResponseDateFromServer));
