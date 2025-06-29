@@ -8,6 +8,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,8 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
 
     private final Queue<Pair<String, String>> edges = new ConcurrentLinkedQueue<>();
 
+    private final AtomicInteger maxCallStackSize = new AtomicInteger(0);
+
     @Override
     public Object postProcessBeforeInstantiation(Class<?> cls, String name) {
         if (cls.getName().startsWith(BASE)) {
@@ -43,6 +46,8 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
             }
             log.debug("Instantiating: {} ← {}", name, parent != null ? parent : "root");
             stack.push(name);
+            int depth = stack.size();
+            maxCallStackSize.updateAndGet(prev -> Math.max(prev, depth));
         }
         return null;
     }
@@ -70,7 +75,7 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
                 out.printf("  \"%s\" -> \"%s\";%n", edge.first(), edge.second());
             }
             out.println("}");
-            log.debug("Bean instantiation graph exported to startupBeans.dot ({} edges)", edges.size());
+            log.debug("Bean instantiation graph exported to startupBeans.dot ({} edges, max call stack size: {})", edges.size(), maxCallStackSize.get());
         }
         catch (IOException e) {
             log.error("Failed to write startupBeans.dot", e);

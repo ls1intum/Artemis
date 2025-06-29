@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_NO_LIQUIBASE;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.sql.SQLException;
@@ -68,7 +69,7 @@ public class LiquibaseConfiguration {
         this.dataSource = dataSourceObjectProvider.getIfUnique();
         this.currentVersionString = buildProperties.getVersion();
 
-        if (!env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+        if (!env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST)) && !env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_NO_LIQUIBASE))) {
             this.databaseMigration = new DatabaseMigration(currentVersionString, dataSource);
             databaseMigration.checkMigrationPath();
         }
@@ -113,8 +114,8 @@ public class LiquibaseConfiguration {
      */
     @EventListener
     public void storeCurrentVersionToDatabase(ApplicationReadyEvent event) {
-        if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
-            return; // Do not perform any operations if the application is running in the test profile.
+        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST)) || env.acceptsProfiles(Profiles.of(SPRING_PROFILE_NO_LIQUIBASE))) {
+            return; // Do not perform any operations if the application is running in the test or no-liquibase profile.
         }
 
         String sqlStatement = this.databaseMigration.getPreviousVersionString() == null ? "INSERT INTO artemis_version (latest_version) VALUES(?);"
