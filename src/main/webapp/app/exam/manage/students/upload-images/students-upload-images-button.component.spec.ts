@@ -12,6 +12,7 @@ describe('StudentsUploadImagesButtonComponent', () => {
     let fixture: ComponentFixture<StudentsUploadImagesButtonComponent>;
     let comp: StudentsUploadImagesButtonComponent;
     let modalService: NgbModal;
+    const testExam: Exam = { id: 1, title: 'Test Exam', course: { id: 1 } };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -24,6 +25,8 @@ describe('StudentsUploadImagesButtonComponent', () => {
                 fixture = TestBed.createComponent(StudentsUploadImagesButtonComponent);
                 comp = fixture.componentInstance;
                 modalService = TestBed.inject(NgbModal);
+                fixture.componentRef.setInput('courseId', 1);
+                fixture.componentRef.setInput('exam', testExam);
             });
     });
 
@@ -31,17 +34,19 @@ describe('StudentsUploadImagesButtonComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        const componentInstance = { courseId: Number, exam: Exam };
-        const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
+    it('should initialize and set modal inputs correctly', () => {
+        const mockModalRef = {
+            componentInstance: { courseId: undefined as any, exam: undefined as any },
+            result: new Promise((resolve) => resolve(true)),
+        };
+        const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
 
-        fixture.componentRef.setInput('exam', {} as Exam);
-        fixture.componentRef.setInput('courseId', 1);
         comp.openUploadImagesDialog(new MouseEvent('click'));
 
         const openUploadImagesDialogButton = fixture.debugElement.query(By.css('jhi-button'));
         expect(openUploadImagesDialogButton).not.toBeNull();
         expect(modalServiceOpenStub).toHaveBeenCalledOnce();
+        expect(mockModalRef.componentInstance.courseId()!).toBe(1);
+        expect(mockModalRef.componentInstance.exam()!).toBe(testExam);
     });
 });

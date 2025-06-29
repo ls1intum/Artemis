@@ -16,6 +16,7 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -41,31 +42,9 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * Spring Data JPA repository for the ProgrammingExercise entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
-
-    /**
-     * Does a max join on the result table for each participation by result id (the newer the result id, the newer the result).
-     * This makes sure that we only receive the latest result for the template and the solution participation if they exist.
-     *
-     * @param courseId the course the returned programming exercises belong to.
-     * @return all exercises for the given course with only the latest results for solution and template each (if present).
-     */
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.templateParticipation tp
-                LEFT JOIN FETCH pe.solutionParticipation sp
-                LEFT JOIN FETCH tp.submissions tps
-                LEFT JOIN FETCH sp.submissions s
-                LEFT JOIN FETCH tps.results tpr
-                LEFT JOIN FETCH s.results spr
-                LEFT JOIN FETCH pe.categories
-            WHERE pe.course.id = :courseId
-                AND (tpr.id = (SELECT MAX(r1.id) FROM Submission stp JOIN stp.results r1 WHERE stp.participation = tp) OR tpr.id IS NULL)
-                AND (spr.id = (SELECT MAX(r2.id) FROM Submission s2 JOIN s2.results r2 WHERE s2.participation = sp) OR spr.id IS NULL)
-            """)
-    List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation" })
     Optional<ProgrammingExercise> findWithTemplateParticipationById(long exerciseId);
@@ -120,8 +99,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(long exerciseId);
 
     List<ProgrammingExercise> findAllByProjectKey(String projectKey);
-
-    List<ProgrammingExercise> findAllByCourseId(Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories" })
     List<ProgrammingExercise> findAllWithCategoriesByCourseId(Long courseId);
@@ -229,9 +206,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             LEFT JOIN FETCH t.students
             LEFT JOIN FETCH pep.submissions s
             WHERE pe.id = :exerciseId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
-    Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(@Param("exerciseId") long exerciseId);
+    Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
     Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);
@@ -386,9 +362,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
-    long countLegalSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") long exerciseId);
+    long countSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") long exerciseId);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
@@ -408,7 +383,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE p.exercise.id IN :exerciseIds
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             GROUP BY p.exercise.id
             """)
     List<ExerciseMapEntryDTO> countSubmissionsByExerciseIdsSubmittedIgnoreTestRun(@Param("exerciseIds") Set<Long> exerciseIds);
@@ -429,7 +403,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND r.submission.submitted = TRUE
-                AND (r.submission.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR r.submission.type IS NULL)
                 AND r.assessor IS NOT NULL
                 AND r.completionDate IS NOT NULL
             """)
@@ -449,9 +422,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 JOIN p.submissions s
             WHERE p.exercise.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 AND p.exercise.exerciseGroup.exam.id = :examId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
-    long countLegalSubmissionsByExamIdSubmitted(@Param("examId") long examId);
+    long countSubmissionsByExamIdSubmitted(@Param("examId") long examId);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
@@ -468,7 +440,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE p.exercise.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 AND p.exercise.id IN :exerciseIds
                 AND s.submitted = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     long countAllSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
 
@@ -676,8 +647,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     @NotNull
-    default ProgrammingExercise findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(programmingExerciseId), programmingExerciseId);
+    default ProgrammingExercise findByIdWithStudentParticipationsAndSubmissionsElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithEagerStudentParticipationsStudentAndSubmissionsById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -685,8 +656,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @return the number of programming submissions which should be assessed
      *         We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
      */
-    default long countLegalSubmissionsByExerciseIdSubmitted(long exerciseId) {
-        return countLegalSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
+    default long countSubmissionsByExerciseIdSubmitted(long exerciseId) {
+        return countSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
     }
 
     /**

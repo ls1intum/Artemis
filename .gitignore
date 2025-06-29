@@ -224,3 +224,5 @@ data-exports/
 /supporting_scripts/**/*.ini
 /legal
 /src/test/resources/config/application-local.yml
+startupBeans.dot
+/junit.xml

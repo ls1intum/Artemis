@@ -1,15 +1,15 @@
-import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, viewChildren } from '@angular/core';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
+import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import * as Split from 'split.js';
 import { Subject } from 'rxjs';
-import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
-import { FromToElement, TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { Exercise, ExerciseType, getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { HttpResponse } from '@angular/common/http';
 import { SimpleMatch } from 'app/plagiarism/shared/entities/PlagiarismMatch';
 import dayjs from 'dayjs/esm';
-import { TextPlagiarismFileElement } from 'app/plagiarism/shared/entities/text/TextPlagiarismFileElement';
+import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
 import { IconDefinition, faLock, faUnlock } from '@fortawesome/free-solid-svg-icons';
 import { TextSubmissionViewerComponent } from './text-submission-viewer/text-submission-viewer.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -28,18 +28,18 @@ export class SplitPaneDirective {
 export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     private plagiarismCasesService = inject(PlagiarismCasesService);
 
-    @Input() comparison: PlagiarismComparison<TextSubmissionElement>;
-    @Input() exercise: Exercise;
-    @Input() splitControlSubject: Subject<string>;
-    @Input() sortByStudentLogin: string;
-    @Input() forStudent: boolean;
+    readonly comparison = input<PlagiarismComparison | undefined>(undefined!);
+    readonly exercise = input<Exercise>();
+    readonly splitControlSubject = input<Subject<string>>();
+    readonly sortByStudentLogin = input<string>();
+    readonly forStudent = input<boolean>();
 
-    @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
+    readonly panes = viewChildren(SplitPaneDirective);
 
-    plagiarismComparison: PlagiarismComparison<TextSubmissionElement>;
-    fileSelectedSubject = new Subject<TextPlagiarismFileElement>();
+    plagiarismComparison: PlagiarismComparison;
+    fileSelectedSubject = new Subject<PlagiarismFileElement>();
     showFilesSubject = new Subject<boolean>();
-    dropdownHoverSubject = new Subject<TextPlagiarismFileElement>();
+    dropdownHoverSubject = new Subject<PlagiarismFileElement>();
 
     public split: Split.Instance;
 
@@ -57,7 +57,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
      * Initialize third-party libraries inside this lifecycle hook.
      */
     ngAfterViewInit(): void {
-        const paneElements = this.panes.map((pane: SplitPaneDirective) => pane.elementRef.nativeElement);
+        const paneElements = this.panes().map((pane: SplitPaneDirective) => pane.elementRef.nativeElement);
 
         this.split = Split.default(paneElements, {
             minSize: 100,
@@ -67,7 +67,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     }
 
     ngOnInit(): void {
-        this.splitControlSubject.subscribe((pane: string) => this.handleSplitControl(pane));
+        this.splitControlSubject()?.subscribe((pane: string) => this.handleSplitControl(pane));
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -79,14 +79,15 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
         if (changes.comparison) {
             this.plagiarismCasesService
-                .getPlagiarismComparisonForSplitView(getCourseId(this.exercise)!, changes.comparison.currentValue.id)
-                .subscribe((resp: HttpResponse<PlagiarismComparison<TextSubmissionElement>>) => {
+                .getPlagiarismComparisonForSplitView(getCourseId(this.exercise())!, changes.comparison.currentValue.id)
+                .subscribe((resp: HttpResponse<PlagiarismComparison>) => {
                     this.plagiarismComparison = resp.body!;
-                    if (this.sortByStudentLogin && this.sortByStudentLogin === this.plagiarismComparison.submissionB.studentLogin) {
+                    const sortByStudentLogin = this.sortByStudentLogin();
+                    if (sortByStudentLogin && sortByStudentLogin === this.plagiarismComparison.submissionB.studentLogin) {
                         this.swapSubmissions(this.plagiarismComparison);
                     }
                     if (this.isProgrammingOrTextExercise) {
-                        this.parseTextMatches(this.plagiarismComparison as PlagiarismComparison<TextSubmissionElement>);
+                        this.parseTextMatches(this.plagiarismComparison as PlagiarismComparison);
                     }
                 });
         }
@@ -103,7 +104,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
      * More specifically, swaps submissionA with submissionB and startA with startB in matches.
      * @param plagiarismComparison plagiarism comparison that will be modified in-place
      */
-    private swapSubmissions(plagiarismComparison: PlagiarismComparison<TextSubmissionElement>) {
+    private swapSubmissions(plagiarismComparison: PlagiarismComparison) {
         const temp = plagiarismComparison.submissionA;
         plagiarismComparison.submissionA = plagiarismComparison.submissionB;
         plagiarismComparison.submissionB = temp;
@@ -117,7 +118,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
         }
     }
 
-    parseTextMatches(plagComparison: PlagiarismComparison<TextSubmissionElement>) {
+    parseTextMatches(plagComparison: PlagiarismComparison) {
         if (plagComparison.matches) {
             const matchesA = plagComparison.matches.map((match) => new SimpleMatch(match.startA, match.length)).sort((m1, m2) => m1.start - m2.start);
             const matchesB = plagComparison.matches.map((match) => new SimpleMatch(match.startB, match.length)).sort((m1, m2) => m1.start - m2.start);
@@ -136,7 +137,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
      * @param matches list of objects containing the index and length of matched elements
      * @param submission the submission to map the elements of
      */
-    mapMatchesToElements(matches: SimpleMatch[], submission: PlagiarismSubmission<TextSubmissionElement>) {
+    mapMatchesToElements(matches: SimpleMatch[], submission: PlagiarismSubmission) {
         // sort submission elements so that from and to indexes from matches reference correct elements
         const elements = submission.elements?.sort((a, b) => a.id - b.id);
         const filesToMatchedElements = new Map<string, FromToElement[]>();
@@ -161,11 +162,11 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     }
 
     getTextSubmissionA() {
-        return this.plagiarismComparison.submissionA as PlagiarismSubmission<TextSubmissionElement>;
+        return this.plagiarismComparison.submissionA as PlagiarismSubmission;
     }
 
     getTextSubmissionB() {
-        return this.plagiarismComparison.submissionB as PlagiarismSubmission<TextSubmissionElement>;
+        return this.plagiarismComparison.submissionB as PlagiarismSubmission;
     }
 
     handleSplitControl(pane: string) {

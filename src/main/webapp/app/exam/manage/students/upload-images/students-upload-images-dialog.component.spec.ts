@@ -53,9 +53,8 @@ describe('StudentsUploadImagesDialogComponent', () => {
                 fixture = TestBed.createComponent(StudentsUploadImagesDialogComponent);
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
-
+                fixture.componentRef.setInput('courseId', course.id);
                 fixture.componentRef.setInput('exam', exam);
-                fixture.componentRef.setInput('courseId', course.id!);
 
                 ngbModal = TestBed.get(NgbActiveModal);
             });

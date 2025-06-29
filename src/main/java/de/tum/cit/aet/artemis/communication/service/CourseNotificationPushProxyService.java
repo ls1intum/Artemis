@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -56,7 +57,9 @@ import de.tum.cit.aet.artemis.core.config.Constants;
  * </p>
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
+@Deprecated(since = "8.2.0", forRemoval = true)
 public class CourseNotificationPushProxyService {
 
     /**
