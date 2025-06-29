@@ -873,4 +873,23 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     Set<Result> findLatestResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
 
+    /**
+     * Finds the latest results for the given submission IDs, including the assessment note.
+     *
+     * @param submissionIds the submission IDs for which to find the latest results
+     * @return a set of latest results with assessment notes
+     */
+    @Query("""
+            SELECT r
+            FROM Result r
+            LEFT JOIN FETCH r.assessmentNote
+            WHERE r.submission.id IN :submissionIds
+            AND r.id = (
+                 SELECT MAX(r2.id)
+                 FROM Result r2
+                 WHERE r2.submission.id = r.submission.id
+               )
+            """)
+    Set<Result> findLatestResultsWithAssessmentNoteBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
+
 }

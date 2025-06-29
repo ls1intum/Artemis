@@ -168,7 +168,7 @@ export class LtiConfigurationComponent implements OnInit {
         this.ltiConfigurationService.deleteLtiPlatform(platformId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
-                this.router.navigate(['admin', 'lti-configuration']);
+                this.platforms = this.platforms.filter((platform) => platform.id !== platformId);
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);

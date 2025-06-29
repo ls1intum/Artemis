@@ -33,7 +33,7 @@
         class="btn btn-outline-primary"
         (click)="saveDiagram()"
         [hidden]="!apollonDiagram"
-        [disabled]="isSaved || (titleField && titleField?.invalid)"
+        [disabled]="isSaved || (titleField() && titleField()?.invalid)"
         jhiTranslate="artemisApp.apollonDiagram.detail.save"
     ></button>
     <div [ngbTooltip]="!hasInteractive ? ('artemisApp.apollonDiagram.create.validationError' | artemisTranslate) : undefined">
