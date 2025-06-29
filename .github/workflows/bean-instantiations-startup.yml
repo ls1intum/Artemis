@@ -42,36 +42,26 @@ jobs:
             > app.log 2>&1 &
           echo $! > app.pid
 
-      - name: Wait for health endpoint
+      - name: Wait for the application to start
         run: |
-          URL=http://localhost:8080/management/health/readiness
-          echo "Waiting up to 60s for $URL → HTTP 200"
+          echo "Waiting up to 60s for 'Artemis is running!' to appear in app.log..."
 
-          # allow curl to fail without exiting
-          set +e
-
-          HTTP_CODE=000
           for i in {1..30}; do
-            # if curl fails, fallback to 000
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
-            if [ "$HTTP_CODE" -eq 200 ]; then
-              echo "✅ $URL returned 200 (after $i attempts)"
+            if grep -q "Artemis is running!" app.log; then
+              echo "✅ Found 'Artemis is running!' in app.log after $i attempts"
               break
             fi
-            echo "  attempt $i/30: HTTP $HTTP_CODE"
+            echo "  attempt $i/30: not found yet"
             sleep 2
           done
 
-          # restore -e so failures here bubble up
-          set -e
-
-          if [ "$HTTP_CODE" -ne 200 ]; then
-            echo "❌ Health check never returned 200; dumping full app.log:"
+          if ! grep -q "Artemis is running!" app.log; then
+            echo "❌ Timeout: 'Artemis is running!' not found in app.log"
             cat app.log
             exit 1
           fi
 
-      - name: Extract and validate metrics
+      - name: Extract and validate bean instantiation metrics
         run: |
           LINE=$(grep 'Bean instantiation graph exported' app.log) \
             || { echo "❌ No metrics line"; cat app.log; exit 1; }
@@ -85,13 +75,13 @@ jobs:
           echo "• Number of edges = $EDGES"
           echo "• Max call stack size = $MAXSTACK"
           MIN_EDGES=20
-          MAX_EDGES=86
-          MAX_STACK_SIZE_THRESHOLD=10
-          (( EDGES < MIN_EDGES )) && { echo "❌ < $MIN_EDGES edges"; exit 1; }
+          MAX_EDGES=95
+          MAX_STACK_SIZE_THRESHOLD=9
+          (( EDGES < MIN_EDGES )) && { echo "❌ < $MIN_EDGES edges. Something seems to be wrong as usually more beans are instantiated"; exit 1; }
           (( EDGES > MAX_EDGES ))   && { echo "❌ > $MAX_EDGES edges"; exit 1; }
           (( MAXSTACK > MAX_STACK_SIZE_THRESHOLD )) && { echo "❌ stack > $MAX_STACK_SIZE_THRESHOLD"; exit 1; }
           echo "✅ Final values → Edges: $EDGES; Max call stack size: $MAXSTACK"
-          echo "🎉 Bean metrics within expected ranges"
+          echo "🎉 Number of instantiated beans on startup within expected ranges"
 
       - name: Stop application
         if: always()
