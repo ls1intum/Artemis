@@ -10,7 +10,7 @@
                 <jhi-plagiarism-split-view
                     [comparison]="submission.plagiarismComparison!"
                     [exercise]="plagiarismCase()?.exercise!"
-                    [sortByStudentLogin]="forStudent ? 'Your submission' : (plagiarismCase()?.student)!.login!"
+                    [sortByStudentLogin]="forStudent() ? 'Your submission' : (plagiarismCase()?.student)!.login!"
                     [splitControlSubject]="splitControlSubject"
                     [forStudent]="forStudent"
                 />
