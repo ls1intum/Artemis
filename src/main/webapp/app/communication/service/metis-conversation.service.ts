@@ -74,6 +74,10 @@ export class MetisConversationService implements OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.cleanupSubscriptions();
+    }
+
+    private cleanupSubscriptions() {
         if (this.subscribedConversationMembershipTopic) {
             this.websocketService.unsubscribe(this.subscribedConversationMembershipTopic);
             this.subscribedConversationMembershipTopic = undefined;
@@ -132,6 +136,11 @@ export class MetisConversationService implements OnDestroy {
         this._activeConversation$.next(this.activeConversation);
         this.isCodeOfConductPresented = false;
         this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
+    }
+
+    public disableConversationService() {
+        this.cleanupSubscriptions();
+        this._isServiceSetup$.next(false);
     }
 
     /**

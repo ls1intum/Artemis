@@ -58,6 +58,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.postWithResponseBody("/api/communication/courses/" + faq.getCourse().getId() + "/faqs", new Faq(), Faq.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody("/api/communication/courses/" + faq.getCourse().getId() + "/faqs/" + this.faq.getId(), this.faq, Faq.class, HttpStatus.FORBIDDEN);
         request.delete("/api/communication/courses/" + faq.getCourse().getId() + "/faqs/" + this.faq.getId(), HttpStatus.FORBIDDEN);
+        request.put("/api/communication/courses/" + course1.getId() + "/faqs/enable", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -227,6 +228,25 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Set<FaqDTO> returnedFaqs = request.get("/api/communication/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
         assertThat(returnedFaqs.size()).isEqualTo(faqs.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testEnableFaq() throws Exception {
+        disableFaq(course1);
+        enableFaqRESTCall(course1);
+        Course updatedCourse = courseRepository.findByIdElseThrow(course1.getId());
+        assertThat(updatedCourse.isFaqEnabled()).isTrue();
+    }
+
+    private void disableFaq(Course course) {
+        course = courseRepository.findByIdElseThrow(course.getId());
+        course.setFaqEnabled(false);
+        courseRepository.save(course);
+    }
+
+    private void enableFaqRESTCall(Course course) throws Exception {
+        request.put("/api/communication/courses/" + course.getId() + "/faqs/enable", null, HttpStatus.OK);
     }
 
 }
