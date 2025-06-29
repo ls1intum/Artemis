@@ -575,8 +575,8 @@ public class ProgrammingExerciseExportImportResource {
             log.info("Successfully exported repository for programming exercise {} with title {} in {} ms", programmingExercise.getId(), programmingExercise.getTitle(),
                     (System.nanoTime() - start) / 1000000);
 
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zippedRepoName + ".zip\"").body(zipResource);
+            return ResponseEntity.ok().contentLength(zipResource.contentLength()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipResource.getFilename())
+                    .body(zipResource);
         }
         catch (GitAPIException e) {
             log.error("Failed to export repository: {}", e.getMessage());
