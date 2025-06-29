@@ -42,7 +42,7 @@ describe('FeedbackLearnerProfileComponent', () => {
         alertService = TestBed.inject(AlertService);
 
         jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(mockProfile);
-        jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile');
+        jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(mockProfile);
 
         fixture.detectChanges();
         await fixture.whenStable();
