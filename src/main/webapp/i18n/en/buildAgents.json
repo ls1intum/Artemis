@@ -17,6 +17,7 @@
             "running": "Running",
             "idle": "Idle",
             "paused": "Paused",
+            "selfPaused": "Self paused",
             "onlineAgents": "online agent(s)",
             "of": "of",
             "buildJobsRunning": "build jobs running",
