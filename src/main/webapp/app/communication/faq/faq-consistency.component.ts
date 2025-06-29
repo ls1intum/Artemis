@@ -5,7 +5,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'faq-consistency-check',
-    templateUrl: './faq-consistency-component.html',
+    templateUrl: './faq-consistency.component.html',
     imports: [TranslateDirective, FontAwesomeModule],
     standalone: true,
 })
