@@ -52,7 +52,7 @@ export class ArtemisIntelligenceService {
 
                         this.websocketService.receive(websocketTopic).subscribe({
                             next: (update: any) => {
-                                if (update.result || update.inconsistencies || update.improvement) {
+                                if (update.result) {
                                     observer.next({
                                         result: update.result || undefined,
                                         inconsistencies: update.inconsistencies || [],

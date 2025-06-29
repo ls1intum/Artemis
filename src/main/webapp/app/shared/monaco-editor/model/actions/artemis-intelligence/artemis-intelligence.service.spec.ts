@@ -108,15 +108,12 @@ describe('ArtemisIntelligenceService', () => {
     describe('consistencyCheck', () => {
         it('should trigger consistency check and return result', () => {
             const exerciseId = 42;
-
             mockWebsocketService.receive.mockReturnValueOnce(of({ result: 'Check Passed' }));
-
             service.consistencyCheck(exerciseId).subscribe((result) => {
                 expect(result).toBe('Check Passed');
                 expect(websocketService.subscribe).toHaveBeenCalledWith(`/user/topic/iris/consistency-check/exercises/${exerciseId}`);
                 expect(websocketService.unsubscribe).toHaveBeenCalledWith(`/user/topic/iris/consistency-check/exercises/${exerciseId}`);
             });
-
             const req = httpMock.expectOne(`api/iris/consistency-check/exercises/${exerciseId}`);
             expect(req.request.method).toBe('POST');
             req.flush(null);
@@ -124,30 +121,41 @@ describe('ArtemisIntelligenceService', () => {
 
         it('should handle WebSocket error during consistency check', () => {
             mockWebsocketService.receive.mockReturnValueOnce(throwError(() => new Error('WebSocket Error')));
-
             service.consistencyCheck(42).subscribe({
                 next: () => {
                     throw new Error('Should not reach this point');
                 },
                 error: (err) => expect(err.message).toBe('WebSocket Error'),
             });
-
             const req = httpMock.expectOne(`api/iris/consistency-check/exercises/42`);
             req.flush(null);
+        });
+
+        it('should handle HTTP error and reset loading state', () => {
+            const exerciseId = 42;
+            const errorCallback = jest.fn();
+
+            service.consistencyCheck(exerciseId).subscribe({
+                error: errorCallback,
+            });
+
+            const req = httpMock.expectOne(`api/iris/consistency-check/exercises/${exerciseId}`);
+            expect(req.request.method).toBe('POST');
+            req.flush({ message: 'Error' }, { status: 500, statusText: 'Server Error' });
+
+            expect(errorCallback).toHaveBeenCalled();
+            expect(service.isLoading()).toBeFalse();
         });
     });
 
     describe('isLoading', () => {
         it('should reflect loading state correctly', () => {
             expect(service.isLoading()).toBeFalse();
-
             const subscription = service.rewrite('test', RewritingVariant.FAQ, 1).subscribe();
             expect(service.isLoading()).toBeTrue();
-
             const req = httpMock.expectOne(`api/iris/courses/1/rewrite-text`);
             req.flush(null);
             subscription.unsubscribe();
-
             expect(service.isLoading()).toBeFalse();
         });
     });
