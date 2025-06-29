@@ -305,7 +305,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 JOIN p.submissions s
             WHERE e.id = :exerciseId
                 AND s.submitted = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") long exerciseId);
@@ -325,7 +324,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE e.id = :exerciseId
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
     long countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId);

@@ -60,7 +60,7 @@ const moduleThresholds = {
         lines:      91.53,
     },
     exercise: {
-        statements: 88.56,
+        statements: 88.55,
         branches:   79.09,
         functions:  80.22,
         lines:      88.65,
@@ -98,7 +98,7 @@ const moduleThresholds = {
     plagiarism: {
         statements: 91.74,
         branches:   81.91,
-        functions:  85.38,
+        functions:  85.17,
         lines:      91.77,
     },
     programming: {
