@@ -469,7 +469,7 @@ public class TeamResource {
         List<StudentParticipation> participations;
         if (authCheckService.isAtLeastInstructorInCourse(course, user) || teams.stream().map(Team::getOwner).allMatch(user::equals)) {
             // fetch including submissions and results for team tutor and instructors
-            participations = studentParticipationRepository.findAllByCourseIdAndTeamShortNameWithEagerLegalSubmissionsResult(course.getId(), teamShortName);
+            participations = studentParticipationRepository.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(course.getId(), teamShortName);
             submissionService.reduceParticipationSubmissionsToLatest(participations, false);
         }
         else {
@@ -478,7 +478,7 @@ public class TeamResource {
         }
 
         // Set the submission count for all participations
-        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countLegalSubmissionsPerParticipationByCourseIdAndTeamShortNameAsMap(courseId, teamShortName);
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByCourseIdAndTeamShortNameAsMap(courseId, teamShortName);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         // Set studentParticipations on all exercises
@@ -504,9 +504,8 @@ public class TeamResource {
      */
     private void sendTeamAssignmentUpdates(Exercise exercise, List<Team> teams) {
         // Get participation to given exercise into a map which participation identifiers as key and a lists of all participation with that identifier as value
-        Map<String, List<StudentParticipation>> participationsMap = studentParticipationRepository
-                .findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(exercise.getId(), false).stream()
-                .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).toList()));
+        Map<String, List<StudentParticipation>> participationsMap = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResult(exercise.getId(), false)
+                .stream().collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).toList()));
 
         // Send out team assignment update via websockets to each team
         teams.forEach(team -> teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, team, participationsMap.getOrDefault(team.getParticipantIdentifier(), List.of())));

@@ -69,8 +69,7 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
         [{ studentParticipations: [{ submissions: null }] }, false],
         [{ studentParticipations: [{ submissions: undefined }] }, false],
         [{ studentParticipations: [{ submissions: [{ type: SubmissionType.MANUAL }] }] }, false],
-        [{ studentParticipations: [{ submissions: [{ type: SubmissionType.ILLEGAL }] }] }, true],
-    ])('should handle missing/empty fields correctly for %o when displaying illegal submission badge', (exercise, shouldBeNonNull) => {
+    ])('should handle missing/empty fields correctly for %o when displaying submission badge', (exercise, shouldBeNonNull) => {
         component.exercise = exercise as Exercise;
 
         fixture.detectChanges();
