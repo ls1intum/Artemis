@@ -253,7 +253,7 @@ describe('FeedbackLearnerProfileComponent', () => {
         await component.ngOnInit();
         await fixture.whenStable();
 
-        // Assert
+        // Assert - Should set default values since DTO constructor converts undefined to DEFAULT_VALUE
         expect(component.feedbackAlternativeStandard()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
         expect(component.feedbackFollowupSummary()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
         expect(component.feedbackBriefDetailed()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
@@ -453,6 +453,302 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Assert - Component should remain in error state
             expect(newComponent.learnerProfile()).toBeUndefined();
             expect(newComponent.disabled).toBeTruthy();
+        });
+
+        it('should handle component initialization with no profile', async () => {
+            // Arrange - Create a new component instance
+            const newFixture = TestBed.createComponent(FeedbackLearnerProfileComponent);
+            const newComponent = newFixture.componentInstance;
+            const newLearnerProfileApiService = TestBed.inject(LearnerProfileApiService);
+
+            // Mock the API call to reject (simulate no profile found)
+            jest.spyOn(newLearnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(new Error('Profile not found'));
+
+            // Act - Initialize the new component
+            await newComponent.ngOnInit();
+            await newFixture.whenStable();
+
+            // Assert - Component should remain in initial state
+            expect(newComponent.learnerProfile()).toBeUndefined();
+            expect(newComponent.disabled).toBeTruthy();
+        });
+    });
+
+    describe('Private method testing', () => {
+        it('should test loadProfile method through ngOnInit', async () => {
+            // Arrange
+            const testProfile = new LearnerProfileDTO({
+                id: 1,
+                feedbackAlternativeStandard: 3,
+                feedbackFollowupSummary: 2,
+                feedbackBriefDetailed: 1,
+            });
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(testProfile);
+
+            // Act - Call ngOnInit which internally calls loadProfile
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(component.learnerProfile()).toEqual(testProfile);
+            expect(component.disabled).toBeFalsy();
+            expect(component.feedbackAlternativeStandard()).toBe(3);
+            expect(component.feedbackFollowupSummary()).toBe(2);
+            expect(component.feedbackBriefDetailed()).toBe(1);
+        });
+
+        it('should test loadProfile error handling through ngOnInit', async () => {
+            // Arrange
+            const error = new Error('Load failed');
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(error);
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+
+            // Act - Call ngOnInit which internally calls loadProfile and handleError
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(addAlertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'artemisApp.learnerProfile.feedbackLearnerProfile.error',
+            });
+        });
+
+        it('should test updateProfileValues method through profile loading', async () => {
+            // Arrange
+            const testProfile = new LearnerProfileDTO({
+                id: 1,
+                feedbackAlternativeStandard: 3,
+                feedbackFollowupSummary: 2,
+                feedbackBriefDetailed: 1,
+            });
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(testProfile);
+
+            // Act - Load profile which internally calls updateProfileValues
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(component.feedbackAlternativeStandard()).toBe(3);
+            expect(component.feedbackFollowupSummary()).toBe(2);
+            expect(component.feedbackBriefDetailed()).toBe(1);
+        });
+
+        it('should test updateProfileValues method with undefined values through profile loading', async () => {
+            // Arrange
+            const testProfile = new LearnerProfileDTO({
+                id: 1,
+                feedbackAlternativeStandard: undefined,
+                feedbackFollowupSummary: undefined,
+                feedbackBriefDetailed: undefined,
+            });
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(testProfile);
+
+            // Act - Load profile which internally calls updateProfileValues
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert - Should set default values since DTO constructor converts undefined to DEFAULT_VALUE
+            expect(component.feedbackAlternativeStandard()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackFollowupSummary()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackBriefDetailed()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+        });
+
+        it('should test handleError method with HttpErrorResponse through API failure', async () => {
+            // Arrange
+            const httpError = new HttpErrorResponse({
+                error: 'Test error',
+                status: 500,
+                statusText: 'Internal Server Error',
+            });
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(httpError);
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+
+            // Act - Call ngOnInit which will trigger handleError
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(addAlertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'Http failure response for (unknown url): 500 Internal Server Error',
+            });
+        });
+
+        it('should test handleError method with generic error through API failure', async () => {
+            // Arrange
+            const genericError = new Error('Generic error');
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(genericError);
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+
+            // Act - Call ngOnInit which will trigger handleError
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(addAlertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'artemisApp.learnerProfile.feedbackLearnerProfile.error',
+            });
+        });
+
+        it('should test handleError method with null error through API failure', async () => {
+            // Arrange
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(null);
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+
+            // Act - Call ngOnInit which will trigger handleError
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(addAlertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'artemisApp.learnerProfile.feedbackLearnerProfile.error',
+            });
+        });
+
+        it('should test handleError method with string error through API failure', async () => {
+            // Arrange
+            const stringError = 'String error';
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockRejectedValue(stringError);
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+
+            // Act - Call ngOnInit which will trigger handleError
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(addAlertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'artemisApp.learnerProfile.feedbackLearnerProfile.error',
+            });
+        });
+    });
+
+    describe('Edge cases and additional coverage', () => {
+        it('should handle profile with null values', async () => {
+            // Arrange
+            const profileWithNullValues = new LearnerProfileDTO({
+                id: 1,
+                feedbackAlternativeStandard: null as any,
+                feedbackFollowupSummary: null as any,
+                feedbackBriefDetailed: null as any,
+            });
+
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profileWithNullValues);
+
+            // Act
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert - Should set default values since DTO constructor converts null to DEFAULT_VALUE
+            expect(component.feedbackAlternativeStandard()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackFollowupSummary()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackBriefDetailed()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+        });
+
+        it('should handle profile with zero values', async () => {
+            // Arrange
+            const profileWithZeroValues = new LearnerProfileDTO({
+                id: 1,
+                feedbackAlternativeStandard: 0,
+                feedbackFollowupSummary: 0,
+                feedbackBriefDetailed: 0,
+            });
+
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profileWithZeroValues);
+
+            // Act
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert - Should set default values since DTO constructor converts out-of-range values (0 < MIN_VALUE) to DEFAULT_VALUE
+            expect(component.feedbackAlternativeStandard()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackFollowupSummary()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackBriefDetailed()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+        });
+
+        it('should handle profile with maximum values', async () => {
+            // Arrange
+            const profileWithMaxValues = new LearnerProfileDTO({
+                id: 1,
+                feedbackAlternativeStandard: 3,
+                feedbackFollowupSummary: 3,
+                feedbackBriefDetailed: 3,
+            });
+
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profileWithMaxValues);
+
+            // Act
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(component.feedbackAlternativeStandard()).toBe(3);
+            expect(component.feedbackFollowupSummary()).toBe(3);
+            expect(component.feedbackBriefDetailed()).toBe(3);
+        });
+
+        it('should test onToggleChange with undefined profile', async () => {
+            // Arrange
+            component.learnerProfile.set(undefined);
+            component.disabled = false;
+
+            // Act
+            await component.onToggleChange();
+            await fixture.whenStable();
+
+            // Assert
+            expect(learnerProfileApiService.putUpdatedLearnerProfile).not.toHaveBeenCalled();
+        });
+
+        it('should test onToggleChange with null profile', async () => {
+            // Arrange
+            component.learnerProfile.set(null as any);
+            component.disabled = false;
+
+            // Act
+            await component.onToggleChange();
+            await fixture.whenStable();
+
+            // Assert
+            expect(learnerProfileApiService.putUpdatedLearnerProfile).not.toHaveBeenCalled();
+        });
+
+        it('should test component with different signal values', () => {
+            // Arrange
+            component.feedbackAlternativeStandard.set(1);
+            component.feedbackFollowupSummary.set(2);
+            component.feedbackBriefDetailed.set(3);
+
+            // Act & Assert
+            expect(component.feedbackAlternativeStandard()).toBe(1);
+            expect(component.feedbackFollowupSummary()).toBe(2);
+            expect(component.feedbackBriefDetailed()).toBe(3);
+        });
+
+        it('should test component disabled state changes', () => {
+            // Arrange & Act
+            component.disabled = false;
+            expect(component.disabled).toBeFalsy();
+
+            component.disabled = true;
+            expect(component.disabled).toBeTruthy();
+        });
+
+        it('should test component with empty profile object', async () => {
+            // Arrange
+            const emptyProfile = new LearnerProfileDTO({});
+            jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(emptyProfile);
+
+            // Act
+            await component.ngOnInit();
+            await fixture.whenStable();
+
+            // Assert
+            expect(component.learnerProfile()).toEqual(emptyProfile);
+            expect(component.disabled).toBeFalsy();
         });
     });
 });
