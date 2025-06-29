@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
@@ -45,9 +45,15 @@ jobs:
       - name: Wait for health endpoint
         run: |
           URL=http://localhost:8080/management/health
-          echo "Waiting for $URL → HTTP 200"
+          echo "Waiting up to 60s for $URL → HTTP 200"
+
+          # allow curl to fail without exiting
+          set +e
+
+          HTTP_CODE=000
           for i in {1..30}; do
-            HTTP_CODE=$(curl -w "%{http_code}" $URL)
+            # if curl fails, fallback to 000
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
             if [ "$HTTP_CODE" -eq 200 ]; then
               echo "✅ $URL returned 200 (after $i attempts)"
               break
@@ -56,10 +62,11 @@ jobs:
             sleep 2
           done
 
-          # final check
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $URL)
+          # restore -e so failures here bubble up
+          set -e
+
           if [ "$HTTP_CODE" -ne 200 ]; then
-            echo "❌ Health check failed (HTTP $HTTP_CODE); dumping full app.log:"
+            echo "❌ Health check never returned 200; dumping full app.log:"
             cat app.log
             exit 1
           fi
