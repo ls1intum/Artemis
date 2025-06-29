@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,16 +24,14 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
-import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -57,7 +54,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
@@ -79,6 +75,8 @@ public class PyrisPipelineService {
     private final PyrisDTOService pyrisDTOService;
 
     private final IrisChatWebsocketService irisChatWebsocketService;
+
+    private final CourseLoadService courseLoadService;
 
     private final CourseRepository courseRepository;
 
@@ -105,7 +103,7 @@ public class PyrisPipelineService {
             IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, Optional<LearningMetricsApi> learningMetricsApi,
             StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
             Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<PrerequisitesApi> prerequisitesApi, Optional<ExamRepositoryApi> examRepositoryApi,
-            ExerciseRepository exerciseRepository) {
+            ExerciseRepository exerciseRepository, CourseLoadService courseLoadService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.pyrisDTOService = pyrisDTOService;
@@ -119,6 +117,7 @@ public class PyrisPipelineService {
         this.prerequisitesApi = prerequisitesApi;
         this.examRepositoryApi = examRepositoryApi;
         this.exerciseRepository = exerciseRepository;
+        this.courseLoadService = courseLoadService;
     }
 
     /**
@@ -330,31 +329,7 @@ public class PyrisPipelineService {
      * @param studentId the id of the student
      */
     private Course loadCourseWithParticipationOfStudent(long courseId, long studentId) {
-        ZonedDateTime now = ZonedDateTime.now();
-        Course course = courseRepository.findById(courseId).orElseThrow();
-        Set<Exercise> releasedExercises = exerciseRepository.findAllReleasedExercisesByCourseId(courseId, now);
-        Set<Lecture> visibleLectures = new HashSet<>();
-        if (lectureRepositoryApi.isPresent()) {
-            visibleLectures = lectureRepositoryApi.orElseThrow().findAllVisibleByCourseIdWithEagerLectureUnits(courseId, now);
-        }
-        Set<Competency> competencies = new HashSet<>();
-        if (competencyRepositoryApi.isPresent()) {
-            competencies = competencyRepositoryApi.orElseThrow().findAllByCourseId(courseId);
-        }
-        Set<Prerequisite> prerequisites = new HashSet<>();
-        if (prerequisitesApi.isPresent()) {
-            prerequisites = prerequisitesApi.orElseThrow().findAllByCourseId(courseId);
-        }
-        Set<Exam> visibleExams = new HashSet<>();
-        if (examRepositoryApi.isPresent()) {
-            visibleExams = examRepositoryApi.orElseThrow().findAllVisibleByCourseId(courseId, now);
-        }
-        course.setExercises(releasedExercises);
-        course.setLectures(visibleLectures);
-        course.setCompetencies(competencies);
-        course.setPrerequisites(prerequisites);
-        course.setExams(visibleExams);
-
+        Course course = courseLoadService.loadCourseWithExercisesLecturesLectureUnitsCompetenciesPrerequisitesAndExams(courseId);
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(studentId,
                 course.getExercises());
 

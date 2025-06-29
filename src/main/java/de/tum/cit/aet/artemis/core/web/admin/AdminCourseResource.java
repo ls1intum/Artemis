@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAdminService;
 import de.tum.cit.aet.artemis.core.service.course.CourseDeletionService;
+import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -71,6 +72,8 @@ public class AdminCourseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final CourseLoadService courseLoadService;
+
     private final UserRepository userRepository;
 
     private final CourseService courseService;
@@ -91,7 +94,7 @@ public class AdminCourseResource {
 
     public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseAdminService courseAdminService, CourseRepository courseRepository,
             AuditEventRepository auditEventRepository, FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService,
-            CourseAccessService courseAccessService) {
+            CourseAccessService courseAccessService, CourseLoadService courseLoadService) {
         this.courseService = courseService;
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
@@ -102,6 +105,7 @@ public class AdminCourseResource {
         this.channelService = channelService;
         this.courseDeletionService = courseDeletionService;
         this.courseAccessService = courseAccessService;
+        this.courseLoadService = courseLoadService;
     }
 
     /**
@@ -188,7 +192,7 @@ public class AdminCourseResource {
     @DeleteMapping("courses/{courseId}")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
-        Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(courseId);
+        Course course = courseLoadService.loadCourseWithExercisesLecturesLectureUnitsCompetenciesAndPrerequisites(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
