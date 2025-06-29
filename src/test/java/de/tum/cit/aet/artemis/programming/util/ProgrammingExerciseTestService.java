@@ -24,8 +24,10 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,6 +66,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -746,7 +749,8 @@ public class ProgrammingExerciseTestService {
 
     private AuxiliaryRepository addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
-        var url = versionControlService.getCloneRepositoryUri(sourceExercise.getProjectKey(), new MockFileRepositoryUri(sourceAuxRepo.originRepoFile).toString());
+        String auxRepoName = sourceExercise.generateRepositoryName("auxrepo");
+        var url = versionControlService.getCloneRepositoryUri(sourceExercise.getProjectKey(), auxRepoName);
         repository.setRepositoryUri(url.toString());
         return auxiliaryRepositoryRepository.save(repository);
     }
@@ -1479,6 +1483,31 @@ public class ProgrammingExerciseTestService {
 
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUri()), anyString(), anyBoolean());
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUri()), (Path) any(), anyBoolean());
+
+        try {
+            byte[] mockZipData = "mock-zip-content".getBytes();
+            InputStreamResource mockResource = new InputStreamResource(new ByteArrayInputStream(mockZipData)) {
+
+                @Override
+                public String getFilename() {
+                    return "mock-auxiliary-repo.zip";
+                }
+
+                @Override
+                public long contentLength() {
+                    return mockZipData.length;
+                }
+
+                @Override
+                public InputStream getInputStream() throws IOException {
+                    return new ByteArrayInputStream(mockZipData);
+                }
+            };
+            doReturn(mockResource).when(gitService).exportRepositoryWithFullHistoryToMemory(eq(auxiliaryRepository.getVcsRepositoryUri()), anyString());
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Failed to setup export mock", e);
+        }
     }
 
     public void exportInstructorAuxiliaryRepository_forbidden() throws Exception {
