@@ -63,9 +63,8 @@ jobs:
 
       - name: Extract and validate bean instantiation metrics
         run: |
-          LINE=$(grep -q 'Bean instantiation graph exported' app.log) \
+          LINE=$(grep 'Bean instantiation graph exported' app.log) \
             || { echo "❌ No metrics line"; cat app.log; exit 1; }
-          echo "✅ Metrics line: $LINE"
           if [[ "$LINE" =~ \(([0-9]+)\ edges,\ max\ call\ stack\ size:\ ([0-9]+)\) ]]; then
             EDGES=${BASH_REMATCH[1]}
             MAXSTACK=${BASH_REMATCH[2]}
