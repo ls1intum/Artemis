@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Params } from '@angular/router';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
@@ -49,7 +49,7 @@ export class MetisService implements OnDestroy {
     private forwardedMessageService = inject(ForwardedMessageService);
     private savedPostService = inject(SavedPostService);
     private metisConversationService = inject(MetisConversationService);
-
+    private http = inject(HttpClient);
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
@@ -977,5 +977,10 @@ export class MetisService implements OnDestroy {
             const updatedPinnedPosts = currentPinnedPosts.filter((pinnedPost) => pinnedPost.id !== postId);
             this.pinnedPosts$.next(updatedPinnedPosts);
         }
+    }
+
+    enable(courseId: number, withMessaging: boolean): Observable<void> {
+        const httpParams = new HttpParams().set('withMessaging', withMessaging);
+        return this.http.put<void>('api/communication/courses/' + courseId + '/enable', undefined, { params: httpParams });
     }
 }
