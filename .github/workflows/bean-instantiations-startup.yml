@@ -47,7 +47,7 @@ jobs:
           URL=http://localhost:8080/management/health
           echo "Waiting for $URL → HTTP 200"
           for i in {1..30}; do
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $URL)
+            HTTP_CODE=$(curl -w "%{http_code}" $URL)
             if [ "$HTTP_CODE" -eq 200 ]; then
               echo "✅ $URL returned 200 (after $i attempts)"
               break
