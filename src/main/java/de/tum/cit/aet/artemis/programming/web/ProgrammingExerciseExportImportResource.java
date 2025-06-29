@@ -409,6 +409,12 @@ public class ProgrammingExerciseExportImportResource {
 
         long start = System.nanoTime();
 
+        if (auxiliaryRepository.getVcsRepositoryUri() == null) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "repositoryNotConfigured", "The auxiliary repository is not configured correctly."))
+                    .body(null);
+        }
+
         InputStreamResource resource = programmingExerciseExportService.exportInstructorAuxiliaryRepositoryForExerciseInMemory(programmingExercise, auxiliaryRepository,
                 Collections.synchronizedList(new ArrayList<>()));
 
