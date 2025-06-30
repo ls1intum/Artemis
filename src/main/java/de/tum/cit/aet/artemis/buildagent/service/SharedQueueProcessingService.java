@@ -351,7 +351,7 @@ public class SharedQueueProcessingService {
             // after processing a build job, remove it from the processing jobs
             distributedDataAccessService.getDistributedProcessingJobs().remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get(), false);
+            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
 
             consecutiveBuildJobFailures.set(0);
 
@@ -402,7 +402,7 @@ public class SharedQueueProcessingService {
 
             distributedDataAccessService.getDistributedProcessingJobs().remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(job, isPaused.get(), false);
+            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(job, isPaused.get(), false, consecutiveBuildJobFailures.get());
 
             if (consecutiveBuildJobFailures.get() >= pauseAfterConsecutiveFailedJobs) {
                 log.error("Build agent has failed to process build jobs {} times in a row. Pausing build agent.", consecutiveBuildJobFailures.get());

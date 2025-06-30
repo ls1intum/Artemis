@@ -30,4 +30,5 @@ export class BuildAgentDetails {
     public lastBuildDate?: dayjs.Dayjs;
     public startDate?: dayjs.Dayjs;
     public gitRevision?: string;
+    public consecutiveBuildFailures?: number;
 }

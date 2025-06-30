@@ -52,11 +52,11 @@ public class BuildAgentInformationService {
     }
 
     public void updateLocalBuildAgentInformation(boolean isPaused) {
-        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, false);
+        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, false, 0);
     }
 
     public void updateLocalBuildAgentInformation(boolean isPaused, boolean isPausedDueToFailures) {
-        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, isPausedDueToFailures);
+        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, isPausedDueToFailures, 0);
     }
 
     /**
@@ -66,12 +66,13 @@ public class BuildAgentInformationService {
      * @param isPaused              whether the build agent is paused
      * @param isPausedDueToFailures whether the build agent is paused due to consecutive failures
      */
-    public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures) {
+    public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         try {
             distributedDataAccessService.getDistributedBuildAgentInformation().lock(memberAddress);
             // Add/update
-            BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures);
+            BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures);
+
             try {
                 distributedDataAccessService.getDistributedBuildAgentInformation().put(info.buildAgent().memberAddress(), info);
             }
@@ -87,7 +88,7 @@ public class BuildAgentInformationService {
         }
     }
 
-    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures) {
+    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
@@ -107,12 +108,12 @@ public class BuildAgentInformationService {
 
         BuildAgentDTO agentInfo = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
 
-        BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob);
+        BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob, consecutiveFailures);
 
         return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails);
     }
 
-    private BuildAgentDetailsDTO getBuildAgentDetails(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob) {
+    private BuildAgentDetailsDTO getBuildAgentDetails(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob, int consecutiveFailures) {
         var gitRevision = gitProperties.getShortCommitId();
         var lastBuildDate = getLastBuildDate(agent, recentBuildJob);
         var startDate = getStartDate(agent);
@@ -124,7 +125,8 @@ public class BuildAgentInformationService {
         var cancelledBuilds = getCancelledBuilds(agent, recentBuildJob);
         var timedOutBuilds = getTimedOutBuilds(agent, recentBuildJob);
 
-        return new BuildAgentDetailsDTO(averageBuildDuration, successfulBuilds, failedBuilds, cancelledBuilds, timedOutBuilds, totalsBuilds, lastBuildDate, startDate, gitRevision);
+        return new BuildAgentDetailsDTO(averageBuildDuration, successfulBuilds, failedBuilds, cancelledBuilds, timedOutBuilds, totalsBuilds, lastBuildDate, startDate, gitRevision,
+                consecutiveFailures);
     }
 
     private ZonedDateTime getLastBuildDate(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob) {
