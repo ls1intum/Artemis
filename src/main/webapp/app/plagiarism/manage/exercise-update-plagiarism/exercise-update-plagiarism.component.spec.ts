@@ -47,10 +47,10 @@ describe('Exercise Update Plagiarism Component', () => {
         expect(comp.exercise()?.plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
     });
 
-    it('should set minimumSizeTooltip on init for programming', () => {
+    it('should set minimumTokenCountTooltip on init for programming', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
         comp.ngOnInit();
-        expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise');
+        expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumTokenCountTooltipProgrammingExercise');
     });
 
     it('should set minimumSizeTooltip on init for text', () => {
@@ -94,11 +94,15 @@ describe('Exercise Update Plagiarism Component', () => {
         expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipTextExercise');
     });
 
-    it('should get correct minimumSizeLabel for programming exercises', () => {
+    it('should get correct minimumTokenCountLabel for programming exercises', () => {
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
+        comp.ngOnInit();
         expect(comp.getMinimumSizeLabel()).toBe('artemisApp.plagiarism.minimumTokenCount');
     });
 
     it('should get correct minimumSizeLabel for text exercises', () => {
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
+        comp.ngOnInit();
         expect(comp.getMinimumSizeLabel()).toBe('artemisApp.plagiarism.minimumSize');
     });
 
