@@ -2,13 +2,15 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Observable } from 'rxjs';
-import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { TutorialGroupRegistrationImportDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-import-dto.model';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { Student } from 'app/openapi/model/student';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
+import { TutorialGroupExport } from 'app/openapi/model/tutorialGroupExport';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
@@ -18,15 +20,16 @@ export class TutorialGroupsService {
     private httpClient = inject(HttpClient);
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
 
     private resourceURL = 'api/tutorialgroup';
 
-    getUniqueCampusValues(courseId: number): Observable<HttpResponse<string[]>> {
-        return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/campus-values`, { observe: 'response' });
+    getUniqueCampusValues(courseId: number): Observable<HttpResponse<Array<string>>> {
+        return this.tutorialGroupApiService.getUniqueCampusValues(courseId, 'response');
     }
 
-    getUniqueLanguageValues(courseId: number): Observable<HttpResponse<string[]>> {
-        return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/language-values`, { observe: 'response' });
+    getUniqueLanguageValues(courseId: number): Observable<HttpResponse<Array<string>>> {
+        return this.tutorialGroupApiService.getUniqueLanguageValues(courseId, 'response');
     }
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
@@ -70,27 +73,23 @@ export class TutorialGroupsService {
     }
 
     deregisterStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/deregister/${login}`, { observe: 'response' });
+        return this.tutorialGroupApiService.deregisterStudent(courseId, tutorialGroupId, login, 'response');
     }
 
     registerStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
-        return this.httpClient.post<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register/${login}`, {}, { observe: 'response' });
+        return this.tutorialGroupApiService.registerStudent(courseId, tutorialGroupId, login, 'response');
     }
 
-    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<StudentDTO[]>> {
-        return this.httpClient.post<StudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register-multiple`, studentDtos, {
-            observe: 'response',
-        });
+    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: Student[]): Observable<HttpResponse<Array<Student>>> {
+        return this.tutorialGroupApiService.registerMultipleStudentsToTutorialGroup(courseId, tutorialGroupId, studentDtos, 'response');
     }
 
-    import(courseId: number, tutorialGroups: TutorialGroupRegistrationImportDTO[]): Observable<HttpResponse<TutorialGroupRegistrationImportDTO[]>> {
-        return this.httpClient.post<TutorialGroupRegistrationImportDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/import`, tutorialGroups, {
-            observe: 'response',
-        });
+    import(courseId: number, tutorialGroups: TutorialGroupRegistrationImport[]): Observable<HttpResponse<Array<TutorialGroupRegistrationImport>>> {
+        return this.tutorialGroupApiService.importRegistrations(courseId, tutorialGroups, 'response');
     }
 
     delete(courseId: number, tutorialGroupId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' });
+        return this.tutorialGroupApiService.delete(courseId, tutorialGroupId, 'response');
     }
 
     convertTutorialGroupArrayDatesFromServer(tutorialGroups: TutorialGroup[]): TutorialGroup[] {
@@ -177,18 +176,14 @@ export class TutorialGroupsService {
      * @return an Observable containing the CSV file as a Blob
      */
     exportTutorialGroupsToCSV(courseId: number, fields: string[]): Observable<Blob> {
-        const params = { fields };
-        return this.httpClient.get(`${this.resourceURL}/courses/${courseId}/tutorial-groups/export/csv`, {
-            params,
-            responseType: 'blob',
-        });
+        return this.tutorialGroupApiService.exportTutorialGroupsToCSV(courseId, fields);
     }
 
     exportToJson(courseId: number, fields: string[]): Observable<string> {
-        const params = { fields };
-        return this.httpClient.get(`${this.resourceURL}/courses/${courseId}/tutorial-groups/export/json`, {
-            params,
-            responseType: 'text',
-        });
+        return this.tutorialGroupApiService.exportTutorialGroupsToJSON(courseId, fields).pipe(
+            map((data: Array<TutorialGroupExport>) => {
+                return JSON.stringify(data);
+            }),
+        );
     }
 }

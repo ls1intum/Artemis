@@ -63,7 +63,8 @@
                 },
                 "successMessage": "Die Abgaben wurden erfolgreich exportiert. Die generierte Zip-Datei wird jetzt heruntergeladen."
             },
-            "loadingStudents": "Lade die Ergebnisse aller Studierenden..."
+            "loadingStudents": "Lade die Ergebnisse aller Studierenden...",
+            "courseScoresTooltip": "Studierende, die für eine Aufgabe keine Bewertung erhalten haben, werden nicht in der Statistik berücksichtigt."
         }
     }
 }

@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -104,7 +105,7 @@ public class QuizResultService {
      */
     private Set<Result> evaluateSubmissions(@NotNull QuizExercise quizExercise) {
         Set<Result> createdResults = new HashSet<>();
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(studentParticipations);
 
         for (var participation : studentParticipations) {
@@ -144,7 +145,8 @@ public class QuizResultService {
 
                 participation.setInitializationState(InitializationState.FINISHED);
 
-                Optional<Result> existingRatedResult = participation.getResults().stream().filter(result -> Boolean.TRUE.equals(result.isRated())).findFirst();
+                Optional<Result> existingRatedResult = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).filter(Objects::nonNull)
+                        .filter(result -> Boolean.TRUE.equals(result.isRated())).findFirst();
 
                 if (existingRatedResult.isPresent()) {
                     // A rated result already exists; no need to create a new one

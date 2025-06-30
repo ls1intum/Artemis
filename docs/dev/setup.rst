@@ -76,8 +76,10 @@ After completing the server setup, proceed with setting up the Artemis client by
    setup/integrated-code-lifecycle
    setup/jenkins-localvc
    setup/aeolus
+   setup/openapi
    setup/common-problems
    setup/docker-compose
+   setup/docker-debugging
    setup/local-database-tests
 
 Production Setup and Extension Services
