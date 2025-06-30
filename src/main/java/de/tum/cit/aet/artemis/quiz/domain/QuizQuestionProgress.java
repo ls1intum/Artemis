@@ -32,7 +32,7 @@ public class QuizQuestionProgress {
     private String progressJson;
 
     @Column(name = "last_modified")
-    private ZonedDateTime lastAnsweredAt;
+    private ZonedDateTime lastModified;
 
     public Long getId() {
         return id;
@@ -63,11 +63,11 @@ public class QuizQuestionProgress {
     }
 
     public ZonedDateTime getLastAnsweredAt() {
-        return lastAnsweredAt;
+        return lastModified;
     }
 
     public void setLastAnsweredAt(ZonedDateTime lastAnsweredAt) {
-        this.lastAnsweredAt = lastAnsweredAt;
+        this.lastModified = lastAnsweredAt;
     }
 
 }
