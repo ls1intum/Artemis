@@ -242,7 +242,7 @@ describe('IrisChatService', () => {
         tick();
     }));
 
-    it('should emit sessionId when set', () => {
+    it('should emit id when set', () => {
         const expectedId = 456;
         service.sessionId$.subscribe((id) => {
             expect(id).toBe(expectedId);
@@ -250,7 +250,7 @@ describe('IrisChatService', () => {
         service.sessionId = expectedId;
     });
 
-    it('should request tutor suggestion if sessionId is set', fakeAsync(() => {
+    it('should request tutor suggestion if id is set', fakeAsync(() => {
         service.sessionId = id;
         const httpStub = jest.spyOn(httpService, 'createTutorSuggestion').mockReturnValueOnce(of());
 
@@ -262,7 +262,7 @@ describe('IrisChatService', () => {
         tick();
     }));
 
-    it('should throw error if sessionId is undefined on tutor suggestion', fakeAsync(() => {
+    it('should throw error if id is undefined on tutor suggestion', fakeAsync(() => {
         service.sessionId = undefined;
 
         service.requestTutorSuggestion().subscribe({

@@ -61,7 +61,7 @@ public class IrisMessageResource {
     }
 
     /**
-     * GET session/{sessionId}/message: Retrieve the messages for the iris session.
+     * GET session/{id}/message: Retrieve the messages for the iris session.
      *
      * @param sessionId of the session
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the list of messages, or with
@@ -78,7 +78,7 @@ public class IrisMessageResource {
     }
 
     /**
-     * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM
+     * POST sessions/{id}/messages: Send a new message from the user to the LLM
      *
      * @param sessionId of the session
      * @param message   to send
@@ -104,7 +104,7 @@ public class IrisMessageResource {
     }
 
     /**
-     * POST sessions/{sessionId}/tutor-suggestion: Send a new tutor suggestion request to the LLM
+     * POST sessions/{id}/tutor-suggestion: Send a new tutor suggestion request to the LLM
      *
      * @param sessionId of the session
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body true, or with status
@@ -123,7 +123,7 @@ public class IrisMessageResource {
     }
 
     /**
-     * POST sessions/{sessionId}/messages/{messageId}/resend: Resend a message if there was previously an error when
+     * POST sessions/{id}/messages/{messageId}/resend: Resend a message if there was previously an error when
      * sending it to the LLM
      *
      * @param sessionId of the session
@@ -153,7 +153,7 @@ public class IrisMessageResource {
     }
 
     /**
-     * PUT sessions/{sessionId}/messages/{messageId}/helpful: Set the helpful attribute of the message
+     * PUT sessions/{id}/messages/{messageId}/helpful: Set the helpful attribute of the message
      *
      * @param sessionId of the session
      * @param messageId of the message

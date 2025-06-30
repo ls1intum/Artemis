@@ -30,7 +30,7 @@ public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession,
                 LEFT JOIN FETCH s.messages m
             WHERE s.id = :sessionId
             """)
-    Optional<IrisSession> findByIdWithMessages(@Param("sessionId") long sessionId);
+    Optional<IrisSession> findByIdWithMessages(@Param("id") long sessionId);
 
     @Query("""
             SELECT s
@@ -39,7 +39,7 @@ public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession,
                 LEFT JOIN FETCH m.content c
             WHERE s.id = :sessionId
             """)
-    IrisSession findByIdWithMessagesAndContents(@Param("sessionId") long sessionId);
+    IrisSession findByIdWithMessagesAndContents(@Param("id") long sessionId);
 
     @NotNull
     default IrisSession findByIdWithMessagesElseThrow(long sessionId) throws EntityNotFoundException {

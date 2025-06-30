@@ -92,7 +92,7 @@ public class TutorialGroupSessionResource {
     }
 
     /**
-     * GET /courses/{courseId}/tutorial-groups/:tutorialGroupId/sessions/:sessionId : get the tutorial group session with the given id.
+     * GET /courses/{courseId}/tutorial-groups/:tutorialGroupId/sessions/:id : get the tutorial group session with the given id.
      *
      * @param courseId        the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId the id of the tutorial group to which the session belongs to
@@ -113,7 +113,7 @@ public class TutorialGroupSessionResource {
     }
 
     /**
-     * PUT /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId : Updates an existing tutorial group session
+     * PUT /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:id : Updates an existing tutorial group session
      *
      * @param courseId                the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId         the id of the tutorial group to which the session belongs to
@@ -158,7 +158,7 @@ public class TutorialGroupSessionResource {
     }
 
     /**
-     * PATCH /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId/attendance-count : Updates the attendance count of a tutorial group session
+     * PATCH /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:id/attendance-count : Updates the attendance count of a tutorial group session
      *
      * @param courseId        the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId the id of the tutorial group to which the session belongs to
@@ -180,7 +180,7 @@ public class TutorialGroupSessionResource {
     }
 
     /**
-     * DELETE /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId : delete a tutorial group session
+     * DELETE /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:id : delete a tutorial group session
      *
      * @param courseId        the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId the id of the tutorial group to which the session belongs to
@@ -240,7 +240,7 @@ public class TutorialGroupSessionResource {
     }
 
     /**
-     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId/cancel : cancel a tutorial group session.
+     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:id/cancel : cancel a tutorial group session.
      *
      * @param courseId               the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId        the id of the tutorial group to which the session belongs to
@@ -268,7 +268,7 @@ public class TutorialGroupSessionResource {
     }
 
     /**
-     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId/activate : activate a tutorial group session.
+     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:id/activate : activate a tutorial group session.
      *
      * @param courseId        the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId the id of the tutorial group to which the session belongs to

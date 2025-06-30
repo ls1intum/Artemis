@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -28,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
@@ -100,12 +100,12 @@ public class IrisChatSessionResource {
     }
 
     /**
-     * GET chat-history/{courseId}/session/{sessionId}: Retrieve an Iris Session for a sessionId
+     * GET chat-history/{courseId}/session/{id}: Retrieve an Iris Session for a id
      *
      * @param courseId  of the course
      * @param chatMode  of the session
      * @param sessionId of the session
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris sessions for the sessionId or {@code 404 (Not Found)} if no session exists
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris sessions for the id or {@code 404 (Not Found)} if no session exists
      */
     @GetMapping("{courseId}/{chatMode}/session/{sessionId}")
     @EnforceAtLeastStudentInCourse
@@ -160,12 +160,14 @@ public class IrisChatSessionResource {
      */
     @GetMapping("{courseId}/sessions")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<IrisChatSession>> getAllSessionsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
+        var course = courseRepository.findById(courseId).orElseThrow();
         if (user.hasAcceptedExternalLLMUsage()) {
-            var allChatSessions = Stream.of(getAllSessionsForCourseChat(courseId), getAllSessionsForLectureChat(courseId), getAllSessionsForProgrammingExerciseChat(courseId),
-                    getAllSessionsForTextExerciseChat(courseId)).flatMap(List::stream).toList();
-            return ResponseEntity.ok(allChatSessions);
+            var irisSessionDTOs = irisSessionService.getIrisSessionsByCourseAndUserId(course, user.getId());
+            // var allChatSessions = Stream.of(getAllSessionsForCourseChat(courseId), getAllSessionsForLectureChat(courseId), getAllSessionsForProgrammingExerciseChat(courseId),
+            // getAllSessionsForTextExerciseChat(courseId)).flatMap(List::stream).toList();
+            return ResponseEntity.ok(irisSessionDTOs);
         }
         else {
             return ResponseEntity.ok(List.of());

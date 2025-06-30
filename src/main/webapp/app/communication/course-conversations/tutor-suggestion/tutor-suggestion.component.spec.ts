@@ -182,7 +182,7 @@ describe('TutorSuggestionComponent', () => {
         }));
     });
 
-    it('should call requestSuggestion when sessionId emits in ngOnChanges', fakeAsync(() => {
+    it('should call requestSuggestion when id emits in ngOnChanges', fakeAsync(() => {
         const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
         jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
 
@@ -197,7 +197,7 @@ describe('TutorSuggestionComponent', () => {
         expect(requestTutorSuggestionSpy).toHaveBeenCalled();
     }));
 
-    it('should not call requestSuggestion if iris is active but no sessionId', fakeAsync(() => {
+    it('should not call requestSuggestion if iris is active but no id', fakeAsync(() => {
         (chatService as any).sessionId$ = of(undefined);
         jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
         const requestSuggestionSpy = jest.spyOn(component as any, 'requestSuggestion');
