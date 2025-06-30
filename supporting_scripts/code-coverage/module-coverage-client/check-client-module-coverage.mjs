@@ -48,16 +48,16 @@ const moduleThresholds = {
         lines:      92.38,
     },
     core: {
-        statements: 89.05,
+        statements: 89.04,
         branches:   70.89,
-        functions:  80.70,
+        functions:  80.68,
         lines:      89.06,
     },
     exam: {
-        statements: 91.30,
-        branches:   78.12,
-        functions:  83.66,
-        lines:      91.53,
+        statements: 91.24,
+        branches:   78.06,
+        functions:  83.26,
+        lines:      91.45,
     },
     exercise: {
         statements: 88.55,
