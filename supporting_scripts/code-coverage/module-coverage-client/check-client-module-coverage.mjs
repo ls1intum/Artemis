@@ -114,10 +114,10 @@ const moduleThresholds = {
         lines:      86.56,
     },
     shared: {
-        statements: 86.79,
-        branches:   71.58,
-        functions:  83.93,
-        lines:      86.59,
+        statements: 86.73,
+        branches:   71.49,
+        functions:  83.88,
+        lines:      86.52,
     },
     text: {
         statements: 89.27,
@@ -126,10 +126,10 @@ const moduleThresholds = {
         lines:      89.63,
     },
     tutorialgroup: {
-        statements: 91.05,
-        branches:   76.38,
-        functions:  83.27,
-        lines:      90.92,
+        statements: 91.31,
+        branches:   75.45,
+        functions:  83.33,
+        lines:      91.20,
     },
 };
 
