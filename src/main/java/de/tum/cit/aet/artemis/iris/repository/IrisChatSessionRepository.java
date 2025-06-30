@@ -28,7 +28,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
      * @return A list of chat sessions sorted by creation date in descending order.
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDAO(
+            SELECT new de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO(
                       s,
                       COALESCE(ccs.courseId, e1.id, e2.id, l.id, -1)
                   )
@@ -40,7 +40,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
                 LEFT JOIN Lecture l ON l.id = lcs.lectureId
                 LEFT JOIN Exercise e1 ON e1.id = tecs.exerciseId
                 LEFT JOIN Exercise e2 ON e2.id = pecs.exerciseId
-                WHERE s.userId = :userId and TYPE(s) in (:types)
+                WHERE s.userId = :userId AND TYPE(s) IN (:types)
                   AND (ccs.courseId = :courseId OR l.course.id = :courseId OR e1.course.id = :courseId OR e2.course.id = :courseId)
                 ORDER BY s.creationDate DESC
             """)
