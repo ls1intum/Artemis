@@ -102,9 +102,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
     @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
     @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
-
+    exerciseUpdatePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
     exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
-    @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent: TeamConfigFormGroupComponent;
 
     examCourseId?: number;
@@ -127,8 +126,13 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
-    plagiarismSubscription?: Subscription;
     teamSubscription?: Subscription;
+
+    constructor() {
+        effect(() => {
+            this.updateFormSectionsOnIsValidChange();
+        });
+    }
 
     get editType(): EditType {
         if (this.isImport) {
@@ -138,25 +142,18 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         return this.textExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
     }
 
-    constructor() {
-        effect(() => {
-            this.updateFormSectionsOnIsValidChange();
-        });
-    }
-
     /**
      * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
      */
     private updateFormSectionsOnIsValidChange() {
         this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // trigger the effect
-
+        this.exerciseUpdatePlagiarismComponent()?.isFormValid();
         this.calculateFormSectionStatus();
     }
 
     ngAfterViewInit() {
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.plagiarismSubscription = this.exerciseUpdatePlagiarismComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
         this.teamSubscription = this.teamConfigFormGroupComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
     }
 
@@ -231,7 +228,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     ngOnDestroy() {
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
-        this.plagiarismSubscription?.unsubscribe();
         this.teamSubscription?.unsubscribe();
     }
 
@@ -255,7 +251,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                         this.points.valid &&
                             this.bonusPoints.valid &&
                             (this.isExamMode ||
-                                (this.exerciseUpdatePlagiarismComponent?.formValid &&
+                                (this.exerciseUpdatePlagiarismComponent()?.isFormValid() &&
                                     !this.textExercise.startDateError &&
                                     !this.textExercise.dueDateError &&
                                     !this.textExercise.assessmentDueDateError &&
