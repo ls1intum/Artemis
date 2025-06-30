@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -14,7 +15,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
@@ -52,12 +56,18 @@ public class LocalCIEventListenerService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final UserService userService;
+
+    private final MailService mailService;
+
     public LocalCIEventListenerService(DistributedDataAccessService distributedDataAccessService, LocalCIQueueWebsocketService localCIQueueWebsocketService,
-            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService) {
+            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, UserService userService, MailService mailService) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
         this.buildJobRepository = buildJobRepository;
         this.programmingMessagingService = programmingMessagingService;
+        this.userService = userService;
+        this.mailService = mailService;
     }
 
     /**
@@ -169,15 +179,32 @@ public class LocalCIEventListenerService {
 
         @Override
         public void entryRemoved(MapEntryRemovedEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent removed: {}", event.oldValue());
-            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.oldValue().buildAgent().name());
+            BuildAgentInformation oldValue = event.oldValue();
+            log.debug("Build agent removed: {}", oldValue);
+            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(oldValue.buildAgent().name());
         }
 
         @Override
         public void entryUpdated(MapEntryUpdatedEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent updated: {}", event.value());
-            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.value().buildAgent().name());
+            BuildAgentInformation oldValue = event.oldValue();
+            BuildAgentInformation newValue = event.value();
+            log.debug("Build agent updated: {}", newValue);
+            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(newValue.buildAgent().name());
+
+            if (oldValue != null && oldValue.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED
+                    && newValue.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED) {
+                notifyAdminAboutAgentPausing(newValue);
+            }
         }
+    }
+
+    private void notifyAdminAboutAgentPausing(BuildAgentInformation buildAgentInformation) {
+        Optional<User> admin = userService.findInternalAdminUser();
+        if (admin.isEmpty()) {
+            log.warn("No internal admin user found. Cannot notify admin about self pausing build agent.");
+            return;
+        }
+        mailService.sendBuildAgentSelfPausedEmailToAdmin(admin.get(), buildAgentInformation.buildAgent().name());
     }
 
     private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime submissionDate, ZonedDateTime buildStartDate,

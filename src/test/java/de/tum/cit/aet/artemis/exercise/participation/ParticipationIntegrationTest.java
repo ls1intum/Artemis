@@ -235,7 +235,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo(TEST_PREFIX + "student1");
         Participation storedParticipation = participationRepo
-                .findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(modelingExercise.getId(), TEST_PREFIX + "student1", false).orElseThrow();
+                .findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(modelingExercise.getId(), TEST_PREFIX + "student1", false).orElseThrow();
         assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type modeling submission").isEqualTo(ModelingSubmission.class);
     }
@@ -249,8 +249,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(textExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo(TEST_PREFIX + "student2");
-        Participation storedParticipation = participationRepo
-                .findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(textExercise.getId(), TEST_PREFIX + "student2", false).orElseThrow();
+        Participation storedParticipation = participationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(textExercise.getId(), TEST_PREFIX + "student2", false)
+                .orElseThrow();
         assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type text submission").isEqualTo(TextSubmission.class);
     }
@@ -475,7 +475,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        prepareMocksForProgrammingExercise(user.getLogin(), false);
+        prepareMocksForProgrammingExercise();
         mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true);
 
         request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
@@ -487,7 +487,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
-        prepareMocksForProgrammingExercise(user.getLogin(), false);
+        prepareMocksForProgrammingExercise();
         mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "editor1", Set.of(user), true);
 
         request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
@@ -516,7 +516,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exerciseRepository.save(programmingExercise);
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        prepareMocksForProgrammingExercise(user.getLogin(), true);
+        prepareMocksForProgrammingExercise();
 
         mockConnectorRequestsForStartPractice(programmingExercise, TEST_PREFIX + "student1");
 
@@ -532,7 +532,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void participateInProgrammingExercise_successful() throws Exception {
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        prepareMocksForProgrammingExercise(user.getLogin(), false);
+        prepareMocksForProgrammingExercise();
         mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true);
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
@@ -550,7 +550,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         request.post("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/practice", null, HttpStatus.BAD_REQUEST);
     }
 
-    private void prepareMocksForProgrammingExercise(String userLogin, boolean practiceMode) throws Exception {
+    private void prepareMocksForProgrammingExercise() throws Exception {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
