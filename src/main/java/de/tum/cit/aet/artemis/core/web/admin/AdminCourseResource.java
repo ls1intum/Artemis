@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAdminService;
 import de.tum.cit.aet.artemis.core.service.course.CourseDeletionService;
 import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
-import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -76,8 +75,6 @@ public class AdminCourseResource {
 
     private final UserRepository userRepository;
 
-    private final CourseService courseService;
-
     private final CourseAdminService courseAdminService;
 
     private final ChannelService channelService;
@@ -92,10 +89,9 @@ public class AdminCourseResource {
 
     private final CourseDeletionService courseDeletionService;
 
-    public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseAdminService courseAdminService, CourseRepository courseRepository,
-            AuditEventRepository auditEventRepository, FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService,
-            CourseAccessService courseAccessService, CourseLoadService courseLoadService) {
-        this.courseService = courseService;
+    public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
+            FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseAccessService courseAccessService,
+            CourseLoadService courseLoadService) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;

@@ -20,21 +20,16 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
-import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
-import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
@@ -53,7 +48,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
-import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
@@ -78,45 +72,25 @@ public class PyrisPipelineService {
 
     private final CourseLoadService courseLoadService;
 
-    private final CourseRepository courseRepository;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final Optional<LearningMetricsApi> learningMetricsApi;
 
     private final UserRepository userRepository;
 
-    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
-
-    private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
-
-    private final Optional<PrerequisitesApi> prerequisitesApi;
-
-    private final Optional<ExamRepositoryApi> examRepositoryApi;
-
-    private final ExerciseRepository exerciseRepository;
-
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
-            IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, Optional<LearningMetricsApi> learningMetricsApi,
-            StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
-            Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<PrerequisitesApi> prerequisitesApi, Optional<ExamRepositoryApi> examRepositoryApi,
-            ExerciseRepository exerciseRepository, CourseLoadService courseLoadService) {
+            IrisChatWebsocketService irisChatWebsocketService, Optional<LearningMetricsApi> learningMetricsApi, StudentParticipationRepository studentParticipationRepository,
+            UserRepository userRepository, CourseLoadService courseLoadService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.pyrisDTOService = pyrisDTOService;
         this.irisChatWebsocketService = irisChatWebsocketService;
-        this.courseRepository = courseRepository;
         this.learningMetricsApi = learningMetricsApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
-        this.lectureRepositoryApi = lectureRepositoryApi;
-        this.competencyRepositoryApi = competencyRepositoryApi;
-        this.prerequisitesApi = prerequisitesApi;
-        this.examRepositoryApi = examRepositoryApi;
-        this.exerciseRepository = exerciseRepository;
         this.courseLoadService = courseLoadService;
     }
 
