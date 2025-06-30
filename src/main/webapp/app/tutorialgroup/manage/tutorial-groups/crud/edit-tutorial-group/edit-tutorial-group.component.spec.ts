@@ -23,6 +23,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
+import { expectComponentRendered } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 
 describe('EditTutorialGroupComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupComponent>;
@@ -88,10 +89,7 @@ describe('EditTutorialGroupComponent', () => {
     });
 
     it('should set form data correctly', () => {
-        expect(fixture.nativeElement.innerHTML).toContain('jhi-tutorial-group-form');
-        const tutorialGroupElement = fixture.debugElement.query(By.css('jhi-tutorial-group-form'));
-        expect(tutorialGroupElement).not.toBeNull();
-        const tutorialGroupFormComponent = tutorialGroupElement.componentInstance;
+        const tutorialGroupFormComponent = expectComponentRendered<TutorialGroupFormComponent>(fixture, 'jhi-tutorial-group-form');
 
         expect(component.tutorialGroup).toEqual(exampleTutorialGroup);
         expect(findTutorialGroupSpy).toHaveBeenCalledWith(2, 1);

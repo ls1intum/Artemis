@@ -68,12 +68,15 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
 
     it('should open the edit free day dialog when the respective button is clicked', fakeAsync(() => {
         const modalService = TestBed.inject(NgbModal);
+        const mockCourse = { id: 1, title: 'Test Course' };
+        const mockTutorialFreePeriod = { id: 42, date: '2025-06-30' };
+        const mockConfiguration = { id: 99, timeSlots: ['08:00-09:00'] };
+
         const mockModalRef = {
             componentInstance: {
-                course: signal(undefined),
-                tutorialGroupFreePeriod: signal(undefined),
-                tutorialGroupsConfiguration: signal(undefined),
-
+                course: signal(mockCourse),
+                tutorialGroupFreePeriod: signal(mockTutorialFreePeriod),
+                tutorialGroupsConfiguration: signal(mockConfiguration),
                 initialize: () => {},
             },
             result: of(),
@@ -90,7 +93,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
             expect(modalOpenSpy).toHaveBeenCalledWith(EditTutorialGroupFreePeriodComponent, { backdrop: 'static', scrollable: false, size: 'lg', animation: false });
             expect(mockModalRef.componentInstance.tutorialGroupFreePeriod).toEqual(tutorialFreePeriod);
             expect(mockModalRef.componentInstance.tutorialGroupsConfiguration).toEqual(configuration);
-            expect(mockModalRef.componentInstance.course()).toEqual(course);
+            expect(mockModalRef.componentInstance.course).toEqual(course);
         });
     }));
 

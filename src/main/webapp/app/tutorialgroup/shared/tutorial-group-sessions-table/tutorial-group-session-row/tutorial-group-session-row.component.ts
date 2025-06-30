@@ -48,10 +48,7 @@ export class TutorialGroupSessionRowComponent {
 
     readonly showIdColumn = input(false);
 
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-
+    // TODO: Skipped for now
     @Input() extraColumn: TemplateRef<any>;
 
     readonly session = input.required<TutorialGroupSession>();
@@ -64,7 +61,7 @@ export class TutorialGroupSessionRowComponent {
 
     persistedAttendanceCount?: number = undefined;
 
-    readonly attendanceDiffersFromPersistedValue: Signal<boolean>;
+    readonly attendanceDiffersFromPersistedValue: Signal<boolean> = computed(() => this.localSession().attendanceCount !== this.persistedAttendanceCount);
     isUpdatingAttendance = false;
 
     cancellationReason?: string;
@@ -78,8 +75,6 @@ export class TutorialGroupSessionRowComponent {
 
     private initialized = false;
     constructor() {
-        this.attendanceDiffersFromPersistedValue = computed(() => this.localSession().attendanceCount !== this.persistedAttendanceCount);
-
         effect(() => {
             const session = this.session();
             if (session) {
@@ -105,9 +100,9 @@ export class TutorialGroupSessionRowComponent {
             this.overlapsWithFreePeriod = !!this.localSession().tutorialGroupFreePeriod;
             if (this.isCancelled) {
                 if (this.overlapsWithFreePeriod) {
-                    this.cancellationReason = this.localSession().tutorialGroupFreePeriod?.reason ? this.localSession().tutorialGroupFreePeriod!.reason : undefined;
+                    this.cancellationReason = this.localSession().tutorialGroupFreePeriod?.reason || undefined;
                 } else {
-                    this.cancellationReason = this.localSession().statusExplanation ? this.localSession().statusExplanation : undefined;
+                    this.cancellationReason = this.localSession().statusExplanation || undefined;
                 }
             }
         }

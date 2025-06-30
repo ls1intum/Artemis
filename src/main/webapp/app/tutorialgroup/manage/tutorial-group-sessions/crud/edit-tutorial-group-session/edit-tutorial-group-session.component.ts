@@ -65,9 +65,16 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
         tutorialGroupSessionDTO.location = location;
 
         this.isLoading = true;
+        const course = this.course();
+        const tutorialGroup = this.tutorialGroup();
+        const tutorialGroupSession = this.tutorialGroupSession();
+        if (!course.id || !tutorialGroup.id || !tutorialGroupSession.id) {
+            captureException('Error: Course, TutorialGroup, or TutorialGroupSession ID is missing');
+            return;
+        }
 
         this.tutorialGroupSessionService
-            .update(this.course().id!, this.tutorialGroup().id!, this.tutorialGroupSession().id!, tutorialGroupSessionDTO)
+            .update(course.id, tutorialGroup.id, tutorialGroupSession.id, tutorialGroupSessionDTO)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

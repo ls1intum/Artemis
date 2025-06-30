@@ -21,6 +21,7 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import '@angular/localize/init';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { expectComponentRendered } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 
 describe('EditTutorialGroupSessionComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupSessionComponent>;
@@ -68,10 +69,7 @@ describe('EditTutorialGroupSessionComponent', () => {
     });
 
     it('should set form data correctly', () => {
-        expect(fixture.nativeElement.innerHTML).toContain('jhi-tutorial-group-session-form');
-        const tutorialGroupElement = fixture.debugElement.query(By.css('jhi-tutorial-group-session-form'));
-        expect(tutorialGroupElement).not.toBeNull();
-        const formStub: TutorialGroupSessionFormComponent = tutorialGroupElement.componentInstance;
+        const formStub = expectComponentRendered<TutorialGroupSessionFormComponent>(fixture, 'jhi-tutorial-group-session-form');
         fixture.detectChanges();
         expect(component.formData).toEqual(tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, timeZone));
         expect(formStub.formData()).toEqual(component.formData);

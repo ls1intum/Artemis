@@ -22,6 +22,7 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
+import { expectComponentRendered } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 
 describe('EditTutorialGroupFreePeriodComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupFreePeriodComponent>;
@@ -57,10 +58,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should set form data correctly for editing free days', () => {
-        expect(fixture.nativeElement.innerHTML).toContain('jhi-tutorial-free-period-form');
-        const tutorialGroupElement = fixture.debugElement.query(By.css('jhi-tutorial-free-period-form'));
-        expect(tutorialGroupElement).not.toBeNull();
-        const formStub = tutorialGroupElement.componentInstance;
+        const formStub = expectComponentRendered<TutorialGroupFreePeriodFormComponent>(fixture, 'jhi-tutorial-free-period-form');
         expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(examplePeriod, 'Europe/Berlin'));
         expect(formStub.formData()).toEqual(component.formData);
     });
@@ -74,11 +72,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         });
 
         setUpTestComponent(periodToEdit);
-
-        expect(fixture.nativeElement.innerHTML).toContain('jhi-tutorial-free-period-form');
-        const tutorialGroupElement = fixture.debugElement.query(By.css('jhi-tutorial-free-period-form'));
-        expect(tutorialGroupElement).not.toBeNull();
-        const formStub = tutorialGroupElement.componentInstance;
+        const formStub = expectComponentRendered<TutorialGroupFreePeriodFormComponent>(fixture, 'jhi-tutorial-free-period-form');
         expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodToEdit, 'Europe/Berlin'));
         expect(formStub.formData()).toEqual(component.formData);
     });
@@ -91,10 +85,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
             reason: 'TestReason',
         });
         setUpTestComponent(periodWithinDayToEdit);
-        expect(fixture.nativeElement.innerHTML).toContain('jhi-tutorial-free-period-form');
-        const tutorialGroupElement = fixture.debugElement.query(By.css('jhi-tutorial-free-period-form'));
-        expect(tutorialGroupElement).not.toBeNull();
-        const formStub = tutorialGroupElement.componentInstance;
+        const formStub = expectComponentRendered<TutorialGroupFreePeriodFormComponent>(fixture, 'jhi-tutorial-free-period-form');
         expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodWithinDayToEdit, 'Europe/Berlin'));
         expect(formStub.formData()).toEqual(component.formData);
     });
