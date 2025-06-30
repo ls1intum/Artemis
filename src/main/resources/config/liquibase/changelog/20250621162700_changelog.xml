@@ -131,13 +131,13 @@
             <columnExists tableName="plagiarism_submission_element" columnName="discriminator"/>
         </preConditions>
 
-        <!-- plagiarism_result.chatMode -->
+        <!-- plagiarism_result.discriminator -->
         <dropColumn tableName="plagiarism_result" columnName="discriminator"/>
 
         <!-- plagiarism_submission_element.token_type -->
         <dropColumn tableName="plagiarism_submission_element" columnName="token_type"/>
 
-        <!-- plagiarism_submission_element.chatMode -->
+        <!-- plagiarism_submission_element.discriminator -->
         <dropColumn tableName="plagiarism_submission_element" columnName="discriminator"/>
     </changeSet>
 </databaseChangeLog>

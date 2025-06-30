@@ -50,7 +50,7 @@ export class TutorialGroupSessionApiService extends BaseService {
             throw new Error('Required parameter tutorialGroupId was null or undefined when calling deleteSession.');
         }
         if (sessionId === null || sessionId === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling deleteSession.');
+            throw new Error('Required parameter sessionId was null or undefined when calling deleteSession.');
         }
 
         let localVarHeaders = this.defaultHeaders;

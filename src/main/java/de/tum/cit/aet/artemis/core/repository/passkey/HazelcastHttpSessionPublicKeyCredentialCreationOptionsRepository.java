@@ -100,7 +100,7 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
         HttpSession session = request.getSession();
         session.setAttribute(this.attrName, options);
 
-        // the id appears to change and does not equal the requestedSessionId, therefore, we use the userId instead
+        // the sessionId appears to change and does not equal the requestedSessionId, therefore, we use the userId instead
         String userId = request.getRemoteUser();
         if (userId == null) {
             log.warn("User ID is null, could not save PublicKeyCredentialCreationOptions");
