@@ -126,6 +126,8 @@ jobs:
     needs: [determine-build-context]
     if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
       - name: Install Python
         uses: actions/setup-python@v5
         with:
