@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
@@ -198,13 +199,18 @@ public class IrisSessionService {
         List<IrisChatSessionDAO> filteredSessions = irisChatSessionDAOs.stream()
                 .filter(cs -> (cs.exerciseId() == null || programmingEnabled) && (cs.lectureId() == null || lectureEnabled) && (cs.courseId() == null || courseEnabled)).toList();
 
-        return irisChatSessionDAOs.stream().map(cs -> {
+        return filteredSessions.stream().map(cs -> {
             Long id = cs.courseId();
-            if (id == null)
+            IrisChatMode irisChatMode = IrisChatMode.COURSE;
+            if (id == null) {
                 id = cs.lectureId();
-            if (id == null)
+                irisChatMode = IrisChatMode.LECTURE;
+            }
+            if (id == null) {
                 id = cs.exerciseId();
-            return new IrisChatSessionDTO(cs.id(), id, cs.creationDate());
+                irisChatMode = IrisChatMode.PROGRAMMING_EXERCISE;
+            }
+            return new IrisChatSessionDTO(cs.id(), id, irisChatMode, cs.creationDate());
         }).toList();
     }
 }
