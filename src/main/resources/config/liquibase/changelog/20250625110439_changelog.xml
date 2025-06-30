@@ -13,12 +13,8 @@
             <column name="quiz_question_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="answered_correctly" type="boolean"/>
-            <column name="times_answered" type="int"/>
-            <column name="times_answered_correct" type="int"/>
-            <column name="times_answered_wrong" type="int"/>
-            <column name="last_answered_at" type="datetime(3)"/>
-            <column name="last_answered_correct_at" type="datetime(3)"/>
+            <column name="progress_json" type="json"/>
+            <column name="last_modified" type="timestamp"/>
         </createTable>
         <addForeignKeyConstraint
                 baseTableName="quiz_question_progress"

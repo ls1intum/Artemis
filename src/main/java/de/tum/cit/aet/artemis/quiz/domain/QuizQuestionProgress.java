@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,23 +28,11 @@ public class QuizQuestionProgress {
     @JoinColumn(name = "quiz_question_id")
     private QuizQuestion quizQuestion;
 
-    @Column(name = "answered_correctly")
-    private boolean answeredCorrectly;
-
-    @Column(name = "times_answered")
-    private Integer timesAnswered;
-
-    @Column(name = "times_answered_correct")
-    private Integer timesAnsweredCorrect;
-
-    @Column(name = "times_answered_wrong")
-    private Integer timesAnsweredWorng;
+    @Column(name = "progress_json", columnDefinition = "json")
+    private String progressJson;
 
     @Column(name = "last_answered_at")
-    private Date lastAnsweredAt;
-
-    @Column(name = "last_answered_correct_at")
-    private Date lastAnsweredCorrectAt;
+    private ZonedDateTime lastAnsweredAt;
 
     public Long getId() {
         return id;
@@ -66,51 +54,20 @@ public class QuizQuestionProgress {
         this.quizQuestion = quizQuestion;
     }
 
-    public boolean isAnsweredCorrectly() {
-        return answeredCorrectly;
+    public String getProgressJson() {
+        return progressJson;
     }
 
-    public void setAnsweredCorrectly(boolean answeredCorrectly) {
-        this.answeredCorrectly = answeredCorrectly;
+    public void setProgressJson(String progressJson) {
+        this.progressJson = progressJson;
     }
 
-    public Integer getTimesAnswered() {
-        return timesAnswered;
-    }
-
-    public void setTimesAnswered(Integer timesAnswered) {
-        this.timesAnswered = timesAnswered;
-    }
-
-    public Integer getTimesAnsweredCorrect() {
-        return timesAnsweredCorrect;
-    }
-
-    public void setTimesAnsweredCorrect(Integer timesAnsweredCorrect) {
-        this.timesAnsweredCorrect = timesAnsweredCorrect;
-    }
-
-    public Integer getTimesAnsweredWrong() {
-        return timesAnsweredWorng;
-    }
-
-    public void setTimesAnsweredWrong(Integer timesAnsweredWrong) {
-        this.timesAnsweredWorng = timesAnsweredWrong;
-    }
-
-    public Date getLastAnsweredAt() {
+    public ZonedDateTime getLastAnsweredAt() {
         return lastAnsweredAt;
     }
 
-    public void setLastAnsweredAt(Date lastAnsweredAt) {
+    public void setLastAnsweredAt(ZonedDateTime lastAnsweredAt) {
         this.lastAnsweredAt = lastAnsweredAt;
     }
 
-    public Date getLastAnsweredCorrectAt() {
-        return lastAnsweredCorrectAt;
-    }
-
-    public void setLastAnsweredCorrectAt(Date lastAnsweredCorrectAt) {
-        this.lastAnsweredCorrectAt = lastAnsweredCorrectAt;
-    }
 }
