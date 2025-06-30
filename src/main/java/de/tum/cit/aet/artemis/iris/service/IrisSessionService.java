@@ -210,7 +210,7 @@ public class IrisSessionService {
                 id = cs.exerciseId();
                 irisChatMode = IrisChatMode.PROGRAMMING_EXERCISE;
             }
-            return new IrisChatSessionDTO(cs.id(), id, irisChatMode, cs.creationDate());
+            return new IrisChatSessionDTO(cs.id(), id, irisChatMode.getValue(), cs.creationDate());
         }).toList();
     }
 }
