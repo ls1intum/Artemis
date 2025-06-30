@@ -272,6 +272,20 @@
                 },
                 "maxPenalty": {
                     "pattern": "The maximum penalty must be between 0 and 100 percent!"
+                },
+                "continuousPlagiarismControl": {
+                    "similarityThreshold": {
+                        "pattern": "Similarity threshold must be 0-100 %."
+                    },
+                    "minimumScore": {
+                        "customMin": "Minimum score must be 0-100 %."
+                    },
+                    "minimumSize": {
+                        "customMin": "Minimum size must be a positive number."
+                    },
+                    "continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod": {
+                        "pattern": "Response period must be 7-31 days."
+                    }
                 }
             },
             "exam": "Exam",

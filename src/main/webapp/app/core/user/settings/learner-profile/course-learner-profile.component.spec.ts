@@ -42,8 +42,6 @@ describe('CourseLearnerProfileComponent', () => {
     clp1.aimForGradeOrBonus = 2;
     clp1.timeInvestment = 2;
     clp1.repetitionIntensity = 2;
-    clp1.proficiency = 2;
-    clp1.initialProficiency = 2;
 
     const clp2 = new CourseLearnerProfileDTO();
     clp2.id = 2;
@@ -52,8 +50,6 @@ describe('CourseLearnerProfileComponent', () => {
     clp2.aimForGradeOrBonus = 1;
     clp2.timeInvestment = 1;
     clp2.repetitionIntensity = 1;
-    clp2.proficiency = 3;
-    clp2.initialProficiency = 3;
     const profiles = [clp1, clp2];
 
     beforeEach(async () => {
@@ -122,16 +118,7 @@ describe('CourseLearnerProfileComponent', () => {
         expect(component.activeCourseId).toBe(course);
     });
 
-    it('should be disabled when no profile is selected', async () => {
-        const course = -1;
-        selectCourse(course);
-        const changeEvent = new Event('change', { bubbles: true, cancelable: false });
-        selector.dispatchEvent(changeEvent);
-        expect(component.activeCourseId).toBeNull();
-        expect(component.disabled).toBeTrue();
-    });
-
-    async function setupUpdateTestLikert(courseIndex: number, courseId: number, mockUpdate: boolean): Promise<CourseLearnerProfileDTO> {
+    async function setupUpdateTest(courseIndex: number, courseId: number, mockUpdate: boolean): Promise<CourseLearnerProfileDTO> {
         const newProfile = new CourseLearnerProfileDTO();
         Object.assign(newProfile, { ...profiles[courseIndex] });
         newProfile.repetitionIntensity = 1;
@@ -166,39 +153,6 @@ describe('CourseLearnerProfileComponent', () => {
         return newProfile;
     }
 
-    async function setupUpdateTestProficiency(courseIndex: number, courseId: number, mockUpdate: boolean): Promise<CourseLearnerProfileDTO> {
-        const newProfile = new CourseLearnerProfileDTO();
-        Object.assign(newProfile, { ...profiles[courseIndex] });
-        newProfile.proficiency = 3.1;
-        newProfile.initialProficiency = 3.1;
-
-        // Set up component state
-        component.courseLearnerProfiles.set([...profiles]);
-        component.activeCourseId = courseId;
-        component.disabled = false;
-        component.editing = true;
-
-        // Set the profile values in the component's signals
-        component.proficiency.set(newProfile.proficiency);
-
-        // Update the profile in the component's state
-        const updatedProfiles = [...profiles];
-        updatedProfiles[courseIndex] = newProfile;
-        component.courseLearnerProfiles.set(updatedProfiles);
-
-        if (mockUpdate) {
-            putUpdatedCourseLearnerProfileSpy.mockResolvedValue(newProfile);
-        } else {
-            putUpdatedCourseLearnerProfileSpy.mockRejectedValue(new Error('Bad Request'));
-        }
-
-        await component.onProfileSave();
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        return newProfile;
-    }
-
     function validateUpdate(index: number, profile: CourseLearnerProfileDTO) {
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
         expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
@@ -213,27 +167,15 @@ describe('CourseLearnerProfileComponent', () => {
     }
 
     describe('Making put requests', () => {
-        it('should update profile on successful request after updating likert values', async () => {
+        it('should update profile on successful request', async () => {
             const courseIndex = 1;
-            const profile = await setupUpdateTestLikert(courseIndex, profiles[courseIndex].courseId, true);
+            const profile = await setupUpdateTest(courseIndex, profiles[courseIndex].courseId, true);
             validateUpdate(courseIndex, profile);
         });
 
-        it('should error on bad request after updating likert values', async () => {
+        it('should error on bad request', async () => {
             const courseIndex = 1;
-            const profile = await setupUpdateTestLikert(courseIndex, profiles[courseIndex].courseId, false);
-            await validateError(profiles[courseIndex].courseId, courseIndex, profile);
-        });
-
-        it('should update profile on successful request after updating proficiency', async () => {
-            const courseIndex = 1;
-            const profile = await setupUpdateTestProficiency(courseIndex, profiles[courseIndex].courseId, false);
-            await validateUpdate(courseIndex, profile);
-        });
-
-        it('should error profile on bad request after updating proficiency', async () => {
-            const courseIndex = 1;
-            const profile = await setupUpdateTestProficiency(courseIndex, profiles[courseIndex].courseId, false);
+            const profile = await setupUpdateTest(courseIndex, profiles[courseIndex].courseId, false);
             await validateError(profiles[courseIndex].courseId, courseIndex, profile);
         });
     });

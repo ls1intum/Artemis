@@ -358,19 +358,15 @@ public class ComplaintResource {
     }
 
     private static Exercise getExercise(StudentParticipation originalParticipation) {
-        Exercise exerciseWithOnlyTitle = originalParticipation.getExercise();
-        if (exerciseWithOnlyTitle instanceof TextExercise) {
-            exerciseWithOnlyTitle = new TextExercise();
-        }
-        else if (exerciseWithOnlyTitle instanceof ModelingExercise) {
-            exerciseWithOnlyTitle = new ModelingExercise();
-        }
-        else if (exerciseWithOnlyTitle instanceof FileUploadExercise) {
-            exerciseWithOnlyTitle = new FileUploadExercise();
-        }
-        else if (exerciseWithOnlyTitle instanceof ProgrammingExercise) {
-            exerciseWithOnlyTitle = new ProgrammingExercise();
-        }
+        Exercise exerciseFromParticipation = originalParticipation.getExercise();
+        Exercise exerciseWithOnlyTitle = switch (exerciseFromParticipation) {
+            case TextExercise ignored -> new TextExercise();
+            case ModelingExercise ignored -> new ModelingExercise();
+            case FileUploadExercise ignored -> new FileUploadExercise();
+            case ProgrammingExercise ignored -> new ProgrammingExercise();
+            default -> exerciseFromParticipation;
+        };
+
         exerciseWithOnlyTitle.setTitle(originalParticipation.getExercise().getTitle());
         exerciseWithOnlyTitle.setId(originalParticipation.getExercise().getId());
         return exerciseWithOnlyTitle;
