@@ -31,7 +31,7 @@ public class QuizQuestionProgress {
     @Column(name = "progress_json", columnDefinition = "json")
     private String progressJson;
 
-    @Column(name = "last_answered_at")
+    @Column(name = "last_modified")
     private ZonedDateTime lastAnsweredAt;
 
     public Long getId() {
