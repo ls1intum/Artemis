@@ -16,11 +16,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisTextExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
@@ -78,11 +80,13 @@ public class IrisChatSessionResource {
 
     private final IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository;
 
+    private final IrisSessionRepository irisSessionRepository;
+
     protected IrisChatSessionResource(IrisCourseChatSessionRepository irisCourseChatSessionRepository, UserRepository userRepository, CourseRepository courseRepository,
             IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService,
             IrisCourseChatSessionService irisCourseChatSessionService, LectureRepositoryApi lectureRepositoryApi, IrisLectureChatSessionService irisLectureChatSessionService,
             IrisLectureChatSessionRepository irisLectureChatSessionRepository, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository,
-            ExerciseRepository exerciseRepository, IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository) {
+            ExerciseRepository exerciseRepository, IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository, IrisSessionRepository irisSessionRepository) {
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
@@ -97,59 +101,37 @@ public class IrisChatSessionResource {
         this.irisExerciseChatSessionRepository = irisExerciseChatSessionRepository;
         this.exerciseRepository = exerciseRepository;
         this.irisTextExerciseChatSessionRepository = irisTextExerciseChatSessionRepository;
+        this.irisSessionRepository = irisSessionRepository;
     }
 
     /**
      * GET chat-history/{courseId}/session/{id}: Retrieve an Iris Session for a id
      *
      * @param courseId  of the course
-     * @param chatMode  of the session
      * @param sessionId of the session
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris sessions for the id or {@code 404 (Not Found)} if no session exists
      */
-    @GetMapping("{courseId}/{chatMode}/session/{sessionId}")
+    @GetMapping("{courseId}/session/{sessionId}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisChatSession> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId, @PathVariable String chatMode) {
-        var chatModeEnum = IrisChatMode.fromValue(chatMode);
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+    public ResponseEntity<IrisChatSession> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId) {
+        var irisSession = irisSessionRepository.findById(sessionId).orElseThrow(() -> new EntityNotFoundException("IrisSession with id " + sessionId + " not found"));
 
+        var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasAcceptedExternalLLMUsageElseThrow();
 
-        IrisChatSession session = null;
+        boolean enabled = switch (irisSession) {
+            case IrisCourseChatSession courseChatSession -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.COURSE_CHAT, courseId);
+            case IrisLectureChatSession lectureChatSession -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.LECTURE_CHAT, courseId);
+            case IrisTextExerciseChatSession textExerciseChatSession -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.TEXT_EXERCISE_CHAT, courseId);
+            case IrisProgrammingExerciseChatSession programmingExerciseChatSession ->
+                irisSettingsService.isEnabledForCourse(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, courseId);
+            default -> false;
+        };
 
-        if (chatModeEnum.equals(IrisChatMode.COURSE)) {
-            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.COURSE_CHAT, course)) {
-                IrisCourseChatSession courseChatSession = irisCourseChatSessionRepository.findSessionWithMessagesByIdAndUserId(sessionId, user.getId()).orElseThrow();
-                courseChatSession.setEntityId(courseChatSession.getCourseId());
-                session = courseChatSession;
-            }
+        if (enabled) {
+            return ResponseEntity.ok((IrisChatSession) irisSession);
         }
-        else if (chatModeEnum.equals(IrisChatMode.LECTURE)) {
-            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.LECTURE_CHAT, course)) {
-                IrisLectureChatSession lectureChatSession = irisLectureChatSessionRepository.findSessionWithMessagesByIdAndUserId(sessionId, user.getId()).orElseThrow();
-                lectureChatSession.setEntityId(lectureChatSession.getLectureId());
-                session = lectureChatSession;
-            }
-        }
-        else if (chatModeEnum.equals(IrisChatMode.TEXT_EXERCISE)) {
-            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, course)) {
-                IrisTextExerciseChatSession textExerciseChatSession = irisTextExerciseChatSessionRepository.findSessionWithMessagesByIdAndUserId(sessionId, user.getId())
-                        .orElseThrow();
-                textExerciseChatSession.setEntityId(textExerciseChatSession.getExerciseId());
-                session = textExerciseChatSession;
-            }
-        }
-        else if (chatModeEnum.equals(IrisChatMode.PROGRAMMING_EXERCISE)) {
-            if (irisSettingsService.isEnabledFor(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, course)) {
-                IrisProgrammingExerciseChatSession programmingExerciseChatSession = irisExerciseChatSessionRepository.findSessionWithMessagesByIdAndUserId(sessionId, user.getId())
-                        .orElseThrow();
-                programmingExerciseChatSession.setEntityId(programmingExerciseChatSession.getExerciseId());
-                session = programmingExerciseChatSession;
-            }
-        }
-
-        return ResponseEntity.ok(session);
+        throw new AccessForbiddenAlertException("This Iris chat Type is disabled in the course.", "iris", "iris.disabled");
     }
 
     /**
