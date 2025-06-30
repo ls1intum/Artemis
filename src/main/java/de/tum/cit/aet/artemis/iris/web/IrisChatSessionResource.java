@@ -114,7 +114,11 @@ public class IrisChatSessionResource {
     @GetMapping("{courseId}/session/{sessionId}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<IrisChatSession> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId) {
-        var irisSession = irisSessionRepository.findById(sessionId).orElseThrow(() -> new EntityNotFoundException("IrisSession with id " + sessionId + " not found"));
+        var irisSession = irisSessionRepository.findByIdWithMessagesAndContents(sessionId);
+
+        if (irisSession == null) {
+            throw new EntityNotFoundException("Iris session with id " + sessionId + " not found");
+        }
 
         if (irisSession.shouldAcceptExternalLLMUsage()) {
             var user = userRepository.getUserWithGroupsAndAuthorities();
