@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -142,7 +143,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getSessionForSessionId() throws Exception {
         var courseSession = createCourseChatSessionForUser("student1");
-        IrisSession irisChatSessions = request.get("/api/iris/chat-history/" + course.getId() + "/course-chat/session/" + courseSession.getId(), HttpStatus.OK, IrisSession.class);
+        IrisSession irisChatSessions = request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.OK, IrisSession.class);
         assertThat(irisChatSessions.getId()).isEqualTo(courseSession.getId());
     }
 
@@ -155,12 +156,12 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         var programmingExerciseSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
-        List<IrisChatSession> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSession.class);
+        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
         assertThat(irisChatSessions).hasSize(4);
-        assertThat(irisChatSessions.contains(courseSession)).isTrue();
-        assertThat(irisChatSessions.contains(programmingExerciseSession)).isTrue();
-        assertThat(irisChatSessions.contains(textExerciseSession)).isTrue();
-        assertThat(irisChatSessions.contains(lectureSession)).isTrue();
+        assertThat(irisChatSessions.stream().filter(s -> s.id().equals(courseSession.getId())).findFirst()).isPresent();
+        assertThat(irisChatSessions.stream().filter(s -> s.id().equals(lectureSession.getId())).findFirst()).isPresent();
+        assertThat(irisChatSessions.stream().filter(s -> s.id().equals(textExerciseSession.getId())).findFirst()).isPresent();
+        assertThat(irisChatSessions.stream().filter(s -> s.id().equals(programmingExerciseSession.getId())).findFirst()).isPresent();
     }
 
     private IrisLectureChatSession createLectureSessionForUser(String userLogin) {
