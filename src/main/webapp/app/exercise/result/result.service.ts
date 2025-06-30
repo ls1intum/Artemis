@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
@@ -230,7 +230,10 @@ export class ResultService implements IResultService {
             .pipe(map((res: ResultsWithPointsArrayResponseType) => this.convertResultsWithPointsResponse(res)));
     }
 
-    getFeedbackDetailsForResult(participationId: number, result: Result): Observable<HttpResponse<Feedback[]>> {
+    getFeedbackDetailsForResult(participationId: number | undefined, result: Result): Observable<HttpResponse<Feedback[]>> {
+        if (!participationId || !result.id) {
+            return of(new HttpResponse<Feedback[]>({ body: [] }));
+        }
         return this.http.get<Feedback[]>(`${this.participationResourceUrl}/${participationId}/results/${result.id!}/details`, { observe: 'response' }).pipe(
             map((res) => {
                 const feedbacks = res.body ?? [];

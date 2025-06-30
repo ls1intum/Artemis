@@ -320,6 +320,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
         modalComponentInstance.exercise = this.exercise;
         modalComponentInstance.result = result;
+        modalComponentInstance.participation = this.participation;
         if (feedbackComponentParameters.exerciseType) {
             modalComponentInstance.exerciseType = feedbackComponentParameters.exerciseType;
         }

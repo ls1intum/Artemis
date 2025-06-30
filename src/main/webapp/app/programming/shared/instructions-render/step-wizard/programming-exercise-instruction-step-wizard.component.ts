@@ -8,6 +8,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-step-wizard',
@@ -24,6 +25,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     @Input() exercise: Exercise;
     @Input() latestResult?: Result;
     @Input() tasks: TaskArray;
+    @Input() participation: Participation;
 
     steps: Array<{ done: TestCaseState; title: string; testIds: number[] }>;
 
@@ -62,6 +64,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
         const componentInstance = modalRef.componentInstance as FeedbackComponent;
         componentInstance.exercise = this.exercise;
         componentInstance.result = this.latestResult;
+        componentInstance.participation = this.participation;
         componentInstance.feedbackFilter = tests;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         componentInstance.taskName = taskName;
