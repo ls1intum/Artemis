@@ -12,18 +12,4 @@ export class IrisSession implements BaseEntity {
     chatMode: ChatServiceMode;
     entityId: number;
     type?: string;
-
-    static parseChatMode(mode: string): ChatServiceMode | undefined {
-        const parsedMode = mode.replaceAll('_', '-');
-        return Object.values(ChatServiceMode).includes(parsedMode as ChatServiceMode) ? (parsedMode as ChatServiceMode) : undefined;
-    }
-
-    constructor(init?: Partial<IrisSession>) {
-        if (init) {
-            Object.assign(this, init);
-            if (typeof init.type === 'string') {
-                this.chatMode = IrisSession.parseChatMode(init.type) as ChatServiceMode;
-            }
-        }
-    }
 }

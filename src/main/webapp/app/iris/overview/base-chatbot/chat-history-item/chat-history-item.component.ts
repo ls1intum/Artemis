@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { DatePipe, NgClass } from '@angular/common';
+import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 
 @Component({
     selector: 'jhi-chat-history-item',
@@ -10,9 +10,9 @@ import { DatePipe, NgClass } from '@angular/common';
     imports: [DatePipe, NgClass],
 })
 export class ChatHistoryItemComponent {
-    @Input() session: IrisSession;
+    @Input() session: IrisSessionDTO;
     @Input() active: boolean = false;
-    @Output() sessionClicked = new EventEmitter<IrisSession>();
+    @Output() sessionClicked = new EventEmitter<IrisSessionDTO>();
 
     onItemClick(): void {
         this.sessionClicked.emit(this.session);

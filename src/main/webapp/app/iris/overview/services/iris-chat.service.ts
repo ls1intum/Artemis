@@ -14,6 +14,7 @@ import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimi
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -73,7 +74,7 @@ export class IrisChatService implements OnDestroy {
     stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
     suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
-    chatSessions: BehaviorSubject<IrisSession[]> = new BehaviorSubject([]);
+    chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
 
     rateLimitInfo?: IrisRateLimitInformation;
     rateLimitSubscription: Subscription;
@@ -328,7 +329,7 @@ export class IrisChatService implements OnDestroy {
     }
 
     private loadChatSessions() {
-        this.http.getChatSessions(this.courseId).subscribe((sessions: IrisSession[]) => {
+        this.http.getChatSessions(this.courseId).subscribe((sessions: IrisSessionDTO[]) => {
             this.chatSessions.next(sessions ?? []);
         });
     }
@@ -362,7 +363,7 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
-    switchToSession(session: IrisSession): void {
+    switchToSession(session: IrisSessionDTO): void {
         if (this.sessionId === session.id) {
             return;
         }
@@ -407,7 +408,7 @@ export class IrisChatService implements OnDestroy {
         return this.suggestions.asObservable();
     }
 
-    public availableChatSessions(): Observable<IrisSession[]> {
+    public availableChatSessions(): Observable<IrisSessionDTO[]> {
         return this.chatSessions.asObservable();
     }
 }

@@ -271,7 +271,7 @@ pre {
 }
 
 .chat-container {
-    height: calc(100% - 2.5rem);
+    flex: 1;
     overflow-y: hidden;
     display: flex;
 }

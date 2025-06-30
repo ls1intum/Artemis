@@ -41,10 +41,10 @@ import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ActivatedRoute } from '@angular/router';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
-import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { User } from 'app/core/user/user.model';
+import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -153,7 +153,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     chatSessionsSubscription: Subscription;
 
     currentSessionId: number | undefined;
-    chatSessions: IrisSession[] = [];
+    chatSessions: IrisSessionDTO[] = [];
     messages: IrisMessage[] = [];
     stages?: IrisStageDTO[] = [];
     suggestions?: string[] = [];
@@ -489,7 +489,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.onSend();
     }
 
-    onSessionClick(session: IrisSession) {
+    onSessionClick(session: IrisSessionDTO) {
         this.chatService.switchToSession(session);
     }
 
@@ -505,7 +505,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * @param ignoreOlderBoundary If true, only the daysAgoNewer boundary is considered (sessions newer than or on this day).
      * @returns An array of IrisSession objects matching the criteria.
      */
-    getSessionsBetween(daysAgoNewer: number, daysAgoOlder?: number, ignoreOlderBoundary = false): IrisSession[] {
+    getSessionsBetween(daysAgoNewer: number, daysAgoOlder?: number, ignoreOlderBoundary = false): IrisSessionDTO[] {
         if (daysAgoNewer < 0 || (!ignoreOlderBoundary && (daysAgoOlder === undefined || daysAgoOlder < 0 || daysAgoNewer > daysAgoOlder))) {
             return [];
         }
