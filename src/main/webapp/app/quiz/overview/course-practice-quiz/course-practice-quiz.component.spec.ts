@@ -19,7 +19,6 @@ import { MultipleChoiceSubmittedAnswer } from '../../shared/entities/multiple-ch
 import { DragAndDropSubmittedAnswer } from '../../shared/entities/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from '../../shared/entities/short-answer-submitted-answer.model';
 import * as Utils from 'app/shared/util/utils';
-import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { MockInstance } from 'ng-mocks';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
