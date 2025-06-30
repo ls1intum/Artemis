@@ -551,6 +551,34 @@ public class ExamUtilService {
     }
 
     /**
+     * Creates and saves an Exam without ExerciseGroups and Exercises.
+     *
+     * @param course                 The Course to which the Exam should be added
+     * @param visibleDate            The visible date of the Exam
+     * @param startDate              The start date of the Exam
+     * @param endDate                The end date of the Exam
+     * @param publishResultsDate     The results publication date of the Exam
+     * @param studentReviewStartDate The date on which the student review starts
+     * @param studentReviewEndDate   The date on which the student review ends
+     * @return The newly created Exam
+     */
+    public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime publishResultsDate,
+            ZonedDateTime studentReviewStartDate, ZonedDateTime studentReviewEndDate, String examiner) {
+        Exam exam = ExamFactory.generateExam(course);
+        exam.setVisibleDate(visibleDate);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        exam.setPublishResultsDate(publishResultsDate);
+        exam.setExamStudentReviewStart(studentReviewStartDate);
+        exam.setExamStudentReviewEnd(studentReviewEndDate);
+        exam.setWorkingTime(exam.getDuration());
+        exam.setGracePeriod(180);
+        exam.setExaminer(examiner);
+        exam = examRepository.save(exam);
+        return exam;
+    }
+
+    /**
      * Creates and saves a Channel for the given Exam.
      *
      * @param exam        The Exam for which the Channel should be created

@@ -944,7 +944,7 @@ public class TutorialGroupService {
      * @return the retrieved events
      */
     public Set<CalendarEventDTO> getCalendarEventDTOsFromTutorialsGroups(Long userId, Long courseId) {
-        Set<Long> tutorialGroupIds = tutorialGroupRepository.findTutorialGroupIdsWhereUserParticipatesForCourseId(userId, courseId);
+        Set<Long> tutorialGroupIds = tutorialGroupRepository.findTutorialGroupIdsWhereUserParticipatesForCourseId(courseId, userId);
         return tutorialGroupSessionRepository.getCalendarEventDTOsFromActiveSessionsForTutorialGroupIds(tutorialGroupIds);
     }
 }

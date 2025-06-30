@@ -31,6 +31,26 @@ public class FileUploadExerciseFactory {
     }
 
     /**
+     * Generates a FileUploadExercise for a course.
+     *
+     * @param releaseDate       The release date of the exercise
+     * @param startDate         The start date of the exercise
+     * @param dueDate           The due date of the exercise
+     * @param assessmentDueDate The assessment due date of the exercise
+     * @param filePattern       The pattern for the allowed file types
+     * @param course            The course of the exercise
+     * @return The generated FileUploadExercise
+     */
+    public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
+            String filePattern, Course course) {
+        var fileUploadExercise = (FileUploadExercise) ExerciseFactory.populateExercise(new FileUploadExercise(), releaseDate, dueDate, assessmentDueDate, course);
+        fileUploadExercise.setStartDate(startDate);
+        fileUploadExercise.setFilePattern(filePattern);
+        fileUploadExercise.setExampleSolution("This is my example solution");
+        return fileUploadExercise;
+    }
+
+    /**
      * Generates a FileUploadExercise for an exam.
      *
      * @param filePattern   The pattern for the allowed file types

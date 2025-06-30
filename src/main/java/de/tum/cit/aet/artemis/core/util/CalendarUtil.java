@@ -92,28 +92,29 @@ public class CalendarUtil {
      * @param eventDTOs the set of calendar events to process
      * @return a set including all unsplit events and the splitting results
      */
-    public static Set<CalendarEventDTO> splitEventsSpanningMultipleDaysIfNecessary(Set<CalendarEventDTO> eventDTOs) {
-        return eventDTOs.stream().flatMap(event -> splitEventAcrossDaysIfNecessary(event).stream()).collect(Collectors.toSet());
+    public static Set<CalendarEventDTO> splitEventsSpanningMultipleDaysIfNecessary(Set<CalendarEventDTO> eventDTOs, ZoneId clientTimeZone) {
+        return eventDTOs.stream().flatMap(event -> splitEventAcrossDaysIfNecessary(event, clientTimeZone).stream()).collect(Collectors.toSet());
     }
 
-    private static Set<CalendarEventDTO> splitEventAcrossDaysIfNecessary(CalendarEventDTO event) {
+    private static Set<CalendarEventDTO> splitEventAcrossDaysIfNecessary(CalendarEventDTO event, ZoneId clientTimeZone) {
         ZonedDateTime start = event.startDate();
         ZonedDateTime end = event.endDate();
-
         if (end == null || start.toLocalDate().equals(end.toLocalDate())) {
             return Set.of(event);
         }
+
+        start = start.withZoneSameInstant(clientTimeZone);
+        end = end.withZoneSameInstant(clientTimeZone);
 
         HashSet<CalendarEventDTO> splitEvents = new HashSet<>();
         int currentSplitId = 0;
         LocalDate currentDay = start.toLocalDate();
         LocalDate endDay = end.toLocalDate();
-        ZoneId zone = start.getZone();
 
         while (!currentDay.isAfter(endDay)) {
-            ZonedDateTime currentStart = currentDay.equals(start.toLocalDate()) ? start : currentDay.atStartOfDay(zone);
+            ZonedDateTime currentStart = currentDay.equals(start.toLocalDate()) ? start : currentDay.atStartOfDay(clientTimeZone);
 
-            ZonedDateTime currentEnd = currentDay.equals(end.toLocalDate()) ? end : currentDay.atTime(DateUtil.END_OF_DAY).atZone(zone);
+            ZonedDateTime currentEnd = currentDay.equals(end.toLocalDate()) ? end : currentDay.atTime(DateUtil.END_OF_DAY).atZone(clientTimeZone);
 
             splitEvents.add(
                     new CalendarEventDTO(event.id() + "-" + currentSplitId, event.title(), event.courseName(), currentStart, currentEnd, event.location(), event.facilitator()));

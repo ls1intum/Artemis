@@ -348,14 +348,14 @@ public class LectureService {
         if (userIsStudent && lecture.getVisibleDate() != null && ZonedDateTime.now().isBefore(lecture.getVisibleDate()))
             return Optional.empty();
         if (lecture.getStartDate() == null && lecture.getEndDate() != null) {
-            return Optional
-                    .of(new CalendarEventDTO("lecture-" + lecture.getId() + "endDate", lecture.getTitle(), lecture.getCourse().getTitle(), lecture.getEndDate(), null, null, null));
+            return Optional.of(
+                    new CalendarEventDTO("lecture-" + lecture.getId() + "-endDate", lecture.getTitle(), lecture.getCourse().getTitle(), lecture.getEndDate(), null, null, null));
         }
         if (lecture.getStartDate() != null && lecture.getEndDate() == null) {
-            return Optional.of(
-                    new CalendarEventDTO("lecture-" + lecture.getId() + "startDate", lecture.getTitle(), lecture.getCourse().getTitle(), lecture.getStartDate(), null, null, null));
+            return Optional.of(new CalendarEventDTO("lecture-" + lecture.getId() + "-startDate", lecture.getTitle(), lecture.getCourse().getTitle(), lecture.getStartDate(), null,
+                    null, null));
         }
-        return Optional.of(
-                new CalendarEventDTO("lecture-" + lecture.getId(), lecture.getTitle(), lecture.getCourse().getTitle(), lecture.getStartDate(), lecture.getEndDate(), null, null));
+        return Optional.of(new CalendarEventDTO("lecture-" + lecture.getId() + "-startAndEndDate", lecture.getTitle(), lecture.getCourse().getTitle(), lecture.getStartDate(),
+                lecture.getEndDate(), null, null));
     }
 }

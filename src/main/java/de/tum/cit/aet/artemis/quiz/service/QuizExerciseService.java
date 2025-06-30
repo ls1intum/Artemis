@@ -567,7 +567,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
      * <p>
      * Context: <br>
-     * The startDate and dueDate properties of {@link QuizExercise}s in {@code QuizMode.SYNCHRONIZED} are always null. Instead, such quizzes have exactly one {@link QuizBatch}.
+     * The startDate and dueDate properties of {@link QuizExercise}s in {@code QuizMode.SYNCHRONIZED} are always null. Instead, such quizzes have exactly one {@link QuizBatch}
      * for which the startTime property is set. The end of the quiz can be calculated by adding the duration property of the exercise to the startTime of the batch.
      *
      * @param quizExercise  the exercise from which to derive the event
@@ -616,7 +616,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     private Set<CalendarEventDTO> deriveEventsForIndividualAndBatchedQuizExercises(QuizExercise quizExercise, boolean userIsCourseStaff) {
         Set<CalendarEventDTO> events = new HashSet<>();
-        if (userIsCourseStaff || (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isBefore(now()))) {
+        if (userIsCourseStaff || quizExercise.getReleaseDate() == null || (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isBefore(now()))) {
             if (quizExercise.getReleaseDate() != null) {
                 events.add(new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(),
                         quizExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), quizExercise.getReleaseDate(), null, null, null));

@@ -82,8 +82,7 @@ public class CalendarResource {
      * @param courseId  the id of the course for which the events should be fetched
      * @param monthKeys a list of ISO 8601 formatted strings representing months
      * @param timeZone  the clients time zone as IANA time zone ID
-     * @return {@code 200 (OK)} with a map of DTOs keyed by day from client timezone perspective. All timestamps of the DTOs are in UTC representation
-     *         and formatted according to ISO 8601 format.
+     * @return {@code 200 (OK)} with a map of DTOs keyed by day from client timezone perspective. All timestamps conform to ISO 8601 format.
      * @throws EntityNotFoundException  {@code 404 (Not Found)} if no course exists for the provided courseId
      * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user does not have at least student role or if the user is not at least student in the course
      * @throws BadRequestException      {@code 400 (Bad Request)} if the monthKeys are empty or formatted incorrectly or if the timeZone is formatted incorrectly.
@@ -112,7 +111,7 @@ public class CalendarResource {
         Set<CalendarEventDTO> calendarEventDTOs = Stream.of(tutorialEventDTOs, lectureEventDTOs, examEventDTOs, quizExerciseEventDTOs, otherExerciseEventDTOs).flatMap(Set::stream)
                 .collect(Collectors.toSet());
         Set<CalendarEventDTO> filteredDTOs = CalendarUtil.filterForEventsOverlappingMonths(calendarEventDTOs, months, clientTimeZone);
-        Set<CalendarEventDTO> splitDTOs = CalendarUtil.splitEventsSpanningMultipleDaysIfNecessary(filteredDTOs);
+        Set<CalendarEventDTO> splitDTOs = CalendarUtil.splitEventsSpanningMultipleDaysIfNecessary(filteredDTOs, clientTimeZone);
         Map<String, List<CalendarEventDTO>> calendarEventDTOsByDay = splitDTOs.stream()
                 .collect(Collectors.groupingBy(dto -> dto.startDate().withZoneSameInstant(clientTimeZone).toLocalDate().toString()));
 
