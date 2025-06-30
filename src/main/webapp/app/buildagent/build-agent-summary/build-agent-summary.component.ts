@@ -72,7 +72,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private updateBuildAgents(buildAgents: BuildAgentInformation[]) {
         this.buildAgents = buildAgents;
         this.buildCapacity = this.buildAgents
-            .filter((agent) => agent.status !== BuildAgentStatus.PAUSED)
+            .filter((agent) => agent.status !== BuildAgentStatus.PAUSED && agent.status !== BuildAgentStatus.SELF_PAUSED)
             .reduce((sum, agent) => sum + (agent.maxNumberOfConcurrentBuildJobs || 0), 0);
         this.currentBuilds = this.buildAgents.reduce((sum, agent) => sum + (agent.numberOfCurrentBuildJobs || 0), 0);
     }

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CoursePracticeQuizComponent } from './course-practice-quiz.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { QuizQuestion, QuizQuestionType } from '../../shared/entities/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MockBuilder } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -19,6 +19,11 @@ import { MultipleChoiceSubmittedAnswer } from '../../shared/entities/multiple-ch
 import { DragAndDropSubmittedAnswer } from '../../shared/entities/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from '../../shared/entities/short-answer-submitted-answer.model';
 import * as Utils from 'app/shared/util/utils';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { MockInstance } from 'ng-mocks';
+import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { signal } from '@angular/core';
 
 const question1: QuizQuestion = {
     id: 1,
@@ -50,6 +55,7 @@ const course = { id: 1, title: 'Test Course' };
 const result: Result = { id: 1, submission: { submittedAnswers: [{ scoreInPoints: 2 }] } as any };
 
 describe('CoursePracticeQuizComponent', () => {
+    MockInstance.scope();
     let component: CoursePracticeQuizComponent;
     let fixture: ComponentFixture<CoursePracticeQuizComponent>;
     let quizService: CoursePracticeQuizService;
@@ -76,6 +82,7 @@ describe('CoursePracticeQuizComponent', () => {
         quizService = TestBed.inject(CoursePracticeQuizService);
         jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(of([question1, question2, question3]));
         jest.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as SecuredImageComponent));
 
         fixture = TestBed.createComponent(CoursePracticeQuizComponent);
         component = fixture.componentInstance;
