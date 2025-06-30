@@ -88,7 +88,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'lg' });
         const componentInstance = modalRef.componentInstance as FeedbackComponent;
         componentInstance.exercise = this.exercise;
-        componentInstance.participation = this;
+        componentInstance.participation = this.participation;
         componentInstance.result = this.latestResult;
         componentInstance.feedbackFilter = this.testIds;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
