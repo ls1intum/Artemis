@@ -43,7 +43,7 @@ spring:
                 prepStmtCacheSqlLimit: 2048
                 useServerPrepStmts: true
     jpa:
-        show-sql: false
+        show-sql: true
     liquibase:
         contexts: dev
     mail:

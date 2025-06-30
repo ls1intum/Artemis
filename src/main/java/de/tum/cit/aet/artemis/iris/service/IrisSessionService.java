@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-import static de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.annotation.Nullable;
@@ -17,15 +17,13 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
-import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDAO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatBasedFeatureInterface;
@@ -189,28 +187,26 @@ public class IrisSessionService {
      * @return A list of all IrisChatSessionsDTOs for a course
      */
     public List<IrisChatSessionDTO> getIrisSessionsByCourseAndUserId(Course course, Long userId) {
-        List<IrisChatSessionDAO> irisChatSessionDAOs = irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId);
+        var settings = irisSettingsService.getCombinedIrisSettingsForCourse(course.getId(), true);
+        List<Class<? extends IrisChatSession>> enabledTypes = new ArrayList<>();
 
-        boolean programmingEnabled = irisSettingsService.isEnabledFor(PROGRAMMING_EXERCISE_CHAT, course);
-        boolean textEnabled = irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, course);
-        boolean lectureEnabled = irisSettingsService.isEnabledFor(IrisSubSettingsType.LECTURE_CHAT, course);
-        boolean courseEnabled = irisSettingsService.isEnabledFor(IrisSubSettingsType.COURSE_CHAT, course);
+        if (settings.irisTextExerciseChatSettings().enabled()) {
+            enabledTypes.add(IrisTextExerciseChatSession.class);
+        }
 
-        List<IrisChatSessionDAO> filteredSessions = irisChatSessionDAOs.stream()
-                .filter(cs -> (cs.exerciseId() == null || programmingEnabled) && (cs.lectureId() == null || lectureEnabled) && (cs.courseId() == null || courseEnabled)).toList();
+        if (settings.irisProgrammingExerciseChatSettings().enabled()) {
+            enabledTypes.add(IrisProgrammingExerciseChatSession.class);
+        }
 
-        return filteredSessions.stream().map(cs -> {
-            Long id = cs.courseId();
-            IrisChatMode irisChatMode = IrisChatMode.COURSE;
-            if (id == null) {
-                id = cs.lectureId();
-                irisChatMode = IrisChatMode.LECTURE;
-            }
-            if (id == null) {
-                id = cs.exerciseId();
-                irisChatMode = IrisChatMode.PROGRAMMING_EXERCISE;
-            }
-            return new IrisChatSessionDTO(cs.id(), id, irisChatMode.getValue(), cs.creationDate());
-        }).toList();
+        if (settings.irisCourseChatSettings().enabled()) {
+            enabledTypes.add(IrisCourseChatSession.class);
+        }
+
+        if (settings.irisLectureChatSettings().enabled()) {
+            enabledTypes.add(IrisLectureChatSession.class);
+        }
+
+        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId, enabledTypes).stream()
+                .map(dao -> new IrisChatSessionDTO(dao.session().getId(), dao.entityId(), dao.session().getCreationDate(), dao.session().getMode())).toList();
     }
 }

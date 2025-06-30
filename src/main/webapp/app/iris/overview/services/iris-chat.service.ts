@@ -16,11 +16,26 @@ import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 
 export enum ChatServiceMode {
-    TEXT_EXERCISE = 'text-exercise-chat',
-    PROGRAMMING_EXERCISE = 'programming-exercise-chat',
-    COURSE = 'course-chat',
-    LECTURE = 'lecture-chat',
-    TUTOR_SUGGESTION = 'tutor-suggestion',
+    TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
+    PROGRAMMING_EXERCISE = 'PROGRAMMING_EXERCISE_CHAT',
+    COURSE = 'COURSE_CHAT',
+    LECTURE = 'LECTURE_CHAT',
+    TUTOR_SUGGESTION = 'TUTOR_SUGGESTION',
+}
+
+export function chatModeToUrlComponent(mode: ChatServiceMode): string | undefined {
+    switch (mode) {
+        case ChatServiceMode.COURSE:
+            return 'course-chat';
+        case ChatServiceMode.LECTURE:
+            return 'lecture-chat';
+        case ChatServiceMode.PROGRAMMING_EXERCISE:
+            return 'programming-exercise-chat';
+        case ChatServiceMode.TEXT_EXERCISE:
+            return 'text-exercise-chat';
+        default:
+            return undefined;
+    }
 }
 
 /**
@@ -338,7 +353,8 @@ export class IrisChatService implements OnDestroy {
     }
 
     switchTo(mode: ChatServiceMode, id?: number): void {
-        const newIdentifier = mode && id ? mode + '/' + id : undefined;
+        const modeUrl = chatModeToUrlComponent(mode);
+        const newIdentifier = modeUrl && id ? modeUrl + '/' + id : undefined;
         const isDifferent = this.sessionCreationIdentifier !== newIdentifier;
         this.sessionCreationIdentifier = newIdentifier;
         if (isDifferent) {
@@ -353,11 +369,7 @@ export class IrisChatService implements OnDestroy {
 
         this.close();
 
-        const requiresAcceptance = this.sessionCreationIdentifier ? this.modeRequiresLLMAcceptance.get(session.chatMode) : true;
-
-        if (requiresAcceptance === false || this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
-            this.http.getChatSessionById(this.courseId, session.id, session.chatMode).subscribe((session) => this.handleNewSession().next(session));
-        }
+        this.http.getChatSessionById(this.courseId, session.id).subscribe((session) => this.handleNewSession().next(session));
     }
 
     private closeAndStart() {

@@ -5,7 +5,6 @@ import { IrisAssistantMessage, IrisMessage, IrisUserMessage } from 'app/iris/sha
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { map, tap } from 'rxjs/operators';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
-import { ChatServiceMode } from './iris-chat.service';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -122,9 +121,7 @@ export class IrisChatHttpService {
             .pipe(map((sessionsArray) => sessionsArray.map((sessionData) => new IrisSession(sessionData))));
     }
 
-    getChatSessionById(courseId: number, sessionId: number, chatServiceMode: ChatServiceMode): Observable<IrisSession> {
-        return this.httpClient
-            .get<IrisSession>(`${this.apiPrefix}/chat-history/${courseId}/${chatServiceMode}/session/${sessionId}`)
-            .pipe(map((sessionData) => new IrisSession(sessionData)));
+    getChatSessionById(courseId: number, sessionId: number): Observable<IrisSession> {
+        return this.httpClient.get<IrisSession>(`${this.apiPrefix}/chat-history/${courseId}/session/${sessionId}`).pipe(map((sessionData) => new IrisSession(sessionData)));
     }
 }

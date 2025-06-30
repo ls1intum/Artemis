@@ -1,9 +1,6 @@
 package de.tum.cit.aet.artemis.iris.domain.session;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.Transient;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -11,9 +8,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 public abstract class IrisChatSession extends IrisSession {
 
     private long userId;
-
-    @Transient
-    private long entityId;
 
     public IrisChatSession(User user) {
         this.userId = user.getId();
@@ -30,12 +24,5 @@ public abstract class IrisChatSession extends IrisSession {
         this.userId = userId;
     }
 
-    public void setEntityId(long entityId) {
-        this.entityId = entityId;
-    }
-
-    @JsonProperty
-    public long getEntityId() {
-        return entityId;
-    }
+    public abstract IrisChatMode getMode();
 }

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
@@ -27,17 +28,22 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
      * @return A list of chat sessions sorted by creation date in descending order.
      */
     @Query("""
-            SELECT s
-            FROM IrisChatSession s
-            LEFT JOIN IrisCourseChatSession ccs ON s.id = ccs.id
-            LEFT JOIN IrisLectureChatSession lcs ON s.id = lcs.id
-            LEFT JOIN IrisTextExerciseChatSession tecs ON s.id = tecs.id
-            LEFT JOIN IrisProgrammingExerciseChatSession pecs ON s.id = pecs.id
-            LEFT JOIN Lecture l ON l.id = lcs.lectureId
-            LEFT JOIN Exercise e ON e.id = tecs.exerciseId OR e.id = pecs.exerciseId
-            WHERE s.userId = :userId
-              AND (ccs.courseId = :courseId OR l.course.id = :courseId OR e.course.id = :courseId)
-            ORDER BY s.creationDate DESC
+            SELECT new de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDAO(
+                      s,
+                      COALESCE(ccs.courseId, e1.id, e2.id, l.id, -1)
+                  )
+                FROM IrisChatSession s
+                LEFT JOIN IrisCourseChatSession ccs ON s.id = ccs.id
+                LEFT JOIN IrisLectureChatSession lcs ON s.id = lcs.id
+                LEFT JOIN IrisTextExerciseChatSession tecs ON s.id = tecs.id
+                LEFT JOIN IrisProgrammingExerciseChatSession pecs ON s.id = pecs.id
+                LEFT JOIN Lecture l ON l.id = lcs.lectureId
+                LEFT JOIN Exercise e1 ON e1.id = tecs.exerciseId
+                LEFT JOIN Exercise e2 ON e2.id = pecs.exerciseId
+                WHERE s.userId = :userId and TYPE(s) in (:types)
+                  AND (ccs.courseId = :courseId OR l.course.id = :courseId OR e1.course.id = :courseId OR e2.course.id = :courseId)
+                ORDER BY s.creationDate DESC
             """)
-    List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
+    List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId,
+            @Param("types") Collection<Class<? extends IrisChatSession>> types);
 }

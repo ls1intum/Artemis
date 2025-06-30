@@ -3,7 +3,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <!-- 
-      Migration to convert `initialization_state` and `discriminator` columns
+      Migration to convert `initialization_state` and `chatMode` columns
       from VARCHAR to ENUM types. This improves data integrity and saves disk space.
       The migration supports only MySQL with conditional logic.
     -->
