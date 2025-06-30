@@ -12,8 +12,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDAO;
 
 @Lazy
 @Repository
