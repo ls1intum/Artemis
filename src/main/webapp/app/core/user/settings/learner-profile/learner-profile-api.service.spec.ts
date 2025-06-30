@@ -7,15 +7,14 @@ import { LearnerProfileDTO } from './dto/learner-profile-dto.model';
 
 // Mock data
 const mockCourseLearnerProfiles: CourseLearnerProfileDTO[] = [
-    {
+    Object.assign(new CourseLearnerProfileDTO(), {
         id: 1,
         courseId: 101,
         courseTitle: 'Course 101',
         aimForGradeOrBonus: 3,
         timeInvestment: 4,
         repetitionIntensity: 2,
-        isValid: () => true,
-    } as CourseLearnerProfileDTO,
+    }),
 ];
 
 const mockLearnerProfile: LearnerProfileDTO = new LearnerProfileDTO({
@@ -55,7 +54,10 @@ describe('LearnerProfileApiService', () => {
     });
 
     it('should update a course learner profile', async () => {
-        const updatedProfile = { ...mockCourseLearnerProfiles[0], aimForGradeOrBonus: 4 };
+        const updatedProfile = Object.assign(new CourseLearnerProfileDTO(), {
+            ...mockCourseLearnerProfiles[0],
+            aimForGradeOrBonus: 4,
+        });
         const promise = service.putUpdatedCourseLearnerProfile(updatedProfile);
         const req = httpMock.expectOne(`api/atlas/course-learner-profiles/${updatedProfile.id}`);
         expect(req.request.method).toBe('PUT');
