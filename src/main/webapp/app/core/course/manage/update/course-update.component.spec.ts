@@ -101,10 +101,9 @@ describe('Course Management Update Component', () => {
         course.learningPathsEnabled = true;
         course.studentCourseAnalyticsDashboardEnabled = false;
 
-        const parentRoute = {
+        const route = {
             data: of({ course }),
         } as any as ActivatedRoute;
-        const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
             imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [

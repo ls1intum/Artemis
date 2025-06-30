@@ -72,7 +72,7 @@ public class SharedQueueManagementService {
      */
     @EventListener(FullStartupEvent.class)
     public void init() {
-        this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), false);
+        this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), true);
         this.updateBuildAgentCapacity();
     }
 
