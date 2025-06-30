@@ -65,6 +65,7 @@ public class BuildAgentInformationService {
      * @param recentBuildJob        the most recent build job
      * @param isPaused              whether the build agent is paused
      * @param isPausedDueToFailures whether the build agent is paused due to consecutive failures
+     * @param consecutiveFailures   number of consecutive build failures on the build agent
      */
     public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
