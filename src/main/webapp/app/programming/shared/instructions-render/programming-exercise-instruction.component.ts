@@ -395,7 +395,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             environmentInjector: this.injector,
         });
         componentRef.instance.exercise = this.exercise;
-        componentRef.instance.participation = this.participation;
         componentRef.instance.taskName = taskName;
         componentRef.instance.latestResult = this.latestResult;
         componentRef.instance.testIds = testIds;

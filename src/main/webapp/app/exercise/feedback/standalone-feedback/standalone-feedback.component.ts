@@ -9,7 +9,6 @@ import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.servi
 import { ResultTemplateStatus, evaluateTemplateStatus } from 'app/exercise/result/result.utils';
 import { FeedbackComponent } from '../feedback.component';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-standalone-feedback',
@@ -24,7 +23,6 @@ export class StandaloneFeedbackComponent implements OnInit {
 
     exercise?: Exercise;
     result?: Result;
-    participation: Participation;
 
     showMissingAutomaticFeedbackInformation = false;
     messageKey?: string;
@@ -43,7 +41,6 @@ export class StandaloneFeedbackComponent implements OnInit {
                 const participation = this.exercise?.studentParticipations?.find((participation) => participation.id === participationId);
                 if (participation) {
                     participation.exercise = this.exercise;
-                    this.participation = participation;
                 }
 
                 const relevantResult = getAllResultsOfAllSubmissions(participation?.submissions).find((result) => result.id == resultId);

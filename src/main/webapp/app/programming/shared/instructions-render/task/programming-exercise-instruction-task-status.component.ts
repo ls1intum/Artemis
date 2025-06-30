@@ -8,7 +8,6 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
@@ -34,7 +33,6 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     }
     @Input() exercise: Exercise;
     @Input() latestResult?: Result;
-    @Input() participation: Participation;
 
     testIdsValue: number[];
     testCaseState: TestCaseState;
@@ -88,7 +86,6 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'lg' });
         const componentInstance = modalRef.componentInstance as FeedbackComponent;
         componentInstance.exercise = this.exercise;
-        componentInstance.participation = this.participation;
         componentInstance.result = this.latestResult;
         componentInstance.feedbackFilter = this.testIds;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;

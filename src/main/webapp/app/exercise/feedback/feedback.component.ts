@@ -37,7 +37,6 @@ import { FeedbackNodeComponent } from './node/feedback-node.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 // Modal -> Result details view
 @Component({
@@ -78,7 +77,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     @Input() exercise?: Exercise;
     @Input() result: Result;
-    @Input() participation: Participation;
 
     /**
      * Specify the feedback.testCase.id values that should be shown, all other values will not be visible.
@@ -216,7 +214,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         feedbacks.forEach((feedback) => (feedback.result = this.result));
                         return of(feedbacks);
                     } else {
-                        return this.resultService.getFeedbackDetailsForResult(this.participation?.id, this.result).pipe(map((response) => response.body));
+                        return this.resultService.getFeedbackDetailsForResult(this.result.submission!.participation!.id!, this.result).pipe(map((response) => response.body));
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
