@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * Service to handle the scheduling of auto ingestion jobs for lecture units.
  */
 @Service
+@Lazy
 @Profile(PROFILE_CORE_AND_SCHEDULING_AND_IRIS)
 public class IrisLectureUnitAutoIngestionService {
 

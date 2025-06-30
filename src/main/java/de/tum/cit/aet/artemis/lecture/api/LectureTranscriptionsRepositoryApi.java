@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
  * API for managing lecture transcriptions.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Controller
 public class LectureTranscriptionsRepositoryApi extends AbstractLectureApi {
 
