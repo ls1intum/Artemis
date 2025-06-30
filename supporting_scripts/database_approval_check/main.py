@@ -37,9 +37,11 @@ def is_db_maintainer(user: NamedUser):
 last_commit_with_db_changes = None
 for commit in pr.get_commits().reversed:
     # Ignore merges from the develop branch (local and remote-tracking)
-    if (commit.commit.message.startswith("Merge branch 'develop' into") or 
-        commit.commit.message.startswith("Merge branch 'origin/develop' into") or
-        commit.commit.message.startswith("Merge remote-tracking branch 'origin/develop' into")):
+    if (
+        commit.commit.message.startswith("Merge branch 'develop' into")
+        or commit.commit.message.startswith("Merge branch 'origin/develop' into")
+        or commit.commit.message.startswith("Merge remote-tracking branch 'origin/develop' into")
+    ):
         continue
     if has_db_changes(commit):
         last_commit_with_db_changes = commit
