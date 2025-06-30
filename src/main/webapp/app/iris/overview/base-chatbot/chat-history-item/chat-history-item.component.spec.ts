@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChatHistoryItemComponent } from './chat-history-item.component';
-import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { By } from '@angular/platform-browser';
 import { DatePipe } from '@angular/common';
+import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 
 describe('ChatHistoryItemComponent', () => {
     let component: ChatHistoryItemComponent;
@@ -10,7 +10,7 @@ describe('ChatHistoryItemComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ChatHistoryItemComponent], // standalone component
+            imports: [ChatHistoryItemComponent],
             providers: [DatePipe],
         }).compileComponents();
 
@@ -18,12 +18,11 @@ describe('ChatHistoryItemComponent', () => {
         component = fixture.componentInstance;
     });
 
-    function getSessionMock(): IrisSession {
+    function getSessionMock(): IrisSessionDTO {
         return {
             id: 1,
             creationDate: new Date('2023-10-15T14:23:00'),
-            // add any other required IrisSession fields here
-        } as unknown as IrisSession;
+        } as unknown as IrisSessionDTO;
     }
 
     it('should create', () => {

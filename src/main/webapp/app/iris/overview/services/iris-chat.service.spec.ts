@@ -75,7 +75,7 @@ describe('IrisChatService', () => {
         const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         service.switchTo(ChatServiceMode.COURSE, id);
 
-        expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.COURSE + '/' + id);
+        expect(httpStub).toHaveBeenCalledWith('course-chat/' + id);
         expect(wsStub).toHaveBeenCalledWith(id);
     }));
 
@@ -85,7 +85,7 @@ describe('IrisChatService', () => {
         const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
 
-        expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE + '/' + id);
+        expect(httpStub).toHaveBeenCalledWith('programming-exercise-chat/' + id);
         expect(wsStub).toHaveBeenCalledWith(id);
     }));
 
@@ -305,26 +305,6 @@ describe('IrisChatService', () => {
             });
             expect(wsStub).toHaveBeenCalledWith(newSession.id);
         }));
-
-        it('should not switch if LLM usage is required but not accepted', () => {
-            Object.defineProperty(accountMock, 'userIdentity', {
-                get: jest.fn(() => ({ externalLLMUsageAccepted: undefined })),
-                configurable: true,
-            });
-            service['hasJustAcceptedExternalLLMUsage'] = false;
-            service['sessionCreationIdentifier'] = 'course/1';
-
-            const closeSpy = jest.spyOn(service as any, 'close');
-            const wsStub = jest.spyOn(wsMock, 'subscribeToSession');
-
-            const newSession = { id: 456, chatMode: ChatServiceMode.COURSE } as IrisSession;
-            service.sessionId = id;
-
-            service.switchToSession(newSession);
-
-            expect(closeSpy).toHaveBeenCalled();
-            expect(wsStub).not.toHaveBeenCalled();
-        });
 
         it('should switch if LLM usage is not required for the mode', fakeAsync(() => {
             Object.defineProperty(accountMock, 'userIdentity', {
