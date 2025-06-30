@@ -120,11 +120,10 @@ public class IrisChatSessionResource {
         user.hasAcceptedExternalLLMUsageElseThrow();
 
         boolean enabled = switch (irisSession) {
-            case IrisCourseChatSession courseChatSession -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.COURSE_CHAT, courseId);
-            case IrisLectureChatSession lectureChatSession -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.LECTURE_CHAT, courseId);
-            case IrisTextExerciseChatSession textExerciseChatSession -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.TEXT_EXERCISE_CHAT, courseId);
-            case IrisProgrammingExerciseChatSession programmingExerciseChatSession ->
-                irisSettingsService.isEnabledForCourse(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, courseId);
+            case IrisCourseChatSession ignored -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.COURSE_CHAT, courseId);
+            case IrisLectureChatSession ignored -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.LECTURE_CHAT, courseId);
+            case IrisTextExerciseChatSession ignored -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.TEXT_EXERCISE_CHAT, courseId);
+            case IrisProgrammingExerciseChatSession ignored -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, courseId);
             default -> false;
         };
 
