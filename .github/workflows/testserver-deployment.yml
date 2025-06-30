@@ -139,7 +139,7 @@ jobs:
           pip install -r requirements.txt
       - name: Check Migration Approval
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.DB_MIGRATON_APPROVAL_GITHUB_TOKEN }}
           GITHUB_PR: ${{ needs.determine-build-context.outputs.pr_number }}
         run: |
           cd supporting_scripts/database_approval_check
