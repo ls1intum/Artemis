@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.iris.dto;
+package de.tum.cit.aet.artemis.iris.dao;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

@@ -126,7 +126,7 @@ describe('WebsocketService', () => {
 
         expect(unsubscribeSpy).toHaveBeenCalledWith(channel);
 
-        // Check that the id was removed from the subscribedChannels map
+        // Check that the sessionId was removed from the subscribedChannels map
         expect(irisWebsocketService['subscribedChannels'].has(sessionId)).toBeFalse();
 
         // Check that the method returned true

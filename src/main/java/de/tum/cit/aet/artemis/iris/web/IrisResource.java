@@ -61,7 +61,7 @@ public class IrisResource {
     }
 
     /**
-     * GET iris/sessions/{id}/active: Retrieve if Iris is active and additional information about the rate limit
+     * GET iris/sessions/{sessionId}/active: Retrieve if Iris is active and additional information about the rate limit
      *
      * @return the ResponseEntity with status 200 (OK) and the health status of Iris
      */

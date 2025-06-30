@@ -3,7 +3,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <!--
-      Migration to convert `jhi_type` and `chatMode` columns in `submission` table
+      Migration to convert `jhi_type` and `discriminator` columns in `submission` table
       from VARCHAR to ENUM. Supports only MySQL.
       Brings storage and performance improvements (esp. relevant with ~8 million rows).
     -->
