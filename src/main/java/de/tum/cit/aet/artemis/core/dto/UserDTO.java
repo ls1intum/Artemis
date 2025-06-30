@@ -81,6 +81,8 @@ public class UserDTO extends AuditingEntityDTO {
      */
     private boolean askToSetupPasskey = false;
 
+    private boolean isLoggedInWithPasskey = false;
+
     private ZonedDateTime externalLLMUsageAccepted;
 
     public UserDTO() {
@@ -251,6 +253,14 @@ public class UserDTO extends AuditingEntityDTO {
 
     public boolean getAskToSetupPasskey() {
         return askToSetupPasskey;
+    }
+
+    public void setIsLoggedInWithPasskey(boolean isLoggedInWithPasskey) {
+        this.isLoggedInWithPasskey = isLoggedInWithPasskey;
+    }
+
+    public boolean isLoggedInWithPasskey() {
+        return isLoggedInWithPasskey;
     }
 
     @Override

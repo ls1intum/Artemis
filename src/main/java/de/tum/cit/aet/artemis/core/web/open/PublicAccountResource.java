@@ -179,6 +179,9 @@ public class PublicAccountResource {
         if (askUsersToSetupPasskey && passkeyEnabled && passkeyCredentialsRepository.isPresent()) {
             shouldPromptUserToSetupPasskey = !this.passkeyCredentialsRepository.orElseThrow().existsByUserId(user.getId());
         }
+        if (passkeyEnabled) {
+            // TODO check if logged in via passkey or not
+        }
         user.setVisibleRegistrationNumber();
         UserDTO userDTO = new UserDTO(user);
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
