@@ -32,7 +32,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     readonly exercise = input<Exercise>();
     readonly splitControlSubject = input<Subject<string>>();
     readonly sortByStudentLogin = input<string>();
-    readonly forStudent = input<boolean>(true);
+    readonly forStudent = input<boolean>();
 
     readonly panes = viewChildren(SplitPaneDirective);
 
