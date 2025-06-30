@@ -37,7 +37,6 @@ export class AssessmentLayoutComponent {
     readonly isAssessor = input.required<boolean>();
     readonly canOverride = input.required<boolean>();
     readonly isTestRun = input(false);
-    readonly isIllegalSubmission = input<boolean>(false);
     readonly exerciseDashboardLink = input.required<string[]>();
 
     readonly result = input<Result>();

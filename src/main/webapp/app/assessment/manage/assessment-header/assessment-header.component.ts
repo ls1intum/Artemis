@@ -47,7 +47,6 @@ export class AssessmentHeaderComponent {
 
     readonly exercise = input<Exercise>();
     readonly result = input<Result>();
-    readonly isIllegalSubmission = input.required<boolean>();
     readonly hasComplaint = input(false);
     readonly hasMoreFeedbackRequest = input(false);
     readonly complaintHandled = input(false);
