@@ -116,8 +116,10 @@ public class IrisChatSessionResource {
     public ResponseEntity<IrisChatSession> getSessionsForSessionId(@PathVariable Long courseId, @PathVariable Long sessionId) {
         var irisSession = irisSessionRepository.findById(sessionId).orElseThrow(() -> new EntityNotFoundException("IrisSession with id " + sessionId + " not found"));
 
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        if (irisSession.shouldAcceptExternalLLMUsage()) {
+            var user = userRepository.getUserWithGroupsAndAuthorities();
+            user.hasAcceptedExternalLLMUsageElseThrow();
+        }
 
         boolean enabled = switch (irisSession) {
             case IrisCourseChatSession ignored -> irisSettingsService.isEnabledForCourse(IrisSubSettingsType.COURSE_CHAT, courseId);
