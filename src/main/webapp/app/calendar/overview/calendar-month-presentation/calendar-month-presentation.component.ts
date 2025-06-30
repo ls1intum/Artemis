@@ -5,9 +5,9 @@ import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { Dayjs } from 'dayjs/esm';
 import * as Utils from 'app/calendar/shared/util/calendar-util';
 import { DayBadgeComponent } from '../../shared/day-badge/day-badge.component';
-import { CalendarEventDummyService } from 'app/calendar/shared/service/calendar-event-dummy.service';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
 
 @Component({
     selector: 'calendar-desktop-month',
@@ -23,11 +23,11 @@ export class CalendarMonthPresentationComponent {
     readonly utils = Utils;
     readonly faXmark = faXmark;
     readonly weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
-    readonly eventMap = computed(() => this.generateEventMap(this.weeks().flat()));
+    readonly eventMap = computed(() => this.eventService.eventMap());
 
     private popover?: NgbPopover;
 
-    constructor(private eventService: CalendarEventDummyService) {}
+    constructor(private eventService: CalendarEventService) {}
 
     getEventsOf(day: Dayjs): CalendarEvent[] {
         const key = day.format('YYYY-MM-DD');
@@ -68,14 +68,5 @@ export class CalendarMonthPresentationComponent {
         }
 
         return calendar;
-    }
-
-    private generateEventMap(days: Dayjs[]): Map<string, CalendarEvent[]> {
-        const map = new Map<string, CalendarEvent[]>();
-        for (const day of days) {
-            const key = day.format('YYYY-MM-DD');
-            map.set(key, this.eventService.getEventsOfDay(day));
-        }
-        return map;
     }
 }
