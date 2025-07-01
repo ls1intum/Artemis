@@ -18,7 +18,7 @@ export class BuildAgentInformation implements BaseEntity {
     public status?: BuildAgentStatus;
     public recentBuildJobs?: BuildJob[];
     public buildAgentDetails?: BuildAgentDetails;
-    public pauseAfterConsecutiveFailures?: number;
+    public pauseAfterConsecutiveBuildFailures?: number;
 }
 
 export class BuildAgentDetails {
