@@ -22,18 +22,13 @@
             <jhi-learning-paths-analytics [courseId]="courseId()" />
         </div>
     </div>
-} @else {
-    <div class="row align-items-center justify-content-center h-100 p-3">
-        <div class="enable-learning-paths-container">
-            <h3 class="mb-3" jhiTranslate="artemisApp.learningPathManagement.learningPathsDisabled.title"></h3>
-            <span jhiTranslate="artemisApp.learningPathManagement.learningPathsDisabled.description"></span>
-            <button
-                (click)="enableLearningPaths()"
-                type="button"
-                class="mt-4 btn btn-primary"
-                id="enable-learning-paths-button"
-                jhiTranslate="artemisApp.learningPathManagement.learningPathsDisabled.buttonLabel"
-            ></button>
-        </div>
-    </div>
+} @else if (course()?.isAtLeastInstructor) {
+    <jhi-feature-activation
+        [headerTitle]="'artemisApp.learningPathManagement.learningPathsDisabled.title'"
+        [description]="'artemisApp.learningPathManagement.learningPathsDisabled.description'"
+        [activateButtonText]="'artemisApp.learningPathManagement.learningPathsDisabled.buttonLabel'"
+        [isLoading]="this.isLoading()"
+        [headerIcon]="faNetworkWired"
+        (enable)="enableLearningPaths()"
+    />
 }

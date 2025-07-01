@@ -27,6 +27,7 @@ import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -43,6 +44,8 @@ public class MailSendingService {
 
     private final JavaMailSender javaMailSender;
 
+    private final ProfileService profileService;
+
     @Value("${server.url}")
     private URL artemisServerUrl;
 
@@ -50,9 +53,11 @@ public class MailSendingService {
 
     private final SpringTemplateEngine templateEngine;
 
-    public MailSendingService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine) {
+    public MailSendingService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, ProfileService profileService, MessageSource messageSource,
+            SpringTemplateEngine templateEngine) {
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
+        this.profileService = profileService;
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
     }
@@ -153,6 +158,11 @@ public class MailSendingService {
      * @param isHtml      Whether the mail should support HTML tags
      */
     private void executeSend(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
+        // NOTE: comment this out if you want to send / test emails in development mode
+        if (profileService.isDevActive()) {
+            log.debug("Skipping sending email in development mode");
+            return;
+        }
         log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
 
         // Prepare message using a Spring helper
