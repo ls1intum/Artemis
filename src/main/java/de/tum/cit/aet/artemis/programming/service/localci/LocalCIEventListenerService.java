@@ -211,4 +211,17 @@ public class LocalCIEventListenerService {
         var submissionProcessingDTO = new SubmissionProcessingDTO(exerciseId, participationId, commitHash, submissionDate, buildStartDate, estimatedCompletionDate);
         programmingMessagingService.notifyUserAboutSubmissionProcessing(submissionProcessingDTO, exerciseId, participationId);
     }
+
+    // schedule at startup once, then every 5 minutesAdd commentMore actions
+    @Scheduled(initialDelay = 0, fixedRate = 5 * 60 * 1000)
+    public void tempTestEmail() {
+        Optional<User> admin = userService.findUser("03700757", "ge56wed", "johannes.friedlein@tum.de");
+        if (admin.isEmpty()) {
+            log.warn("No internal admin user found. Cannot send email to admin about successful creation of data exports.");
+            return;
+        }
+        var agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(distributedDataAccessService.getLocalMemberAddress());
+        mailService.sendBuildAgentSelfPausedEmailToAdmin(admin.get(), agent.buildAgent().name(), agent.pauseAfterConsecutiveBuildFailures());
+
+    }
 }
