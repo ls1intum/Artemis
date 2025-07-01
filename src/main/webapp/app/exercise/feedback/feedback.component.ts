@@ -245,8 +245,8 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         this.updateChart(this.feedbackItemNodes);
                     }
 
-                    if (isStudentParticipation(this.result)) {
-                        this.badge = ResultService.evaluateBadge(this.result.submission!.participation!, this.result);
+                    if (isStudentParticipation(this.participation)) {
+                        this.badge = ResultService.evaluateBadge(this.participation, this.result);
                     }
 
                     return of(null);

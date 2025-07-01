@@ -47,81 +47,86 @@ describe('ResultUtils', () => {
     it.each([
         {
             result: {
-                submission: {
-                    participation: { exercise: { type: ExerciseType.PROGRAMMING } },
-                },
-
                 feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }],
                 testCaseCount: 0,
             } as Result,
+            participation: { exercise: { type: ExerciseType.PROGRAMMING } } as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: true,
         },
         {
             result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }, { type: FeedbackType.MANUAL }], testCaseCount: 1 },
+            participation: { exercise: { type: ExerciseType.PROGRAMMING } } as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: false,
         },
         {
             result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }], testCaseCount: 0 },
+            participation: { exercise: { type: ExerciseType.PROGRAMMING } } as Participation,
             templateStatus: ResultTemplateStatus.NO_RESULT,
             expected: false,
         },
         {
             result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }], testCaseCount: 0 },
+            participation: { exercise: { type: ExerciseType.PROGRAMMING } } as Participation,
             templateStatus: ResultTemplateStatus.IS_BUILDING,
             expected: false,
         },
-    ])('should correctly determine if compilation is tested', ({ result, templateStatus, expected }) => {
-        expect(isOnlyCompilationTested(result, templateStatus!)).toBe(expected);
+    ])('should correctly determine if compilation is tested', ({ result, participation, templateStatus, expected }) => {
+        expect(isOnlyCompilationTested(result, participation, templateStatus!)).toBe(expected);
     });
 
     it.each([
-        { result: undefined, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-secondary' },
-        { result: {}, templateStatus: ResultTemplateStatus.LATE, expected: 'result-late' },
+        { result: undefined, participation: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-secondary' },
+        { result: {}, participation: {}, templateStatus: ResultTemplateStatus.LATE, expected: 'result-late' },
         {
             result: { submission: { submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed: true }, assessmentType: AssessmentType.AUTOMATIC },
+            participation: {},
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: 'text-danger',
         },
         {
             result: {
-                submission: { participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } } } as Result,
                 assessmentType: AssessmentType.AUTOMATIC,
             },
+            participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } },
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: 'text-secondary',
         },
-        { result: { score: undefined, successful: true }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
+        {
+            result: { score: undefined, successful: true },
+            participation: {},
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: 'text-success',
+        },
         {
             result: { score: 0, successful: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA },
+            participation: {},
             templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
             expected: 'text-secondary',
         },
         {
             result: { score: 0, successful: true, assessmentType: AssessmentType.AUTOMATIC_ATHENA },
+            participation: {},
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: 'text-secondary',
         },
-        { result: { score: undefined, successful: false }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
-        { result: { score: MIN_SCORE_GREEN, testCaseCount: 1 }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
-        { result: { score: MIN_SCORE_ORANGE, testCaseCount: 1 }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'result-orange' },
-        { result: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
+        { result: { score: undefined, successful: false }, participation: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
+        { result: { score: MIN_SCORE_GREEN, testCaseCount: 1 }, participation: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
+        { result: { score: MIN_SCORE_ORANGE, testCaseCount: 1 }, participation: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'result-orange' },
+        { result: {}, participation: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
         {
-            result: { score: 1, submission: { participation: { exercise: { type: ExerciseType.PROGRAMMING } } } } as Result,
+            result: { score: 1 } as Result,
+            participation: { exercise: { type: ExerciseType.PROGRAMMING, submissions: [{ id: 1 }] } } as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: 'text-success',
         },
-    ])('should correctly determine text color class', ({ result, templateStatus, expected }) => {
-        expect(getTextColorClass(result, templateStatus!)).toBe(expected);
+    ])('should correctly determine text color class', ({ result, participation, templateStatus, expected }) => {
+        expect(getTextColorClass(result, participation, templateStatus!)).toBe(expected);
     });
 
     it.each([
-        {
-            result: { submission: { participation: { exercise: { type: ExerciseType.PROGRAMMING } } } } as Result,
-            templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: faCheckCircle,
-        },
+        { participation: { exercise: { type: ExerciseType.PROGRAMMING } }, result: {} as Result, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faCheckCircle },
         { result: undefined, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faQuestionCircle },
         {
             result: { submission: { submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed: true }, assessmentType: AssessmentType.AUTOMATIC },
@@ -129,7 +134,8 @@ describe('ResultUtils', () => {
             expected: faTimesCircle,
         },
         {
-            result: { submission: { participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } } } } as Result,
+            participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } },
+            result: {} as Result,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faQuestionCircle,
         },
@@ -182,7 +188,10 @@ describe('ResultUtils', () => {
         {
             result: {
                 feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result failed to generate' }],
-                participation: { type: ParticipationType.STUDENT, exercise: { type: ExerciseType.TEXT } },
+            },
+            participation: {
+                type: ParticipationType.STUDENT,
+                exercise: { type: ExerciseType.TEXT },
                 successful: false,
                 assessmentType: AssessmentType.AUTOMATIC_ATHENA,
                 completionDate: dayjs().subtract(5, 'minutes'),
@@ -190,8 +199,8 @@ describe('ResultUtils', () => {
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faTimesCircle,
         },
-    ])('should correctly determine result icon', ({ result, templateStatus, expected }) => {
-        expect(getResultIconClass(result, templateStatus!)).toBe(expected);
+    ])('should correctly determine result icon', ({ result, participation, templateStatus, expected }) => {
+        expect(getResultIconClass(result, participation, templateStatus!)).toBe(expected);
     });
 
     describe('circular reference breaker', () => {

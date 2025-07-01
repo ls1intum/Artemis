@@ -234,7 +234,7 @@ describe('FeedbackComponent', () => {
 
     it('should set the exercise from the participation if available', () => {
         comp.exercise = undefined;
-        comp.result.submission!.participation!.exercise = exercise;
+        comp.participation.exercise = exercise;
 
         comp.ngOnInit();
 
@@ -302,12 +302,12 @@ describe('FeedbackComponent', () => {
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and a submission was provided which was marked with build failed.', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.result.submission = { ...comp.result.submission, buildFailed: true } as ProgrammingSubmission;
+        comp.participation = { ...comp.participation, submissions: [{ buildFailed: true } as ProgrammingSubmission] };
 
         comp.ngOnInit();
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id, comp.result.id);
+        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
         expect(comp.buildLogs).toBeArrayOfSize(0);
         expect(comp.isLoading).toBeFalse();
     });
@@ -336,27 +336,27 @@ describe('FeedbackComponent', () => {
 
     it('fetchBuildLogs should suppress 403 error', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.result.submission = { ...comp.result.submission, buildFailed: true } as ProgrammingSubmission;
+        comp.participation = { ...comp.participation, submissions: [{ buildFailed: true } as ProgrammingSubmission] };
         const response = new HttpErrorResponse({ status: 403 });
         buildlogsStub.mockReturnValue(throwError(() => response));
 
         comp.ngOnInit();
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id, comp.result.id);
+        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
         expect(comp.loadingFailed).toBeFalse();
         expect(comp.isLoading).toBeFalse();
     });
 
     it('fetchBuildLogs should not suppress errors with status other than 403', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.result.submission = { ...comp.result.submission, buildFailed: true } as ProgrammingSubmission;
+        comp.participation = { ...comp.participation, submissions: [{ buildFailed: true } as ProgrammingSubmission] };
         const response = new HttpErrorResponse({ status: 500 });
         buildlogsStub.mockReturnValue(throwError(() => response));
         comp.ngOnInit();
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id, comp.result.id);
+        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
         expect(comp.loadingFailed).toBeTrue();
         expect(comp.isLoading).toBeFalse();
     });
