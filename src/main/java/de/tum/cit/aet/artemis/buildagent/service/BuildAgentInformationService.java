@@ -57,8 +57,8 @@ public class BuildAgentInformationService {
         updateLocalBuildAgentInformationWithRecentJob(null, isPaused, false, DEFAULT_CONSECUTIVE_FAILURES);
     }
 
-    public void updateLocalBuildAgentInformation(boolean isPaused, boolean isPausedDueToFailures) {
-        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, isPausedDueToFailures, DEFAULT_CONSECUTIVE_FAILURES);
+    public void updateLocalBuildAgentInformation(boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
+        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, isPausedDueToFailures, consecutiveFailures);
     }
 
     /**
@@ -113,7 +113,9 @@ public class BuildAgentInformationService {
 
         BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob, consecutiveFailures);
 
-        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails);
+        int pauseAfterConsecutiveFailedJobs = buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs();
+        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails,
+                pauseAfterConsecutiveFailedJobs);
     }
 
     private BuildAgentDetailsDTO getBuildAgentDetails(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob, int consecutiveFailures) {

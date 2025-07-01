@@ -79,7 +79,6 @@
                 "missingBuildsPercentage": "Missing Builds %:",
                 "timeoutBuilds": "Timed out Builds:",
                 "timeoutBuildsPercentage": "Timed out Builds %:",
-                "consecutiveBuildFailures": "Consecutive Build Failures:",
                 "daySpan": "1 day",
                 "weekSpan": "7 days",
                 "monthSpan": "30 days"

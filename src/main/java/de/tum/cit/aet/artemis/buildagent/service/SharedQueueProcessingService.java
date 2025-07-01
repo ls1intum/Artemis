@@ -114,9 +114,6 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
-    @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs:100}")
-    private int pauseAfterConsecutiveFailedJobs;
-
     public SharedQueueProcessingService(BuildAgentConfiguration buildAgentConfiguration, BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap,
             TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService, BuildAgentInformationService buildAgentInformationService,
             DistributedDataAccessService distributedDataAccessService) {
@@ -404,7 +401,7 @@ public class SharedQueueProcessingService {
             localProcessingJobs.decrementAndGet();
             buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(job, isPaused.get(), false, consecutiveBuildJobFailures.get());
 
-            if (consecutiveBuildJobFailures.get() >= pauseAfterConsecutiveFailedJobs) {
+            if (consecutiveBuildJobFailures.get() >= buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs()) {
                 log.error("Build agent has failed to process build jobs {} times in a row. Pausing build agent.", consecutiveBuildJobFailures.get());
                 pauseBuildAgent(true);
                 return null;
@@ -427,7 +424,7 @@ public class SharedQueueProcessingService {
 
             isPaused.set(true);
             removeListenerAndCancelScheduledFuture();
-            buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get(), dueToFailures);
+            buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get(), dueToFailures, consecutiveBuildJobFailures.get());
 
             log.info("Gracefully cancelling running build jobs");
             Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
