@@ -99,14 +99,23 @@ export class PostingHeaderComponent implements OnInit, OnChanges {
         this.setUserAuthorityIconAndTooltip();
     }
 
+    /**
+     * Indicates if the posting was created after the last time the current user read the conversation
+     */
     get isAfter(): boolean | undefined {
         return this.posting()?.creationDate?.isAfter(this.lastReadDate());
     }
 
+    /**
+     * Returns the author of the current posting
+     */
     get authorOfPosting(): User | undefined {
         return this.posting()?.author;
     }
 
+    /**
+     * Returns the creation date of the posting
+     */
     get creationDate(): dayjs.Dayjs | undefined {
         return this.posting()?.creationDate;
     }
@@ -162,6 +171,10 @@ export class PostingHeaderComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Emits the event to open a user profile or direct chat when the author's name is clicked,
+     * unless the user is the author himself or role is missing
+     */
     protected userNameClicked() {
         if (this.isAuthorOfPosting || !this.posting()?.authorRole) {
             return;

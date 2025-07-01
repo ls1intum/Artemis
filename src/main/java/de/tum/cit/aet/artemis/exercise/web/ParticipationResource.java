@@ -7,8 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,7 +44,6 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -53,7 +51,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
@@ -72,7 +69,6 @@ import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -82,6 +78,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -111,6 +108,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * REST controller for managing Participation.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationResource {
@@ -121,6 +119,8 @@ public class ParticipationResource {
 
     private final ParticipationService participationService;
 
+    private final ParticipationDeletionService participationDeletionService;
+
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final QuizExerciseRepository quizExerciseRepository;
@@ -128,8 +128,6 @@ public class ParticipationResource {
     private final ExerciseRepository exerciseRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    private final CourseRepository courseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -171,13 +169,11 @@ public class ParticipationResource {
 
     private final Optional<StudentExamApi> studentExamApi;
 
-    private final ResultService resultService;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
+    public ParticipationResource(ParticipationService participationService, ParticipationDeletionService participationDeletionService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, FeatureToggleService featureToggleService,
@@ -185,11 +181,11 @@ public class ParticipationResource {
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
             ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
-            ModelingExerciseFeedbackService modelingExerciseFeedbackService, ResultService resultService, Optional<StudentExamApi> studentExamApi) {
+            ModelingExerciseFeedbackService modelingExerciseFeedbackService, Optional<StudentExamApi> studentExamApi) {
         this.participationService = participationService;
+        this.participationDeletionService = participationDeletionService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
@@ -211,7 +207,6 @@ public class ParticipationResource {
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
         this.textFeedbackApi = textFeedbackApi;
         this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
-        this.resultService = resultService;
         this.studentExamApi = studentExamApi;
     }
 
@@ -385,7 +380,7 @@ public class ParticipationResource {
             }
         }
         else if (exercise instanceof ProgrammingExercise) {
-            if (participation.findLatestLegalResult() == null) {
+            if (participation.findLatestResult() == null) {
                 throw new BadRequestAlertException("You need to submit at least once and have the build results", "participation", "noSubmissionExists", true);
             }
         }
@@ -607,15 +602,6 @@ public class ParticipationResource {
         return ResponseEntity.ok().body(updatedParticipations);
     }
 
-    private Set<StudentParticipation> findParticipationWithLatestResults(Exercise exercise) {
-        // TODO: we should reduce the amount of data fetched here and sent to the client: double check which data is actually required in the exercise scores page
-        if (exercise.isTeamMode()) {
-            // For team exercises the students need to be eagerly fetched
-            return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
-        }
-        return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsAndAssessmentNote(exercise.getId());
-    }
-
     /**
      * GET /exercises/:exerciseId/participations : get all the participations for an exercise
      *
@@ -632,15 +618,7 @@ public class ParticipationResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         Set<StudentParticipation> participations;
         if (withLatestResults) {
-            participations = findParticipationWithLatestResults(exercise);
-            participations.forEach(participation -> {
-                participation.setSubmissionCount(participation.getSubmissions().size());
-                if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {
-                    var lastLegalSubmission = participation.getSubmissions().stream().filter(submission -> submission.getType() != SubmissionType.ILLEGAL)
-                            .max(Comparator.naturalOrder());
-                    participation.setSubmissions(lastLegalSubmission.map(Set::of).orElse(Collections.emptySet()));
-                }
-            });
+            participations = participationService.findByExerciseIdWithLatestSubmissionResultAndAssessmentNote(exercise.getId(), exercise.isTeamMode());
         }
         else {
             if (exercise.isTeamMode()) {
@@ -653,77 +631,14 @@ public class ParticipationResource {
             Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
             participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
         }
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
+        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
         participations = participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
             // remove unnecessary data to reduce response size
             participation.setExercise(null);
         }).collect(Collectors.toSet());
 
         return ResponseEntity.ok(participations);
-    }
-
-    /**
-     * GET /courses/:courseId/participations : get all the participations for a course
-     *
-     * @param courseId The participationId of the course
-     * @return A list of all participations for the given course
-     */
-    @GetMapping("courses/{courseId}/participations")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<List<StudentParticipation>> getAllParticipationsForCourse(@PathVariable Long courseId) {
-        long start = System.currentTimeMillis();
-        log.debug("REST request to get all Participations for Course {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
-        int resultCount = 0;
-        for (StudentParticipation participation : participations) {
-            // make sure the registration number is explicitly shown in the client
-            participation.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
-            // we only need participationId, title, dates and max points
-            // remove unnecessary elements
-            final var exercise = getExercise(participation);
-            switch (exercise) {
-                case ProgrammingExercise programmingExercise -> {
-                    programmingExercise.setSolutionParticipation(null);
-                    programmingExercise.setTemplateParticipation(null);
-                    programmingExercise.setTestRepositoryUri(null);
-                    programmingExercise.setShortName(null);
-                    programmingExercise.setProgrammingLanguage(null);
-                    programmingExercise.setPackageName(null);
-                    programmingExercise.setAllowOnlineEditor(null);
-                }
-                case QuizExercise quizExercise -> {
-                    quizExercise.setQuizQuestions(null);
-                    quizExercise.setQuizPointStatistic(null);
-                }
-                case TextExercise textExercise -> textExercise.setExampleSolution(null);
-                case ModelingExercise modelingExercise -> {
-                    modelingExercise.setExampleSolutionModel(null);
-                    modelingExercise.setExampleSolutionExplanation(null);
-                }
-                default -> {
-                }
-            }
-            resultCount += participation.getResults().size();
-        }
-        long end = System.currentTimeMillis();
-        log.info("Found {} participations with {} results in {}ms", participations.size(), resultCount, end - start);
-        return ResponseEntity.ok().body(participations);
-    }
-
-    private static Exercise getExercise(StudentParticipation participation) {
-        Exercise exercise = participation.getExercise();
-        exercise.setCourse(null);
-        exercise.setStudentParticipations(null);
-        exercise.setTutorParticipations(null);
-        exercise.setExampleSubmissions(null);
-        exercise.setAttachments(null);
-        exercise.setCategories(null);
-        exercise.setProblemStatement(null);
-        exercise.setGradingInstructions(null);
-        exercise.setDifficulty(null);
-        exercise.setMode(null);
-        return exercise;
     }
 
     /**
@@ -896,7 +811,7 @@ public class ParticipationResource {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
         auditEventRepository.add(auditEvent);
         log.info(logMessage);
-        participationService.delete(participation.getId(), true);
+        participationDeletionService.delete(participation.getId(), true);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 
@@ -916,7 +831,7 @@ public class ParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
-        participationService.cleanupBuildPlan(participation);
+        participationDeletionService.cleanupBuildPlan(participation);
         return ResponseEntity.ok().body(participation);
     }
 

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class SubmissionVersionService {
 
@@ -79,25 +81,25 @@ public class SubmissionVersionService {
     }
 
     private String getSubmissionContent(Submission submission) {
-        if (submission instanceof ModelingSubmission modelingSubmission) {
-            return ("Model: " + modelingSubmission.getModel() + "; Explanation: " + modelingSubmission.getExplanationText());
-        }
-        else if (submission instanceof TextSubmission textSubmission) {
-            return textSubmission.getText();
-        }
-        else if (submission instanceof QuizSubmission quizSubmission) {
-            try {
-                // TODO: it might be nice to remove some question parameters (i.e. SubmittedAnswer -> QuizQuestion) to reduce the json size as those are not really necessary,
-                // however directly manipulating the object is dangerous because it will be returned to the client.
-                return objectMapper.writeValueAsString(quizSubmission.getSubmittedAnswers());
+        switch (submission) {
+            case ModelingSubmission modelingSubmission -> {
+                return "Model: " + modelingSubmission.getModel() + "; Explanation: " + modelingSubmission.getExplanationText();
             }
-            catch (JsonProcessingException e) {
-                log.error("Error when writing quiz submission {} to json value. Will fall back to string representation", submission, e);
-                return submission.toString();
+            case TextSubmission textSubmission -> {
+                return textSubmission.getText();
             }
-        }
-        else {
-            throw new IllegalArgumentException("Versioning for this submission type not supported: " + submission.getType());
+            case QuizSubmission quizSubmission -> {
+                try {
+                    // TODO: it might be nice to remove some question parameters (i.e. SubmittedAnswer -> QuizQuestion) to reduce the json size as those are not really necessary,
+                    // however directly manipulating the object is dangerous because it will be returned to the client.
+                    return objectMapper.writeValueAsString(quizSubmission.getSubmittedAnswers());
+                }
+                catch (JsonProcessingException e) {
+                    log.error("Error when writing quiz submission {} to json value. Will fall back to string representation", submission, e);
+                    return submission.toString();
+                }
+            }
+            default -> throw new IllegalArgumentException("Versioning for this submission type not supported: " + submission.getType());
         }
     }
 }
