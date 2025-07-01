@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.shared.base;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -59,7 +58,7 @@ import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
 @ResourceLock("AbstractArtemisBuildAgentTest")
 // NOTE: Do not use SPRING_PROFILE_TEST as it will cause the test to fail due to missing beans. This is because SPRING_PROFILE_TEST will cause some
 // test services, which dependencies are not provided since we are not running the full application context, to be created.
-@ActiveProfiles({ PROFILE_TEST_BUILDAGENT, PROFILE_BUILDAGENT, "local", PROFILE_SCHEDULING })
+@ActiveProfiles({ PROFILE_TEST_BUILDAGENT, PROFILE_BUILDAGENT, "local" })
 @TestPropertySource(properties = { "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=2",
         "artemis.continuous-integration.pause-grace-period-seconds=2", "artemis.continuous-integration.pause-after-consecutive-failed-jobs=5" })
 public abstract class AbstractArtemisBuildAgentTest {
