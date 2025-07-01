@@ -1,11 +1,11 @@
-package de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue;
+package de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener.QueueItemListener;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener.QueueListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueListener;
 
 public interface DistributedQueue<T> {
 

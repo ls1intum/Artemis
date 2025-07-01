@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map;
+package de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryListener;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapListener;
 
 public interface DistributedMap<K, V> {
 
