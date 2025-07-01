@@ -300,7 +300,6 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Result programmingResult = participationUtilService.addResultToSubmission(programmingParticipation, programmingSubmission);
         programmingResult.setCompletionDate(programmingExercise.getDueDate().minusMinutes(2));
         resultRepository.save(programmingResult);
-        ;
 
         StudentParticipation textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
         Submission textSubmission = new TextSubmission();
