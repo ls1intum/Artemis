@@ -136,6 +136,8 @@ public class ExerciseService {
 
     private final ParticipationFilterService participationFilterService;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
@@ -143,7 +145,7 @@ public class ExerciseService {
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService) {
+            ParticipationFilterService participationFilterService, ExerciseVersionService exerciseVersionService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -168,6 +170,7 @@ public class ExerciseService {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**

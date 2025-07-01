@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -175,6 +176,8 @@ public class ProgrammingExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
@@ -186,7 +189,7 @@ public class ProgrammingExerciseResource {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ChannelRepository channelRepository,
             Optional<AthenaApi> athenaApi, Environment environment, RepositoryCheckoutService repositoryCheckoutService, Optional<SlideApi> slideApi,
-            ProgrammingExerciseDeletionService programmingExerciseDeletionService) {
+            ProgrammingExerciseDeletionService programmingExerciseDeletionService, ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
@@ -216,6 +219,7 @@ public class ProgrammingExerciseResource {
         this.repositoryCheckoutService = repositoryCheckoutService;
         this.slideApi = slideApi;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -276,6 +280,8 @@ public class ProgrammingExerciseResource {
         try {
             // Setup all repositories etc
             ProgrammingExercise newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise);
+            var user = userRepository.getUserWithGroupsAndAuthorities();
+            exerciseVersionService.createExerciseVersion(newProgrammingExercise, user);
 
             // Create default static code analysis categories
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
@@ -394,6 +400,7 @@ public class ProgrammingExerciseResource {
                 updatedProgrammingExercise, notificationText);
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseVersionService.createExerciseVersion(savedProgrammingExercise, user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         slideApi.ifPresent(api -> api.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise));
 
@@ -419,6 +426,7 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, existingProgrammingExercise, user);
         updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(updatedProgrammingExercise, notificationText);
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(updatedProgrammingExercise);
     }
@@ -443,6 +451,7 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateProblemStatement(programmingExercise, updatedProblemStatement, notificationText);
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
         // we saved a problem statement with test ids instead of test names. For easier editing we send a problem statement with test names to the client:
         programmingExerciseTaskService.replaceTestIdsWithNames(updatedProgrammingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
