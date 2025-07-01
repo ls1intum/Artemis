@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -29,6 +30,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 @Lazy
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends ArtemisJpaRepository<ProgrammingExerciseStudentParticipation, Long> {
+
+    @Query("""
+            SELECT p.repositoryUri
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    Set<String> getAllRepoUris(long exerciseId);
 
     @Query("""
             SELECT p
