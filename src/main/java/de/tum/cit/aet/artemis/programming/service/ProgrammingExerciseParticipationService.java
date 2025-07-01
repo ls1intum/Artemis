@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -71,10 +73,12 @@ public class ProgrammingExerciseParticipationService {
 
     private final ResultRepository resultRepository;
 
+    private final SubmissionRepository submissionRepository;
+
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
             ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, SubmissionRepository submissionRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -83,6 +87,7 @@ public class ProgrammingExerciseParticipationService {
         this.versionControlService = versionControlService;
         this.gitService = gitService;
         this.resultRepository = resultRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -395,15 +400,18 @@ public class ProgrammingExerciseParticipationService {
     }
 
     public ProgrammingExerciseStudentParticipation findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(long participationId) throws EntityNotFoundException {
-        ProgrammingExerciseStudentParticipation participation = studentParticipationRepository.findWithLatestSubmissionByIdElseThrow(participationId);
-        if (participation.getSubmissions().isEmpty()) {
+        ProgrammingExerciseStudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
+        Optional<Submission> latestSubmissionOptional = submissionRepository.findLatestSubmissionByParticipationId(participationId);
+        if (latestSubmissionOptional.isEmpty()) {
+            participation.setSubmissions(Set.of());
             return participation;
         }
-        Submission latestSubmission = participation.getSubmissions().iterator().next();
+        Submission latestSubmission = latestSubmissionOptional.get();
         Optional<Result> latestResultOptional = resultRepository.findLatestResultWithFeedbacksBySubmissionId(latestSubmission.getId(), ZonedDateTime.now());
         latestResultOptional.ifPresentOrElse(latestResult -> {
             latestSubmission.setResults(List.of(latestResult));
         }, () -> latestSubmission.setResults(List.of()));
+        participation.setSubmissions(Set.of(latestSubmission));
         return participation;
     }
 }

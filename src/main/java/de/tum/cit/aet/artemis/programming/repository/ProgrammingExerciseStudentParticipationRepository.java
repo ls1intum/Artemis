@@ -74,19 +74,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
     }
 
-    @Query("""
-              SELECT p
-              FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-              WHERE p.id = :participationId
-                AND s.id = (
-                  SELECT MAX(s2.id)
-                  FROM Submission s2
-                  WHERE s2.participation = p
-                )
-            """)
-    Optional<ProgrammingExerciseStudentParticipation> findWithLatestSubmissionById(@Param("participationId") long participationId);
-
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
 
@@ -208,7 +195,4 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
 
-    default ProgrammingExerciseStudentParticipation findWithLatestSubmissionByIdElseThrow(long participationId) {
-        return getValueElseThrow(findWithLatestSubmissionById(participationId), participationId);
-    }
 }
