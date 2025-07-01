@@ -87,8 +87,18 @@ describe('IrisChatbotWidgetComponent', () => {
         // Setup DOM
         const overlay = document.createElement('div');
         overlay.className = 'cdk-overlay-container';
-        // @ts-ignore
-        overlay.getBoundingClientRect = jest.fn(() => ({ width: 500, height: 600 }));
+
+        overlay.getBoundingClientRect = jest.fn(() => ({
+            x: 0,
+            y: 0,
+            width: 500,
+            height: 600,
+            top: 0,
+            right: 500,
+            bottom: 600,
+            left: 0,
+            toJSON: () => {},
+        }));
         document.body.appendChild(overlay);
 
         const widget = document.createElement('div');
