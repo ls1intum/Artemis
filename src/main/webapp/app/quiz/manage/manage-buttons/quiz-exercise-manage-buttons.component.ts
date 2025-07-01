@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject, input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -52,9 +52,11 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     baseUrl: string;
     isEvaluatingQuizExercise: boolean;
 
-    @Input()
-    isDetailPage: boolean;
+    readonly isDetailPage = input<boolean>(undefined!);
 
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input()
     quizExercise: QuizExercise;
 
@@ -98,7 +100,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
                     content: 'Deleted an quizExercise',
                 });
                 this.dialogErrorSource.next('');
-                if (this.isDetailPage) {
+                if (this.isDetailPage()) {
                     this.router.navigate(['course-management', this.quizExercise.course!.id, 'exercises']);
                 }
             },

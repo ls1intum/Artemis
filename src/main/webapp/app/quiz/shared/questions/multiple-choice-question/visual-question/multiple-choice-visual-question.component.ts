@@ -20,6 +20,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class MultipleChoiceVisualQuestionComponent {
     _question: MultipleChoiceQuestion;
 
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     set question(question: MultipleChoiceQuestion) {
         this._question = question;

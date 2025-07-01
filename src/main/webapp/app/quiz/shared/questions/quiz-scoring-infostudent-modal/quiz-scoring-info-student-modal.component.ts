@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, inject } from '@angular/core';
+import { AfterViewInit, Component, Input, inject, input } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -28,17 +28,25 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     QuizQuestionType = QuizQuestionType;
     ScoringType = ScoringType;
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() score: number; // Score of the student that has been achieved
-    @Input() questionIndex: number; // Question Index of the question
+    readonly questionIndex = input<number>(undefined!); // Question Index of the question
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() question: QuizQuestion;
-    @Input() dragAndDropMapping = new Array<DragAndDropMapping>();
+    readonly dragAndDropMapping = input(new Array<DragAndDropMapping>());
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() incorrectlyMappedDragAndDropItems: number;
-    @Input() mappedLocations: number;
-    @Input() multipleChoiceMapping = new Array<AnswerOption>();
-    @Input() shortAnswerText = new Array<ShortAnswerSubmittedText>();
-    @Input() correctlyMappedDragAndDropItems: number; // Amount of correctly mapped drag and drop items
-    @Input() multipleChoiceSubmittedResult: Result;
-    @Input() quizQuestions: QuizQuestion[] | undefined;
+    readonly mappedLocations = input<number>(undefined!);
+    readonly multipleChoiceMapping = input(new Array<AnswerOption>());
+    readonly shortAnswerText = input(new Array<ShortAnswerSubmittedText>());
+    readonly correctlyMappedDragAndDropItems = input<number>(undefined!); // Amount of correctly mapped drag and drop items
+    readonly multipleChoiceSubmittedResult = input<Result>(undefined!);
+    readonly quizQuestions = input<QuizQuestion[]>();
 
     /* Multiple Choice Counting Variables*/
     multipleChoiceCorrectAnswerCorrectlyChosen: number; // Amount of right options chosen by the student
@@ -105,7 +113,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private submittedAnswerCorrectValues() {
         let answerOptionsOfQuestion = new Array<AnswerOption>();
-        for (const question of this.quizQuestions || []) {
+        for (const question of this.quizQuestions() || []) {
             const mcQuizQuestion = question as MultipleChoiceQuestion;
             if (mcQuizQuestion.id === this.question.id) {
                 answerOptionsOfQuestion = mcQuizQuestion.answerOptions!;
@@ -113,10 +121,11 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
             }
         }
 
-        if (!this.multipleChoiceSubmittedResult || !this.multipleChoiceSubmittedResult.submission) {
+        const multipleChoiceSubmittedResult = this.multipleChoiceSubmittedResult();
+        if (!multipleChoiceSubmittedResult || !multipleChoiceSubmittedResult.submission) {
             return;
         }
-        const submittedQuizSubmission = this.multipleChoiceSubmittedResult.submission as QuizSubmission;
+        const submittedQuizSubmission = multipleChoiceSubmittedResult.submission as QuizSubmission;
         const submittedAnswerLength = submittedQuizSubmission.submittedAnswers?.length ?? 0;
         for (let i = 0; i < submittedAnswerLength; i++) {
             if (submittedQuizSubmission.submittedAnswers![i].quizQuestion!.id === this.question.id) {
@@ -174,9 +183,9 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private countDragAndDrop() {
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
-        this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.incorrectlyMappedDragAndDropItems;
+        this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems() - this.incorrectlyMappedDragAndDropItems;
 
-        if (this.correctlyMappedDragAndDropItems === 1) {
+        if (this.correctlyMappedDragAndDropItems() === 1) {
             this.rightMap = this.translateService.instant(translationBasePath + 'item');
         } else {
             this.rightMap = this.translateService.instant(translationBasePath + 'items');
@@ -196,7 +205,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
         const shortAnswer = this.question as ShortAnswerQuestion;
         this.shortAnswerSpots = shortAnswer.spots!.length;
-        this.shortAnswerCorrectAnswers = this.shortAnswerText.filter((option) => option.isCorrect).length;
+        this.shortAnswerCorrectAnswers = this.shortAnswerText().filter((option) => option.isCorrect).length;
         this.shortAnswerWrongAnswers = this.shortAnswerSpots - this.shortAnswerCorrectAnswers;
         this.differenceShortAnswer = this.shortAnswerCorrectAnswers - this.shortAnswerWrongAnswers;
 

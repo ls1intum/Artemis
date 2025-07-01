@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, input } from '@angular/core';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -22,8 +22,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, FormsModule, NgbTooltip, NgbCollapse, TranslateDirective, MarkdownEditorMonacoComponent, CdkDropList, CdkDrag, CdkDragHandle, ArtemisTranslatePipe],
 })
 export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() question: MultipleChoiceQuestion;
-    @Input() questionIndex: number;
+    readonly questionIndex = input<number>(undefined!);
 
     @Output() questionDeleted = new EventEmitter<object>();
     @Output() questionUpdated = new EventEmitter<object>();
@@ -34,7 +36,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
     questionText: string;
 
     // Create Backup Question for resets
-    @Input() backupQuestion: MultipleChoiceQuestion;
+    readonly backupQuestion = input<MultipleChoiceQuestion>(undefined!);
 
     isQuestionCollapsed: boolean;
 
@@ -155,16 +157,16 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      * Resets the question title
      */
     resetQuestionTitle() {
-        this.question.title = this.backupQuestion.title;
+        this.question.title = this.backupQuestion().title;
     }
 
     /**
      * Resets the question text
      */
     resetQuestionText() {
-        this.question.text = this.backupQuestion.text;
-        this.question.explanation = this.backupQuestion.explanation;
-        this.question.hint = this.backupQuestion.hint;
+        this.question.text = this.backupQuestion().text;
+        this.question.explanation = this.backupQuestion().explanation;
+        this.question.hint = this.backupQuestion().hint;
     }
 
     /**
@@ -173,7 +175,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
     resetQuestion() {
         this.resetQuestionTitle();
         this.resetQuestionText();
-        this.question.answerOptions = cloneDeep(this.backupQuestion.answerOptions);
+        this.question.answerOptions = cloneDeep(this.backupQuestion().answerOptions);
     }
 
     /**
@@ -186,11 +188,11 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
             return answerOption.id === answer.id;
         });
         // Find correct backup answer
-        const backupAnswerIndex = this.backupQuestion.answerOptions!.findIndex((answerBackup) => {
+        const backupAnswerIndex = this.backupQuestion().answerOptions!.findIndex((answerBackup) => {
             return answer.id === answerBackup.id;
         });
         // Overwrite current answerOption at given index with the backup
-        this.question.answerOptions![answerIndex] = cloneDeep(this.backupQuestion.answerOptions![backupAnswerIndex]);
+        this.question.answerOptions![answerIndex] = cloneDeep(this.backupQuestion().answerOptions![backupAnswerIndex]);
     }
 
     /**

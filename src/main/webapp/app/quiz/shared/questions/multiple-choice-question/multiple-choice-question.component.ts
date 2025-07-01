@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject, input } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -25,6 +25,8 @@ export class MultipleChoiceQuestionComponent {
 
     _question: MultipleChoiceQuestion;
 
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     set question(question: MultipleChoiceQuestion) {
         this._question = question;
@@ -34,24 +36,22 @@ export class MultipleChoiceQuestionComponent {
         return this._question;
     }
     // TODO: Map vs. Array --> consistency
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input()
     selectedAnswerOptions: AnswerOption[];
-    @Input()
-    clickDisabled: boolean;
+    readonly clickDisabled = input<boolean>(undefined!);
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input()
     showResult: boolean;
-    @Input()
-    questionIndex: number;
-    @Input()
-    score: number;
-    @Input()
-    forceSampleSolution: boolean;
-    @Input()
-    fnOnSelection: any;
-    @Input()
-    submittedResult: Result;
-    @Input()
-    quizQuestions: QuizQuestion[] | undefined;
+    readonly questionIndex = input<number>(undefined!);
+    readonly score = input<number>(undefined!);
+    readonly forceSampleSolution = input<boolean>(undefined!);
+    readonly fnOnSelection = input<any>();
+    readonly submittedResult = input<Result>(undefined!);
+    readonly quizQuestions = input<QuizQuestion[]>();
 
     @Output()
     selectedAnswerOptionsChange = new EventEmitter<AnswerOption[]>();
@@ -89,7 +89,7 @@ export class MultipleChoiceQuestionComponent {
      * @param answerOption The answer option to toggle
      */
     toggleSelection(answerOption: AnswerOption): void {
-        if (this.clickDisabled) {
+        if (this.clickDisabled()) {
             // Do nothing
             return;
         }
@@ -107,8 +107,9 @@ export class MultipleChoiceQuestionComponent {
         }
         this.selectedAnswerOptionsChange.emit(this.selectedAnswerOptions);
         /** Only execute the onSelection function if we received such input **/
-        if (this.fnOnSelection) {
-            this.fnOnSelection();
+        const fnOnSelection = this.fnOnSelection();
+        if (fnOnSelection) {
+            fnOnSelection();
         }
     }
 

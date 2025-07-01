@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject, input } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
@@ -30,6 +30,8 @@ export class ShortAnswerQuestionComponent {
     shortAnswerQuestion: ShortAnswerQuestion;
     _forceSampleSolution: boolean;
 
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     set question(question: QuizQuestion) {
         this.shortAnswerQuestion = question as ShortAnswerQuestion;
@@ -37,16 +39,20 @@ export class ShortAnswerQuestionComponent {
     }
 
     // TODO: Map vs. Array --> consistency
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input()
     submittedTexts: ShortAnswerSubmittedText[];
-    @Input()
-    clickDisabled: boolean;
+    readonly clickDisabled = input<boolean>(undefined!);
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input()
     showResult: boolean;
-    @Input()
-    questionIndex: number;
-    @Input()
-    score: number;
+    readonly questionIndex = input<number>(undefined!);
+    readonly score = input<number>(undefined!);
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     set forceSampleSolution(forceSampleSolution) {
         this._forceSampleSolution = forceSampleSolution;
@@ -58,8 +64,7 @@ export class ShortAnswerQuestionComponent {
     get forceSampleSolution() {
         return this._forceSampleSolution;
     }
-    @Input()
-    fnOnSubmittedTextUpdate: any;
+    readonly fnOnSubmittedTextUpdate = input<any>();
 
     @Output()
     submittedTextsChange = new EventEmitter<ShortAnswerSubmittedText[]>();
@@ -111,8 +116,9 @@ export class ShortAnswerQuestionComponent {
         }
         this.submittedTextsChange.emit(this.submittedTexts);
         /** Only execute the onMappingUpdate function if we received such input **/
-        if (this.fnOnSubmittedTextUpdate) {
-            this.fnOnSubmittedTextUpdate();
+        const fnOnSubmittedTextUpdate = this.fnOnSubmittedTextUpdate();
+        if (fnOnSubmittedTextUpdate) {
+            fnOnSubmittedTextUpdate();
         }
     }
 

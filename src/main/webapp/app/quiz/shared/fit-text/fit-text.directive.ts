@@ -1,4 +1,4 @@
-import { AfterViewInit, Directive, ElementRef, HostListener, Input, OnChanges, OnDestroy, OnInit, Renderer2, SimpleChanges, inject } from '@angular/core';
+import { AfterViewInit, Directive, ElementRef, HostListener, OnChanges, OnDestroy, OnInit, Renderer2, SimpleChanges, inject, input } from '@angular/core';
 
 // NOTE: this code was taken from https://github.com/sollenne/angular-fittext because the repository was not maintained any more since June 2018
 
@@ -6,14 +6,14 @@ import { AfterViewInit, Directive, ElementRef, HostListener, Input, OnChanges, O
 export class FitTextDirective implements AfterViewInit, OnInit, OnChanges, OnDestroy {
     private renderer = inject(Renderer2);
 
-    @Input() fitText = true;
-    @Input() compression = 1;
-    @Input() activateOnResize = true;
-    @Input() minFontSize?: number | 'inherit' = 0;
-    @Input() maxFontSize?: number | 'inherit' = Number.POSITIVE_INFINITY;
-    @Input() delay = 100;
-    @Input() innerHTML: any;
-    @Input() fontUnit: 'px' | 'em' | string = 'px';
+    readonly fitText = input(true);
+    readonly compression = input(1);
+    readonly activateOnResize = input(true);
+    readonly minFontSize = input<(number | 'inherit') | undefined>(0);
+    readonly maxFontSize = input<(number | 'inherit') | undefined>(Number.POSITIVE_INFINITY);
+    readonly delay = input(100);
+    readonly innerHTML = input<any>();
+    readonly fontUnit = input<'px' | 'em' | string>('px');
 
     private readonly fitTextElement: HTMLElement;
     private readonly computed: CSSStyleDeclaration;
@@ -39,14 +39,16 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnChanges, OnDes
 
     @HostListener('window:resize')
     public onWindowResize = (): void => {
-        if (this.activateOnResize) {
+        if (this.activateOnResize()) {
             this.setFontSize();
         }
     };
 
     public ngOnInit() {
-        this.fitTextMinFontSize = this.minFontSize === 'inherit' ? Number(this.computed.fontSize) : this.minFontSize!;
-        this.fitTextMaxFontSize = this.maxFontSize === 'inherit' ? Number(this.computed.fontSize) : this.maxFontSize!;
+        const minFontSize = this.minFontSize();
+        this.fitTextMinFontSize = minFontSize === 'inherit' ? Number(this.computed.fontSize) : minFontSize!;
+        const maxFontSize = this.maxFontSize();
+        this.fitTextMaxFontSize = maxFontSize === 'inherit' ? Number(this.computed.fontSize) : maxFontSize!;
     }
 
     public ngAfterViewInit() {
@@ -58,7 +60,7 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnChanges, OnDes
             this.setFontSize(0);
         }
         if (changes['innerHTML']) {
-            this.fitTextElement.innerHTML = this.innerHTML;
+            this.fitTextElement.innerHTML = this.innerHTML();
             if (!changes['innerHTML'].firstChange) {
                 this.setFontSize(0);
             }
@@ -69,7 +71,7 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnChanges, OnDes
         clearTimeout(this.resizeTimeout);
     }
 
-    private setFontSize = (delay: number = this.delay): void => {
+    private setFontSize = (delay: number = this.delay()): void => {
         this.resizeTimeout = setTimeout(() => {
             if (this.fitTextElement.offsetHeight * this.fitTextElement.offsetWidth !== 0) {
                 // reset to default
@@ -89,7 +91,7 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnChanges, OnDes
                     (parseFloat(getComputedStyle(this.fitTextParent).paddingLeft) + parseFloat(getComputedStyle(this.fitTextParent).paddingRight)) -
                     6) *
                     ratio *
-                    this.compression,
+                    this.compression(),
                 this.fitTextMaxFontSize,
             ),
             this.fitTextMinFontSize,
@@ -97,7 +99,7 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnChanges, OnDes
     };
 
     private setStyles = (fontSize: number, lineHeight: number | string, display: string): void => {
-        this.renderer.setStyle(this.fitTextElement, 'fontSize', fontSize.toString() + this.fontUnit);
+        this.renderer.setStyle(this.fitTextElement, 'fontSize', fontSize.toString() + this.fontUnit());
         this.renderer.setStyle(this.fitTextElement, 'lineHeight', lineHeight.toString());
         this.renderer.setStyle(this.fitTextElement, 'display', display);
     };

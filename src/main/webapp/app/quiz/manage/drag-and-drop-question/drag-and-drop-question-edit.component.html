@@ -5,7 +5,7 @@
                 class="btn question-collapse"
                 (click)="isQuestionCollapsed = !isQuestionCollapsed"
                 [attr.aria-expanded]="!isQuestionCollapsed"
-                [attr.aria-controls]="'collapseQuestion' + questionIndex"
+                [attr.aria-controls]="'collapseQuestion' + questionIndex()"
             >
                 <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
             </button>
@@ -37,7 +37,7 @@
                         class="btn question-collapse"
                         (click)="isQuestionCollapsed = !isQuestionCollapsed"
                         [attr.aria-expanded]="!isQuestionCollapsed"
-                        [attr.aria-controls]="'collapseQuestion' + questionIndex"
+                        [attr.aria-controls]="'collapseQuestion' + questionIndex()"
                     >
                         <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
                     </button>
@@ -104,7 +104,7 @@
             </div>
         </div>
     }
-    <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex }}">
+    <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
         @if (!reEvaluationInProgress) {
             <div class="question-options">
                 <div class="form-group">
@@ -120,13 +120,13 @@
                     <div class="form-check custom-control custom-checkbox">
                         <input
                             type="checkbox"
-                            id="{{ 'cbRandomizeOrderDnD' + questionIndex }}"
+                            id="{{ 'cbRandomizeOrderDnD' + questionIndex() }}"
                             [(ngModel)]="question.randomizeOrder"
                             class="form-check-input custom-control-input"
                         />
                         <label
                             class="form-check-label custom-control-label"
-                            for="{{ 'cbRandomizeOrderDnD' + questionIndex }}"
+                            for="{{ 'cbRandomizeOrderDnD' + questionIndex() }}"
                             jhiTranslate="artemisApp.dragAndDropQuestion.randomizeOrder"
                         ></label>
                     </div>
@@ -162,13 +162,13 @@
                         <div class="form-check custom-control custom-checkbox">
                             <input
                                 type="checkbox"
-                                id="{{ 'cbRandomizeOrderDnD' + questionIndex }}"
+                                id="{{ 'cbRandomizeOrderDnD' + questionIndex() }}"
                                 [(ngModel)]="question.randomizeOrder"
                                 class="form-check-input custom-control-input"
                             />
                             <label
                                 class="form-check-label custom-control-label"
-                                for="{{ 'cbRandomizeOrderDnD' + questionIndex }}"
+                                for="{{ 'cbRandomizeOrderDnD' + questionIndex() }}"
                                 jhiTranslate="artemisApp.dragAndDropQuestion.randomizeOrder"
                             ></label>
                         </div>
@@ -258,7 +258,7 @@
                             }
                         </button>
                     </div>
-                    <input #backgroundFileInput id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" [hidden]="true" (change)="setBackgroundFile($event)" />
+                    <input #backgroundFileInput id="backgroundFileInput{{ questionIndex() }}" type="file" accept="image/*" [hidden]="true" (change)="setBackgroundFile($event)" />
                 </div>
                 @if (reEvaluationInProgress) {
                     <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetBackground()">
@@ -457,7 +457,7 @@
                             <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemPicture"></span>
                         }
                     </button>
-                    <input #dragItemFileInput id="dragItemFileInput{{ questionIndex }}" type="file" accept="image/*" [hidden]="true" (change)="createImageDragItem($event)" />
+                    <input #dragItemFileInput id="dragItemFileInput{{ questionIndex() }}" type="file" accept="image/*" [hidden]="true" (change)="createImageDragItem($event)" />
                     <button class="btn btn-outline-secondary me-2" id="add-text-drag-item" (click)="addTextDragItem()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
@@ -489,7 +489,7 @@
 </div>
 @if (!reEvaluationInProgress && showPreview) {
     <div class="preview-dnd-question">
-        <jhi-drag-and-drop-question [question]="question" [mappings]="[]" [questionIndex]="questionIndex" [filePreviewPaths]="filePreviewPaths" />
+        <jhi-drag-and-drop-question [question]="question" [mappings]="[]" [questionIndex]="questionIndex()" [filePreviewPaths]="filePreviewPaths" />
         <hr />
         <div class="btn btn-outline-secondary" (click)="togglePreview()">
             <fa-icon [icon]="faPencilAlt" />

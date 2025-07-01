@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, input } from '@angular/core';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
@@ -8,7 +8,7 @@ import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-q
     template: `
         <jhi-short-answer-question-edit
             [question]="shortAnswerQuestion"
-            [questionIndex]="questionIndex"
+            [questionIndex]="questionIndex()"
             [reEvaluationInProgress]="true"
             (questionUpdated)="questionUpdated.emit()"
             (questionDeleted)="questionDeleted.emit()"
@@ -22,11 +22,12 @@ import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-q
 export class ReEvaluateShortAnswerQuestionComponent {
     shortAnswerQuestion: ShortAnswerQuestion;
 
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input() set question(question: QuizQuestion) {
         this.shortAnswerQuestion = question as ShortAnswerQuestion;
     }
-    @Input()
-    questionIndex: number;
+    readonly questionIndex = input<number>(undefined!);
 
     @Output()
     questionUpdated = new EventEmitter();

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, OnChanges, Output, ViewEncapsulation, inject, input } from '@angular/core';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -44,9 +44,17 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
     private alertService = inject(AlertService);
     private changeDetectorRef = inject(ChangeDetectorRef);
 
-    @Input() show: boolean;
-    @Input() courseId: number;
-    @Input() filePool: Map<string, { path?: string; file: File }>;
+    readonly show = input<boolean>(undefined!);
+    readonly courseId = input<number>(undefined!);
+    readonly filePool = input<
+        Map<
+            string,
+            {
+                path?: string;
+                file: File;
+            }
+        >
+    >(undefined!);
 
     @Output() onQuestionsAdded = new EventEmitter<Array<QuizQuestion>>();
     @Output() onFilesAdded = new EventEmitter<Map<string, { path: string; file: File }>>();
@@ -72,12 +80,12 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
     importFileName: string;
 
     ngOnChanges() {
-        if (this.show) {
+        if (this.show()) {
             this.courseManagementService.getAllCoursesWithQuizExercises().subscribe((res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.changeDetectorRef.detectChanges();
             });
-            this.examManagementService.findAllExamsAccessibleToUser(this.courseId!).subscribe((res: HttpResponse<Exam[]>) => {
+            this.examManagementService.findAllExamsAccessibleToUser(this.courseId()!).subscribe((res: HttpResponse<Exam[]>) => {
                 this.exams = res.body!;
                 this.changeDetectorRef.detectChanges();
             });
@@ -349,7 +357,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                     files.set(backgroundFile.name, { path: dndQuestion.backgroundFilePath!, file: backgroundFile });
                     dndQuestion.backgroundFilePath = backgroundFile.name;
                 } else {
-                    const backgroundFile = await this.fileService.getFile(dndQuestion.backgroundFilePath!, this.filePool);
+                    const backgroundFile = await this.fileService.getFile(dndQuestion.backgroundFilePath!, this.filePool());
                     files.set(backgroundFile.name, { path: dndQuestion.backgroundFilePath!, file: backgroundFile });
                     dndQuestion.backgroundFilePath = backgroundFile.name;
                 }
@@ -370,7 +378,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                             files.set(exportedDragItemFile.name, { path: dragItem.pictureFilePath, file: exportedDragItemFile });
                             dragItem.pictureFilePath = exportedDragItemFile.name;
                         } else {
-                            const dragItemFile = await this.fileService.getFile(dragItem.pictureFilePath, this.filePool);
+                            const dragItemFile = await this.fileService.getFile(dragItem.pictureFilePath, this.filePool());
                             files.set(dragItemFile.name, { path: dragItem.pictureFilePath, file: dragItemFile });
                             dragItem.pictureFilePath = dragItemFile.name;
                         }

@@ -1,6 +1,6 @@
 <div
     class="dnd-question markdown-preview"
-    [ngClass]="{ disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.points! && !forceSampleSolution }"
+    [ngClass]="{ disabled: clickDisabled() && !showResult, result: showResult && !forceSampleSolution, incorrect: (score() || 0) < question.points! && !forceSampleSolution }"
 >
     <div [hidden]="loadingState === 'success'">
         @if (loadingState !== 'error') {
@@ -21,7 +21,7 @@
     </div>
     <div [hidden]="loadingState !== 'success'">
         <h4 class="question-title-display">
-            <span>{{ questionIndex }})</span> {{ question.title }}
+            <span>{{ questionIndex() }})</span> {{ question.title }}
         </h4>
         <p [innerHTML]="renderedQuestion.text"></p>
         @if (question.invalid) {
@@ -57,18 +57,18 @@
             </div>
         }
         @if (showResult && !forceSampleSolution) {
-            <div class="question-score result" [ngClass]="{ incorrect: (score || 0) < question.points! }">
+            <div class="question-score result" [ngClass]="{ incorrect: (score() || 0) < question.points! }">
                 <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
-                <span class="show-explanation">{{ score || 0 }}/{{ question.points }}</span>
+                <span class="show-explanation">{{ score() || 0 }}/{{ question.points }}</span>
                 <span class="show-explanation">
                     <jhi-quiz-scoring-infostudent-modal
-                        [score]="score"
+                        [score]="score()"
                         [question]="question"
                         [dragAndDropMapping]="mappings"
                         [correctlyMappedDragAndDropItems]="correctAnswer"
                         [incorrectlyMappedDragAndDropItems]="incorrectLocationMappings"
                         [mappedLocations]="mappedLocations"
-                        [questionIndex]="questionIndex"
+                        [questionIndex]="questionIndex()"
                     />
                 </span>
             </div>
@@ -97,7 +97,7 @@
             <div class="background-area">
                 @if (question.backgroundFilePath) {
                     <jhi-secured-image
-                        [src]="addPublicFilePrefix(filePreviewPaths.get(question.backgroundFilePath!) || question.backgroundFilePath!)!"
+                        [src]="addPublicFilePrefix(filePreviewPaths().get(question.backgroundFilePath!) || question.backgroundFilePath!)!"
                         (endLoadingProcess)="changeLoading($event)"
                     />
                 }
@@ -127,9 +127,9 @@
                                             (dragenter)="drag()"
                                             (dragend)="drop()"
                                             [dragItem]="dragItemForDropLocation(dropLocation)!"
-                                            [clickDisabled]="clickDisabled"
+                                            [clickDisabled]="clickDisabled()"
                                             [minWidth]="100 + '%'"
-                                            [filePreviewPaths]="filePreviewPaths"
+                                            [filePreviewPaths]="filePreviewPaths()"
                                         />
                                     }
                                 </div>
@@ -189,7 +189,7 @@
                                                 [dragItem]="dragItemForDropLocation(dropLocation)!"
                                                 [clickDisabled]="true"
                                                 [minWidth]="100 + '%'"
-                                                [filePreviewPaths]="filePreviewPaths"
+                                                [filePreviewPaths]="filePreviewPaths()"
                                             />
                                         }
                                         @if (!dragItemForDropLocation(dropLocation)) {
@@ -253,7 +253,7 @@
                                                 [dragItem]="correctDragItemForDropLocation(dropLocation)!"
                                                 [clickDisabled]="true"
                                                 [minWidth]="100 + '%'"
-                                                [filePreviewPaths]="filePreviewPaths"
+                                                [filePreviewPaths]="filePreviewPaths()"
                                             />
                                         }
                                         @if (!dropLocation || !correctDragItemForDropLocation(dropLocation)) {
@@ -295,9 +295,9 @@
                                 (dragenter)="drag()"
                                 (dragend)="drop()"
                                 [dragItem]="dragItem"
-                                [clickDisabled]="clickDisabled"
+                                [clickDisabled]="clickDisabled()"
                                 [minWidth]="'160'"
-                                [filePreviewPaths]="filePreviewPaths"
+                                [filePreviewPaths]="filePreviewPaths()"
                             />
                         }
                     </div>

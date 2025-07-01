@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
@@ -69,6 +69,8 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     _question: DragAndDropQuestion;
     _forceSampleSolution: boolean;
 
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     set question(question) {
         this._question = question;
@@ -78,16 +80,20 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
         return this._question;
     }
     // TODO: Map vs. Array --> consistency
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input()
     mappings: DragAndDropMapping[];
-    @Input()
-    clickDisabled: boolean;
+    readonly clickDisabled = input<boolean>(undefined!);
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input()
     showResult: boolean;
-    @Input()
-    questionIndex: number;
-    @Input()
-    score: number;
+    readonly questionIndex = input<number>(undefined!);
+    readonly score = input<number>(undefined!);
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     set forceSampleSolution(forceSampleSolution) {
         this._forceSampleSolution = forceSampleSolution;
@@ -98,10 +104,8 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     get forceSampleSolution() {
         return this._forceSampleSolution;
     }
-    @Input()
-    onMappingUpdate: any;
-    @Input()
-    filePreviewPaths: Map<string, string> = new Map<string, string>();
+    readonly onMappingUpdate = input<any>();
+    readonly filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
 
     @Output()
     mappingsChange = new EventEmitter<DragAndDropMapping[]>();
@@ -226,8 +230,9 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
 
         this.mappingsChange.emit(this.mappings);
         /** Only execute the onMappingUpdate function if we received such input **/
-        if (this.onMappingUpdate) {
-            this.onMappingUpdate();
+        const onMappingUpdate = this.onMappingUpdate();
+        if (onMappingUpdate) {
+            onMappingUpdate();
         }
     }
 

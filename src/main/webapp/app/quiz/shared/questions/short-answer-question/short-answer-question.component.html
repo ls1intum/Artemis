@@ -1,13 +1,13 @@
 <div
     class="sa-question"
     [ngClass]="{
-        disabled: clickDisabled && !showResult,
+        disabled: clickDisabled() && !showResult,
         result: showResult && !forceSampleSolution,
-        incorrect: (score || 0) < shortAnswerQuestion.points! && !forceSampleSolution,
+        incorrect: (score() || 0) < shortAnswerQuestion.points! && !forceSampleSolution,
     }"
 >
     <h4 class="question-title-display">
-        <span>{{ questionIndex }})</span> {{ shortAnswerQuestion.title }}
+        <span>{{ questionIndex() }})</span> {{ shortAnswerQuestion.title }}
     </h4>
     @if (!showResult) {
         <div>
@@ -24,7 +24,7 @@
                                         class="short-answer-question-container__input"
                                         type="text"
                                         [maxLength]="MAX_CHARACTER_COUNT"
-                                        [disabled]="clickDisabled"
+                                        [disabled]="clickDisabled()"
                                         value="{{ getSubmittedTextForSpotAsString(element) }}"
                                         id="solution-{{ i }}-{{ j }}-{{ shortAnswerQuestion.id }}"
                                         (change)="setSubmittedText()"
@@ -103,11 +103,11 @@
         </div>
     }
     @if (showResult && !forceSampleSolution) {
-        <div class="question-score result" [ngClass]="{ incorrect: (score || 0) < shortAnswerQuestion.points! }">
+        <div class="question-score result" [ngClass]="{ incorrect: (score() || 0) < shortAnswerQuestion.points! }">
             <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
-            <span class="show-explanation">{{ score || 0 }}/{{ shortAnswerQuestion.points }}</span>
+            <span class="show-explanation">{{ score() || 0 }}/{{ shortAnswerQuestion.points }}</span>
             <span class="show-explanation">
-                <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="shortAnswerQuestion" [shortAnswerText]="submittedTexts" [questionIndex]="questionIndex" />
+                <jhi-quiz-scoring-infostudent-modal [score]="score()" [question]="shortAnswerQuestion" [shortAnswerText]="submittedTexts" [questionIndex]="questionIndex()" />
             </span>
         </div>
     }

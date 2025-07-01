@@ -3,7 +3,7 @@
         <h5 class="modal-title">
             <span
                 jhiTranslate="artemisApp.quizExercise.explanationText.scoringTitle"
-                [translateValues]="{ paramTitle: this.question.title, paramIndex: this.questionIndex }"
+                [translateValues]="{ paramTitle: this.question.title, paramIndex: this.questionIndex() }"
             ></span>
         </h5>
         <button type="button" class="btn-close" aria-label="Close" (click)="d()"></button>
@@ -105,7 +105,7 @@
                                     paramScore: this.score,
                                     paramQuestionScore: this.question.points,
                                     paramWrongMappedItems: this.incorrectlyMappedDragAndDropItems,
-                                    paramRightMapping: this.correctlyMappedDragAndDropItems,
+                                    paramRightMapping: this.correctlyMappedDragAndDropItems(),
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
                                     rightMap: this.rightMap,
@@ -251,8 +251,8 @@
                                     paramScore: this.score,
                                     paramQuestionScore: this.question.points,
                                     paramWrongMappedItems: this.incorrectlyMappedDragAndDropItems,
-                                    paramRightMapping: this.correctlyMappedDragAndDropItems,
-                                    paramDragAndDropElementsCount: this.mappedLocations,
+                                    paramRightMapping: this.correctlyMappedDragAndDropItems(),
+                                    paramDragAndDropElementsCount: this.mappedLocations(),
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
                                     rightMap: this.rightMap,
@@ -260,8 +260,8 @@
                                 }"
                             ></p>
                             <b
-                                >+ {{ this.correctlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.mappedLocations }} -
-                                {{ this.incorrectlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.mappedLocations }} = {{ this.score }}</b
+                                >+ {{ this.correctlyMappedDragAndDropItems() }}*{{ this.question.points }}/{{ this.mappedLocations() }} -
+                                {{ this.incorrectlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.mappedLocations() }} = {{ this.score }}</b
                             >
                             <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
                         </span>
@@ -274,8 +274,8 @@
                                     paramScore: this.score,
                                     paramQuestionScore: this.question.points,
                                     paramWrongMappedItems: this.incorrectlyMappedDragAndDropItems,
-                                    paramRightMapping: this.correctlyMappedDragAndDropItems,
-                                    paramDragAndDropElementsCount: this.mappedLocations,
+                                    paramRightMapping: this.correctlyMappedDragAndDropItems(),
+                                    paramDragAndDropElementsCount: this.mappedLocations(),
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
                                     rightMap: this.rightMap,
@@ -283,8 +283,8 @@
                                 }"
                             ></p>
                             <b
-                                >+ {{ this.correctlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.mappedLocations }} -
-                                {{ this.incorrectlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.mappedLocations }}
+                                >+ {{ this.correctlyMappedDragAndDropItems() }}*{{ this.question.points }}/{{ this.mappedLocations() }} -
+                                {{ this.incorrectlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.mappedLocations() }}
                                 = 0
                             </b>
                             <p jhiTranslate="artemisApp.quizExercise.explanationText.zeroPointer"></p>
@@ -453,15 +453,15 @@
                                     paramScore: this.score,
                                     paramQuestionScore: this.question.points,
                                     paramWrongMappedItems: this.incorrectlyMappedDragAndDropItems,
-                                    paramRightMapping: this.correctlyMappedDragAndDropItems,
-                                    paramDragAndDropElementsCount: this.mappedLocations,
+                                    paramRightMapping: this.correctlyMappedDragAndDropItems(),
+                                    paramDragAndDropElementsCount: this.mappedLocations(),
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
                                     rightMap: this.rightMap,
                                     wrongMap: this.wrongMap,
                                 }"
                             ></p>
-                            <b>+ {{ this.correctlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.mappedLocations }} = {{ this.score }}</b>
+                            <b>+ {{ this.correctlyMappedDragAndDropItems() }}*{{ this.question.points }}/{{ this.mappedLocations() }} = {{ this.score }}</b>
                             <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
                         </span>
                     }
@@ -473,15 +473,15 @@
                                     paramScore: this.score,
                                     paramQuestionScore: this.question.points,
                                     paramWrongMappedItems: this.incorrectlyMappedDragAndDropItems,
-                                    paramRightMapping: this.correctlyMappedDragAndDropItems,
-                                    paramDragAndDropElementsCount: this.mappedLocations,
+                                    paramRightMapping: this.correctlyMappedDragAndDropItems(),
+                                    paramDragAndDropElementsCount: this.mappedLocations(),
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
                                     rightMap: this.rightMap,
                                     wrongMap: this.wrongMap,
                                 }"
                             ></p>
-                            <b>+ {{ this.correctlyMappedDragAndDropItems }}*{{ this.question.points }}/{{ this.mappedLocations }} = 0 </b>
+                            <b>+ {{ this.correctlyMappedDragAndDropItems() }}*{{ this.question.points }}/{{ this.mappedLocations() }} = 0 </b>
                             <p jhiTranslate="artemisApp.quizExercise.explanationText.zeroPointer"></p>
                             <p jhiTranslate="artemisApp.quizExercise.explanationText.KeepTrying"></p>
                         </span>
