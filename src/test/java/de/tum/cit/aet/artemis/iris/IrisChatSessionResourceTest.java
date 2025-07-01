@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
@@ -120,7 +121,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         team.setExercise(teamExercise);
         team.setStudents(Set.of(users.get(1), users.get(2)));
         team.setOwner(users.get(1));
-        final var savedTeam = teamRepository.save(team);
+        teamRepository.save(team);
 
         pipelineDone = new AtomicBoolean(false);
 
@@ -142,7 +143,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getSessionForSessionId() throws Exception {
-        var courseSession = createCourseChatSessionForUser("student1");
+        IrisCourseChatSession courseSession = createCourseChatSessionForUser("student1");
         IrisSession irisChatSessions = request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.OK, IrisSession.class);
         assertThat(irisChatSessions.getId()).isEqualTo(courseSession.getId());
     }
@@ -150,10 +151,10 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAllSessionsForCourseWithSessions() throws Exception {
-        var courseSession = createCourseChatSessionForUser("student1");
-        var lectureSession = createLectureSessionForUser("student1");
-        var textExerciseSession = createTextExerciseChatSessionForUser("student1");
-        var programmingExerciseSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(soloExercise,
+        IrisCourseChatSession courseSession = createCourseChatSessionForUser("student1");
+        IrisLectureChatSession lectureSession = createLectureSessionForUser("student1");
+        IrisTextExerciseChatSession textExerciseSession = createTextExerciseChatSessionForUser("student1");
+        IrisProgrammingExerciseChatSession programmingExerciseSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
         List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
@@ -165,17 +166,17 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     }
 
     private IrisLectureChatSession createLectureSessionForUser(String userLogin) {
-        var user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
         return irisLectureChatSessionRepository.save(new IrisLectureChatSession(lecture, user));
     }
 
     private IrisCourseChatSession createCourseChatSessionForUser(String userLogin) {
-        var user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
         return irisLectureChatSessionRepository.save(new IrisCourseChatSession(course, user));
     }
 
     private IrisTextExerciseChatSession createTextExerciseChatSessionForUser(String userLogin) {
-        var user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
         return irisLectureChatSessionRepository.save(new IrisTextExerciseChatSession(textExercise, user));
     }
 }

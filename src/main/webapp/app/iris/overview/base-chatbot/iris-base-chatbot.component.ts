@@ -125,20 +125,20 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected route = inject(ActivatedRoute);
 
     // Icons
-    faTrash = faTrash;
-    faCircle = faCircle;
-    faPaperPlane = faPaperPlane;
-    faExpand = faExpand;
-    faXmark = faXmark;
-    faArrowDown = faArrowDown;
-    faCircleInfo = faCircleInfo;
-    faCompress = faCompress;
-    faThumbsUp = faThumbsUp;
-    faThumbsDown = faThumbsDown;
-    faRedo = faRedo;
-    faPenToSquare = faPenToSquare;
-    faChevronRight = faChevronRight;
-    facSidebar = facSidebar;
+    protected readonly faTrash = faTrash;
+    protected readonly faCircle = faCircle;
+    protected readonly faPaperPlane = faPaperPlane;
+    protected readonly faExpand = faExpand;
+    protected readonly faXmark = faXmark;
+    protected readonly faArrowDown = faArrowDown;
+    protected readonly faCircleInfo = faCircleInfo;
+    protected readonly faCompress = faCompress;
+    protected readonly faThumbsUp = faThumbsUp;
+    protected readonly faThumbsDown = faThumbsDown;
+    protected readonly faRedo = faRedo;
+    protected readonly faPenToSquare = faPenToSquare;
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly facSidebar = facSidebar;
 
     // State variables
     sessionIdSubscription: Subscription;
@@ -182,7 +182,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     @Input() fullSize: boolean | undefined;
     @Input() showCloseButton = false;
     @Input() isChatGptWrapper = false;
-    @Input() showChatSessions: boolean = false;
     @Output() fullSizeToggle = new EventEmitter<void>();
     @Output() closeClicked = new EventEmitter<void>();
 

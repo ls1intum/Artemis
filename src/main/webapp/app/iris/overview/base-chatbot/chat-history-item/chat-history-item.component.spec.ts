@@ -30,30 +30,30 @@ describe('ChatHistoryItemComponent', () => {
     });
 
     it('should display formatted creation date', () => {
-        component.session = getSessionMock();
+        fixture.componentRef.setInput('session', getSessionMock());
         fixture.detectChanges();
 
         const datePipe = new DatePipe('en-US');
-        const expectedDate = datePipe.transform(component.session.creationDate, 'dd.MM.yy HH:mm');
+        const expectedDate = datePipe.transform(component.session()!.creationDate, 'dd.MM.yy HH:mm');
         const pElem: HTMLElement = fixture.nativeElement.querySelector('p');
 
         expect(pElem.textContent).toContain(expectedDate);
     });
 
     it('should emit sessionClicked when item is clicked', () => {
-        component.session = getSessionMock();
+        fixture.componentRef.setInput('session', getSessionMock());
         jest.spyOn(component.sessionClicked, 'emit');
         fixture.detectChanges();
 
         const itemDiv = fixture.debugElement.query(By.css('.chat-history-item'));
         itemDiv.triggerEventHandler('click', null);
 
-        expect(component.sessionClicked.emit).toHaveBeenCalledWith(component.session);
+        expect(component.sessionClicked.emit).toHaveBeenCalledWith(component.session()!);
     });
 
     it('should add "chat-history-item-selected" class when active is true', () => {
-        component.session = getSessionMock();
-        component.active = true;
+        fixture.componentRef.setInput('session', getSessionMock());
+        fixture.componentRef.setInput('active', true);
         fixture.detectChanges();
 
         const itemDiv: HTMLElement = fixture.nativeElement.querySelector('.chat-history-item');
@@ -61,8 +61,8 @@ describe('ChatHistoryItemComponent', () => {
     });
 
     it('should not add "chat-history-item-selected" class when active is false', () => {
-        component.session = getSessionMock();
-        component.active = false;
+        fixture.componentRef.setInput('session', getSessionMock());
+        fixture.componentRef.setInput('active', false);
         fixture.detectChanges();
 
         const itemDiv: HTMLElement = fixture.nativeElement.querySelector('.chat-history-item');
