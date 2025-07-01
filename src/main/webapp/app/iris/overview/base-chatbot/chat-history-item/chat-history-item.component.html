@@ -1,4 +1,4 @@
-<div class="chat-history-item" [ngClass]="{ 'chat-history-item-selected': active() }" (click)="onItemClick()">
+<div class="chat-history-item" [ngClass]="{ 'chat-history-item-selected': active() }" (click)="onItemClick()" role="button" (keydown.enter)="onItemClick()">
     @let s = session();
     @if (s !== undefined) {
         <p>{{ s.creationDate | date: 'dd.MM.yy HH:mm' }}</p>
