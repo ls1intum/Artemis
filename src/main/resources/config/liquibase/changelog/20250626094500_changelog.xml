@@ -16,7 +16,7 @@
             <column name="exercise_id" type="bigint">
                 <constraints nullable="false" />
             </column>
-            <column name="content" type="longtext">
+            <column name="content" type="json">
                 <constraints nullable="false" />
             </column>
 
