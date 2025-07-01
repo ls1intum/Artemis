@@ -14,7 +14,7 @@ import { Participation, ParticipationType } from 'app/exercise/shared/entities/p
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 
@@ -77,11 +77,11 @@ describe('ResultUtils', () => {
     });
 
     it.each([
-        { result: undefined, participation: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-secondary' },
+        { result: undefined, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-secondary' },
         { result: {}, participation: {}, templateStatus: ResultTemplateStatus.LATE, expected: 'result-late' },
         {
             result: { submission: { submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed: true }, assessmentType: AssessmentType.AUTOMATIC },
-            participation: {},
+            participation: {} as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: 'text-danger',
         },
@@ -89,35 +89,35 @@ describe('ResultUtils', () => {
             result: {
                 assessmentType: AssessmentType.AUTOMATIC,
             },
-            participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } },
+            participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } } as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: 'text-secondary',
         },
         {
             result: { score: undefined, successful: true },
-            participation: {},
+            participation: {} as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: 'text-success',
         },
         {
             result: { score: 0, successful: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA },
-            participation: {},
+            participation: {} as Participation,
             templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
             expected: 'text-secondary',
         },
         {
             result: { score: 0, successful: true, assessmentType: AssessmentType.AUTOMATIC_ATHENA },
-            participation: {},
+            participation: {} as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: 'text-secondary',
         },
-        { result: { score: undefined, successful: false }, participation: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
-        { result: { score: MIN_SCORE_GREEN, testCaseCount: 1 }, participation: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
-        { result: { score: MIN_SCORE_ORANGE, testCaseCount: 1 }, participation: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'result-orange' },
-        { result: {}, participation: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
+        { result: { score: undefined, successful: false }, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
+        { result: { score: MIN_SCORE_GREEN, testCaseCount: 1 }, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
+        { result: { score: MIN_SCORE_ORANGE, testCaseCount: 1 }, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'result-orange' },
+        { result: {}, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
         {
             result: { score: 1 } as Result,
-            participation: { exercise: { type: ExerciseType.PROGRAMMING, submissions: [{ id: 1 }] } } as Participation,
+            participation: { exercise: { type: ExerciseType.PROGRAMMING } as Exercise, submissions: [{ id: 1 }] } as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: 'text-success',
         },
@@ -126,41 +126,52 @@ describe('ResultUtils', () => {
     });
 
     it.each([
-        { participation: { exercise: { type: ExerciseType.PROGRAMMING } }, result: {} as Result, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faCheckCircle },
-        { result: undefined, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faQuestionCircle },
+        {
+            result: {} as Result,
+            participation: { exercise: { type: ExerciseType.PROGRAMMING } as Exercise } as Participation,
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: faCheckCircle,
+        },
+        { result: undefined, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faQuestionCircle },
         {
             result: { submission: { submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed: true }, assessmentType: AssessmentType.AUTOMATIC },
+            participation: {} as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faTimesCircle,
         },
         {
-            participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } },
             result: {} as Result,
+            participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } as Exercise } as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faQuestionCircle,
         },
         {
             result: { score: undefined, successful: true, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
+            participation: {} as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faCheckCircle,
         },
         {
             result: { score: undefined, successful: false, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
+            participation: {} as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faTimesCircle,
         },
         {
             result: { score: MIN_SCORE_GREEN, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
+            participation: {} as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faCheckCircle,
         },
         {
             result: { score: MIN_SCORE_ORANGE, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
+            participation: {} as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faTimesCircle,
         },
         {
             result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
+            participation: {} as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faTimesCircle,
         },
@@ -171,6 +182,7 @@ describe('ResultUtils', () => {
                 successful: undefined,
                 completionDate: dayjs().add(5, 'minutes'),
             },
+            participation: {} as Participation,
             templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
             expected: faCircleNotch,
         },
@@ -182,6 +194,7 @@ describe('ResultUtils', () => {
                 assessmentType: AssessmentType.AUTOMATIC_ATHENA,
                 completionDate: dayjs().subtract(5, 'minutes'),
             } as Result,
+            participation: {} as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faCheckCircle,
         },
@@ -191,11 +204,11 @@ describe('ResultUtils', () => {
             },
             participation: {
                 type: ParticipationType.STUDENT,
-                exercise: { type: ExerciseType.TEXT },
+                exercise: { type: ExerciseType.TEXT } as Exercise,
                 successful: false,
                 assessmentType: AssessmentType.AUTOMATIC_ATHENA,
                 completionDate: dayjs().subtract(5, 'minutes'),
-            } as Result,
+            } as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faTimesCircle,
         },

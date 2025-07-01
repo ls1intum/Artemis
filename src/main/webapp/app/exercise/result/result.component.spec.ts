@@ -63,6 +63,7 @@ const mockResult: Result = {
 
 const preparedFeedback: FeedbackComponentPreparedParams = {
     exercise: mockExercise,
+    participation: mockParticipation,
     result: mockResult,
     exerciseType: ExerciseType.PROGRAMMING,
     showScoreChart: true,

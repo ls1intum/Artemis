@@ -352,7 +352,7 @@ describe('ResultService', () => {
             // Re-mock to get reference because direct import doesn't work here
             const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
             captureExceptionSpy.mockClear();
-            expect(resultService.getResultString(undefined, undefined)).toBe('');
+            expect(resultService.getResultString(undefined, undefined, undefined)).toBe('');
             expect(captureExceptionSpy).toHaveBeenCalledOnce();
             expect(captureExceptionSpy).toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
         });
