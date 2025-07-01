@@ -252,7 +252,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @MethodSource("setResultRatedPermutations")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void setProgrammingExerciseResultRated(boolean shouldBeRated, ZonedDateTime buildAndTestAfterDueDate, SubmissionType submissionType, ZonedDateTime dueDate,
-            ZonedDateTime individualDueDate, ZonedDateTime submissionDate) {
+            ZonedDateTime submissionDate) {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
         programmingExercise.setDueDate(dueDate);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
