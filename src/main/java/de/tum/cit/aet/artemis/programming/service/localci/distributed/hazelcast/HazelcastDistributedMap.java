@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.localci.distributedData.hazelcast;
+package de.tum.cit.aet.artemis.programming.service.localci.distributed.hazelcast;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,12 +12,12 @@ import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryAddedEvent;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryListener;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryRemovedEvent;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryUpdatedEvent;
-import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryAddedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryRemovedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryUpdatedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapListener;
 
 public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
 
