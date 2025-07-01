@@ -65,7 +65,12 @@ const submissionWithAnswers = {
     submittedAnswers: [multipleChoiceSubmittedAnswer, dragAndDropSubmittedAnswer, shortAnswerSubmittedAnswer],
     submitted: true,
 } as QuizSubmission;
-const exercise = { id: 1, studentParticipations: [studentParticipation], quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] } as QuizExercise;
+
+const exercise = {
+    id: 1,
+    studentParticipations: [studentParticipation],
+    quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion],
+} as QuizExercise;
 
 describe('QuizExamSummaryComponent', () => {
     let fixture: ComponentFixture<QuizExamSummaryComponent>;
@@ -79,18 +84,23 @@ describe('QuizExamSummaryComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(QuizExamSummaryComponent);
                 component = fixture.componentInstance;
-                component.quizParticipation = {
+                const quizParticipation = {
                     quizQuestions: exercise.quizQuestions!,
                     studentParticipations: exercise.studentParticipations,
                 };
-                component.submission = { id: 2, submittedAnswers: [] };
-                component.resultsPublished = true;
-                component.exam = { id: 1 } as Exam;
+                const submission = { id: 2, submittedAnswers: [] };
+                const resultsPublished = true;
+                const exam = { id: 1 } as Exam;
+                fixture.componentRef.setInput('quizParticipation', quizParticipation);
+                fixture.componentRef.setInput('submission', submission);
+                fixture.componentRef.setInput('resultsPublished', resultsPublished);
+                fixture.componentRef.setInput('exam', exam);
             });
     });
 
     it('should initialize', () => {
-        component.exam = { id: 1, publishResultsDate: dayjs().subtract(1, 'hours') } as Exam;
+        const exam = { id: 1, publishResultsDate: dayjs().subtract(1, 'hours') } as Exam;
+        fixture.componentRef.setInput('exam', exam);
         component.ngOnChanges();
         expect(component).not.toBeNull();
         expect(component.exam).not.toBeNull();
@@ -98,7 +108,7 @@ describe('QuizExamSummaryComponent', () => {
     });
 
     it('should initialize the solution dictionaries correctly', () => {
-        component.submission = submissionWithAnswers;
+        fixture.componentRef.setInput('submission', submissionWithAnswers);
         component.ngOnChanges();
         expect(component.selectedAnswerOptions.get(1)![0]).toEqual(correctAnswerOption);
         expect(component.getScoreForQuizQuestion(1)).toBe(1);

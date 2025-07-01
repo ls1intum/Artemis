@@ -26,12 +26,13 @@ describe('ExamTimerComponent', () => {
         fixture = TestBed.createComponent(ExamTimerComponent);
         component = fixture.componentInstance;
         dateService = TestBed.inject(ArtemisServerDateService);
-        component.endDate = inFuture;
+
+        fixture.componentRef.setInput('endDate', inFuture);
+        fixture.componentRef.setInput('criticalTime', dayjs.duration(200));
     });
 
     it('should call ngOnInit', () => {
         jest.spyOn(dateService, 'now').mockReturnValue(now);
-        component.criticalTime = dayjs.duration(200);
         component.ngOnInit();
         expect(component).not.toBeNull();
         expect(component.isCriticalTime).toBeTrue();
@@ -57,7 +58,7 @@ describe('ExamTimerComponent', () => {
 
     it('should update time in the template correctly', fakeAsync(() => {
         // 30 minutes left
-        component.endDate = dayjs(now).add(30, 'minutes');
+        fixture.componentRef.setInput('endDate', dayjs(now).add(30, 'minutes'));
         jest.spyOn(dateService, 'now').mockReturnValueOnce(dayjs(now)).mockReturnValueOnce(dayjs(now)).mockReturnValueOnce(dayjs(now).add(5, 'minutes'));
         fixture.detectChanges();
         tick();
