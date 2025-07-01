@@ -24,6 +24,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 
 describe('FeedbackComponent', () => {
     let comp: FeedbackComponent;
@@ -199,6 +200,12 @@ describe('FeedbackComponent', () => {
         course.title = 'Testcourse';
         exercise.course = course;
         comp.exercise = exercise;
+        comp.participation = {
+            id: 55,
+            type: ParticipationType.PROGRAMMING,
+            participantIdentifier: 'student42',
+            repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
+        } as ProgrammingExerciseStudentParticipation;
         comp.result = {
             id: 89,
             submission: {
@@ -289,7 +296,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id!, comp.result);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(55, comp.result);
         expect(comp.isLoading).toBeFalse();
     });
 
