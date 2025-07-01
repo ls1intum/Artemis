@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 
-public class LocalCIEventListenerServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
+class LocalCIEventListenerServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localcieventlistenerint";
 
