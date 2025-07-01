@@ -162,7 +162,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
         this.translateService.onLangChange.subscribe(() => {
             if (this.resultString) {
-                this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
+                this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
             }
         });
 
@@ -221,14 +221,14 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
         } else if (
             this.result &&
             ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) || isAthenaAIResult(this.result))
         ) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
             this.resultTooltip = this.buildResultTooltip();
         } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
