@@ -1,4 +1,7 @@
-package de.tum.cit.aet.artemis.programming.service.localci.distributed.hazelcast;
+package de.tum.cit.aet.artemis.programming.service.localci.distributedData.hazelcast;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -13,10 +16,6 @@ import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;

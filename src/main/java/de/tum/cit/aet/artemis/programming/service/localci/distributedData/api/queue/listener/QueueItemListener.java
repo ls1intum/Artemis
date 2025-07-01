@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener;
+package de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener;
 
 /**
  * Listener interface for receiving notifications about specific items being added to or removed from a distributed queue.

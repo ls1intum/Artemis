@@ -1,10 +1,10 @@
-package de.tum.cit.aet.artemis.programming.service.localci.distributed.api;
+package de.tum.cit.aet.artemis.programming.service.localci.distributedData.api;
 
 import java.util.Set;
 
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.topic.DistributedTopic;
 
 /**
  * The DistributedDataProvider acts as an abstraction layer for accessing distributed data structures
@@ -20,13 +20,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.
  */
 public interface DistributedDataProvider {
 
-    /**
-     * Returns a distributed queue with the given name.
-     *
-     * @param name the name of the queue
-     * @param <T>  the type of elements in the queue
-     * @return a DistributedQueue with the specified name
-     */
     <T> DistributedQueue<T> getQueue(String name);
 
     /**

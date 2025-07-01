@@ -1,6 +1,6 @@
-package de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener;
+package de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener;
 
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
 
 /**
  * Listener interface for queue events.

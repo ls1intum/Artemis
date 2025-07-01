@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.localci.distributed.hazelcast;
+package de.tum.cit.aet.artemis.programming.service.localci.distributedData.hazelcast;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,9 +13,9 @@ import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener.QueueItemListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener.QueueListener;
 
 public class HazelcastDistributedQueue<T> implements DistributedQueue<T> {
 

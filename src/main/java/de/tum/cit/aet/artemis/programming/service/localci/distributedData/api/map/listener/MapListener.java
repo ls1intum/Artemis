@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener;
+package de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener;
 
 public interface MapListener {
 

@@ -1,11 +1,11 @@
-package de.tum.cit.aet.artemis.programming.service.localci.distributed.hazelcast;
+package de.tum.cit.aet.artemis.programming.service.localci.distributedData.hazelcast;
 
 import java.util.UUID;
 import java.util.function.Consumer;
 
 import com.hazelcast.topic.ITopic;
 
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.topic.DistributedTopic;
 
 public class HazelcastDistributedTopic<T> implements DistributedTopic<T> {
 

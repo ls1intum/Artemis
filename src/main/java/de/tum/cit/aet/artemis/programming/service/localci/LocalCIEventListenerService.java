@@ -24,11 +24,11 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryAddedEvent;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryListener;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryRemovedEvent;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryUpdatedEvent;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryAddedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryRemovedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.map.listener.MapEntryUpdatedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributedData.api.queue.listener.QueueItemListener;
 
 /**
  * Central listener service for handling LocalCI events.
