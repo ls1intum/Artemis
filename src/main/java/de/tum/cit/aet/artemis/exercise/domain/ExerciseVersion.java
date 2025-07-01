@@ -2,12 +2,8 @@ package de.tum.cit.aet.artemis.exercise.domain;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorColumn;
-import jakarta.persistence.DiscriminatorType;
-import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -20,10 +16,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
 @Table(name = "exercise_version")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@DiscriminatorValue(value = "E")
 public class ExerciseVersion extends AbstractAuditingEntity {
 
     @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
@@ -40,8 +33,9 @@ public class ExerciseVersion extends AbstractAuditingEntity {
      * The content of this field is used to display the history of changes made to the exercise.
      * The content of this field is used to compare the current state of the exercise with the previous state.
      */
-    @Column(name = "content")
-    private String content;
+    @Column(name = "content", columnDefinition = "json")
+    @Convert(converter = ExerciseVersionConverter.class)
+    private ExerciseVersionContent content;
 
     public Exercise getExercise() {
         return exercise;
@@ -59,11 +53,11 @@ public class ExerciseVersion extends AbstractAuditingEntity {
         this.author = author;
     }
 
-    public String getContent() {
+    public ExerciseVersionContent getContent() {
         return content;
     }
 
-    public void setContent(String content) {
+    public void setContent(ExerciseVersionContent content) {
         this.content = content;
     }
 }
