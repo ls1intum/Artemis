@@ -29,6 +29,8 @@ public class BuildAgentInformationService {
 
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(BuildAgentInformationService.class);
 
+    private static final int DEFAULT_CONSECUTIVE_FAILURES = 0;
+
     private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
@@ -52,11 +54,11 @@ public class BuildAgentInformationService {
     }
 
     public void updateLocalBuildAgentInformation(boolean isPaused) {
-        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, false, 0);
+        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, false, DEFAULT_CONSECUTIVE_FAILURES);
     }
 
     public void updateLocalBuildAgentInformation(boolean isPaused, boolean isPausedDueToFailures) {
-        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, isPausedDueToFailures, 0);
+        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, isPausedDueToFailures, DEFAULT_CONSECUTIVE_FAILURES);
     }
 
     /**
