@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -106,13 +107,15 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
+    private final SubmissionRepository submissionRepository;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             Optional<StudentExamApi> studentExamApi, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, SubmissionRepository submissionRepository) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -129,6 +132,7 @@ public class ProgrammingExerciseParticipationResource {
         this.sharedQueueManagementService = sharedQueueManagementService;
         this.examApi = examApi;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -139,18 +143,13 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @EnforceAtLeastStudent
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
-        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository
-                .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId)
-                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-
+    public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithLatestResultForStudentParticipation(@PathVariable long participationId) {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService
+                .findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(participationId);
         hasAccessToParticipationElseThrow(participation);
         filterParticipationSubmissionResults(participation);
-
-        Optional<Submission> latestSubmission = participation.getSubmissions().stream().findFirst();
-        Optional<Result> latestResult = latestSubmission.flatMap(submission -> submission.getResults().stream().findFirst());
-        Set<Result> results = latestResult.map(Set::of).orElseGet(Set::of);
         // hide details that should not be shown to the students
+        List<Result> results = participation.getSubmissions().isEmpty() ? List.of() : participation.getSubmissions().iterator().next().getResults();
         resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
         return ResponseEntity.ok(participation);
     }
