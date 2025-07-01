@@ -78,7 +78,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     @Input() exercise?: Exercise;
     @Input() result: Result;
-    @Input() participation?: Participation;
+    @Input() participation: Participation;
 
     /**
      * Specify the feedback.testCase.id values that should be shown, all other values will not be visible.
@@ -185,7 +185,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
      * Sets up the information related to the exercise.
      */
     private initializeExerciseInformation() {
-        this.exercise ??= this.result.submission?.participation?.exercise;
+        this.exercise ??= this.participation?.exercise;
         if (this.exercise) {
             this.course = getCourseFromExercise(this.exercise);
         }
@@ -195,7 +195,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
         }
 
         // In case the exerciseType is not set, we try to set it back if the participation is from a programming exercise
-        if (!this.exerciseType && isProgrammingExerciseParticipation(this.result?.submission?.participation)) {
+        if (!this.exerciseType && isProgrammingExerciseParticipation(this.participation)) {
             this.exerciseType = ExerciseType.PROGRAMMING;
         }
 
@@ -236,10 +236,9 @@ export class FeedbackComponent implements OnInit, OnChanges {
                     if (
                         this.result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA &&
                         this.exerciseType === ExerciseType.PROGRAMMING &&
-                        this.result.submission?.participation &&
-                        (this.result.submission as ProgrammingSubmission).buildFailed
+                        (this.participation?.submissions?.[0] as ProgrammingSubmission)?.buildFailed
                     ) {
-                        return this.fetchAndSetBuildLogs(this.result.submission.participation.id!, this.result.id);
+                        return this.fetchAndSetBuildLogs(this.participation.id!, this.result.id);
                     }
 
                     if (this.showScoreChart) {
