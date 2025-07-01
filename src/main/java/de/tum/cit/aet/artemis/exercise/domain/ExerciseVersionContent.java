@@ -24,9 +24,9 @@ public record ExerciseVersionContent(
         @JsonProperty("due_date") ZonedDateTime dueDate,
 
         // Points and difficulty
-        @JsonProperty("max_points") Integer maxPoints,
+        @JsonProperty("max_points") Double maxPoints,
 
-        @JsonProperty("bonus_points") Integer bonusPoints,
+        @JsonProperty("bonus_points") Double bonusPoints,
 
         @JsonProperty("difficulty") DifficultyLevel difficulty,
 
@@ -72,9 +72,9 @@ public record ExerciseVersionContent(
 
         private ZonedDateTime dueDate;
 
-        private Integer maxPoints;
+        private Double maxPoints;
 
-        private Integer bonusPoints;
+        private Double bonusPoints;
 
         private DifficultyLevel difficulty;
 
@@ -133,12 +133,12 @@ public record ExerciseVersionContent(
             return this;
         }
 
-        public Builder maxPoints(Integer maxPoints) {
+        public Builder maxPoints(Double maxPoints) {
             this.maxPoints = maxPoints;
             return this;
         }
 
-        public Builder bonusPoints(Integer bonusPoints) {
+        public Builder bonusPoints(Double bonusPoints) {
             this.bonusPoints = bonusPoints;
             return this;
         }
