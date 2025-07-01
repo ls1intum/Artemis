@@ -161,6 +161,7 @@ export class ResultService implements IResultService {
         points: number,
         short: boolean | undefined,
     ): string {
+        const latestSubmission = (result.submission ?? participation.submissions?.[0]) as ProgrammingSubmission;
         let buildAndTestMessage: string;
         if (isAIResultAndFailed(result)) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
@@ -170,7 +171,7 @@ export class ResultService implements IResultService {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
         } else if (isAIResultAndProcessed(result)) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
-        } else if ((participation?.submissions?.[0] as ProgrammingSubmission)?.buildFailed) {
+        } else if (latestSubmission?.buildFailed) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildFailed');
         } else if (!result.testCaseCount) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulNoTests');

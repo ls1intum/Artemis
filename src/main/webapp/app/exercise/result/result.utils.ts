@@ -394,7 +394,8 @@ export const isStudentParticipation = (participation: Participation) => {
  * @param participation
  */
 export const isBuildFailedAndResultIsAutomatic = (result: Result, participation: Participation) => {
-    return isBuildFailed(participation?.submissions?.[0]) && !isManualResult(result);
+    const latestSubmission = result?.submission ?? participation?.submissions?.[0];
+    return isBuildFailed(latestSubmission) && !isManualResult(result);
 };
 
 /**

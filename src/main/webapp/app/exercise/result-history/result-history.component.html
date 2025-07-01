@@ -10,11 +10,11 @@
                     [ngClass]="
                         result.id === selectedResultId()
                             ? 'text-primary'
-                            : getTextColorClass(result, participation()!, evaluateTemplateStatus(exercise(), participation()!, result, false, MissingResultInfo.NONE))
+                            : getTextColorClass(result, participation()!, evaluateTemplateStatus(exercise(), participation(), result, false, MissingResultInfo.NONE))
                     "
                 >
                     <fa-icon
-                        [icon]="getResultIconClass(result, participation()!, evaluateTemplateStatus(exercise(), participation()!, result, false, MissingResultInfo.NONE))"
+                        [icon]="getResultIconClass(result, participation()!, evaluateTemplateStatus(exercise(), participation(), result, false, MissingResultInfo.NONE))"
                         size="xl"
                     />
                 </div>

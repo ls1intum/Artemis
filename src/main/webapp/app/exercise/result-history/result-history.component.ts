@@ -34,7 +34,6 @@ export class ResultHistoryComponent implements OnChanges {
 
     ngOnChanges() {
         this.showPreviousDivider = this.results().length > MAX_RESULT_HISTORY_LENGTH;
-        this.participation.set(this.participationInput() ?? this.displayedResults?.[0]?.submission?.participation);
         if (this.exercise()?.type === ExerciseType.TEXT || this.exercise()?.type === ExerciseType.MODELING) {
             this.displayedResults = this.results().filter((result) => result.successful !== undefined);
         } else {
@@ -51,5 +50,6 @@ export class ResultHistoryComponent implements OnChanges {
                 this.movedLastRatedResult = true;
             }
         }
+        this.participation.set(this.participationInput() ?? this.displayedResults?.[0]?.submission?.participation);
     }
 }
