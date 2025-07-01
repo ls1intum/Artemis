@@ -219,15 +219,15 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     evaluate() {
         this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding, this.missingResultInfo, this.isQueued);
         if (this.templateStatus === ResultTemplateStatus.LATE) {
-            this.textColorClass = getTextColorClass(this.result, this.templateStatus);
-            this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
+            this.textColorClass = getTextColorClass(this.result, this.participation, this.templateStatus);
+            this.resultIconClass = getResultIconClass(this.result, this.participation, this.templateStatus);
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
         } else if (
             this.result &&
             ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) || isAthenaAIResult(this.result))
         ) {
-            this.textColorClass = getTextColorClass(this.result, this.templateStatus);
-            this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
+            this.textColorClass = getTextColorClass(this.result, this.participation, this.templateStatus);
+            this.resultIconClass = getResultIconClass(this.result, this.participation, this.templateStatus);
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
             this.resultTooltip = this.buildResultTooltip();
         } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
@@ -272,7 +272,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.participation &&
             isProgrammingExerciseStudentParticipation(this.participation) &&
             !isPracticeMode(this.participation) &&
-            isResultPreliminary(this.result!, programmingExercise)
+            isResultPreliminary(this.result!, this.participation, programmingExercise)
         ) {
             if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
                 return 'artemisApp.result.preliminaryTooltipSemiAutomatic';

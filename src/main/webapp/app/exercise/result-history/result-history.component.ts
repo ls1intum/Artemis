@@ -1,10 +1,11 @@
-import { Component, OnChanges, input } from '@angular/core';
+import { Component, OnChanges, input, signal } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
 import { NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultComponent } from '../../exercise/result/result.component';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 export const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -22,6 +23,8 @@ export class ResultHistoryComponent implements OnChanges {
     readonly MissingResultInfo = MissingResultInformation;
 
     results = input.required<Result[]>();
+    participationInput = input<Participation>();
+    participation = signal<Participation | undefined>(undefined);
     exercise = input<Exercise>();
     selectedResultId = input<number>();
 
@@ -31,6 +34,7 @@ export class ResultHistoryComponent implements OnChanges {
 
     ngOnChanges() {
         this.showPreviousDivider = this.results().length > MAX_RESULT_HISTORY_LENGTH;
+        this.participation.set(this.participationInput() ?? this.displayedResults?.[0]?.submission?.participation);
         if (this.exercise()?.type === ExerciseType.TEXT || this.exercise()?.type === ExerciseType.MODELING) {
             this.displayedResults = this.results().filter((result) => result.successful !== undefined);
         } else {

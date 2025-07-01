@@ -163,7 +163,11 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
         this.commitHash = this.getCommitHash().slice(0, 11);
 
-        this.isOnlyCompilationTested = isOnlyCompilationTested(this.result, evaluateTemplateStatus(this.exercise, this.result.submission?.participation, this.result, false));
+        this.isOnlyCompilationTested = isOnlyCompilationTested(
+            this.result,
+            this.participation,
+            evaluateTemplateStatus(this.exercise, this.result.submission?.participation, this.result, false),
+        );
     }
 
     /**
