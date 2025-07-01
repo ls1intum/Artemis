@@ -4,7 +4,10 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class QuizQuestionProgressData {
+public class QuizQuestionProgressDataDAO {
+
+    public QuizQuestionProgressDataDAO() {
+    };
 
     private int repetition;
 
@@ -22,18 +25,21 @@ public class QuizQuestionProgressData {
 
     public static class Attempt {
 
-        private ZonedDateTime answered_at;
+        public Attempt() {
+        };
+
+        private ZonedDateTime answeredAt;
 
         private double score;
 
         // Getters and Setters
 
-        public ZonedDateTime getAnswered_at() {
-            return answered_at;
+        public ZonedDateTime getAnsweredAt() {
+            return answeredAt;
         }
 
-        public void setAnswered_at(ZonedDateTime answered_at) {
-            this.answered_at = answered_at;
+        public void setAnsweredAt(ZonedDateTime answeredAt) {
+            this.answeredAt = answeredAt;
         }
 
         public double getScore() {

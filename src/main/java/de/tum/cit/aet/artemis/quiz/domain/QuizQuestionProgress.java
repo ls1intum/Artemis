@@ -4,62 +4,50 @@ import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
-public class QuizQuestionProgress {
+public class QuizQuestionProgress extends DomainObject {
 
-    @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "user_id")
+    private long userId;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Column(name = "quiz_question_id")
+    private long quizQuestionId;
 
-    @ManyToOne
-    @JoinColumn(name = "quiz_question_id")
-    private QuizQuestion quizQuestion;
-
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "progress_json", columnDefinition = "json")
-    private String progressJson;
+    private QuizQuestionProgressDataDAO progress;
 
     @Column(name = "last_modified")
     private ZonedDateTime lastModified;
 
-    public Long getId() {
-        return id;
+    public long getUser() {
+        return userId;
     }
 
-    public User getUser() {
-        return user;
+    public void setUser(long userId) {
+        this.userId = userId;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public long getQuizQuestion() {
+        return quizQuestionId;
     }
 
-    public QuizQuestion getQuizQuestion() {
-        return quizQuestion;
+    public void setQuizQuestion(long quizQuestionId) {
+        this.quizQuestionId = quizQuestionId;
     }
 
-    public void setQuizQuestion(QuizQuestion quizQuestion) {
-        this.quizQuestion = quizQuestion;
+    public QuizQuestionProgressDataDAO getProgressJson() {
+        return progress;
     }
 
-    public String getProgressJson() {
-        return progressJson;
-    }
-
-    public void setProgressJson(String progressJson) {
-        this.progressJson = progressJson;
+    public void setProgressJson(QuizQuestionProgressDataDAO progress) {
+        this.progress = progress;
     }
 
     public ZonedDateTime getLastAnsweredAt() {

@@ -14,7 +14,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="progress_json" type="json"/>
-            <column name="last_modified" type="timestamp"/>
+            <column name="last_modified" type="datetime(3)"/>
         </createTable>
         <addForeignKeyConstraint
                 baseTableName="quiz_question_progress"
