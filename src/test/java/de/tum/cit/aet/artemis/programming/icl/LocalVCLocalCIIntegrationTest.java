@@ -412,7 +412,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // Create participation and ensure it's properly linked to the repository
         var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        // Ensure the assignmentRepository.localGit is using the same repository as the participation
+        // Ensure the assignmentRepository.workingCopyGitRepo is using the same repository as the participation
         String expectedRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, student1Login);
         log.debug("Created participation {} for exercise {} with repository slug {}", participation.getId(), programmingExercise.getId(), expectedRepositorySlug);
 
@@ -439,7 +439,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // Also try the actual Git operations to see if they generate additional logs
         // These may fail with various errors depending on test execution context
         try {
-            localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, "wrong-password", projectKey1, expectedRepositorySlug, NOT_AUTHORIZED);
+            localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, "wrong-password", projectKey1, expectedRepositorySlug,
+                    NOT_AUTHORIZED);
         }
         catch (AssertionError e) {
             // If Git exceptions are not thrown as expected, we'll still check for logs
@@ -451,7 +452,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         }
 
         try {
-            localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, "wrong-password", projectKey1, expectedRepositorySlug, NOT_AUTHORIZED);
+            localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, "wrong-password", projectKey1, expectedRepositorySlug,
+                    NOT_AUTHORIZED);
         }
         catch (AssertionError e) {
             log.debug("Git push operation may not have thrown exception as expected: {}", e.getMessage());
@@ -461,7 +463,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         }
 
         try {
-            localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, "", projectKey1, expectedRepositorySlug, NOT_AUTHORIZED);
+            localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, "", projectKey1, expectedRepositorySlug, NOT_AUTHORIZED);
         }
         catch (AssertionError e) {
             log.debug("Git fetch operation with empty password may not have thrown exception as expected: {}", e.getMessage());
@@ -471,7 +473,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         }
 
         try {
-            localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, "", projectKey1, expectedRepositorySlug, NOT_AUTHORIZED);
+            localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, "", projectKey1, expectedRepositorySlug, NOT_AUTHORIZED);
         }
         catch (AssertionError e) {
             log.debug("Git push operation with empty password may not have thrown exception as expected: {}", e.getMessage());
@@ -829,14 +831,14 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         examRepository.save(exam);
 
         // student1 should not be able to fetch or push.
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
         // tutor1 should be able to fetch but not push.
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, tutor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopyGitRepo, tutor1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
         // instructor1 should be able to fetch and push.
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, instructor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopyGitRepo, instructor1Login, projectKey1, assignmentRepositorySlug);
 
         // Grace period is over.
         exam.setGracePeriod(0);
