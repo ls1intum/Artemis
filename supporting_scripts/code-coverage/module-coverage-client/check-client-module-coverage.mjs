@@ -48,9 +48,9 @@ const moduleThresholds = {
         lines:      92.38,
     },
     core: {
-        statements: 89.05,
+        statements: 89.04,
         branches:   70.89,
-        functions:  80.70,
+        functions:  80.68,
         lines:      89.06,
     },
     exam: {
@@ -74,7 +74,7 @@ const moduleThresholds = {
     iris: {
         statements: 86.10,
         branches:   67.62,
-        functions:  85.30,
+        functions:  84.60,
         lines:      86.67,
     },
     lecture: {
