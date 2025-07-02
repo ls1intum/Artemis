@@ -47,7 +47,7 @@ public final class Constants {
      * Submissions after the grace period exceeded will be unrated.
      * <p>
      * If the student was able to successfully push their solution, this solution should still be graded, even if
-     * the push was a few seconds late.
+     * the processing of the push was up to 1s late.
      * <p>
      * Have a look at setRatedIfNotAfterDueDate(Participation participation, ZonedDateTime submissionDate) in
      * de.tum.cit.aet.artemis.assessment.domain.Result.
