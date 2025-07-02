@@ -15,7 +15,7 @@ import { PROFILE_ATHENA, PROFILE_IRIS } from 'app/app.constants';
 
 describe('UserSettingsContainerComponent', () => {
     let fixture: ComponentFixture<UserSettingsContainerComponent>;
-    let comp: UserSettingsContainerComponent;
+    let component: UserSettingsContainerComponent;
 
     let translateService: TranslateService;
 
@@ -35,44 +35,44 @@ describe('UserSettingsContainerComponent', () => {
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(UserSettingsContainerComponent);
-        comp = fixture.componentInstance;
+        component = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
         translateService.currentLang = 'en';
     });
 
     it('should initialize', async () => {
-        comp.ngOnInit();
-        expect(comp.currentUser).toBeDefined();
-        expect(comp.isAtLeastTutor).toBeFalse();
+        component.ngOnInit();
+        expect(component.currentUser).toBeDefined();
+        expect(component.isAtLeastTutor).toBeFalse();
     });
 
     it('should set isPasskeyEnabled to false when the module feature is inactive', () => {
-        jest.spyOn(comp['profileService'], 'isModuleFeatureActive').mockReturnValue(false);
-        comp.ngOnInit();
-        expect(comp.isPasskeyEnabled).toBeFalse();
+        jest.spyOn(component['profileService'], 'isModuleFeatureActive').mockReturnValue(false);
+        component.ngOnInit();
+        expect(component.isPasskeyEnabled).toBeFalse();
     });
 
     it('should set isUsingExternalLLM to false when no profiles are active', () => {
-        jest.spyOn(comp['profileService'], 'isProfileActive').mockReturnValue(false);
-        comp.ngOnInit();
-        expect(comp.isUsingExternalLLM).toBeFalse();
+        jest.spyOn(component['profileService'], 'isProfileActive').mockReturnValue(false);
+        component.ngOnInit();
+        expect(component.isUsingExternalLLM).toBeFalse();
     });
 
     it('should set isUsingExternalLLM to true if iris profile is active', () => {
-        jest.spyOn(comp['profileService'], 'isProfileActive').mockImplementation((profile) => profile === PROFILE_IRIS);
-        comp.ngOnInit();
-        expect(comp.isUsingExternalLLM).toBeTrue();
+        jest.spyOn(component['profileService'], 'isProfileActive').mockImplementation((profile) => profile === PROFILE_IRIS);
+        component.ngOnInit();
+        expect(component.isUsingExternalLLM).toBeTrue();
     });
 
     it('should set isUsingExternalLLM to true if athena profile is active', () => {
-        jest.spyOn(comp['profileService'], 'isProfileActive').mockImplementation((profile) => profile === PROFILE_ATHENA);
-        comp.ngOnInit();
-        expect(comp.isUsingExternalLLM).toBeTrue();
+        jest.spyOn(component['profileService'], 'isProfileActive').mockImplementation((profile) => profile === PROFILE_ATHENA);
+        component.ngOnInit();
+        expect(component.isUsingExternalLLM).toBeTrue();
     });
 
     it('should set isUsingExternalLLM to true if athena and iris profile is active', () => {
-        jest.spyOn(comp['profileService'], 'isProfileActive').mockImplementation((profile) => profile === PROFILE_ATHENA || profile === PROFILE_IRIS);
-        comp.ngOnInit();
-        expect(comp.isUsingExternalLLM).toBeTrue();
+        jest.spyOn(component['profileService'], 'isProfileActive').mockImplementation((profile) => profile === PROFILE_ATHENA || profile === PROFILE_IRIS);
+        component.ngOnInit();
+        expect(component.isUsingExternalLLM).toBeTrue();
     });
 });
