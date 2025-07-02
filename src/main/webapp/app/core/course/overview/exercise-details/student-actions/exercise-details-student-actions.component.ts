@@ -14,7 +14,7 @@ import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { MODULE_FEATURE_TEXT, PROFILE_ATHENA } from 'app/app.constants';
+import { PROFILE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { NgTemplateOutlet } from '@angular/common';
@@ -87,14 +87,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     hasRatedGradedResult: boolean;
     beforeDueDate: boolean;
     editorLabel?: string;
-    textExerciseEnabled = false;
     athenaEnabled = false;
     routerLink: string;
     numberOfGradedParticipationResults: number;
 
     ngOnInit(): void {
         this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
-        this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
 
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
@@ -271,9 +269,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     }
 
     get allowEditing(): boolean {
-        if (this.exercise.type === ExerciseType.TEXT && this.textExerciseEnabled) {
-            return false;
-        }
         return (
             (this.gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate) ||
             this.gradedParticipation?.initializationState === InitializationState.FINISHED
