@@ -76,5 +76,22 @@ describe('UserSettingsContainerComponent', () => {
             component.ngOnInit();
             expect(component.isUsingExternalLLM).toBeTrue();
         });
+
+        it('should display the external LLM usage link when isUsingExternalLLM is true', () => {
+            jest.spyOn(component['profileService'], 'isProfileActive').mockReturnValue(true);
+            fixture.detectChanges();
+
+            const externalLLMLink: HTMLElement = fixture.nativeElement.querySelector('a[routerLink="external-data"]');
+            expect(externalLLMLink).toBeTruthy();
+            expect(externalLLMLink.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage'); // Verify the translation key
+        });
+
+        it('should not display the external LLM usage link when isUsingExternalLLM is false', () => {
+            jest.spyOn(component['profileService'], 'isProfileActive').mockReturnValue(false);
+            fixture.detectChanges();
+
+            const externalLLMLink: HTMLElement = fixture.nativeElement.querySelector('a[routerLink="external-data"]');
+            expect(externalLLMLink).toBeFalsy();
+        });
     });
 });
