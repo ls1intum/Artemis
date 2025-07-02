@@ -15,6 +15,7 @@ export class CourseChatbotComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.courseId) {
+            this.chatService.setCourseId(this.courseId!);
             this.chatService.switchTo(ChatServiceMode.COURSE, this.courseId);
         }
     }
