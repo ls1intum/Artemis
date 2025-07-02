@@ -61,10 +61,6 @@ export class CalendarEventService {
     }
 
     private mapCalendarEventDTO(dto: CalendarEventDTO): CalendarEvent {
-        return {
-            ...dto,
-            startDate: dayjs(dto.startDate),
-            endDate: dto.endDate ? dayjs(dto.endDate) : undefined,
-        };
+        return new CalendarEvent(dto.id, dto.title, dayjs(dto.startDate), dto.endDate ? dayjs(dto.endDate) : undefined, dto.location, dto.facilitator);
     }
 }

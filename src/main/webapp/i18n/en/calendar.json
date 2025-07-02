@@ -1,13 +1,28 @@
 {
     "artemisApp": {
         "calendar": {
-            "mondayShort": "Mo",
-            "tuesdayShort": "Tu",
-            "wednesdayShort": "We",
-            "thursdayShort": "Th",
-            "fridayShort": "Fr",
-            "saturdayShort": "Sa",
-            "sundayShort": "Su"
+            "mondayShort": "Mon",
+            "tuesdayShort": "Tue",
+            "wednesdayShort": "Wed",
+            "thursdayShort": "Thu",
+            "fridayShort": "Fri",
+            "saturdayShort": "Sat",
+            "sundayShort": "Sun",
+            "eventDescriptor": {
+                "tutorialStart": "Start",
+                "tutorialEnd": "End",
+                "examPublishResults": "Results Out",
+                "examReviewStart": "Review Start",
+                "examReviewEnd": "Review End",
+                "exerciseRelease": "Release",
+                "exerciseStart": "Start",
+                "exerciseDue": "Due",
+                "exerciseAssessmentDue": "Assessment Due"
+            },
+            "legendExerciseLabel": "Exercise",
+            "legendLectureLabel": "Lecture",
+            "legendTutorialLabel": "Tutorial",
+            "legendExamLabel": "Exam"
         }
     }
 }

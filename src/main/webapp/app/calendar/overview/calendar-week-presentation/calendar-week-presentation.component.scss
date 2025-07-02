@@ -5,7 +5,7 @@
     justify-content: flex-start;
 
     border: 2px solid var(--border-color);
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
 
     .header {
         height: 2.25rem;
@@ -31,30 +31,6 @@
         .day-name {
             font-size: 1rem;
             font-weight: 600;
-        }
-    }
-
-    .all-day-event-section {
-        height: 2.25rem;
-        display: flex;
-        flex-direction: row;
-        justify-content: flex-start;
-        border-bottom: 2px solid var(--border-color);
-
-        .all-day-info-cell {
-            width: 4.5rem;
-            display: flex;
-            flex-direction: row;
-            justify-content: flex-end;
-            align-items: center;
-            padding-right: 0.25rem;
-            font-size: 0.5rem;
-            font-weight: 550;
-        }
-
-        .all-day-event-cell {
-            flex: 1;
-            border-left: 2px solid var(--border-color);
         }
     }
 
@@ -89,14 +65,14 @@
             .event-column {
                 flex: 1;
                 position: relative;
-                border-left: 2px solid var(--border-color);
+                border-left: 1px solid var(--border-color);
 
                 .hour-segment {
                     height: 3.5rem;
                 }
 
                 .hour-segment:not(:first-child) {
-                    border-top: 2px solid var(--border-color);
+                    border-top: 1px solid var(--border-color);
                 }
 
                 .event {
@@ -110,8 +86,29 @@
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
+                    color: var(--black);
+                }
+
+                .exam-event-cell {
+                    background-color: var(--pastel-teal);
+                }
+
+                .lecture-event-cell {
+                    background-color: var(--pastel-blue);
+                }
+
+                .tutorial-event-cell {
+                    background-color: var(--pastel-purple);
+                }
+
+                .exercise-event-cell {
+                    background-color: var(--pastel-cyan);
                 }
             }
         }
+    }
+
+    .no-scroll {
+        overflow: hidden;
     }
 }

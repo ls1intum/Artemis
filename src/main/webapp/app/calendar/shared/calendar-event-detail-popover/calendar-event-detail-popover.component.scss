@@ -1,0 +1,40 @@
+.popover-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 12rem;
+
+    .event-popover-header {
+        display: flex;
+        flex-direction: row;
+        align-items: start;
+        justify-content: space-between;
+        gap: 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+
+        .close-button {
+            color: var(--secondary);
+        }
+
+        .close-button:hover {
+            color: var(--primary);
+            cursor: pointer;
+        }
+    }
+
+    .popup-info-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--secondary);
+
+        .popup-icon-frame {
+            width: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    }
+}

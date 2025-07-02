@@ -13,8 +13,15 @@
                         @let events = getEventsOf(day);
                         @if (events.length > 3) {
                             @for (event of utils.limitToLengthTwo(events); track event.id) {
+                                @let eventDescriptor = utils.getEventDescriptor(event);
                                 <div
                                     class="event-cell"
+                                    [ngClass]="{
+                                        'exam-event-cell': event.isExamEvent,
+                                        'lecture-event-cell': event.isLectureEvent(),
+                                        'tutorial-event-cell': event.isTutorialEvent(),
+                                        'exercise-event-cell': event.isExerciseEvent(),
+                                    }"
                                     [ngbPopover]="eventPopover"
                                     triggers="manual"
                                     [autoClose]="false"
@@ -22,14 +29,25 @@
                                     (click)="openPopover(event, popover)"
                                     #popover="ngbPopover"
                                 >
-                                    {{ event.title }}
+                                    @if (eventDescriptor) {
+                                        {{ eventDescriptor | artemisTranslate }}: {{ event.title }}
+                                    } @else {
+                                        {{ event.title }}
+                                    }
                                 </div>
                             }
                             <div class="more-events-info">+{{ events.length - 2 }} more</div>
                         } @else {
                             @for (event of events; track event.id) {
+                                @let eventDescriptor = utils.getEventDescriptor(event);
                                 <div
                                     class="event-cell"
+                                    [ngClass]="{
+                                        'exam-event-cell': event.isExamEvent,
+                                        'lecture-event-cell': event.isLectureEvent(),
+                                        'tutorial-event-cell': event.isTutorialEvent(),
+                                        'exercise-event-cell': event.isExerciseEvent(),
+                                    }"
                                     [ngbPopover]="eventPopover"
                                     triggers="manual"
                                     [autoClose]="false"
@@ -37,7 +55,11 @@
                                     (click)="openPopover(event, popover)"
                                     #popover="ngbPopover"
                                 >
-                                    {{ event.title }}
+                                    @if (eventDescriptor) {
+                                        {{ eventDescriptor | artemisTranslate }}: {{ event.title }}
+                                    } @else {
+                                        {{ event.title }}
+                                    }
                                 </div>
                             }
                         }
@@ -50,14 +72,6 @@
 
 <ng-template #eventPopover let-pop="popover">
     @if (selectedEvent) {
-        <div class="popover-content">
-            <div class="event-popover-header">
-                <div>{{ selectedEvent.title }}</div>
-                <fa-icon [icon]="faXmark" class="close-button" (click)="closePopover()" />
-            </div>
-            @if (selectedEvent.endDate) {
-                <div>time: {{ getTimeString(selectedEvent!.startDate) }}-{{ getTimeString(selectedEvent!.endDate) }}</div>
-            }
-        </div>
+        <jhi-calendar-event-detail-popover [event]="selectedEvent" (onClosePopover)="closePopover()" />
     }
 </ng-template>

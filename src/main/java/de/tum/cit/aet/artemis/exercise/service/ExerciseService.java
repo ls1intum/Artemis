@@ -836,21 +836,22 @@ public class ExerciseService {
     private Set<CalendarEventDTO> deriveEvents(Exercise exercise, boolean userIsCourseStaff) {
         if (!(exercise instanceof FileUploadExercise || exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof ProgrammingExercise))
             return new HashSet<>();
+
         Set<CalendarEventDTO> events = new HashSet<>();
-        if (userIsCourseStaff || (exercise.getReleaseDate() != null && exercise.getReleaseDate().isBefore(now()))) {
+        if (userIsCourseStaff || exercise.getReleaseDate() == null || (exercise.getReleaseDate() != null && exercise.getReleaseDate().isBefore(now()))) {
             String idPrefix = exercise instanceof FileUploadExercise ? "fileUploadExercise-"
                     : exercise instanceof TextExercise ? "textExercise-" : exercise instanceof ModelingExercise ? "modelingExercise-" : "programmingExercise-";
+            if (exercise.getReleaseDate() != null) {
+                events.add(new CalendarEventDTO(idPrefix + exercise.getId() + "-releaseDate", exercise.getTitle(), exercise.getReleaseDate(), null, null, null));
+            }
             if (exercise.getStartDate() != null) {
-                events.add(new CalendarEventDTO(idPrefix + exercise.getId() + "-startDate", exercise.getTitle(), exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
-                        exercise.getStartDate(), null, null, null));
+                events.add(new CalendarEventDTO(idPrefix + exercise.getId() + "-startDate", exercise.getTitle(), exercise.getStartDate(), null, null, null));
             }
             if (exercise.getDueDate() != null) {
-                events.add(new CalendarEventDTO(idPrefix + exercise.getId() + "-dueDate", exercise.getTitle(), exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
-                        exercise.getDueDate(), null, null, null));
+                events.add(new CalendarEventDTO(idPrefix + exercise.getId() + "-dueDate", exercise.getTitle(), exercise.getDueDate(), null, null, null));
             }
             if (exercise.getAssessmentDueDate() != null) {
-                events.add(new CalendarEventDTO(idPrefix + exercise.getId() + "-assessmentDueDate", exercise.getTitle(),
-                        exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getAssessmentDueDate(), null, null, null));
+                events.add(new CalendarEventDTO(idPrefix + exercise.getId() + "-assessmentDueDate", exercise.getTitle(), exercise.getAssessmentDueDate(), null, null, null));
             }
         }
         return events;

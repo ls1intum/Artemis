@@ -1,19 +1,46 @@
 import { Dayjs } from 'dayjs/esm';
 
-export interface CalendarEvent {
-    id: string;
-    title: string;
-    courseName: string;
-    startDate: Dayjs;
-    endDate?: Dayjs;
-    location?: string;
-    facilitator?: string;
+export class CalendarEvent {
+    constructor(
+        public id: string,
+        public title: string,
+        public startDate: Dayjs,
+        public endDate?: Dayjs,
+        public location?: string,
+        public facilitator?: string,
+    ) {}
+
+    isTutorialEvent(): boolean {
+        return this.id.startsWith('tutorial');
+    }
+
+    isLectureEvent(): boolean {
+        return this.id.startsWith('lecture');
+    }
+
+    isExamEvent(): boolean {
+        return this.id.startsWith('exam');
+    }
+
+    isQuizExerciseEvent(): boolean {
+        return this.id.startsWith('quizExercise');
+    }
+
+    isExerciseEvent(): boolean {
+        const id = this.id;
+        return (
+            id.startsWith('quizExercise') ||
+            id.startsWith('fileUploadExercise') ||
+            id.startsWith('textExercise') ||
+            id.startsWith('modelingExercise') ||
+            id.startsWith('programmingExercise')
+        );
+    }
 }
 
 export interface CalendarEventDTO {
     id: string;
     title: string;
-    courseName: string;
     startDate: string;
     endDate?: string;
     location?: string;

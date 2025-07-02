@@ -583,8 +583,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             return Optional.empty();
         QuizBatch synchronizedBatch = synchronizedBatchOptional.get();
 
-        return Optional.of(new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-startAndEndDate", quizExercise.getTitle(),
-                quizExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), synchronizedBatch.getStartTime(),
+        return Optional.of(new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-startAndEndDate", quizExercise.getTitle(), synchronizedBatch.getStartTime(),
                 synchronizedBatch.getStartTime().plusSeconds(quizExercise.getDuration()), null, null));
     }
 
@@ -618,12 +617,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Set<CalendarEventDTO> events = new HashSet<>();
         if (userIsCourseStaff || quizExercise.getReleaseDate() == null || (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isBefore(now()))) {
             if (quizExercise.getReleaseDate() != null) {
-                events.add(new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(),
-                        quizExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), quizExercise.getReleaseDate(), null, null, null));
+                events.add(new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(), quizExercise.getReleaseDate(), null, null, null));
             }
             if (quizExercise.getDueDate() != null) {
-                events.add(new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-dueDate", quizExercise.getTitle(),
-                        quizExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), quizExercise.getDueDate(), null, null, null));
+                events.add(new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-dueDate", quizExercise.getTitle(), quizExercise.getDueDate(), null, null, null));
             }
         }
         return events;

@@ -48,15 +48,19 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
                 SELECT new de.tum.cit.aet.artemis.core.dto.CalendarEventDTO(
                     CONCAT('tutorial-', CAST(session.id AS string)),
                     "Tutorial Session",
-                    course.title,
                     session.start,
                     session.end,
-                    session.location,
+                    CONCAT(
+                        CAST(session.location AS string),
+                        CASE WHEN session.tutorialGroup.campus IS NOT NULL AND NOT session.tutorialGroup.isOnline
+                             THEN CONCAT(' - ', CAST(session.tutorialGroup.campus AS string))
+                             ELSE ''
+                        END
+                    ),
                     CONCAT(teachingAssistant.firstName, ' ', teachingAssistant.lastName)
                 )
                 FROM TutorialGroupSession session
                     JOIN session.tutorialGroup tutorialGroup
-                    JOIN tutorialGroup.course course
                     JOIN tutorialGroup.teachingAssistant teachingAssistant
                 WHERE tutorialGroup.id IN :tutorialGroupIds AND session.status = 'ACTIVE'
             """)

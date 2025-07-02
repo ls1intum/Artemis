@@ -1,10 +1,11 @@
 import { Component, computed, input } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { Dayjs } from 'dayjs/esm';
 import * as Utils from 'app/calendar/shared/util/calendar-util';
 import { DayBadgeComponent } from '../../shared/day-badge/day-badge.component';
+import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
@@ -12,7 +13,7 @@ import { CalendarEventService } from 'app/calendar/shared/service/calendar-event
 @Component({
     selector: 'calendar-desktop-month',
     standalone: true,
-    imports: [FaIconComponent, NgbPopover, DayBadgeComponent, ArtemisTranslatePipe],
+    imports: [NgClass, FaIconComponent, NgbPopover, DayBadgeComponent, CalendarEventDetailPopoverComponent, ArtemisTranslatePipe],
     templateUrl: './calendar-month-presentation.component.html',
     styleUrls: ['./calendar-month-presentation.component.scss'],
 })
@@ -21,7 +22,6 @@ export class CalendarMonthPresentationComponent {
     selectedEvent?: CalendarEvent;
 
     readonly utils = Utils;
-    readonly faXmark = faXmark;
     readonly weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
     readonly eventMap = computed(() => this.eventService.eventMap());
 
@@ -44,10 +44,6 @@ export class CalendarMonthPresentationComponent {
     closePopover() {
         this.popover?.close();
         this.popover = undefined;
-    }
-
-    getTimeString(timestamp: Dayjs): string {
-        return timestamp.format('HH:mm');
     }
 
     private computeWeeksFrom(startDate: Dayjs): Dayjs[][] {

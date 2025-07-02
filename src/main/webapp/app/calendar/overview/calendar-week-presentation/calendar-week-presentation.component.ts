@@ -1,5 +1,6 @@
-import { AfterViewInit, Component, ElementRef, computed, input, viewChild } from '@angular/core';
-import { NgStyle } from '@angular/common';
+import { AfterViewInit, Component, ElementRef, computed, input, signal, viewChild } from '@angular/core';
+import { NgClass, NgStyle } from '@angular/common';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { Dayjs } from 'dayjs/esm';
 import * as Utils from 'app/calendar/shared/util/calendar-util';
 import { DayBadgeComponent } from '../../shared/day-badge/day-badge.component';
@@ -7,21 +8,24 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarEventAndPositioning, PositionInfo } from 'app/calendar/shared/entities/calendar-event-positioning.model';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
+import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 
 @Component({
     selector: 'calendar-desktop-week',
-    imports: [DayBadgeComponent, ArtemisTranslatePipe, NgStyle],
+    imports: [DayBadgeComponent, ArtemisTranslatePipe, NgbPopover, NgStyle, NgClass, CalendarEventDetailPopoverComponent],
     templateUrl: './calendar-week-presentation.component.html',
     styleUrl: './calendar-week-presentation.component.scss',
 })
 export class CalendarWeekPresentationComponent implements AfterViewInit {
     firstDayOfCurrentMonth = input.required<Dayjs>();
     firstDayOfCurrentWeek = input.required<Dayjs>();
+    selectedEvent = signal<CalendarEvent | undefined>(undefined);
 
     readonly utils = Utils;
     readonly weekDays = computed(() => this.computeWeekDaysFrom(this.firstDayOfCurrentWeek()));
-    readonly scrollContainer = viewChild<ElementRef>('scrollContainer');
 
+    scrollContainer = viewChild<ElementRef>('scrollContainer');
+    private popover?: NgbPopover;
     private dayToEventAndPositioningMap = computed(() => this.computeDayToEventAndPositioningMap(this.eventService.eventMap(), this.weekDays()));
     private static HOUR_SEGMENT_HEIGHT = 16 * 3.5;
 
@@ -36,6 +40,19 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
 
     getEventsAndPositioningsFor(day: Dayjs): CalendarEventAndPositioning[] {
         return this.dayToEventAndPositioningMap().get(day.format('YYYY-MM-DD')) ?? [];
+    }
+
+    openPopover(event: CalendarEvent, popover: NgbPopover) {
+        this.selectedEvent.set(event);
+        this.popover?.close();
+        this.popover = popover;
+        popover.open();
+    }
+
+    closePopover() {
+        this.popover?.close();
+        this.popover = undefined;
+        this.selectedEvent.set(undefined);
     }
 
     private computeWeekDaysFrom(firstDayOfWeek: Dayjs): Dayjs[] {
@@ -89,7 +106,7 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
 
         return currentGroup.map((event, index) => {
             const top = event.startDate.diff(event.startDate.startOf('day'), 'minute') * pixelsPerMinute;
-            const height = event.endDate ? event.endDate.diff(event.startDate, 'minute') * pixelsPerMinute : 28;
+            const height = event.endDate ? event.endDate.diff(event.startDate, 'minute') * pixelsPerMinute : 24;
             const left = horizontalMargin + index * (eventWidth + gapBetweenEvents);
 
             const pos: PositionInfo = { top, height, left, width: eventWidth };

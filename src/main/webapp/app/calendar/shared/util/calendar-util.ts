@@ -44,3 +44,52 @@ export function identify(dateObject: Dayjs | Dayjs[]): string {
 export function limitToLengthTwo(events: CalendarEvent[]): CalendarEvent[] {
     return events.slice(0, 2);
 }
+
+export function getEventDescriptor(event: CalendarEvent): string | undefined {
+    const eventId = event.id;
+    if (event.isTutorialEvent()) {
+        return undefined;
+    } else if (event.isLectureEvent()) {
+        if (eventId.endsWith('startAndEndDate')) {
+            return undefined;
+        } else if (eventId.endsWith('startDate')) {
+            return 'artemisApp.calendar.eventDescriptor.tutorialStart';
+        } else {
+            return 'artemisApp.calendar.eventDescriptor.tutorialEnd';
+        }
+    } else if (event.isExamEvent()) {
+        if (eventId.endsWith('startAndEndDate')) {
+            return undefined;
+        } else if (eventId.endsWith('publishResultsDate')) {
+            return 'artemisApp.calendar.eventDescriptor.examPublishResults';
+        } else if (eventId.endsWith('studentReviewStartDate')) {
+            return 'artemisApp.calendar.eventDescriptor.examReviewStart';
+        } else {
+            return 'artemisApp.calendar.eventDescriptor.examReviewEnd';
+        }
+    } else {
+        if (event.isQuizExerciseEvent()) {
+            if (eventId.endsWith('startAndEndDate')) {
+                return undefined;
+            } else if (eventId.endsWith('releaseDate')) {
+                return 'artemisApp.calendar.eventDescriptor.exerciseRelease';
+            } else {
+                return 'artemisApp.calendar.eventDescriptor.exerciseDue';
+            }
+        } else {
+            if (eventId.endsWith('releaseDate')) {
+                return 'artemisApp.calendar.eventDescriptor.exerciseRelease';
+            } else if (eventId.endsWith('startDate')) {
+                return 'artemisApp.calendar.eventDescriptor.exerciseStart';
+            } else if (eventId.endsWith('dueDate')) {
+                return 'artemisApp.calendar.eventDescriptor.exerciseDue';
+            } else {
+                return 'artemisApp.calendar.eventDescriptor.exerciseAssessmentDue';
+            }
+        }
+    }
+}
+
+export function getTimeString(timestamp: Dayjs): string {
+    return timestamp.format('HH:mm');
+}

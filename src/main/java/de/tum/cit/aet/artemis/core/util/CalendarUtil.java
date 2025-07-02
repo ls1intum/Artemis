@@ -116,8 +116,7 @@ public class CalendarUtil {
 
             ZonedDateTime currentEnd = currentDay.equals(end.toLocalDate()) ? end : currentDay.atTime(DateUtil.END_OF_DAY).atZone(clientTimeZone);
 
-            splitEvents.add(
-                    new CalendarEventDTO(event.id() + "-" + currentSplitId, event.title(), event.courseName(), currentStart, currentEnd, event.location(), event.facilitator()));
+            splitEvents.add(new CalendarEventDTO(event.id() + "-" + currentSplitId, event.title(), currentStart, currentEnd, event.location(), event.facilitator()));
 
             currentSplitId++;
             currentDay = currentDay.plusDays(1);

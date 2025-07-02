@@ -7,7 +7,22 @@
             "thursdayShort": "Do",
             "fridayShort": "Fr",
             "saturdayShort": "Sa",
-            "sundayShort": "So"
+            "sundayShort": "So",
+            "eventDescriptor": {
+                "tutorialStart": "Anfang",
+                "tutorialEnd": "Ende",
+                "examPublishResults": "Veröffentlichung Ergebnisse",
+                "examReviewStart": "Einsicht Start",
+                "examReviewEnd": "Einsicht Ende",
+                "exerciseRelease": "Veröffentlichung",
+                "exerciseStart": "Start",
+                "exerciseDue": "Ende",
+                "exerciseAssessmentDue": "Korrektur Ende"
+            },
+            "legendExerciseLabel": "Übung",
+            "legendLectureLabel": "Vorlesung",
+            "legendTutorialLabel": "Tutorial",
+            "legendExamLabel": "Klausur"
         }
     }
 }

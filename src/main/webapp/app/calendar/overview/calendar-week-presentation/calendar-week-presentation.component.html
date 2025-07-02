@@ -10,13 +10,7 @@
             </div>
         }
     </div>
-    <div class="all-day-event-section">
-        <div class="all-day-info-cell">ganztags</div>
-        @for (day of weekDays(); track utils.identify(day)) {
-            <div class="all-day-event-cell"></div>
-        }
-    </div>
-    <div class="scroll-container" #scrollContainer>
+    <div class="scroll-container" #scrollContainer [class.no-scroll]="selectedEvent()">
         <div class="specific-time-event-section">
             <div class="info-column">
                 <div class="info-column-spacer"></div>
@@ -31,16 +25,36 @@
                         <div class="hour-segment"></div>
                     }
                     @for (item of getEventsAndPositioningsFor(day); track item.event.id) {
+                        @let event = item.event;
+                        @let position = item.position;
+                        @let eventDescriptor = utils.getEventDescriptor(event);
                         <div
                             class="event"
-                            [ngStyle]="{
-                                top: item.position.top + 'px',
-                                height: item.position.height + 'px',
-                                left: item.position.left + '%',
-                                width: item.position.width + '%',
+                            [ngClass]="{
+                                'exam-event-cell': event.isExamEvent,
+                                'lecture-event-cell': event.isLectureEvent(),
+                                'tutorial-event-cell': event.isTutorialEvent(),
+                                'exercise-event-cell': event.isExerciseEvent(),
                             }"
+                            [ngStyle]="{
+                                top: position.top + 'px',
+                                height: position.height + 'px',
+                                left: position.left + '%',
+                                width: position.width + '%',
+                            }"
+                            [ngbPopover]="eventPopover"
+                            [container]="'body'"
+                            triggers="manual"
+                            [autoClose]="false"
+                            [placement]="['top', 'bottom', 'right', 'left']"
+                            (click)="openPopover(event, popover)"
+                            #popover="ngbPopover"
                         >
-                            {{ item.event.title }}
+                            @if (eventDescriptor) {
+                                {{ eventDescriptor | artemisTranslate }}: {{ event.title }}
+                            } @else {
+                                {{ event.title }}
+                            }
                         </div>
                     }
                 </div>
@@ -48,3 +62,10 @@
         </div>
     </div>
 </div>
+
+<ng-template #eventPopover let-pop="popover">
+    @let event = selectedEvent();
+    @if (event) {
+        <jhi-calendar-event-detail-popover [event]="event" (onClosePopover)="closePopover()" />
+    }
+</ng-template>
