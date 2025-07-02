@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
-import { MODULE_FEATURE_PASSKEY, PROFILE_IRIS, PROFILE_THEIA, addPublicFilePrefix } from 'app/app.constants';
+import { MODULE_FEATURE_PASSKEY, PROFILE_ATHENA, PROFILE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -34,7 +34,7 @@ export class UserSettingsContainerComponent implements OnInit {
         this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
 
         const isIrisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-        const isAthenaEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
+        const isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         this.isUsingExternalLLM = isIrisEnabled || isAthenaEnabled;
 
         this.accountService

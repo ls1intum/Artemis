@@ -11,6 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { UserSettingsContainerComponent } from 'app/core/user/settings/user-settings-container/user-settings-container.component';
+import { PROFILE_ATHENA, PROFILE_IRIS } from 'app/app.constants';
 
 describe('UserSettingsContainerComponent', () => {
     let fixture: ComponentFixture<UserSettingsContainerComponent>;
@@ -43,5 +44,35 @@ describe('UserSettingsContainerComponent', () => {
         comp.ngOnInit();
         expect(comp.currentUser).toBeDefined();
         expect(comp.isAtLeastTutor).toBeFalse();
+    });
+
+    it('should set isPasskeyEnabled to false when the module feature is inactive', () => {
+        jest.spyOn(comp['profileService'], 'isModuleFeatureActive').mockReturnValue(false);
+        comp.ngOnInit();
+        expect(comp.isPasskeyEnabled).toBeFalse();
+    });
+
+    it('should set isUsingExternalLLM to false when no profiles are active', () => {
+        jest.spyOn(comp['profileService'], 'isProfileActive').mockReturnValue(false);
+        comp.ngOnInit();
+        expect(comp.isUsingExternalLLM).toBeFalse();
+    });
+
+    it('should set isUsingExternalLLM to true if iris profile is active', () => {
+        jest.spyOn(comp['profileService'], 'isProfileActive').mockImplementation((profile) => profile === PROFILE_IRIS);
+        comp.ngOnInit();
+        expect(comp.isUsingExternalLLM).toBeTrue();
+    });
+
+    it('should set isUsingExternalLLM to true if athena profile is active', () => {
+        jest.spyOn(comp['profileService'], 'isProfileActive').mockImplementation((profile) => profile === PROFILE_ATHENA);
+        comp.ngOnInit();
+        expect(comp.isUsingExternalLLM).toBeTrue();
+    });
+
+    it('should set isUsingExternalLLM to true if athena and iris profile is active', () => {
+        jest.spyOn(comp['profileService'], 'isProfileActive').mockImplementation((profile) => profile === PROFILE_ATHENA || profile === PROFILE_IRIS);
+        comp.ngOnInit();
+        expect(comp.isUsingExternalLLM).toBeTrue();
     });
 });
