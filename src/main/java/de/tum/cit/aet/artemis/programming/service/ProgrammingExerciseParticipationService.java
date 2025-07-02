@@ -399,6 +399,20 @@ public class ProgrammingExerciseParticipationService {
         return participation;
     }
 
+    /**
+     * Retrieves the {@link ProgrammingExerciseStudentParticipation} for the given ID, including
+     * its latest {@link Submission} and the most recent {@link Result} with feedback (if available).
+     *
+     * <p>
+     * If no submission exists for the participation, the returned participation will contain
+     * an empty set of submissions. If a submission exists but no result with feedback is found,
+     * the submission will contain an empty list of results.
+     * </p>
+     *
+     * @param participationId the ID of the student participation to retrieve
+     * @return the participation enriched with its latest submission and corresponding result (if available)
+     * @throws EntityNotFoundException if no participation exists with the given ID
+     */
     public ProgrammingExerciseStudentParticipation findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(long participationId) throws EntityNotFoundException {
         ProgrammingExerciseStudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         Optional<Submission> latestSubmissionOptional = submissionRepository.findLatestSubmissionByParticipationId(participationId);

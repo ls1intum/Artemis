@@ -95,7 +95,7 @@ describe('TutorialGroupFormComponent', () => {
         validTeachingAssistant = new User();
         validTeachingAssistant.login = 'testLogin';
         component = fixture.componentInstance;
-        component.course = course;
+        fixture.componentRef.setInput('course', course);
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
@@ -160,7 +160,7 @@ describe('TutorialGroupFormComponent', () => {
         }));
 
         it('should correctly set form values in edit mode', () => {
-            component.isEditMode = true;
+            fixture.componentRef.setInput('isEditMode', true);
             runOnPushChangeDetection(fixture);
             const formData: TutorialGroupFormData = {
                 title: validTitle,
@@ -179,7 +179,7 @@ describe('TutorialGroupFormComponent', () => {
                     location: validLocation,
                 },
             };
-            component.formData = formData;
+            fixture.componentRef.setInput('formData', formData);
             component.ngOnChanges();
 
             const groupFormControlNames: Array<keyof TutorialGroupFormData> = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
@@ -230,7 +230,7 @@ describe('TutorialGroupFormComponent', () => {
         }));
 
         it('should correctly set form values in edit mode', () => {
-            component.isEditMode = true;
+            fixture.componentRef.setInput('isEditMode', true);
             runOnPushChangeDetection(fixture);
             const formData: TutorialGroupFormData = {
                 title: validTitle,
@@ -243,7 +243,7 @@ describe('TutorialGroupFormComponent', () => {
                 schedule: undefined,
             };
 
-            component.formData = formData;
+            fixture.componentRef.setInput('formData', formData);
             component.ngOnChanges();
 
             const formControlNames: Array<keyof TutorialGroupFormData> = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
