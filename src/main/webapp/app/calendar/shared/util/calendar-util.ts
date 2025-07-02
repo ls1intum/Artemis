@@ -125,3 +125,5 @@ export function getExerciseDescriptor(event: CalendarEvent): string {
         return 'artemisApp.calendar.exerciseDescriptor.fileUpload';
     }
 }
+
+export type CalendarEventFilterOption = 'examEvents' | 'lectureEvents' | 'tutorialEvents' | 'exerciseEvents';

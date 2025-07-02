@@ -5,6 +5,7 @@ import { CalendarEvent, CalendarEventDTO } from 'app/calendar/shared/entities/ca
 import { HttpClient } from '@angular/common/http';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import timezone from 'dayjs/plugin/timezone';
+import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 
 dayjs.extend(timezone);
 
@@ -15,13 +16,14 @@ type CalendarEventMapResponse = HttpResponse<Record<string, CalendarEventDTO[]>>
 })
 export class CalendarEventService {
     private httpClient = inject(HttpClient);
+    private readonly resourceUrl = '/api/calendar/courses';
 
     private currentMonthKey?: string;
     private currentEventMap = signal<Map<string, CalendarEvent[]>>(new Map());
+    readonly eventMap = computed(() => this.filterEventMapByOptions(this.currentEventMap(), this.includedEventFilterOptions()));
 
-    readonly eventMap = computed(() => this.currentEventMap());
-
-    private readonly resourceUrl = '/api/calendar/courses';
+    eventFilterOptions: CalendarEventFilterOption[] = ['examEvents', 'lectureEvents', 'tutorialEvents', 'exerciseEvents'];
+    includedEventFilterOptions = signal<CalendarEventFilterOption[]>(this.eventFilterOptions);
 
     loadEventsForCurrentMonth(courseId: number, firstDayOfCurrentMonth: Dayjs): Observable<void> {
         const currentMonthKey = firstDayOfCurrentMonth.format('YYYY-MM');
@@ -52,6 +54,16 @@ export class CalendarEventService {
             );
     }
 
+    toggleEventFilterOption(option: CalendarEventFilterOption): void {
+        this.includedEventFilterOptions.update((currentOptions) => {
+            if (currentOptions.includes(option)) {
+                return currentOptions.filter((currentOption) => currentOption !== option);
+            } else {
+                return [...currentOptions, option];
+            }
+        });
+    }
+
     private mapCalendarEventDTOMap(dtoMap: Record<string, CalendarEventDTO[]>): Map<string, CalendarEvent[]> {
         const result = new Map<string, CalendarEvent[]>();
         for (const [dayKey, dtoList] of Object.entries(dtoMap)) {
@@ -62,5 +74,34 @@ export class CalendarEventService {
 
     private mapCalendarEventDTO(dto: CalendarEventDTO): CalendarEvent {
         return new CalendarEvent(dto.id, dto.title, dayjs(dto.startDate), dto.endDate ? dayjs(dto.endDate) : undefined, dto.location, dto.facilitator);
+    }
+
+    private filterEventMapByOptions(eventMap: Map<string, CalendarEvent[]>, filterOptions: CalendarEventFilterOption[]): Map<string, CalendarEvent[]> {
+        const filteredMap = new Map<string, CalendarEvent[]>();
+
+        for (const [day, events] of eventMap) {
+            filteredMap.set(
+                day,
+                events.filter((event) => this.eventMatchesFilter(event, filterOptions)),
+            );
+        }
+
+        return filteredMap;
+    }
+
+    private eventMatchesFilter(event: CalendarEvent, filterOptions: CalendarEventFilterOption[]): boolean {
+        if (filterOptions.includes('examEvents') && event.isExamEvent()) {
+            return true;
+        }
+        if (filterOptions.includes('lectureEvents') && event.isLectureEvent()) {
+            return true;
+        }
+        if (filterOptions.includes('tutorialEvents') && event.isTutorialEvent()) {
+            return true;
+        }
+        if (filterOptions.includes('exerciseEvents') && event.isExerciseEvent()) {
+            return true;
+        }
+        return false;
     }
 }

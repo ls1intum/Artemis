@@ -19,10 +19,10 @@
                 "exerciseDue": "Due",
                 "exerciseAssessmentDue": "Assessment Due"
             },
-            "legendExerciseLabel": "Exercise Events",
-            "legendLectureLabel": "Lecture Events",
-            "legendTutorialLabel": "Tutorial Events",
-            "legendExamLabel": "Exam Events",
+            "exerciseFilterOption": "Exercise Events",
+            "lectureFilterOption": "Lecture Events",
+            "tutorialFilterOption": "Tutorial Events",
+            "examFilterOption": "Exam Events",
             "exerciseDescriptor": {
                 "programming": "Programming Exercise",
                 "text": "Text Exercise",

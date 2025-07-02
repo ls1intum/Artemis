@@ -22,6 +22,28 @@
     box-sizing: border-box;
 }
 
+.legend-circle {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 0.25rem;
+}
+
+.exam {
+    background-color: var(--pastel-teal);
+}
+
+.lecture {
+    background-color: var(--pastel-blue);
+}
+
+.tutorial {
+    background-color: var(--pastel-purple);
+}
+
+.exercise {
+    background-color: var(--pastel-cyan);
+}
+
 .remove-btn {
     cursor: pointer;
 }
@@ -47,5 +69,5 @@
 
 input[type='checkbox'] {
     margin-right: 8px;
-    margin-left: 0 !important; /* override Bootstrap's left margin */
+    margin-left: 0 !important;
 }
