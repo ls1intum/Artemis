@@ -95,7 +95,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     ngOnInit(): void {
         this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
-        this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
