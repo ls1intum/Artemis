@@ -150,6 +150,7 @@ public class ProgrammingExerciseParticipationResource {
         Optional<Submission> latestSubmission = participation.getSubmissions().stream().findFirst();
         Optional<Result> latestResult = latestSubmission.flatMap(submission -> submission.getResults().stream().findFirst());
         Set<Result> results = latestResult.map(Set::of).orElseGet(Set::of);
+        latestSubmission.ifPresent(submission -> submission.setResults(latestResult.map(List::of).orElseGet(List::of)));
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
         return ResponseEntity.ok(participation);
