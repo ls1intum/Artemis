@@ -4,10 +4,11 @@ import { faClock, faLocationDot, faUser, faXmark } from '@fortawesome/free-solid
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as utils from 'app/calendar/shared/util/calendar-util';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-calendar-event-detail-popover',
-    imports: [FaIconComponent, ArtemisTranslatePipe],
+    imports: [FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './calendar-event-detail-popover.component.html',
     styleUrl: './calendar-event-detail-popover.component.scss',
 })

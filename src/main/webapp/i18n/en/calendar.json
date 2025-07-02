@@ -22,7 +22,14 @@
             "legendExerciseLabel": "Exercise",
             "legendLectureLabel": "Lecture",
             "legendTutorialLabel": "Tutorial",
-            "legendExamLabel": "Exam"
+            "legendExamLabel": "Exam",
+            "exerciseDescriptor": {
+                "programming": "Programming Exercise",
+                "text": "Text Exercise",
+                "fileUpload": "File-Upload Exercise",
+                "modeling": "Modeling Exercise",
+                "quiz": "Quiz Exercise"
+            }
         }
     }
 }

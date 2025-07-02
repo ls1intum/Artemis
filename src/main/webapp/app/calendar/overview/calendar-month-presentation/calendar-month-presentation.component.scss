@@ -36,19 +36,26 @@
 
         .event-cell {
             width: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.25rem;
+
             background-color: var(--body-bg);
             border-radius: 0.25rem;
             padding: 0.125rem 0.25rem;
             font-size: 0.5rem;
             color: var(--black);
-
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-
             &:hover {
                 filter: brightness(1.1);
                 cursor: pointer;
+            }
+
+            .event-label {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
         }
 

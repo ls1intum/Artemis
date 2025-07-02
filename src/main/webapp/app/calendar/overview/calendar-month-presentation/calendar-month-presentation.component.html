@@ -55,10 +55,15 @@
                                     (click)="openPopover(event, popover)"
                                     #popover="ngbPopover"
                                 >
-                                    @if (eventDescriptor) {
-                                        {{ eventDescriptor | artemisTranslate }}: {{ event.title }}
-                                    } @else {
-                                        {{ event.title }}
+                                    <div class="event-label">
+                                        @if (eventDescriptor) {
+                                            {{ eventDescriptor | artemisTranslate }}: {{ event.title }}
+                                        } @else {
+                                            {{ event.title }}
+                                        }
+                                    </div>
+                                    @if (event.isExerciseEvent()) {
+                                        <fa-icon [icon]="utils.getIconForExerciseEvent(event)" />
                                     }
                                 </div>
                             }

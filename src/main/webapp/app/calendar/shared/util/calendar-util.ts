@@ -1,6 +1,8 @@
 import dayjs, { Dayjs } from 'dayjs/esm';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faCheckDouble, faFileArrowUp, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 
 dayjs.extend(isoWeek);
 
@@ -92,4 +94,32 @@ export function getEventDescriptor(event: CalendarEvent): string | undefined {
 
 export function getTimeString(timestamp: Dayjs): string {
     return timestamp.format('HH:mm');
+}
+
+export function getIconForExerciseEvent(event: CalendarEvent): IconProp {
+    if (event.isTextExerciseEvent()) {
+        return faFont;
+    } else if (event.isModelingExerciseEvent()) {
+        return faProjectDiagram;
+    } else if (event.isQuizExerciseEvent()) {
+        return faCheckDouble;
+    } else if (event.isProgrammingExercise()) {
+        return faKeyboard;
+    } else {
+        return faFileArrowUp;
+    }
+}
+
+export function getExerciseDescriptor(event: CalendarEvent): string {
+    if (event.isProgrammingExercise()) {
+        return 'artemisApp.calendar.exerciseDescriptor.programming';
+    } else if (event.isTextExerciseEvent()) {
+        return 'artemisApp.calendar.exerciseDescriptor.text';
+    } else if (event.isModelingExerciseEvent()) {
+        return 'artemisApp.calendar.exerciseDescriptor.modeling';
+    } else if (event.isQuizExerciseEvent()) {
+        return 'artemisApp.calendar.exerciseDescriptor.quiz';
+    } else {
+        return 'artemisApp.calendar.exerciseDescriptor.fileUpload';
+    }
 }

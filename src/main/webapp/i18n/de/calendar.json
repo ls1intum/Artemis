@@ -22,7 +22,14 @@
             "legendExerciseLabel": "Übung",
             "legendLectureLabel": "Vorlesung",
             "legendTutorialLabel": "Tutorial",
-            "legendExamLabel": "Klausur"
+            "legendExamLabel": "Klausur",
+            "exerciseDescriptor": {
+                "programming": "Programmieraufgabe",
+                "text": "Textaufgabe",
+                "fileUpload": "File-Upload-Aufgabe",
+                "modeling": "Modellieraufgabe",
+                "quiz": "Quizaufgabe"
+            }
         }
     }
 }

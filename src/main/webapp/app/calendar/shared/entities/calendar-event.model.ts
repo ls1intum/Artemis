@@ -26,6 +26,18 @@ export class CalendarEvent {
         return this.id.startsWith('quizExercise');
     }
 
+    isTextExerciseEvent(): boolean {
+        return this.id.startsWith('textExercise');
+    }
+
+    isModelingExerciseEvent(): boolean {
+        return this.id.startsWith('modelingExercise');
+    }
+
+    isProgrammingExercise(): boolean {
+        return this.id.startsWith('programmingExercise');
+    }
+
     isExerciseEvent(): boolean {
         const id = this.id;
         return (

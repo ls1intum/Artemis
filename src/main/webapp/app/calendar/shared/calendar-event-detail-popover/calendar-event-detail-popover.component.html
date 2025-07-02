@@ -39,4 +39,12 @@
             <div>{{ event().facilitator }}</div>
         </div>
     }
+    @if (event().isExerciseEvent()) {
+        <div class="popup-info-row">
+            <div class="popup-icon-frame">
+                <fa-icon class="popup-icon" [icon]="utils.getIconForExerciseEvent(event())" />
+            </div>
+            <div jhiTranslate="{{ utils.getExerciseDescriptor(event()) }}"></div>
+        </div>
+    }
 </div>
