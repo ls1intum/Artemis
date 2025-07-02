@@ -8,6 +8,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { CalendarMonthPresentationComponent } from 'app/calendar/overview/calendar-month-presentation/calendar-month-presentation.component';
 import { CalendarWeekPresentationComponent } from 'app/calendar/overview/calendar-week-presentation/calendar-week-presentation.component';
+import { CalendarLegendComponent } from 'app/calendar/shared/calendar-legend/calendar-legend.component';
 import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
 
 dayjs.extend(isoWeek);
@@ -15,7 +16,7 @@ dayjs.extend(isSameOrBefore);
 
 @Component({
     selector: 'jhi-calendar-desktop',
-    imports: [CalendarMonthPresentationComponent, CalendarWeekPresentationComponent, NgClass, FaIconComponent],
+    imports: [CalendarMonthPresentationComponent, CalendarWeekPresentationComponent, CalendarLegendComponent, NgClass, FaIconComponent],
     templateUrl: './calendar-overview.component.html',
     styleUrl: './calendar-overview.component.scss',
 })
