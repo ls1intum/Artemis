@@ -53,39 +53,46 @@ describe('UserSettingsContainerComponent', () => {
     });
 
     describe('isUsingExternalLLM behavior', () => {
-        it('should not display the external LLM usage link when neither athena nor iris is active', () => {
-            jest.spyOn(component['profileService'], 'isProfileActive').mockReturnValue(false);
-            fixture.detectChanges();
+        /**
+         * @param activeProfiles for which true should be returned when calling isProfileActive
+         */
+        const spyOnProfileService = (activeProfiles: string[]) => {
+            jest.spyOn(component['profileService'], 'isProfileActive').mockImplementation((profile) => activeProfiles.includes(profile));
+        };
 
-            const externalLLMLink: HTMLElement = fixture.nativeElement.querySelector('a[routerLink="external-data"]');
+        /**
+         * Queries the external LLM usage link HTML from the component's template.
+         */
+        const queryExternalLLMLink = (): HTMLElement | null => {
+            fixture.detectChanges();
+            return fixture.nativeElement.querySelector('a[routerLink="external-data"]');
+        };
+
+        it('should not display the external LLM usage link when neither athena nor iris is active', () => {
+            spyOnProfileService([]);
+            const externalLLMLink = queryExternalLLMLink();
             expect(externalLLMLink).toBeFalsy();
         });
 
         it('should display the external LLM usage link when athena is active', () => {
-            jest.spyOn(component['profileService'], 'isProfileActive').mockImplementation((profile) => profile === PROFILE_ATHENA);
-            fixture.detectChanges();
-
-            const externalLLMLink: HTMLElement = fixture.nativeElement.querySelector('a[routerLink="external-data"]');
+            spyOnProfileService([PROFILE_ATHENA]);
+            const externalLLMLink = queryExternalLLMLink();
             expect(externalLLMLink).toBeTruthy();
-            expect(externalLLMLink.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');
+            expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');
         });
 
         it('should display the external LLM usage link when iris is active', () => {
-            jest.spyOn(component['profileService'], 'isProfileActive').mockImplementation((profile) => profile === PROFILE_IRIS);
-            fixture.detectChanges();
-
-            const externalLLMLink: HTMLElement = fixture.nativeElement.querySelector('a[routerLink="external-data"]');
+            spyOnProfileService([PROFILE_IRIS]);
+            const externalLLMLink = queryExternalLLMLink();
             expect(externalLLMLink).toBeTruthy();
-            expect(externalLLMLink.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');
+            expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');
         });
 
-        it('should display the external LLM usage link when atehna and iris are active', () => {
-            jest.spyOn(component['profileService'], 'isProfileActive').mockImplementation((profile) => profile === PROFILE_ATHENA || profile === PROFILE_IRIS);
-            fixture.detectChanges();
-
-            const externalLLMLink: HTMLElement = fixture.nativeElement.querySelector('a[routerLink="external-data"]');
+        it('should display the external LLM usage link when athena and iris are active', () => {
+            spyOnProfileService([PROFILE_ATHENA, PROFILE_IRIS]);
+            const externalLLMLink = queryExternalLLMLink();
             expect(externalLLMLink).toBeTruthy();
-            expect(externalLLMLink.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');
+            expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');
         });
     });
 });
