@@ -42,6 +42,18 @@ public final class Constants {
      */
     public static final String ARTEMIS_FILE_PATH_PREFIX = "/api/core/files/";
 
+    /**
+     * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
+     * Submissions after the grace period exceeded will be unrated.
+     * <p>
+     * If the student was able to successfully push their solution, this solution should still be graded, even if
+     * the processing of the push was up to 1s late.
+     * <p>
+     * Have a look at setRatedIfNotAfterDueDate(Participation participation, ZonedDateTime submissionDate) in
+     * de.tum.cit.aet.artemis.assessment.domain.Result.
+     */
+    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
+
     public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
 
     public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
