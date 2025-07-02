@@ -45,7 +45,7 @@ export const triggerChanges = (comp: OnChanges, ...changes: Array<{ property: st
  * @param fixture The Angular component fixture.
  * @param component The component class or instance.
  * @returns The component instance.
- * @throws Error if the selector is not found or if the element is not found.
+ * @throws Error if the element is not found.
  */
 export function getComponentInstanceFromFixture<T>(fixture: ComponentFixture<any>, component: Type<T>): T {
     const debugElement = fixture.debugElement.query(By.directive(component));
