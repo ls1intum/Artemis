@@ -12,7 +12,7 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercise/participation/participation.utils';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { Participation, ParticipationType, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
@@ -263,7 +263,7 @@ export const isOnlyCompilationTested = (result: Result | undefined, participatio
     return (
         templateStatus !== ResultTemplateStatus.NO_RESULT &&
         templateStatus !== ResultTemplateStatus.IS_BUILDING &&
-        !isBuildFailed(participation?.submissions?.[0]) &&
+        !isBuildFailed(getLatestSubmission(participation)) &&
         zeroTests &&
         isProgrammingExercise
     );
@@ -394,7 +394,7 @@ export const isStudentParticipation = (participation: Participation) => {
  * @param participation
  */
 export const isBuildFailedAndResultIsAutomatic = (result: Result, participation: Participation) => {
-    const latestSubmission = result?.submission ?? participation?.submissions?.[0];
+    const latestSubmission = result?.submission ?? getLatestSubmission(participation);
     return isBuildFailed(latestSubmission) && !isManualResult(result);
 };
 

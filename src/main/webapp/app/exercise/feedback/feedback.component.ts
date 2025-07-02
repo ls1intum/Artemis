@@ -37,7 +37,7 @@ import { FeedbackNodeComponent } from './node/feedback-node.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 
 // Modal -> Result details view
 @Component({
@@ -237,11 +237,9 @@ export class FeedbackComponent implements OnInit, OnChanges {
                     }
 
                     // If the submission is marked with buildFailed, fetch the build logs.
-                    if (
-                        this.result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA &&
-                        this.exerciseType === ExerciseType.PROGRAMMING &&
-                        (this.participation?.submissions?.[0] as ProgrammingSubmission)?.buildFailed
-                    ) {
+                    const buildFailed = (getLatestSubmission(this.participation) as ProgrammingSubmission)?.buildFailed;
+
+                    if (this.result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && this.exerciseType === ExerciseType.PROGRAMMING && buildFailed) {
                         return this.fetchAndSetBuildLogs(this.participation.id!, this.result.id);
                     }
 
