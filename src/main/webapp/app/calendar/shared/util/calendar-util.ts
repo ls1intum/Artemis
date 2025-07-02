@@ -24,7 +24,9 @@ export function getWeekDayNameKey(day: Dayjs): string {
 }
 
 export function getHoursOfDay(): string[] {
-    return Array.from({ length: 23 }, (_, i) => `${(i + 1).toString().padStart(2, '0')}:00`);
+    const hours = Array.from({ length: 23 }, (_, i) => `${(i + 1).toString().padStart(2, '0')}:00`);
+    hours.push('00:00');
+    return hours;
 }
 
 export function range(n: number): number[] {

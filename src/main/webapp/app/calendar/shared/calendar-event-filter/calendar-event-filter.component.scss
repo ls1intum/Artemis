@@ -1,0 +1,51 @@
+.multi-select {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 200px;
+}
+
+.selected-chips {
+    display: flex;
+    gap: 6px;
+}
+
+.chip {
+    background: var(--body-bg);
+    padding: 4px 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    box-sizing: border-box;
+}
+
+.remove-btn {
+    cursor: pointer;
+}
+
+.dropdown {
+    position: absolute;
+    width: auto;
+    top: 100%;
+    right: 0;
+    border: 1px solid var(--border-color);
+    background: var(--dropdown-bg);
+    border-radius: 0.125rem;
+    z-index: 2;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    margin-top: 0.25rem;
+}
+
+.dropdown-item {
+    padding: 6px 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+input[type='checkbox'] {
+    margin-right: 8px;
+    margin-left: 0 !important; /* override Bootstrap's left margin */
+}

@@ -17,7 +17,6 @@
                 @for (hour of utils.getHoursOfDay(); track hour) {
                     <div class="time-label">{{ hour }}</div>
                 }
-                <div class="info-column-spacer"></div>
             </div>
             @for (day of weekDays(); track utils.identify(day)) {
                 <div class="event-column">

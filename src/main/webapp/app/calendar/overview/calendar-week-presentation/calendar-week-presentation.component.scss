@@ -69,10 +69,7 @@
 
                 .hour-segment {
                     height: 3.5rem;
-                }
-
-                .hour-segment:not(:first-child) {
-                    border-top: 1px solid var(--border-color);
+                    border-bottom: 1px solid var(--border-color);
                 }
 
                 .event {

@@ -19,10 +19,10 @@
                 "exerciseDue": "Ende",
                 "exerciseAssessmentDue": "Korrektur Ende"
             },
-            "legendExerciseLabel": "Übung",
-            "legendLectureLabel": "Vorlesung",
-            "legendTutorialLabel": "Tutorial",
-            "legendExamLabel": "Klausur",
+            "legendExerciseLabel": "Übungsevents",
+            "legendLectureLabel": "Vorlesungsevents",
+            "legendTutorialLabel": "Tutorialevents",
+            "legendExamLabel": "Klausurevents",
             "exerciseDescriptor": {
                 "programming": "Programmieraufgabe",
                 "text": "Textaufgabe",
