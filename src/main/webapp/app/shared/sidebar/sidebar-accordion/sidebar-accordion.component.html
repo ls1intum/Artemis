@@ -3,7 +3,7 @@
         <div id="test-accordion-item-container-{{ i }}" class="pointer">
             <div
                 [id]="'test-accordion-item-header-' + groupKey"
-                class="control-label d-flex align-items-center justify-content-between py-2 bg-module"
+                class="control-label d-flex align-items-center justify-content-between py-2 ps-2 bg-module"
                 (click)="toggleGroupCategoryCollapse(groupKey)"
             >
                 <div class="my-2">
@@ -25,9 +25,9 @@
             @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length) {
                 <div id="test-accordion-item-content" [ngbCollapse]="collapseState[groupKey]" class="bg-module">
                     <div class="p-2">
-                        @for (weekGroup of getGroupedByWeek(groupKey); track weekGroup.start?.valueOf()) {
+                        @for (weekGroup of getGroupedByWeek(groupKey); track weekGroup.start?.valueOf(); let first = $first) {
                             @if (weekGroup.showDateHeader) {
-                                <div class="text-muted small p-2">
+                                <div class="text-muted small p-2 ps-0" [ngClass]="{ 'pt-0': first }">
                                     {{
                                         weekGroup.isNoDate
                                             ? ('artemisApp.courseOverview.sidebar.noDate' | artemisTranslate)

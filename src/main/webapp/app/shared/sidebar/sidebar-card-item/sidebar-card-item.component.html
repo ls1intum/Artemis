@@ -83,7 +83,7 @@
                     class="small text-truncate me-2"
                     [title]="sidebarItem.title"
                     [class.muted]="sidebarItem.conversation?.isMuted"
-                    [ngClass]="unreadCount() > 0 && !sidebarItem.conversation?.isMuted ? 'fw-bold' : 'fw-normal'"
+                    [ngClass]="sidebarType === 'conversation' ? (unreadCount() > 0 && !sidebarItem.conversation?.isMuted ? 'fw-bold' : 'fw-normal') : 'fw-semibold'"
                 >
                     @if (otherUser) {
                         <jhi-profile-picture
