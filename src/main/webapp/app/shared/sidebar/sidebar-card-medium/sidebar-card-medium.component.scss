@@ -15,7 +15,7 @@
         }
 
         &.item-border {
-            border-color: var(--body-bg) !important;
+            border-color: var(--bs-card-border-color) !important;
         }
     }
 }
@@ -28,12 +28,12 @@
     }
 
     &.item-border {
-        border-color: var(--body-bg) !important;
+        border-color: var(--bs-card-border-color) !important;
     }
 }
 
 .item-border {
     border-width: 1px !important;
     border-style: solid;
-    border-color: var(--body-bg) !important;
+    border-color: var(--bs-card-border-color) !important;
 }

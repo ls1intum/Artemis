@@ -21,8 +21,8 @@
     white-space: nowrap;
 }
 
-hr {
+.sidebar-divider {
     all: unset;
     display: block;
-    border-top: 1px solid var(--body-bg);
+    border-top: 1px solid var(--bs-card-border-color) !important;
 }
