@@ -1,0 +1,46 @@
+<div class="graph-container">
+    <div class="graph-wrapper">
+        <div class="graph-controls">
+            <button (click)="zoomIn()">
+                <fa-icon [icon]="faPlus" />
+            </button>
+            <button (click)="zoomOut()">
+                <fa-icon [icon]="faMinus" />
+            </button>
+            <button (click)="resetView()">
+                <fa-icon [icon]="faArrowsToEye" />
+            </button>
+        </div>
+
+        @if (loading()) {
+            <jhi-loading-indicator-container [isLoading]="true" />
+        } @else if (!nodes || nodes.length === 0) {
+            <div class="empty-state">
+                <fa-icon [icon]="faHexagonNodes" class="empty-state-icon" />
+                <h3>No Data Available</h3>
+                <p>There are no memories or learnings to display.</p>
+            </div>
+        } @else {
+            <svg #svgContainer class="graph-svg"></svg>
+        }
+    </div>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color memory"></div>
+            <span>Memory</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color learning"></div>
+            <span>Learning</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line memory-memory"></div>
+            <span>Memory Connection</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line memory-learning"></div>
+            <span>Memory-Learning Connection</span>
+        </div>
+    </div>
+</div>

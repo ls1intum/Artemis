@@ -1,0 +1,159 @@
+.graph-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+.graph-wrapper {
+    flex: 1;
+    position: relative;
+    background-color: white;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.graph-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+.graph-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.loading-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+
+    span {
+        font-size: 14px;
+        color: #666;
+    }
+}
+
+.empty-state {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+
+    mat-icon {
+        font-size: 64px;
+        height: 64px;
+        width: 64px;
+        color: #ccc;
+    }
+
+    h3 {
+        margin-top: 15px;
+        margin-bottom: 10px;
+        color: #555;
+    }
+
+    p {
+        color: #777;
+        font-size: 14px;
+    }
+}
+
+.legend {
+    display: flex;
+    justify-content: center;
+    padding-top: 10px;
+    gap: 20px;
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 6px;
+
+            &.memory {
+                background-color: #4f86f7;
+            }
+
+            &.learning {
+                background-color: #f7a14f;
+            }
+        }
+
+        .legend-line {
+            width: 20px;
+            height: 2px;
+
+            &.memory-memory {
+                background-color: #6c8ebf;
+            }
+
+            &.memory-learning {
+                background-color: #d79b00;
+            }
+        }
+    }
+}
+
+/* D3 specific styles */
+:host ::ng-deep {
+    .node {
+        cursor: pointer;
+        stroke: #fff;
+        stroke-width: 2px;
+
+        &.selected {
+            stroke: #333;
+            stroke-width: 3px;
+        }
+
+        &.memory {
+            fill: #4f86f7;
+        }
+
+        &.learning {
+            fill: #f7a14f;
+        }
+
+        &.deleted {
+            stroke: #ff3333;
+            stroke-width: 3px;
+        }
+    }
+
+    .link {
+        stroke-opacity: 0.6;
+
+        &.memory-memory {
+            stroke: #6c8ebf;
+        }
+
+        &.memory-learning {
+            stroke: #d79b00;
+        }
+    }
+
+    text {
+        font-family: sans-serif;
+        fill: #333;
+    }
+}
