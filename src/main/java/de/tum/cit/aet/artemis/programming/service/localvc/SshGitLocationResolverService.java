@@ -85,6 +85,8 @@ public class SshGitLocationResolverService implements GitLocationResolver {
             }
             catch (LocalVCForbiddenException e) {
                 log.error("User {} does not have access to the repository {}", user.getLogin(), repositoryPath);
+                localVCServletService.saveFailedAccessVcsAccessLog(new AuthenticationContext.Session(session), repositoryTypeOrUserName, exercise, localVCRepositoryUri, user,
+                        repositoryAction);
                 throw new AccessDeniedException("User does not have access to this repository", e);
             }
         }
