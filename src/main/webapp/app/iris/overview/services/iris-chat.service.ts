@@ -14,13 +14,29 @@ import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimi
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 
 export enum ChatServiceMode {
-    TEXT_EXERCISE = 'text-exercise-chat',
-    PROGRAMMING_EXERCISE = 'programming-exercise-chat',
-    COURSE = 'course-chat',
-    LECTURE = 'lecture-chat',
-    TUTOR_SUGGESTION = 'tutor-suggestion',
+    TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
+    PROGRAMMING_EXERCISE = 'PROGRAMMING_EXERCISE_CHAT',
+    COURSE = 'COURSE_CHAT',
+    LECTURE = 'LECTURE_CHAT',
+    TUTOR_SUGGESTION = 'TUTOR_SUGGESTION',
+}
+
+export function chatModeToUrlComponent(mode: ChatServiceMode): string | undefined {
+    switch (mode) {
+        case ChatServiceMode.COURSE:
+            return 'course-chat';
+        case ChatServiceMode.LECTURE:
+            return 'lecture-chat';
+        case ChatServiceMode.PROGRAMMING_EXERCISE:
+            return 'programming-exercise-chat';
+        case ChatServiceMode.TEXT_EXERCISE:
+            return 'text-exercise-chat';
+        default:
+            return undefined;
+    }
 }
 
 /**
@@ -58,6 +74,7 @@ export class IrisChatService implements OnDestroy {
     stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
     suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
+    chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
 
     rateLimitInfo?: IrisRateLimitInformation;
     rateLimitSubscription: Subscription;
@@ -66,6 +83,8 @@ export class IrisChatService implements OnDestroy {
     private sessionCreationIdentifier?: string;
 
     hasJustAcceptedExternalLLMUsage = false;
+
+    private courseId = 0;
 
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
@@ -80,9 +99,11 @@ export class IrisChatService implements OnDestroy {
         const requiresAcceptance = this.sessionCreationIdentifier
             ? this.modeRequiresLLMAcceptance.get(Object.values(ChatServiceMode).find((mode) => this.sessionCreationIdentifier?.includes(mode)) as ChatServiceMode)
             : true;
-
         if (requiresAcceptance === false || this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
-            this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
+            this.getCurrentSessionOrCreate().subscribe({
+                ...this.handleNewSession(),
+                complete: () => this.loadChatSessions(),
+            });
         }
     }
 
@@ -243,7 +264,10 @@ export class IrisChatService implements OnDestroy {
 
     public clearChat(): void {
         this.close();
-        this.createNewSession().subscribe(this.handleNewSession());
+        this.createNewSession().subscribe({
+            ...this.handleNewSession(),
+            complete: () => this.loadChatSessions(),
+        });
     }
 
     private handleWebsocketMessage(payload: IrisChatWebsocketDTO) {
@@ -304,6 +328,12 @@ export class IrisChatService implements OnDestroy {
         );
     }
 
+    private loadChatSessions() {
+        this.http.getChatSessions(this.courseId).subscribe((sessions: IrisSessionDTO[]) => {
+            this.chatSessions.next(sessions ?? []);
+        });
+    }
+
     /**
      * Creates a new session
      */
@@ -324,7 +354,8 @@ export class IrisChatService implements OnDestroy {
     }
 
     switchTo(mode: ChatServiceMode, id?: number): void {
-        const newIdentifier = mode && id ? mode + '/' + id : undefined;
+        const modeUrl = chatModeToUrlComponent(mode);
+        const newIdentifier = modeUrl && id ? modeUrl + '/' + id : undefined;
         const isDifferent = this.sessionCreationIdentifier !== newIdentifier;
         this.sessionCreationIdentifier = newIdentifier;
         if (isDifferent) {
@@ -332,11 +363,25 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
+    switchToSession(session: IrisSessionDTO): void {
+        if (this.sessionId === session.id) {
+            return;
+        }
+
+        this.close();
+
+        this.http.getChatSessionById(this.courseId, session.id).subscribe((session) => this.handleNewSession().next(session));
+    }
+
     private closeAndStart() {
         this.close();
         if (this.sessionCreationIdentifier) {
             this.start();
         }
+    }
+
+    public currentSessionId(): Observable<number | undefined> {
+        return this.sessionId$;
     }
 
     public currentMessages(): Observable<IrisMessage[]> {
@@ -351,11 +396,19 @@ export class IrisChatService implements OnDestroy {
         return this.error.asObservable();
     }
 
+    public setCourseId(courseId: number): void {
+        this.courseId = courseId;
+    }
+
     public currentNumNewMessages(): Observable<number> {
         return this.numNewMessages.asObservable();
     }
 
     public currentSuggestions(): Observable<string[]> {
         return this.suggestions.asObservable();
+    }
+
+    public availableChatSessions(): Observable<IrisSessionDTO[]> {
+        return this.chatSessions.asObservable();
     }
 }
