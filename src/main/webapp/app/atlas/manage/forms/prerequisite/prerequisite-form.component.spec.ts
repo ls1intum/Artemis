@@ -123,8 +123,8 @@ describe('PrerequisiteFormComponent', () => {
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
         expect(prerequisiteFormComponent.form.valid).toBeTrue();
         expect(getCourseCompetencyTitlesSpy).toHaveBeenCalledOnce();
-        const submitFormSpy = jest.spyOn(component, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(component.formSubmitted, 'emit');
+        const submitFormSpy = jest.spyOn(prerequisiteFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(prerequisiteFormComponent.formSubmitted, 'emit');
 
         const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
@@ -149,8 +149,8 @@ describe('PrerequisiteFormComponent', () => {
             optional: true,
         };
         fixture.detectChanges();
-        component.formData = formData;
-        component.ngOnChanges();
+        prerequisiteFormComponent.formData = formData;
+        prerequisiteFormComponent.ngOnChanges();
 
         expect(prerequisiteFormComponent.titleControl?.value).toEqual(formData.title);
         expect(prerequisiteFormComponent.descriptionControl?.value).toEqual(formData.description);
@@ -184,7 +184,7 @@ describe('PrerequisiteFormComponent', () => {
         const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
-        component.updateDescriptionControl('Building a tool: create a plan and implement something!');
+        prerequisiteFormComponent.updateDescriptionControl('Building a tool: create a plan and implement something!');
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
@@ -205,11 +205,11 @@ describe('PrerequisiteFormComponent', () => {
             ),
         );
         component.isEditMode = true;
-        component.formData.title = 'initialName';
+        prerequisiteFormComponent.formData.title = 'initialName';
 
         fixture.detectChanges();
 
-        const titleControl = component.titleControl!;
+        const titleControl = prerequisiteFormComponent.titleControl!;
         tick(250);
         expect(titleControl.errors?.titleUnique).toBeUndefined();
 
