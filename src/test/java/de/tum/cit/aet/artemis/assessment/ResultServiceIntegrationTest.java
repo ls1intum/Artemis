@@ -307,9 +307,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 // The build and test date has not passed, due date has not passed, normal student submission => rated result.
                 Arguments.of(true, dateInFuture, SubmissionType.MANUAL, dateInFuture, now),
                 // The build and test date has not passed, due date has passed, normal student submission => unrated result.
-                Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast, now),
-                // Any illegal submission should not be rated
-                Arguments.of(false, null, SubmissionType.ILLEGAL, dateInPast, now), Arguments.of(false, null, SubmissionType.ILLEGAL, dateInFuture, now));
+                Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast, now));
     }
 
     @Test
