@@ -96,8 +96,8 @@ export class CompetencyAccordionComponent implements OnChanges {
             this.promptForRating = CompetencyJol.shouldPromptForJol(
                 this.competency() satisfies Competency,
                 {
-                    progress: this.metrics().competencyMetrics?.progress?.[this.competency.id],
-                    confidence: this.metrics().competencyMetrics?.confidence?.[this.competency.id],
+                    progress: this.metrics().competencyMetrics?.progress?.[this.competency().id],
+                    confidence: this.metrics().competencyMetrics?.confidence?.[this.competency().id],
                 },
                 courseCompetencies,
             );
@@ -111,7 +111,7 @@ export class CompetencyAccordionComponent implements OnChanges {
 
         const courseExercises = this.course()?.exercises ?? [];
         const exerciseIdToExercise = Object.fromEntries(courseExercises.map((exercise) => [exercise.id, exercise] as [number, Exercise]));
-        const activeCompetencyExercises = (this.metrics.competencyMetrics()?.exercises?.[this.competency().id] ?? [])
+        const activeCompetencyExercises = (this.metrics().competencyMetrics?.exercises?.[this.competency().id] ?? [])
             .flatMap((exerciseId) => [exerciseIdToExercise[exerciseId]])
             .filter((exercise) => exercise.releaseDate?.isBefore(dayjs()))
             .filter((exercise) => exercise.dueDate?.isAfter(dayjs()) || isStartPracticeAvailable(exercise));
@@ -149,7 +149,7 @@ export class CompetencyAccordionComponent implements OnChanges {
         }
 
         const completedLectureUnits = this.metrics().lectureUnitStudentMetricsDTO?.completed ?? [];
-        const competencyLectureUnits = this.metrics().competencyMetrics?.lectureUnits?.[this.competency.id] ?? [];
+        const competencyLectureUnits = this.metrics().competencyMetrics?.lectureUnits?.[this.competency().id] ?? [];
         this.nextLectureUnits = competencyLectureUnits
             .filter((lectureUnitId) => !completedLectureUnits.includes(lectureUnitId))
             .flatMap((lectureUnitId) => this.metrics().lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId] ?? [])
@@ -159,7 +159,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     calculateProgressValues() {
-        const jol = this.metrics().competencyMetrics?.currentJolValues?.[this.competency.id];
+        const jol = this.metrics().competencyMetrics?.currentJolValues?.[this.competency().id];
         this.jolRating = jol?.jolValue;
         this.exercisesProgress = this.calculateExercisesProgress();
         this.lectureUnitsProgress = this.calculateLectureUnitsProgress();
@@ -231,7 +231,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     onRatingChange(newRating: number) {
         if (this.metrics().competencyMetrics) {
             this.metrics().competencyMetrics.currentJolValues = {
-                ...this.metrics().competencyMetrics.currentJolValues,
+                ...(this.metrics().competencyMetrics.currentJolValues ?? {}),
                 [this.competency().id]: {
                     competencyId: this.competency().id,
                     jolValue: newRating,
