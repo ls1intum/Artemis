@@ -493,6 +493,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     ])(
         'should show correct open exercise button for text exercises',
         fakeAsync((exercise: Exercise, shouldShowButton: boolean, expectedLabel: string | undefined, shouldBeOutlined: boolean | undefined) => {
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+
             comp.exercise = exercise;
             comp.ngOnInit();
             comp.ngOnChanges();
