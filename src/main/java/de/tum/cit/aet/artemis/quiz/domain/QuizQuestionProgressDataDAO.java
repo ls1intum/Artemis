@@ -9,17 +9,19 @@ public class QuizQuestionProgressDataDAO {
     public QuizQuestionProgressDataDAO() {
     };
 
-    private int repetition;
+    private double lastScore;
 
-    private int intervalDays;
+    private int repetition;
 
     private double easinessFactor;
 
-    private ZonedDateTime nextDueDate;
+    private int interval;
 
-    private ZonedDateTime lastAnsweredAt;
+    private int sessionCount;
 
-    private double lastScore;
+    private int priority;
+
+    private int box;
 
     private List<Attempt> attempts;
 
@@ -61,12 +63,12 @@ public class QuizQuestionProgressDataDAO {
         this.repetition = repetition;
     }
 
-    public int getIntervalDays() {
-        return intervalDays;
+    public int getInterval() {
+        return interval;
     }
 
-    public void setIntervalDays(int intervalDays) {
-        this.intervalDays = intervalDays;
+    public void setInterval(int interval) {
+        this.interval = interval;
     }
 
     public double getEasinessFactor() {
@@ -77,20 +79,20 @@ public class QuizQuestionProgressDataDAO {
         this.easinessFactor = easinessFactor;
     }
 
-    public ZonedDateTime getNextDueDate() {
-        return nextDueDate;
+    public int getPriority() {
+        return priority;
     }
 
-    public void setNextDueDate(ZonedDateTime nextDueDate) {
-        this.nextDueDate = nextDueDate;
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
 
-    public ZonedDateTime getLastAnsweredAt() {
-        return lastAnsweredAt;
+    public int getSessionCount() {
+        return sessionCount;
     }
 
-    public void setLastAnsweredAt(ZonedDateTime lastAnsweredAt) {
-        this.lastAnsweredAt = lastAnsweredAt;
+    public void setSessionCount(int sessionCount) {
+        this.sessionCount = sessionCount;
     }
 
     public double getLastScore() {
@@ -99,6 +101,14 @@ public class QuizQuestionProgressDataDAO {
 
     public void setLastScore(double lastScore) {
         this.lastScore = lastScore;
+    }
+
+    public int getBox() {
+        return box;
+    }
+
+    public void setBox(int box) {
+        this.box = box;
     }
 
     public List<Attempt> getAttempts() {
