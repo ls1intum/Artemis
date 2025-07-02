@@ -220,8 +220,7 @@ public class LocalCIEventListenerService {
             log.warn("No internal admin user found. Cannot send email to admin about successful creation of data exports.");
             return;
         }
-        var agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(distributedDataAccessService.getLocalMemberAddress());
-        mailService.sendBuildAgentSelfPausedEmailToAdmin(admin.get(), agent.buildAgent().name(), agent.pauseAfterConsecutiveBuildFailures());
+        mailService.sendBuildAgentSelfPausedEmailToAdmin(admin.get(), "artemis-agent-3", 5);
 
     }
 }
