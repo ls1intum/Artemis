@@ -6,6 +6,14 @@ export class MemirisLearning {
     content: string;
     reference: string;
     memories: string[]; // Array of memory IDs associated with this learning
+
+    constructor(id: string, title: string, content: string, reference: string, memories: string[]) {
+        this.id = id;
+        this.title = title;
+        this.content = content;
+        this.reference = reference;
+        this.memories = memories;
+    }
 }
 
 export class MemirisMemory {
@@ -16,6 +24,16 @@ export class MemirisMemory {
     connections: string[]; // Array of memory connection IDs of this memory
     slept_on: boolean;
     deleted: boolean;
+
+    constructor(id: string, title: string, content: string, learnings: string[], connections: string[], slept_on: boolean, deleted: boolean) {
+        this.id = id;
+        this.title = title;
+        this.content = content;
+        this.learnings = learnings;
+        this.connections = connections;
+        this.slept_on = slept_on;
+        this.deleted = deleted;
+    }
 }
 
 export enum MemirisConnectionType {
@@ -32,12 +50,26 @@ export class MemirisMemoryConnection {
     memories: MemirisMemory[]; // Array of memory objects associated with this connection
     description: string;
     weight: number;
+
+    constructor(id: string, connection_type: MemirisConnectionType, memories: MemirisMemory[], description: string, weight: number) {
+        this.id = id;
+        this.connection_type = connection_type;
+        this.memories = memories;
+        this.description = description;
+        this.weight = weight;
+    }
 }
 
 export class MemirisGraphData {
     memories: MemirisMemory[] = [];
     learnings: MemirisLearning[] = [];
     connections: MemirisMemoryConnection[] = [];
+
+    constructor(memories: MemirisMemory[], learnings: MemirisLearning[], connections: MemirisMemoryConnection[]) {
+        this.memories = memories;
+        this.learnings = learnings;
+        this.connections = connections;
+    }
 }
 
 export abstract class MemirisSimulationNode implements SimulationNodeDatum {

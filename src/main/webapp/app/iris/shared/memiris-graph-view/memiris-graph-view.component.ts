@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, computed, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, OnChanges, OnDestroy, SimpleChanges, computed, input, output, viewChild } from '@angular/core';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { faArrowsToEye, faHexagonNodes, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -41,7 +41,7 @@ import {
     templateUrl: './memiris-graph-view.component.html',
     styleUrl: './memiris-graph-view.component.scss',
 })
-export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
+export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
     svgContainer = viewChild<ElementRef>('svgContainer');
 
     graphData = input<MemirisGraphData>();
@@ -77,10 +77,6 @@ export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
     private height = 0;
     private graphGroup: Selection<SVGGElement, unknown, null, undefined>;
 
-    ngOnInit(): void {
-        requestAnimationFrame(() => this.initializeGraph());
-    }
-
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['filters']) {
             this.applyFilters();
@@ -112,6 +108,11 @@ export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
      * @param {MemirisGraphData} data - The input data for the graph, containing memories, learnings, and connections.
      */
     private updateGraphData(data: MemirisGraphData) {
+        if (!data) {
+            return;
+        }
+        // eslint-disable-next-line no-undef
+        console.log('Updating graph data:', data);
         // Create nodes from graph data
         this.allNodes = data.memories.map((memory) => new MemirisMemoryNode(memory));
         this.allNodes.push(...data.learnings.map((learning) => new MemirisLearningNode(learning)));
@@ -253,7 +254,10 @@ export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
      * This method is called whenever the graph data or filters change.
      */
     updateGraph(): void {
-        if (!this.svg) return;
+        if (!this.svg) {
+            requestAnimationFrame(() => this.initializeGraph());
+            return;
+        }
 
         const nodesGroup = this.svg.select<SVGGElement>('.nodes');
         const linksGroup = this.svg.select<SVGGElement>('.links');
