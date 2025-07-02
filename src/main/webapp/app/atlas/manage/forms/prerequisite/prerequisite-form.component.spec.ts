@@ -38,6 +38,7 @@ import { getComponentInstanceFromFixture } from 'test/helpers/utils/general-test
     imports: [PrerequisiteFormComponent],
 })
 class WrapperComponent {
+    formData: CourseCompetencyFormData;
     isEditMode: boolean;
     courseId: number;
     lecturesOfCourseWithLectureUnits: Lecture[];
@@ -148,8 +149,9 @@ describe('PrerequisiteFormComponent', () => {
             taxonomy: CompetencyTaxonomy.ANALYZE,
             optional: true,
         };
+
+        component.formData = formData;
         fixture.detectChanges();
-        prerequisiteFormComponent.formData = formData;
         prerequisiteFormComponent.ngOnChanges();
 
         expect(prerequisiteFormComponent.titleControl?.value).toEqual(formData.title);
@@ -205,7 +207,7 @@ describe('PrerequisiteFormComponent', () => {
             ),
         );
         component.isEditMode = true;
-        prerequisiteFormComponent.formData.title = 'initialName';
+        prerequisiteFormComponent.formData().title = 'initialName';
 
         fixture.detectChanges();
 
