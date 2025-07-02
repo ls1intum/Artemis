@@ -47,16 +47,12 @@ export const triggerChanges = (comp: OnChanges, ...changes: Array<{ property: st
  * @returns The component instance.
  * @throws Error if the selector is not found or if the element is not found.
  */
-export function getComponentInstanceFromFixture<T>(fixture: ComponentFixture<any>, component: T) {
-    const selector = getSelectorOfComponent(component);
-    if (!selector) {
-        throw new Error(`Selector not found for component ${component}`);
+export function getComponentInstanceFromFixture<T>(fixture: ComponentFixture<any>, component: Type<T>): T {
+    const debugElement = fixture.debugElement.query(By.directive(component));
+    if (!debugElement) {
+        throw new Error(`Component of type ${component.name} not found in fixture`);
     }
-    const element = fixture.debugElement.query(By.css(selector));
-    if (!element) {
-        throw new Error(`Element not found for selector ${selector}`);
-    }
-    return element.componentInstance as T;
+    return debugElement.componentInstance as T;
 }
 
 /**
