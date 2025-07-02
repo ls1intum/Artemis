@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CoursePracticeQuizComponent } from './course-practice-quiz.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { QuizQuestion, QuizQuestionType } from '../../shared/entities/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MockBuilder } from 'ng-mocks';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
@@ -9,6 +9,10 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { CoursePracticeQuizService } from 'app/quiz/overview/service/course-practice-quiz.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { MockInstance } from 'ng-mocks';
+import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { signal } from '@angular/core';
 
 const question1: DragAndDropQuestion = {
     id: 1,
@@ -36,6 +40,7 @@ const question3: QuizQuestion = {
 };
 
 describe('CoursePracticeQuizComponent', () => {
+    MockInstance.scope();
     let component: CoursePracticeQuizComponent;
     let fixture: ComponentFixture<CoursePracticeQuizComponent>;
     let quizService: CoursePracticeQuizService;
@@ -60,6 +65,7 @@ describe('CoursePracticeQuizComponent', () => {
             ]);
         quizService = TestBed.inject(CoursePracticeQuizService);
         jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(of([question1, question2, question3]));
+        MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as SecuredImageComponent));
 
         fixture = TestBed.createComponent(CoursePracticeQuizComponent);
         component = fixture.componentInstance;

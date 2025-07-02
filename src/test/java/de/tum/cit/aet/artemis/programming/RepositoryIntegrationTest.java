@@ -69,7 +69,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
@@ -524,16 +523,16 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private void addPlagiarismCaseToProgrammingExercise(String studentLoginWithoutPost, String studentLoginWithPost) {
-        var textPlagiarismResult = textExerciseUtilService.createTextPlagiarismResultForExercise(programmingExercise);
-        var plagiarismComparison = new PlagiarismComparison<TextSubmissionElement>();
+        var textPlagiarismResult = textExerciseUtilService.createPlagiarismResultForExercise(programmingExercise);
+        var plagiarismComparison = new PlagiarismComparison();
         plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
         plagiarismComparison.setStatus(PlagiarismStatus.CONFIRMED);
 
-        var plagiarismSubmissionA = new PlagiarismSubmission<TextSubmissionElement>();
+        var plagiarismSubmissionA = new PlagiarismSubmission();
         plagiarismSubmissionA.setStudentLogin(studentLoginWithoutPost);
         plagiarismSubmissionA.setSubmissionId(participation.getId());
 
-        var plagiarismSubmissionB = new PlagiarismSubmission<TextSubmissionElement>();
+        var plagiarismSubmissionB = new PlagiarismSubmission();
         plagiarismSubmissionB.setStudentLogin(studentLoginWithPost);
         plagiarismSubmissionB.setSubmissionId(participation.getId() + 1);
 

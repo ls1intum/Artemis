@@ -89,27 +89,24 @@ describe('Plagiarism Sidebar Component', () => {
 
     it('should reset pagination on changes', () => {
         const comparisons = [
-            { id: 1 } as PlagiarismComparison<any>,
-            { id: 2 } as PlagiarismComparison<any>,
-            { id: 3 } as PlagiarismComparison<any>,
-            { id: 4 } as PlagiarismComparison<any>,
-            { id: 5 } as PlagiarismComparison<any>,
-            { id: 6 } as PlagiarismComparison<any>,
-            { id: 7 } as PlagiarismComparison<any>,
-            { id: 8 } as PlagiarismComparison<any>,
-            { id: 9 } as PlagiarismComparison<any>,
-            { id: 10 } as PlagiarismComparison<any>,
-            { id: 11 } as PlagiarismComparison<any>,
-            { id: 12 } as PlagiarismComparison<any>,
+            { id: 1 } as PlagiarismComparison,
+            { id: 2 } as PlagiarismComparison,
+            { id: 3 } as PlagiarismComparison,
+            { id: 4 } as PlagiarismComparison,
+            { id: 5 } as PlagiarismComparison,
+            { id: 6 } as PlagiarismComparison,
+            { id: 7 } as PlagiarismComparison,
+            { id: 8 } as PlagiarismComparison,
+            { id: 9 } as PlagiarismComparison,
+            { id: 10 } as PlagiarismComparison,
+            { id: 11 } as PlagiarismComparison,
+            { id: 12 } as PlagiarismComparison,
         ];
         const pagedComparisons = comparisons.slice(0, 10);
-        comp.comparisons = comparisons;
+        fixture.componentRef.setInput('comparisons', comparisons);
         comp.ngOnChanges({
-            comparisons: {
-                currentValue: comparisons,
-            } as SimpleChange,
+            comparisons: new SimpleChange([], comparisons, true),
         });
-
         expect(comp.currentPage).toBe(0);
         expect(comp.numberOfPages).toBe(2);
         expect(comp.pagedComparisons).toEqual(pagedComparisons);

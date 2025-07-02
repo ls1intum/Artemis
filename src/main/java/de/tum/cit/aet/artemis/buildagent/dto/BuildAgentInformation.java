@@ -28,6 +28,6 @@ public record BuildAgentInformation(BuildAgentDTO buildAgent, int maxNumberOfCon
     }
 
     public enum BuildAgentStatus {
-        ACTIVE, IDLE, PAUSED
+        ACTIVE, IDLE, PAUSED, SELF_PAUSED
     }
 }
