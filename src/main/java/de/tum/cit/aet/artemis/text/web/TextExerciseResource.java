@@ -413,7 +413,7 @@ public class TextExerciseResource {
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
         if (!(participation.getExercise() instanceof TextExercise textExercise)) {
             throw new BadRequestAlertException("The exercise of the participation is not a text exercise.", ENTITY_NAME, "wrongExerciseType");
         }
