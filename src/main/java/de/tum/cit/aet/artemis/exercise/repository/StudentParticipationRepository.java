@@ -114,13 +114,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND TYPE(ex) <> QuizExercise
                 AND p.testRun = FALSE
                 AND p.student IS NOT NULL
-                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd',SECOND, 1,
-                CASE
-                WHEN ex.dueDate IS NULL               THEN p.individualDueDate
-                WHEN p.individualDueDate IS NULL      THEN ex.dueDate
-                WHEN ex.dueDate > p.individualDueDate THEN ex.dueDate
-                ELSE p.individualDueDate
-                END))
+                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd',SECOND, 1, COALESCE(p.individualDueDate, ex.dueDate)))
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
@@ -141,13 +135,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE ex.course.id = :courseId
                 AND p.testRun = FALSE
                 AND p.team IS NOT NULL
-                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd',SECOND, 1,
-                CASE
-                WHEN ex.dueDate IS NULL               THEN p.individualDueDate
-                WHEN p.individualDueDate IS NULL      THEN ex.dueDate
-                WHEN ex.dueDate > p.individualDueDate THEN ex.dueDate
-                ELSE p.individualDueDate
-                END))
+                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd',SECOND, 1,  COALESCE(p.individualDueDate, ex.dueDate)))
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
