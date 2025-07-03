@@ -17,6 +17,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { InputSignal, signal } from '@angular/core';
+import { CompetencyFormControlsWithViewed } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
 
 describe('CompetencyRecommendationDetailComponent', () => {
     let fixture: ComponentFixture<CompetencyRecommendationDetailComponent>;
@@ -50,16 +52,18 @@ describe('CompetencyRecommendationDetailComponent', () => {
 
     beforeEach(() => {
         //initialize component
-        component.form = new FormGroup({
-            competency: new FormGroup({
-                title: new FormControl('Title' as string | undefined, { nonNullable: true }),
-                description: new FormControl('Description' as string | undefined, { nonNullable: true }),
-                taxonomy: new FormControl(CompetencyTaxonomy.ANALYZE as CompetencyTaxonomy | undefined, { nonNullable: true }),
+        component.form = signal(
+            new FormGroup({
+                competency: new FormGroup({
+                    title: new FormControl('Title' as string | undefined, { nonNullable: true }),
+                    description: new FormControl('Description' as string | undefined, { nonNullable: true }),
+                    taxonomy: new FormControl(CompetencyTaxonomy.ANALYZE as CompetencyTaxonomy | undefined, { nonNullable: true }),
+                }),
+                viewed: new FormControl(false, { nonNullable: true }),
             }),
-            viewed: new FormControl(false, { nonNullable: true }),
-        });
-        component.index = 0;
-    });
+        );
+        component.index = signal(0) as InputSignal<number>;
+    }) as InputSignal<FormGroup<CompetencyFormControlsWithViewed>>;
 
     afterEach(() => {
         jest.restoreAllMocks();
@@ -77,7 +81,7 @@ describe('CompetencyRecommendationDetailComponent', () => {
 
         //component should not start out in edit mode
         expect(component.isInEditMode).toBeFalse();
-        expect(component.form.controls.competency.disabled).toBeTrue();
+        expect(component.form().controls.competency.disabled).toBeTrue();
 
         const editButton = fixture.debugElement.nativeElement.querySelector('#editButton-0 > .jhi-btn');
         editButton.click();

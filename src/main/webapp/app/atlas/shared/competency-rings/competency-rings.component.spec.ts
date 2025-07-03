@@ -4,8 +4,6 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
-import { CompetencyGraphDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { Component } from '@angular/core';
 import { getComponentInstanceFromFixture } from 'test/helpers/utils/general-test.utils';
 

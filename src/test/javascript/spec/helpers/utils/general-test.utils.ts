@@ -1,4 +1,4 @@
-import { Component, DebugElement, OnChanges, SimpleChange, SimpleChanges } from '@angular/core';
+import { DebugElement, OnChanges, SimpleChange, SimpleChanges, Type } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ComponentFixture } from '@angular/core/testing';
 

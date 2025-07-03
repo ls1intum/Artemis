@@ -5,6 +5,7 @@ import { MockDirective } from 'ng-mocks';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { signal } from '@angular/core';
 
 describe('TaxonomySelectComponent', () => {
     let componentFixture: ComponentFixture<TaxonomySelectComponent>;
@@ -20,7 +21,7 @@ describe('TaxonomySelectComponent', () => {
             .then(() => {
                 componentFixture = TestBed.createComponent(TaxonomySelectComponent);
                 component = componentFixture.componentInstance;
-                component.form = new FormControl<CompetencyTaxonomy | undefined>(undefined);
+                component.form = signal(new FormControl<CompetencyTaxonomy | undefined>(undefined));
             });
     });
 
@@ -37,7 +38,7 @@ describe('TaxonomySelectComponent', () => {
         const select = componentFixture.debugElement.query(By.css('.form-select')).nativeElement;
         expect(select.value).toBe('');
 
-        component.form.setValue(CompetencyTaxonomy.ANALYZE);
+        component.form().setValue(CompetencyTaxonomy.ANALYZE);
         componentFixture.detectChanges();
 
         expect(select.value).toContain(CompetencyTaxonomy.ANALYZE);

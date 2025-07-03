@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyContributionComponent } from './competency-contribution.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CompetencyContributionCardComponent } from 'app/atlas/shared/competency-contribution/competency-contribution-card/competency-contribution-card.component';
-import { input, runInInjectionContext } from '@angular/core';
+import { signal } from '@angular/core';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { CarouselModule } from 'primeng/carousel';
@@ -14,7 +14,6 @@ import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/compete
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('CompetencyContributionComponent', () => {
-    let component: CompetencyContributionComponent;
     let fixture: ComponentFixture<CompetencyContributionComponent>;
     let courseCompetencyService: CourseCompetencyService;
     let getCompetencyContributionsForExerciseStub: jest.SpyInstance;
@@ -28,7 +27,6 @@ describe('CompetencyContributionComponent', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(CompetencyContributionComponent);
-        component = fixture.componentInstance;
 
         courseCompetencyService = TestBed.inject(CourseCompetencyService);
         getCompetencyContributionsForExerciseStub = jest
