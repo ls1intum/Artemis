@@ -322,6 +322,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             // Assign existing ID if available
             if (this.shortAnswerQuestion.spots.length < existingSpotIDs.length) {
                 spot.id = existingSpotIDs[this.shortAnswerQuestion.spots.length];
+                delete spot.tempID;
             }
             spot.spotNr = +spotID.trim();
             this.shortAnswerQuestion.spots.push(spot);
@@ -336,6 +337,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             // Assign existing ID if available
             if (this.shortAnswerQuestion.solutions.length < existingSolutionIDs.length) {
                 solution.id = existingSolutionIDs[this.shortAnswerQuestion.solutions.length];
+                delete solution.tempID;
             }
             this.shortAnswerQuestion.solutions.push(solution);
 
