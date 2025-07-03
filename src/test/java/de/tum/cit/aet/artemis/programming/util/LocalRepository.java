@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.util;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -109,9 +110,9 @@ public class LocalRepository {
 
         // Add an initial commit directly in the local working copy
         File readme = new File(workingCopyGitRepoFile, "README.md");
-        Files.write(readme.toPath(), "Initial commit".getBytes());
+        FileUtils.writeStringToFile(readme, "Initial commit", Charset.defaultCharset());
         workingCopyGitRepo.add().addFilepattern("README.md").call();
-        workingCopyGitRepo.commit().setMessage("Initial commit").call();
+        GitService.commit(workingCopyGitRepo).setMessage("Initial commit").call();
 
         // Push the initial commit to the origin (bare or not)
         workingCopyGitRepo.push().setRemote("origin").setPushAll().call();

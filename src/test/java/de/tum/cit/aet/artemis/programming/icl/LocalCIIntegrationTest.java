@@ -31,8 +31,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.attributes.AttributesNodeProvider;
+import org.eclipse.jgit.lib.BaseRepositoryBuilder;
+import org.eclipse.jgit.lib.ObjectDatabase;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.RefDatabase;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.jupiter.api.AfterAll;
@@ -320,9 +326,53 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testInvalidLocalVCRepositoryUri() {
-        // The local repository cannot be resolved to a valid LocalVCRepositoryUri as it is not located at the correct base path and is not a bare repository.
+        // this strange looking setup is required to create a Repository object with an invalid git path to trigger the exception.
+        // the default LocalRepository now has a working git path, so we need to create a new one with an invalid path.
+        Path path = Path.of("abc", "def", "file.txt");
+        Repository repositoryWithInvalidPath = new Git(new Repository(new BaseRepositoryBuilder<>().setGitDir(path.toFile())) {
+
+            @Override
+            public void create(boolean bare) throws IOException {
+
+            }
+
+            @Override
+            public String getIdentifier() {
+                return "";
+            }
+
+            @Override
+            public ObjectDatabase getObjectDatabase() {
+                return null;
+            }
+
+            @Override
+            public RefDatabase getRefDatabase() {
+                return null;
+            }
+
+            @Override
+            public StoredConfig getConfig() {
+                return null;
+            }
+
+            @Override
+            public AttributesNodeProvider createAttributesNodeProvider() {
+                return null;
+            }
+
+            @Override
+            public void scanForRepoChanges() throws IOException {
+
+            }
+
+            @Override
+            public void notifyIndexChanged(boolean internal) {
+
+            }
+        }).getRepository();
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> processNewPush(commitHash, studentAssignmentRepository.workingCopyGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities()))
+                .isThrownBy(() -> processNewPush(commitHash, repositoryWithInvalidPath, userTestRepository.getUserWithGroupsAndAuthorities()))
                 .withMessageContaining("Could not create valid repository URI from path");
     }
 
