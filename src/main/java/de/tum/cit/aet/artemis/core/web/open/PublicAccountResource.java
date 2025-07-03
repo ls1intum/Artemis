@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.core.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.security.jwt.JWTFilter.extractValidJwt;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,9 +21,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,6 +45,9 @@ import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
+import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.AccountService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 
@@ -79,13 +81,16 @@ public class PublicAccountResource {
 
     private final Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository;
 
+    private final TokenProvider tokenProvider;
+
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
-            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository) {
+            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
         this.userRepository = userRepository;
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
+        this.tokenProvider = tokenProvider;
     }
 
     /**
@@ -163,7 +168,7 @@ public class PublicAccountResource {
      */
     @GetMapping("account")
     @EnforceNothing
-    public ResponseEntity<UserDTO> getAccount() {
+    public ResponseEntity<UserDTO> getAccount(HttpServletRequest request) {
         long start = System.currentTimeMillis();
 
         Optional<User> userOptional = Optional.empty();
@@ -182,11 +187,13 @@ public class PublicAccountResource {
         if (askUsersToSetupPasskey && passkeyEnabled && passkeyCredentialsRepository.isPresent()) {
             shouldPromptUserToSetupPasskey = !this.passkeyCredentialsRepository.orElseThrow().existsByUserId(user.getId());
         }
+
         boolean isLoggedInWithPasskey = false;
         if (passkeyEnabled) {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            isLoggedInWithPasskey = authentication instanceof WebAuthnAuthentication;
+            JwtWithSource jwtWithSource = extractValidJwt(request, this.tokenProvider);
+            isLoggedInWithPasskey = Objects.equals(this.tokenProvider.getAuthenticationMethod(Objects.requireNonNull(jwtWithSource).jwt()), AuthenticationMethod.PASSKEY);
         }
+
         user.setVisibleRegistrationNumber();
         UserDTO userDTO = new UserDTO(user);
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
