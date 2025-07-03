@@ -372,12 +372,8 @@ eureka:
             git-branch: ${git.branch:}
 
 # Helios configuration
+# It is enabled and all the values are set by the ansible
+# Refer to the ansible repository https://github.com/ls1intum/artemis-ansible
 helios:
   status:
-    enabled: true
-    environment-name: ${HELIOS_ENVIRONMENT_NAME:}
-    endpoints:
-        - url: https://helios.aet.cit.tum.de/api/environments/status
-          secretKey: ${HELIOS_PROD_SECRET_KEY:}
-        - url: https://helios-staging.aet.cit.tum.de/api/environments/status
-          secretKey: ${HELIOS_STAGING_SECRET_KEY:}
+    enabled: false
