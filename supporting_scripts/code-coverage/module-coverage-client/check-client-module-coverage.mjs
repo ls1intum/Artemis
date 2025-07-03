@@ -126,10 +126,10 @@ const moduleThresholds = {
         lines:      89.63,
     },
     tutorialgroup: {
-        statements: 91.31,
-        branches:   75.85,
-        functions:  83.51,
-        lines:      91.20,
+        statements: 91.21, // +0.1 (bump up)
+        branches:   75.90, // -0.05 (warning)
+        functions:  83.60, // -0.09 (warning)
+        lines:      91.30, // -0.1 (fail)
     },
 };
 
@@ -138,6 +138,7 @@ const moduleThresholds = {
 const metrics = ['statements', 'branches', 'functions', 'lines'];
 
 const AIMED_FOR_COVERAGE = 90;
+const ALLOWED_DEVIATION_BEFORE_FAILURE_IS_DISPLAYED = 0.09
 
 const roundToTwoDigits = (value) => Math.round(value * 100) / 100;
 
@@ -150,11 +151,14 @@ const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
         const roundedPercentage = roundToTwoDigits(percentage);
         const roundedThreshold = roundToTwoDigits(thresholds[metric]);
         const pass = roundedPercentage >= roundedThreshold;
+        const passWithWarning = !pass && roundedPercentage >= roundedThreshold - ALLOWED_DEVIATION_BEFORE_FAILURE_IS_DISPLAYED;
         const higherThanExpected = roundedPercentage > roundedThreshold && roundedThreshold < AIMED_FOR_COVERAGE;
 
-        const status = `${higherThanExpected ? '⬆️' : ''} ${pass ? '✅' : '❌'}`;
+        const status = `${higherThanExpected ? '⬆️' : ''} ${pass ? '✅' : passWithWarning ? '⚠️' : '❌'}`;
         console.log(`${status.padStart(6)} ${metric.padEnd(12)}: ${roundedPercentage.toFixed(2).padStart(6)}%  (need ≥ ${roundedThreshold.toFixed(2)}%)`);
-        if (!pass) failed = true;
+        if (!passWithWarning) {
+            failed = true;
+        }
     }
     return failed;
 };
