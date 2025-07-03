@@ -129,7 +129,7 @@ const moduleThresholds = {
         statements: 91.21, // +0.1 (bump up)
         branches:   75.90, // -0.05 (warning)
         functions:  83.60, // -0.09 (warning)
-        lines:      91.30, // -0.1 (fail)
+        lines:      91.40, // -0.1 (fail)
     },
 };
 
@@ -156,7 +156,7 @@ const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
 
         const status = `${higherThanExpected ? '⬆️' : ''} ${pass ? '✅' : passWithWarning ? '⚠️' : '❌'}`;
         console.log(`${status.padStart(6)} ${metric.padEnd(12)}: ${roundedPercentage.toFixed(2).padStart(6)}%  (need ≥ ${roundedThreshold.toFixed(2)}%)`);
-        if (!passWithWarning) {
+        if (!pass && !passWithWarning) {
             failed = true;
         }
     }
