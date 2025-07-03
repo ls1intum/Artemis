@@ -6,8 +6,10 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Optional;
 
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
@@ -97,14 +99,22 @@ public class ArtemisSuccessfulLoginService {
      * Handles successful authentication events.
      * Sends a login notification email to users when they successfully authenticate.
      *
-     * @param username             the username of the user who has successfully logged in
+     * @param loginOrEmail         the username or email of the user who has successfully logged in
      * @param authenticationMethod the method used for authentication
      * @param clientEnvironment    the environment information of the client (optional)
      * @see AuthenticationMethod for available authentication methods
      */
-    public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
+    public void sendLoginEmail(String loginOrEmail, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
+        String lowercaseLoginOrEmail = loginOrEmail.toLowerCase(Locale.ENGLISH);
+
         try {
-            User recipient = userRepository.getUserByLoginElseThrow(username);
+            User recipient;
+
+            if (SecurityUtils.isEmail(lowercaseLoginOrEmail)){
+                recipient = userRepository.getUserByEmailElseThrow(lowercaseLoginOrEmail);
+            } else {
+                recipient = userRepository.getUserByLoginElseThrow(lowercaseLoginOrEmail);
+            }
 
             if (!globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.NEW_LOGIN)) {
                 return;
@@ -112,7 +122,7 @@ public class ArtemisSuccessfulLoginService {
 
             String localeKey = recipient.getLangKey();
             if (localeKey == null) {
-                log.warn("User {} has no language set, using default language 'en'", username);
+                log.warn("User {} has no language set, using default language 'en'", lowercaseLoginOrEmail);
                 localeKey = "en";
             }
             Language language = Language.fromLanguageShortName(localeKey);
@@ -141,7 +151,7 @@ public class ArtemisSuccessfulLoginService {
             mailSendingService.buildAndSendAsync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
         }
         catch (EntityNotFoundException ignored) {
-            log.error("User with login {} not found when trying to send newLoginEmail", username);
+            log.error("User with login {} not found when trying to send newLoginEmail", lowercaseLoginOrEmail);
         }
     }
 }
