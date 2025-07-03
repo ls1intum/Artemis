@@ -46,9 +46,9 @@ describe('TutorialGroupRowButtonsComponent', () => {
         fixture.detectChanges();
     });
     const setInputValues = () => {
-        component.course = course;
-        component.tutorialGroup = tutorialGroup;
-        component.isAtLeastInstructor = true;
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('isAtLeastInstructor', true);
     };
 
     it('should open the session management dialog when the respective button is clicked', fakeAsync(() => {

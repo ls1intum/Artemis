@@ -575,6 +575,18 @@ public class IrisSettingsService {
     }
 
     /**
+     * Checks whether an Iris feature is enabled for a course.
+     *
+     * @param type     The Iris feature to check
+     * @param courseId The course to check
+     * @return Whether the Iris feature is enabled for the course
+     */
+    public boolean isEnabledForCourse(IrisSubSettingsType type, Long courseId) {
+        var settings = getCombinedIrisSettingsForCourse(courseId, true);
+        return isFeatureEnabledInSettings(settings, type);
+    }
+
+    /**
      * Checks whether an Iris feature is enabled for an exercise.
      *
      * @param type     The Iris feature to check
