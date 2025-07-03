@@ -29,7 +29,7 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent {
         });
     }
 
-    private initialize(): void {
+    protected initialize(): void {
         super.initialize();
 
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])

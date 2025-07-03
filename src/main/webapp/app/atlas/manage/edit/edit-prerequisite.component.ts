@@ -29,7 +29,7 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent {
         });
     }
 
-    private initialize(): void {
+    protected initialize(): void {
         super.initialize();
 
         this.isLoading = true;

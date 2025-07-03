@@ -21,7 +21,7 @@ export abstract class EditCourseCompetencyComponent {
     lecturesWithLectureUnits: Lecture[] = [];
     courseId: number;
 
-    private initialize(): void {
+    protected initialize(): void {
         this.isLoading = true;
         this.activatedRoute.parent?.parent?.paramMap
             .pipe(
