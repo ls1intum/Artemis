@@ -14,7 +14,7 @@ export class IsLoggedInWithPasskeyGuard implements CanActivate {
      * @return true if the user has logged in with a passkey, false otherwise
      */
     canActivate(): boolean {
-        if (this.accountService.userIdentity?.isLoggedInWithPasskey) {
+        if (this.accountService.userIdentity?.loggedInWithPasskey) {
             return true;
         }
 
