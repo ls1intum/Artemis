@@ -41,7 +41,7 @@ describe('TutorialGroupSessionForm', () => {
 
         fixture = TestBed.createComponent(TutorialGroupSessionFormComponent);
         component = fixture.componentInstance;
-        component.timeZone = 'Europe/Berlin';
+        fixture.componentRef.setInput('timeZone', 'Europe/Berlin');
         fixture.detectChanges();
 
         clickSubmit = generateClickSubmitButton(component, fixture, {
@@ -65,13 +65,13 @@ describe('TutorialGroupSessionForm', () => {
     });
 
     it('should correctly set form values in edit mode', () => {
-        component.isEditMode = true;
+        fixture.componentRef.setInput('isEditMode', true);
         const formData: TutorialGroupSessionFormData = {
             date: validDate,
             startTime: validStartTime,
             endTime: validEndTime,
         };
-        component.formData = formData;
+        fixture.componentRef.setInput('formData', formData);
         component.ngOnChanges();
 
         const formControlNames = ['date', 'startTime', 'endTime'];
