@@ -22,7 +22,7 @@ export class CalendarEventService {
     private currentEventMap = signal<Map<string, CalendarEvent[]>>(new Map());
     readonly eventMap = computed(() => this.filterEventMapByOptions(this.currentEventMap(), this.includedEventFilterOptions()));
 
-    eventFilterOptions: CalendarEventFilterOption[] = ['examEvents', 'lectureEvents', 'tutorialEvents', 'exerciseEvents'];
+    eventFilterOptions: CalendarEventFilterOption[] = ['lectureEvents', 'exerciseEvents', 'tutorialEvents', 'examEvents'];
     includedEventFilterOptions = signal<CalendarEventFilterOption[]>(this.eventFilterOptions);
 
     loadEventsForCurrentMonth(courseId: number, firstDayOfCurrentMonth: Dayjs): Observable<void> {

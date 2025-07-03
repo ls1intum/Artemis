@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,7 +19,7 @@ import { CalendarEventService } from 'app/calendar/shared/service/calendar-event
 })
 export class CalendarMonthPresentationComponent {
     firstDayOfCurrentMonth = input.required<Dayjs>();
-    selectedEvent?: CalendarEvent;
+    selectedEvent = signal<CalendarEvent | undefined>(undefined);
 
     readonly utils = Utils;
     readonly weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
@@ -35,7 +35,11 @@ export class CalendarMonthPresentationComponent {
     }
 
     openPopover(event: CalendarEvent, popover: NgbPopover) {
-        this.selectedEvent = event;
+        if (this.selectedEvent() === event) {
+            this.closePopover();
+            return;
+        }
+        this.selectedEvent.set(event);
         this.popover?.close();
         this.popover = popover;
         popover.open();
@@ -44,6 +48,7 @@ export class CalendarMonthPresentationComponent {
     closePopover() {
         this.popover?.close();
         this.popover = undefined;
+        this.selectedEvent.set(undefined);
     }
 
     private computeWeeksFrom(startDate: Dayjs): Dayjs[][] {

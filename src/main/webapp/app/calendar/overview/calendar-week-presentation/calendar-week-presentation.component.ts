@@ -43,6 +43,10 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
     }
 
     openPopover(event: CalendarEvent, popover: NgbPopover) {
+        if (this.selectedEvent() === event) {
+            this.closePopover();
+            return;
+        }
         this.selectedEvent.set(event);
         this.popover?.close();
         this.popover = popover;
