@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { ExternalDataGuard } from 'app/core/user/settings/external-data.guard';
 
 export const routes: Routes = [
     {
@@ -26,12 +27,13 @@ export const routes: Routes = [
                 },
             },
             {
-                path: 'externalLLMUsage',
+                path: 'external-data',
                 loadComponent: () =>
                     import('app/core/user/settings/external-llm-usage-settings/external-llm-usage-settings.component').then((m) => m.ExternalLlmUsageSettingsComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.externalLLMUsage',
                 },
+                canActivate: [ExternalDataGuard],
             },
             {
                 path: 'profile',

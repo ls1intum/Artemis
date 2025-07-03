@@ -222,8 +222,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                     this.course.set(res.body);
                 }
 
-                this.setupConversationService();
-
                 setTimeout(() => this.refreshingCourse.set(false), 500); // ensure min animation duration
             }),
             // catch 403 errors where registration is possible
