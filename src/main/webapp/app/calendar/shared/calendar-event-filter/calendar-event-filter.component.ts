@@ -1,13 +1,14 @@
 import { Component, HostListener, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-calendar-event-filter',
-    imports: [FaIconComponent, TranslateDirective],
+    imports: [NgbPopover, FaIconComponent, TranslateDirective],
     templateUrl: './calendar-event-filter.component.html',
     styleUrl: './calendar-event-filter.component.scss',
 })

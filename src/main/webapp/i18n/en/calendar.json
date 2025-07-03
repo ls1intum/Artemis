@@ -8,7 +8,7 @@
             "fridayShort": "Fri",
             "saturdayShort": "Sat",
             "sundayShort": "Sun",
-            "eventDescriptor": {
+            "eventSubtypeDescriptor": {
                 "tutorialStart": "Start",
                 "tutorialEnd": "End",
                 "examPublishResults": "Results Out",
@@ -23,12 +23,15 @@
             "lectureFilterOption": "Lecture Events",
             "tutorialFilterOption": "Tutorial Events",
             "examFilterOption": "Exam Events",
-            "exerciseDescriptor": {
-                "programming": "Programming Exercise",
-                "text": "Text Exercise",
-                "fileUpload": "File-Upload Exercise",
-                "modeling": "Modeling Exercise",
-                "quiz": "Quiz Exercise"
+            "eventDescriptor": {
+                "programming": "Programming Exercise Event",
+                "text": "Text Exercise Event",
+                "fileUpload": "File-Upload Exercise Event",
+                "modeling": "Modeling Exercise Event",
+                "quiz": "Quiz Exercise Event",
+                "lecture": "Lecture Event",
+                "tutorial": "Tutorial Event",
+                "exam": "Exam Event"
             }
         }
     }

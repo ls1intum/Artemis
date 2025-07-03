@@ -26,7 +26,7 @@
                     @for (item of getEventsAndPositioningsFor(day); track item.event.id) {
                         @let event = item.event;
                         @let position = item.position;
-                        @let eventDescriptor = utils.getEventDescriptor(event);
+                        @let eventSubtypeDescriptor = utils.getEventSubtypeDescriptor(event);
                         <div
                             class="event"
                             [ngClass]="{
@@ -49,8 +49,8 @@
                             (click)="openPopover(event, popover)"
                             #popover="ngbPopover"
                         >
-                            @if (eventDescriptor) {
-                                {{ eventDescriptor | artemisTranslate }}: {{ event.title }}
+                            @if (eventSubtypeDescriptor) {
+                                {{ eventSubtypeDescriptor | artemisTranslate }}: {{ event.title }}
                             } @else {
                                 {{ event.title }}
                             }

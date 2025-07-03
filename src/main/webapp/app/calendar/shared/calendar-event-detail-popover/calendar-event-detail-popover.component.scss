@@ -23,14 +23,14 @@
         }
     }
 
-    .popup-info-row {
+    .popover-info-row {
         display: flex;
         flex-direction: row;
         align-items: center;
         gap: 0.5rem;
         color: var(--secondary);
 
-        .popup-icon-frame {
+        .popover-icon-frame {
             width: 1rem;
             display: flex;
             justify-content: center;

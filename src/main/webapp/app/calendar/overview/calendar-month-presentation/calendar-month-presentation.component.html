@@ -13,7 +13,7 @@
                         @let events = getEventsOf(day);
                         @if (events.length > 3) {
                             @for (event of utils.limitToLengthTwo(events); track event.id) {
-                                @let eventDescriptor = utils.getEventDescriptor(event);
+                                @let eventSubtypeDescriptor = utils.getEventSubtypeDescriptor(event);
                                 <div
                                     class="event-cell"
                                     [ngClass]="{
@@ -29,8 +29,8 @@
                                     (click)="openPopover(event, popover)"
                                     #popover="ngbPopover"
                                 >
-                                    @if (eventDescriptor) {
-                                        {{ eventDescriptor | artemisTranslate }}: {{ event.title }}
+                                    @if (eventSubtypeDescriptor) {
+                                        {{ eventSubtypeDescriptor | artemisTranslate }}: {{ event.title }}
                                     } @else {
                                         {{ event.title }}
                                     }
@@ -39,7 +39,7 @@
                             <div class="more-events-info">+{{ events.length - 2 }} more</div>
                         } @else {
                             @for (event of events; track event.id) {
-                                @let eventDescriptor = utils.getEventDescriptor(event);
+                                @let eventSubtypeDescriptor = utils.getEventSubtypeDescriptor(event);
                                 <div
                                     class="event-cell"
                                     [ngClass]="{
@@ -56,15 +56,13 @@
                                     #popover="ngbPopover"
                                 >
                                     <div class="event-label">
-                                        @if (eventDescriptor) {
-                                            {{ eventDescriptor | artemisTranslate }}: {{ event.title }}
+                                        @if (eventSubtypeDescriptor) {
+                                            {{ eventSubtypeDescriptor | artemisTranslate }}: {{ event.title }}
                                         } @else {
                                             {{ event.title }}
                                         }
                                     </div>
-                                    @if (event.isExerciseEvent()) {
-                                        <fa-icon [icon]="utils.getIconForExerciseEvent(event)" />
-                                    }
+                                    <fa-icon [icon]="utils.getIconForEvent(event)" />
                                 </div>
                             }
                         }
@@ -76,7 +74,8 @@
 </div>
 
 <ng-template #eventPopover let-pop="popover">
-    @if (selectedEvent) {
-        <jhi-calendar-event-detail-popover [event]="selectedEvent" (onClosePopover)="closePopover()" />
+    @let event = selectedEvent();
+    @if (event) {
+        <jhi-calendar-event-detail-popover [event]="event" (onClosePopover)="closePopover()" />
     }
 </ng-template>

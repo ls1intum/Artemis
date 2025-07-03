@@ -9,12 +9,20 @@
         }
     </div>
 
-    <button type="button" class="btn btn-outline-primary" (click)="toggleOpen()">
+    <button
+        type="button"
+        class="btn btn-outline-primary"
+        [ngbPopover]="popoverContent"
+        popoverClass="filter-popover"
+        [autoClose]="'outside'"
+        triggers="click"
+        placement="bottom-end"
+    >
         Filter
         <fa-icon [icon]="faChevronDown" />
     </button>
 
-    @if (isOpen()) {
+    <ng-template #popoverContent>
         <div class="dropdown">
             @for (option of options; track option) {
                 <div class="form-check dropdown-item">
@@ -23,5 +31,5 @@
                 </div>
             }
         </div>
-    }
+    </ng-template>
 </div>

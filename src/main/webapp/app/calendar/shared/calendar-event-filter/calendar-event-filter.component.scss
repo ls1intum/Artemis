@@ -48,19 +48,6 @@
     cursor: pointer;
 }
 
-.dropdown {
-    position: absolute;
-    width: auto;
-    top: 100%;
-    right: 0;
-    border: 1px solid var(--border-color);
-    background: var(--dropdown-bg);
-    border-radius: 0.125rem;
-    z-index: 2;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    margin-top: 0.25rem;
-}
-
 .dropdown-item {
     padding: 6px 8px;
     cursor: pointer;

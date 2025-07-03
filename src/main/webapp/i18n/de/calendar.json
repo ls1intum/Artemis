@@ -8,7 +8,7 @@
             "fridayShort": "Fr",
             "saturdayShort": "Sa",
             "sundayShort": "So",
-            "eventDescriptor": {
+            "eventSubtypeDescriptor": {
                 "tutorialStart": "Anfang",
                 "tutorialEnd": "Ende",
                 "examPublishResults": "Veröffentlichung Ergebnisse",
@@ -23,12 +23,15 @@
             "lectureFilterOption": "Vorlesungsevents",
             "tutorialFilterOption": "Tutorialevents",
             "examFilterOption": "Klausurevents",
-            "exerciseDescriptor": {
-                "programming": "Programmieraufgabe",
-                "text": "Textaufgabe",
-                "fileUpload": "File-Upload-Aufgabe",
-                "modeling": "Modellieraufgabe",
-                "quiz": "Quizaufgabe"
+            "eventDescriptor": {
+                "programming": "Programmieraufgabenevent",
+                "text": "Textaufgabenevent",
+                "fileUpload": "File-Upload-Aufgabenevent",
+                "modeling": "Modellieraufgabenevent",
+                "quiz": "Quizaufgabenevent",
+                "lecture": "Vorlesungsevent",
+                "tutorial": "Tutorialevent",
+                "exam": "Examevent"
             }
         }
     }
