@@ -545,5 +545,4 @@ public class ProgrammingSubmissionService extends SubmissionService {
         submission.setSubmissionDate(ZonedDateTime.now());
         submissionRepository.save(submission);
     }
-    // TODO: Add back in when we have a way to calculate the lines changed in the submission, I am removing the block temporarily just so the app compiles
 }

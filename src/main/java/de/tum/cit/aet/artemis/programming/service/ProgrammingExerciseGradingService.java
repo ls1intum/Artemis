@@ -305,7 +305,6 @@ public class ProgrammingExerciseGradingService {
                 submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
             }
 
-            // TODO: Add back in when we have a way to calculate the lines changed in the submission, I am removing the block temporarily just so the app compiles
             if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isPracticeMode()) {
                 // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
                 Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), processedResult);
