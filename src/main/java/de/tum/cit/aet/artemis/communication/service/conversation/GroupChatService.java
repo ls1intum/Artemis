@@ -6,6 +6,7 @@ import java.util.Set;
 
 import jakarta.validation.Valid;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class GroupChatService {
 
@@ -53,15 +55,20 @@ public class GroupChatService {
     public GroupChat startGroupChat(Course course, Set<User> startingMembers) {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var participantIds = startingMembers.stream().map(User::getId).toList();
+        // Try to find an existing group chat with exactly the same participants (no more, no less)
         var existingChatBetweenUsers = groupChatRepository.findGroupChatWithExactParticipants(course.getId(), participantIds, startingMembers.size());
         if (existingChatBetweenUsers.isPresent()) {
             GroupChat chat = existingChatBetweenUsers.get();
+            // If the existing chat has no messages and was not created by the current user,
+            // we update the creator to the current user (useful in case the chat was pre-created)
             if (chat.getLastMessageDate() == null && !requestingUser.getId().equals(chat.getCreator().getId())) {
                 chat.setCreator(requestingUser);
                 return groupChatRepository.save(existingChatBetweenUsers.get());
             }
+            // Otherwise, reuse the existing chat as is
             return existingChatBetweenUsers.get();
         }
+        // No existing chat found — create a new one
         var groupChat = new GroupChat();
         groupChat.setCourse(course);
         groupChat.setCreator(requestingUser);

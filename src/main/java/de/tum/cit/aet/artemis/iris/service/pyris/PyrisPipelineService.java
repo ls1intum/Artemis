@@ -17,6 +17,7 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -64,6 +65,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
  * Service responsible for executing the various Pyris pipelines in a type-safe manner.
  * Uses {@link PyrisConnectorService} to execute the pipelines and {@link PyrisJobService} to manage the jobs.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class PyrisPipelineService {
@@ -353,7 +355,7 @@ public class PyrisPipelineService {
         course.setPrerequisites(prerequisites);
         course.setExams(visibleExams);
 
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId,
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(studentId,
                 course.getExercises());
 
         Map<Long, Set<StudentParticipation>> participationMap = new HashMap<>();

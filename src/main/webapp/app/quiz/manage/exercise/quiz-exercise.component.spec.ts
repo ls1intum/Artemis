@@ -141,4 +141,26 @@ describe('QuizExercise Management Component', () => {
         expect(comp.quizExercises).toHaveLength(1);
         expect(comp.quizExercises[0].isAtLeastEditor).toBeTruthy();
     });
+
+    it('should correctly calculate isEditable when loadExercises is called and isQuizEditable returns false', () => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        jest.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [quizExercise],
+                    headers,
+                }),
+            ),
+        );
+
+        jest.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.ACTIVE);
+
+        // WHEN
+        comp.ngOnInit();
+
+        // THEN
+        expect(quizExerciseService.findForCourse).toHaveBeenCalledOnce();
+        expect(comp.quizExercises[0]).toEqual(quizExercise);
+        expect(comp.quizExercises[0].isEditable).toBeFalse();
+    });
 });

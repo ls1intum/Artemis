@@ -21,6 +21,8 @@ import { TutorialGroupFreePeriodFormComponent } from 'app/tutorialgroup/manage/t
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { TutorialGroupFreePeriodsManagementComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
+import { expectComponentRendered } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 
 describe('EditTutorialGroupFreePeriodComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupFreePeriodComponent>;
@@ -56,9 +58,9 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should set form data correctly for editing free days', () => {
-        const formStub: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
+        const formStub = expectComponentRendered<TutorialGroupFreePeriodFormComponent>(fixture, 'jhi-tutorial-free-period-form');
         expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(examplePeriod, 'Europe/Berlin'));
-        expect(formStub.formData).toEqual(component.formData);
+        expect(formStub.formData()).toEqual(component.formData);
     });
 
     it('should set form data correctly for editing free periods', () => {
@@ -70,10 +72,9 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         });
 
         setUpTestComponent(periodToEdit);
-
-        const formStub: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
+        const formStub = expectComponentRendered<TutorialGroupFreePeriodFormComponent>(fixture, 'jhi-tutorial-free-period-form');
         expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodToEdit, 'Europe/Berlin'));
-        expect(formStub.formData).toEqual(component.formData);
+        expect(formStub.formData()).toEqual(component.formData);
     });
 
     it('should set form data correctly for editing free periods within a day', () => {
@@ -84,9 +85,9 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
             reason: 'TestReason',
         });
         setUpTestComponent(periodWithinDayToEdit);
-        const formStub: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
+        const formStub = expectComponentRendered<TutorialGroupFreePeriodFormComponent>(fixture, 'jhi-tutorial-free-period-form');
         expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodWithinDayToEdit, 'Europe/Berlin'));
-        expect(formStub.formData).toEqual(component.formData);
+        expect(formStub.formData()).toEqual(component.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {
@@ -115,6 +116,40 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         expect(updatedStub).toHaveBeenCalledOnce();
         expect(updatedStub).toHaveBeenCalledWith(course.id!, exampleConfiguration.id!, examplePeriod.id!, formDataToTutorialGroupFreePeriodDTO(formData));
         expect(closeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not initialize if inputs are missing', () => {
+        // Do not set any inputs
+        fixture = TestBed.createComponent(EditTutorialGroupFreePeriodComponent);
+        component = fixture.componentInstance;
+        component.initialize();
+        expect(component.isInitialized).toBeFalse();
+    });
+
+    it('should set startTime and endTime correctly when freePeriodWithinDay', () => {
+        // Prepare a period within day
+        const start = dayjs('2021-01-08T12:00:00').tz('UTC');
+        const end = dayjs('2021-01-08T15:00:00').tz('UTC');
+        const periodWithinDay: TutorialGroupFreePeriod = { id: 1, start, end, reason: 'Reason' } as any;
+
+        // Stub static checks
+        jest.spyOn(TutorialGroupFreePeriodsManagementComponent, 'isFreePeriod').mockReturnValue(false);
+        jest.spyOn(TutorialGroupFreePeriodsManagementComponent, 'isFreePeriodWithinDay').mockReturnValue(true);
+
+        // Set inputs and initialize
+        fixture = TestBed.createComponent(EditTutorialGroupFreePeriodComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('tutorialGroupFreePeriod', periodWithinDay);
+        fixture.componentRef.setInput('tutorialGroupsConfiguration', { id: 1 } as TutorialGroupsConfiguration);
+        component.initialize();
+
+        // Expect formData startTime and endTime hours match the UTC→Berlin hour
+        const berlinStartHour = start.tz('Europe/Berlin').hour();
+        const berlinEndHour = end.tz('Europe/Berlin').hour();
+        expect(component.formData.startTime!.getHours()).toBe(berlinStartHour);
+        expect(component.formData.endTime!.getHours()).toBe(berlinEndHour);
+        expect(component.isInitialized).toBeTrue();
     });
 
     // Helper functions

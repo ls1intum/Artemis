@@ -272,18 +272,19 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 .flatMap(
                     (participation) =>
                         participation.submissions?.flatMap((submission) => {
-                            submission.results?.forEach((result) => {
-                                result.submission = submission;
-                            });
-                            submission.participation = participation;
-                            return submission.results ?? [];
+                            return (
+                                submission.results?.map((result) => {
+                                    result.submission = submission;
+                                    result.submission.participation = participation;
+                                    return result;
+                                }) ?? []
+                            );
                         }) ?? [],
                 )
                 .sort(this.resultSortFunction)
                 .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && !result.successful));
         }
     }
-
     private resultSortFunction = (a: Result, b: Result) => {
         const aValue = dayjs(a.completionDate!).valueOf();
         const bValue = dayjs(b.completionDate!).valueOf();

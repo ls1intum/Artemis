@@ -6,16 +6,19 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Optional;
 
 import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -31,44 +34,63 @@ import de.tum.cit.aet.artemis.core.util.ClientEnvironment;
  */
 @Profile(PROFILE_CORE)
 @Service
+@Lazy
 public class ArtemisSuccessfulLoginService {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisSuccessfulLoginService.class);
 
-    @Value("${artemis.user-management.password-reset.links.en}")
-    private String passwordResetLinkEnUrl;
+    private final URL artemisServerUrl;
 
-    @Value("${artemis.user-management.password-reset.links.de}")
-    private String passwordResetLinkDeUrl;
+    private final String passwordResetLinkEnUrl;
 
-    @Value("${server.url}")
-    private URL artemisServerUrl;
+    private final String passwordResetLinkDeUrl;
 
     private final UserRepository userRepository;
 
     private final MailSendingService mailSendingService;
 
+    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
+
+    public ArtemisSuccessfulLoginService(UserRepository userRepository, MailSendingService mailSendingService,
+            GlobalNotificationSettingRepository globalNotificationSettingRepository, @Value("${server.url}") URL artemisServerUrl,
+            @Value("${artemis.user-management.password-reset.links.en:#{null}}") Optional<String> passwordResetLinkEnUrl,
+            @Value("${artemis.user-management.password-reset.links.de:#{null}}") Optional<String> passwordResetLinkDeUrl) {
+        this.userRepository = userRepository;
+        this.mailSendingService = mailSendingService;
+        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
+        this.artemisServerUrl = artemisServerUrl;
+
+        this.passwordResetLinkEnUrl = getResetLinkOrDefault(passwordResetLinkEnUrl);
+        this.passwordResetLinkDeUrl = getResetLinkOrDefault(passwordResetLinkDeUrl);
+    }
+
     /**
-     * Ensures that the password reset links for both English and German are initialized properly.
-     * If the configured links are empty or set to a placeholder, it uses the default link, the ArtemisServerURL/account/reset/request.
+     * Returns a non-empty, non-placeholder reset link.
+     *
+     * @param resetLink The configured reset link.
+     * @return The reset link, or if the configured link is empty or set to a placeholder, it uses the default link.
      */
-    @PostConstruct
-    public void ensurePasswordResetLinksAreInitializedProperly() {
-        String defaultPasswordResetLink = artemisServerUrl + "/account/reset/request";
-        String configurationPlaceholder = "<link>";
-        if (passwordResetLinkEnUrl == null || passwordResetLinkEnUrl.isEmpty() || passwordResetLinkEnUrl.equals(configurationPlaceholder)) {
-            log.info("No password reset link configured for English, using default link {}", defaultPasswordResetLink);
-            passwordResetLinkEnUrl = defaultPasswordResetLink;
+    private String getResetLinkOrDefault(final Optional<String> resetLink) {
+        final String defaultPasswordResetLink = artemisServerUrl + "/account/reset/request";
+
+        if (isEmptyOrDefaultLink(resetLink)) {
+            log.info("No password reset link configured, using default link {}", defaultPasswordResetLink);
+            return defaultPasswordResetLink;
         }
-        if (passwordResetLinkDeUrl == null || passwordResetLinkDeUrl.isEmpty() || passwordResetLinkDeUrl.equals(configurationPlaceholder)) {
-            log.info("No password reset link configured for German, using default link {}", defaultPasswordResetLink);
-            passwordResetLinkDeUrl = defaultPasswordResetLink;
+        else {
+            return resetLink.orElseThrow();
         }
     }
 
-    public ArtemisSuccessfulLoginService(UserRepository userRepository, MailSendingService mailSendingService) {
-        this.userRepository = userRepository;
-        this.mailSendingService = mailSendingService;
+    private boolean isEmptyOrDefaultLink(final Optional<String> link) {
+        if (link.isEmpty()) {
+            return true;
+        }
+        else {
+            final String configurationPlaceholder = "<link>";
+            final String configuredLink = link.get();
+            return configuredLink.isBlank() || configurationPlaceholder.equals(configuredLink);
+        }
     }
 
     /**
@@ -83,6 +105,10 @@ public class ArtemisSuccessfulLoginService {
     public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
         try {
             User recipient = userRepository.getUserByLoginElseThrow(username);
+
+            if (!globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.NEW_LOGIN)) {
+                return;
+            }
 
             String localeKey = recipient.getLangKey();
             if (localeKey == null) {
