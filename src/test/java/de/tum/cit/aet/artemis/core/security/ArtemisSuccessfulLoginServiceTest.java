@@ -61,7 +61,7 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         artemisSuccessfulLoginService.sendLoginEmail(user.getEmail(), AuthenticationMethod.PASSWORD, null);
         await().atMost(5, SECONDS)
-            .untilAsserted(() -> verify(mailSendingService).buildAndSendAsync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
+                .untilAsserted(() -> verify(mailSendingService).buildAndSendAsync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
     }
 
     @Test

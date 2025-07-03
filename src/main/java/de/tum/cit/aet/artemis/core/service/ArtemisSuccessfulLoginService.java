@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Optional;
 
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
@@ -26,6 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.util.ClientEnvironment;
 
@@ -110,9 +110,10 @@ public class ArtemisSuccessfulLoginService {
         try {
             User recipient;
 
-            if (SecurityUtils.isEmail(lowercaseLoginOrEmail)){
+            if (SecurityUtils.isEmail(lowercaseLoginOrEmail)) {
                 recipient = userRepository.getUserByEmailElseThrow(lowercaseLoginOrEmail);
-            } else {
+            }
+            else {
                 recipient = userRepository.getUserByLoginElseThrow(lowercaseLoginOrEmail);
             }
 
