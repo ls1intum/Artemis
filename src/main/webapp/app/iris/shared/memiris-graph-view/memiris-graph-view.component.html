@@ -13,7 +13,9 @@
         </div>
 
         @if (loading()) {
-            <jhi-loading-indicator-container [isLoading]="true" />
+            <div class="loading-indicator">
+                <jhi-loading-indicator-container [isLoading]="true" />
+            </div>
         } @else if (!nodes || nodes.length === 0) {
             <div class="empty-state">
                 <fa-icon [icon]="faHexagonNodes" class="empty-state-icon" />
@@ -21,7 +23,7 @@
                 <p>There are no memories or learnings to display.</p>
             </div>
         } @else {
-            <svg #svgContainer class="graph-svg"></svg>
+            <svg #svgContainer class="memiris-graph-svg"></svg>
         }
     </div>
 

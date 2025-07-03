@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MemirisGraphViewComponent } from 'app/iris/shared/memiris-graph-view/memiris-graph-view.component';
 import { MemirisConnectionType, MemirisGraphData, MemirisGraphFilters, MemirisLearning, MemirisMemory, MemirisMemoryConnection } from 'app/iris/shared/entities/memiris.model';
@@ -15,14 +15,11 @@ export class MemirisAdminComponent implements OnInit {
     graphData?: MemirisGraphData;
     readonly filters = signal(new MemirisGraphFilters());
 
-    constructor() {
-        effect(() => {
-            // eslint-disable-next-line no-undef
-            console.log(this.filters);
-        });
-    }
-
     ngOnInit(): void {
+        setTimeout(() => {
+            this.graphData = new MemirisGraphData([], [], []);
+        }, 3000);
+
         // Initialize the graph data with mock data after 5 seconds
         setTimeout(() => {
             const memories = [];
@@ -92,7 +89,7 @@ export class MemirisAdminComponent implements OnInit {
             });
 
             this.graphData = new MemirisGraphData(memories, learnings, connections);
-        }, 5000);
+        }, 6000);
     }
 
     private mockLearning(title: string): MemirisLearning {

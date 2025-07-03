@@ -192,6 +192,9 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
         this.width = element.clientWidth || 800;
         this.height = element.clientHeight || 600;
 
+        // Initialize nodes in a circular layout to prevent initial overlapping
+        this.initializeCircularLayout();
+
         // Create SVG element
         this.svg = select(element).attr('width', '100%').attr('height', '100%').attr('viewBox', [0, 0, this.width, this.height]);
 
@@ -218,7 +221,6 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
                 'M97.141,225.92c0-8.095,3.091-16.192,9.259-22.366L300.689,9.27c12.359-12.359,32.397-12.359,44.751,0 c12.354,12.354,12.354,32.388,0,44.748L173.525,225.92l171.903,171.909c12.354,12.354,12.354,32.391,0,44.744 c-12.354,12.365-32.386,12.365-44.745,0l-194.29-194.281C100.226,242.115,97.141,234.018,97.141,225.92z',
             )
             .attr('fill', '#6c8ebf')
-            // Rotate the arrow to point in the right direction (arrow points left by default)
             .attr('transform', 'rotate(180, 225.92, 225.92)');
 
         // Setup zoom behavior
@@ -302,8 +304,8 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
             .attr('class', (link: MemirisSimulationLink) => this.getLinkClasses(link))
             .attr('stroke', (link: MemirisSimulationLink) => this.getLinkColor(link))
             .attr('stroke-width', 1.5)
+            // Add arrow marker for memory-memory CREATED_FROM connections
             .attr('marker-end', (link: MemirisSimulationLink) => {
-                // Add arrow marker only for CREATED_FROM connection type
                 if (link instanceof MemirisSimulationLinkMemoryMemory && link.connection.connection_type === MemirisConnectionType.CREATED_FROM) {
                     return 'url(#arrowhead)';
                 }
@@ -693,5 +695,29 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
             console.warn('Unknown link type:', link);
             return 100;
         }
+    }
+
+    /**
+     * Initializes the nodes in a circular layout to prevent initial overlapping.
+     * This method positions the nodes in a circle based on their index,
+     * spreading them out evenly around the circumference.
+     */
+    private initializeCircularLayout(): void {
+        const radius = Math.min(this.width, this.height); // Radius of the circle
+        const centerX = this.width / 2;
+        const centerY = this.height / 2;
+
+        this.nodes.forEach((node, index) => {
+            // Calculate the angle for this node
+            const angle = (index / this.nodes.length) * 2 * Math.PI;
+
+            // Calculate x and y positions based on the angle
+            node.x = centerX + radius * Math.cos(angle);
+            node.y = centerY + radius * Math.sin(angle);
+
+            // Reset fixed positions
+            node.fx = null;
+            node.fy = null;
+        });
     }
 }
