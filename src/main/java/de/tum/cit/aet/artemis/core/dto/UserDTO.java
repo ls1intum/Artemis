@@ -262,7 +262,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.isLoggedInWithPasskey = isLoggedInWithPasskey;
     }
 
-    public boolean isLoggedInWithPasskey() {
+    public boolean getIsLoggedInWithPasskey() {
         return isLoggedInWithPasskey;
     }
 

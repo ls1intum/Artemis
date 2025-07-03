@@ -191,7 +191,9 @@ public class PublicAccountResource {
         boolean isLoggedInWithPasskey = false;
         if (passkeyEnabled) {
             JwtWithSource jwtWithSource = extractValidJwt(request, this.tokenProvider);
-            isLoggedInWithPasskey = Objects.equals(this.tokenProvider.getAuthenticationMethod(Objects.requireNonNull(jwtWithSource).jwt()), AuthenticationMethod.PASSKEY);
+            if (jwtWithSource != null) {
+                isLoggedInWithPasskey = Objects.equals(this.tokenProvider.getAuthenticationMethod(jwtWithSource.jwt()), AuthenticationMethod.PASSKEY);
+            }
         }
 
         user.setVisibleRegistrationNumber();

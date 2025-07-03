@@ -233,6 +233,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
         assertThat(account).isNotNull();
         assertThat(account.getAskToSetupPasskey()).isTrue();
+        assertThat(account.getIsLoggedInWithPasskey()).isFalse();
     }
 
     @Test
