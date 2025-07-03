@@ -34,7 +34,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /**
      * The URL of the video to play (required input)
      */
-    videoUrl = input.required<string>();
+    videoUrl = input<string | undefined>();
 
     /**
      * An array of transcript segments to highlight and sync
