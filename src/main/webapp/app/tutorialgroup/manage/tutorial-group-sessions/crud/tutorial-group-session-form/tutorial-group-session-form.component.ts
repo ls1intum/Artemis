@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbTimeAdapter, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
@@ -27,17 +27,16 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
     private fb = inject(FormBuilder);
     protected readonly DateTimePickerType = DateTimePickerType;
 
-    @Input()
-    formData: TutorialGroupSessionFormData = {
+    readonly formData = input<TutorialGroupSessionFormData>({
         date: undefined,
         startTime: undefined,
         endTime: undefined,
         location: undefined,
-    };
+    });
 
-    @Input() timeZone: string;
-    @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<TutorialGroupSessionFormData> = new EventEmitter<TutorialGroupSessionFormData>();
+    readonly timeZone = input<string>();
+    readonly isEditMode = input(false);
+    readonly formSubmitted = output<TutorialGroupSessionFormData>();
     faCalendarAlt = faCalendarAlt;
 
     form: FormGroup;
@@ -68,8 +67,9 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
 
     ngOnChanges() {
         this.initializeForm();
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+        const formData = this.formData();
+        if (this.isEditMode() && formData) {
+            this.setFormValues(formData);
         }
     }
 
