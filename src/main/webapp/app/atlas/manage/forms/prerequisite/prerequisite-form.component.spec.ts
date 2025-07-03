@@ -32,6 +32,7 @@ import { getComponentInstanceFromFixture } from 'test/helpers/utils/general-test
         [isEditMode]="isEditMode"
         (formSubmitted)="formSubmitted($event)"
         [courseId]="courseId"
+        [hasCancelButton]="hasCancelButton"
         [lecturesOfCourseWithLectureUnits]="lecturesOfCourseWithLectureUnits"
         [prerequisite]="prerequisite"
     />`,
@@ -43,6 +44,7 @@ class WrapperComponent {
     courseId: number;
     lecturesOfCourseWithLectureUnits: Lecture[];
     prerequisite: Prerequisite;
+    hasCancelButton = true;
     formSubmitted(formData: CourseCompetencyFormData) {}
 }
 
@@ -207,7 +209,8 @@ describe('PrerequisiteFormComponent', () => {
             ),
         );
         component.isEditMode = true;
-        prerequisiteFormComponent.formData().title = 'initialName';
+        const updatedPrerequisite = { ...component.prerequisite, title: 'initialName' };
+        component.prerequisite = updatedPrerequisite;
 
         fixture.detectChanges();
 

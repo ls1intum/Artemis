@@ -1,6 +1,6 @@
-import { Component, DestroyRef, effect, inject, input, model, output } from '@angular/core';
+import { Component, DestroyRef, inject, input, model, output } from '@angular/core';
 import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
-import { Subject, debounceTime } from 'rxjs';
+import { Subject, Subscription, debounceTime } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -18,14 +18,14 @@ export class StandardizedCompetencyFilterComponent {
     knowledgeAreaFilterChange = output<KnowledgeAreaDTO>();
 
     protected titleFilterSubject = new Subject<void>();
+    private titleFilterSubscription?: Subscription;
 
     constructor() {
-        effect(() => {
-            this.titleFilterSubject.pipe(debounceTime(500)).subscribe(() => this.competencyTitleFilterChange.emit(this.competencyTitleFilter() ?? ''));
-        });
+        this.titleFilterSubscription = this.titleFilterSubject.pipe(debounceTime(500)).subscribe(() => this.competencyTitleFilterChange.emit(this.competencyTitleFilter() ?? ''));
 
         inject(DestroyRef).onDestroy(() => {
-            this.titleFilterSubject.unsubscribe();
+            this.titleFilterSubject.complete();
+            this.titleFilterSubscription?.unsubscribe();
         });
     }
 }
