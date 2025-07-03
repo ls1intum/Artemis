@@ -5,7 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import {
@@ -24,10 +24,13 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/shared/service/file.service';
+import { of, throwError } from 'rxjs';
+import { TranscriptSegment } from 'app/lecture/shared/video-player/video-player.component';
 
 describe('AttachmentVideoUnitComponent', () => {
     let scienceService: ScienceService;
     let fileService: FileService;
+    let httpClient: HttpClient;
 
     let component: AttachmentVideoUnitComponent;
     let fixture: ComponentFixture<AttachmentVideoUnitComponent>;
@@ -42,6 +45,7 @@ describe('AttachmentVideoUnitComponent', () => {
             name: 'test',
             link: '/path/to/file/test.pdf',
         },
+        videoSource: '', // default, override in tests
     };
 
     beforeEach(async () => {
@@ -49,10 +53,7 @@ describe('AttachmentVideoUnitComponent', () => {
             imports: [AttachmentVideoUnitComponent],
             providers: [
                 provideHttpClient(),
-                {
-                    provide: TranslateService,
-                    useClass: MockTranslateService,
-                },
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FileService, useClass: MockFileService },
                 MockProvider(ScienceService),
             ],
@@ -60,6 +61,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
         scienceService = TestBed.inject(ScienceService);
         fileService = TestBed.inject(FileService);
+        httpClient = TestBed.inject(HttpClient);
 
         fixture = TestBed.createComponent(AttachmentVideoUnitComponent);
         component = fixture.componentInstance;
@@ -149,5 +151,41 @@ describe('AttachmentVideoUnitComponent', () => {
         component.handleDownload();
 
         expect(onCompletionEmitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should fetch transcript when expanded and videoSource is .m3u8', async () => {
+        component.lectureUnit().videoSource = 'https://example.com/video.m3u8';
+        const segmentsMock: TranscriptSegment[] = [{ startTime: 0, endTime: 5, text: 'Hello World', slideNumber: 1 }];
+        const httpSpy = jest.spyOn(httpClient, 'get').mockReturnValue(of({ segments: segmentsMock }));
+
+        component.toggleCollapse(false); // expand
+        fixture.detectChanges();
+
+        expect(httpSpy).toHaveBeenCalledWith('/api/lecture/lecture-unit/1/transcript');
+        expect(component.transcriptSegments()).toEqual(segmentsMock);
+    });
+
+    it('should not fetch transcript if videoSource is not .m3u8', async () => {
+        component.lectureUnit().videoSource = 'https://youtube.com/watch?v=abc123';
+        const httpSpy = jest.spyOn(httpClient, 'get');
+
+        component.toggleCollapse(false); // expand
+        fixture.detectChanges();
+
+        expect(httpSpy).not.toHaveBeenCalled();
+        expect(component.transcriptSegments()).toEqual([]);
+    });
+
+    it('should handle transcript fetch error gracefully', async () => {
+        component.lectureUnit().videoSource = 'https://example.com/video.m3u8';
+        const httpSpy = jest.spyOn(httpClient, 'get').mockReturnValue(throwError(() => new Error('Failed')));
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        component.toggleCollapse(false); // expand
+        fixture.detectChanges();
+
+        expect(httpSpy).toHaveBeenCalledWith('/api/lecture/lecture-unit/1/transcript');
+        expect(component.transcriptSegments()).toEqual([]);
+        expect(errorSpy).toHaveBeenCalledWith('Transcript fetch failed', expect.any(Error));
     });
 });
