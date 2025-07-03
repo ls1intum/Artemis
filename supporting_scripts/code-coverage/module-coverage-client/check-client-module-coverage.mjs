@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
+import path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -143,6 +144,23 @@ const ALLOWED_DEVIATION_BEFORE_FAILURE_IS_DISPLAYED = 0.09
 
 const roundToTwoDigits = (value) => Math.round(value * 100) / 100;
 
+const printDirectories = (dir, level = 0, maxLevel = 3) => {
+    if (level > maxLevel) return;
+
+    try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            console.log(`${'  '.repeat(level)}- ${entry.name}`);
+            if (entry.isDirectory()) {
+                printDirectories(fullPath, level + 1, maxLevel);
+            }
+        }
+    } catch (error) {
+        console.error(`Error reading directory ${dir}:`, error.message);
+    }
+};
+
 const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
     let failed = false;
     console.log(`\nModule: ${module}`);
@@ -158,22 +176,9 @@ const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
         const status = `${higherThanExpected ? '⬆️' : ''} ${pass ? '✅' : passWithWarning ? '⚠️' : '❌'}`;
         console.log(`${status.padStart(6)} ${metric.padEnd(12)}: ${roundedPercentage.toFixed(2).padStart(6)}%  (need ≥ ${roundedThreshold.toFixed(2)}%)`);
         if (!pass && !passWithWarning) {
-            // Check if the user has changed any files in the module
-            const gitDiffCommand = `git diff --name-only -- src/main/webapp/app/${module}/`;
-            let moduleChanged = false;
-
-            try {
-                const changedFiles = execSync(gitDiffCommand, { encoding: 'utf-8' }).trim();
-                moduleChanged = changedFiles.length > 0;
-            } catch (error) {
-                console.error('❌ Failed to check for changed files:', error);
-            }
-
-            if (moduleChanged) {
-                console.warn(`⚠️  Module "${module}" has changes in the following files:\n${changedFiles}`);
-            } else {
-                console.warn(`⚠️  Module "${module}" has no changes.`);
-            }
+            const currentDir = process.cwd();
+            console.log(`Current Directory: ${currentDir}`);
+            printDirectories(currentDir);
 
             failed = true;
         }
