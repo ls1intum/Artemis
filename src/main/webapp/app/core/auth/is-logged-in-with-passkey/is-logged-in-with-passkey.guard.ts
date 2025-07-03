@@ -1,26 +1,24 @@
 import { Injectable, inject } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
-
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable({
     providedIn: 'root',
 })
 export class IsLoggedInWithPasskeyGuard implements CanActivate {
-    private profileService = inject(ProfileService);
-    private router = inject(Router);
+    private readonly accountService = inject(AccountService);
+    private readonly router = inject(Router);
 
     /**
      * Check if the client can activate a route.
      * @return true if the user has logged in with a passkey, false otherwise
      */
     canActivate(): boolean {
-        // TODO
-        if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
-            this.router.navigate(['/']);
-            return false;
+        if (this.accountService.userIdentity?.isLoggedInWithPasskey) {
+            return true;
         }
-        return true;
+
+        this.router.navigate(['/']); // TODO redirect to a page that explains to login with passkey
+        return false;
     }
 }

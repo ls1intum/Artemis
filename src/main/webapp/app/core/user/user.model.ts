@@ -25,6 +25,8 @@ export class User extends Account {
      */
     public askToSetupPasskey?: boolean;
 
+    public isLoggedInWithPasskey?: boolean;
+
     constructor(
         id?: number,
         login?: string,
@@ -45,6 +47,7 @@ export class User extends Account {
         vcsAccessTokenExpiryDate?: string,
         externalLLMUsageAccepted?: dayjs.Dayjs,
         askToSetupPasskey?: boolean,
+        isLoggedInWithPasskey?: boolean,
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
         this.id = id;
@@ -58,6 +61,7 @@ export class User extends Account {
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
         this.askToSetupPasskey = askToSetupPasskey;
+        this.isLoggedInWithPasskey = isLoggedInWithPasskey;
     }
 }
 /**
