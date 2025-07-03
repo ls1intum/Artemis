@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -102,7 +103,7 @@ const moduleThresholds = {
         lines:      92.20,
     },
     programming: {
-        statements: 88.75,
+        statements: 90.75,
         branches:   76.65,
         functions:  80.97,
         lines:      88.86,
@@ -129,7 +130,7 @@ const moduleThresholds = {
         statements: 91.31, // +0.1 (bump up)
         branches:   75.90, // -0.05 (warning)
         functions:  83.60, // -0.09 (warning)
-        lines:      91.30,
+        lines:      95.30, // should fail but nothing changed in module
     },
 };
 
@@ -157,6 +158,23 @@ const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
         const status = `${higherThanExpected ? '⬆️' : ''} ${pass ? '✅' : passWithWarning ? '⚠️' : '❌'}`;
         console.log(`${status.padStart(6)} ${metric.padEnd(12)}: ${roundedPercentage.toFixed(2).padStart(6)}%  (need ≥ ${roundedThreshold.toFixed(2)}%)`);
         if (!pass && !passWithWarning) {
+            // Check if the user has changed any files in the module
+            const gitDiffCommand = `git diff --name-only -- src/main/webapp/app/${module}/`;
+            let moduleChanged = false;
+
+            try {
+                const changedFiles = execSync(gitDiffCommand, { encoding: 'utf-8' }).trim();
+                moduleChanged = changedFiles.length > 0;
+            } catch (error) {
+                console.error('❌ Failed to check for changed files:', error);
+            }
+
+            if (moduleChanged) {
+                console.warn(`⚠️  Module "${module}" has changes in the following files:\n${changedFiles}`);
+            } else {
+                console.warn(`⚠️  Module "${module}" has no changes.`);
+            }
+
             failed = true;
         }
     }
