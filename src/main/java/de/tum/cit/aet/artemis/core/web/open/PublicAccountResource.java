@@ -19,6 +19,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -179,8 +182,10 @@ public class PublicAccountResource {
         if (askUsersToSetupPasskey && passkeyEnabled && passkeyCredentialsRepository.isPresent()) {
             shouldPromptUserToSetupPasskey = !this.passkeyCredentialsRepository.orElseThrow().existsByUserId(user.getId());
         }
+        boolean isLoggedInWithPasskey = false;
         if (passkeyEnabled) {
-            // TODO check if logged in via passkey or not
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            isLoggedInWithPasskey = authentication instanceof WebAuthnAuthentication;
         }
         user.setVisibleRegistrationNumber();
         UserDTO userDTO = new UserDTO(user);
@@ -188,6 +193,7 @@ public class PublicAccountResource {
         userDTO.setVcsAccessToken(user.getVcsAccessToken());
         userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
         userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
+        userDTO.setIsLoggedInWithPasskey(isLoggedInWithPasskey);
         log.debug("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
         return ResponseEntity.ok(userDTO);
     }
