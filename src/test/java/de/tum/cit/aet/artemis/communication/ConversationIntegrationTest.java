@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -32,7 +33,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -44,9 +44,6 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -624,5 +621,24 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         return List.of(Arguments.of(CourseInformationSharingConfiguration.DISABLED, HttpStatus.FORBIDDEN),
                 Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING, HttpStatus.OK),
                 Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, HttpStatus.OK));
+    }
+
+    @ParameterizedTest
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_AND_MESSAGING", "COMMUNICATION_ONLY" })
+    void testEnableCommunication(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
+        enableCommunicationRESTCall(exampleCourseId, courseInformationSharingConfiguration);
+        Course updatedCourse = courseRepository.findByIdElseThrow(exampleCourseId);
+        assertThat(updatedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
+    }
+
+    private void enableCommunicationRESTCall(long courseId, CourseInformationSharingConfiguration configuration) throws Exception {
+        if (CourseInformationSharingConfiguration.COMMUNICATION_ONLY == configuration) {
+            request.put("/api/communication/courses/" + courseId + "/enable", null, HttpStatus.OK);
+        }
+        else if (CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING == configuration) {
+            request.put("/api/communication/courses/" + courseId + "/enable?withMessaging=true", null, HttpStatus.OK);
+        }
     }
 }

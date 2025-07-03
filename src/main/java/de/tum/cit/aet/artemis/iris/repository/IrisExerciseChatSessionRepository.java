@@ -5,6 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -54,6 +55,9 @@ public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<
             ORDER BY s.creationDate DESC
             """)
     List<IrisProgrammingExerciseChatSession> findSessionsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = "messages")
+    Optional<IrisProgrammingExerciseChatSession> findSessionWithMessagesByIdAndUserId(Long id, Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
     List<IrisProgrammingExerciseChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);

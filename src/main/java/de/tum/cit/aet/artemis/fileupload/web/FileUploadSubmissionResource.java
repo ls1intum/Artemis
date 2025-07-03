@@ -300,7 +300,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("participations/{participationId}/file-upload-editor")
     @EnforceAtLeastStudent
     public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
         FileUploadExercise fileUploadExercise;
         if (participation.getExercise() instanceof FileUploadExercise) {
             fileUploadExercise = (FileUploadExercise) participation.getExercise();

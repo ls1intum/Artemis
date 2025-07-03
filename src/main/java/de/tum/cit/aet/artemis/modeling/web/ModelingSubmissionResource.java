@@ -334,13 +334,14 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * </ul>
      * Upon successful validation, it returns a {@link ValidationResult} containing the participation, the modeling exercise, and the permission flag.
      *
-     * @param studentParticipation the student participation to validate
+     * @param participationId the ID of the student participation to validate
      * @return a {@link ValidationResult} containing the validated participation, modeling exercise, and permission flag
      * @throws BadRequestAlertException   if the participation has a null exercise or if the exercise is not a {@link ModelingExercise}
      * @throws AccessForbiddenException   if the user does not have the required access rights to view the participation
      * @throws ExamApiNotPresentException if the exam access API is required but not present
      */
-    private ValidationResult validateParticipation(StudentParticipation studentParticipation) {
+    private ValidationResult validateParticipation(long participationId) {
+        var studentParticipation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var exercise = studentParticipation.getExercise();
 
@@ -376,7 +377,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> getLatestModelingSubmission(@PathVariable long participationId) {
         log.debug("REST request to get latest modeling submission for participation: {}", participationId);
-        var validationResult = validateParticipation(studentParticipationRepository.findByIdWithLatestLegalSubmissionResultFeedbackElseThrow(participationId));
+        var validationResult = validateParticipation(participationId);
         var studentParticipation = validationResult.studentParticipation;
         var exercise = validationResult.modelingExercise;
 
@@ -432,7 +433,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<List<Submission>> getSubmissionsWithResultsForParticipation(@PathVariable long participationId) {
         log.debug("REST request to get submissions with results for participation: {}", participationId);
 
-        var validationResult = validateParticipation(studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId));
+        var validationResult = validateParticipation(participationId);
         var studentParticipation = validationResult.studentParticipation;
 
         // Get the submissions associated with the participation
