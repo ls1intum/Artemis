@@ -5,7 +5,7 @@ import { MockDirective } from 'ng-mocks';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { signal } from '@angular/core';
+import { InputSignal, signal } from '@angular/core';
 
 describe('TaxonomySelectComponent', () => {
     let componentFixture: ComponentFixture<TaxonomySelectComponent>;
@@ -21,7 +21,7 @@ describe('TaxonomySelectComponent', () => {
             .then(() => {
                 componentFixture = TestBed.createComponent(TaxonomySelectComponent);
                 component = componentFixture.componentInstance;
-                component.form = signal(new FormControl<CompetencyTaxonomy | undefined>(undefined));
+                component.form = signal(new FormControl<CompetencyTaxonomy | undefined>(undefined)) as InputSignal<FormControl<any>>;
             });
     });
 

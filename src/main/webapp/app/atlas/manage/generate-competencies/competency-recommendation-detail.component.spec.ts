@@ -61,9 +61,9 @@ describe('CompetencyRecommendationDetailComponent', () => {
                 }),
                 viewed: new FormControl(false, { nonNullable: true }),
             }),
-        );
-        component.index = signal(0) as InputSignal<number>;
-    }) as InputSignal<FormGroup<CompetencyFormControlsWithViewed>>;
+        ) as unknown as InputSignal<FormGroup<CompetencyFormControlsWithViewed>>;
+        component.index = signal(0) as unknown as InputSignal<number>;
+    });
 
     afterEach(() => {
         jest.restoreAllMocks();
