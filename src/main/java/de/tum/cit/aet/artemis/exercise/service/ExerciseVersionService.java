@@ -99,43 +99,63 @@ public class ExerciseVersionService {
 
         // Add programming exercise specific fields
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            try {
-                // Get template commit hash
-                if (programmingExercise.getTemplateParticipation() != null && programmingExercise.getTemplateParticipation().getVcsRepositoryUri() != null) {
-                    var templateCommitHash = gitService.getLastCommitHash(programmingExercise.getTemplateParticipation().getVcsRepositoryUri());
-                    if (templateCommitHash != null) {
-                        builder.templateCommitId(templateCommitHash.getName());
-                    }
-                }
-
-                // Get solution commit hash
-                if (programmingExercise.getSolutionParticipation() != null && programmingExercise.getSolutionParticipation().getVcsRepositoryUri() != null) {
-                    var solutionCommitHash = gitService.getLastCommitHash(programmingExercise.getSolutionParticipation().getVcsRepositoryUri());
-                    if (solutionCommitHash != null) {
-                        builder.solutionCommitId(solutionCommitHash.getName());
-                    }
-                }
-
-                // Get test commit hash
-                if (programmingExercise.getTestRepositoryUri() != null) {
-                    var testCommitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUri());
-                    if (testCommitHash != null) {
-                        builder.testsCommitId(testCommitHash.getName());
-                    }
-                }
-            }
-            catch (Exception e) {
-                log.warn("Error retrieving commit hashes for exercise {}: {}", exercise.getTitle(), e.getMessage());
-            }
+            addProgrammingExerciseFields(programmingExercise, builder);
         }
 
         // Add quiz exercise specific fields
         if (exercise instanceof QuizExercise quizExercise) {
-            builder.isOpenForPractice(quizExercise.isIsOpenForPractice()).randomizeQuestionOrder(quizExercise.isRandomizeQuestionOrder())
-                    .allowedNumberOfAttempts(quizExercise.getAllowedNumberOfAttempts()).duration(quizExercise.getDuration());
+            addQuizExerciseFields(quizExercise, builder);
         }
 
         return builder.build();
+    }
+
+    /**
+     * Adds programming exercise specific fields to the builder.
+     *
+     * @param programmingExercise the programming exercise
+     * @param builder             the builder to add fields to
+     */
+    private void addProgrammingExerciseFields(ProgrammingExercise programmingExercise, ExerciseVersionContent.Builder builder) {
+        try {
+            // Get template commit hash
+            if (programmingExercise.getTemplateParticipation() != null && programmingExercise.getTemplateParticipation().getVcsRepositoryUri() != null) {
+                var templateCommitHash = gitService.getLastCommitHash(programmingExercise.getTemplateParticipation().getVcsRepositoryUri());
+                if (templateCommitHash != null) {
+                    builder.templateCommitId(templateCommitHash.getName());
+                }
+            }
+
+            // Get solution commit hash
+            if (programmingExercise.getSolutionParticipation() != null && programmingExercise.getSolutionParticipation().getVcsRepositoryUri() != null) {
+                var solutionCommitHash = gitService.getLastCommitHash(programmingExercise.getSolutionParticipation().getVcsRepositoryUri());
+                if (solutionCommitHash != null) {
+                    builder.solutionCommitId(solutionCommitHash.getName());
+                }
+            }
+
+            // Get test commit hash
+            if (programmingExercise.getTestRepositoryUri() != null) {
+                var testCommitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUri());
+                if (testCommitHash != null) {
+                    builder.testsCommitId(testCommitHash.getName());
+                }
+            }
+        }
+        catch (Exception e) {
+            log.warn("Error retrieving commit hashes for exercise {}: {}", programmingExercise.getTitle(), e.getMessage());
+        }
+    }
+
+    /**
+     * Adds quiz exercise specific fields to the builder.
+     *
+     * @param quizExercise the quiz exercise
+     * @param builder      the builder to add fields to
+     */
+    private void addQuizExerciseFields(QuizExercise quizExercise, ExerciseVersionContent.Builder builder) {
+        builder.isOpenForPractice(quizExercise.isIsOpenForPractice()).randomizeQuestionOrder(quizExercise.isRandomizeQuestionOrder())
+                .allowedNumberOfAttempts(quizExercise.getAllowedNumberOfAttempts()).duration(quizExercise.getDuration());
     }
 
     /**
