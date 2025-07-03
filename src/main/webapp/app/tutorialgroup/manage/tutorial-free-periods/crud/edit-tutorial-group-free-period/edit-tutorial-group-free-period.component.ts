@@ -28,10 +28,9 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
     private alertService = inject(AlertService);
 
+    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
     @Input() tutorialGroupFreePeriod: TutorialGroupFreePeriod;
-
     @Input() tutorialGroupsConfiguration: TutorialGroupsConfiguration;
-
     @Input() course: Course;
 
     isLoading = false;
@@ -87,7 +86,6 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
         tutorialGroupFreePeriodDto.reason = reason;
 
         this.isLoading = true;
-
         this.tutorialGroupFreePeriodService
             .update(this.course.id!, this.tutorialGroupsConfiguration.id!, this.tutorialGroupFreePeriod.id!, tutorialGroupFreePeriodDto)
             .pipe(
