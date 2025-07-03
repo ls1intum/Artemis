@@ -1,18 +1,26 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, effect, signal } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MemirisGraphViewComponent } from 'app/iris/shared/memiris-graph-view/memiris-graph-view.component';
 import { MemirisConnectionType, MemirisGraphData, MemirisGraphFilters, MemirisLearning, MemirisMemory, MemirisMemoryConnection } from 'app/iris/shared/entities/memiris.model';
 import { v4 as uuid } from 'uuid';
+import { MemirisGraphFiltersComponent } from 'app/iris/shared/memiris-graph-filters/memiris-graph-filters.component';
 
 @Component({
     selector: 'jhi-memiris-admin',
-    imports: [TranslateDirective, MemirisGraphViewComponent],
+    imports: [TranslateDirective, MemirisGraphViewComponent, MemirisGraphFiltersComponent],
     templateUrl: './memiris-admin.component.html',
     styleUrl: './memiris-admin.component.scss',
 })
 export class MemirisAdminComponent implements OnInit {
     graphData?: MemirisGraphData;
-    filters: MemirisGraphFilters = new MemirisGraphFilters();
+    readonly filters = signal(new MemirisGraphFilters());
+
+    constructor() {
+        effect(() => {
+            // eslint-disable-next-line no-undef
+            console.log(this.filters);
+        });
+    }
 
     ngOnInit(): void {
         // Initialize the graph data with mock data after 5 seconds

@@ -1,5 +1,12 @@
 <div class="container">
     <h2 jhiTranslate="artemisApp.memiris.admin.title"></h2>
     <h3 jhiTranslate="artemisApp.memiris.admin.graph.title"></h3>
-    <jhi-memiris-graph-view [graphData]="graphData" [filters]="filters" />
+    <div class="row">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-12 order-md-first order-last">
+            <jhi-memiris-graph-filters [(filters)]="filters" />
+        </div>
+        <div class="col-xl-10 col-lg-9 col-md-8 col-12 order-md-last order-first">
+            <jhi-memiris-graph-view [graphData]="graphData" [filters]="filters()" />
+        </div>
+    </div>
 </div>

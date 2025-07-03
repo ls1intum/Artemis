@@ -1,13 +1,13 @@
 <div class="graph-container">
     <div class="graph-wrapper">
-        <div class="graph-controls">
-            <button (click)="zoomIn()">
+        <div class="graph-controls btn-group-vertical" role="group">
+            <button class="btn btn-primary" (click)="zoomIn()">
                 <fa-icon [icon]="faPlus" />
             </button>
-            <button (click)="zoomOut()">
+            <button class="btn btn-primary" (click)="zoomOut()">
                 <fa-icon [icon]="faMinus" />
             </button>
-            <button (click)="resetView()">
+            <button class="btn btn-primary" (click)="resetView()">
                 <fa-icon [icon]="faArrowsToEye" />
             </button>
         </div>

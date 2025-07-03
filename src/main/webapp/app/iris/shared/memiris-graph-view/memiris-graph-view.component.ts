@@ -34,10 +34,11 @@ import {
     zoom,
     zoomIdentity,
 } from 'd3';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-memiris-graph-view',
-    imports: [LoadingIndicatorContainerComponent, FontAwesomeModule],
+    imports: [LoadingIndicatorContainerComponent, FontAwesomeModule, ButtonComponent],
     templateUrl: './memiris-graph-view.component.html',
     styleUrl: './memiris-graph-view.component.scss',
 })
@@ -152,21 +153,23 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
                 }
 
                 // Every other connection type creates a link for each pair of memories
-                connection.memories.forEach((sourceMemory, index) => {
-                    const sourceNode = this.allNodes.find((node) => node.getId() === sourceMemory.id);
-                    if (!sourceNode) return;
+                if (connection.connection_type !== MemirisConnectionType.CREATED_FROM) {
+                    connection.memories.forEach((sourceMemory, index) => {
+                        const sourceNode = this.allNodes.find((node) => node.getId() === sourceMemory.id);
+                        if (!sourceNode) return;
 
-                    // Create links to all other memories in the connection
-                    connection.memories.forEach((targetMemory, targetIndex) => {
-                        if (index === targetIndex) {
-                            return;
-                        }
-                        const targetNode = this.allNodes.find((node) => node.getId() === targetMemory.id);
-                        if (targetNode) {
-                            this.allLinks.push(new MemirisSimulationLinkMemoryMemory(connection, sourceNode as MemirisMemoryNode, targetNode as MemirisMemoryNode));
-                        }
+                        // Create links to all other memories in the connection
+                        connection.memories.forEach((targetMemory, targetIndex) => {
+                            if (index === targetIndex) {
+                                return;
+                            }
+                            const targetNode = this.allNodes.find((node) => node.getId() === targetMemory.id);
+                            if (targetNode) {
+                                this.allLinks.push(new MemirisSimulationLinkMemoryMemory(connection, sourceNode as MemirisMemoryNode, targetNode as MemirisMemoryNode));
+                            }
+                        });
                     });
-                });
+                }
             }
         });
 
@@ -198,6 +201,26 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
         // Create container group for zoom
         this.graphGroup = this.svg.append('g');
 
+        // Define arrow markers for links
+        this.svg
+            .append('defs')
+            .append('marker')
+            .attr('id', 'arrowhead')
+            .attr('viewBox', '0 0 451.847 451.847')
+            .attr('refX', 750) // Position the arrow away from the target node
+            .attr('refY', 225.92)
+            .attr('markerWidth', 10)
+            .attr('markerHeight', 10)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr(
+                'd',
+                'M97.141,225.92c0-8.095,3.091-16.192,9.259-22.366L300.689,9.27c12.359-12.359,32.397-12.359,44.751,0 c12.354,12.354,12.354,32.388,0,44.748L173.525,225.92l171.903,171.909c12.354,12.354,12.354,32.391,0,44.744 c-12.354,12.365-32.386,12.365-44.745,0l-194.29-194.281C100.226,242.115,97.141,234.018,97.141,225.92z',
+            )
+            .attr('fill', '#6c8ebf')
+            // Rotate the arrow to point in the right direction (arrow points left by default)
+            .attr('transform', 'rotate(180, 225.92, 225.92)');
+
         // Setup zoom behavior
         this.zoom = zoom<SVGSVGElement, unknown>()
             .scaleExtent([0.1, 4])
@@ -218,18 +241,18 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
 
         // 1. Setup dynamic collision force with proper radius for each node
         const collide = forceCollide<MemirisSimulationNode>()
-            .radius((node) => this.getNodeRadius(node) + PADDING) // Use node's actual radius + padding
+            .radius((node: MemirisSimulationNode) => this.getNodeRadius(node) + PADDING) // Use node's actual radius + padding
             .iterations(2); // Run collision detection twice per tick for better resolution
 
         // 2. Setup charge force with stronger repulsion for memory nodes
         const charge = forceManyBody<MemirisSimulationNode>()
-            .strength((node) => this.getNodeChargeStrength(node))
+            .strength((node: MemirisSimulationNode) => this.getNodeChargeStrength(node))
             .distanceMax(200);
 
         // 3. Setup link force with variable distances based on link type
         const link = forceLink<MemirisSimulationNode, MemirisSimulationLink>(this.links)
-            .id((node) => node.getId())
-            .distance((link) => this.getLinkDistance(link))
+            .id((node: MemirisSimulationNode) => node.getId())
+            .distance((link: MemirisSimulationLink) => this.getLinkDistance(link))
             .strength(0.1); // Mid-range spring strength
 
         // 4. Setup center force with mild strength
@@ -262,37 +285,50 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
         const nodesGroup = this.svg.select<SVGGElement>('.nodes');
         const linksGroup = this.svg.select<SVGGElement>('.links');
 
-        if (!nodesGroup || !linksGroup) return;
+        if (!nodesGroup || !linksGroup) {
+            return;
+        }
+
+        // Remove existing elements to avoid duplication
+        nodesGroup.selectAll('*').remove();
+        linksGroup.selectAll('*').remove();
 
         // Create link elements
         this.linkElements = linksGroup
             .selectAll<SVGLineElement, MemirisSimulationLink>('line')
-            .data(this.links, (link) => link.getId())
+            .data(this.links, (link: MemirisSimulationLink) => link.getId())
             .enter()
             .append('line')
-            .attr('class', (node) => this.getLinkClasses(node))
-            .attr('stroke', (node) => this.getLinkColor(node))
-            .attr('stroke-width', 1.5);
+            .attr('class', (link: MemirisSimulationLink) => this.getLinkClasses(link))
+            .attr('stroke', (link: MemirisSimulationLink) => this.getLinkColor(link))
+            .attr('stroke-width', 1.5)
+            .attr('marker-end', (link: MemirisSimulationLink) => {
+                // Add arrow marker only for CREATED_FROM connection type
+                if (link instanceof MemirisSimulationLinkMemoryMemory && link.connection.connection_type === MemirisConnectionType.CREATED_FROM) {
+                    return 'url(#arrowhead)';
+                }
+                return null;
+            });
 
         // Create node elements
         this.nodeElements = nodesGroup
             .selectAll<SVGCircleElement, MemirisSimulationNode>('circle')
-            .data(this.nodes, (node) => node.getId())
+            .data(this.nodes, (node: MemirisSimulationNode) => node.getId())
             .enter()
             .append('circle')
-            .attr('class', (node) => this.getNodeClasses(node))
-            .attr('r', (node) => this.getNodeRadius(node))
-            .attr('fill', (node) => this.getNodeColor(node))
+            .attr('class', (node: MemirisSimulationNode) => this.getNodeClasses(node))
+            .attr('r', (node: MemirisSimulationNode) => this.getNodeRadius(node))
+            .attr('fill', (node: MemirisSimulationNode) => this.getNodeColor(node))
             .call(this.setupDrag() as any)
             .on('click', (_event: MouseEvent, node: MemirisSimulationNode) => this.handleNodeClick(node));
 
         // Create text labels
         this.textElements = nodesGroup
             .selectAll<SVGTextElement, MemirisSimulationNode>('text')
-            .data(this.nodes, (node) => node.getId())
+            .data(this.nodes, (node: MemirisSimulationNode) => node.getId())
             .enter()
             .append('text')
-            .text((node) => node.getLabel())
+            .text((node: MemirisSimulationNode) => node.getLabel())
             .attr('font-size', '12px')
             .attr('dx', 15)
             .attr('dy', 4)
@@ -301,7 +337,7 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
         // Create link labels to show connection types
         this.linkLabelElements = linksGroup
             .selectAll<SVGTextElement, MemirisSimulationLink>('text.link-label')
-            .data(this.links, (link) => link.getId())
+            .data(this.links, (link: MemirisSimulationLink) => link.getId())
             .enter()
             .append('text')
             .attr('class', 'link-label')
@@ -309,8 +345,8 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
             .attr('text-anchor', 'middle')
             .attr('dy', -5)
             .attr('pointer-events', 'none')
-            .style('fill', (link) => this.getLinkColor(link), 'important')
-            .text((node) => node.getLabel());
+            .style('fill', (link: MemirisSimulationLink) => this.getLinkColor(link), 'important')
+            .text((node: MemirisSimulationLink) => node.getLabel());
 
         // Restart simulation with new nodes and links
         if (this.simulation) {
@@ -367,34 +403,34 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
         if (!this.linkElements || !this.nodeElements || !this.textElements) return;
 
         this.linkElements
-            .attr('x1', (link) => link.source.x || 0)
-            .attr('y1', (link) => link.source.y || 0)
-            .attr('x2', (link) => link.target.x || 0)
-            .attr('y2', (link) => link.target.y || 0);
+            .attr('x1', (link: MemirisSimulationLink) => link.source.x || 0)
+            .attr('y1', (link: MemirisSimulationLink) => link.source.y || 0)
+            .attr('x2', (link: MemirisSimulationLink) => link.target.x || 0)
+            .attr('y2', (link: MemirisSimulationLink) => link.target.y || 0);
 
-        this.nodeElements.attr('cx', (node) => node.x || 0).attr('cy', (node) => node.y || 0);
+        this.nodeElements.attr('cx', (node: MemirisSimulationNode) => node.x || 0).attr('cy', (node: MemirisSimulationNode) => node.y || 0);
 
-        this.textElements.attr('x', (node) => node.x || 0).attr('y', (node) => node.y || 0);
+        this.textElements.attr('x', (node: MemirisSimulationNode) => node.x || 0).attr('y', (node: MemirisSimulationNode) => node.y || 0);
 
         if (this.linkLabelElements) {
             this.linkLabelElements
                 // Position link labels at the midpoint of the link
-                .attr('x', (d) => {
-                    const sourceX = d.source.x || 0;
-                    const targetX = d.target.x || 0;
+                .attr('x', (link: MemirisSimulationLink) => {
+                    const sourceX = link.source.x || 0;
+                    const targetX = link.target.x || 0;
                     return (sourceX + targetX) / 2;
                 })
-                .attr('y', (d) => {
-                    const sourceY = d.source.y || 0;
-                    const targetY = d.target.y || 0;
+                .attr('y', (link: MemirisSimulationLink) => {
+                    const sourceY = link.source.y || 0;
+                    const targetY = link.target.y || 0;
                     return (sourceY + targetY) / 2;
                 })
                 // Rotate link labels to align with the link
-                .attr('transform', (d) => {
-                    const sourceX = d.source.x || 0;
-                    const sourceY = d.source.y || 0;
-                    const targetX = d.target.x || 0;
-                    const targetY = d.target.y || 0;
+                .attr('transform', (link: MemirisSimulationLink) => {
+                    const sourceX = link.source.x || 0;
+                    const sourceY = link.source.y || 0;
+                    const targetX = link.target.x || 0;
+                    const targetY = link.target.y || 0;
 
                     // Calculate angle of the link
                     const dx = targetX - sourceX;
@@ -475,7 +511,7 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
         this.nodeElements.classed('selected', false);
 
         if (node) {
-            this.nodeElements.filter((candidate_node) => candidate_node.getId() === node.getId()).classed('selected', true);
+            this.nodeElements.filter((candidate_node: MemirisSimulationNode) => candidate_node.getId() === node.getId()).classed('selected', true);
         }
     }
 
