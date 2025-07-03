@@ -229,9 +229,10 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     onRatingChange(newRating: number) {
-        if (this.metrics().competencyMetrics) {
-            this.metrics().competencyMetrics.currentJolValues = {
-                ...(this.metrics().competencyMetrics.currentJolValues ?? {}),
+        const competencyMetrics = this.metrics().competencyMetrics;
+        if (competencyMetrics) {
+            competencyMetrics.currentJolValues = {
+                ...(competencyMetrics.currentJolValues ?? {}),
                 [this.competency().id]: {
                     competencyId: this.competency().id,
                     jolValue: newRating,
