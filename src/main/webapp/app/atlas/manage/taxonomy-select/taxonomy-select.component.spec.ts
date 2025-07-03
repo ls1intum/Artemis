@@ -21,7 +21,7 @@ describe('TaxonomySelectComponent', () => {
             .then(() => {
                 componentFixture = TestBed.createComponent(TaxonomySelectComponent);
                 component = componentFixture.componentInstance;
-                component.form = signal(new FormControl<CompetencyTaxonomy | undefined>(undefined)) as InputSignal<FormControl<any>>;
+                component.form = signal(new FormControl<CompetencyTaxonomy | undefined>(undefined)) as unknown as InputSignal<FormControl<any>>;
             });
     });
 

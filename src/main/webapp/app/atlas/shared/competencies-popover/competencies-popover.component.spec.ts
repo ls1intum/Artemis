@@ -11,6 +11,7 @@ import { RouterModule } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { InputSignal, signal } from '@angular/core';
+import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 
 @Component({
     selector: 'jhi-statistics',
@@ -63,9 +64,11 @@ describe('CompetencyPopoverComponent', () => {
         'should navigate',
         fakeAsync((navigateTo: 'competencyManagement' | 'courseCompetencies', expectedPath: string) => {
             const location: Location = TestBed.inject(Location);
-            competencyPopoverComponent.navigateTo = signal(<'competencyManagement' | 'courseCompetencies'>navigateTo) as InputSignal<'competencyManagement' | 'courseCompetencies'>;
-            competencyPopoverComponent.competencyLinks = signal([{ competency: { id: 1, title: 'competency' }, weight: 1 }]) as InputSignal<CompetencyLectureUnitLink[]>;
-            competencyPopoverComponent.courseId = signal(1) as InputSignal<number>;
+            competencyPopoverComponent.navigateTo = signal(<'competencyManagement' | 'courseCompetencies'>navigateTo) as unknown as InputSignal<
+                'competencyManagement' | 'courseCompetencies'
+            >;
+            competencyPopoverComponent.competencyLinks = signal([{ competency: { id: 1, title: 'competency' }, weight: 1 }]) as unkown as InputSignal<CompetencyLectureUnitLink[]>;
+            competencyPopoverComponent.courseId = signal(1) as unknown as InputSignal<number>;
             competencyPopoverComponentFixture.detectChanges();
             const popoverButton = competencyPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
             popoverButton.click();
