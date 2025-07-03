@@ -29,6 +29,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     ],
 })
 export class CompetencyRecommendationDetailComponent {
+    taxonomyControlSignal = input(this.taxonomyControl);
     form = input.required<FormGroup<CompetencyFormControlsWithViewed>>();
     index = input.required<number>();
     isCollapsed = model<boolean>(true);

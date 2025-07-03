@@ -8,13 +8,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Component } from '@angular/core';
 import { getComponentInstanceFromFixture } from 'test/helpers/utils/general-test.utils';
+import { PageableSearch } from 'app/shared/table/pageable-table';
 
-@Component({
-    template: '<jhi-competency-search [(search)]="search" (searchChange)="searchChange($event)"/>',
-    imports: [CompetencySearchComponent],
-})
 class WrapperComponent {
     search: CourseCompetencyFilter;
 

@@ -39,7 +39,7 @@ export class CourseDescriptionFormComponent {
 
     private initialize(): void {
         this.form = this.formBuilder.group({
-            courseDescription: [this.placeholder, [Validators.required, Validators.minLength(this.DESCRIPTION_MIN), Validators.maxLength(this.DESCRIPTION_MAX)]],
+            courseDescription: [this.placeholder(), [Validators.required, Validators.minLength(this.DESCRIPTION_MIN), Validators.maxLength(this.DESCRIPTION_MAX)]],
         });
     }
 

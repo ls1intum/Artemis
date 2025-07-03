@@ -46,7 +46,7 @@
             />
         </div>
     </div>
-    <div class="card-body border-0" [ngbCollapse]="isCollapsed" formGroupName="competency">
+    <div class="card-body border-0" [ngbCollapse]="isCollapsed()" formGroupName="competency">
         <div class="form-group">
             <label for="title-{{ index() }}" jhiTranslate="artemisApp.competency.title"></label>
             <input type="text" class="form-control" id="title-{{ index() }}" formControlName="title" />
@@ -92,7 +92,7 @@
         </div>
         <div class="form-group">
             <label for="taxonomy-{{ index() }}" jhiTranslate="artemisApp.competency.taxonomy"></label>
-            <jhi-taxonomy-select selectId="taxonomy-{{ index() }}" [form]="taxonomyControl" />
+            <jhi-taxonomy-select [selectId]="'taxonomy-' + index()" [form]="form().controls.taxonomy" />
         </div>
     </div>
 </div>
