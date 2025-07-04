@@ -7,7 +7,7 @@ import { CalendarEventService } from 'app/calendar/shared/service/calendar-event
 import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';
 import { By } from '@angular/platform-browser';
 import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
-import { CalendarDayBadgeComponent } from 'app/calendar/shared/day-badge/calendar-day-badge.component';
+import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 
@@ -28,7 +28,7 @@ describe('CalendarDesktopMonthComponent', () => {
             new CalendarEvent('tutorial-1', 'Tutorial', referenceDate.add(1, 'day'), referenceDate.add(1, 'day').add(1, 'hour'), 'Zoom', 'Marlon Nienaber'),
             new CalendarEvent('tutorial-2', 'Tutorial', referenceDate.add(1, 'day').add(2, 'hour'), referenceDate.add(1, 'day').add(3, 'hour'), 'Zoom', 'Marlon Nienaber'),
             new CalendarEvent('tutorial-3', 'Tutorial', referenceDate.add(1, 'day').add(3, 'hour'), referenceDate.add(1, 'day').add(4, 'hour'), 'Zoom', 'Marlon Nienaber'),
-            new CalendarEvent('textExercise-31-startDate', 'Your aspirations as a programmer', referenceDate.add(2, 'day'), undefined, undefined),
+            new CalendarEvent('textExercise-31-startDate', 'Your aspirations as a programmer', referenceDate.add(2, 'day'), undefined, undefined, undefined),
         ];
 
         for (const event of events) {

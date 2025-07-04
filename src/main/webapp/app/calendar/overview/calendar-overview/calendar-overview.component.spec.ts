@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { CalendarEventFilterComponent } from 'app/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
-import { CalendarDayBadgeComponent } from 'app/calendar/shared/day-badge/calendar-day-badge.component';
+import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';

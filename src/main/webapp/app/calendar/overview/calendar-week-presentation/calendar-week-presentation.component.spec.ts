@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CalendarWeekPresentationComponent } from './calendar-week-presentation.component';
 import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
-import { CalendarDayBadgeComponent } from 'app/calendar/shared/day-badge/calendar-day-badge.component';
+import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
 import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';

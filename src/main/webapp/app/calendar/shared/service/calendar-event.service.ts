@@ -47,7 +47,7 @@ export class CalendarEventService {
             })
             .pipe(
                 map((res: CalendarEventMapResponse) => {
-                    const parsed = this.mapCalendarEventDTOMap(res.body ?? {});
+                    const parsed = this.createCalendarEventMap(res.body ?? {});
                     this.currentEventMap.set(parsed);
                     this.currentMonthKey = currentMonthKey;
                 }),
@@ -64,26 +64,26 @@ export class CalendarEventService {
         });
     }
 
-    private mapCalendarEventDTOMap(dtoMap: Record<string, CalendarEventDTO[]>): Map<string, CalendarEvent[]> {
+    private createCalendarEventMap(dtoMap: Record<string, CalendarEventDTO[]>): Map<string, CalendarEvent[]> {
         const result = new Map<string, CalendarEvent[]>();
         for (const [dayKey, dtoList] of Object.entries(dtoMap)) {
-            result.set(dayKey, dtoList.map(this.mapCalendarEventDTO));
+            result.set(dayKey, dtoList.map(this.createCalendarEvent));
         }
         return result;
     }
 
-    private mapCalendarEventDTO(dto: CalendarEventDTO): CalendarEvent {
-        return new CalendarEvent(dto.id, dto.title, dayjs(dto.startDate), dto.endDate ? dayjs(dto.endDate) : undefined, dto.location, dto.facilitator);
+    private createCalendarEvent(dto: CalendarEventDTO): CalendarEvent {
+        return new CalendarEvent(dto.id, dto.title, dayjs(dto.startDate), dto.endDate ? dayjs(dto.endDate) : undefined, dto.location ?? undefined, dto.facilitator ?? undefined);
     }
 
     private filterEventMapByOptions(eventMap: Map<string, CalendarEvent[]>, filterOptions: CalendarEventFilterOption[]): Map<string, CalendarEvent[]> {
         const filteredMap = new Map<string, CalendarEvent[]>();
 
         for (const [day, events] of eventMap) {
-            filteredMap.set(
-                day,
-                events.filter((event) => this.eventMatchesFilter(event, filterOptions)),
-            );
+            const filteredEvents = events.filter((event) => this.eventMatchesFilter(event, filterOptions));
+            if (filteredEvents.length > 0) {
+                filteredMap.set(day, filteredEvents);
+            }
         }
 
         return filteredMap;

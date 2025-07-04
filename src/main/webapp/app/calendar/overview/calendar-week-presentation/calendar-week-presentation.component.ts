@@ -3,7 +3,7 @@ import { NgClass, NgStyle } from '@angular/common';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { Dayjs } from 'dayjs/esm';
 import * as Utils from 'app/calendar/shared/util/calendar-util';
-import { CalendarDayBadgeComponent } from '../../shared/day-badge/calendar-day-badge.component';
+import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarEventAndPositioning, PositionInfo } from 'app/calendar/shared/entities/calendar-event-positioning.model';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';

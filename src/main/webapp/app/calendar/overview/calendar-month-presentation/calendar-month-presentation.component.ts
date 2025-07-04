@@ -9,7 +9,7 @@ import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
 import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
-import { CalendarDayBadgeComponent } from '../../shared/day-badge/calendar-day-badge.component';
+import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 
 @Component({
     selector: 'calendar-desktop-month',
