@@ -5,7 +5,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
@@ -35,14 +35,17 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
+    let fixture: ComponentFixture<IrisBaseChatbotComponent>;
+
     let chatService: IrisChatService;
     let httpService: jest.Mocked<IrisChatHttpService>;
     let wsMock: jest.Mocked<IrisWebsocketService>;
     let mockModalService: jest.Mocked<NgbModal>;
-    let fixture: ComponentFixture<IrisBaseChatbotComponent>;
+    let mockActivatedRoute: MockActivatedRoute;
 
     const statusMock = {
         currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
@@ -86,6 +89,7 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: AccountService, useValue: accountMock },
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 456 }) },
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
             ],
@@ -103,6 +107,11 @@ describe('IrisBaseChatbotComponent', () => {
                 wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
                 mockModalService = TestBed.inject(NgbModal) as jest.Mocked<NgbModal>;
                 component = fixture.componentInstance;
+
+                mockActivatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+                mockActivatedRoute.setParameters({
+                    courseId: '456',
+                });
 
                 jest.spyOn(accountMock, 'getAuthenticationState').mockReturnValue(of());
 
