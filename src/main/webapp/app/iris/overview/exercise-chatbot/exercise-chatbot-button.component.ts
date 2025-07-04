@@ -51,7 +51,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     private readonly dialog = inject(MatDialog);
     private readonly overlay = inject(Overlay);
     private readonly chatService = inject(IrisChatService);
-    private route = inject(ActivatedRoute);
+    private readonly route = inject(ActivatedRoute);
 
     private readonly CHAT_BUBBLE_TIMEOUT = 10000;
 
