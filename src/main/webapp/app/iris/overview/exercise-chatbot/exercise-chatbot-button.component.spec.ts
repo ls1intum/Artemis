@@ -95,6 +95,7 @@ describe('ExerciseChatbotButtonComponent', () => {
                 component = fixture.componentInstance;
                 fixture.detectChanges();
                 chatService = TestBed.inject(IrisChatService);
+                chatService.setCourseId(mockCourseId);
                 chatHttpServiceMock = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
                 wsServiceMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
             });
@@ -115,7 +116,6 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
-            courseId: mockCourseId,
         });
         fixture.whenStable();
         tick();
@@ -134,7 +134,6 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
-            courseId: mockCourseId,
         });
         fixture.whenStable();
         tick();
@@ -160,7 +159,6 @@ describe('ExerciseChatbotButtonComponent', () => {
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
-            courseId: mockCourseId,
         });
         chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
 
@@ -181,7 +179,6 @@ describe('ExerciseChatbotButtonComponent', () => {
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
-            courseId: mockCourseId,
         });
         chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
         component.openChat();
