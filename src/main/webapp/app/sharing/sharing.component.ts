@@ -30,31 +30,19 @@ import { take } from 'rxjs';
     standalone: true,
 })
 export class SharingComponent implements OnInit {
-    /**
-     * list of courses to import to
-     */
     courses: Course[];
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    /** for sorting course table */
-    reverse: boolean = false;
-    /** for sorting course table */
-    predicate: string;
-    /**
-     * the shopping basket imported from the sharing platform
-     */
+    reverseSorting: boolean = false;
+    sortColumn: string;
     shoppingBasket: ShoppingBasket;
     /**
      * holder for all data needed to import the exercise
      */
     sharingInfo: SharingInfo = new SharingInfo();
-    /**
-     * the selected course
-     */
+
     selectedCourse: Course;
-    /**
-     * flag for instructor role test
-     */
+
     isInstructor = false;
 
     // Icons
@@ -70,18 +58,16 @@ export class SharingComponent implements OnInit {
         private programmingExerciseSharingService: ProgrammingExerciseSharingService,
         private alertService: AlertService,
     ) {
-        this.predicate = 'id';
+        this.sortColumn = 'id';
     }
 
-    /**
-     * @returns the expiration data of the shopping basket
-     */
-    getTokenExpiryDate(): Date {
+    getBasketTokenExpiryDate(): Date {
         if (this.shoppingBasket?.tokenValidUntil) {
             return new Date(this.shoppingBasket.tokenValidUntil);
         }
         return new Date();
     }
+
     /**
      * loads all courses from courseService
      */
@@ -94,26 +80,14 @@ export class SharingComponent implements OnInit {
         });
     }
 
-    /**
-     * course selection event handler
-     * @param course selected course
-     */
     onCourseSelected(course: Course): void {
         this.selectedCourse = course;
     }
 
-    /**
-     * the id of the course
-     * @returns the id of the course
-     */
     courseId(): number {
         return this.selectedCourse?.id ?? 0;
     }
 
-    /**
-     * exercise selection event handler
-     * @param index the index of the selected exercise in basket
-     */
     onExerciseSelected(index: number): void {
         this.sharingInfo.selectedExercise = index;
     }
@@ -131,7 +105,7 @@ export class SharingComponent implements OnInit {
      * sorts the course table
      */
     sortRows() {
-        this.sortService.sortByProperty(this.courses, this.predicate, this.reverse);
+        this.sortService.sortByProperty(this.courses, this.sortColumn, this.reverseSorting);
     }
 
     /**
@@ -161,7 +135,7 @@ export class SharingComponent implements OnInit {
     }
 
     get formattedExpiryDate(): string {
-        return this.getTokenExpiryDate().toLocaleString();
+        return this.getBasketTokenExpiryDate().toLocaleString();
     }
 
     /**

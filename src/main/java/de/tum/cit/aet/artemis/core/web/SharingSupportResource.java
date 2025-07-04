@@ -38,7 +38,7 @@ public class SharingSupportResource {
     /**
      * sharing configution resource path for sharing config request
      */
-    public static final String SHARINGCONFIG_RESOURCE_PATH = "config";
+    private static final String SHARINGCONFIG_RESOURCE_PATH = "config";
 
     /**
      * sharing configuration resource path for rest request, iff sharing profile is enabled
@@ -51,11 +51,8 @@ public class SharingSupportResource {
     private final SharingConnectorService sharingConnectorService;
 
     /**
-     * constructor
-     *
      * @param sharingConnectorService the sharing connector service
      */
-    @SuppressWarnings("unused")
     public SharingSupportResource(SharingConnectorService sharingConnectorService) {
         this.sharingConnectorService = sharingConnectorService;
     }
