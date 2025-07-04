@@ -1707,7 +1707,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
 
-        Set<QuizQuestion> quizQuestions = request.getSet("/api/quiz/courses/" + course.getId() + "/practice/quiz", OK, QuizQuestion.class);
+        List<QuizQuestion> quizQuestions = request.getList("/api/quiz/courses/" + course.getId() + "/practice/quiz", OK, QuizQuestion.class);
 
         assertThat(quizQuestions).isNotNull();
         assertThat(quizQuestions).hasSameSizeAs(quizExercise.getQuizQuestions());
