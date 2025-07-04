@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
+import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -168,6 +169,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Autowired
     private ExamTestRepository examRepository;
 
+    @Autowired
+    private LearnerProfileUtilService learnerProfileUtilService;
+
     @Captor
     private ArgumentCaptor<Result> resultCaptor;
 
@@ -184,7 +188,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @BeforeEach
     void initTestData() throws Exception {
+        super.initTestCase();
         userUtilService.addUsers(TEST_PREFIX, 4, 1, 1, 1);
+        learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
 
         // Add users that are not in the course/exercise
         userUtilService.createAndSaveUser(TEST_PREFIX + "student3");
