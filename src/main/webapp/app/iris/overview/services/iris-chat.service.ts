@@ -15,7 +15,7 @@ import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 export enum ChatServiceMode {
@@ -52,6 +52,7 @@ export class IrisChatService implements OnDestroy {
     private readonly userService = inject(UserService);
     private readonly accountService = inject(AccountService);
     private readonly route = inject(ActivatedRoute);
+    private readonly router = inject(Router);
 
     private modeRequiresLLMAcceptance = new Map<ChatServiceMode, boolean>([
         [ChatServiceMode.TEXT_EXERCISE, true],
@@ -107,6 +108,10 @@ export class IrisChatService implements OnDestroy {
         return this.route.params.pipe(
             map((params) => {
                 const updatedCourseId = params['courseId'];
+                // eslint-disable-next-line no-undef
+                console.log('Updated courseId:', updatedCourseId);
+                // eslint-disable-next-line no-undef
+                console.log('Current route:', this.router.url);
                 this.setCourseId(updatedCourseId);
                 return updatedCourseId;
             }),
@@ -354,7 +359,11 @@ export class IrisChatService implements OnDestroy {
     }
 
     private async loadChatSessions() {
+        // eslint-disable-next-line no-undef
+        console.log('Loading chat sessions for courseId:');
         const courseId = await this.getCourseId();
+        // eslint-disable-next-line no-undef
+        console.log('loading chat sessions for courseId:', courseId);
         if (courseId) {
             this.chatSessionSubscription?.unsubscribe();
             this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
