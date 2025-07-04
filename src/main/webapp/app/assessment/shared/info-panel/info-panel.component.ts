@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 @Component({
     selector: 'jhi-info-panel',
@@ -6,6 +6,6 @@ import { Component, Input } from '@angular/core';
     styleUrls: ['./info-panel.scss'],
 })
 export class InfoPanelComponent {
-    @Input() panelHeader: string;
-    @Input() panelDescriptionHeader: string;
+    readonly panelHeader = input.required<string>();
+    readonly panelDescriptionHeader = input<string>();
 }

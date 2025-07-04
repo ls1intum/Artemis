@@ -122,7 +122,6 @@ describe('RatingComponent', () => {
             ratingComponent.onRate({
                 oldValue: 0,
                 newValue: 2,
-                starRating: new StarRatingComponent(),
             });
             expect(ratingService.createRating).not.toHaveBeenCalled();
             expect(ratingService.updateRating).not.toHaveBeenCalled();
@@ -132,7 +131,6 @@ describe('RatingComponent', () => {
             ratingComponent.onRate({
                 oldValue: 0,
                 newValue: 2,
-                starRating: new StarRatingComponent(),
             });
             expect(ratingService.createRating).toHaveBeenCalledOnce();
             expect(ratingService.updateRating).not.toHaveBeenCalled();
@@ -144,7 +142,6 @@ describe('RatingComponent', () => {
             ratingComponent.onRate({
                 oldValue: 1,
                 newValue: 2,
-                starRating: new StarRatingComponent(),
             });
             expect(ratingService.updateRating).toHaveBeenCalledOnce();
             expect(ratingService.createRating).not.toHaveBeenCalled();
