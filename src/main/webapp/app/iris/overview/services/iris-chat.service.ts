@@ -428,7 +428,7 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
-    switchToSession(session: IrisSessionDTO): Promise<void> {
+    switchToSession(session: IrisSessionDTO): void {
         if (this.sessionId === session.id) {
             return;
         }
@@ -486,7 +486,7 @@ export class IrisChatService implements OnDestroy {
         return this.updateCourseId();
     }
 
-    public setCourseId(courseId: number): void {
+    public setCourseId(courseId: number | undefined): void {
         this.courseId = courseId;
     }
 
