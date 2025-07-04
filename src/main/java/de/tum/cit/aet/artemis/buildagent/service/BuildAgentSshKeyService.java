@@ -37,7 +37,7 @@ public class BuildAgentSshKeyService {
     private KeyPair keyPair;
 
     @Value("${artemis.version-control.ssh-private-key-folder-path:#{null}}")
-    private Optional<String> gitSshPrivateKeyPath;
+    private Optional<Path> gitSshPrivateKeyPath;
 
     @Value("${artemis.version-control.build-agent-use-ssh:false}")
     private boolean useSshForBuildAgent;
@@ -60,6 +60,10 @@ public class BuildAgentSshKeyService {
             throw new RuntimeException("No SSH private key folder was set but should use SSH for build agent authentication.");
         }
 
+        if (!gitSshPrivateKeyPath.get().toFile().exists()) {
+            gitSshPrivateKeyPath.get().toFile().mkdirs();
+        }
+
         try {
             generateKeyPair();
             writePrivateKey();
@@ -76,7 +80,7 @@ public class BuildAgentSshKeyService {
     }
 
     private void writePrivateKey() throws IOException, GeneralSecurityException {
-        Path privateKeyPath = Path.of(gitSshPrivateKeyPath.orElseThrow(), "id_rsa");
+        Path privateKeyPath = gitSshPrivateKeyPath.orElseThrow().resolve("id_rsa");
         OpenSSHKeyPairResourceWriter writer = new OpenSSHKeyPairResourceWriter();
 
         try (OutputStream outputStream = Files.newOutputStream(privateKeyPath)) {

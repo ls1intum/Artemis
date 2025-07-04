@@ -3,12 +3,14 @@ package de.tum.cit.aet.artemis.programming.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Entity
 @DiscriminatorValue(value = "PESP")
@@ -40,6 +42,10 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     @Override
     public void setRepositoryUri(String repositoryUri) {
         this.repositoryUri = repositoryUri;
+    }
+
+    public void setRepositoryUri(@NotNull LocalVCRepositoryUri repositoryUri) {
+        this.repositoryUri = repositoryUri.getURI().toString();
     }
 
     @Override
