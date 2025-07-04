@@ -2,8 +2,8 @@
     <table class="sharing-table">
         <thead>
             <tr>
-                <th jhiTranslate="artemisApp.sharing.importedExercise">Imported Exercise</th>
-                <th jhiTranslate="artemisApp.sharing.courseToImport">Course to import</th>
+                <th jhiTranslate="artemisApp.sharing.importedExercise"></th>
+                <th jhiTranslate="artemisApp.sharing.courseToImport"></th>
                 <th></th>
             </tr>
         </thead>
@@ -13,13 +13,13 @@
                     <br />
                     <div>
                         @if (!shoppingBasket) {
-                            <div jhiTranslate="artemisApp.sharing.error.noImportedExercises">No importable exercises found</div>
+                            <div jhiTranslate="artemisApp.sharing.error.noImportedExercises"></div>
                         } @else {
                             <table class="table table-striped">
                                 <thead>
                                     <tr>
                                         <th></th>
-                                        <th class="d-none d-md-table-cell" jhiTranslate="artemisApp.sharing.exerciseToImport">Exercise to import</th>
+                                        <th class="d-none d-md-table-cell" jhiTranslate="artemisApp.sharing.exerciseToImport"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -46,11 +46,11 @@
                         }
                         <br />
                         <div>
-                            <span jhiTranslate="artemisApp.sharing.expiresAt" [translateValues]="{ expirationDate: getTokenExpiryDate().toLocaleString() }">expires at: </span>
+                            <span jhiTranslate="artemisApp.sharing.expiresAt" [translateValues]="{ expirationDate: formattedExpiryDate }"></span>
                         </div>
                         @if (!isInstructor) {
                             <div class="p-2">
-                                <strong jhiTranslate="artemisApp.sharing.loginAsInstructor">Please ensure to log in as instructor!</strong>
+                                <strong jhiTranslate="artemisApp.sharing.loginAsInstructor"></strong>
                             </div>
                         }
                     </div>
@@ -59,7 +59,7 @@
                     <div>
                         <table class="table table-striped course-table">
                             <thead>
-                                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                                <tr jhiSort [(predicate)]="sortColumn" [(ascending)]="reverseSorting" (sortChange)="sortRows()">
                                     <th class="d-none d-md-table-cell"></th>
                                     <th class="d-none d-md-table-cell"></th>
                                     <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id"></span><fa-icon [icon]="faSort" /></th>
@@ -101,7 +101,7 @@
                         </table>
                     </div>
                 </td>
-                <td class="vertical-align-top" f>
+                <td class="vertical-align-top">
                     <br />
                     <button
                         [disabled]="!selectedCourse"
@@ -110,7 +110,7 @@
                         (click)="navigateToImportFromSharing()"
                     >
                         <fa-icon [icon]="faPlus" />
-                        <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.sharing.import">Import Programming Exercise from Sharing Platform</span>
+                        <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.sharing.import"></span>
                     </button>
                 </td>
             </tr>

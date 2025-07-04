@@ -1,0 +1,51 @@
+{
+    "compilerOptions": {
+        "allowJs": false,
+        "target": "es2024",
+        "module": "es2022",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "sourceMap": true,
+        "emitDecoratorMetadata": true,
+        "declaration": false,
+        "experimentalDecorators": true,
+        "removeComments": true,
+        "strict": false,
+        "noImplicitReturns": false,
+        "noUnusedLocals": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "outDir": "build/resources/main/static/app",
+        "forceConsistentCasingInFileNames": true,
+        "lib": ["es2024", "dom"],
+        "typeRoots": ["node_modules/@types"],
+        "baseUrl": "./",
+        "paths": {
+            "app/*": ["src/main/webapp/app/*"],
+            "@angular/*": ["node_modules/@angular/*"],
+            "test/*": ["src/test/javascript/spec/*"]
+        },
+        "importHelpers": true
+    },
+    "angularCompilerOptions": {
+        "genDir": "build/resources/main/aot",
+        "skipMetadataEmit": true,
+        "strictInjectionParameters": true,
+        "strictInputAccessModifiers": true,
+        "fullTemplateTypeCheck": true,
+        "strictTemplates": true,
+        "preserveWhitespaces": true,
+        "extendedDiagnostics": {
+            "checks": {
+                "optionalChainNotNullable": "suppress"
+            }
+        }
+    },
+    "include": ["src/main/webapp/app"],
+    "exclude": ["node_modules", "src/main/resources","cypress.config.ts"
+    ],
+    "files": ["cypress.config.ts"]
+}

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -35,6 +36,10 @@ import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRe
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
@@ -68,10 +73,23 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
 
+    @MockitoBean
+    protected ProgrammingLanguageFeatureService programmingLanguageFeatureService;
+
+    @MockitoBean
+    protected VersionControlService versionControlService;
+
+    @MockitoBean
+    protected ContinuousIntegrationService continuousIntegrationService;
+
+    @MockitoBean
+    protected ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
+
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
+        Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi, programmingLanguageFeatureService,
+                versionControlService, continuousIntegrationService, continuousIntegrationTriggerService);
         super.resetSpyBeans();
     }
 
