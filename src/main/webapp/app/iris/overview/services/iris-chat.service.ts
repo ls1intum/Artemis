@@ -79,26 +79,38 @@ export class IrisChatService implements OnDestroy {
     chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
 
     rateLimitInfo?: IrisRateLimitInformation;
-    rateLimitSubscription: Subscription;
+
+    private rateLimitSubscription: Subscription;
     private acceptSubscription?: Subscription;
+    private routeSubscription?: Subscription;
+    private chatSessionSubscription?: Subscription;
+    private chatSessionByIdSubscription?: Subscription;
 
     private sessionCreationIdentifier?: string;
 
     hasJustAcceptedExternalLLMUsage = false;
 
-    private courseId: number;
+    private courseId?: number;
 
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
+        this.updateCourseId();
+    }
 
-        this.route.params.subscribe((params) => {
-            this.courseId = Number(params['courseId']);
+    private updateCourseId() {
+        this.routeSubscription?.unsubscribe();
+
+        this.routeSubscription = this.route.params.subscribe((params) => {
+            this.courseId = params['courseId'];
         });
     }
 
     ngOnDestroy(): void {
         this.rateLimitSubscription.unsubscribe();
         this.acceptSubscription?.unsubscribe();
+        this.routeSubscription?.unsubscribe();
+        this.chatSessionSubscription?.unsubscribe();
+        this.chatSessionByIdSubscription?.unsubscribe();
     }
 
     protected start() {
@@ -335,7 +347,8 @@ export class IrisChatService implements OnDestroy {
     }
 
     private loadChatSessions() {
-        this.http.getChatSessions(this.courseId).subscribe((sessions: IrisSessionDTO[]) => {
+        this.chatSessionSubscription?.unsubscribe();
+        this.chatSessionSubscription = this.http.getChatSessions(this.courseId).subscribe((sessions: IrisSessionDTO[]) => {
             this.chatSessions.next(sessions ?? []);
         });
     }
@@ -376,7 +389,8 @@ export class IrisChatService implements OnDestroy {
 
         this.close();
 
-        this.http.getChatSessionById(this.courseId, session.id).subscribe((session) => this.handleNewSession().next(session));
+        this.chatSessionByIdSubscription?.unsubscribe();
+        this.chatSessionByIdSubscription = this.http.getChatSessionById(this.courseId, session.id).subscribe((session) => this.handleNewSession().next(session));
     }
 
     private closeAndStart() {
