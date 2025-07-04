@@ -198,7 +198,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         const cachedDiffInformation = new Map<string, RepositoryDiffInformation>();
         cachedDiffInformation.set(JSON.stringify([1, 2]), mockDiffInformation);
 
-        // Directly set the cached diff information instead of using input()
+        // Mock signal to return cached diff information instead of using input()
         (component as any).cachedDiffInformation = jest.fn().mockReturnValue(cachedDiffInformation);
 
         component.ngOnInit();
