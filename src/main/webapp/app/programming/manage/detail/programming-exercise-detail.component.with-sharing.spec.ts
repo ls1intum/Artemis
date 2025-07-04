@@ -14,7 +14,6 @@ import { ProgrammingExerciseGradingService } from 'app/programming/manage/servic
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
@@ -26,10 +25,43 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
+import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+
+// Mock the diff.utils module to avoid Monaco Editor issues in tests
+jest.mock('app/programming/shared/utils/diff.utils', () => ({
+    ...jest.requireActual('app/programming/shared/utils/diff.utils'),
+    processRepositoryDiff: jest.fn().mockImplementation((templateFiles, solutionFiles) => {
+        // Handle the case where files are undefined (when repository fetch fails)
+        if (!templateFiles || !solutionFiles) {
+            return Promise.resolve(undefined);
+        }
+        return Promise.resolve({
+            diffInformations: [
+                {
+                    originalFileContent: 'testing line differences',
+                    modifiedFileContent: 'testing line diff\nnew line',
+                    originalPath: 'Example.java',
+                    modifiedPath: 'Example.java',
+                    diffReady: true,
+                    fileStatus: 'unchanged',
+                    lineChange: {
+                        addedLineCount: 2,
+                        removedLineCount: 1,
+                    },
+                    title: 'Example.java',
+                },
+            ],
+            totalLineChange: {
+                addedLineCount: 2,
+                removedLineCount: 1,
+            },
+        } as RepositoryDiffInformation);
+    }),
+}));
 
 /*
  * just use a separate file for sharing aspects, could be merged into programming-exercise-detail.component.spec.ts if stabilized.
@@ -52,13 +84,29 @@ describe('ProgrammingExerciseDetailComponent', () => {
         solutionParticipation: {
             id: 2,
         } as SolutionProgrammingExerciseParticipation,
-        buildConfig: {
-            buildTool: 'GRADLE',
-            buildImage: 'ghcr.io/ls1intum/gradle-jdk17:latest',
-            buildImagePullSecret: 'gradle-jdk17-pull-secret',
-            buildImagePullSecretName: 'gradle-jdk17-pull-secret',
+    } as ProgrammingExercise;
+
+    const mockDiffInformation = {
+        diffInformations: [
+            {
+                originalFileContent: 'testing line differences',
+                modifiedFileContent: 'testing line diff\nnew line',
+                originalPath: 'Example.java',
+                modifiedPath: 'Example.java',
+                diffReady: false,
+                fileStatus: 'unchanged',
+                lineChange: {
+                    addedLineCount: 2,
+                    removedLineCount: 1,
+                },
+                title: 'Example.java',
+            },
+        ],
+        totalLineChange: {
+            addedLineCount: 2,
+            removedLineCount: 1,
         },
-    } as unknown as ProgrammingExercise;
+    } as unknown as RepositoryDiffInformation;
 
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
@@ -74,21 +122,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
-    const gitDiffReport = {
-        templateRepositoryCommitHash: 'x1',
-        solutionRepositoryCommitHash: 'x2',
-        entries: [
-            {
-                previousFilePath: '/src/test.java',
-                filePath: '/src/test.java',
-                previousStartLine: 1,
-                startLine: 1,
-                previousLineCount: 2,
-                lineCount: 2,
-            },
-        ],
-    } as ProgrammingExerciseGitDiffReport;
-
     const profileInfo = {
         activeProfiles: [],
         activeModuleFeatures: [MODULE_FEATURE_PLAGIARISM],
@@ -98,7 +131,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot()],
             providers: [
-                MockProvider(AlertService),
                 MockProvider(ProgrammingLanguageFeatureService),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -112,24 +144,37 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
+
+        // Mock the ResizeObserver, which is not available in the test environment
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
         fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
         comp = fixture.componentInstance;
 
-        statisticsService = fixture.debugElement.injector.get(StatisticsService);
+        statisticsService = TestBed.inject(StatisticsService);
         jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
-        exerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-        profileService = fixture.debugElement.injector.get(ProfileService);
-        submissionPolicyService = fixture.debugElement.injector.get(SubmissionPolicyService);
 
-        programmingLanguageFeatureService = fixture.debugElement.injector.get(ProgrammingLanguageFeatureService);
+        exerciseService = TestBed.inject(ProgrammingExerciseService);
+        profileService = TestBed.inject(ProfileService);
+        submissionPolicyService = TestBed.inject(SubmissionPolicyService);
+
+        programmingLanguageFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
+        TestBed.inject(Router);
 
         jest.spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
             of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })),
         );
-        jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+        jest.spyOn(exerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(
+            of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent ?? '']])),
+        );
+        jest.spyOn(exerciseService, 'getSolutionRepositoryTestFilesWithContent').mockReturnValue(
+            of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent ?? '']])),
+        );
         jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
 
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
         jest.spyOn(programmingLanguageFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
             plagiarismCheckSupported: true,
         } as ProgrammingLanguageFeature);
