@@ -15,8 +15,7 @@ import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
-import { ActivatedRoute, Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { Router } from '@angular/router';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -51,7 +50,6 @@ export class IrisChatService implements OnDestroy {
     private readonly status = inject(IrisStatusService);
     private readonly userService = inject(UserService);
     private readonly accountService = inject(AccountService);
-    private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
 
     private modeRequiresLLMAcceptance = new Map<ChatServiceMode, boolean>([
@@ -104,28 +102,47 @@ export class IrisChatService implements OnDestroy {
         this.updateCourseId();
     }
 
-    private updateCourseId(): Observable<number | undefined> {
-        return this.route.params.pipe(
-            map((params) => {
-                const updatedCourseId = params['courseId'];
-                // eslint-disable-next-line no-undef
-                console.log('ActivatedRoute snapshot:', this.route.snapshot);
-                // eslint-disable-next-line no-undef
-                console.log('ActivatedRoute params:', this.route.snapshot.params);
-                // eslint-disable-next-line no-undef
-                console.log('ActivatedRoute:', this.route);
-                // eslint-disable-next-line no-undef
-                console.log('Route parameters:', params);
-                // eslint-disable-next-line no-undef
-                console.log('Updated courseId:', updatedCourseId);
-                // eslint-disable-next-line no-undef
-                console.log('Current route:', this.router.url);
-                // eslint-disable-next-line no-undef
-                console.log('Route parameters:', params);
-                this.setCourseId(updatedCourseId);
-                return updatedCourseId;
-            }),
-        );
+    /**
+     * <b>Extracts the course ID from the current route URL.</b>
+     *
+     * <p>We assume the route follows the structure:</p>
+     * <pre>
+     * /courses/{courseId}/lectures/{lectureId}
+     * </pre>
+     *
+     * <p>For example:</p>
+     * <ul>
+     *   <li><code>/courses/19/lectures/27</code> - Extracts <code>19</code> as the course ID.</li>
+     * </ul>
+     *
+     *
+     * @return courseId retrieved from current route or <code>undefined</code> if the route does not match the expected structure
+     *
+     * @Note We cannot use ActivatedRoute here, because this service is injectable in the root
+     *       and therefore might be instantiated before the route is fully initialized.
+     */
+    private getCourseIdFromCurrentUrl(): number | undefined {
+        const currentUrl = this.router.url;
+
+        /**
+         * Regex to match '/courses/{number}'
+         */
+        const COURSE_ID_REGEX = /\/courses\/(\d+)/;
+        const match = currentUrl.match(COURSE_ID_REGEX);
+
+        /**
+         * 0 would contain the fully matched string, e.g. '/courses/19'
+         *
+         * 1 is the first capturing group, which contains the course ID, e.g. '19'
+         */
+        const capturingGroupIndex = 1;
+        return match ? Number(match[capturingGroupIndex]) : undefined;
+    }
+
+    private updateCourseId(): number | undefined {
+        const updatedCourseId = this.getCourseIdFromCurrentUrl();
+        this.setCourseId(updatedCourseId);
+        return updatedCourseId;
     }
 
     ngOnDestroy(): void {
@@ -368,12 +385,8 @@ export class IrisChatService implements OnDestroy {
         );
     }
 
-    private async loadChatSessions() {
-        // eslint-disable-next-line no-undef
-        console.log('Loading chat sessions for courseId:');
-        const courseId = await this.getCourseId();
-        // eslint-disable-next-line no-undef
-        console.log('loading chat sessions for courseId:', courseId);
+    private loadChatSessions() {
+        const courseId = this.getCourseId();
         if (courseId) {
             this.chatSessionSubscription?.unsubscribe();
             this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
@@ -415,14 +428,14 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
-    async switchToSession(session: IrisSessionDTO): Promise<void> {
+    switchToSession(session: IrisSessionDTO): Promise<void> {
         if (this.sessionId === session.id) {
             return;
         }
 
         this.close();
 
-        const courseId = await this.getCourseId();
+        const courseId = this.getCourseId();
         if (courseId) {
             this.chatSessionByIdSubscription?.unsubscribe();
             this.chatSessionByIdSubscription = this.http.getChatSessionById(courseId, session.id).subscribe((session) => this.handleNewSession().next(session));
@@ -465,12 +478,12 @@ export class IrisChatService implements OnDestroy {
      * <p>Required in edge cases where a route requiring the {@link courseId} (e.g., a lecture from the student view)
      * is loaded directly by accessing the link or by reloading the page.</p>
      */
-    public async getCourseId(): Promise<number | undefined> {
+    public getCourseId(): number | undefined {
         if (this.courseId) {
             return this.courseId;
         }
 
-        return await firstValueFrom(this.updateCourseId());
+        return this.updateCourseId();
     }
 
     public setCourseId(courseId: number): void {
