@@ -11,7 +11,6 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 })
 export class CalendarDayBadgeComponent {
     day: InputSignal<Dayjs> = input.required<Dayjs>();
-    selected: InputSignal<boolean> = input(false);
 
     get dayNumber(): number {
         return this.day().date();
