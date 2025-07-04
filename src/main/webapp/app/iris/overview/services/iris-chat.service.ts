@@ -120,6 +120,8 @@ export class IrisChatService implements OnDestroy {
                 console.log('Updated courseId:', updatedCourseId);
                 // eslint-disable-next-line no-undef
                 console.log('Current route:', this.router.url);
+                // eslint-disable-next-line no-undef
+                console.log('Route parameters:', params);
                 this.setCourseId(updatedCourseId);
                 return updatedCourseId;
             }),
