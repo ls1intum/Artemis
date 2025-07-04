@@ -178,12 +178,17 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         irisSessionRepository.save(courseSession);
         irisMessageRepository.saveAll(courseSession.getMessages());
 
+        IrisChatSession textExerciseSession = IrisChatSessionFactory.createTextExerciseSessionForUserWithMessages(textExercise, user);
+        irisSessionRepository.save(textExerciseSession);
+        irisMessageRepository.saveAll(textExerciseSession.getMessages());
+
         // Execute the request
         List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
 
         // Assertions
-        assertThat(irisChatSessions).hasSize(2);
+        assertThat(irisChatSessions).hasSize(3);
         assertThat(irisChatSessions.stream().filter(s -> s.id().equals(lectureSession.getId())).findFirst()).isPresent();
         assertThat(irisChatSessions.stream().filter(s -> s.id().equals(courseSession.getId())).findFirst()).isPresent();
+        assertThat(irisChatSessions.stream().filter(s -> s.id().equals(textExerciseSession.getId())).findFirst()).isPresent();
     }
 }

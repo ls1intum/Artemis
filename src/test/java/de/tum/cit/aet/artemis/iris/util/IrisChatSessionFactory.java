@@ -54,4 +54,10 @@ public class IrisChatSessionFactory {
         chatSession.setCourseId(course.getId());
         return createSessionWithMessages(chatSession, course.getId());
     }
+
+    public static IrisTextExerciseChatSession createTextExerciseSessionForUserWithMessages(TextExercise textExercise, User user) {
+        IrisTextExerciseChatSession chatSession = createTextExerciseChatSessionForUser(textExercise, user);
+        chatSession.setExerciseId(textExercise.getId());
+        return createSessionWithMessages(chatSession, textExercise.getId());
+    }
 }
