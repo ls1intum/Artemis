@@ -90,8 +90,8 @@ export class ExerciseService {
      * Validates if the dates are correct
      */
     validateDate(exercise: Exercise) {
-        exercise.startDateError = this.hasStartDateError(exercise);
         exercise.dueDateError = this.hasDueDateError(exercise);
+        exercise.startDateError = this.hasStartDateError(exercise);
         exercise.assessmentDueDateError = this.hasAssessmentDueDateError(exercise);
 
         exercise.exampleSolutionPublicationDateError = this.hasExampleSolutionPublicationDateError(exercise);
