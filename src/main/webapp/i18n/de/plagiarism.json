@@ -44,7 +44,7 @@
             "minimumSize": "Plagiatskontrolle: Minimale Größe",
             "minimumTokenCount": "Minimale Tokenanzahl",
             "minimumSizeTooltipTextExercise": "Es werden nur diejenigen Abgaben berücksichtigt, die mindestens so viele Wörter beinhalten wie der angegebene Wert.",
-            "minimumTokenCountTooltipProgrammingExercise": "Nur Einsendungen berücksichtigen, die mindestens diese Anzahl an Tokens enthalten. Hilft dabei, sehr kleine oder unvollständige Einsendungen vor der Plagiatsprüfung herauszufiltern.",
+ "minimumTokenCountTooltipProgrammingExercise": "Nur Abgaben berücksichtigen, die mindestens diese Anzahl an Tokens enthalten. Hilft dabei, sehr kleine oder unvollständige Abgaben vor der Plagiatsprüfung herauszufiltern.",
             "plagiarismCaseResponsePeriod": "Antwortfrist bezüglich signifikanten Ähnlichkeit Plagiatsfälle in Tagen",
             "plagiarismCaseResponsePeriodTooltip": "Falls die Signifikante Ähnlichkeit nach dem Fälligkeitsdatum der Übung weiter besteht, zeigt das System die Anzahl der verbleibenden Tage an, in denen die Studierenden eine Antwort formulieren müssen (ohne diese jedoch durchzusetzen).",
             "noInfoAvailable": "Keine Information verfügbar",
