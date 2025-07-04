@@ -56,6 +56,14 @@
                     <span class="bold">:</span>
                     <span>{{ buildAgent.buildAgentDetails?.gitRevision }}</span>
                 </div>
+                <div>
+                    <span class="bold" jhiTranslate="artemisApp.buildAgents.consecutiveBuildFailures"></span>
+                    <span>{{ buildAgent.buildAgentDetails?.consecutiveBuildFailures }}</span>
+                </div>
+                <div>
+                    <span class="bold" jhiTranslate="artemisApp.buildAgents.pauseAfterConsecutiveFailures"></span>
+                    <span>{{ buildAgent.pauseAfterConsecutiveBuildFailures }}</span>
+                </div>
             </div>
 
             <jhi-build-job-statistics [buildJobStatisticsInput]="buildJobStatistics" class="mb-4" />

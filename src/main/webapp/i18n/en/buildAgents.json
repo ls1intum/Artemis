@@ -21,6 +21,8 @@
             "onlineAgents": "online agent(s)",
             "of": "of",
             "buildJobsRunning": "build jobs running",
+            "consecutiveBuildFailures": "Consecutive Build Failures:",
+            "pauseAfterConsecutiveFailures": "Self pause after consecutive failed builds:",
             "alerts": {
                 "buildAgentPaused": "Build agent pause request sent successfully. The agent will not accept new build jobs and will gracefully finish the current build jobs or will cancel them after a configurable seconds.",
                 "buildAgentResumed": "Build agent resume request sent successfully. The agent will start accepting new build jobs.",
