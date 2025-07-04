@@ -96,7 +96,6 @@ public class LocalRepository {
      * @param originRepoFileName The name of the directory in which the origin repository will be created
      * @param originIsBare       Whether the origin repository should be bare or not. Set this to false only if you need to create files in the origin repository.
      */
-    // TODO: merge with method below to avoid code duplication
     public void configureRepos(Path repoBasePath, String localRepoFileName, String originRepoFileName, boolean originIsBare) throws Exception {
         var workingCopyGitRepoPath = getRepoPath(repoBasePath, localRepoFileName);
         workingCopyGitRepoFile = workingCopyGitRepoPath.toAbsolutePath().toFile();
