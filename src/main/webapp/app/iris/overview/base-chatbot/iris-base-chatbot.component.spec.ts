@@ -35,7 +35,6 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
-import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
@@ -87,7 +86,7 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: AccountService, useValue: accountMock },
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 456 }) },
+                MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
             ],
@@ -101,6 +100,7 @@ describe('IrisBaseChatbotComponent', () => {
 
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 chatService = TestBed.inject(IrisChatService);
+                chatService.setCourseId(456);
                 httpService = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
                 wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
                 mockModalService = TestBed.inject(NgbModal) as jest.Mocked<NgbModal>;
