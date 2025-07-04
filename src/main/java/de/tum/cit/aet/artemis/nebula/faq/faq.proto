@@ -1,21 +1,30 @@
 syntax = "proto3";
 
-package faqservice;
+package de.tum.cit.aet.artemis.nebula;
 
 service FAQService {
-  rpc RewriteFAQ(FaqRewritingRequest) returns (FaqRewritingResponse);
+    rpc RewriteFAQ(FaqRewritingRequest) returns (FaqRewritingResponse);
+    rpc RewriteFAQStream(FaqRewritingRequest) returns (stream FaqRewriteStatusUpdate);
+
 }
 
 message FAQ {
-  string question_title = 1;
-  string question_answer = 2;
+    string question_title = 1;
+    string question_answer = 2;
 }
 
 message FaqRewritingRequest {
-  repeated FAQ faqs = 1;
-  string input_text = 2;
+    repeated FAQ faqs = 1;
+    string input_text = 2;
 }
 
 message FaqRewritingResponse {
-  string result = 1;
+    string result = 1;
+}
+
+message FaqRewriteStatusUpdate {
+    string status_message = 1;
+    int32 progress_percent = 2;
+    bool done = 3;
+    string final_result = 4;
 }

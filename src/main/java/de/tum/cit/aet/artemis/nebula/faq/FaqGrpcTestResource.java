@@ -36,7 +36,17 @@ public class FaqGrpcTestResource {
     public ResponseEntity<String> rewriteFaqInNebula(@PathVariable Long courseId, @RequestBody String inputText) {
 
         log.debug("REST request to rewrite the following FAQ input text : {}", inputText);
-        String result = faqGrpcService.ingestAcceptedFaqsToNebula(courseId, inputText);
+        String result = faqGrpcService.rewriteFaqInNebula(courseId, inputText);
+        log.debug("Result from the rewriting : {} See the result: {}", inputText, result);
+        return ResponseEntity.ok(result);
+    }
+
+    @EnforceAtLeastTutorInCourse
+    @PostMapping("rewrite-faq-stream/{courseId}")
+    public ResponseEntity<String> rewriteFaqInNebulaStream(@PathVariable Long courseId, @RequestBody String inputText) {
+
+        log.debug("REST request to rewrite the following FAQ input text : {}", inputText);
+        String result = faqGrpcService.rewriteFaqInNebulaStream(courseId);
         log.debug("Result from the rewriting : {} See the result: {}", inputText, result);
         return ResponseEntity.ok(result);
     }
