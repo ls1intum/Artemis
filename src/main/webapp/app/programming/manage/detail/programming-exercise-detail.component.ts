@@ -52,7 +52,7 @@ import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
-import { catchError, mergeMap, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';

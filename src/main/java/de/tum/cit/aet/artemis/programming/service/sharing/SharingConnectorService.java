@@ -14,16 +14,15 @@ import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 
 /**
  * Service to support Sharing Platform functionality as a plugin.
@@ -38,7 +37,7 @@ public class SharingConnectorService {
     /**
      * just to signal a missing/inconsistent sharing configuration to the sharing connector service.
      */
-    public static final String UNKNOWN_INSTALLATION_NAME = "unknown installationame";
+    public static final String UNKNOWN_INSTALLATION_NAME = "unknown installation name";
 
     /**
      * just a maximum check length for validation limiting
@@ -132,7 +131,7 @@ public class SharingConnectorService {
     @Value("${artemis.sharing.serverurl:#{null}}")
     private String sharingUrl;
 
-    private final TaskExecutor taskExecutor;
+    private final TaskScheduler taskScheduler;
 
     /**
      * installation name for Sharing Platform
@@ -144,19 +143,13 @@ public class SharingConnectorService {
     }
 
     /**
-     * profile service
-     */
-    private final ProfileService profileService;
-
-    /**
      * rest template for connector request
      */
     private final RestTemplate restTemplate;
 
-    public SharingConnectorService(ProfileService profileService, RestTemplate restTemplate, TaskExecutor taskExecutor) {
-        this.profileService = profileService;
+    public SharingConnectorService(RestTemplate restTemplate, TaskScheduler taskScheduler) {
         this.restTemplate = restTemplate;
-        this.taskExecutor = taskExecutor;
+        this.taskScheduler = taskScheduler;
     }
 
     /**
@@ -257,9 +250,9 @@ public class SharingConnectorService {
      * At (spring) application startup, we request a reinitialization of the sharing platform .
      * It starts a background thread in order not to block application startup.
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @EventListener(FullStartupEvent.class)
     public void triggerSharingReinitAfterApplicationStart() {
-        taskExecutor.execute(this::triggerReinit);
+        taskScheduler.schedule(this::triggerReinit, Instant.now().plusSeconds(10));
     }
 
     /**
@@ -282,7 +275,7 @@ public class SharingConnectorService {
             String reInitUrlWithApiKey = UriComponentsBuilder.fromUriString(sharingUrl).pathSegment("api", "pluginIF", "v0.1", "reInitialize").queryParam("apiKey", sharingApiKey)
                     .encode().toUriString();
             try {
-                boolean success = restTemplate.getForObject(reInitUrlWithApiKey, Boolean.class);
+                boolean success = Boolean.TRUE.equals(restTemplate.getForObject(reInitUrlWithApiKey, Boolean.class));
                 if (!success) {
                     log.warn("The request for connector reinitialization from Sharing Platform was not successful");
                 }
