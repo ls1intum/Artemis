@@ -38,7 +38,7 @@ public class IrisChatSessionFactory {
         return new IrisProgrammingExerciseChatSession(programmingExercise, user);
     }
 
-    public static <T extends IrisChatSession> T createSessionWithMessages(T session, Long id) {
+    public static <T extends IrisChatSession> T createSessionWithMessages(T session) {
         List<IrisMessage> messages = new ArrayList<>();
         messages.add(IrisMessageFactory.createIrisMessage(IrisMessageSender.LLM));
         messages.add(IrisMessageFactory.createIrisMessage(IrisMessageSender.USER));
@@ -51,25 +51,21 @@ public class IrisChatSessionFactory {
 
     public static IrisLectureChatSession createLectureSessionForUserWithMessages(Lecture lecture, User user) {
         IrisLectureChatSession chatSession = createLectureSessionForUser(lecture, user);
-        chatSession.setLectureId(lecture.getId());
-        return createSessionWithMessages(chatSession, lecture.getId());
+        return createSessionWithMessages(chatSession);
     }
 
     public static IrisCourseChatSession createCourseSessionForUserWithMessages(Course course, User user) {
         IrisCourseChatSession chatSession = createCourseChatSessionForUser(course, user);
-        chatSession.setCourseId(course.getId());
-        return createSessionWithMessages(chatSession, course.getId());
+        return createSessionWithMessages(chatSession);
     }
 
     public static IrisTextExerciseChatSession createTextExerciseSessionForUserWithMessages(TextExercise textExercise, User user) {
         IrisTextExerciseChatSession chatSession = createTextExerciseChatSessionForUser(textExercise, user);
-        chatSession.setExerciseId(textExercise.getId());
-        return createSessionWithMessages(chatSession, textExercise.getId());
+        return createSessionWithMessages(chatSession);
     }
 
     public static IrisProgrammingExerciseChatSession createProgrammingExerciseChatSessionForUserWithMessages(ProgrammingExercise programmingExercise, User user) {
         IrisProgrammingExerciseChatSession chatSession = createProgrammingExerciseChatSessionForUser(programmingExercise, user);
-        chatSession.setExerciseId(programmingExercise.getId());
-        return createSessionWithMessages(chatSession, programmingExercise.getId());
+        return createSessionWithMessages(chatSession);
     }
 }
