@@ -11,7 +11,7 @@ describe('CalendarEventService', () => {
 
     const courseId = 42;
     const date = dayjs('2025-10-01');
-    const expectedUrl = `/api/calendar/courses/${courseId}/calendar-events`;
+    const expectedUrl = `/api/core/calendar/courses/${courseId}/calendar-events`;
 
     const testRequestResponse = {
         '2025-10-01': [
@@ -166,9 +166,9 @@ describe('CalendarEventService', () => {
             ],
         };
 
-        service.includedEventFilterOptions.set(['examEvents']); // Exclude lecture initially
+        service.includedEventFilterOptions.set(['examEvents']);
 
-        service.loadEventsForCurrentMonth(1, dayjs('2025-10-01')).subscribe(() => {
+        service.loadEventsForCurrentMonth(courseId, dayjs('2025-10-01')).subscribe(() => {
             expect(service.eventMap().get('2025-10-01')).toBeUndefined();
 
             service.toggleEventFilterOption('lectureEvents');
@@ -185,7 +185,7 @@ describe('CalendarEventService', () => {
             });
         });
 
-        const testRequets = httpMock.expectOne((request) => request.url.includes('/api/calendar/courses/1/calendar-events'));
+        const testRequets = httpMock.expectOne((request) => request.url === expectedUrl);
         expect(testRequets.request.method).toBe('GET');
         testRequets.flush(smallHttpResponse);
         tick();
