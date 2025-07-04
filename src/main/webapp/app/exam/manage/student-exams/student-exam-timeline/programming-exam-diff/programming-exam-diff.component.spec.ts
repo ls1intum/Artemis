@@ -111,7 +111,6 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         modal = TestBed.inject(NgbModal);
         cachedRepositoryFilesService = TestBed.inject(CachedRepositoryFilesService);
-        //cachedRepositoryFilesService.emitCachedRepositoryFiles(new Map<string, Map<string, string>>());
         const exercise = { id: 3, title: 'programming exercise' } as ProgrammingExercise;
         const studentParticipation = {} as StudentParticipation;
         component.exercise.set(exercise);
