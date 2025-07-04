@@ -167,39 +167,56 @@ examples.forEach((activeConversation) => {
             expect(fetchNextPageSpy).toHaveBeenCalled();
         }));
 
-        it('should find visible elements at the scroll position and save scroll position', () => {
-            // Mock des Containers
-            component.content.nativeElement = {
-                getBoundingClientRect: jest.fn().mockReturnValue({ top: 0, bottom: 100 }),
-                scrollTop: 0,
-                scrollHeight: 200,
-                removeEventListener: jest.fn(),
-            };
-            const mockMessages = [
-                { post: { id: 1 }, elementRef: { nativeElement: { getBoundingClientRect: jest.fn().mockReturnValue({ top: 10, bottom: 90 }) } } },
-                { post: { id: 2 }, elementRef: { nativeElement: { getBoundingClientRect: jest.fn().mockReturnValue({ top: 100, bottom: 200 }) } } },
-            ] as unknown as PostingThreadComponent[];
-            component.messages.toArray = jest.fn().mockReturnValue(mockMessages);
+        it('should save scroll position', () => {
+            const container = document.createElement('div');
+            container.id = 'scrollableDiv';
+            document.body.appendChild(container);
+
+            const post = document.createElement('jhi-posting-thread');
+            post.id = 'item-42';
+            container.appendChild(post);
+
             component.canStartSaving = true;
-            const nextSpy = jest.spyOn(component.scrollSubject, 'next');
+            const saveSpy = jest.spyOn(component, 'saveScrollPosition');
+            const firstIdSpy = jest.spyOn(component, 'findFirstVisiblePostId').mockReturnValue(42);
             component.findElementsAtScrollPosition();
-            expect(component.elementsAtScrollPosition).toEqual([mockMessages[0]]);
-            expect(nextSpy).toHaveBeenCalledWith(1);
+            expect(saveSpy).toHaveBeenCalledWith(42);
+            expect(firstIdSpy).toHaveBeenCalledOnce();
+            document.body.removeChild(container);
         });
 
-        it('should not save scroll position if no elements are visible', () => {
-            const mockMessages = [
-                {
-                    post: { id: 1 },
-                    elementRef: { nativeElement: { getBoundingClientRect: jest.fn().mockReturnValue({ top: 200, bottom: 300 }) } },
-                },
-            ] as unknown as PostingThreadComponent[];
+        it('should not save scroll position if no visible post is found', () => {
+            // Arrange
+            component.canStartSaving = true;
 
-            component.messages.toArray = jest.fn().mockReturnValue(mockMessages);
-            const nextSpy = jest.spyOn(component.scrollSubject, 'next');
+            const saveSpy = jest.spyOn(component, 'saveScrollPosition');
+            const findFirstSpy = jest.spyOn(component, 'findFirstVisiblePostId').mockReturnValue(null);
+
             component.findElementsAtScrollPosition();
-            expect(component.elementsAtScrollPosition).toEqual([]);
-            expect(nextSpy).not.toHaveBeenCalled();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(findFirstSpy).toHaveBeenCalled();
+        });
+
+        it('should return the ID of the first visible post', async () => {
+            const container = document.createElement('div');
+            container.id = 'scrollableDiv';
+
+            const post = document.createElement('jhi-posting-thread');
+            post.id = 'item-42';
+
+            container.appendChild(post);
+            document.body.appendChild(container);
+            Object.defineProperty(post, 'getBoundingClientRect', {
+                value: () => ({ top: 10, bottom: 60 }),
+            });
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                value: () => ({ top: 0 }),
+            });
+            jest.spyOn(document, 'getElementById').mockReturnValue(container);
+            const result = component.findFirstVisiblePostId();
+            expect(result).toBe(42);
+            document.body.removeChild(container);
         });
 
         it('should scroll to the bottom when a new message is created', fakeAsync(() => {

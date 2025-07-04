@@ -592,6 +592,29 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         });
     }
 
+    /**
+     * Finds the first visible post in the scrollable container.
+     * Returns the post ID or null if no post is visible.
+     */
+    findFirstVisiblePostId(): number | null {
+        const container = document.getElementById('scrollableDiv');
+        if (!container) return null;
+
+        const containerTop = container.getBoundingClientRect().top;
+        const threads = container.querySelectorAll<HTMLElement>('jhi-posting-thread[id^="item-"]');
+
+        for (const thread of threads) {
+            const rect = thread.getBoundingClientRect();
+            if (rect.bottom > containerTop + 5) {
+                const id = thread.id;
+                const postId = parseInt(id.replace('item-', ''), 10);
+                return isNaN(postId) ? null : postId;
+            }
+        }
+
+        return null;
+    }
+
     saveScrollPosition = (postId: number) => {
         this.scrollSubject.next(postId);
     };
@@ -614,8 +637,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (!element) {
             this.fetchNextPage();
         } else {
-            // We scroll to the element with a slight buffer to ensure its fully visible (-10)
-            this.content.nativeElement.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop - 10);
+            // We scroll to the element with a slight buffer to ensure its fully visible (+10)
+            this.content.nativeElement.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop);
             this.canStartSaving = true;
             if (isOpenThread) {
                 this.openThread.emit(element.post);
@@ -625,21 +648,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
     }
 
-    findElementsAtScrollPosition() {
-        const messageArray = this.messages.toArray();
-        const containerRect = this.content.nativeElement.getBoundingClientRect();
-        const visibleMessages = [];
-        for (const message of messageArray) {
-            if (!message.elementRef?.nativeElement || !message.post?.id) continue;
-            const rect = message.elementRef.nativeElement.getBoundingClientRect();
-            if (rect.top >= containerRect.top && rect.bottom <= containerRect.bottom) {
-                visibleMessages.push(message);
-                break; // Only need the first visible message
-            }
-        }
-        this.elementsAtScrollPosition = visibleMessages;
-        if (this.elementsAtScrollPosition && this.elementsAtScrollPosition.length > 0 && this.canStartSaving) {
-            this.saveScrollPosition(this.elementsAtScrollPosition[0].post.id!);
+    findElementsAtScrollPosition(): void {
+        const postId = this.findFirstVisiblePostId();
+        if (postId !== null && this.canStartSaving && this._activeConversation?.id) {
+            this.saveScrollPosition(postId);
         }
     }
 
