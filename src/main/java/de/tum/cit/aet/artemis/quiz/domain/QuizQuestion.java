@@ -21,6 +21,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -79,6 +80,11 @@ public abstract class QuizQuestion extends DomainObject {
     @ManyToOne
     @JsonIgnore
     private QuizExercise exercise;
+
+    @JsonProperty("exerciseId")
+    public Long getExerciseId() {
+        return exercise != null ? exercise.getId() : null;
+    }
 
     public String getTitle() {
         return title;

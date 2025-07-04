@@ -12,18 +12,21 @@ import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismHeaderComponent } from 'app/plagiarism/manage/plagiarism-header/plagiarism-header.component';
+import { AlertService } from '../../../shared/service/alert.service';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;
     let fixture: ComponentFixture<PlagiarismHeaderComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
+    const alertServiceMock = { error: jest.fn(), addAlert: jest.fn() };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [PlagiarismHeaderComponent, MockDirective(TranslateDirective)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AlertService, useValue: alertServiceMock },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -34,13 +37,14 @@ describe('Plagiarism Header Component', () => {
         comp = fixture.componentInstance;
 
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
-        comp.comparison = {
+        fixture.componentRef.setInput('comparison', {
+            id: 1,
             submissionA: { studentLogin: 'studentA' },
             submissionB: { studentLogin: 'studentB' },
             status: PlagiarismStatus.NONE,
-        } as PlagiarismComparison;
-        comp.exercise = { course: { id: 1 } } as Exercise;
-        comp.splitControlSubject = new Subject<string>();
+        } as PlagiarismComparison);
+        fixture.componentRef.setInput('exercise', { course: { id: 1 } } as Exercise);
+        fixture.componentRef.setInput('splitControlSubject', new Subject<string>());
     });
 
     afterEach(() => {
@@ -64,7 +68,7 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should disable deny button if plagiarism status is denied or loading', () => {
-        comp.comparison.status = PlagiarismStatus.DENIED;
+        fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.DENIED });
         comp.isLoading = true;
 
         fixture.detectChanges();
@@ -80,7 +84,7 @@ describe('Plagiarism Header Component', () => {
         jest.spyOn(comp, 'updatePlagiarismStatus');
         const modalSpy = jest.spyOn(TestBed.inject(NgbModal), 'open');
 
-        comp.comparison.status = PlagiarismStatus.CONFIRMED;
+        fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.CONFIRMED });
 
         comp.denyPlagiarism();
 
@@ -98,13 +102,13 @@ describe('Plagiarism Header Component', () => {
         tick();
 
         expect(updatePlagiarismComparisonStatusStub).toHaveBeenCalledOnce();
-        expect(comp.comparison.status).toEqual(PlagiarismStatus.CONFIRMED);
+        expect(comp.comparison()?.status).toEqual(PlagiarismStatus.CONFIRMED);
         expect(comp.isLoading).toBeFalse();
     }));
 
     it('should emit when expanding left split view pane', () => {
-        comp.splitControlSubject = new Subject<string>();
-        jest.spyOn(comp.splitControlSubject, 'next');
+        // we set the splitControlSubject in beforeEach, hence we can assume it is defined
+        jest.spyOn(comp.splitControlSubject()!, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitLeftButton = nativeElement.querySelector("[data-qa='split-view-left']");
@@ -112,12 +116,12 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitControlSubject.next).toHaveBeenCalledWith('left');
+        expect(comp.splitControlSubject()?.next).toHaveBeenCalledWith('left');
     });
 
     it('should emit when expanding right split view pane', () => {
-        comp.splitControlSubject = new Subject<string>();
-        jest.spyOn(comp.splitControlSubject, 'next');
+        // we set the splitControlSubject in beforeEach, hence we can assume it is defined
+        jest.spyOn(comp.splitControlSubject()!, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitRightButton = nativeElement.querySelector("[data-qa='split-view-right']");
@@ -125,12 +129,12 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitControlSubject.next).toHaveBeenCalledWith('right');
+        expect(comp.splitControlSubject()?.next).toHaveBeenCalledWith('right');
     });
 
     it('should emit when resetting the split panes', () => {
-        comp.splitControlSubject = new Subject<string>();
-        jest.spyOn(comp.splitControlSubject, 'next');
+        // we set the splitControlSubject in beforeEach, hence we can assume it is defined
+        jest.spyOn(comp.splitControlSubject()!, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitHalfButton = nativeElement.querySelector("[data-qa='split-view-even']");
@@ -138,11 +142,11 @@ describe('Plagiarism Header Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.splitControlSubject.next).toHaveBeenCalledWith('even');
+        expect(comp.splitControlSubject()?.next).toHaveBeenCalledWith('even');
     });
 
     it('should display team mode disabled help icon when teamMode is enabled', () => {
-        comp.exercise.teamMode = true;
+        fixture.componentRef.setInput('exercise', { ...comp.exercise(), teamMode: true });
         fixture.detectChanges();
 
         const nativeElement = fixture.nativeElement;
@@ -155,7 +159,7 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should hide team mode disabled help icon when teamMode is disabled', () => {
-        comp.exercise.teamMode = false;
+        fixture.componentRef.setInput('exercise', { ...comp.exercise(), teamMode: false });
         fixture.detectChanges();
 
         const nativeElement = fixture.nativeElement;
@@ -164,5 +168,21 @@ describe('Plagiarism Header Component', () => {
 
         expect(helpIcon).toBeFalsy(); // The icon should not be present
         expect(textElement).toBeFalsy(); // The text should not be present
+    });
+
+    it('shows an error and aborts when the course id is missing', () => {
+        fixture.componentRef.setInput('comparison', { id: 42 } as any);
+
+        fixture.componentRef.setInput('exercise', undefined);
+        fixture.detectChanges();
+        const alertSpy = jest.spyOn(alertServiceMock, 'error');
+        const updateSpy = jest.spyOn(plagiarismCasesService, 'updatePlagiarismComparisonStatus');
+
+        comp.updatePlagiarismStatus(PlagiarismStatus.CONFIRMED);
+
+        expect(alertSpy).toHaveBeenCalledWith('error.courseIdUndefined');
+        expect(alertSpy).toHaveBeenCalledOnce();
+        expect(updateSpy).not.toHaveBeenCalled();
+        expect(comp.isLoading).toBeFalse();
     });
 });

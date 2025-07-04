@@ -52,6 +52,8 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.exception.GitException;
@@ -222,7 +224,17 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @return the path to the exported exercise
      * @throws IOException if an error occurs while accessing the file system
      */
-    public Path exportProgrammingExerciseForDownload(ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
+    public Path exportProgrammingExerciseForDownload(@NotNull ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
+        // Reset grading criterion ids to null, such that Hibernate can persist them.
+        if (exercise.getGradingCriteria() != null) {
+            for (GradingCriterion gradingCriterion : exercise.getGradingCriteria()) {
+                gradingCriterion.setId(null);
+                for (GradingInstruction gradingInstruction : gradingCriterion.getStructuredGradingInstructions()) {
+                    gradingInstruction.setId(null);
+                }
+            }
+        }
+
         List<Path> pathsToBeZipped = new ArrayList<>();
         var exportDir = exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, true, Optional.empty(), new ArrayList<>(), pathsToBeZipped);
         // Setup path to store the zip file for the exported programming exercise
