@@ -8,7 +8,15 @@
 
 .hover-effect {
     &:hover {
-        background-color: var(--hover-slightly-darker-body-bg);
+        background-color: var(--link-item-bg);
+
+        &.border-module {
+            border-color: var(--link-item-bg) !important;
+        }
+
+        &.item-border {
+            border-color: var(--bs-card-border-color) !important;
+        }
     }
 }
 
@@ -18,4 +26,14 @@
     &.border-module {
         border-color: var(--sidebar-card-selected-bg) !important;
     }
+
+    &.item-border {
+        border-color: var(--bs-card-border-color) !important;
+    }
+}
+
+.item-border {
+    border-width: 1px !important;
+    border-style: solid;
+    border-color: var(--bs-card-border-color) !important;
 }
