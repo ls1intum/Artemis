@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR } from 'app/shared/constants/authority.constants';
 import { lectureUnitRoute } from 'app/lecture/manage/lecture-units/lecture-unit-management.route';
 import { CourseManagementResolve } from 'app/core/course/manage/services/course-management-resolve.service';
 import { hasLectureUnsavedChangesGuard } from './hasLectureUnsavedChanges.guard';
@@ -15,7 +15,7 @@ export const lectureRoute: Routes = [
             course: CourseManagementResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -31,7 +31,7 @@ export const lectureRoute: Routes = [
                 path: 'new',
                 loadComponent: () => import('./lecture-update/lecture-update.component').then((m) => m.LectureUpdateComponent),
                 data: {
-                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: IS_AT_LEAST_EDITOR,
                     pageTitle: 'global.generic.create',
                 },
                 canActivate: [UserRouteAccessService],
@@ -43,7 +43,7 @@ export const lectureRoute: Routes = [
                     lecture: LectureResolve,
                 },
                 data: {
-                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: IS_AT_LEAST_EDITOR,
                     pageTitle: 'artemisApp.lecture.home.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -58,7 +58,7 @@ export const lectureRoute: Routes = [
                         path: 'attachments',
                         loadComponent: () => import('app/lecture/manage/lecture-attachments/lecture-attachments.component').then((m) => m.LectureAttachmentsComponent),
                         data: {
-                            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_EDITOR,
                             pageTitle: 'artemisApp.lecture.attachments.title',
                         },
                         canActivate: [UserRouteAccessService],
@@ -81,7 +81,7 @@ export const lectureRoute: Routes = [
                         path: 'edit',
                         loadComponent: () => import('./lecture-update/lecture-update.component').then((m) => m.LectureUpdateComponent),
                         data: {
-                            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_EDITOR,
                             pageTitle: 'global.generic.edit',
                         },
                         canActivate: [UserRouteAccessService],
