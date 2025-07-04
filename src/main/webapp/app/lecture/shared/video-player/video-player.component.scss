@@ -1,0 +1,63 @@
+.video-wrapper {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    padding: 0.5rem;
+    box-sizing: border-box;
+    align-items: flex-start;
+}
+
+.video-column {
+    flex: 2;
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #000;
+}
+
+.video-js {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 0.625rem rgba(0, 0, 0, 0.2);
+}
+
+.video-js .vjs-control-bar {
+    bottom: 0 !important;
+    top: auto !important;
+}
+
+.transcript-column {
+    flex: 1;
+    max-height: 31.25rem;
+    overflow-y: auto;
+    padding-left: 1rem;
+    border-left: 1px solid #ddd;
+}
+
+.transcript-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.transcript-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.transcript-line {
+    cursor: pointer;
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.25rem;
+    transition: background 0.2s;
+}
+
+.transcript-line.active {
+    background-color: var(--transcript-active-bg);
+    color: var(--transcript-active-text);
+    font-weight: 600;
+}
