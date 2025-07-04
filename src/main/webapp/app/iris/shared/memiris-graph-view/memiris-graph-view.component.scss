@@ -114,11 +114,6 @@
         stroke: #fff;
         stroke-width: 2px;
 
-        &.selected {
-            stroke: #333;
-            stroke-width: 3px;
-        }
-
         &.memory {
             fill: #4f86f7;
         }
@@ -131,9 +126,15 @@
             stroke: #ff3333;
             stroke-width: 3px;
         }
+
+        &.selected {
+            stroke: #333;
+            stroke-width: 3px;
+        }
     }
 
     .link {
+        stroke-width: 1.5px;
         stroke-opacity: 0.6;
 
         &.memory-memory {
@@ -142,6 +143,16 @@
 
         &.memory-learning {
             stroke: #d79b00;
+        }
+    }
+
+    .link-label {
+        &.memory-memory {
+            fill: #6c8ebf;
+        }
+
+        &.memory-learning {
+            fill: #d79b00;
         }
     }
 

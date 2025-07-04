@@ -301,9 +301,7 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
             .data(this.links, (link: MemirisSimulationLink) => link.getId())
             .enter()
             .append('line')
-            .attr('class', (link: MemirisSimulationLink) => this.getLinkClasses(link))
-            .attr('stroke', (link: MemirisSimulationLink) => this.getLinkColor(link))
-            .attr('stroke-width', 1.5)
+            .attr('class', (link: MemirisSimulationLink) => `link ${this.getLinkClasses(link)}`)
             // Add arrow marker for memory-memory CREATED_FROM connections
             .attr('marker-end', (link: MemirisSimulationLink) => {
                 if (link instanceof MemirisSimulationLinkMemoryMemory && link.connection.connection_type === MemirisConnectionType.CREATED_FROM) {
@@ -320,7 +318,6 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
             .append('circle')
             .attr('class', (node: MemirisSimulationNode) => this.getNodeClasses(node))
             .attr('r', (node: MemirisSimulationNode) => this.getNodeRadius(node))
-            .attr('fill', (node: MemirisSimulationNode) => this.getNodeColor(node))
             .call(this.setupDrag() as any)
             .on('click', (_event: MouseEvent, node: MemirisSimulationNode) => this.handleNodeClick(node));
 
@@ -342,12 +339,11 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
             .data(this.links, (link: MemirisSimulationLink) => link.getId())
             .enter()
             .append('text')
-            .attr('class', 'link-label')
+            .attr('class', (link: MemirisSimulationLink) => `link-label ${this.getLinkClasses(link)}`)
             .attr('font-size', '10px')
             .attr('text-anchor', 'middle')
             .attr('dy', -5)
             .attr('pointer-events', 'none')
-            .style('fill', (link: MemirisSimulationLink) => this.getLinkColor(link), 'important')
             .text((node: MemirisSimulationLink) => node.getLabel());
 
         // Restart simulation with new nodes and links
@@ -560,43 +556,6 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
     }
 
     /**
-     * Returns the color for a given node based on its type.
-     *
-     * @param {MemirisSimulationNode} node - The node for which to get the color.
-     * @return {string} The color code for the node.
-     */
-    private getNodeColor(node: MemirisSimulationNode): string {
-        // Check if MemirisSimulationNode is an instance of MemirisMemoryNode or MemirisLearningNode to decide color
-        if (node instanceof MemirisMemoryNode) {
-            return '#4f86f7';
-        } else if (node instanceof MemirisLearningNode) {
-            return '#f7a14f';
-        } else {
-            // eslint-disable-next-line no-undef
-            console.warn('Unknown node type:', node);
-            return '#ccc';
-        }
-    }
-
-    /**
-     * Returns the color for a given link based on its type.
-     *
-     * @param {MemirisSimulationLink} link - The link for which to get the color.
-     * @return {string} The color code for the link.
-     */
-    private getLinkColor(link: MemirisSimulationLink): string {
-        if (link instanceof MemirisSimulationLinkMemoryMemory) {
-            return '#6c8ebf';
-        } else if (link instanceof MemirisSimulationLinkMemoryLearning) {
-            return '#d79b00';
-        } else {
-            // eslint-disable-next-line no-undef
-            console.warn('Unknown link type:', link);
-            return '#ddd';
-        }
-    }
-
-    /**
      * Returns the CSS classes for a given node based on its type and state.
      *
      * @param {MemirisSimulationNode} node - The node for which to get the classes.
@@ -628,7 +587,7 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
      * @return {string} The CSS class string for the link.
      */
     private getLinkClasses(link: MemirisSimulationLink): string {
-        let classes = 'link';
+        let classes = '';
 
         if (link instanceof MemirisSimulationLinkMemoryMemory) {
             classes += ' memory-memory';

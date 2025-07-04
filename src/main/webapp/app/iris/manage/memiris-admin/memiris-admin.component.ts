@@ -18,7 +18,7 @@ export class MemirisAdminComponent implements OnInit {
     ngOnInit(): void {
         setTimeout(() => {
             this.graphData = new MemirisGraphData([], [], []);
-        }, 3000);
+        }, 1000);
 
         // Initialize the graph data with mock data after 5 seconds
         setTimeout(() => {
@@ -89,7 +89,7 @@ export class MemirisAdminComponent implements OnInit {
             });
 
             this.graphData = new MemirisGraphData(memories, learnings, connections);
-        }, 6000);
+        }, 2000);
     }
 
     private mockLearning(title: string): MemirisLearning {
