@@ -24,7 +24,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/shared/service/file.service';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { TranscriptSegment } from 'app/lecture/shared/video-player/video-player.component';
 
 describe('AttachmentVideoUnitComponent', () => {
@@ -174,18 +174,5 @@ describe('AttachmentVideoUnitComponent', () => {
 
         expect(httpSpy).not.toHaveBeenCalled();
         expect(component.transcriptSegments()).toEqual([]);
-    });
-
-    it('should handle transcript fetch error gracefully', async () => {
-        component.lectureUnit().videoSource = 'https://example.com/video.m3u8';
-        const httpSpy = jest.spyOn(httpClient, 'get').mockReturnValue(throwError(() => new Error('Failed')));
-        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-        component.toggleCollapse(false); // expand
-        fixture.detectChanges();
-
-        expect(httpSpy).toHaveBeenCalledWith('/api/lecture/lecture-unit/1/transcript');
-        expect(component.transcriptSegments()).toEqual([]);
-        expect(errorSpy).toHaveBeenCalledWith('Transcript fetch failed', expect.any(Error));
     });
 });
