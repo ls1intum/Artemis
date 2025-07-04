@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -164,33 +163,27 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         assertThat(irisChatSessions).hasSize(0);
     }
 
+    private void saveChatSessionWithMessages(IrisChatSession session) {
+        irisSessionRepository.save(session);
+        irisMessageRepository.saveAll(session.getMessages());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAllSessionsForCourseWithSessions_shouldReturnSessionsWithMessages() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        IrisLectureChatSession lectureSession = IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user);
-        irisLectureChatSessionRepository.save(lectureSession);
-        irisMessageRepository.saveAll(lectureSession.getMessages());
-
-        IrisChatSession courseSession = IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user);
-        irisSessionRepository.save(courseSession);
-        irisMessageRepository.saveAll(courseSession.getMessages());
-
-        IrisChatSession textExerciseSession = IrisChatSessionFactory.createTextExerciseSessionForUserWithMessages(textExercise, user);
-        irisSessionRepository.save(textExerciseSession);
-        irisMessageRepository.saveAll(textExerciseSession.getMessages());
-
-        IrisChatSession programmingExerciseSession = IrisChatSessionFactory.createProgrammingExerciseChatSessionForUserWithMessages(soloExercise, user);
-        irisSessionRepository.save(programmingExerciseSession);
-        irisMessageRepository.saveAll(programmingExerciseSession.getMessages());
+        saveChatSessionWithMessages(IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user));
+        saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
+        saveChatSessionWithMessages(IrisChatSessionFactory.createTextExerciseSessionForUserWithMessages(textExercise, user));
+        saveChatSessionWithMessages(IrisChatSessionFactory.createProgrammingExerciseChatSessionForUserWithMessages(soloExercise, user));
 
         List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
 
         assertThat(irisChatSessions).hasSize(4);
-        assertThat(irisChatSessions.stream().filter(s -> s.id().equals(lectureSession.getId())).findFirst()).isPresent();
-        assertThat(irisChatSessions.stream().filter(s -> s.id().equals(courseSession.getId())).findFirst()).isPresent();
-        assertThat(irisChatSessions.stream().filter(s -> s.id().equals(textExerciseSession.getId())).findFirst()).isPresent();
-        assertThat(irisChatSessions.stream().filter(s -> s.id().equals(programmingExerciseSession.getId())).findFirst()).isPresent();
+        assertThat(irisChatSessions.stream().anyMatch(session -> session.entityId().equals(lecture.getId()))).isTrue();
+        assertThat(irisChatSessions.stream().anyMatch(session -> session.entityId().equals(course.getId()))).isTrue();
+        assertThat(irisChatSessions.stream().anyMatch(session -> session.entityId().equals(textExercise.getId()))).isTrue();
+        assertThat(irisChatSessions.stream().anyMatch(session -> session.entityId().equals(soloExercise.getId()))).isTrue();
     }
 }
