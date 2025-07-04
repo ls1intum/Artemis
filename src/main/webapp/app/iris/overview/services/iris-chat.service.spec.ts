@@ -26,8 +26,6 @@ import {
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import 'app/shared/util/array.extension';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
-import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { ActivatedRoute } from '@angular/router';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;
@@ -57,7 +55,6 @@ describe('IrisChatService', () => {
                 { provide: IrisStatusService, useValue: statusMock },
                 { provide: UserService, useValue: userMock },
                 { provide: AccountService, useValue: accountMock },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: courseId }) },
             ],
         });
 
