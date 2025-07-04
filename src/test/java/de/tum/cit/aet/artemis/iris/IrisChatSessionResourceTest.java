@@ -170,7 +170,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // Create and save lecture session with messages
-        IrisLectureChatSession lectureSession = IrisChatSessionFactory.createLectureSessionWithMessages(lecture, user);
+        IrisLectureChatSession lectureSession = IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user);
 
         irisLectureChatSessionRepository.save(lectureSession);
         irisMessageRepository.saveAll(lectureSession.getMessages());
