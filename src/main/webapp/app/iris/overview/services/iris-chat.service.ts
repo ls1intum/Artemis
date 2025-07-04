@@ -448,7 +448,7 @@ export class IrisChatService implements OnDestroy {
             return this.courseId;
         }
 
-        this.route.params.pipe(
+        return this.route.params.pipe(
             map((params) => {
                 const updatedCourseId = params['courseId'];
                 this.setCourseId(updatedCourseId);
