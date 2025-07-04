@@ -603,7 +603,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         const containerTop = container.getBoundingClientRect().top;
         const threads = container.querySelectorAll<HTMLElement>('jhi-posting-thread[id^="item-"]');
 
-        for (const thread of threads) {
+        for (const thread of Array.from(threads)) {
             const rect = thread.getBoundingClientRect();
             if (rect.bottom > containerTop + 5) {
                 const id = thread.id;
