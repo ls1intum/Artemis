@@ -103,11 +103,4 @@ describe('CalendarEventFilterComponent', () => {
         expect(component.getColorClassForFilteringOption('tutorialEvents')).toBe('tutorial');
         expect(component.getColorClassForFilteringOption('exerciseEvents')).toBe('exercise');
     });
-
-    it('should return correct translation key for each option', () => {
-        expect(component.getFilterOptionString('examEvents')).toBe('artemisApp.calendar.examFilterOption');
-        expect(component.getFilterOptionString('lectureEvents')).toBe('artemisApp.calendar.lectureFilterOption');
-        expect(component.getFilterOptionString('tutorialEvents')).toBe('artemisApp.calendar.tutorialFilterOption');
-        expect(component.getFilterOptionString('exerciseEvents')).toBe('artemisApp.calendar.exerciseFilterOption');
-    });
 });

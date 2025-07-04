@@ -15,14 +15,14 @@
         <div jhiTranslate="{{ utils.getEventNameKey(event()) }}"></div>
     </div>
     @if (event().endDate) {
-        <div class="popover-info-row">
+        <div class="popover-info-row" id="start-and-end-row">
             <div class="popover-icon-frame">
                 <fa-icon [icon]="faClock" />
             </div>
             <div>{{ utils.getTimeString(event().startDate) }}-{{ utils.getTimeString(event().endDate!) }}</div>
         </div>
     } @else {
-        <div class="popover-info-row">
+        <div class="popover-info-row" id="start-row">
             <div class="popover-icon-frame">
                 <fa-icon [icon]="faClock" />
             </div>
@@ -30,7 +30,7 @@
         </div>
     }
     @if (event().location) {
-        <div class="popover-info-row">
+        <div class="popover-info-row" id="location-row">
             <div class="popover-icon-frame">
                 <fa-icon [icon]="faLocationDot" />
             </div>
@@ -38,7 +38,7 @@
         </div>
     }
     @if (event().facilitator) {
-        <div class="popover-info-row">
+        <div class="popover-info-row" id="facilitator-row">
             <div class="popover-icon-frame">
                 <fa-icon class="popover-icon" [icon]="faUser" />
             </div>
