@@ -430,9 +430,12 @@ export class IrisChatService implements OnDestroy {
      * <p>Required in edge cases where a route requiring the {@link courseId} (e.g., a lecture from the student view)
      * is loaded directly by accessing the link or by reloading the page.</p>
      */
-    public getCourseId(): number | undefined {
+    public getCourseId(): number {
         if (!this.courseId) {
             this.updateCourseId();
+        }
+        if (!this.courseId) {
+            throw new Error('Course ID is not set');
         }
 
         return this.courseId;
