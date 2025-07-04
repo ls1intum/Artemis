@@ -135,8 +135,8 @@ export class IrisChatService implements OnDestroy {
          *
          * 1 is the first capturing group, which contains the course ID, e.g. '19'
          */
-        const capturingGroupIndex = 1;
-        return match ? Number(match[capturingGroupIndex]) : undefined;
+        const CAPTURING_GROUP_INDEX = 1;
+        return match ? Number(match[CAPTURING_GROUP_INDEX]) : undefined;
     }
 
     private updateCourseId(): number | undefined {
