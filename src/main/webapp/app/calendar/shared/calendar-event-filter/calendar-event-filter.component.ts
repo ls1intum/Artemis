@@ -1,4 +1,4 @@
-import { Component, HostListener, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
@@ -55,14 +55,6 @@ export class CalendarEventFilterComponent {
                 return 'artemisApp.calendar.tutorialFilterOption';
             case 'examEvents':
                 return 'artemisApp.calendar.examFilterOption';
-        }
-    }
-
-    @HostListener('document:click', ['$event'])
-    onDocumentClick(event: MouseEvent) {
-        const target = event.target as HTMLElement;
-        if (!target.closest('.multi-select')) {
-            this.isOpen.set(false);
         }
     }
 }

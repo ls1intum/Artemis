@@ -1,7 +1,7 @@
 <div class="multi-select">
     <div class="selected-chips">
         @for (option of includedOptions(); track option) {
-            <div class="chip">
+            <div class="chip" [attr.data-testid]="'chip-' + option">
                 <div class="legend-circle" [class]="getColorClassForFilteringOption(option)"></div>
                 <span jhiTranslate="{{ getFilterOptionString(option) }}"></span>
                 <fa-icon [icon]="faXmark" class="remove-btn" (click)="toggleOption(option)" />
