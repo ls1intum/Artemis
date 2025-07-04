@@ -396,7 +396,7 @@ describe('IrisChatService', () => {
 
     describe('getCourseId', () => {
         /**
-         * This can be the case when loading a page directly from a URL or via browser page reload.
+         * It can be the case that courseId is undefined when loading a page directly from a URL or via browser page reload.
          */
         it('should extract course ID from the current URL when courseId is undefined', () => {
             service.setCourseId(undefined); // courseId must be undefined so it is retrieved from the URL
