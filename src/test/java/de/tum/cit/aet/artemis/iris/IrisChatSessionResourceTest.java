@@ -166,20 +166,24 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getAllSessionsForCourseWithSessions2() throws Exception {
+    void getAllSessionsForCourseWithSessions_shouldReturnSessionsWithMessages() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // Create and save lecture session with messages
         IrisLectureChatSession lectureSession = IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user);
-
         irisLectureChatSessionRepository.save(lectureSession);
         irisMessageRepository.saveAll(lectureSession.getMessages());
+
+        IrisChatSession courseSession = IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user);
+        irisSessionRepository.save(courseSession);
+        irisMessageRepository.saveAll(courseSession.getMessages());
 
         // Execute the request
         List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
 
         // Assertions
-        assertThat(irisChatSessions).hasSize(1);
+        assertThat(irisChatSessions).hasSize(2);
         assertThat(irisChatSessions.stream().filter(s -> s.id().equals(lectureSession.getId())).findFirst()).isPresent();
+        assertThat(irisChatSessions.stream().filter(s -> s.id().equals(courseSession.getId())).findFirst()).isPresent();
     }
 }

@@ -7,6 +7,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
@@ -31,37 +32,26 @@ public class IrisChatSessionFactory {
         return new IrisTextExerciseChatSession(textExercise, user);
     }
 
-    public static IrisLectureChatSession createLectureSessionForUserWithMessages(Lecture lecture, User user) {
+    public static <T extends IrisChatSession> T createSessionWithMessages(T session, Long id) {
         List<IrisMessage> messages = new ArrayList<>();
-
         messages.add(IrisMessageFactory.createIrisMessage(IrisMessageSender.LLM));
         messages.add(IrisMessageFactory.createIrisMessage(IrisMessageSender.USER));
+        messages.forEach(message -> message.setSession(session));
 
-        return createLectureSessionForUserWithMessages(lecture, user, messages);
+        session.setMessages(messages);
+
+        return session;
     }
 
-    public static IrisLectureChatSession createLectureSessionForUserWithMessages(Lecture lecture, User user, List<IrisMessage> messages) {
-        IrisLectureChatSession session = new IrisLectureChatSession(lecture, user);
-        session.setLectureId(lecture.getId());
-        session.setMessages(messages);
-        messages.forEach(message -> message.setSession(session));
-        return session;
+    public static IrisLectureChatSession createLectureSessionForUserWithMessages(Lecture lecture, User user) {
+        IrisLectureChatSession chatSession = createLectureSessionForUser(lecture, user);
+        chatSession.setLectureId(lecture.getId());
+        return createSessionWithMessages(chatSession, lecture.getId());
     }
 
     public static IrisCourseChatSession createCourseSessionForUserWithMessages(Course course, User user) {
-        List<IrisMessage> messages = new ArrayList<>();
-
-        messages.add(IrisMessageFactory.createIrisMessage(IrisMessageSender.LLM));
-        messages.add(IrisMessageFactory.createIrisMessage(IrisMessageSender.USER));
-
-        return createCourseSessionForUserWithMessages(course, user, messages);
-    }
-
-    public static IrisCourseChatSession createCourseSessionForUserWithMessages(Course course, User user, List<IrisMessage> messages) {
-        IrisCourseChatSession session = new IrisCourseChatSession(course, user);
-        session.setCourseId(course.getId());
-        session.setMessages(messages);
-        messages.forEach(message -> message.setSession(session));
-        return session;
+        IrisCourseChatSession chatSession = createCourseChatSessionForUser(course, user);
+        chatSession.setCourseId(course.getId());
+        return createSessionWithMessages(chatSession, course.getId());
     }
 }
