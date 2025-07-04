@@ -44,6 +44,9 @@ describe('ExerciseChatbotButtonComponent', () => {
         userIdentity: { externalLLMUsageAccepted: dayjs() },
     };
 
+    const mockExerciseId = 123;
+    const mockCourseId = 456;
+
     beforeEach(async () => {
         mockParamsSubject = new Subject();
         mockActivatedRoute = {
@@ -102,10 +105,9 @@ describe('ExerciseChatbotButtonComponent', () => {
     });
 
     it('should subscribe to route.params and call chatService.switchTo with exercise mode', fakeAsync(() => {
-        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(123)));
+        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         jest.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
-        const mockExerciseId = 123;
         const spy = jest.spyOn(chatService, 'switchTo');
 
         component.mode = ChatServiceMode.PROGRAMMING_EXERCISE;
@@ -113,7 +115,7 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
-            courseId: 456,
+            courseId: mockCourseId,
         });
         fixture.whenStable();
         tick();
@@ -122,10 +124,9 @@ describe('ExerciseChatbotButtonComponent', () => {
     }));
 
     it('should subscribe to route.params and call chatService.switchTo with text exercise mode', fakeAsync(() => {
-        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(123)));
+        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         jest.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
-        const mockExerciseId = 123;
         const spy = jest.spyOn(chatService, 'switchTo');
 
         component.mode = ChatServiceMode.TEXT_EXERCISE;
@@ -133,7 +134,7 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
-            courseId: 456,
+            courseId: mockCourseId,
         });
         fixture.whenStable();
         tick();
@@ -154,14 +155,14 @@ describe('ExerciseChatbotButtonComponent', () => {
 
     it('should show new message indicator when chatbot is closed', fakeAsync(() => {
         // given
-        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(123)));
+        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         jest.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
         mockParamsSubject.next({
-            exerciseId: 123,
-            courseId: 456,
+            exerciseId: mockExerciseId,
+            courseId: mockCourseId,
         });
-        chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, 123);
+        chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
 
         // when
         fixture.detectChanges();
@@ -175,14 +176,14 @@ describe('ExerciseChatbotButtonComponent', () => {
 
     it('should not show new message indicator when chatbot is open', fakeAsync(() => {
         // given
-        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(123)));
+        jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         jest.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         jest.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
         mockParamsSubject.next({
-            exerciseId: 123,
-            courseId: 456,
+            exerciseId: mockExerciseId,
+            courseId: mockCourseId,
         });
-        chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, 123);
+        chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
         component.openChat();
 
         // when
