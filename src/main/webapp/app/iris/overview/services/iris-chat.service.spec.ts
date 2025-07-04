@@ -26,11 +26,13 @@ import {
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import 'app/shared/util/array.extension';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
+import { Router } from '@angular/router';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;
     let httpService: jest.Mocked<IrisChatHttpService>;
     let wsMock: jest.Mocked<IrisWebsocketService>;
+    let routerMock: { url: string };
 
     const id = 123;
     const courseId = 234;
@@ -47,6 +49,8 @@ describe('IrisChatService', () => {
     };
 
     beforeEach(() => {
+        routerMock = { url: '' };
+
         TestBed.configureTestingModule({
             providers: [
                 IrisChatService,
@@ -55,6 +59,7 @@ describe('IrisChatService', () => {
                 { provide: IrisStatusService, useValue: statusMock },
                 { provide: UserService, useValue: userMock },
                 { provide: AccountService, useValue: accountMock },
+                { provide: Router, useValue: routerMock },
             ],
         });
 
@@ -386,6 +391,29 @@ describe('IrisChatService', () => {
 
             expect(getChatSessionsSpy).toHaveBeenCalledWith(courseId);
             expect(nextSpy).toHaveBeenCalledWith([]);
+        });
+    });
+
+    describe('getCourseId', () => {
+        /**
+         * It can be the case that courseId is undefined when loading a page directly from a URL or via browser page reload.
+         */
+        it('should extract course ID from the current URL when courseId is undefined', () => {
+            service.setCourseId(undefined); // courseId must be undefined so it is retrieved from the URL
+            routerMock.url = '/courses/19/lectures/27';
+
+            const courseId = service.getCourseId();
+
+            expect(courseId).toBe(19);
+        });
+
+        it('should return undefined when courseId is undefined and the URL does not match the expected structure', () => {
+            service.setCourseId(undefined); // courseId must be undefined so it is retrieved from the URL
+            routerMock.url = '/invalid-url';
+
+            const courseId = service.getCourseId();
+
+            expect(courseId).toBeUndefined();
         });
     });
 });
