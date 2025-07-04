@@ -19,7 +19,7 @@ import { UserService } from 'app/core/user/shared/user.service';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 describe('ExerciseChatbotButtonComponent', () => {
     let component: IrisExerciseChatbotButtonComponent;
