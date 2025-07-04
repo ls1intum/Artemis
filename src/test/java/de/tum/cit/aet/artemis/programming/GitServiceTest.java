@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ReflogEntry;
@@ -186,26 +185,6 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
         // second commit
         gitUtilService.updateFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2, "lorem ipsum solet");
         gitUtilService.stashAndCommitAll(GitUtilService.REPOS.LOCAL, "my second commit");
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "master", "main", "someOtherName" })
-    void testPushSourceToTargetRepoWithBranch(String defaultBranch) throws GitAPIException, IOException {
-        gitUtilService.initRepo(defaultBranch);
-
-        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.REMOTE);
-        var repoUri = gitUtilService.getRepoUriByType(GitUtilService.REPOS.REMOTE);
-
-        Git git = new Git(localRepo);
-        assertThat(git.getRepository().getBranch()).isEqualTo(defaultBranch);
-        // TODO I don't think the assertions below make sense and we don't push anything here -> probably remove
-        // assertThat(git.getRepository().getBranch()).isEqualTo(this.defaultBranch);
-        //
-        // if (!this.defaultBranch.equals(defaultBranch)) {
-        // assertThat(localRepo.getConfig().toText()).doesNotContain(defaultBranch);
-        // }
-
-        gitUtilService.deleteRepos();
     }
 
     @Test

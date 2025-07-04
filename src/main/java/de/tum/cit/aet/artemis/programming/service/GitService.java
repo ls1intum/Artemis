@@ -490,9 +490,11 @@ public class GitService extends AbstractGitService {
         if (targetUrl == null) {
             return null;
         }
-        return (targetPath.normalize()).resolve(targetUrl.folderNameForRepositoryUri());
-
-        // return Path.of(targetPath.toString().replaceAll("^\\." + Pattern.quote(java.io.File.separator), ""), targetUrl.folderNameForRepositoryUri());
+        Path resolvedPath = (targetPath.normalize()).resolve(targetUrl.folderNameForRepositoryUri()).normalize();
+        if (!resolvedPath.startsWith(targetPath.normalize())) {
+            throw new IllegalArgumentException("Invalid path: " + resolvedPath);
+        }
+        return resolvedPath;
     }
 
     /**
