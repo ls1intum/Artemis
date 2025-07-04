@@ -352,9 +352,16 @@ export class IrisChatService implements OnDestroy {
 
     private loadChatSessions() {
         this.chatSessionSubscription?.unsubscribe();
-        this.chatSessionSubscription = this.http.getChatSessions(this.getCourseId()).subscribe((sessions: IrisSessionDTO[]) => {
-            this.chatSessions.next(sessions ?? []);
-        });
+        const courseId = this.getCourseId();
+        if (courseId) {
+            this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
+                this.chatSessions.next(sessions ?? []);
+            });
+        } else {
+            // eslint-disable-next-line no-undef
+            console.error('Could not load chat sessions, courseId is not set.');
+            this.chatSessions.next([]);
+        }
     }
 
     /**
@@ -394,7 +401,13 @@ export class IrisChatService implements OnDestroy {
         this.close();
 
         this.chatSessionByIdSubscription?.unsubscribe();
-        this.chatSessionByIdSubscription = this.http.getChatSessionById(this.getCourseId(), session.id).subscribe((session) => this.handleNewSession().next(session));
+        const courseId = this.getCourseId();
+        if (courseId) {
+            this.chatSessionByIdSubscription = this.http.getChatSessionById(courseId, session.id).subscribe((session) => this.handleNewSession().next(session));
+        } else {
+            // eslint-disable-next-line no-undef
+            console.error('Could not switch session, courseId is not set.');
+        }
     }
 
     private closeAndStart() {
