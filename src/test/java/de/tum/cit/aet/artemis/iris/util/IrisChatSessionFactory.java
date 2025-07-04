@@ -10,8 +10,10 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 public class IrisChatSessionFactory {
@@ -30,6 +32,10 @@ public class IrisChatSessionFactory {
 
     public static IrisTextExerciseChatSession createTextExerciseChatSessionForUser(TextExercise textExercise, User user) {
         return new IrisTextExerciseChatSession(textExercise, user);
+    }
+
+    public static IrisProgrammingExerciseChatSession createProgrammingExerciseChatSessionForUser(ProgrammingExercise programmingExercise, User user) {
+        return new IrisProgrammingExerciseChatSession(programmingExercise, user);
     }
 
     public static <T extends IrisChatSession> T createSessionWithMessages(T session, Long id) {
@@ -59,5 +65,11 @@ public class IrisChatSessionFactory {
         IrisTextExerciseChatSession chatSession = createTextExerciseChatSessionForUser(textExercise, user);
         chatSession.setExerciseId(textExercise.getId());
         return createSessionWithMessages(chatSession, textExercise.getId());
+    }
+
+    public static IrisProgrammingExerciseChatSession createProgrammingExerciseChatSessionForUserWithMessages(ProgrammingExercise programmingExercise, User user) {
+        IrisProgrammingExerciseChatSession chatSession = createProgrammingExerciseChatSessionForUser(programmingExercise, user);
+        chatSession.setExerciseId(programmingExercise.getId());
+        return createSessionWithMessages(chatSession, programmingExercise.getId());
     }
 }
