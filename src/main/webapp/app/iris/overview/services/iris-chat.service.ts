@@ -421,10 +421,13 @@ export class IrisChatService implements OnDestroy {
     }
 
     /**
-     * As this service is injectable in root, it might be instantiated before the courseId is set.
-     * To ensure that the courseId is always available, we wrap it in this getter to potentially update the courseId before
-     * accessing it, for the edge case that a route that requires the courseId (e.g. lecture from student view)
-     * is loaded directly by accessing the link (or reloading the student view lecture page).
+     * As this service is injectable in root, it might be instantiated before the route and therefore {@link courseId} is set.
+     *
+     * To ensure that {@link courseId} is always available, we wrap it in this getter to potentially update {@link courseId} before
+     * accessing it.
+     *
+     * For the edge case that a route that requires the {@link courseId} (e.g. lecture from student view)
+     * is loaded directly by accessing the link (or reloading the student view lecture page) the {@link updateCourseId} method will be triggered.
      */
     public getCourseId(): number | undefined {
         if (!this.courseId) {
