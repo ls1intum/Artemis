@@ -598,10 +598,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      */
     findFirstVisiblePostId(): number | null {
         const container = document.getElementById('scrollableDiv');
-        if (!container) return null;
-
-        const containerTop = container.getBoundingClientRect().top;
-        const threads = container.querySelectorAll<HTMLElement>('jhi-posting-thread[id^="item-"]');
+        const containerTop = container!.getBoundingClientRect().top;
+        const threads = container!.querySelectorAll<HTMLElement>('jhi-posting-thread[id^="item-"]');
 
         for (const thread of Array.from(threads)) {
             const rect = thread.getBoundingClientRect();

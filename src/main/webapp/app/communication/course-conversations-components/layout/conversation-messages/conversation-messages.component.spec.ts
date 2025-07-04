@@ -219,6 +219,27 @@ examples.forEach((activeConversation) => {
             document.body.removeChild(container);
         });
 
+        it('should return null if no visible post is found', async () => {
+            const container = document.createElement('div');
+            container.id = 'scrollableDiv';
+
+            const post = document.createElement('jhi-posting-thread');
+            post.id = 'item-42';
+            container.appendChild(post);
+            document.body.appendChild(container);
+            Object.defineProperty(post, 'getBoundingClientRect', {
+                value: () => ({ top: 0, bottom: 100 }),
+            });
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                value: () => ({ top: 200 }),
+            });
+
+            jest.spyOn(document, 'getElementById').mockReturnValue(container);
+            const result = component.findFirstVisiblePostId();
+            expect(result).toBeNull();
+            document.body.removeChild(container);
+        });
+
         it('should scroll to the bottom when a new message is created', fakeAsync(() => {
             component.content.nativeElement.scrollTop = 100;
             fixture.detectChanges();
