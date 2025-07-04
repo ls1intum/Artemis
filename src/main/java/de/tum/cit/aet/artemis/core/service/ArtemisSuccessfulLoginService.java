@@ -6,7 +6,6 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Optional;
 
 import jakarta.annotation.Nullable;
@@ -105,16 +104,14 @@ public class ArtemisSuccessfulLoginService {
      * @see AuthenticationMethod for available authentication methods
      */
     public void sendLoginEmail(String loginOrEmail, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
-        String lowercaseLoginOrEmail = loginOrEmail.toLowerCase(Locale.ENGLISH);
-
         try {
             User recipient;
 
-            if (SecurityUtils.isEmail(lowercaseLoginOrEmail)) {
-                recipient = userRepository.getUserByEmailElseThrow(lowercaseLoginOrEmail);
+            if (SecurityUtils.isEmail(loginOrEmail)) {
+                recipient = userRepository.getUserByEmailElseThrow(loginOrEmail);
             }
             else {
-                recipient = userRepository.getUserByLoginElseThrow(lowercaseLoginOrEmail);
+                recipient = userRepository.getUserByLoginElseThrow(loginOrEmail);
             }
 
             if (!globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.NEW_LOGIN)) {
@@ -123,7 +120,7 @@ public class ArtemisSuccessfulLoginService {
 
             String localeKey = recipient.getLangKey();
             if (localeKey == null) {
-                log.warn("User {} has no language set, using default language 'en'", lowercaseLoginOrEmail);
+                log.warn("User {} has no language set, using default language 'en'", loginOrEmail);
                 localeKey = "en";
             }
             Language language = Language.fromLanguageShortName(localeKey);
@@ -152,7 +149,7 @@ public class ArtemisSuccessfulLoginService {
             mailSendingService.buildAndSendAsync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
         }
         catch (EntityNotFoundException ignored) {
-            log.error("User with login {} not found when trying to send newLoginEmail", lowercaseLoginOrEmail);
+            log.error("User with login {} not found when trying to send newLoginEmail", loginOrEmail);
         }
     }
 }
