@@ -226,7 +226,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("tutorial-" + tutorialGroupSession.getId(), "Tutorial Session", tutorialGroupSession.getStart(),
-                    tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation(), tutor.getFirstName() + " " + tutor.getLastName());
+                    tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -246,7 +246,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("tutorial-" + tutorialGroupSession.getId(), "Tutorial Session", tutorialGroupSession.getStart(),
-                    tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation(), tutor.getFirstName() + " " + tutor.getLastName());
+                    tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
