@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -23,7 +24,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -245,6 +245,9 @@ public class GitService extends AbstractGitService {
         // Replace the exercise name in the repository folder name with the participation ID.
         // This is necessary to be able to refer back to the correct participation after the JPlag detection run.
         String updatedRepoFolderName = repoFolderName.replaceAll("/[a-zA-Z0-9]*-", "/" + participation.getId() + "-");
+        if (updatedRepoFolderName.startsWith(FileSystems.getDefault().getSeparator())) {
+            updatedRepoFolderName = updatedRepoFolderName.substring(1);
+        }
         Path localPath = targetPath.resolve(updatedRepoFolderName);
 
         Repository repository = getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, true);
@@ -486,7 +489,9 @@ public class GitService extends AbstractGitService {
         if (targetUrl == null) {
             return null;
         }
-        return Path.of(targetPath.toString().replaceAll("^\\." + Pattern.quote(java.io.File.separator), ""), targetUrl.folderNameForRepositoryUri());
+        return (targetPath.normalize()).resolve(targetUrl.folderNameForRepositoryUri());
+
+        // return Path.of(targetPath.toString().replaceAll("^\\." + Pattern.quote(java.io.File.separator), ""), targetUrl.folderNameForRepositoryUri());
     }
 
     /**

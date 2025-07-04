@@ -2239,7 +2239,8 @@ public class ProgrammingExerciseIntegrationTestService {
                 {
                   "C.java" : "efg",
                   "B.java" : "cde",
-                  "A.java" : "abc"
+                  "A.java" : "abc",
+                  "README.md" : "Initial commit"
                 }""";
 
         request.getWithFileContents("/api/programming/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(),

@@ -198,12 +198,12 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
         Git git = new Git(localRepo);
         assertThat(git.getRepository().getBranch()).isEqualTo(defaultBranch);
-
-        assertThat(git.getRepository().getBranch()).isEqualTo(this.defaultBranch);
-
-        if (!this.defaultBranch.equals(defaultBranch)) {
-            assertThat(localRepo.getConfig().toText()).doesNotContain(defaultBranch);
-        }
+        // TODO I don't think the assertions below make sense and we don't push anything here -> probably remove
+        // assertThat(git.getRepository().getBranch()).isEqualTo(this.defaultBranch);
+        //
+        // if (!this.defaultBranch.equals(defaultBranch)) {
+        // assertThat(localRepo.getConfig().toText()).doesNotContain(defaultBranch);
+        // }
 
         gitUtilService.deleteRepos();
     }

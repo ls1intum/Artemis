@@ -122,8 +122,7 @@ public class LocalRepository {
         remoteBareGitRepo = Git.wrap(new FileRepositoryBuilder().setGitDir(remoteBareGitRepoFile).build());
 
         workingCopyGitRepo.close();
-        workingCopyGitRepo = Git.wrap(new FileRepositoryBuilder().setGitDir(workingCopyGitRepoFile).build());
-
+        workingCopyGitRepo = Git.wrap(new FileRepositoryBuilder().setGitDir(new File(workingCopyGitRepoFile, ".git")).setWorkTree(workingCopyGitRepoFile).build());
         log.info("Configured local repository with one commit, working copy at {} and origin repository at {}", workingCopyGitRepoFile, remoteBareGitRepoFile);
     }
 
