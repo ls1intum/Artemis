@@ -35,6 +35,12 @@ export interface LearningPathDTO {
     startedByStudent: boolean;
 }
 
+export interface LearningPathAverageProgressDTO {
+    courseId: number;
+    averageProgress: number;
+    totalStudents: number;
+}
+
 export interface LearningPathNavigationObjectDTO {
     id: number;
     completed: boolean;
