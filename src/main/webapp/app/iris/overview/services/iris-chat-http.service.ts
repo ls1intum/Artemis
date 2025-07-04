@@ -74,7 +74,6 @@ export class IrisChatHttpService {
     /**
      * Creates a new tutor suggestion message in a session
      * @param sessionId of the session
-     * @param message to be created
      */
     createTutorSuggestion(sessionId: number): Response<void> {
         return this.httpClient.post<void>(`${this.apiPrefix}/sessions/${sessionId}/tutor-suggestion`, Object.assign({}), { observe: 'response' });
