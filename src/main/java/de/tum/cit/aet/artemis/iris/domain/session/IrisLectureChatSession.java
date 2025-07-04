@@ -37,4 +37,9 @@ public class IrisLectureChatSession extends IrisChatSession {
     public boolean shouldAcceptExternalLLMUsage() {
         return true;
     }
+
+    @Override
+    public IrisChatMode getMode() {
+        return IrisChatMode.LECTURE_CHAT;
+    }
 }
