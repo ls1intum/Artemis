@@ -193,7 +193,7 @@ class RepositoryUriTest {
     void testFolderNameForRepositoryUriWithHttpUri() throws URISyntaxException {
         URI httpUri = new URI("https://example.com/git/projectName.git");
         VcsRepositoryUri uri = new VcsRepositoryUri(httpUri.toString());
-        assertThat(uri.folderNameForRepositoryUri()).isEqualTo("/projectName");
+        assertThat(uri.folderNameForRepositoryUri()).isEqualTo("projectName");
     }
 
     @Test

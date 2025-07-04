@@ -14,6 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.doReturn;
@@ -78,6 +79,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.GitException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
@@ -138,6 +140,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
@@ -272,6 +275,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    @Autowired
+    private ContinuousIntegrationService continuousIntegrationService;
 
     public Course course;
 
@@ -672,6 +678,7 @@ public class ProgrammingExerciseTestService {
 
     public void importFromFile_exception_DirectoryDeleted() throws Exception {
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+        doThrow(new GitException()).when(gitService).commitAndPush(any(), anyString(), anyBoolean(), any());
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
@@ -717,6 +724,7 @@ public class ProgrammingExerciseTestService {
         exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.setChannelName("testchannel-pe");
         mockDelegate.mockConnectorRequestsForSetup(exercise, true, false, false);
+        doThrow(new InternalServerErrorException("error")).when(continuousIntegrationService).createBuildPlanForExercise(any(), anyString(), any(), any(), any());
         var programmingExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class,
                 HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(programmingExercise).isNull();
@@ -1805,17 +1813,14 @@ public class ProgrammingExerciseTestService {
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.workingCopyGitRepoFile.toPath(), null);
-        createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
         doReturn(studentRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(participation.getVcsRepositoryUri()), any(Path.class), anyBoolean());
 
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.workingCopyGitRepoFile.toPath(), null);
-        createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         doReturn(templateRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
 
         // Mock solution repo
         Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null);
-        createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         doReturn(solutionRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean());
 
         // Mock tests repo
@@ -2015,10 +2020,11 @@ public class ProgrammingExerciseTestService {
         // Extract the archive
         Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
 
-        // Check that the dummy files we created exist in the archive
+        // Check that the dummy files that exist by default in a local repository exist in the archive
         try (var files = Files.walk(extractedArchiveDir)) {
             var filenames = files.filter(Files::isRegularFile).map(Path::getFileName).map(Path::toString).toList();
-            assertThat(filenames).contains("HelloWorld.java", "Template.java", "Solution.java", "Tests.java");
+            assertThat(filenames).contains("README.md");
+            assertThat(filenames.stream().filter("README.md"::equals)).hasSize(4);
         }
 
         FileUtils.deleteDirectory(extractedArchiveDir.toFile());
@@ -2147,7 +2153,7 @@ public class ProgrammingExerciseTestService {
         var participantRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(studentTeamRepo));
         final var teamLocalPath = studentTeamRepo.workingCopyGitRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
-        doThrow(new CanceledException("Checkout got interrupted!")).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
+        doThrow(new IOException("Checkout got interrupted!")).when(gitService).copyBareRepository(any(), any(), anyString());
 
         // the local repo should exist before startExercise()
         assertThat(teamLocalPath).exists();
@@ -2185,6 +2191,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void configureRepository_testBadRequestError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
+        doThrow(new IOException()).when(gitService).copyBareRepository(any(), any(), anyString());
 
         // Start participation
         assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))

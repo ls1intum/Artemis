@@ -349,7 +349,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(studentAssignmentRepositoryUri2.getURI().toString()).isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2 + ".git");
 
         // assert that the folder names are correct
-        assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo("/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1);
-        assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo("/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2);
+        assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1);
+        assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2);
     }
 }

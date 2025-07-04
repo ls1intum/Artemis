@@ -245,6 +245,7 @@ public class GitService extends AbstractGitService {
         // Replace the exercise name in the repository folder name with the participation ID.
         // This is necessary to be able to refer back to the correct participation after the JPlag detection run.
         String updatedRepoFolderName = repoFolderName.replaceAll("/[a-zA-Z0-9]*-", "/" + participation.getId() + "-");
+        // the repo-folder name might start with a separator, e.g. "/studentOriginRepo1234567890 which is treated as absolute path which is wrong
         if (updatedRepoFolderName.startsWith(FileSystems.getDefault().getSeparator())) {
             updatedRepoFolderName = updatedRepoFolderName.substring(1);
         }
