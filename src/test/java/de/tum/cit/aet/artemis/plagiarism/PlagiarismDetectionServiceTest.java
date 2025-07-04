@@ -10,12 +10,14 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -281,7 +283,7 @@ class PlagiarismDetectionServiceTest {
 
     private Path createTestFile(String filename, String content) throws IOException {
         Path testFile = tempDir.resolve(filename);
-        Files.writeString(testFile, content);
+        FileUtils.writeStringToFile(testFile.toFile(), content, StandardCharsets.UTF_8);
         return testFile;
     }
 
@@ -291,7 +293,7 @@ class PlagiarismDetectionServiceTest {
         lenient().when(repository.getLocalPath()).thenReturn(repoPath);
 
         Path file = repoPath.resolve(filename);
-        Files.writeString(file, content);
+        FileUtils.writeStringToFile(file.toFile(), content, StandardCharsets.UTF_8);
         return repoPath;
     }
 
@@ -304,7 +306,7 @@ class PlagiarismDetectionServiceTest {
         for (int i = 0; i < 3; i++) {
             Path javaFile = repoPath.resolve("Test" + i + ".java");
             String content = String.format(COMPLEX_JAVA_CONTENT_TEMPLATE, i);
-            Files.writeString(javaFile, content);
+            FileUtils.writeStringToFile(javaFile.toFile(), content, StandardCharsets.UTF_8);
         }
         return repoPath;
     }
@@ -316,11 +318,11 @@ class PlagiarismDetectionServiceTest {
 
         // Create a Java file (relevant)
         Path javaFile = repoPath.resolve("Test.java");
-        Files.writeString(javaFile, "public class Test { }");
+        FileUtils.writeStringToFile(javaFile.toFile(), "public class Test { }", StandardCharsets.UTF_8);
 
         // Create a text file (not relevant)
         Path textFile = repoPath.resolve("readme.txt");
-        Files.writeString(textFile, NON_JAVA_CONTENT);
+        FileUtils.writeStringToFile(textFile.toFile(), NON_JAVA_CONTENT, StandardCharsets.UTF_8);
 
         return repoPath;
     }
