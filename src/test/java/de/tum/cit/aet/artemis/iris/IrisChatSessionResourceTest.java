@@ -27,9 +27,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -144,19 +142,23 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getSessionForSessionId() throws Exception {
-        IrisCourseChatSession courseSession = createCourseChatSessionForUser("student1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        IrisCourseChatSession courseSession = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
+        this.irisSessionRepository.save(courseSession);
+
         IrisSession irisChatSessions = request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.OK, IrisSession.class);
         assertThat(irisChatSessions.getId()).isEqualTo(courseSession.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getAllSessionsForCourseWithSessions() throws Exception {
-        IrisCourseChatSession courseSession = createCourseChatSessionForUser("student1");
-        IrisLectureChatSession lectureSession = createLectureSessionForUser("student1");
-        IrisTextExerciseChatSession textExerciseSession = createTextExerciseChatSessionForUser("student1");
-        IrisProgrammingExerciseChatSession programmingExerciseSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(soloExercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+    void getAllSessionsForCourseWithSessions_filteringOutSessionsWithoutMessages() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        irisSessionRepository.save(IrisChatSessionFactory.createCourseChatSessionForUser(course, user));
+        irisSessionRepository.save(IrisChatSessionFactory.createLectureSessionForUser(lecture, user));
+        irisSessionRepository.save(IrisChatSessionFactory.createTextExerciseChatSessionForUser(textExercise, user));
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
         List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
         assertThat(irisChatSessions).hasSize(0);
@@ -179,20 +181,5 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         // Assertions
         assertThat(irisChatSessions).hasSize(1);
         assertThat(irisChatSessions.stream().filter(s -> s.id().equals(lectureSession.getId())).findFirst()).isPresent();
-    }
-
-    private IrisLectureChatSession createLectureSessionForUser(String userLogin) {
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
-        return irisLectureChatSessionRepository.save(new IrisLectureChatSession(lecture, user));
-    }
-
-    private IrisCourseChatSession createCourseChatSessionForUser(String userLogin) {
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
-        return irisLectureChatSessionRepository.save(new IrisCourseChatSession(course, user));
-    }
-
-    private IrisTextExerciseChatSession createTextExerciseChatSessionForUser(String userLogin) {
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
-        return irisLectureChatSessionRepository.save(new IrisTextExerciseChatSession(textExercise, user));
     }
 }

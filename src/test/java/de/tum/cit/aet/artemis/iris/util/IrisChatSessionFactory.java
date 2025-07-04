@@ -9,7 +9,9 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 public class IrisChatSessionFactory {
 
@@ -24,6 +26,18 @@ public class IrisChatSessionFactory {
         messages.add(IrisMessageFactory.createIrisMessage(IrisMessageSender.USER));
 
         return createLectureSessionWithMessages(lecture, user, messages);
+    }
+
+    public static IrisLectureChatSession createLectureSessionForUser(Lecture lecture, User user) {
+        return new IrisLectureChatSession(lecture, user);
+    }
+
+    public static IrisCourseChatSession createCourseChatSessionForUser(Course course, User user) {
+        return new IrisCourseChatSession(course, user);
+    }
+
+    public static IrisTextExerciseChatSession createTextExerciseChatSessionForUser(TextExercise textExercise, User user) {
+        return new IrisTextExerciseChatSession(textExercise, user);
     }
 
     public static IrisLectureChatSession createLectureSessionWithMessages(Lecture lecture, User user, List<IrisMessage> messages) {
