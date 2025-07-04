@@ -514,7 +514,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         rangeEndDate.setDate(today.getDate() - daysAgoNewer);
         rangeEndDate.setHours(23, 59, 59, 999); // Set to the end of the 'daysAgoNewer' day
 
-        let rangeStartDate: Date | null = null;
+        let rangeStartDate: Date | undefined = undefined;
         if (!ignoreOlderBoundary && daysAgoOlder !== undefined) {
             rangeStartDate = new Date(today);
             rangeStartDate.setDate(today.getDate() - daysAgoOlder);
