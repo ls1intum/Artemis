@@ -128,15 +128,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
             isEditFieldDisplayedMapping[key as ProgrammingExerciseInputField] = isDisplayed;
         });
-
-        if (this.sharingInfo) {
+        // show the SHORT_NAME field when importing from the sharing platform
+        if (this.isImportFromSharing) {
             isEditFieldDisplayedMapping[ProgrammingExerciseInputField.SHORT_NAME] = true;
         }
 
         return isEditFieldDisplayedMapping;
     });
 
-    private translationBasePath = 'artemisApp.programmingExercise.';
+    private readonly translationBasePath = 'artemisApp.programmingExercise.';
 
     programmingLanguageChanged = (language: ProgrammingLanguage) => this.onProgrammingLanguageChange(language);
     withDependenciesChanged = (withDependencies: boolean) => this.onWithDependenciesChanged(withDependencies);

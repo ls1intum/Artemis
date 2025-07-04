@@ -62,6 +62,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationIndependentTes
         assertThat(exerciseSharingService.getBasketInfo(null, "unused")).isEmpty();
     }
 
+    @Test
     void shouldReturnEmptyBasketInfoOnInvalidToken() {
         assertThat(exerciseSharingService.getBasketInfo("&%$!äöü", "unused")).isEmpty();
     }
