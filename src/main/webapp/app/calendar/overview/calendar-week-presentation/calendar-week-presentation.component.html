@@ -26,7 +26,7 @@
                     @for (item of getEventsAndPositioningsFor(day); track item.event.id) {
                         @let event = item.event;
                         @let position = item.position;
-                        @let eventSubtypeDescriptor = utils.getEventSubtypeDescriptor(event);
+                        @let eventSubtypeDescriptor = utils.getEventSubtypeNameKey(event);
                         <div
                             class="event"
                             [ngClass]="{

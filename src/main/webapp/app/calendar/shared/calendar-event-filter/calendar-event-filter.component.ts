@@ -5,6 +5,7 @@ import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import * as Utils from 'app/calendar/shared/util/calendar-util';
 
 @Component({
     selector: 'jhi-calendar-event-filter',
@@ -16,6 +17,7 @@ export class CalendarEventFilterComponent {
     isOpen = signal(false);
     includedOptions;
 
+    readonly utils = Utils;
     readonly options;
     readonly faChevronDown = faChevronDown;
     readonly faXmark = faXmark;
@@ -42,19 +44,6 @@ export class CalendarEventFilterComponent {
             return 'tutorial';
         } else {
             return 'exercise';
-        }
-    }
-
-    getFilterOptionString(option: CalendarEventFilterOption): string {
-        switch (option) {
-            case 'exerciseEvents':
-                return 'artemisApp.calendar.exerciseFilterOption';
-            case 'lectureEvents':
-                return 'artemisApp.calendar.lectureFilterOption';
-            case 'tutorialEvents':
-                return 'artemisApp.calendar.tutorialFilterOption';
-            case 'examEvents':
-                return 'artemisApp.calendar.examFilterOption';
         }
     }
 }

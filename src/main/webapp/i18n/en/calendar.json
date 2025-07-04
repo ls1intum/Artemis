@@ -8,7 +8,7 @@
             "fridayShort": "Fri",
             "saturdayShort": "Sat",
             "sundayShort": "Sun",
-            "eventSubtypeDescriptor": {
+            "eventSubtypeName": {
                 "tutorialStart": "Start",
                 "tutorialEnd": "End",
                 "examPublishResults": "Results Out",
@@ -23,7 +23,7 @@
             "lectureFilterOption": "Lecture Events",
             "tutorialFilterOption": "Tutorial Events",
             "examFilterOption": "Exam Events",
-            "eventDescriptor": {
+            "eventName": {
                 "programming": "Programming Exercise Event",
                 "text": "Text Exercise Event",
                 "fileUpload": "File-Upload Exercise Event",

@@ -1,6 +1,6 @@
 <div class="popover-content">
     <div class="event-popover-header">
-        @let eventSubtypeDescriptor = utils.getEventSubtypeDescriptor(event());
+        @let eventSubtypeDescriptor = utils.getEventSubtypeNameKey(event());
         @if (eventSubtypeDescriptor) {
             <div>{{ eventSubtypeDescriptor | artemisTranslate }}: {{ event().title }}</div>
         } @else {
@@ -12,7 +12,7 @@
         <div class="popover-icon-frame">
             <fa-icon class="popover-icon" [icon]="utils.getIconForEvent(event())" />
         </div>
-        <div jhiTranslate="{{ utils.getExerciseDescriptor(event()) }}"></div>
+        <div jhiTranslate="{{ utils.getEventNameKey(event()) }}"></div>
     </div>
     @if (event().endDate) {
         <div class="popover-info-row">

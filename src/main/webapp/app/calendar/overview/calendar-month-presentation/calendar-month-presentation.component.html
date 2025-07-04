@@ -13,7 +13,7 @@
                         @let events = getEventsOf(day);
                         @if (events.length > 3) {
                             @for (event of utils.limitToLengthTwo(events); track event.id) {
-                                @let eventSubtypeDescriptor = utils.getEventSubtypeDescriptor(event);
+                                @let eventSubtypeDescriptor = utils.getEventSubtypeNameKey(event);
                                 <div
                                     class="event-cell"
                                     [ngClass]="{
@@ -40,7 +40,7 @@
                             <div class="more-events-info">+{{ events.length - 2 }} more</div>
                         } @else {
                             @for (event of events; track event.id) {
-                                @let eventSubtypeDescriptor = utils.getEventSubtypeDescriptor(event);
+                                @let eventSubtypeDescriptor = utils.getEventSubtypeNameKey(event);
                                 <div
                                     class="event-cell"
                                     [ngClass]="{
