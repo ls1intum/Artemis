@@ -1,0 +1,92 @@
+{
+  "userInfo" : {
+    "email" : "test.user@example.com"
+  },
+  "exerciseInfo" : [ {
+    "project" : {
+      "project_id" : 318,
+      "project_name" : "Simple IO Tests",
+      "namespace" : "sharing/university-innsbruck/java/general/simple-io-tests",
+      "main_group" : "sharing",
+      "sub_group" : "university-innsbruck",
+      "url" : "https://sharing.codeability-austria.uibk.ac.at/sharing/university-innsbruck/java/general/simple-io-tests",
+      "last_activity_at" : "2025-01-23T12:10:20Z",
+      "visibility" : "public",
+      "users" : [ "user1@example.com", "user2@example.com", "user3@example.com", "instructor@example.com", "admin@example.com" ],      "groups" : [ "teacher", "teacher/unauthenticatedteachers" ],
+      "star_count" : 0,
+      "open_issues_count" : 0,
+      "forks_count" : 1,
+      "description" : "",
+      "archived" : false,
+      "commit_id" : null
+    },
+    "file" : {
+      "filename" : "metadata.yaml",
+      "path" : "metadata.yaml",
+      "commit_id" : "903da4e7a59549427df9b38f79b0104efec1ce60",
+      "parentId" : null,
+      "children" : [ ],
+      "indexing_date" : "2025-01-23T12:19:09.726792Z",
+      "last_activity_at" : "2025-01-23T12:19:09.726793Z"
+    },
+    "metadata" : {
+      "assesses" : null,
+      "audience" : "Anfänger",
+      "contributor" : null,
+      "creator" : [ {
+        "name" : "Michael Breu",
+        "affiliation" : "Universität Innsbruck",
+        "email" : "creator@example.com"
+      } ],
+      "description" : "This package provides an infrastructure for simple IO Tests in Artemis. The goal is to provide a simple configuration of the IO-behavior with JUnit tests.",
+      "difficulty" : "medium",
+      "educationalAlignment" : null,
+      "educationalFramework" : null,
+      "educationalLevel" : null,
+      "educationalUse" : null,
+      "format" : [ "Artemis" ],
+      "identifier" : "IOTests UIBK",
+      "interactivityType" : null,
+      "isBasedOn" : null,
+      "image" : "https://sharing.codeability-austria.uibk.ac.at/sharing/university-innsbruck/java/general/simple-io-tests/-/raw/903da4e7a59549427df9b38f79b0104efec1ce60/IOTest.png",
+      "keyword" : [ "JUnit Tests", "IO Tests", "Artemis" ],
+      "language" : [ "de" ],
+      "learningResourceType" : "programming exercise",
+      "license" : "CC-SA-BY 4.0",
+      "metadataVersion" : "0.4",
+      "programmingLanguage" : [ "Java" ],
+      "publisher" : [ {
+        "name" : "Michael Breu",
+        "affiliation" : "Universität Innsbruck",
+        "email" : "publish.user@example.com"
+      } ],
+      "requires" : [ "Java8", "JUnit5" ],
+      "status" : "final",
+      "structure" : "atomic",
+      "subject" : null,
+      "teaches" : null,
+      "timeRequired" : null,
+      "title" : "JUnit IO Tests (new Artemis version 1.0.7)",
+      "typicalAgeRange" : null,
+      "version" : "1.0.7",
+      "valid" : null,
+      "publicVisibility" : {
+        "except" : [ "solution" ]
+      },
+      "repositoryURL" : null
+    },
+    "searchStatistics" : {
+      "views" : 24,
+      "downloads" : 1,
+      "badgeRewarded" : false
+    },
+    "exerciseId" : "[318]",
+    "ranking5" : 2,
+    "supportedActions" : [ {
+      "plugin" : "Artemis Sharing Connector",
+      "action" : "Import",
+      "commandName" : "Export to Artemis@testInstance"
+    } ]
+  } ],
+  "tokenValidUntil" : 1743173574798
+}
