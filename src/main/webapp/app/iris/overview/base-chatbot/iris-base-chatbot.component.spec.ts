@@ -45,7 +45,6 @@ describe('IrisBaseChatbotComponent', () => {
     let httpService: jest.Mocked<IrisChatHttpService>;
     let wsMock: jest.Mocked<IrisWebsocketService>;
     let mockModalService: jest.Mocked<NgbModal>;
-    let mockActivatedRoute: MockActivatedRoute;
 
     const statusMock = {
         currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
@@ -81,7 +80,6 @@ describe('IrisBaseChatbotComponent', () => {
             ],
             providers: [
                 MockProvider(NgbModal),
-                { provide: ActivatedRoute, useValue: {} },
                 { provide: LocalStorageService, useValue: {} },
                 { provide: TranslateService, useValue: {} },
                 { provide: SessionStorageService, useValue: {} },
@@ -107,11 +105,6 @@ describe('IrisBaseChatbotComponent', () => {
                 wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
                 mockModalService = TestBed.inject(NgbModal) as jest.Mocked<NgbModal>;
                 component = fixture.componentInstance;
-
-                mockActivatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
-                mockActivatedRoute.setParameters({
-                    courseId: '456',
-                });
 
                 jest.spyOn(accountMock, 'getAuthenticationState').mockReturnValue(of());
 
