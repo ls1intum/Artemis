@@ -75,8 +75,8 @@ public class QuizQuestionProgressTest extends AbstractSpringIntegrationIndepende
         quizQuestionId = quizQuestion.getId();
 
         quizQuestionProgress = new QuizQuestionProgress();
-        quizQuestionProgress.setUser(userId);
-        quizQuestionProgress.setQuizQuestion(quizQuestionId);
+        quizQuestionProgress.setUserId(userId);
+        quizQuestionProgress.setQuizQuestionId(quizQuestionId);
 
         QuizQuestionProgressDataDAO progressData = new QuizQuestionProgressDataDAO();
         progressData.setEasinessFactor(2.5);
@@ -189,8 +189,8 @@ public class QuizQuestionProgressTest extends AbstractSpringIntegrationIndepende
             questions.add(question);
 
             QuizQuestionProgress progress = new QuizQuestionProgress();
-            progress.setUser(userId);
-            progress.setQuizQuestion(question.getId());
+            progress.setUserId(userId);
+            progress.setQuizQuestionId(question.getId());
             QuizQuestionProgressDataDAO data = new QuizQuestionProgressDataDAO();
             data.setPriority(priorities[i]);
             progress.setProgressJson(data);

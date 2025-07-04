@@ -26,19 +26,19 @@ public class QuizQuestionProgress extends DomainObject {
     @Column(name = "last_modified")
     private ZonedDateTime lastModified;
 
-    public long getUser() {
+    public long getUserId() {
         return userId;
     }
 
-    public void setUser(long userId) {
+    public void setUserId(long userId) {
         this.userId = userId;
     }
 
-    public long getQuizQuestion() {
+    public long getQuizQuestionId() {
         return quizQuestionId;
     }
 
-    public void setQuizQuestion(long quizQuestionId) {
+    public void setQuizQuestionId(long quizQuestionId) {
         this.quizQuestionId = quizQuestionId;
     }
 

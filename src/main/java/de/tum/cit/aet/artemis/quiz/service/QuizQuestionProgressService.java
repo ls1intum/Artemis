@@ -106,8 +106,8 @@ public class QuizQuestionProgressService {
         answeredQuestions.forEach((question, data) -> {
             long userId = getUserId();
             QuizQuestionProgress progress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
-            progress.setUser(userId);
-            progress.setQuizQuestion(question.getId());
+            progress.setUserId(userId);
+            progress.setQuizQuestionId(question.getId());
             progress.setProgressJson(data);
             progress.setLastAnsweredAt(lastAnsweredAt);
             save(progress);
