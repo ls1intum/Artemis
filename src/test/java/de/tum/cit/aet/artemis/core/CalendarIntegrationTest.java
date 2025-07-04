@@ -1188,11 +1188,11 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
         CalendarEventDTO expectedEvent1 = new CalendarEventDTO("tutorial-" + tutorialGroupSession1.getId(), "Tutorial Session", tutorialGroupSession1.getStart(),
-                tutorialGroupSession1.getEnd(), tutorialGroupSession1.getLocation(), tutor.getFirstName() + " " + tutor.getLastName());
+                tutorialGroupSession1.getEnd(), tutorialGroupSession1.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
         CalendarEventDTO expectedEvent2 = new CalendarEventDTO("tutorial-" + tutorialGroupSession2.getId(), "Tutorial Session", tutorialGroupSession2.getStart(),
-                tutorialGroupSession2.getEnd(), tutorialGroupSession2.getLocation(), tutor.getFirstName() + " " + tutor.getLastName());
+                tutorialGroupSession2.getEnd(), tutorialGroupSession2.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
         CalendarEventDTO expectedEvent3 = new CalendarEventDTO("tutorial-" + tutorialGroupSession3.getId(), "Tutorial Session", tutorialGroupSession3.getStart(),
-                tutorialGroupSession3.getEnd(), tutorialGroupSession3.getLocation(), tutor.getFirstName() + " " + tutor.getLastName());
+                tutorialGroupSession3.getEnd(), tutorialGroupSession3.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
         Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3)
                 .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
