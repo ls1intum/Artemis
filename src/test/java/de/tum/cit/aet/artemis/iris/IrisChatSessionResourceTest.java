@@ -158,7 +158,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         irisSessionRepository.save(IrisChatSessionFactory.createCourseChatSessionForUser(course, user));
         irisSessionRepository.save(IrisChatSessionFactory.createLectureSessionForUser(lecture, user));
         irisSessionRepository.save(IrisChatSessionFactory.createTextExerciseChatSessionForUser(textExercise, user));
-        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(soloExercise, user);
 
         List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
         assertThat(irisChatSessions).hasSize(0);
