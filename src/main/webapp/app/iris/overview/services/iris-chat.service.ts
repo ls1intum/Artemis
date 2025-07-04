@@ -15,6 +15,7 @@ import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { ActivatedRoute } from '@angular/router';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -49,6 +50,7 @@ export class IrisChatService implements OnDestroy {
     private readonly status = inject(IrisStatusService);
     private readonly userService = inject(UserService);
     private readonly accountService = inject(AccountService);
+    private readonly route = inject(ActivatedRoute);
 
     private modeRequiresLLMAcceptance = new Map<ChatServiceMode, boolean>([
         [ChatServiceMode.TEXT_EXERCISE, true],
@@ -84,10 +86,14 @@ export class IrisChatService implements OnDestroy {
 
     hasJustAcceptedExternalLLMUsage = false;
 
-    private courseId = 0;
+    private courseId: number;
 
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
+
+        this.route.params.subscribe((params) => {
+            this.courseId = Number(params['courseId']);
+        });
     }
 
     ngOnDestroy(): void {
