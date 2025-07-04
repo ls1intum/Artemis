@@ -90,6 +90,11 @@ export class IrisChatService implements OnDestroy {
 
     hasJustAcceptedExternalLLMUsage = false;
 
+    /**
+     * This property should only be used internally in {@link getCourseId()} and {@link setCourseId()}.
+     *
+     * @deprecated do not use this property directly, use {@link getCourseId()} instead.
+     */
     private courseId?: number;
 
     protected constructor() {
@@ -99,9 +104,8 @@ export class IrisChatService implements OnDestroy {
 
     private updateCourseId() {
         this.routeSubscription?.unsubscribe();
-
         this.routeSubscription = this.route.params.subscribe((params) => {
-            this.courseId = params['courseId'];
+            this.setCourseId(params['courseId']);
         });
     }
 
@@ -348,7 +352,7 @@ export class IrisChatService implements OnDestroy {
 
     private loadChatSessions() {
         this.chatSessionSubscription?.unsubscribe();
-        this.chatSessionSubscription = this.http.getChatSessions(this.courseId).subscribe((sessions: IrisSessionDTO[]) => {
+        this.chatSessionSubscription = this.http.getChatSessions(this.getCourseId()).subscribe((sessions: IrisSessionDTO[]) => {
             this.chatSessions.next(sessions ?? []);
         });
     }
@@ -390,7 +394,7 @@ export class IrisChatService implements OnDestroy {
         this.close();
 
         this.chatSessionByIdSubscription?.unsubscribe();
-        this.chatSessionByIdSubscription = this.http.getChatSessionById(this.courseId, session.id).subscribe((session) => this.handleNewSession().next(session));
+        this.chatSessionByIdSubscription = this.http.getChatSessionById(this.getCourseId(), session.id).subscribe((session) => this.handleNewSession().next(session));
     }
 
     private closeAndStart() {
@@ -414,6 +418,20 @@ export class IrisChatService implements OnDestroy {
 
     public currentError(): Observable<IrisErrorMessageKey | undefined> {
         return this.error.asObservable();
+    }
+
+    /**
+     * As this service is injectable in root, it might be instantiated before the courseId is set.
+     * To ensure that the courseId is always available, we wrap it in this getter to potentially update the courseId before
+     * accessing it, for the edge case that a route that requires the courseId (e.g. lecture from student view)
+     * is loaded directly by accessing the link (or reloading the student view lecture page).
+     */
+    public getCourseId(): number | undefined {
+        if (!this.courseId) {
+            this.updateCourseId();
+        }
+
+        return this.courseId;
     }
 
     public setCourseId(courseId: number): void {
