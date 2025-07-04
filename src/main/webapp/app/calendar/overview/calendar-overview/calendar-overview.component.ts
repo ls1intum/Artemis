@@ -1,7 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, WritableSignal, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
+import 'dayjs/locale/de';
+import 'dayjs/locale/en';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -10,19 +12,30 @@ import { CalendarMonthPresentationComponent } from 'app/calendar/overview/calend
 import { CalendarWeekPresentationComponent } from 'app/calendar/overview/calendar-week-presentation/calendar-week-presentation.component';
 import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
 import { CalendarEventFilterComponent } from 'app/calendar/shared/calendar-event-filter/calendar-event-filter.component';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 dayjs.extend(isoWeek);
 dayjs.extend(isSameOrBefore);
 
 @Component({
     selector: 'jhi-calendar-desktop',
-    imports: [CalendarMonthPresentationComponent, CalendarWeekPresentationComponent, CalendarEventFilterComponent, NgClass, FaIconComponent],
+    imports: [
+        CalendarMonthPresentationComponent,
+        CalendarWeekPresentationComponent,
+        CalendarEventFilterComponent,
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        TranslateDirective,
+    ],
     templateUrl: './calendar-overview.component.html',
     styleUrl: './calendar-overview.component.scss',
 })
 export class CalendarOverviewComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private courseId?: number;
+    private currentLocale: WritableSignal<string>;
 
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
@@ -30,9 +43,18 @@ export class CalendarOverviewComponent implements OnInit {
     firstDayOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     firstDayOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
 
-    constructor(private calendarEventService: CalendarEventService) {}
+    constructor(
+        private calendarEventService: CalendarEventService,
+        private translateService: TranslateService,
+    ) {
+        this.currentLocale = signal(this.translateService.currentLang);
+    }
 
     ngOnInit(): void {
+        this.translateService.onLangChange.subscribe((event) => {
+            this.currentLocale.set(event.lang);
+        });
+
         this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
             const courseIdParameter = parameterMap.get('courseId');
             if (courseIdParameter) {
@@ -79,11 +101,12 @@ export class CalendarOverviewComponent implements OnInit {
     }
 
     getMonthDescription(): string {
+        const currentLocale = this.currentLocale();
         if (this.presentation() === 'month') {
-            return this.firstDayOfCurrentMonth().format('MMMM YYYY');
+            return this.firstDayOfCurrentMonth().locale(currentLocale).format('MMMM YYYY');
         } else {
-            const firstDayOfCurrentWeek = this.firstDayOfCurrentWeek();
-            const lastDayOfCurrentWeek = this.firstDayOfCurrentWeek().endOf('isoWeek');
+            const firstDayOfCurrentWeek = this.firstDayOfCurrentWeek().locale(currentLocale);
+            const lastDayOfCurrentWeek = this.firstDayOfCurrentWeek().endOf('isoWeek').locale(currentLocale);
             if (lastDayOfCurrentWeek.isSame(firstDayOfCurrentWeek, 'month')) {
                 return firstDayOfCurrentWeek.format('MMMM YYYY');
             } else {

@@ -4,11 +4,12 @@ import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Dayjs } from 'dayjs/esm';
 import * as Utils from 'app/calendar/shared/util/calendar-util';
-import { DayBadgeComponent } from '../../shared/day-badge/day-badge.component';
-import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
+import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
+import { DayBadgeComponent } from '../../shared/day-badge/day-badge.component';
 
 @Component({
     selector: 'calendar-desktop-month',
@@ -23,15 +24,18 @@ export class CalendarMonthPresentationComponent {
 
     readonly utils = Utils;
     readonly weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
-    readonly eventMap = computed(() => this.eventService.eventMap());
+    readonly eventMap;
 
     private popover?: NgbPopover;
 
-    constructor(private eventService: CalendarEventService) {}
+    constructor(private eventService: CalendarEventService) {
+        this.eventMap = this.eventService.eventMap;
+    }
 
     getEventsOf(day: Dayjs): CalendarEvent[] {
         const key = day.format('YYYY-MM-DD');
-        return this.eventMap().get(key) ?? [];
+        const result = this.eventMap().get(key) ?? [];
+        return result;
     }
 
     openPopover(event: CalendarEvent, popover: NgbPopover) {

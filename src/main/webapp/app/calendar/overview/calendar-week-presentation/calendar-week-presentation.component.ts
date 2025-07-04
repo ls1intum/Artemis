@@ -17,7 +17,6 @@ import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calenda
     styleUrl: './calendar-week-presentation.component.scss',
 })
 export class CalendarWeekPresentationComponent implements AfterViewInit {
-    firstDayOfCurrentMonth = input.required<Dayjs>();
     firstDayOfCurrentWeek = input.required<Dayjs>();
     selectedEvent = signal<CalendarEvent | undefined>(undefined);
 

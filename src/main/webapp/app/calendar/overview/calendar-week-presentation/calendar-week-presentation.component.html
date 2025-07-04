@@ -48,6 +48,7 @@
                             [placement]="['top', 'bottom', 'right', 'left']"
                             (click)="openPopover(event, popover)"
                             #popover="ngbPopover"
+                            [attr.data-testid]="event.id"
                         >
                             @if (eventSubtypeDescriptor) {
                                 {{ eventSubtypeDescriptor | artemisTranslate }}: {{ event.title }}

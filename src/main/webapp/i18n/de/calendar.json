@@ -32,7 +32,11 @@
                 "lecture": "Vorlesungsevent",
                 "tutorial": "Tutorialevent",
                 "exam": "Examevent"
-            }
+            },
+            "filterButtonLabel": "Filter",
+            "todayButtonLabel": "Heute",
+            "weekButtonLabel": "Woche",
+            "monthButtonLabel": "Monat"
         }
     }
 }
