@@ -48,6 +48,7 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { ActivatedRoute } from '@angular/router';
 import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -89,7 +90,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     artemisIntelligenceActions = computed(() =>
         this.irisEnabled
             ? [
-                  new RewriteAction(this.artemisIntelligenceService, RewritingVariant.PROBLEM_STATEMENT, this.courseId),
+                  new RewriteAction(
+                      this.artemisIntelligenceService,
+                      RewritingVariant.PROBLEM_STATEMENT,
+                      this.courseId,
+                      signal<RewriteResult>({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
+                  ),
                   ...(this.exerciseId ? [new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId, this.renderedConsistencyCheckResultMarkdown)] : []),
               ]
             : [],

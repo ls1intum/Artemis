@@ -103,6 +103,6 @@ class PyrisRewritingIntegrationTest extends AbstractIrisIntegrationTest {
      * @param result the result of the rewriting process
      */
     private void simulateWebsocketMessageWithResult(RewritingJob job, List<LLMRequest> tokens, List<PyrisStageDTO> stages, String result) {
-        irisRewritingService.handleStatusUpdate(job, new PyrisRewritingStatusUpdateDTO(stages, result, tokens));
+        irisRewritingService.handleStatusUpdate(job, new PyrisRewritingStatusUpdateDTO(stages, result, tokens, null, null, null));
     }
 }
