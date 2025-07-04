@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { DayBadgeComponent } from './day-badge.component';
+import { CalendarDayBadgeComponent } from './calendar-day-badge.component';
 
 describe('DayBadgeComponent', () => {
-    let component: DayBadgeComponent;
-    let fixture: ComponentFixture<DayBadgeComponent>;
+    let component: CalendarDayBadgeComponent;
+    let fixture: ComponentFixture<CalendarDayBadgeComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [DayBadgeComponent],
+            imports: [CalendarDayBadgeComponent],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(DayBadgeComponent);
+        fixture = TestBed.createComponent(CalendarDayBadgeComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });

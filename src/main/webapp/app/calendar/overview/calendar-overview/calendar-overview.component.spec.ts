@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { CalendarEventFilterComponent } from 'app/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
-import { DayBadgeComponent } from 'app/calendar/shared/day-badge/day-badge.component';
+import { CalendarDayBadgeComponent } from 'app/calendar/shared/day-badge/calendar-day-badge.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
@@ -42,7 +42,7 @@ describe('CalendarDesktopComponent', () => {
             imports: [CalendarOverviewComponent, CalendarWeekPresentationComponent, CalendarMonthPresentationComponent],
             declarations: [
                 MockComponent(CalendarEventDetailPopoverComponent),
-                MockComponent(DayBadgeComponent),
+                MockComponent(CalendarDayBadgeComponent),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CalendarEventFilterComponent),

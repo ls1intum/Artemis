@@ -7,7 +7,7 @@ import { CalendarEventService } from 'app/calendar/shared/service/calendar-event
 import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';
 import { By } from '@angular/platform-browser';
 import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
-import { DayBadgeComponent } from 'app/calendar/shared/day-badge/day-badge.component';
+import { CalendarDayBadgeComponent } from 'app/calendar/shared/day-badge/calendar-day-badge.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 
@@ -42,7 +42,7 @@ describe('CalendarDesktopMonthComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CalendarMonthPresentationComponent, CalendarEventDetailPopoverComponent],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(DayBadgeComponent), MockDirective(TranslateDirective)],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(CalendarDayBadgeComponent), MockDirective(TranslateDirective)],
             providers: [
                 {
                     provide: CalendarEventService,

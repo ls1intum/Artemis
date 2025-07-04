@@ -9,12 +9,12 @@ import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
 import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
-import { DayBadgeComponent } from '../../shared/day-badge/day-badge.component';
+import { CalendarDayBadgeComponent } from '../../shared/day-badge/calendar-day-badge.component';
 
 @Component({
     selector: 'calendar-desktop-month',
     standalone: true,
-    imports: [NgClass, FaIconComponent, NgbPopover, DayBadgeComponent, CalendarEventDetailPopoverComponent, ArtemisTranslatePipe],
+    imports: [NgClass, FaIconComponent, NgbPopover, CalendarDayBadgeComponent, CalendarEventDetailPopoverComponent, ArtemisTranslatePipe],
     templateUrl: './calendar-month-presentation.component.html',
     styleUrls: ['./calendar-month-presentation.component.scss'],
 })

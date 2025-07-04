@@ -6,10 +6,10 @@ import dayjs, { Dayjs } from 'dayjs/esm';
     selector: 'day-badge',
     standalone: true,
     imports: [NgClass],
-    templateUrl: './day-badge.component.html',
-    styleUrls: ['./day-badge.component.scss'],
+    templateUrl: './calendar-day-badge.component.html',
+    styleUrls: ['./calendar-day-badge.component.scss'],
 })
-export class DayBadgeComponent {
+export class CalendarDayBadgeComponent {
     day: InputSignal<Dayjs> = input.required<Dayjs>();
     selected: InputSignal<boolean> = input(false);
 
