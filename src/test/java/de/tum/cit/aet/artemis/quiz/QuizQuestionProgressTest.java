@@ -124,8 +124,8 @@ public class QuizQuestionProgressTest extends AbstractSpringIntegrationIndepende
         // Progress exists in database
         Optional<QuizQuestionProgress> progress = quizQuestionProgressTestRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
         assertThat(progress).isNotNull();
-        assertThat(progress.get().getUser()).isEqualTo(userId);
-        assertThat(progress.get().getQuizQuestion()).isEqualTo(quizQuestionId);
+        assertThat(progress.get().getUserId()).isEqualTo(userId);
+        assertThat(progress.get().getQuizQuestionId()).isEqualTo(quizQuestionId);
         assertThat(progress.get().getLastAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
 
         QuizQuestionProgressDataDAO data = progress.get().getProgressJson();
@@ -144,8 +144,8 @@ public class QuizQuestionProgressTest extends AbstractSpringIntegrationIndepende
         quizQuestionProgressTestRepository.deleteAll();
         quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission);
         Optional<QuizQuestionProgress> progressEmpty = quizQuestionProgressTestRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
-        assertThat(progressEmpty.get().getUser()).isEqualTo(userId);
-        assertThat(progressEmpty.get().getQuizQuestion()).isEqualTo(quizQuestionId);
+        assertThat(progressEmpty.get().getUserId()).isEqualTo(userId);
+        assertThat(progressEmpty.get().getQuizQuestionId()).isEqualTo(quizQuestionId);
         assertThat(progressEmpty.get().getLastAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
 
         QuizQuestionProgressDataDAO dataEmpty = progress.get().getProgressJson();
