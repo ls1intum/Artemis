@@ -109,6 +109,14 @@ export class IrisChatService implements OnDestroy {
             map((params) => {
                 const updatedCourseId = params['courseId'];
                 // eslint-disable-next-line no-undef
+                console.log('ActivatedRoute snapshot:', this.route.snapshot);
+                // eslint-disable-next-line no-undef
+                console.log('ActivatedRoute params:', this.route.snapshot.params);
+                // eslint-disable-next-line no-undef
+                console.log('ActivatedRoute:', this.route);
+                // eslint-disable-next-line no-undef
+                console.log('Route parameters:', params);
+                // eslint-disable-next-line no-undef
                 console.log('Updated courseId:', updatedCourseId);
                 // eslint-disable-next-line no-undef
                 console.log('Current route:', this.router.url);
