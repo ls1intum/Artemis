@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizQuestionProgressTestRepos
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizQuestionTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-public class QuizQuestionProgressTest extends AbstractSpringIntegrationIndependentTest {
+class QuizQuestionProgressTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private QuizQuestionProgressService quizQuestionProgressService;
