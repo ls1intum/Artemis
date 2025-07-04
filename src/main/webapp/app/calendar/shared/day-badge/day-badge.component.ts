@@ -1,6 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, InputSignal, input } from '@angular/core';
 import { NgClass } from '@angular/common';
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 
 @Component({
     selector: 'day-badge',
@@ -10,15 +10,14 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['./day-badge.component.scss'],
 })
 export class DayBadgeComponent {
-    @Input({ required: true }) date!: dayjs.Dayjs;
-    @Input() minimalTodayIndication: boolean = false;
-    @Input() selected: boolean = false;
+    day: InputSignal<Dayjs> = input.required<Dayjs>();
+    selected: InputSignal<boolean> = input(false);
 
-    get day(): number {
-        return this.date.date();
+    get dayNumber(): number {
+        return this.day().date();
     }
 
     isToday(): boolean {
-        return this.date.isSame(dayjs(), 'day');
+        return this.day().isSame(dayjs(), 'day');
     }
 }
