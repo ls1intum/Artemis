@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, input, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import videojs from 'video.js';
 
@@ -75,12 +75,6 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         this.player.on('timeupdate', () => {
             const currentTime = this.player?.currentTime?.() ?? 0;
             this.updateCurrentSegment(currentTime);
-        });
-
-        // Optional: React to input changes (for dev/debug or dynamic transcript support)
-        effect(() => {
-            void this.videoUrl();
-            void this.transcriptSegments();
         });
     }
 

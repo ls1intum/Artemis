@@ -66,7 +66,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
         if (!isCollapsed) {
             this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
-            this.fetchTranscript();
+
+            // Only fetch transcript if .m3u8
+            if (this.videoUrl()?.includes('.m3u8')) {
+                this.fetchTranscript();
+            }
         }
     }
 
