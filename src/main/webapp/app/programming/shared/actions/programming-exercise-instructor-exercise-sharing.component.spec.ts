@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -8,10 +9,20 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClient } from '@angular/common/http';
 import { ProgrammingExerciseInstructorExerciseSharingComponent } from './programming-exercise-instructor-exercise-sharing.component';
+import { Component, signal } from '@angular/core';
 
+@Component({
+    template: `<jhi-programming-exercise-instructor-exercise-sharing [exerciseId]="testValue"></jhi-programming-exercise-instructor-exercise-sharing>`,
+    standalone: true,
+    imports: [ProgrammingExerciseInstructorExerciseSharingComponent],
+})
+class TestHostComponent {
+    testValue = signal(5);
+}
 describe('ProgrammingExercise Instructor Exercise Sharing', () => {
+    let hostFixture: ComponentFixture<TestHostComponent>;
+
     let comp: ProgrammingExerciseInstructorExerciseSharingComponent;
-    let fixture: ComponentFixture<ProgrammingExerciseInstructorExerciseSharingComponent>;
     let httpMock: HttpTestingController;
     let consoleError: any;
     beforeEach(() => {
@@ -28,8 +39,11 @@ describe('ProgrammingExercise Instructor Exercise Sharing', () => {
             .compileComponents()
             .then(() => {
                 httpMock = TestBed.inject(HttpTestingController);
-                fixture = TestBed.createComponent(ProgrammingExerciseInstructorExerciseSharingComponent);
-                comp = fixture.componentInstance;
+                hostFixture = TestBed.createComponent(TestHostComponent);
+
+                hostFixture.detectChanges();
+                const childDebugEl = hostFixture.debugElement.query(By.directive(ProgrammingExerciseInstructorExerciseSharingComponent));
+                comp = childDebugEl.componentInstance as ProgrammingExerciseInstructorExerciseSharingComponent;
             });
         consoleError = console.error;
         // Mock console.error to prevent error messages "navigation not implemented" in tests
@@ -44,7 +58,7 @@ describe('ProgrammingExercise Instructor Exercise Sharing', () => {
 
     describe('Action method', () => {
         it('export to sharing initiation (success)', fakeAsync(() => {
-            comp.exportExerciseToSharing(5);
+            comp.exportExerciseToSharing();
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush('returnURL');
             tick();
@@ -55,14 +69,14 @@ describe('ProgrammingExercise Instructor Exercise Sharing', () => {
                 location: { href: '' },
                 focus: () => {},
             } as WindowProxy;
-            comp.exportExerciseToSharing(5);
+            comp.exportExerciseToSharing();
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush('returnURL');
             tick();
         }));
 
         it('export to sharing initiation (fail Exercise not found)', fakeAsync(() => {
-            comp.exportExerciseToSharing(5);
+            comp.exportExerciseToSharing();
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush('Exercise not found', { status: 404, statusText: 'Not Found' });
             tick();

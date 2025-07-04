@@ -418,7 +418,6 @@ public class ExerciseSharingService {
         String algorithm = "HmacSHA256";
         String psk = sharingConnectorService.getSharingApiKeyOrNull();
         if (psk == null) {
-            log.error("No preshared Key?");
             throw new IllegalStateException("Sharing API key is not configured");
         }
         SecretKeySpec secretKeySpec = new SecretKeySpec(psk.getBytes(StandardCharsets.UTF_8), algorithm);
