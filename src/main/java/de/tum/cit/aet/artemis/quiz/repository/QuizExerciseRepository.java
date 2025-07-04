@@ -36,7 +36,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 LEFT JOIN FETCH exercise.quizBatches
             WHERE exercise.course.id = :courseId
             """)
-    Set<QuizExercise> findByCourseIdWithBatches(long courseId);
+    Set<QuizExercise> findByCourseIdWithBatches(@Param("courseId") long courseId);
 
     @Query("""
             SELECT DISTINCT e

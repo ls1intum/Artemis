@@ -16,7 +16,7 @@ type CalendarEventMapResponse = HttpResponse<Record<string, CalendarEventDTO[]>>
 })
 export class CalendarEventService {
     private httpClient = inject(HttpClient);
-    private readonly resourceUrl = '/api/calendar/courses';
+    private readonly resourceUrl = '/api/core/calendar/courses';
 
     private currentMonthKey?: string;
     private currentEventMap = signal<Map<string, CalendarEvent[]>>(new Map());

@@ -345,8 +345,9 @@ public class LectureService {
      * @return the derived event
      */
     private Optional<CalendarEventDTO> deriveEvent(Lecture lecture, boolean userIsStudent) {
-        if (userIsStudent && lecture.getVisibleDate() != null && ZonedDateTime.now().isBefore(lecture.getVisibleDate()))
+        if (userIsStudent && lecture.getVisibleDate() != null && ZonedDateTime.now().isBefore(lecture.getVisibleDate())) {
             return Optional.empty();
+        }
         if (lecture.getStartDate() == null && lecture.getEndDate() != null) {
             return Optional.of(new CalendarEventDTO("lecture-" + lecture.getId() + "-endDate", lecture.getTitle(), lecture.getEndDate(), null, null, null));
         }

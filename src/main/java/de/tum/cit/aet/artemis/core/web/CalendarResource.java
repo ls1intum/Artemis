@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 @Lazy
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/calendar/")
+@RequestMapping("api/core/")
 public class CalendarResource {
 
     private static final Logger log = LoggerFactory.getLogger(CalendarResource.class);
@@ -87,7 +87,7 @@ public class CalendarResource {
      * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user does not have at least student role or if the user is not at least student in the course
      * @throws BadRequestException      {@code 400 (Bad Request)} if the monthKeys are empty or formatted incorrectly or if the timeZone is formatted incorrectly.
      */
-    @GetMapping("courses/{courseId}/calendar-events")
+    @GetMapping("calendar/courses/{courseId}/calendar-events")
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, List<CalendarEventDTO>>> getCalendarEventsOverlappingMonths(@PathVariable Long courseId, @RequestParam List<String> monthKeys,
             @RequestParam String timeZone) {

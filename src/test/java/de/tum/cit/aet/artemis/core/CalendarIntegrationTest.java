@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
  * Note: <br>
  * In the following test class tutors, editors and instructors are referred to as course staff members.
  */
-public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private TutorialGroupUtilService tutorialGroupUtilService;
@@ -144,7 +144,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
     void shouldReturnNotFoundWhenCourseDoesNotExist() throws Exception {
         int courseId = -3;
-        String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
         request.get(URL, HttpStatus.NOT_FOUND, String.class);
     }
 
@@ -153,7 +153,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
     void shouldReturnBadRequestWhenMonthsHaveWrongFormat() throws Exception {
         Long courseId = course.getId();
         String monthKeys = "11-2025";
-        String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING;
+        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING;
         request.get(URL, HttpStatus.BAD_REQUEST, String.class);
     }
 
@@ -162,7 +162,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
     void shouldReturnBadRequestWhenMonthsAreEmpty() throws Exception {
         Long courseId = course.getId();
         String monthKeys = "";
-        String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING;
+        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING;
         request.get(URL, HttpStatus.BAD_REQUEST, String.class);
     }
 
@@ -171,7 +171,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
     void shouldReturnBadRequestWhenTimeZoneFormattedIncorrectly() throws Exception {
         Long courseId = course.getId();
         String malformedTimeZone = "EST";
-        String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + malformedTimeZone;
+        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + malformedTimeZone;
         request.get(URL, HttpStatus.BAD_REQUEST, String.class);
     }
 
@@ -180,7 +180,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
     void shouldReturnForbiddenForStudentNotPartOfCourse() throws Exception {
         userUtilService.addStudent("notstudent", NOT_STUDENT_LOGIN);
         Long courseId = course.getId();
-        String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
         request.get(URL, HttpStatus.FORBIDDEN, String.class);
     }
 
@@ -189,7 +189,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
     void shouldReturnForbiddenForTutorNotPartOfCourse() throws Exception {
         userUtilService.addStudent("nottutor", NOT_TUTOR_LOGIN);
         Long courseId = course.getId();
-        String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
         request.get(URL, HttpStatus.FORBIDDEN, String.class);
     }
 
@@ -198,7 +198,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
     void shouldReturnForbiddenForEditorNotPartOfCourse() throws Exception {
         userUtilService.addStudent("noteditor", NOT_EDITOR_LOGIN);
         Long courseId = course.getId();
-        String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
         request.get(URL, HttpStatus.FORBIDDEN, String.class);
     }
 
@@ -207,7 +207,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
     void shouldReturnForbiddenForInstructorNotPartOfCourse() throws Exception {
         userUtilService.addStudent("notinstructor", NOT_INSTRUCTOR_LOGIN);
         Long courseId = course.getId();
-        String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
         request.get(URL, HttpStatus.FORBIDDEN, String.class);
     }
 
@@ -222,7 +222,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
             TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusHours(2),
                     5);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("tutorial-" + tutorialGroupSession.getId(), "Tutorial Session", tutorialGroupSession.getStart(),
@@ -242,7 +242,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
             TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusHours(2),
                     5);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("tutorial-" + tutorialGroupSession.getId(), "Tutorial Session", tutorialGroupSession.getStart(),
@@ -263,7 +263,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForVisibleLectureWithStartButNoEndAsStudent() throws Exception {
             Lecture lecture = lectureUtilService.createLecture(course, FIXED_DATE, FIXED_DATE.plusDays(1), null);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("lecture-" + lecture.getId() + "-startDate", lecture.getTitle(), lecture.getStartDate(), null, null, null);
@@ -279,7 +279,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForVisibleLectureWithEndButNoStartAsStudent() throws Exception {
             Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), null, PAST_DATE);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("lecture-" + lecture.getId() + "-endDate", lecture.getTitle(), lecture.getEndDate(), null, null, null);
@@ -295,7 +295,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForVisibleLectureWithStartAndEndAsStudent() throws Exception {
             Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("lecture-" + lecture.getId() + "-startAndEndDate", lecture.getTitle(), lecture.getStartDate(),
@@ -312,7 +312,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnNoEventForInvisibleLectureWithStartAndEndAsStudent() throws Exception {
             Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -325,7 +325,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForVisibleLectureWithStartButNoEndAsCourseStaffMember() throws Exception {
             Lecture lecture = lectureUtilService.createLecture(course, FIXED_DATE, FIXED_DATE.plusDays(1), null);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("lecture-" + lecture.getId() + "-startDate", lecture.getTitle(), lecture.getStartDate(), null, null, null);
@@ -341,7 +341,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForVisibleLectureWithEndButNoStartAsCourseStaffMember() throws Exception {
             Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), null, PAST_DATE);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("lecture-" + lecture.getId() + "-endDate", lecture.getTitle(), lecture.getEndDate(), null, null, null);
@@ -357,7 +357,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForVisibleLectureWithStartAndEndAsCourseStaffMember() throws Exception {
             Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("lecture-" + lecture.getId() + "-startAndEndDate", lecture.getTitle(), lecture.getStartDate(),
@@ -374,7 +374,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForInvisibleLectureWithStartAndEventEventAsCourseStaffMember() throws Exception {
             Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("lecture-" + lecture.getId() + "-startAndEndDate", lecture.getTitle(), lecture.getStartDate(),
@@ -396,7 +396,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
             Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), PAST_DATE.plusDays(1), PAST_DATE.plusDays(2),
                     PAST_DATE.plusDays(3), "Test-Examiner");
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO("exam-" + exam.getId() + "-startAndEndDate", exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
@@ -418,7 +418,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventsForVisibleExamWithStartAndEndButNoPublishResultsAndReviewStartAndEndAsStudent() throws Exception {
             Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), null, null, null, "Test-Examiner");
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("exam-" + exam.getId() + "-startAndEndDate", exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
@@ -436,7 +436,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
             Exam exam = examUtilService.addExam(course, FUTURE_DATE, FUTURE_DATE.plusHours(2), FUTURE_DATE.plusHours(3), FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2),
                     FUTURE_DATE.plusDays(3), "Test-Examiner");
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -451,7 +451,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
             Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), PAST_DATE.plusDays(1), PAST_DATE.plusDays(2),
                     PAST_DATE.plusDays(3), "Test-Examiner");
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO("exam-" + exam.getId() + "-startAndEndDate", exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
@@ -473,7 +473,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventsForVisibleExamWithStartAndEndButNoPublishResultsAndReviewStartAndEndAsCourseStaffMember() throws Exception {
             Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), null, null, null, "Test-Examiner");
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("exam-" + exam.getId() + "-startAndEndDate", exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
@@ -491,7 +491,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
             Exam exam = examUtilService.addExam(course, FUTURE_DATE, FUTURE_DATE.plusHours(2), FUTURE_DATE.plusHours(3), FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2),
                     FUTURE_DATE.plusDays(3), "Test-Examiner");
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO("exam-" + exam.getId() + "-startAndEndDate", exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
@@ -517,7 +517,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForReleasedSynchronizedQuizWithStartTimeAsStudent() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, PAST_DATE.plusDays(1), 600);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-startAndEndDate", quizExercise.getTitle(), PAST_DATE.plusDays(1),
@@ -534,7 +534,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnNoEventForUnreleasedSynchronizedQuizWithStartTimeAsStudent() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, FUTURE_DATE, FUTURE_DATE.plusHours(1), 600);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -548,7 +548,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnNoEventForReleasedSynchronizedQuizWithoutStartTimeAsStudent() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, null, 600);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -562,7 +562,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForReleasedSynchronizedQuizWithStartTimeAsCourseStaffMember() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, PAST_DATE.plusDays(1), 600);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-startAndEndDate", quizExercise.getTitle(), PAST_DATE.plusDays(1),
@@ -579,7 +579,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForUnreleasedSynchronizedQuizWithStartTimeAsCourseStaffMember() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, FUTURE_DATE, FUTURE_DATE.plusHours(1), 600);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-startAndEndDate", quizExercise.getTitle(), FUTURE_DATE.plusHours(1),
@@ -596,7 +596,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnNoEventForReleasedSynchronizedQuizWithoutStartTimeAsCourseStaffMember() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, null, 600);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -610,7 +610,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForReleasedIndividualQuizWithNoDueDateAsStudent() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.INDIVIDUAL);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(), PAST_DATE, null, null, null);
@@ -626,7 +626,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForIndividualQuizWithDueDateButNoReleaseDateAsStudent() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.INDIVIDUAL);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-dueDate", quizExercise.getTitle(), PAST_DATE, null, null, null);
@@ -642,7 +642,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventsForReleasedIndividualQuizWithDueDateAsStudent() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(), PAST_DATE, null, null, null);
@@ -660,7 +660,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnNoEventForIndividualQuizWithNoReleaseDateAndNoDueDateAsStudent() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.INDIVIDUAL);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -674,7 +674,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnNoEventForUnreleasedIndividualQuizWithDueDateAsStudent() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -688,7 +688,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForReleasedIndividualQuizWithNoDueDateAsCourseStaffMember() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.INDIVIDUAL);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(), PAST_DATE, null, null, null);
@@ -704,7 +704,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForIndividualQuizWithDueDateButNoReleaseDateAsCourseStaffMember() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.INDIVIDUAL);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-dueDate", quizExercise.getTitle(), PAST_DATE, null, null, null);
@@ -720,7 +720,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventsForReleasedIndividualQuizWithDueDateAsCourseStaffMember() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(), PAST_DATE, null, null, null);
@@ -738,7 +738,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnNoEventForIndividualQuizWithNoReleaseDateAndNoDueDateAsCourseStaffMember() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.INDIVIDUAL);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -752,7 +752,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventsForUnreleasedIndividualQuizWithDueDateAsCourseStaffMember() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(), FUTURE_DATE, null, null, null);
@@ -770,7 +770,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForReleasedBatchedQuizWithNoDueDateAsStudent() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.BATCHED);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(), PAST_DATE, null, null, null);
@@ -786,7 +786,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForBatchedQuizWithDueDateButNoReleaseDateAsStudent() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.BATCHED);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-dueDate", quizExercise.getTitle(), PAST_DATE, null, null, null);
@@ -802,7 +802,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventsForReleasedBatchedQuizWithDueDateAsStudent() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.BATCHED);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(), PAST_DATE, null, null, null);
@@ -820,7 +820,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnNoEventForBatchedQuizWithNoReleaseDateAndNoDueDateAsStudent() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.BATCHED);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -834,7 +834,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnNoEventForUnreleasedBatchedQuizWithDueDateAsStudent() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.BATCHED);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -848,7 +848,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForReleasedBatchedQuizWithNoDueDateAsCourseStaffMember() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.BATCHED);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(), PAST_DATE, null, null, null);
@@ -864,7 +864,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventForBatchedQuizWithDueDateButNoReleaseDateAsCourseStaffMember() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.BATCHED);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-dueDate", quizExercise.getTitle(), PAST_DATE, null, null, null);
@@ -880,7 +880,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventsForReleasedBatchedQuizWithDueDateAsCourseStaffMember() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.BATCHED);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(), PAST_DATE, null, null, null);
@@ -898,7 +898,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnNoEventForBatchedQuizWithNoReleaseDateAndNoDueDateAsCourseStaffMember() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.BATCHED);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -912,7 +912,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
         void shouldReturnCorrectEventsForUnreleasedBatchedQuizWithDueDateAsCourseStaffMember() throws Exception {
             QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.BATCHED);
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-releaseDate", quizExercise.getTitle(), FUTURE_DATE, null, null, null);
@@ -950,7 +950,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
                 case PROGRAMMING -> "programmingExercise-";
             };
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO(idPrefix + exercise.getId() + "-releaseDate", exercise.getTitle(), PAST_DATE, null, null, null);
@@ -979,7 +979,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
                 case PROGRAMMING -> "programmingExercise-";
             };
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO(idPrefix + exercise.getId() + "-releaseDate", exercise.getTitle(), PAST_DATE, null, null, null);
@@ -1008,7 +1008,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
                 case PROGRAMMING -> "programmingExercise-";
             };
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO(idPrefix + exercise.getId() + "-releaseDate", exercise.getTitle(), PAST_DATE, null, null, null);
@@ -1040,7 +1040,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
                 case PROGRAMMING -> "programmingExercise-";
             };
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
@@ -1066,7 +1066,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
                 case PROGRAMMING -> "programmingExercise-";
             };
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO(idPrefix + exercise.getId() + "-releaseDate", exercise.getTitle(), PAST_DATE, null, null, null);
@@ -1095,7 +1095,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
                 case PROGRAMMING -> "programmingExercise-";
             };
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO(idPrefix + exercise.getId() + "-releaseDate", exercise.getTitle(), PAST_DATE, null, null, null);
@@ -1124,7 +1124,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
                 case PROGRAMMING -> "programmingExercise-";
             };
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO(idPrefix + exercise.getId() + "-releaseDate", exercise.getTitle(), PAST_DATE, null, null, null);
@@ -1156,7 +1156,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
                 case PROGRAMMING -> "programmingExercise-";
             };
             Long courseId = course.getId();
-            String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent1 = new CalendarEventDTO(idPrefix + exercise.getId() + "-releaseDate", exercise.getTitle(), FUTURE_DATE, null, null, null);
@@ -1184,7 +1184,7 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
                 FIXED_DATE.plusMonths(1).plusHours(1), 5);
         Long courseId = course.getId();
         String monthKeys = YearMonth.from(FIXED_DATE.minusMonths(1)) + "," + FIXED_DATE_MONTH_STRING + "," + YearMonth.from(FIXED_DATE.plusMonths(1));
-        String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING;
+        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING;
         Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
         CalendarEventDTO expectedEvent1 = new CalendarEventDTO("tutorial-" + tutorialGroupSession1.getId(), "Tutorial Session", tutorialGroupSession1.getStart(),
@@ -1207,20 +1207,20 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
                 new HashSet<>(Set.of(student)));
         TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusDays(2), 5);
         Long courseId = course.getId();
-        String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
+        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING;
         Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
         ZoneId timezone = tutorialGroupSession.getStart().getZone();
         CalendarEventDTO expectedEvent1 = new CalendarEventDTO("tutorial-" + tutorialGroupSession.getId() + "-0", "Tutorial Session", tutorialGroupSession.getStart(),
-                tutorialGroupSession.getStart().toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone), tutorialGroupSession.getLocation(),
+                tutorialGroupSession.getStart().toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(),
                 tutor.getFirstName() + " " + tutor.getLastName());
         CalendarEventDTO expectedEvent2 = new CalendarEventDTO("tutorial-" + tutorialGroupSession.getId() + "-1", "Tutorial Session",
                 tutorialGroupSession.getStart().plusDays(1).toLocalDate().atStartOfDay(timezone),
-                tutorialGroupSession.getStart().plusDays(1).toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone), tutorialGroupSession.getLocation(),
-                tutor.getFirstName() + " " + tutor.getLastName());
+                tutorialGroupSession.getStart().plusDays(1).toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone),
+                tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
         CalendarEventDTO expectedEvent3 = new CalendarEventDTO("tutorial-" + tutorialGroupSession.getId() + "-2", "Tutorial Session",
-                tutorialGroupSession.getStart().plusDays(2).toLocalDate().atStartOfDay(timezone), tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation(),
-                tutor.getFirstName() + " " + tutor.getLastName());
+                tutorialGroupSession.getStart().plusDays(2).toLocalDate().atStartOfDay(timezone), tutorialGroupSession.getEnd(),
+                tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
         Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3)
                 .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -1239,11 +1239,11 @@ public class CalendarIntegrationTest extends AbstractSpringIntegrationIndependen
 
         Long courseId = course.getId();
         String otherTimeZone = "America/Los_Angeles";
-        String URL = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=2025-05&timeZone=" + otherTimeZone;
+        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=2025-05&timeZone=" + otherTimeZone;
         Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
         CalendarEventDTO expectedEvent = new CalendarEventDTO("tutorial-" + tutorialGroupSession.getId(), "Tutorial Session", tutorialGroupSession.getStart(),
-                tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation(), tutor.getFirstName() + " " + tutor.getLastName());
+                tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
         Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
         expectedResponse.put(tutorialGroupSession.getStart().withZoneSameInstant(ZoneId.of(otherTimeZone)).toLocalDate().toString(), List.of(expectedEvent));
 

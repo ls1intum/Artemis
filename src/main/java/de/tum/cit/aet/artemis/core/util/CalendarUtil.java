@@ -89,7 +89,8 @@ public class CalendarUtil {
     /**
      * Loops through the given {@link CalendarEventDTO}s and splits events that span multiple days into several events each covering one day.
      *
-     * @param eventDTOs the set of calendar events to process
+     * @param eventDTOs      the set of calendar events to process
+     * @param clientTimeZone the timezone of the client
      * @return a set including all unsplit events and the splitting results
      */
     public static Set<CalendarEventDTO> splitEventsSpanningMultipleDaysIfNecessary(Set<CalendarEventDTO> eventDTOs, ZoneId clientTimeZone) {

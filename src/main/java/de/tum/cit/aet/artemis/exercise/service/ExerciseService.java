@@ -834,8 +834,9 @@ public class ExerciseService {
      * @return the derived events
      */
     private Set<CalendarEventDTO> deriveEvents(Exercise exercise, boolean userIsCourseStaff) {
-        if (!(exercise instanceof FileUploadExercise || exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof ProgrammingExercise))
+        if (!(exercise instanceof FileUploadExercise || exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof ProgrammingExercise)) {
             return new HashSet<>();
+        }
 
         Set<CalendarEventDTO> events = new HashSet<>();
         if (userIsCourseStaff || exercise.getReleaseDate() == null || (exercise.getReleaseDate() != null && exercise.getReleaseDate().isBefore(now()))) {

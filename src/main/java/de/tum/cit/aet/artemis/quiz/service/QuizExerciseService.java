@@ -575,12 +575,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return one event representing the working time period of the exercise
      */
     private Optional<CalendarEventDTO> deriveEventForSynchronizedQuizExercise(QuizExercise quizExercise, boolean userIsStudent) {
-        if (userIsStudent && quizExercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(quizExercise.getReleaseDate()))
+        if (userIsStudent && quizExercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(quizExercise.getReleaseDate())) {
             return Optional.empty();
+        }
 
         Optional<QuizBatch> synchronizedBatchOptional = quizExercise.getQuizBatches().stream().findFirst();
-        if (synchronizedBatchOptional.isEmpty() || synchronizedBatchOptional.get().getStartTime() == null)
+        if (synchronizedBatchOptional.isEmpty() || synchronizedBatchOptional.get().getStartTime() == null) {
             return Optional.empty();
+        }
         QuizBatch synchronizedBatch = synchronizedBatchOptional.get();
 
         return Optional.of(new CalendarEventDTO("quizExercise-" + quizExercise.getId() + "-startAndEndDate", quizExercise.getTitle(), synchronizedBatch.getStartTime(),
