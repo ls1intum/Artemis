@@ -13,7 +13,6 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -43,12 +42,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ResponseActions;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.client.RestTemplate;
@@ -61,6 +58,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.web.SharingSupportResource;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -68,10 +66,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -95,7 +89,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
     private SharingPlatformMockProvider sharingPlatformMockProvider;
 
     @Autowired
-    private MockMvc restMockMvc;
+    private RequestUtilService requestUtilService;
 
     @Autowired
     private SharingConnectorService sharingConnectorService;
@@ -109,18 +103,6 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private ExerciseSharingService exerciseSharingService;
-
-    @MockitoBean
-    private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
-
-    @MockitoBean
-    private VersionControlService versionControlService;
-
-    @MockitoBean
-    private ContinuousIntegrationService continuousIntegrationService;
-
-    @MockitoBean
-    private ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
 
     @Autowired
     @Qualifier("sharingRestTemplate")
@@ -147,8 +129,8 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
 
     @Test
     void shouldReturnTrueWhenSharingPlatformIsEnabled() throws Exception {
-        MvcResult result = restMockMvc.perform(get("/api/core/sharing/" + SharingSupportResource.SHARINGCONFIG_RESOURCE_IS_ENABLED).contentType(MediaType.APPLICATION_JSON))
-                // .andDo(print())
+        MvcResult result = requestUtilService
+                .performMvcRequest(get("/api/core/sharing/" + SharingSupportResource.SHARINGCONFIG_RESOURCE_IS_ENABLED).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
         assertThat(content).isEqualTo("true");
@@ -179,10 +161,9 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         final ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(basketURI)).andExpect(method(HttpMethod.GET));
         responseActions.andRespond(MockRestResponseCreators.withBadRequest());
 
-        restMockMvc
-                .perform(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL", TEST_RETURN_URL,
+        requestUtilService
+                .performMvcRequest(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL", TEST_RETURN_URL,
                         "apiBaseURL", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN).contentType(MediaType.APPLICATION_JSON))
-                /* .andDo(print()) */
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON)).andExpect(status().isNotFound());
     }
 
@@ -202,8 +183,10 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         final ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(basketURI)).andExpect(method(HttpMethod.GET));
         responseActions.andRespond(MockRestResponseCreators.withResourceNotFound());
 
-        restMockMvc.perform(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", "undefinedBasketToken"), "returnURL", "http://testing/xyz1",
-                "apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString()).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isNotFound());
+        requestUtilService
+                .performMvcRequest(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", "undefinedBasketToken"), "returnURL",
+                        "http://testing/xyz1", "apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
     }
 
     private Map<String, String> parseParamsToMap(String... params) {
@@ -245,9 +228,9 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnBadRequestWhenChecksumIsInvalid() throws Exception {
-        restMockMvc.perform(get("/api/programming/sharing/import/basket").queryParam("basketToken", "sampleBasket.json").queryParam("returnURL", "http://testing/xyz1")
-                .queryParam("apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString()).queryParam("checksum", "wrongChecksum")
-                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+        requestUtilService.performMvcRequest(get("/api/programming/sharing/import/basket").queryParam("basketToken", "sampleBasket.json")
+                .queryParam("returnURL", "http://testing/xyz1").queryParam("apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString())
+                .queryParam("checksum", "wrongChecksum").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -298,9 +281,10 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         // doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
 
         String setupInfoJsonString = objectMapper.writeValueAsString(setupInfo);
-        MvcResult resultPE = restMockMvc
-                .perform(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON).content(setupInfoJsonString).accept(MediaType.APPLICATION_JSON))
-                .andDo(print()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+        MvcResult resultPE = requestUtilService
+                .performMvcRequest(
+                        post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON).content(setupInfoJsonString).accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
 
         // finally cleanup the cache
         exerciseSharingService.getRepositoryCache().asMap().forEach((key, value) -> {
@@ -322,9 +306,9 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
 
     private void validateProblemStatement(SharingInfoDTO sharingInfo) throws Exception, JsonProcessingException, UnsupportedEncodingException {
         // get Problem Statement
-        MvcResult resultPS = restMockMvc
-                .perform(post("/api/programming/sharing/import/basket/problem-statement").contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON))/* .andDo(print()) */
+        MvcResult resultPS = requestUtilService
+                .performMvcRequest(post("/api/programming/sharing/import/basket/problem-statement").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.TEXT_PLAIN)).andExpect(status().isOk()).andReturn();
         // Zip file is cached, no extra request to sharing platform required!
         String contentPS = resultPS.getResponse().getContentAsString();
@@ -334,9 +318,9 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
     private ProgrammingExercise getAndTestExerciseDetails(SharingInfoDTO sharingInfo) throws Exception, JsonProcessingException, UnsupportedEncodingException {
         // get Exercise Details
 
-        MvcResult resultED = restMockMvc
-                .perform(post("/api/programming/sharing/import/basket/exercise-details").contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON)) /* .andDo(print()) */
+        MvcResult resultED = requestUtilService
+                .performMvcRequest(post("/api/programming/sharing/import/basket/exercise-details").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String contentED = resultED.getResponse().getContentAsString();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -349,6 +333,10 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         return exercise;
     }
 
+    /**
+     * utility method to make the course returned by `programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases()` serializable.
+     *
+     */
     private static void makeCourseJSONSerializable(Course course1) {
         course1.setCompetencies(Set.of());
         course1.setLearningPaths(Set.of());
@@ -388,8 +376,8 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         SharingSetupInfo emptySetupInfo = new SharingSetupInfo(null, null, null);
 
         // last step: do Exercise Import
-        restMockMvc.perform(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(emptySetupInfo))
-                .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().is5xxServerError());
+        requestUtilService.performMvcRequest(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(emptySetupInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().is5xxServerError());
 
     }
 
@@ -399,7 +387,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
 
         SharingInfoDTO sharingInfo = new SharingInfoDTO("Some Basket Token", TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN, "Invalid Checksum", 0);
 
-        restMockMvc.perform(post("/api/programming/sharing/import/basket/exercise-details").contentType(MediaType.APPLICATION_JSON)
+        requestUtilService.performMvcRequest(post("/api/programming/sharing/import/basket/exercise-details").contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
     }
 
@@ -409,7 +397,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
 
         SharingInfoDTO sharingInfo = new SharingInfoDTO("SomeBasketToken", TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN, "Invalid Checksum", 0);
 
-        restMockMvc.perform(post("/api/programming/sharing/import/basket/problem-statement").contentType(MediaType.APPLICATION_JSON)
+        requestUtilService.performMvcRequest(post("/api/programming/sharing/import/basket/problem-statement").contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
     }
 
@@ -424,10 +412,9 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         final ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(basketURI)).andExpect(method(HttpMethod.GET));
         responseActions.andRespond(MockRestResponseCreators.withSuccess(sampleBasket, MediaType.APPLICATION_JSON));
 
-        MvcResult result = restMockMvc
-                .perform(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL", TEST_RETURN_URL,
+        MvcResult result = requestUtilService
+                .performMvcRequest(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL", TEST_RETURN_URL,
                         "apiBaseURL", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN).contentType(MediaType.APPLICATION_JSON))
-                /* .andDo(print()) */
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
 

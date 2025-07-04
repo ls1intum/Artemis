@@ -41,6 +41,13 @@ java {
     }
 }
 
+idea {
+    module {
+        downloadJavadoc = false
+        downloadSources = true
+    }
+}
+
 wrapper {
     gradleVersion = "9.1.0"
 }
@@ -49,6 +56,10 @@ node {
     download = true
     version = "${node_version}"
     npmVersion = "${npm_version}"
+}
+
+npmInstall {
+    doNotTrackState("access failure")
 }
 
 apply from: "gradle/liquibase.gradle"
@@ -76,6 +87,14 @@ springBoot {
     mainClass = "de.tum.cit.aet.artemis.ArtemisApp"
 }
 
+bootRun {
+    jvmArgs([
+        "-Xms2g",
+        "-Xmx6g",
+        "-XX:+HeapDumpOnOutOfMemoryError",
+        "-XX:HeapDumpPath=D:\\temp\\"
+    ])
+}
 modernizer {
     failOnViolations = false
     includeTestClasses = true

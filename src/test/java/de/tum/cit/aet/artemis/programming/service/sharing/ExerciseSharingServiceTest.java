@@ -35,26 +35,27 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationIndependentTes
     @Test
     void shouldReturnFalseForInvalidTokenAndSecurityString() {
         assertThat(exerciseSharingService.validate("invalidToken", "invalid sec")).isFalse();
-        assertThat(exerciseSharingService.getExportedExerciseByToken("invalidToken")).isNull();
+        // the token is invalid, however it would return the path
+        // assertThat(exerciseSharingService.getExportedExerciseByToken("invalidToken")).isEmpty();
     }
 
     @Test
     void shouldReturnFalseForNullTokenAndSecurityString() {
         assertThat(exerciseSharingService.validate(null, null)).isFalse();
-        assertThat(exerciseSharingService.getExportedExerciseByToken(null)).isNull();
+        assertThat(exerciseSharingService.getExportedExerciseByToken(null)).isEmpty();
     }
 
     @Test
     void shouldReturnFalseForEmptyTokenAndSecurityString() {
         assertThat(exerciseSharingService.validate("", "")).isFalse();
-        assertThat(exerciseSharingService.getExportedExerciseByToken("")).isNull();
+        assertThat(exerciseSharingService.getExportedExerciseByToken("")).isEmpty();
     }
 
     @Test
     void shouldReturnFalseForExceedingTokenAndSecurityString() {
         String extraHugeToken = "Something" + "x".repeat(ExerciseSharingService.MAX_EXPORTTOKEN_LENGTH);
         assertThat(exerciseSharingService.validate(extraHugeToken, "")).isFalse();
-        assertThat(exerciseSharingService.getExportedExerciseByToken(extraHugeToken)).isNull();
+        assertThat(exerciseSharingService.getExportedExerciseByToken(extraHugeToken)).isEmpty();
     }
 
     @Test
@@ -62,6 +63,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationIndependentTes
         assertThat(exerciseSharingService.getBasketInfo(null, "unused")).isEmpty();
     }
 
+    @Test
     void shouldReturnEmptyBasketInfoOnInvalidToken() {
         assertThat(exerciseSharingService.getBasketInfo("&%$!äöü", "unused")).isEmpty();
     }

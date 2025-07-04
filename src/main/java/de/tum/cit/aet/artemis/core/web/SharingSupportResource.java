@@ -36,12 +36,12 @@ public class SharingSupportResource {
     private static final Logger log = LoggerFactory.getLogger(SharingSupportResource.class);
 
     /**
-     * sharing configution resource path for sharing config request
+     * the sharing configuration resource path for sharing config request
      */
-    public static final String SHARINGCONFIG_RESOURCE_PATH = "config";
+    private static final String SHARINGCONFIG_RESOURCE_PATH = "config";
 
     /**
-     * sharing configuration resource path for rest request, iff sharing profile is enabled
+     * the sharing configuration resource path for rest request, iff sharing profile is enabled
      */
     public static final String SHARINGCONFIG_RESOURCE_IS_ENABLED = SHARINGCONFIG_RESOURCE_PATH + "/is-enabled";
 
@@ -51,21 +51,18 @@ public class SharingSupportResource {
     private final SharingConnectorService sharingConnectorService;
 
     /**
-     * constructor
-     *
      * @param sharingConnectorService the sharing connector service
      */
-    @SuppressWarnings("unused")
     public SharingSupportResource(SharingConnectorService sharingConnectorService) {
         this.sharingConnectorService = sharingConnectorService;
     }
 
     /**
      * Returns Sharing Plugin configuration to be used in context with Artemis.
-     * This configuration is requested by the sharing platform on a regular basis.
+     * This configuration is requested by the sharing platform in general every 10 minutes.
      * It is secured by the common secret api key token transferred by Authorization header.
      *
-     * @param sharingApiKey    the common secret api key token (transfered by Authorization header).
+     * @param sharingApiKey    the common secret api key token (transferred by Authorization header).
      * @param apiBaseUrl       the base url of the sharing application api (for callbacks)
      * @param installationName a descriptive name of the sharing application
      *
@@ -74,8 +71,8 @@ public class SharingSupportResource {
      *
      */
     @GetMapping(SHARINGCONFIG_RESOURCE_PATH)
-    public ResponseEntity<SharingPluginConfig> getConfig(@RequestHeader("Authorization") Optional<String> sharingApiKey, @RequestParam String apiBaseUrl,
-            @RequestParam Optional<String> installationName) {
+    public ResponseEntity<SharingPluginConfig> getConfig(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestHeader("Authorization") Optional<String> sharingApiKey,
+            @RequestParam String apiBaseUrl, @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestParam Optional<String> installationName) {
         if (sharingApiKey.isPresent() && sharingConnectorService.validate(sharingApiKey.get())) {
             log.info("Delivered Sharing Config ");
             URL parsedApiBaseUrl;

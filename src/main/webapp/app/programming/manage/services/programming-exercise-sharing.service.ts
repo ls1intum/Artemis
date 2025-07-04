@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -24,7 +24,7 @@ export class ProgrammingExerciseSharingService {
     resourceUrlBasket = 'api/programming/sharing/import/basket/';
     resourceUrlExport = 'api/programming/sharing/export';
 
-    constructor(private readonly http: HttpClient) {}
+    private readonly http = inject(HttpClient);
 
     /**
      * loads the Shopping Basket via the Service

@@ -733,8 +733,8 @@
                 }
             },
             "sharing": {
-                "import": "Programmieraufgabe aus Sharing importieren",
-                "export": "Exportieren nach Sharing",
+                "import": "Programmieraufgabe aus der Austauschplattform importieren",
+                "export": "Exportieren in die Austauschplattform",
                 "error": {
                     "export": "Kann Aufgabe nicht exportieren: {{ message }}"
                 }

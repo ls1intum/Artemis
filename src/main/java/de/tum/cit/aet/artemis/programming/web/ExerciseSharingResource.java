@@ -1,12 +1,12 @@
 package de.tum.cit.aet.artemis.programming.web;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
@@ -56,21 +56,25 @@ public class ExerciseSharingResource {
      */
     private static class AutoDeletingFileInputStream extends FileInputStream {
 
-        private final File file;
+        private final Path path;
 
-        private AutoDeletingFileInputStream(@NotNull File file) throws FileNotFoundException {
-            super(file);
-            this.file = file;
+        private AutoDeletingFileInputStream(@NotNull Path path) throws FileNotFoundException {
+            super(path.toFile());
+            this.path = path;
         }
 
         @Override
         public void close() throws IOException {
-            super.close();
             try {
-                Files.delete(this.file.toPath());
+                super.close();
             }
-            catch (IOException e) {
-                log.error("Cannot delete {}", this.file.toPath());
+            finally {
+                try {
+                    Files.delete(this.path);
+                }
+                catch (IOException e) {
+                    log.error("Could not delete temporary file {}", this.path, e);
+                }
             }
         }
     }
@@ -103,7 +107,7 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET .../sharing/import/basket
+     * GET api/programming/sharing/import/basket
      *
      * @param basketToken the token of the shopping basket
      * @param returnURL   the URL to return to after the basket is loaded
@@ -126,7 +130,7 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET .../sharing/setup-import
+     * GET api/programming/sharing/setup-import
      * sets up the imported exercise as a ProgrammingExercise.
      *
      * @param sharingSetupInfo the sharing setup information containing the details of the exercise to be imported
@@ -142,7 +146,7 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET .../sharing/import/basket/problem-statement get the problem statement of the exercise defined in sharingInfo.
+     * GET api/programming/sharing/import/basket/problem-statement get the problem statement of the exercise defined in sharingInfo.
      *
      * @param sharingInfo the sharing info (with exercise position in the basket)
      * @return the ResponseEntity with status 200 (OK) and with body the problem statement, or with status 404 (Not Found)
@@ -158,7 +162,7 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET .../sharing/import/basket/exercise-details: get exercise details of the exercise defined in sharingInfo.
+     * GET api/programming/sharing/import/basket/exercise-details: get exercise details of the exercise defined in sharingInfo.
      *
      * @param sharingInfo the sharing info (with exercise position in the basket)
      * @return the ResponseEntity with status 200 (OK) and with body the problem statement, or with status 404 (Not Found)
@@ -174,7 +178,7 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * POST /sharing/export/{exerciseId}: export programming exercise to sharing
+     * POST api/programming/sharing/export/{exerciseId}: export programming exercise to sharing
      * by generating a unique URL token exposing the exercise
      *
      * @param exerciseId  the id of the exercise to export
@@ -196,7 +200,8 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET /sharing/export/{exerciseToken}: Endpoint exposing an exported exercise zip to Sharing
+     * GET api/programming/sharing/export/{exerciseToken}: Endpoint exposing an exported exercise zip to Sharing.
+     * Publicly available, access is guarded by a security token.
      *
      * @param token in base64 format and used to retrieve the exercise
      * @param sec   digest of the shared key
@@ -204,22 +209,22 @@ public class ExerciseSharingResource {
      * @throws FileNotFoundException if the zip file does not exist anymore
      */
     @GetMapping(SHARING_EXPORT_RESOURCE_PATH + "/{token}")
-    @EnforceAtLeastEditor
     // Custom Key validation is applied
     public ResponseEntity<Resource> exportExerciseToSharing(@PathVariable("token") String token, @RequestParam("sec") String sec) throws FileNotFoundException {
         if (!exerciseSharingService.validate(token, sec)) {
             log.warn("Security Token {} is not valid", sec);
             return ResponseEntity.status(401).build();
         }
-        File zipFile = exerciseSharingService.getExportedExerciseByToken(token);
+        Optional<Path> zipFilePath = exerciseSharingService.getExportedExerciseByToken(token);
 
-        if (zipFile == null) {
+        if (zipFilePath.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        InputStreamResource resource = new InputStreamResource(new AutoDeletingFileInputStream(zipFile));
+        InputStreamResource resource = new InputStreamResource(new AutoDeletingFileInputStream(zipFilePath.get()));
 
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+        return ResponseEntity.ok().contentLength(zipFilePath.get().toFile().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFilePath.toString())
+                .body(resource);
     }
 
 }

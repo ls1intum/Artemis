@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.service.sharing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -21,13 +20,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -49,7 +48,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     private SharingPlatformMockProvider sharingPlatformMockProvider;
 
     @Autowired
-    private MockMvc restMockMvc;
+    private RequestUtilService requestUtilService;
 
     @BeforeEach
     void startUp() throws Exception {
@@ -81,9 +80,10 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
                 .findFirst();
         assertThat(progrO).isPresent();
         ProgrammingExercise progr = progrO.get();
-
-        MvcResult result = restMockMvc.perform(post("/api/programming/sharing/export/" + progr.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
+        MvcResult result = requestUtilService
+                .performMvcRequest(post("/api/programming/sharing/export/" + progr.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.TEXT_PLAIN + ";charset=UTF-8")).andExpect(status().isInternalServerError()).andReturn();
+
         String content = result.getResponse().getContentAsString();
         assertThat(content).startsWith("An error occurred while exporting the exercise");
     }
@@ -94,8 +94,8 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportWithRepositories() throws Exception {
 
-        MvcResult result = restMockMvc
-                .perform(post("/api/programming/sharing/export/" + programmingExercise1.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
+        MvcResult result = requestUtilService
+                .performMvcRequest(post("/api/programming/sharing/export/" + programmingExercise1.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.TEXT_PLAIN + ";charset=UTF-8")).andExpect(status().isOk()).andReturn();
         String jsonResult = result.getResponse().getContentAsString();
 
@@ -116,7 +116,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
 
         MockHttpServletRequestBuilder requestBuilder = convertToGetRequestBuilder(exerciseUrl);
 
-        MvcResult zipResult = restMockMvc.perform(requestBuilder).andDo(print()).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM)).andExpect(status().isOk())
+        MvcResult zipResult = requestUtilService.performMvcRequest(requestBuilder).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM)).andExpect(status().isOk())
                 .andReturn();
 
         byte[] binaryData = zipResult.getResponse().getContentAsByteArray();
@@ -140,7 +140,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExerciseZipdownloadInvalidToken() throws Exception {
 
-        restMockMvc.perform(get("/api/programming/sharing/export/INVALID_EXERCISE_TOKEN").queryParam("sec", "someSec")).andDo(print()).andExpect(status().isUnauthorized());
+        requestUtilService.performMvcRequest(get("/api/programming/sharing/export/INVALID_EXERCISE_TOKEN").queryParam("sec", "someSec")).andExpect(status().isUnauthorized());
     }
 
 }

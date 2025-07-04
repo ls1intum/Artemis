@@ -1,13 +1,14 @@
+.sharing-table {
+    border-spacing: 50px 0;
+    border-collapse: separate;
+}
+
+/*
 :host {
     margin: 0;
     padding: 0;
     font-family: 'Ubuntu', sans-serif;
     display: flex;
-}
-
-.sharing-table {
-    border-spacing: 50px 0;
-    border-collapse: separate;
 }
 
 .vertical-align-top {
@@ -170,3 +171,4 @@
 .container .box:hover .icon .title {
     opacity: 0;
 }
+*/

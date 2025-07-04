@@ -208,7 +208,7 @@ const routes: Routes = [
     {
         path: 'sharing/import/:basketToken',
         data: {
-            authorities: [Authority.USER],
+            authorities: [Authority.EDITOR, Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.sharing.title',
         },
         loadComponent: () => import('./sharing/sharing.component').then((m) => m.SharingComponent),
