@@ -57,6 +57,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
 
     protected readonly IrisLogoLookDirection = IrisLogoLookDirection;
     protected readonly IrisLogoSize = IrisLogoSize;
+    protected readonly IrisTextMessageContent = IrisTextMessageContent;
 
     @Input() mode: ChatServiceMode;
 
@@ -168,6 +169,4 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
         this.chatOpen = false;
         this.newIrisMessage = undefined;
     }
-
-    protected readonly IrisTextMessageContent = IrisTextMessageContent;
 }
