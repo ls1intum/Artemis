@@ -158,7 +158,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         irisSessionRepository.save(IrisChatSessionFactory.createCourseChatSessionForUser(course, user));
         irisSessionRepository.save(IrisChatSessionFactory.createLectureSessionForUser(lecture, user));
         irisSessionRepository.save(IrisChatSessionFactory.createTextExerciseChatSessionForUser(textExercise, user));
-        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(soloExercise, user);
+        irisSessionRepository.save(IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(soloExercise, user));
 
         List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
         assertThat(irisChatSessions).hasSize(0);
@@ -169,7 +169,6 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     void getAllSessionsForCourseWithSessions_shouldReturnSessionsWithMessages() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        // Create and save lecture session with messages
         IrisLectureChatSession lectureSession = IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user);
         irisLectureChatSessionRepository.save(lectureSession);
         irisMessageRepository.saveAll(lectureSession.getMessages());
@@ -186,10 +185,8 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         irisSessionRepository.save(programmingExerciseSession);
         irisMessageRepository.saveAll(programmingExerciseSession.getMessages());
 
-        // Execute the request
         List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
 
-        // Assertions
         assertThat(irisChatSessions).hasSize(4);
         assertThat(irisChatSessions.stream().filter(s -> s.id().equals(lectureSession.getId())).findFirst()).isPresent();
         assertThat(irisChatSessions.stream().filter(s -> s.id().equals(courseSession.getId())).findFirst()).isPresent();
