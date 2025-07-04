@@ -16,6 +16,7 @@ import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { ActivatedRoute } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -70,6 +71,7 @@ export class IrisChatService implements OnDestroy {
     public set sessionId(id: number | undefined) {
         this.sessionIdSubject.next(id);
     }
+
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
     newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject(undefined);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
@@ -82,7 +84,6 @@ export class IrisChatService implements OnDestroy {
 
     private rateLimitSubscription: Subscription;
     private acceptSubscription?: Subscription;
-    private routeSubscription?: Subscription;
     private chatSessionSubscription?: Subscription;
     private chatSessionByIdSubscription?: Subscription;
 
@@ -102,17 +103,19 @@ export class IrisChatService implements OnDestroy {
         this.updateCourseId();
     }
 
-    private updateCourseId() {
-        this.routeSubscription?.unsubscribe();
-        this.routeSubscription = this.route.params.subscribe((params) => {
-            this.setCourseId(params['courseId']);
-        });
+    private updateCourseId(): Observable<number | undefined> {
+        return this.route.params.pipe(
+            map((params) => {
+                const updatedCourseId = params['courseId'];
+                this.setCourseId(updatedCourseId);
+                return updatedCourseId;
+            }),
+        );
     }
 
     ngOnDestroy(): void {
         this.rateLimitSubscription.unsubscribe();
         this.acceptSubscription?.unsubscribe();
-        this.routeSubscription?.unsubscribe();
         this.chatSessionSubscription?.unsubscribe();
         this.chatSessionByIdSubscription?.unsubscribe();
     }
@@ -350,10 +353,10 @@ export class IrisChatService implements OnDestroy {
         );
     }
 
-    private loadChatSessions() {
-        this.chatSessionSubscription?.unsubscribe();
-        const courseId = this.getCourseId();
+    private async loadChatSessions() {
+        const courseId = await this.getCourseId();
         if (courseId) {
+            this.chatSessionSubscription?.unsubscribe();
             this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
                 this.chatSessions.next(sessions ?? []);
             });
@@ -393,16 +396,16 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
-    switchToSession(session: IrisSessionDTO): void {
+    async switchToSession(session: IrisSessionDTO): Promise<void> {
         if (this.sessionId === session.id) {
             return;
         }
 
         this.close();
 
-        this.chatSessionByIdSubscription?.unsubscribe();
-        const courseId = this.getCourseId();
+        const courseId = await this.getCourseId();
         if (courseId) {
+            this.chatSessionByIdSubscription?.unsubscribe();
             this.chatSessionByIdSubscription = this.http.getChatSessionById(courseId, session.id).subscribe((session) => this.handleNewSession().next(session));
         } else {
             // eslint-disable-next-line no-undef
@@ -443,18 +446,12 @@ export class IrisChatService implements OnDestroy {
      * <p>Required in edge cases where a route requiring the {@link courseId} (e.g., a lecture from the student view)
      * is loaded directly by accessing the link or by reloading the page.</p>
      */
-    public getCourseId(): number | undefined {
+    public async getCourseId(): Promise<number | undefined> {
         if (this.courseId) {
             return this.courseId;
         }
 
-        return this.route.params.pipe(
-            map((params) => {
-                const updatedCourseId = params['courseId'];
-                this.setCourseId(updatedCourseId);
-                return this.courseId;
-            }),
-        );
+        return await firstValueFrom(this.updateCourseId());
     }
 
     public setCourseId(courseId: number): void {
