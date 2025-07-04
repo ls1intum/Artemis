@@ -10,8 +10,8 @@ export class LectureTranscriptionService {
 
     ingestTranscription(courseId: number, lectureId: number, lectureUnitId: number): Observable<boolean> {
         return this.httpClient
-            .put(
-                `api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/ingest-transcription`,
+            .post(
+                `api/lecture/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest`,
                 {},
                 {
                     observe: 'response',
