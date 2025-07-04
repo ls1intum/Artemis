@@ -31,7 +31,9 @@ describe('Plagiarism Case Verdict Component', () => {
         [PlagiarismVerdict.POINT_DEDUCTION, 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction'],
         [PlagiarismVerdict.NO_PLAGIARISM, 'artemisApp.plagiarism.plagiarismCases.verdict.noPlagiarism'],
     ])('should return correct translation string', (verdict: PlagiarismVerdict | undefined, message: string) => {
-        comp.plagiarismCase = { verdict } as PlagiarismCase;
+        fixture.componentRef.setInput('plagiarismCase', {
+            verdict,
+        } as PlagiarismCase);
         fixture.detectChanges();
 
         expect(comp.verdictTranslationString).toBe(message);
@@ -44,7 +46,10 @@ describe('Plagiarism Case Verdict Component', () => {
         [PlagiarismVerdict.POINT_DEDUCTION, 'bg-danger'],
         [PlagiarismVerdict.NO_PLAGIARISM, 'bg-success'],
     ])('should return correct verdict badge class', (verdict: PlagiarismVerdict | undefined, className: string) => {
-        comp.plagiarismCase = { verdict } as PlagiarismCase;
+        fixture.componentRef.setInput('plagiarismCase', {
+            verdict,
+        } as PlagiarismCase);
+
         fixture.detectChanges();
 
         const element = fixture.debugElement.query(By.css('.badge'));
