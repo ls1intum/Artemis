@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Spring Data JPA repository for the {@link Prerequisite} entity.
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Repository
 public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisite, Long> {
 
@@ -72,4 +74,24 @@ public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisit
     long countByCourse(Course course);
 
     List<Prerequisite> findByCourseIdOrderById(long courseId);
+
+    @Query("""
+            SELECT p
+            FROM LearningPath lp
+                JOIN lp.course.prerequisites p
+            WHERE lp.id = :learningPathId
+            """)
+    Set<Prerequisite> findByLearningPathId(@Param("learningPathId") long learningPathId);
+
+    @Query("""
+            SELECT p
+            FROM LearningPath lp
+                JOIN lp.course.prerequisites p
+                LEFT JOIN FETCH p.lectureUnitLinks plul
+                LEFT JOIN FETCH plul.lectureUnit
+                LEFT JOIN FETCH p.exerciseLinks pel
+                LEFT JOIN FETCH pel.exercise
+            WHERE lp.id = :learningPathId
+            """)
+    Set<Prerequisite> findByLearningPathIdWithLectureUnitsAndExercises(@Param("learningPathId") long learningPathId);
 }

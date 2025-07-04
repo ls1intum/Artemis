@@ -11,6 +11,7 @@ import java.util.Set;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
  * All science event data is exported into a single CSV file.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class DataExportScienceEventService {
 

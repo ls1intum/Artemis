@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
  * Spring Data JPA repository to fetch exercise related metrics.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise, Long> {
 
@@ -48,8 +50,9 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
             )
             FROM Exercise e
             WHERE e.course.id = :courseId
+                AND COALESCE(e.startDate, e.releaseDate) <= CURRENT_TIMESTAMP
             """)
-    Set<ExerciseInformationDTO> findAllExerciseInformationByCourseId(@Param("courseId") long courseId);
+    Set<ExerciseInformationDTO> findAllStartedExerciseInformationByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT e.id AS key, c AS value
@@ -89,29 +92,52 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
     Set<ScoreDTO> findScore(@Param("exerciseIds") Set<Long> exerciseIds, @Param("userId") long userId);
 
     /**
-     * Get the latest submission dates for a user in a set of exercises.
+     * Get the latest submission dates for a user in a set of individual exercises.
      * <p>
-     * This query fetches the latest submission dates for the specified user in the given set of exercises.
-     * It takes into account both individual and team participations.
+     * This query fetches the latest submission dates for the specified user in the given set of individualexercises.
+     * It takes only individual participations into account
      *
-     * @param exerciseIds the ids of the exercises for which to fetch the latest submission dates
-     * @param userId      the id of the user whose submission dates are being fetched
+     * @param individualExerciseIds the ids of the individual exercises for which to fetch the latest submission dates
+     * @param userId                the id of the user whose submission dates are being fetched
      * @return a set of ResourceTimestampDTO objects containing the exercise id and the latest submission date for the user
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate)), p.id
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate), p.id)
+            FROM Submission s
+                LEFT JOIN StudentParticipation p ON s.participation.id = p.id
+                LEFT JOIN p.exercise e
+            WHERE e.id IN :individualExerciseIds
+                AND s.submitted = TRUE
+                AND p.student.id = :userId
+                AND p.testRun = FALSE
+            GROUP BY e.id, p.id
+            """)
+    Set<ResourceTimestampDTO> findLatestIndividualSubmissionDatesForUser(@Param("individualExerciseIds") Set<Long> individualExerciseIds, @Param("userId") long userId);
+
+    /**
+     * Get the latest submission dates for a user in a set of team exercises.
+     * <p>
+     * This query fetches the latest submission dates for the specified user in the given set of team exercises.
+     * It takes into account only team participations into account
+     *
+     * @param teamExerciseIds the ids of the team exercises for which to fetch the latest submission dates
+     * @param userId          the id of the user whose submission dates are being fetched
+     * @return a set of ResourceTimestampDTO objects containing the exercise id and the latest submission date for the user
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate), p.id)
             FROM Submission s
                 LEFT JOIN StudentParticipation p ON s.participation.id = p.id
                 LEFT JOIN p.exercise e
                 LEFT JOIN p.team t
                 LEFT JOIN t.students u
-            WHERE e.id IN :exerciseIds
+            WHERE e.id IN :teamExerciseIds
                 AND s.submitted = TRUE
-                AND (p.student.id = :userId OR u.id = :userId)
+                AND u.id = :userId
                 AND p.testRun = FALSE
             GROUP BY e.id, p.id
             """)
-    Set<ResourceTimestampDTO> findLatestSubmissionDatesForUser(@Param("exerciseIds") Set<Long> exerciseIds, @Param("userId") long userId);
+    Set<ResourceTimestampDTO> findLatestTeamSubmissionDatesForUser(@Param("teamExerciseIds") Set<Long> teamExerciseIds, @Param("userId") long userId);
 
     /**
      * Get the latest submission dates for a set of exercises.
@@ -123,7 +149,7 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * @return a set of ResourceTimestampDTO objects containing the exercise id and the latest submission date for each exercise
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate)), p.id
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate), p.id)
             FROM Submission s
                 LEFT JOIN Participation p ON s.participation.id = p.id
                 LEFT JOIN p.exercise e

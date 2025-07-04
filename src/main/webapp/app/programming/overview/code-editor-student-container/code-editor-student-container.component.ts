@@ -13,7 +13,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
@@ -69,7 +69,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     showEditorInstructions = true;
     latestResult: Result | undefined;
     hasTutorAssessment = false;
-    isIllegalSubmission = false;
     numberOfSubmissionsForSubmissionPolicy?: number;
 
     // Icons
@@ -93,8 +92,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                         const dueDateHasPassed = hasExerciseDueDatePassed(this.exercise, this.participation);
                         this.repositoryIsLocked = false; // TODO: load this information dynamically from the server
-                        this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
-                        this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;
+                        const allResults = getAllResultsOfAllSubmissions(this.participation.submissions);
+                        this.latestResult = allResults.length >= 1 ? allResults.first() : undefined;
                         this.checkForTutorAssessment(dueDateHasPassed);
                         this.course = getCourseFromExercise(this.exercise);
                         this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exercise.id!).subscribe((submissionPolicy) => {
@@ -103,8 +102,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                                 this.getNumberOfSubmissionsForSubmissionPolicy();
                             }
                         });
-                        if (this.participation.results && this.participation.results[0] && this.participation.results[0].feedbacks) {
-                            checkSubsequentFeedbackInAssessment(this.participation.results[0].feedbacks);
+                        if (allResults && allResults[0] && allResults[0].feedbacks) {
+                            checkSubsequentFeedbackInAssessment(allResults[0].feedbacks);
                         }
                     }),
                 )
@@ -136,10 +135,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     loadParticipationWithLatestResult(participationId: number): Observable<ProgrammingExerciseStudentParticipation> {
         return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
             map((participation: ProgrammingExerciseStudentParticipation) => {
-                if (participation.results?.length) {
-                    // connect result and participation
-                    participation.results[0].participation = participation;
-                }
                 return participation;
             }),
         );

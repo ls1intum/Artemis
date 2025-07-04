@@ -20,8 +20,8 @@ import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.mo
 import { TeamService } from 'app/exercise/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
+import { getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
@@ -56,6 +56,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 import { ScienceService } from 'app/shared/science/science.service';
+import { hasResults } from 'app/exercise/participation/participation.utils';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 
 interface InstructorActionItem {
@@ -140,6 +141,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private teamAssignmentUpdateListener: Subscription;
     private submissionSubscription: Subscription;
     studentParticipations: StudentParticipation[] = [];
+    resultsOfGradedStudentParticipation: (Result | undefined)[] = [];
     gradedStudentParticipation?: StudentParticipation;
     practiceStudentParticipation?: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
@@ -154,6 +156,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     isTestServer = false;
     instructorActionItems: InstructorActionItem[] = [];
     exerciseIcon: IconProp;
+    numberOfPracticeResults: number;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
@@ -195,7 +198,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.irisSettings = undefined;
         this.studentParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exerciseId);
         this.updateStudentParticipations();
-        this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.gradedStudentParticipation?.results);
+        this.resultWithComplaint = getFirstResultWithComplaintFromResults(
+            this.gradedStudentParticipation?.submissions?.flatMap((submission) => (submission.results ?? []).filter((result): result is Result => result !== undefined)),
+        );
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
             this.handleNewExercise(exerciseResponse.body!);
             this.loadComplaintAndLatestRatedResult();
@@ -253,22 +258,33 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      */
     private filterUnfinishedResults(participations?: StudentParticipation[]) {
         participations?.forEach((participation: Participation) => {
-            if (participation.results) {
-                participation.results = participation.results.filter((result: Result) => result.completionDate);
+            const results = participation?.submissions?.flatMap((submission) => submission.results) ?? [];
+            if (results) {
+                this.resultsOfGradedStudentParticipation = results;
             }
         });
     }
 
     sortResults() {
         if (this.studentParticipations?.length) {
-            this.studentParticipations.forEach((participation) => participation.results?.sort(this.resultSortFunction));
+            this.studentParticipations.forEach((participation) => participation.submissions?.flatMap((submission) => submission.results)?.sort(this.resultSortFunction));
             this.sortedHistoryResults = this.studentParticipations
-                .flatMap((participation) => participation.results ?? [])
+                .flatMap(
+                    (participation) =>
+                        participation.submissions?.flatMap((submission) => {
+                            return (
+                                submission.results?.map((result) => {
+                                    result.submission = submission;
+                                    result.submission.participation = participation;
+                                    return result;
+                                }) ?? []
+                            );
+                        }) ?? [],
+                )
                 .sort(this.resultSortFunction)
                 .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && !result.successful));
         }
     }
-
     private resultSortFunction = (a: Result, b: Result) => {
         const aValue = dayjs(a.completionDate!).valueOf();
         const bValue = dayjs(b.completionDate!).valueOf();
@@ -309,17 +325,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                         changedParticipation.exercise?.dueDate &&
                         hasExerciseDueDatePassed(changedParticipation.exercise, changedParticipation) &&
                         changedParticipation.id === this.gradedStudentParticipation?.id &&
-                        (changedParticipation.results?.length || 0) > (this.gradedStudentParticipation?.results?.length || 0)
+                        getAllResultsOfAllSubmissions(changedParticipation.submissions).length > getAllResultsOfAllSubmissions(this.gradedStudentParticipation?.submissions).length
                     ) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
                     if (
-                        ((changedParticipation.results?.length || 0) > (this.gradedStudentParticipation?.results?.length || 0) ||
-                            changedParticipation.results?.last()?.completionDate === undefined) &&
-                        changedParticipation.results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                        changedParticipation.results?.last()?.successful !== undefined
+                        (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.length >
+                            getAllResultsOfAllSubmissions(this.gradedStudentParticipation?.submissions).length ||
+                            getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.completionDate === undefined) &&
+                        getAllResultsOfAllSubmissions(changedParticipation.submissions).last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
+                        getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful !== undefined
                     ) {
-                        if (changedParticipation.results?.last()?.successful === true) {
+                        if (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful === true) {
                             this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
                         } else {
                             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
@@ -341,6 +358,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private updateStudentParticipations() {
         this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
         this.practiceStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
+        this.numberOfPracticeResults = this.practiceStudentParticipation?.submissions?.flatMap((submission) => submission.results)?.length ?? 0;
     }
 
     /**
@@ -389,12 +407,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const ratedResults = this.gradedStudentParticipation?.results?.filter((result: Result) => result.rated).sort(this.resultSortFunction);
+        const ratedResults = getAllResultsOfAllSubmissions(this.gradedStudentParticipation?.submissions)
+            ?.filter((result: Result) => result.rated)
+            .sort(this.resultSortFunction);
         if (ratedResults) {
             const latestResult = ratedResults.last();
-            if (latestResult) {
-                latestResult.participation = this.gradedStudentParticipation;
-            }
             this.latestRatedResult = latestResult;
         }
     }
@@ -540,4 +557,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.submissionSubscription?.unsubscribe();
         this.paramsSubscription?.unsubscribe();
     }
+
+    protected readonly hasResults = hasResults;
 }

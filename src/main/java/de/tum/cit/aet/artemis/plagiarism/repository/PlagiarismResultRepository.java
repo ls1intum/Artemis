@@ -7,6 +7,7 @@ import java.util.Optional;
 import jakarta.annotation.Nullable;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
@@ -20,13 +21,14 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
  * Spring Data JPA repository for the PlagiarismResult entity.
  */
 @Conditional(PlagiarismEnabled.class)
+@Lazy
 @Repository
-public interface PlagiarismResultRepository extends ArtemisJpaRepository<PlagiarismResult<?>, Long> {
+public interface PlagiarismResultRepository extends ArtemisJpaRepository<PlagiarismResult, Long> {
 
-    Optional<PlagiarismResult<?>> findFirstByExerciseIdOrderByLastModifiedDateDesc(long exerciseId);
+    Optional<PlagiarismResult> findFirstByExerciseIdOrderByLastModifiedDateDesc(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "comparisons")
-    PlagiarismResult<?> findPlagiarismResultById(long plagiarismResultId);
+    PlagiarismResult findPlagiarismResultById(long plagiarismResultId);
 
     /**
      * Finds the first plagiarism result by exercise ID, including its comparisons, ordered by last modified date in descending order.
@@ -37,7 +39,7 @@ public interface PlagiarismResultRepository extends ArtemisJpaRepository<Plagiar
      *         or null if no result is found
      */
     @Nullable
-    default PlagiarismResult<?> findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
+    default PlagiarismResult findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
         var plagiarismResultIdOrEmpty = findFirstByExerciseIdOrderByLastModifiedDateDesc(exerciseId);
         if (plagiarismResultIdOrEmpty.isEmpty()) {
             return null;
@@ -47,13 +49,13 @@ public interface PlagiarismResultRepository extends ArtemisJpaRepository<Plagiar
     }
 
     /**
-     * Store the given TextPlagiarismResult in the database.
+     * Store the given PlagiarismResult in the database.
      *
-     * @param result TextPlagiarismResult to store in the database.
+     * @param result PlagiarismResult to store in the database.
      * @return the saved result
      */
-    default PlagiarismResult<?> savePlagiarismResultAndRemovePrevious(PlagiarismResult<?> result) {
-        Optional<PlagiarismResult<?>> optionalPreviousResult = Optional
+    default PlagiarismResult savePlagiarismResultAndRemovePrevious(PlagiarismResult result) {
+        Optional<PlagiarismResult> optionalPreviousResult = Optional
                 .ofNullable(findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(result.getExercise().getId()));
         result = save(result);
         optionalPreviousResult.ifPresent(this::delete);
@@ -65,7 +67,7 @@ public interface PlagiarismResultRepository extends ArtemisJpaRepository<Plagiar
      *
      * @param plagiarismResult the result for which a couple of related objects should be set to null
      */
-    default void prepareResultForClient(PlagiarismResult<?> plagiarismResult) {
+    default void prepareResultForClient(PlagiarismResult plagiarismResult) {
         if (plagiarismResult != null) {
             for (var comparison : plagiarismResult.getComparisons()) {
                 comparison.setPlagiarismResult(null);

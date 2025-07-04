@@ -4,13 +4,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 
@@ -19,18 +19,16 @@ import de.tum.cit.aet.artemis.lecture.service.LectureService;
  */
 @Profile(PROFILE_CORE)
 @Controller
+@Lazy
 public class LectureApi extends AbstractLectureApi {
 
     private final LectureService lectureService;
 
     private final LectureImportService lectureImportService;
 
-    private final LectureRepository lectureRepository;
-
-    public LectureApi(LectureService lectureService, LectureImportService lectureImportService, LectureRepository lectureRepository) {
+    public LectureApi(LectureService lectureService, LectureImportService lectureImportService) {
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
-        this.lectureRepository = lectureRepository;
     }
 
     public Set<Lecture> filterVisibleLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {

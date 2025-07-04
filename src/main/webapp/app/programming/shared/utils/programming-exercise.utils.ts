@@ -20,9 +20,10 @@ export const createBuildPlanUrl = (template: string, projectKey: string, buildPl
  * Note: We check some error cases in this method as a undefined value for the given parameters, because the clients using this method might unwillingly provide them (result component).
  *
  * @param latestResult Result with attached Submission - if submission is undefined, method will use the result completionDate as a reference.
+ * @param participation Participation of the result
  * @param programmingExercise ProgrammingExercise
  */
-export const isResultPreliminary = (latestResult: Result, programmingExercise?: ProgrammingExercise) => {
+export const isResultPreliminary = (latestResult: Result, participation: Participation, programmingExercise?: ProgrammingExercise) => {
     if (!programmingExercise) {
         return false;
     }
@@ -32,7 +33,7 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
     if (isAIResultAndIsBeingProcessed(latestResult) || isAIResultAndTimedOut(latestResult) || isAIResultAndFailed(latestResult)) {
         return false;
     }
-    if (latestResult.participation?.type === ParticipationType.PROGRAMMING && isPracticeMode(latestResult.participation)) {
+    if (participation?.type === ParticipationType.PROGRAMMING && isPracticeMode(participation)) {
         return false;
     }
 

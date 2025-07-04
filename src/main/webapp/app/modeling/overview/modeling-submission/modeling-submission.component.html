@@ -20,7 +20,15 @@
                             <jhi-button
                                 id="Continue"
                                 [title]="'entity.action.continueSubmission'"
-                                [routerLink]="['/courses', course?.id, 'exercises', 'modeling-exercises', modelingExercise?.id!, 'participate', result?.participation?.id]"
+                                [routerLink]="[
+                                    '/courses',
+                                    course?.id,
+                                    'exercises',
+                                    'modeling-exercises',
+                                    modelingExercise?.id!,
+                                    'participate',
+                                    result?.submission?.participation?.id,
+                                ]"
                             />
                         }
                     } @else {
@@ -55,7 +63,12 @@
     @if (isFeedbackView && showResultHistory) {
         <div class="mb-4">
             <div id="result-history" class="row mb-2">
-                <jhi-result-history [results]="sortedResultHistory" [exercise]="modelingExercise" [selectedResultId]="submission.latestResult?.id!" />
+                <jhi-result-history
+                    [results]="sortedResultHistory"
+                    [exercise]="modelingExercise"
+                    [participationInput]="participation"
+                    [selectedResultId]="submission.latestResult?.id!"
+                />
             </div>
         </div>
     }
@@ -200,7 +213,7 @@
                         }
                         @if (result) {
                             <div class="row">
-                                <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)" />
+                                <jhi-rating class="mt-2 alert alert-info" [result]="result" />
                             </div>
                         }
                         @if (result && !examMode && !isFeedbackView) {

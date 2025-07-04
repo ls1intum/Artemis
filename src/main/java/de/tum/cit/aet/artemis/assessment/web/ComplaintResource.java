@@ -12,6 +12,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -58,6 +59,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * REST controller for managing complaints.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/assessment/")
 public class ComplaintResource {
@@ -118,19 +120,19 @@ public class ComplaintResource {
         String entityName = complaint.complaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
         Complaint savedComplaint;
         if (complaint.examId().isPresent()) {
-            if (!result.getParticipation().getExercise().isExamExercise()) {
+            if (!result.getSubmission().getParticipation().getExercise().isExamExercise()) {
                 throw new BadRequestAlertException("A complaint for an course exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
                         "complaintAboutCourseExerciseWrongComponent");
             }
-            authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
+            authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getSubmission().getParticipation());
         }
         else {
-            if (result.getParticipation().getExercise().isExamExercise()) {
+            if (result.getSubmission().getParticipation().getExercise().isExamExercise()) {
                 throw new BadRequestAlertException("A complaint for an exam exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
                         "complaintAboutExamExerciseWrongComponent");
             }
             // Assumes user with participation in an exam exercise can file a complaint for that participation.
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getSubmission().getParticipation().getExercise(), null);
         }
         savedComplaint = complaintService.createComplaint(complaint, complaint.examId(), principal);
 
@@ -159,7 +161,7 @@ public class ComplaintResource {
         }
         Complaint complaint = optionalComplaint.get();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        StudentParticipation participation = (StudentParticipation) complaint.getResult().getParticipation();
+        StudentParticipation participation = (StudentParticipation) complaint.getResult().getSubmission().getParticipation();
         Exercise exercise = participation.getExercise();
         boolean isOwner = authCheckService.isOwnerOfParticipation(participation, user);
         boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
@@ -180,7 +182,7 @@ public class ComplaintResource {
             complaint.filterSensitiveInformation();
         }
         // hide participation + exercise + course which might include sensitive information
-        complaint.getResult().setParticipation(null);
+        complaint.getResult().getSubmission().setParticipation(null);
         return ResponseEntity.ok(complaint);
     }
 
@@ -318,8 +320,8 @@ public class ComplaintResource {
     private void filterOutStudentFromComplaint(Complaint complaint) {
         complaint.setParticipant(null);
 
-        if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
-            StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+        if (complaint.getResult() != null && complaint.getResult().getSubmission().getParticipation() != null) {
+            StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getSubmission().getParticipation();
             studentParticipation.setParticipant(null);
         }
     }
@@ -329,11 +331,12 @@ public class ComplaintResource {
             return;
         }
 
-        StudentParticipation originalParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+        StudentParticipation originalParticipation = (StudentParticipation) complaint.getResult().getSubmission().getParticipation();
         if (originalParticipation != null && originalParticipation.getExercise() != null) {
             final var exerciseWithOnlyTitle = getExercise(originalParticipation);
 
             originalParticipation.setExercise(exerciseWithOnlyTitle);
+            originalParticipation.setSubmissions(null);
         }
 
         Submission originalSubmission = complaint.getResult().getSubmission();
@@ -349,24 +352,21 @@ public class ComplaintResource {
                 }
             }
             submissionWithOnlyId.setId(originalSubmission.getId());
+            submissionWithOnlyId.setParticipation(originalSubmission.getParticipation());
             complaint.getResult().setSubmission(submissionWithOnlyId);
         }
     }
 
     private static Exercise getExercise(StudentParticipation originalParticipation) {
-        Exercise exerciseWithOnlyTitle = originalParticipation.getExercise();
-        if (exerciseWithOnlyTitle instanceof TextExercise) {
-            exerciseWithOnlyTitle = new TextExercise();
-        }
-        else if (exerciseWithOnlyTitle instanceof ModelingExercise) {
-            exerciseWithOnlyTitle = new ModelingExercise();
-        }
-        else if (exerciseWithOnlyTitle instanceof FileUploadExercise) {
-            exerciseWithOnlyTitle = new FileUploadExercise();
-        }
-        else if (exerciseWithOnlyTitle instanceof ProgrammingExercise) {
-            exerciseWithOnlyTitle = new ProgrammingExercise();
-        }
+        Exercise exerciseFromParticipation = originalParticipation.getExercise();
+        Exercise exerciseWithOnlyTitle = switch (exerciseFromParticipation) {
+            case TextExercise ignored -> new TextExercise();
+            case ModelingExercise ignored -> new ModelingExercise();
+            case FileUploadExercise ignored -> new FileUploadExercise();
+            case ProgrammingExercise ignored -> new ProgrammingExercise();
+            default -> exerciseFromParticipation;
+        };
+
         exerciseWithOnlyTitle.setTitle(originalParticipation.getExercise().getTitle());
         exerciseWithOnlyTitle.setId(originalParticipation.getExercise().getId());
         return exerciseWithOnlyTitle;
@@ -395,7 +395,7 @@ public class ComplaintResource {
             if (assessor != null && (assessor.getLogin().equals(submissorName) == assessorSameAsCaller || isAtLeastInstructor)
                     && (student != null && assessor.getLogin().equals(student.getLogin())) == isTestRun) {
                 // Remove data about the student
-                StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+                StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getSubmission().getParticipation();
                 studentParticipation.setParticipant(null);
                 studentParticipation.setExercise(null);
                 complaint.setParticipant(null);

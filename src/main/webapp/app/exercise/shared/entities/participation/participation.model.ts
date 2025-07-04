@@ -6,7 +6,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
 
 export enum InitializationState {
     /**
@@ -39,10 +38,6 @@ export abstract class Participation implements BaseEntity {
     public initializationDate?: dayjs.Dayjs;
     public individualDueDate?: dayjs.Dayjs;
     public presentationScore?: number;
-    /**
-     * @deprecated This property will be removed in Artemis 8.0. Use `submissions.results` instead.
-     */
-    public results?: Result[];
     public submissions?: Submission[];
     public exercise?: Exercise;
     public type?: ParticipationType;
@@ -54,7 +49,7 @@ export abstract class Participation implements BaseEntity {
     // transient
     public submissionCount?: number;
 
-    constructor(type: ParticipationType) {
+    protected constructor(type: ParticipationType) {
         this.type = type;
     }
 }
@@ -77,4 +72,14 @@ export const getExercise = (participation: Participation): Exercise | undefined 
                 return (participation as TemplateProgrammingExerciseParticipation).programmingExercise ?? (participation as TemplateProgrammingExerciseParticipation).exercise;
         }
     }
+};
+
+export const getLatestSubmission = (participation: Participation): Submission | undefined => {
+    if (participation.submissions && participation.submissions.length === 1) {
+        return participation.submissions[0];
+    } else if (participation.submissions && participation.submissions.length > 1) {
+        participation.submissions.sort((a, b) => (b.id ?? 0) - (a.id ?? 0)); // sort by id descending
+        return participation.submissions[0];
+    }
+    return undefined;
 };

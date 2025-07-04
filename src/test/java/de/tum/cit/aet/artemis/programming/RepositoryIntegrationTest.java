@@ -69,7 +69,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
@@ -117,6 +116,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     private static final String TEST_PREFIX = "repositoryintegration";
 
     private final String studentRepoBaseUrl = "/api/programming/repository/";
+
+    private final String participationsBaseUrl = "/api/programming/participations/";
 
     private final String filesContentBaseUrl = "/api/programming/repository-files-content/";
 
@@ -228,9 +229,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
                 .getOrCheckoutRepository(participation.getVcsRepositoryUri(), false);
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participation);
-
-        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfParticipation(participation);
-        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfExercise(programmingExercise);
 
         logs.add(buildLogEntry);
         logs.add(largeBuildLogEntry);
@@ -525,16 +523,16 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private void addPlagiarismCaseToProgrammingExercise(String studentLoginWithoutPost, String studentLoginWithPost) {
-        var textPlagiarismResult = textExerciseUtilService.createTextPlagiarismResultForExercise(programmingExercise);
-        var plagiarismComparison = new PlagiarismComparison<TextSubmissionElement>();
+        var textPlagiarismResult = textExerciseUtilService.createPlagiarismResultForExercise(programmingExercise);
+        var plagiarismComparison = new PlagiarismComparison();
         plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
         plagiarismComparison.setStatus(PlagiarismStatus.CONFIRMED);
 
-        var plagiarismSubmissionA = new PlagiarismSubmission<TextSubmissionElement>();
+        var plagiarismSubmissionA = new PlagiarismSubmission();
         plagiarismSubmissionA.setStudentLogin(studentLoginWithoutPost);
         plagiarismSubmissionA.setSubmissionId(participation.getId());
 
-        var plagiarismSubmissionB = new PlagiarismSubmission<TextSubmissionElement>();
+        var plagiarismSubmissionB = new PlagiarismSubmission();
         plagiarismSubmissionB.setStudentLogin(studentLoginWithPost);
         plagiarismSubmissionB.setSubmissionId(participation.getId() + 1);
 
@@ -822,7 +820,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var instructorAssignmentRepoUri = new GitUtilService.MockFileRepositoryUri(tempRepository.localRepoFile);
         ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = participationUtilService
                 .addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "instructor1", instructorAssignmentRepoUri.getURI());
-        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfParticipation(instructorAssignmentParticipation);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(tempRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(instructorAssignmentParticipation.getVcsRepositoryUri(), true, defaultBranch);
 
@@ -946,7 +943,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsNoSubmission() throws Exception {
-        var receivedLogs = request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
+        var receivedLogs = request.get(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull().isEmpty();
     }
 
@@ -954,7 +951,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsWithSubmissionBuildSuccessful() throws Exception {
         programmingExerciseUtilService.createProgrammingSubmission(participation, false);
-        request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, List.class);
+        var buildLogs = request.get(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
+        assertThat(buildLogs).isEmpty();
     }
 
     @Test
@@ -964,7 +962,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
         submission.setBuildLogEntries(buildLogEntries);
         participationUtilService.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
-        var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+        var receivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
         assertLogsContent(receivedLogs);
     }
@@ -976,7 +974,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
         submission.setBuildLogEntries(buildLogEntries);
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
-        var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+        var receivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
         assertLogsContent(receivedLogs);
     }
@@ -985,7 +983,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetBuildLogs_cannotAccessParticipation() throws Exception {
         // student2 should not have access to student1's participation.
-        request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class);
+        request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class);
     }
 
     private void assertLogsContent(List<BuildLogEntry> receivedLogs) {
@@ -1016,7 +1014,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         submission.setBuildLogEntries(buildLogEntries);
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
 
-        var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+        var receivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(3).isEqualTo(buildLogEntries);
     }
 
@@ -1056,17 +1054,17 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var result2 = participationUtilService.addResultToSubmission(submission2, AssessmentType.AUTOMATIC).getFirstResult();
 
         // Specify to use result1
-        var receivedLogs1 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
+        var receivedLogs1 = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
                 parameters(Map.of("resultId", result1.getId())));
         assertThat(receivedLogs1).isEqualTo(submission1Logs);
 
         // Specify to use result2
-        var receivedLogs2 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
+        var receivedLogs2 = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
                 parameters(Map.of("resultId", result2.getId())));
         assertThat(receivedLogs2).isEqualTo(submission2Logs);
 
         // Without parameters, the latest submission must be used
-        var receivedLogsLatest = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+        var receivedLogsLatest = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogsLatest).isEqualTo(submission2Logs);
     }
 
@@ -1074,9 +1072,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsFromDatabaseForSpecificResults_otherParticipation() throws Exception {
         var result = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "tutor1");
-        programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(result, (StudentParticipation) result.getParticipation(), "xyz");
+        programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(result, (StudentParticipation) result.getSubmission().getParticipation(), "xyz");
 
-        request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class, parameters(Map.of("resultId", result.getId())));
+        request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class, parameters(Map.of("resultId", result.getId())));
     }
 
     @Disabled

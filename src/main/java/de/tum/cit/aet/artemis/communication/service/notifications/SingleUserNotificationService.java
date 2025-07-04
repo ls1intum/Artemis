@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class SingleUserNotificationService {
 
@@ -62,7 +64,7 @@ public class SingleUserNotificationService {
 
         // Find student participations with eager legal submissions and latest results that have a completion date
         Set<StudentParticipation> filteredStudentParticipations = Set
-                .copyOf(studentParticipationRepository.findByExerciseIdAndTestRunWithEagerLegalSubmissionsAndLatestResultWithCompletionDate(exercise.getId(), false));
+                .copyOf(studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsAndLatestResultWithCompletionDate(exercise.getId(), false));
 
         // Load and assign all studentParticipations with results (this information is needed for the emails later)
         exercise.setStudentParticipations(filteredStudentParticipations);
@@ -133,7 +135,6 @@ public class SingleUserNotificationService {
      */
     public void saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(Exercise exercise, User recipient, Result result) {
         StudentParticipation studentParticipationForEmail = new StudentParticipation();
-        studentParticipationForEmail.setResults(Set.of(result));
         studentParticipationForEmail.setParticipant(recipient);
         exercise.setStudentParticipations(Set.of(studentParticipationForEmail));
     }

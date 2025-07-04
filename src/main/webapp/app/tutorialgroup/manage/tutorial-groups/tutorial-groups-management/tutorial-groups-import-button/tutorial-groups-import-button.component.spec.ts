@@ -41,7 +41,7 @@ describe('TutorialGroupsImportButtonComponent', () => {
         // given
         const modalService = TestBed.inject(NgbModal);
         const mockModalRef = {
-            componentInstance: { courseId: undefined },
+            componentInstance: { courseId: undefined as any },
             result: Promise.resolve(),
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
@@ -58,7 +58,7 @@ describe('TutorialGroupsImportButtonComponent', () => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledTimes(2);
             expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupsRegistrationImportDialogComponent, { backdrop: 'static', scrollable: false, size: 'xl', animation: false });
-            expect(mockModalRef.componentInstance.courseId).toEqual(exampleCourseId);
+            expect(mockModalRef.componentInstance.courseId()).toEqual(exampleCourseId);
             expect(importFinishSpy).toHaveBeenCalledOnce();
         });
     }));

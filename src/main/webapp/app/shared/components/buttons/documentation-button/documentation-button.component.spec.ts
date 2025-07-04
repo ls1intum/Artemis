@@ -16,7 +16,6 @@ describe('DocumentationButtonComponent', () => {
             imports: [MockDirective(NgbTooltip)],
             declarations: [DocumentationButtonComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
             providers: [MockProvider(TranslateService)],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

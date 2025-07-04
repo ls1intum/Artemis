@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { Participation, ParticipationType, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -116,13 +116,13 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         if (!this.result && this.participation) {
             this.exercise = this.exercise ?? getExercise(this.participation);
             this.participation.exercise = this.exercise;
-
-            if (this.participation.results?.length) {
+            const results = getAllResultsOfAllSubmissions(this.participation.submissions);
+            if (results.length) {
                 if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
                     // sort results by completionDate descending to ensure the newest result is shown
                     // this is important for modeling exercises since students can have multiple tries
                     // think about if this should be used for all types of exercises
-                    this.participation.results.sort((r1: Result, r2: Result) => {
+                    results.sort((r1: Result, r2: Result) => {
                         if (r1.completionDate! > r2.completionDate!) {
                             return -1;
                         }
@@ -134,19 +134,17 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                 }
                 // Make sure result and participation are connected
                 if (!this.showUngradedResults) {
-                    const firstRatedResult = this.participation.results.find((result) => result?.rated);
+                    const firstRatedResult = results.find((result) => result?.rated);
                     if (firstRatedResult) {
                         this.result = firstRatedResult;
-                        this.result.participation = this.participation;
                     }
                 } else {
-                    this.result = this.participation.results[0];
-                    this.result.participation = this.participation;
+                    this.result = getAllResultsOfAllSubmissions(this.participation.submissions).first();
                 }
             }
-        } else if (!this.participation && this.result && this.result.participation) {
+        } else if (!this.participation && this.result) {
             // make sure this.participation is initialized in case it was not passed
-            this.participation = this.result.participation;
+            this.participation = this.result.submission!.participation!;
             this.exercise = this.exercise ?? getExercise(this.participation);
             this.participation.exercise = this.exercise;
         } else if (this.participation) {
@@ -164,7 +162,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
         this.translateService.onLangChange.subscribe(() => {
             if (this.resultString) {
-                this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
+                this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
             }
         });
 
@@ -221,16 +219,16 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     evaluate() {
         this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding, this.missingResultInfo, this.isQueued);
         if (this.templateStatus === ResultTemplateStatus.LATE) {
-            this.textColorClass = getTextColorClass(this.result, this.templateStatus);
-            this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
+            this.textColorClass = getTextColorClass(this.result, this.participation, this.templateStatus);
+            this.resultIconClass = getResultIconClass(this.result, this.participation, this.templateStatus);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
         } else if (
             this.result &&
             ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) || isAthenaAIResult(this.result))
         ) {
-            this.textColorClass = getTextColorClass(this.result, this.templateStatus);
-            this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
+            this.textColorClass = getTextColorClass(this.result, this.participation, this.templateStatus);
+            this.resultIconClass = getResultIconClass(this.result, this.participation, this.templateStatus);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
             this.resultTooltip = this.buildResultTooltip();
         } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
@@ -274,7 +272,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.participation &&
             isProgrammingExerciseStudentParticipation(this.participation) &&
             !isPracticeMode(this.participation) &&
-            isResultPreliminary(this.result!, programmingExercise)
+            isResultPreliminary(this.result!, this.participation, programmingExercise)
         ) {
             if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
                 return 'artemisApp.result.preliminaryTooltipSemiAutomatic';
@@ -291,15 +289,21 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         const exerciseService = this.exerciseCacheService ?? this.exerciseService;
         if (this.exercise?.type === ExerciseType.TEXT || this.exercise?.type === ExerciseType.MODELING) {
             const courseId = getCourseFromExercise(this.exercise)?.id;
-            let submissionId = result.submission?.id;
-            // In case of undefined result submission try the latest submission as this can happen before reloading the component
-            if (!submissionId) {
-                submissionId = result.participation?.submissions?.last()?.id;
-            }
+            const submissionId = result.submission?.id;
 
             const exerciseTypePath = this.exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
 
-            this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, this.exercise?.id, 'participate', result.participation?.id, 'submission', submissionId]);
+            this.router.navigate([
+                '/courses',
+                courseId,
+                'exercises',
+                exerciseTypePath,
+                this.exercise?.id,
+                'participate',
+                result.submission?.participation?.id,
+                'submission',
+                submissionId,
+            ]);
             return undefined;
         }
 
@@ -316,6 +320,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
         modalComponentInstance.exercise = this.exercise;
         modalComponentInstance.result = result;
+        modalComponentInstance.participation = this.participation;
         if (feedbackComponentParameters.exerciseType) {
             modalComponentInstance.exerciseType = feedbackComponentParameters.exerciseType;
         }

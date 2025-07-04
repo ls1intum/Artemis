@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lti.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -23,6 +24,7 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorization
  */
 @Profile(PROFILE_LTI)
 @Component
+@Lazy
 public class CustomLti13Configurer extends Lti13Configurer {
 
     /** Path for login. **/
@@ -31,8 +33,11 @@ public class CustomLti13Configurer extends Lti13Configurer {
     /** Path for initiating login process. */
     private static final String LOGIN_INITIATION_PATH = "/initiate-login";
 
+    /** Base for LTI 1.3 API endpoints. */
+    public static final String LTI13_BASE = "api/lti/public/lti13";
+
     /** Base path for LTI 1.3 API endpoints. */
-    public static final String LTI13_BASE_PATH = "api/lti/public/lti13";
+    public static final String LTI13_BASE_PATH = "/" + LTI13_BASE;
 
     /** Full path for LTI 1.3 login. */
     public static final String LTI13_LOGIN_PATH = LTI13_BASE_PATH + LOGIN_PATH;
@@ -43,8 +48,14 @@ public class CustomLti13Configurer extends Lti13Configurer {
     /** Redirect proxy path for LTI 1.3 login. */
     public static final String LTI13_LOGIN_REDIRECT_PROXY_PATH = LTI13_BASE_PATH + "/auth-callback";
 
+    // without leading '/'
+    public static final String LTI13_LOGIN_REDIRECT_PROXY = LTI13_BASE + "/auth-callback";
+
     /** Path for LTI 1.3 deep linking. */
     public static final String LTI13_DEEPLINK_REDIRECT_PATH = LTI13_BASE_PATH + "/deep-link";
+
+    // without leading '/'
+    public static final String LTI13_DEEPLINK_REDIRECT = LTI13_BASE + "/deep-link";
 
     /** Path for LTI 1.3 deep linking redirect. */
     public static final String LTI13_DEEPLINK_SELECT_COURSE_PATH = "/lti/select-course";
@@ -55,7 +66,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
     private final DistributedStateAuthorizationRequestRepository stateRepository;
 
     public CustomLti13Configurer(DistributedStateAuthorizationRequestRepository stateRepository) {
-        super.ltiPath("/" + LTI13_BASE_PATH);
+        super.ltiPath(LTI13_BASE_PATH);
         super.loginInitiationPath(LOGIN_INITIATION_PATH);
         super.loginPath(LOGIN_PATH);
         this.stateRepository = stateRepository;
@@ -75,7 +86,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
         // https://www.imsglobal.org/spec/security/v1p0/#step-3-authentication-response
         OAuth2LoginAuthenticationFilter defaultLoginFilter = configureLoginFilter(clientRegistrationRepository(http), oidcLaunchFlowAuthenticationProvider,
                 authorizationRequestRepository);
-        http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, "/" + LTI13_LOGIN_PATH, lti13Service(http)), JWTFilter.class);
+        http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, LTI13_LOGIN_PATH, lti13Service(http)), JWTFilter.class);
     }
 
     protected Lti13Service lti13Service(HttpSecurity http) {

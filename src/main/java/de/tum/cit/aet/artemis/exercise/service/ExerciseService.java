@@ -6,7 +6,6 @@ import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedB
 import static java.time.ZonedDateTime.now;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -26,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -65,10 +65,8 @@ import de.tum.cit.aet.artemis.exam.api.ExamLiveEventsApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -84,6 +82,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
  * Service Implementation for managing Exercise.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ExerciseService {
 
@@ -234,7 +233,7 @@ public class ExerciseService {
         DueDateStat totalNumberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
-            numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countLegalSubmissionsByExerciseIdSubmitted(exerciseId), 0L);
+            numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exerciseId), 0L);
             totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId), 0L);
         }
         else {
@@ -677,7 +676,7 @@ public class ExerciseService {
         // update the grading criteria to re-calculate the results considering the updated usage limits
         gradingCriterionRepository.saveAll(exercise.getGradingCriteria());
 
-        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
+        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackBySubmissionParticipationExerciseId(exercise.getId());
 
         // add example submission results that belong exercise
         if (!exercise.getExampleSubmissions().isEmpty()) {
@@ -799,16 +798,4 @@ public class ExerciseService {
         exercise.getCompetencyLinks().forEach(link -> link.setExercise(exercise));
     }
 
-    /**
-     * Returns a map from exercise type to count of exercise given a course id.
-     *
-     * @param courseId the course id
-     * @return the mapping from exercise type to course type. If a course has no exercises for a specific type, the map contains an entry for that type with value 0.
-     */
-    public Map<ExerciseType, Long> countByCourseIdGroupByType(long courseId) {
-        Map<ExerciseType, Long> exerciseTypeCountMap = exerciseRepository.countByCourseIdGroupedByType(courseId).stream()
-                .collect(Collectors.toMap(ExerciseTypeCountDTO::exerciseType, ExerciseTypeCountDTO::count));
-
-        return Arrays.stream(ExerciseType.values()).collect(Collectors.toMap(type -> type, type -> exerciseTypeCountMap.getOrDefault(type, 0L)));
-    }
 }

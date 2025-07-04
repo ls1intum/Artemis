@@ -317,7 +317,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission submission = fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission,
                 TEST_PREFIX + "student1");
         fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise, lateFileUploadSubmission, TEST_PREFIX + "student2"); // tests prioritizing in-time
-                                                                                                                                               // submissions over late
+        // submissions over late
         // submissions
 
         exerciseUtilService.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -434,7 +434,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getParticipation().getResults()).isEmpty();
+        assertThat(participationUtilService.getResultsForParticipation(submission.getParticipation())).isEmpty();
     }
 
     @Test
@@ -445,12 +445,11 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(finishedFileUploadExercise, fileUploadSubmission,
                 TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", feedbacks);
         Participation participation = fileUploadSubmission.getParticipation();
-        participation.setResults(null);
         FileUploadSubmission submission = request.get("/api/fileupload/participations/" + participation.getId() + "/file-upload-editor", HttpStatus.OK, FileUploadSubmission.class);
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getParticipation().getResults()).isEmpty();
+        assertThat(participationUtilService.getResultsForParticipation(submission.getParticipation())).isEmpty();
     }
 
     @Test
@@ -465,7 +464,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission submission = request.get("/api/fileupload/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
                 FileUploadSubmission.class);
         assertThat(submission.getLatestResult()).isNull();
-        assertThat(submission.getParticipation().getResults()).isEmpty();
+        assertThat(participationUtilService.getResultsForParticipation(submission.getParticipation())).isEmpty();
     }
 
     @Test
@@ -637,7 +636,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     }
 
     private void checkDetailsHidden(FileUploadSubmission submission, boolean isStudent) {
-        assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
+        assertThat(participationUtilService.getResultsForParticipation(submission.getParticipation())).isNullOrEmpty();
         if (isStudent) {
             assertThat(submission.getLatestResult()).isNull();
         }
@@ -661,7 +660,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
         Participation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(releasedFileUploadExercise, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToParticipation(studentParticipation, fileUploadSubmission);
+        Result result = participationUtilService.addResultToSubmission(studentParticipation, fileUploadSubmission);
 
         long submissionID = fileUploadSubmission.getId();
         FileUploadSubmission receivedSubmission = request.get("/api/fileupload/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
@@ -676,7 +675,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
         Participation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(releasedFileUploadExercise, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToParticipation(studentParticipation, fileUploadSubmission);
+        Result result = participationUtilService.addResultToSubmission(studentParticipation, fileUploadSubmission);
 
         long submissionID = fileUploadSubmission.getId();
         var params = new LinkedMultiValueMap<String, String>();

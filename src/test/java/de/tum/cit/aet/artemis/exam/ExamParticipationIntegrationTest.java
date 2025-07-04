@@ -358,7 +358,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
 
         // Ensure that the participations were not deleted
         List<StudentParticipation> participationsStudent2 = studentParticipationRepository
-                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student2.getId(), studentExam2.getExercises());
+                .findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(student2.getId(), studentExam2.getExercises());
         assertThat(participationsStudent2).hasSize(studentExam2.getExercises().size());
 
         // Make sure delete also works if so many objects have been created before
@@ -418,7 +418,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
         verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         List<StudentParticipation> participationsStudent1 = studentParticipationRepository
-                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(), studentExam1.getExercises());
+                .findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(student1.getId(), studentExam1.getExercises());
         assertThat(participationsStudent1).hasSize(studentExam1.getExercises().size());
 
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
@@ -444,7 +444,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(studentExams).hasSameSizeAs(storedExam.getExamUsers()).doesNotContain(studentExam1);
 
         // Ensure that the participations of student1 were deleted
-        participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(),
+        participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(student1.getId(),
                 studentExam1.getExercises());
         assertThat(participationsStudent1).isEmpty();
 
@@ -538,7 +538,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
         for (var exercise : exercisesInExam) {
-            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(exercise.getId(), false);
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResult(exercise.getId(), false);
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }
@@ -586,10 +586,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
                     result.setRated(true);
                 }
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-                result.setParticipation(participation);
                 result.setAssessor(examTutor1);
-                result = resultRepository.save(result);
                 result.setSubmission(submission);
+                result = resultRepository.save(result);
                 submission.addResult(result);
                 submissionRepository.save(submission);
             }
@@ -681,10 +680,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
                     result.completionDate(ZonedDateTime.now().minusMinutes(3));
                 }
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-                result.setParticipation(participation);
                 result.setAssessor(examInstructor);
-                result = resultRepository.save(result);
                 result.setSubmission(submission);
+                result = resultRepository.save(result);
                 submission.addResult(result);
                 submissionRepository.save(submission);
             }
@@ -756,7 +754,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @CsvSource({ "false, false", "true, false", "false, true", "true, true" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamScore(boolean withCourseBonus, boolean withSecondCorrectionAndStarted) throws Exception {
-        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
+        programmingExerciseTestService.setup(this, versionControlService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
 
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
@@ -809,7 +807,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
         for (var exercise : exercisesInExam) {
-            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(exercise.getId(), false);
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResult(exercise.getId(), false);
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }
@@ -855,18 +853,16 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
                 // Create results
                 if (withSecondCorrectionAndStarted) {
                     var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(5));
-                    firstResult.setParticipation(participation);
                     firstResult.setAssessor(instructor);
-                    firstResult = resultRepository.save(firstResult);
                     firstResult.setSubmission(submission);
+                    firstResult = resultRepository.save(firstResult);
                     submission.addResult(firstResult);
                 }
 
                 var finalResult = new Result().score(resultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(5));
-                finalResult.setParticipation(participation);
                 finalResult.setAssessor(instructor);
-                finalResult = resultRepository.save(finalResult);
                 finalResult.setSubmission(submission);
+                finalResult = resultRepository.save(finalResult);
                 submission.addResult(finalResult);
 
                 submission.submitted(true);
@@ -1121,9 +1117,12 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
 
         Team team1 = teamRepository.findById(team1Id).orElseThrow();
         var result = participationUtilService.createParticipationSubmissionAndResult(teamTextExerciseId, team1, 10.0, 10.0, 40, true);
+        result.setCompletionDate(ZonedDateTime.now().minusDays(10));
+        resultRepository.save(result);
         // Creating a second results for team1 to test handling multiple results.
-        participationUtilService.createSubmissionAndResult((StudentParticipation) result.getParticipation(), 50, true);
-
+        var result2 = participationUtilService.createSubmissionAndResult((StudentParticipation) result.getSubmission().getParticipation(), 50, true);
+        result2.setCompletionDate(ZonedDateTime.now().minusDays(10));
+        resultRepository.save(result2);
         var student2Result = participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student2, 10.0, 10.0, 50, true);
 
         var student3Result = participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student3, 10.0, 10.0, 30, true);
@@ -1134,13 +1133,13 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         // Adding plagiarism cases
         var bonusPlagiarismCase = new PlagiarismCase();
         bonusPlagiarismCase.setStudent(student3);
-        bonusPlagiarismCase.setExercise(student3Result.getParticipation().getExercise());
+        bonusPlagiarismCase.setExercise(student3Result.getSubmission().getParticipation().getExercise());
         bonusPlagiarismCase.setVerdict(PlagiarismVerdict.PLAGIARISM);
         plagiarismCaseRepository.save(bonusPlagiarismCase);
 
         var bonusPlagiarismCase2 = new PlagiarismCase();
         bonusPlagiarismCase2.setStudent(student2);
-        bonusPlagiarismCase2.setExercise(student2Result.getParticipation().getExercise());
+        bonusPlagiarismCase2.setExercise(student2Result.getSubmission().getParticipation().getExercise());
         bonusPlagiarismCase2.setVerdict(PlagiarismVerdict.POINT_DEDUCTION);
         bonusPlagiarismCase2.setVerdictPointDeduction(50);
         plagiarismCaseRepository.save(bonusPlagiarismCase2);
