@@ -255,16 +255,16 @@ export class IrisChatService implements OnDestroy {
 
     /**
      * Parses the latest suggestions string and updates the suggestions subject.
-     * @param s: The latest suggestions string
-     * @private
+     *
+     * @param str The latest suggestions string
      */
-    private parseLatestSuggestions(s?: string) {
-        if (!s) {
+    private parseLatestSuggestions(str?: string) {
+        if (!str) {
             this.suggestions.next([]);
             return;
         }
 
-        const suggestions = JSON.parse(s);
+        const suggestions = JSON.parse(str);
         this.suggestions.next(suggestions);
     }
 
