@@ -131,7 +131,7 @@ describe('ProgrammingExerciseUtils', () => {
         it('should handle result completion date as string', () => {
             result.completionDate = '2023-01-01T10:00:00Z' as any;
             exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().add(5, 'hours');
-            expect(isResultPreliminary(result, exercise)).toBeTrue();
+            expect(isResultPreliminary(result, participation, exercise)).toBeTrue();
         });
 
         describe('manual assessment set for the exercise', () => {
