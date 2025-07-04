@@ -9,7 +9,7 @@ import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.comp
     imports: [IrisBaseChatbotComponent],
 })
 export class CourseChatbotComponent implements OnChanges {
-    chatService = inject(IrisChatService);
+    private readonly chatService = inject(IrisChatService);
 
     @Input() courseId?: number;
 
