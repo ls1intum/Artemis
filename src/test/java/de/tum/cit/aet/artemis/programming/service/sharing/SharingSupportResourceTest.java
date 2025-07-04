@@ -14,17 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -33,14 +27,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  */
 class SharingSupportResourceTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "exercisesharingimporttests";
-
-    public static final String INSTRUCTORNAME = TEST_PREFIX + "instructor1";
-
-    public static final String SAMPLE_BASKET_TOKEN = "sampleBasketToken.json";
-
-    public static final String TEST_RETURN_URL = "http://testing/xyz1";
-
     @Value("${artemis.sharing.apikey:#{null}}")
     private String sharingApiKey;
 
@@ -48,7 +34,7 @@ class SharingSupportResourceTest extends AbstractSpringIntegrationIndependentTes
     private SharingPlatformMockProvider sharingPlatformMockProvider;
 
     @Autowired
-    private MockMvc restMockMvc;
+    private RequestUtilService requestUtilService;
 
     @Autowired
     private SharingConnectorService sharingConnectorService;
@@ -63,23 +49,9 @@ class SharingSupportResourceTest extends AbstractSpringIntegrationIndependentTes
     @Autowired
     private ExerciseSharingService exerciseSharingService;
 
-    @MockitoBean
-    private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
-
-    @MockitoBean
-    private VersionControlService versionControlService;
-
-    @MockitoBean
-    private ContinuousIntegrationService continuousIntegrationService;
-
-    @MockitoBean
-    private ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
-
     @Autowired
     @Qualifier("sharingRestTemplate")
     private RestTemplate restTemplate;
-
-    private MockRestServiceServer mockServer;
 
     @BeforeEach
     void startUp() throws Exception {
@@ -97,33 +69,29 @@ class SharingSupportResourceTest extends AbstractSpringIntegrationIndependentTes
      */
     @Test
     void shouldReturnConfigurationWhenValidApiKeyProvided() throws Exception {
-        MvcResult result = restMockMvc.perform(get("/api/core/sharing/config").queryParam("apiBaseUrl", sharingPlatformMockProvider.SHARING_BASEURL_PLUGIN)
-                .queryParam("installationName", sharingPlatformMockProvider.TEST_INSTALLATION_NAME).header("Authorization", sharingApiKey).contentType(MediaType.APPLICATION_JSON))
+        MvcResult result = requestUtilService.performMvcRequest(get("/api/core/sharing/config").queryParam("apiBaseUrl", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN)
+                .queryParam("installationName", SharingPlatformMockProvider.TEST_INSTALLATION_NAME).header("Authorization", sharingApiKey).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
         assertThat(content).isNotEmpty();
     }
 
-    /**
-     * request config with wrong api key
-     *
-     */
     @Test
     void shouldReturnUnauthorizedWhenInvalidApiKeyProvided() throws Exception {
-        restMockMvc.perform(get("/api/core/sharing/config").queryParam("apiBaseUrl", sharingPlatformMockProvider.SHARING_BASEURL_PLUGIN)
-                .queryParam("installationName", sharingPlatformMockProvider.TEST_INSTALLATION_NAME).header("Authorization", "wrongKey").contentType(MediaType.APPLICATION_JSON))
+        requestUtilService.performMvcRequest(get("/api/core/sharing/config").queryParam("apiBaseUrl", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN)
+                .queryParam("installationName", SharingPlatformMockProvider.TEST_INSTALLATION_NAME).header("Authorization", "wrongKey").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
 
     /**
-     * request config with missing api key
+     * request config with a missing api key
      *
      */
     @Test
     void shouldReturnUnauthorizedWhenApiKeyMissing() throws Exception {
-        restMockMvc
-                .perform(get("/api/core/sharing/config").queryParam("apiBaseUrl", sharingPlatformMockProvider.SHARING_BASEURL_PLUGIN)
-                        .queryParam("installationName", sharingPlatformMockProvider.TEST_INSTALLATION_NAME).contentType(MediaType.APPLICATION_JSON))
+        requestUtilService
+                .performMvcRequest(get("/api/core/sharing/config").queryParam("apiBaseUrl", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN)
+                        .queryParam("installationName", SharingPlatformMockProvider.TEST_INSTALLATION_NAME).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -133,7 +101,7 @@ class SharingSupportResourceTest extends AbstractSpringIntegrationIndependentTes
      */
     @Test
     void connectRequestFromSharingPlatformWrongBaseURL() throws Exception {
-        restMockMvc.perform(get("/api/core/sharing/config").queryParam("apiBaseUrl", "invalid://missing.hostx/malformed/path")
+        requestUtilService.performMvcRequest(get("/api/core/sharing/config").queryParam("apiBaseUrl", "invalid://missing.host/malformed/path")
                 .queryParam("installationName", SharingPlatformMockProvider.TEST_INSTALLATION_NAME).header("Authorization", sharingApiKey).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
@@ -144,8 +112,8 @@ class SharingSupportResourceTest extends AbstractSpringIntegrationIndependentTes
      */
     @Test
     void connectRequestFromSharingPlatformWithMissingInstallationName() throws Exception {
-        restMockMvc.perform(get("/api/core/sharing/config").queryParam("apiBaseUrl", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN).header("Authorization", sharingApiKey)
-                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+        requestUtilService.performMvcRequest(get("/api/core/sharing/config").queryParam("apiBaseUrl", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN)
+                .header("Authorization", sharingApiKey).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
         assertThat(sharingConnectorService.getInstallationName()).isIn(SharingConnectorService.UNKNOWN_INSTALLATION_NAME, InetAddress.getLocalHost().getCanonicalHostName());
     }
 

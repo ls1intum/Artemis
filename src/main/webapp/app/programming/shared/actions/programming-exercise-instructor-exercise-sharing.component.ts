@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
@@ -27,16 +27,13 @@ export class ProgrammingExerciseInstructorExerciseSharingComponent {
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
     sharingTab: WindowProxy | null = null;
+    private readonly sharingService = inject(ProgrammingExerciseSharingService);
+    private readonly alertService = inject(AlertService);
 
     exerciseId = input<number>();
 
     // Icons
     faDownload = faDownload;
-
-    constructor(
-        private readonly sharingService: ProgrammingExerciseSharingService,
-        private readonly alertService: AlertService,
-    ) {}
 
     /**
      * **CodeAbility changes**: Used to initiate export of an exercise to

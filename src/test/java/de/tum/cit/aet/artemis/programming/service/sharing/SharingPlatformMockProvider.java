@@ -28,7 +28,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Lazy
 public class SharingPlatformMockProvider {
 
-    protected static final String TEST_INSTALLATION_NAME = "ArtemisTestInstance";
+    /**
+     * also needed by other test infrastructure.
+     */
+    public static final String TEST_INSTALLATION_NAME = "ArtemisTestInstance";
 
     public static final String SHARING_BASEURL = "http://localhost:9001/api";
 

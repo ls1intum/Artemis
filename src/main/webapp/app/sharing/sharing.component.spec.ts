@@ -97,7 +97,7 @@ describe('SharingComponent', () => {
         courseReq.flush(courses);
 
         // then
-        expect(fixture.componentInstance.getTokenExpiryDate()).toStrictEqual(testBasket.tokenValidUntil);
+        expect(fixture.componentInstance.getBasketTokenExpiryDate()).toStrictEqual(testBasket.tokenValidUntil);
 
         // course not yet selected
         expect(fixture.componentInstance.courseId()).toBe(0);
@@ -162,7 +162,7 @@ describe('SharingComponent', () => {
     it('failed init basket error', fakeAsync(() => {
         jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(true));
         // token expiry date not yet set
-        const tokenExpiryDate = fixture.componentInstance.getTokenExpiryDate();
+        const tokenExpiryDate = fixture.componentInstance.getBasketTokenExpiryDate();
         expect(tokenExpiryDate.getTime()).toBeGreaterThanOrEqual(Date.now() - 1000);
         expect(tokenExpiryDate.getTime()).toBeLessThanOrEqual(Date.now() + 1000);
         const errorSpy = jest.spyOn(alertService, 'error');
@@ -193,8 +193,8 @@ describe('SharingComponent', () => {
     it('failed init course load error', fakeAsync(() => {
         jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(true));
         // token expiry date not yet set
-        expect(fixture.componentInstance.getTokenExpiryDate().getTime()).toBeGreaterThanOrEqual(Date.now() - 1000);
-        expect(fixture.componentInstance.getTokenExpiryDate().getTime()).toBeLessThanOrEqual(Date.now() + 1000);
+        expect(fixture.componentInstance.getBasketTokenExpiryDate().getTime()).toBeGreaterThanOrEqual(Date.now() - 1000);
+        expect(fixture.componentInstance.getBasketTokenExpiryDate().getTime()).toBeLessThanOrEqual(Date.now() + 1000);
 
         fixture.detectChanges();
         tick();

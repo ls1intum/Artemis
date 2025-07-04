@@ -122,7 +122,7 @@ public class ProgrammingExerciseImportFromFileService {
                     if (directories.isEmpty()) {
                         throw new BadRequestAlertException("No directories found for Sharing import", "programmingExercise", "noSharingDirFound");
                     }
-                    importExerciseDir = directories.get(0);
+                    importExerciseDir = directories.getFirst();
                 }
             }
 
@@ -131,7 +131,6 @@ public class ProgrammingExerciseImportFromFileService {
             checkDetailsJsonExists(importExerciseDir);
             checkRepositoriesExist(importExerciseDir);
 
-            var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
             programmingExerciseValidationService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
             newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise);
