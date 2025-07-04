@@ -109,8 +109,6 @@ public class QuizExerciseResource {
 
     private static final String ENTITY_NAME = "quizExercise";
 
-    private final QuizQuestionRepository quizQuestionRepository;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -193,7 +191,6 @@ public class QuizExerciseResource {
         this.quizResultService = quizResultService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
-        this.quizQuestionRepository = quizQuestionRepository;
         this.quizQuestionsProgressService = quizQuestionsProgressService;
     }
 
