@@ -53,8 +53,14 @@ export class CalendarMonthPresentationComponent {
         this.selectedEvent.set(undefined);
     }
 
-    private computeWeeksFrom(startDate: Dayjs): Dayjs[][] {
-        const startOfMonth = startDate.startOf('month');
+    /**
+     * Computes all weeks overlapping with the month of the parameter.
+     *
+     * @param firstDayOfSomeMonth - The first day of some month.
+     * @returns An array of weeks, where each week is an array of 7 Dayjs dates.
+     */
+    private computeWeeksFrom(firstDayOfSomeMonth: Dayjs): Dayjs[][] {
+        const startOfMonth = firstDayOfSomeMonth;
         const endOfMonth = startOfMonth.endOf('month');
         const startDay = startOfMonth.startOf('isoWeek');
 

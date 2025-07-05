@@ -75,6 +75,12 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
         );
     }
 
+    /**
+     * Groups overlapping events and calculates positions based on the groups.
+     *
+     * @param calendarEvents - The list of calendar events to position.
+     * @returns A list of calendar events with associated position metadata.
+     */
     private addPositionsToCalendarEvents(calendarEvents: CalendarEvent[]): CalendarEventAndPosition[] {
         if (calendarEvents.length === 0) {
             return [];
