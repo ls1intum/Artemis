@@ -45,8 +45,8 @@ public class QuizQuestionProgressService {
      * Fetch the necessary data for the quiz question progress from the quiz exercise and submission
      * Set the progress data for each answered question
      *
-     * @param quizExercise:   The quiz exercise for which the progress is to be retrieved
-     * @param quizSubmission: The quiz submission containing the user's answers
+     * @param quizExercise   The quiz exercise for which the progress is to be retrieved
+     * @param quizSubmission The quiz submission containing the user's answers
      */
     public void retrieveProgressFromResultAndSubmission(QuizExercise quizExercise, QuizSubmission quizSubmission) {
         ZonedDateTime lastAnsweredAt = quizSubmission.getSubmissionDate();
@@ -106,8 +106,8 @@ public class QuizQuestionProgressService {
     /**
      * The function updates the progress of quiz questions and save it to the database
      *
-     * @param answeredQuestions: List of quiz questions that were answered
-     * @param lastAnsweredAt:    Time when the question was last answered
+     * @param answeredQuestions List of quiz questions that were answered
+     * @param lastAnsweredAt    Time when the question was last answered
      */
     public void updateProgress(Map<QuizQuestion, QuizQuestionProgressDataDAO> answeredQuestions, ZonedDateTime lastAnsweredAt) {
         answeredQuestions.forEach((question, data) -> {
@@ -124,7 +124,7 @@ public class QuizQuestionProgressService {
     /**
      * Save the progress of a quiz question to the database
      *
-     * @param quizQuestionProgress: The progress object containing the user's progress for a quiz question
+     * @param quizQuestionProgress The progress object containing the user's progress for a quiz question
      */
     public QuizQuestionProgress save(QuizQuestionProgress quizQuestionProgress) {
         return quizQuestionProgressRepository.save(quizQuestionProgress);
@@ -133,7 +133,7 @@ public class QuizQuestionProgressService {
     /**
      * Get the sorted List of 10 quiz questions based on their priority
      *
-     * @param courseId: ID of the course for which the quiz questions are to be fetched
+     * @param courseId ID of the course for which the quiz questions are to be fetched
      */
     public List<QuizQuestion> getQuestionsForSession(Long courseId) {
         Set<QuizQuestion> allQuestions = getQuizQuestions(courseId);
@@ -148,8 +148,8 @@ public class QuizQuestionProgressService {
     /**
      * Calculate the repetition count, which represents how many times the question has been answered correctly in a row
      *
-     * @param score: The score achieved for the question
-     * @param data:  The progress data for the question
+     * @param score The score achieved for the question
+     * @param data  The progress data for the question
      */
     public int calculateRepetition(double score, QuizQuestionProgressDataDAO data) {
         if (score != 1.0) {
@@ -173,8 +173,8 @@ public class QuizQuestionProgressService {
     /**
      * Calculate the easiness factor based on the SM-2 algorithm
      *
-     * @param score:                  The score achieved for the question
-     * @param previousEasinessFactor: The easiness factor from the previous progress
+     * @param score                  The score achieved for the question
+     * @param previousEasinessFactor The easiness factor from the previous progress
      */
     public double calculateEasinessFactor(double score, double previousEasinessFactor) {
         double newEasinessFactor = previousEasinessFactor + (0.1 - (5 - score * 5) * (0.08 + (1 - score * 5) * 0.02));
@@ -184,8 +184,9 @@ public class QuizQuestionProgressService {
     /**
      * Calculate the interval for the next session in which the question should be repeated
      *
-     * @param easinessFactor:   The easiness factor for the question
-     * @param previousInterval: The interval form the previous progress
+     * @param easinessFactor   The easiness factor for the question
+     * @param previousInterval The interval form the previous progress
+     * @param repetition       The repetition count for the question
      */
     public int calculateInterval(double easinessFactor, int previousInterval, int repetition) {
         if (repetition <= 1) {
@@ -205,8 +206,8 @@ public class QuizQuestionProgressService {
      * Calculate the priority for the question. The priority is used to determine the order in which questions should be presented.
      * A smaller number means higher priority
      *
-     * @param sessionCount: The number of sessions in which the question has been answered
-     * @param interval:     The interval for the next session in which the question should be repeated
+     * @param sessionCount The number of sessions in which the question has been answered
+     * @param interval     The interval for the next session in which the question should be repeated
      */
     public int calculatePriority(int sessionCount, int interval) {
         if (sessionCount == 0) {
@@ -220,7 +221,7 @@ public class QuizQuestionProgressService {
      * The boxes are based on the Leitner system and are used to keep track of the learning progress of the student.
      * They will be used for gamification elements
      *
-     * @param interval: The interval for the next session in which the question should be repeated
+     * @param interval The interval for the next session in which the question should be repeated
      */
     public int calculateBox(int interval) {
         if (interval == 1) {
