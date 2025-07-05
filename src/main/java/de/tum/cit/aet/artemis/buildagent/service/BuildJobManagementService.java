@@ -27,8 +27,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.topic.ITopic;
-
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
@@ -36,6 +34,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
 /**
  * This service is responsible for adding build jobs to the Integrated Code Lifecycle executor service.
@@ -99,9 +98,8 @@ public class BuildJobManagementService {
      */
     @EventListener(FullStartupEvent.class)
     public void init() {
-        ITopic<String> canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
-        canceledBuildJobsTopic.addMessageListener(message -> {
-            String buildJobId = message.getMessageObject();
+        DistributedTopic<String> canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
+        canceledBuildJobsTopic.addMessageListener(buildJobId -> {
             lock.lock();
             try {
                 if (runningFutures.containsKey(buildJobId)) {
