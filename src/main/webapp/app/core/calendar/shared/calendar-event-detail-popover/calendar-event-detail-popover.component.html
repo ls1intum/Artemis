@@ -12,7 +12,7 @@
         <div class="icon-frame">
             <fa-icon class="popover-icon" [icon]="utils.getIconForEvent(event())" />
         </div>
-        <div jhiTranslate="{{ utils.getEventNameKey(event()) }}"></div>
+        <div jhiTranslate="{{ utils.getEventTypeNameKey(event()) }}" data-testid="event-type-name-key"></div>
     </div>
     @if (event().endDate) {
         <div class="info-row" id="start-and-end-row">

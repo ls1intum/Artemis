@@ -9,8 +9,8 @@
             "saturdayShort": "Sa",
             "sundayShort": "So",
             "eventSubtypeName": {
-                "tutorialStart": "Anfang",
-                "tutorialEnd": "Ende",
+                "lectureStart": "Anfang",
+                "lectureEnd": "Ende",
                 "examPublishResults": "Veröffentlichung Ergebnisse",
                 "examReviewStart": "Einsicht Start",
                 "examReviewEnd": "Einsicht Ende",

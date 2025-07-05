@@ -1,7 +1,7 @@
 import dayjs, { Dayjs } from 'dayjs/esm';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faChalkboardTeacher, faCheckDouble, faFileArrowUp, faFont, faGraduationCap, faKeyboard, faPersonChalkboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faCheckDouble, faDiagramProject, faFileArrowUp, faFont, faGraduationCap, faKeyboard, faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
 import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
 
 dayjs.extend(isoWeek);
@@ -46,7 +46,7 @@ export function getIconForEvent(event: CalendarEvent): IconProp {
         if (event.isTextExerciseEvent()) {
             return faFont;
         } else if (event.isModelingExerciseEvent()) {
-            return faProjectDiagram;
+            return faDiagramProject;
         } else if (event.isQuizExerciseEvent()) {
             return faCheckDouble;
         } else if (event.isProgrammingExercise()) {
@@ -55,7 +55,7 @@ export function getIconForEvent(event: CalendarEvent): IconProp {
             return faFileArrowUp;
         }
     } else if (event.isLectureEvent()) {
-        return faChalkboardTeacher;
+        return faChalkboardUser;
     } else if (event.isTutorialEvent()) {
         return faPersonChalkboard;
     } else {
@@ -75,7 +75,7 @@ export function getWeekDayNameKeys(): string[] {
     ];
 }
 
-export function getEventNameKey(event: CalendarEvent): string {
+export function getEventTypeNameKey(event: CalendarEvent): string {
     if (event.isExerciseEvent()) {
         if (event.isProgrammingExercise()) {
             return 'artemisApp.calendar.eventName.programming';
@@ -105,9 +105,9 @@ export function getEventSubtypeNameKey(event: CalendarEvent): string | undefined
         if (eventId.endsWith('startAndEndDate')) {
             return undefined;
         } else if (eventId.endsWith('startDate')) {
-            return 'artemisApp.calendar.eventSubtypeName.tutorialStart';
+            return 'artemisApp.calendar.eventSubtypeName.lectureStart';
         } else {
-            return 'artemisApp.calendar.eventSubtypeName.tutorialEnd';
+            return 'artemisApp.calendar.eventSubtypeName.lectureEnd';
         }
     } else if (event.isExamEvent()) {
         if (eventId.endsWith('startAndEndDate')) {
