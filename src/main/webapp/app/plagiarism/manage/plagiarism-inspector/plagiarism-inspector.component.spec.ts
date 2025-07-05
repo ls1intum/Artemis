@@ -120,13 +120,23 @@ describe('Plagiarism Inspector Component', () => {
     it('should get the minimumSize tooltip for programming', () => {
         comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
 
-        expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise');
+        expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumTokenCountTooltipProgrammingExercise');
     });
 
     it('should get the minimumSize tootip for text', () => {
         comp.exercise = { type: ExerciseType.TEXT } as Exercise;
 
         expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipTextExercise');
+    });
+
+    it('should get the minimumSize label for programming', () => {
+        comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+        expect(comp.getMinimumSizeLabel()).toBe('artemisApp.plagiarism.minimumTokenCount');
+    });
+
+    it('should get the minimumSize label for text', () => {
+        comp.exercise = { type: ExerciseType.TEXT } as Exercise;
+        expect(comp.getMinimumSizeLabel()).toBe('artemisApp.plagiarism.minimumSize');
     });
 
     it('should fetch the plagiarism detection results for programming exercises', () => {
@@ -304,4 +314,89 @@ describe('Plagiarism Inspector Component', () => {
 
         expect(cleanUpPlagiarismSpy).toHaveBeenCalledOnce();
     }));
+
+    it('should handle plagiarism check state change when completed', () => {
+        comp.exercise = textExercise;
+        const getLatestPlagiarismResultSpy = jest.spyOn(comp, 'getLatestPlagiarismResult').mockImplementation();
+        const checkState = { state: 'COMPLETED' as const, messages: 'Plagiarism check completed' };
+
+        comp.handlePlagiarismCheckStateChange(checkState);
+
+        expect(comp.detectionInProgress).toBeFalsy();
+        expect(comp.detectionInProgressMessage).toBe('artemisApp.plagiarism.fetchingResults');
+        expect(getLatestPlagiarismResultSpy).toHaveBeenCalled();
+    });
+
+    it('should handle plagiarism check state change when running', () => {
+        const checkState = { state: 'RUNNING' as const, messages: 'Plagiarism check running' };
+
+        comp.handlePlagiarismCheckStateChange(checkState);
+
+        expect(comp.detectionInProgress).toBeTruthy();
+        expect(comp.detectionInProgressMessage).toBe('Plagiarism check running');
+    });
+
+    it('should handle error', () => {
+        comp.handleError();
+
+        expect(comp.detectionInProgress).toBeFalsy();
+    });
+
+    it('should toggle delete all plagiarism comparisons', () => {
+        comp.deleteAllPlagiarismComparisons = false;
+
+        comp.toggleDeleteAllPlagiarismComparisons();
+
+        expect(comp.deleteAllPlagiarismComparisons).toBeTruthy();
+
+        comp.toggleDeleteAllPlagiarismComparisons();
+
+        expect(comp.deleteAllPlagiarismComparisons).toBeFalsy();
+    });
+
+    it('should check plagiarism JPlag report for programming exercise', () => {
+        comp.exercise = programmingExercise;
+        const checkPlagiarismJPlagReportSpy = jest.spyOn(programmingExerciseService, 'checkPlagiarismJPlagReport').mockReturnValue(of(new HttpResponse<Blob>()));
+
+        comp.checkPlagiarismJPlagReport();
+
+        expect(checkPlagiarismJPlagReportSpy).toHaveBeenCalled();
+    });
+
+    it('should sort comparisons for result', () => {
+        const unsortedResult = {
+            ...textPlagiarismResult,
+            comparisons: [
+                { id: 1, similarity: 0.5 },
+                { id: 3, similarity: 0.9 },
+                { id: 2, similarity: 0.7 },
+            ] as PlagiarismComparison[],
+        };
+
+        comp.sortComparisonsForResult(unsortedResult);
+
+        expect(unsortedResult.comparisons[0].similarity).toBe(0.9);
+        expect(unsortedResult.comparisons[1].similarity).toBe(0.7);
+        expect(unsortedResult.comparisons[2].similarity).toBe(0.5);
+    });
+
+    it('should handle plagiarism result', () => {
+        const sortComparisonsForResultSpy = jest.spyOn(comp, 'sortComparisonsForResult');
+
+        comp.handlePlagiarismResult(textPlagiarismResultDTO);
+
+        expect(comp.plagiarismResult).toBe(textPlagiarismResultDTO.plagiarismResult);
+        expect(comp.plagiarismResultStats).toBe(textPlagiarismResultDTO.plagiarismResultStats);
+        expect(comp.visibleComparisons).toBe(textPlagiarismResultDTO.plagiarismResult.comparisons);
+        expect(sortComparisonsForResultSpy).toHaveBeenCalledWith(textPlagiarismResultDTO.plagiarismResult);
+    });
+
+    it('should return undefined when no comparison is selected', () => {
+        comp.selectedComparisonId = -1;
+        comp.visibleComparisons = comparisons as PlagiarismComparison[];
+
+        const selected = comp.getSelectedComparison();
+
+        expect(selected).toBeUndefined();
+    });
 });

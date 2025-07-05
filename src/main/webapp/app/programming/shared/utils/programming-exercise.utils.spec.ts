@@ -26,6 +26,16 @@ describe('ProgrammingExerciseUtils', () => {
         expect(generatedUrl).toBe(expectedUrl);
     });
 
+    it('createBuildPlanUrl returns undefined for empty template', () => {
+        const template = '';
+        const buildPlanId = 'BPID';
+        const projectKey = 'PK';
+
+        const generatedUrl = createBuildPlanUrl(template, projectKey, buildPlanId);
+
+        expect(generatedUrl).toBeUndefined();
+    });
+
     describe('isProgrammingExerciseStudentParticipation', () => {
         it('returns true for a programming exercise participation', () => {
             const participation = new ProgrammingExerciseStudentParticipation();
@@ -115,6 +125,12 @@ describe('ProgrammingExerciseUtils', () => {
 
         it('return true on invalid date', () => {
             result.completionDate = dayjs('Invalid date');
+            expect(isResultPreliminary(result, participation, exercise)).toBeTrue();
+        });
+
+        it('should handle result completion date as string', () => {
+            result.completionDate = '2023-01-01T10:00:00Z' as any;
+            exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().add(5, 'hours');
             expect(isResultPreliminary(result, participation, exercise)).toBeTrue();
         });
 

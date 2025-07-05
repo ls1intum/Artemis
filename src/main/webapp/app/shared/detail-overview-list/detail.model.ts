@@ -11,7 +11,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
+import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 
 export type Detail = NotShownDetail | ShownDetail;
 
@@ -120,7 +120,11 @@ export interface ProgrammingTestStatusDetail extends DetailBase {
 }
 export interface ProgrammingDiffReportDetail extends DetailBase {
     type: DetailType.ProgrammingDiffReport;
-    data: { addedLineCount: number; removedLineCount: number; isLoadingDiffReport?: boolean; gitDiffReport?: ProgrammingExerciseGitDiffReport };
+    data: {
+        repositoryDiffInformation?: RepositoryDiffInformation;
+        templateFileContentByPath: Map<string, string>;
+        solutionFileContentByPath: Map<string, string>;
+    };
 }
 
 interface ProgrammingProblemStatementDetail extends DetailBase {

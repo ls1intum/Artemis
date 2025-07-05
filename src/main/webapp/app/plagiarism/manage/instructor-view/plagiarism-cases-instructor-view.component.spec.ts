@@ -248,6 +248,17 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(location.path()).toBe(`/course-management/${courseId}/${exercise1.type}-exercises/${exerciseId}/plagiarism`);
     }));
 
+    it('should handle empty plagiarism cases list', () => {
+        const emptyPlagiarismCases: PlagiarismCase[] = [];
+        expect(component.numberOfCases(emptyPlagiarismCases)).toBe(0);
+        expect(component.numberOfCasesWithVerdict(emptyPlagiarismCases)).toBe(0);
+        expect(component.percentageOfCasesWithVerdict(emptyPlagiarismCases)).toBe(0);
+        expect(component.numberOfCasesWithPost(emptyPlagiarismCases)).toBe(0);
+        expect(component.percentageOfCasesWithPost(emptyPlagiarismCases)).toBe(0);
+        expect(component.numberOfCasesWithStudentAnswer(emptyPlagiarismCases)).toBe(0);
+        expect(component.percentageOfCasesWithStudentAnswer(emptyPlagiarismCases)).toBe(0);
+    });
+
     it('should scroll to the correct exercise element when scrollToExercise is called', () => {
         const nativeElement1 = { id: 'exercise-with-plagiarism-case-1', scrollIntoView: jest.fn() };
         const nativeElement2 = { id: 'exercise-with-plagiarism-case-2', scrollIntoView: jest.fn() };

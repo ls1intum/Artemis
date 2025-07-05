@@ -25,8 +25,8 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     public resourceUrlParticipations = 'api/programming/programming-exercise-participations/';
     public resourceUrl = 'api/programming/programming-exercise/';
 
-    getLatestResultWithFeedback(participationId: number): Observable<Result | undefined> {
-        const options = createRequestOption({ withSubmission: true });
+    getLatestResultWithFeedback(participationId: number, withSubmission = true): Observable<Result | undefined> {
+        const options = createRequestOption({ withSubmission });
         return this.http.get<Result | undefined>(this.resourceUrlParticipations + participationId + '/latest-result-with-feedbacks', { params: options }).pipe(
             tap((res) => {
                 if (res?.submission?.participation?.exercise) {

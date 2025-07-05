@@ -53,8 +53,8 @@
 
             <div class="col">
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.minimumSize"></label>
-                    <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="minimumSizeTooltip | artemisTranslate" />
+                    <label class="form-control-label" [jhiTranslate]="getMinimumSizeLabel()"></label>
+                    <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate" />
                     <input type="number" class="form-control" min="0" max="100" id="plagiarism-minimum-size" formControlName="minimumSize" required />
                 </div>
             </div>
