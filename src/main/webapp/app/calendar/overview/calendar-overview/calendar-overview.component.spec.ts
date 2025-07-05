@@ -1,21 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { CalendarOverviewComponent } from './calendar-overview.component';
-import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
+import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarWeekPresentationComponent } from 'app/calendar/overview/calendar-week-presentation/calendar-week-presentation.component';
+import { CalendarMonthPresentationComponent } from 'app/calendar/overview/calendar-month-presentation/calendar-month-presentation.component';
 import { CalendarEventFilterComponent } from 'app/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { CalendarWeekPresentationComponent } from 'app/calendar/overview/calendar-week-presentation/calendar-week-presentation.component';
-import { CalendarMonthPresentationComponent } from 'app/calendar/overview/calendar-month-presentation/calendar-month-presentation.component';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
-import { TranslateService } from '@ngx-translate/core';
+import { CalendarOverviewComponent } from './calendar-overview.component';
 
 describe('CalendarDesktopComponent', () => {
     let component: CalendarOverviewComponent;

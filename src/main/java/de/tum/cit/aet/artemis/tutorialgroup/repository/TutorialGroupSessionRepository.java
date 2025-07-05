@@ -52,8 +52,8 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
                     session.end,
                     CONCAT(
                         CAST(session.location AS string),
-                        CASE WHEN session.tutorialGroup.campus IS NOT NULL AND NOT session.tutorialGroup.isOnline
-                             THEN CONCAT(' - ', CAST(session.tutorialGroup.campus AS string))
+                        CASE WHEN tutorialGroup.campus IS NOT NULL AND NOT tutorialGroup.isOnline
+                             THEN CONCAT(' - ', CAST(tutorialGroup.campus AS string))
                              ELSE ''
                         END
                     ),

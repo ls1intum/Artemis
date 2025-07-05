@@ -1383,7 +1383,7 @@ public class ExamService {
     /**
      * Derives the following events for a given {@link Exam}:
      * <ul>
-     * <li>One event representing the actual working time (starts on start date and ends on end date of the exam, both are always not noll)</li>
+     * <li>One event representing the actual working time (starts on start date and ends on end date of the exam, both are always not null)</li>
      * <li>One event representing the point in them when results are published if not null</li>
      * <li>Two events representing the start and end of the student review period (only available as a pair and if result publish date is not null)</li>
      * </ul>

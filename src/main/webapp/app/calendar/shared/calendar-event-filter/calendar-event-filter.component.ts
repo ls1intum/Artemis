@@ -1,11 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
-import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import * as Utils from 'app/calendar/shared/util/calendar-util';
+import * as utils from 'app/calendar/shared/util/calendar-util';
+import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
+import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 
 @Component({
     selector: 'jhi-calendar-event-filter',
@@ -14,10 +14,9 @@ import * as Utils from 'app/calendar/shared/util/calendar-util';
     styleUrl: './calendar-event-filter.component.scss',
 })
 export class CalendarEventFilterComponent {
-    isOpen = signal(false);
     includedOptions;
 
-    readonly utils = Utils;
+    readonly utils = utils;
     readonly options;
     readonly faChevronDown = faChevronDown;
     readonly faXmark = faXmark;
@@ -27,23 +26,19 @@ export class CalendarEventFilterComponent {
         this.includedOptions = calendarEventService.includedEventFilterOptions;
     }
 
-    toggleOpen() {
-        this.isOpen.update((currentState) => !currentState);
-    }
-
     toggleOption(option: CalendarEventFilterOption) {
         this.calendarEventService.toggleEventFilterOption(option);
     }
 
     getColorClassForFilteringOption(option: CalendarEventFilterOption): string {
         if (option === 'examEvents') {
-            return 'exam';
+            return 'exam-chip';
         } else if (option === 'lectureEvents') {
-            return 'lecture';
+            return 'lecture-chip';
         } else if (option === 'tutorialEvents') {
-            return 'tutorial';
+            return 'tutorial-chip';
         } else {
-            return 'exercise';
+            return 'exercise-chip';
         }
     }
 }

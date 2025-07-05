@@ -1,20 +1,19 @@
-import { Component, computed, input, signal } from '@angular/core';
-import { NgClass } from '@angular/common';
+import { Component, Signal, computed, input, signal } from '@angular/core';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Dayjs } from 'dayjs/esm';
-import * as Utils from 'app/calendar/shared/util/calendar-util';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
-
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import * as utils from 'app/calendar/shared/util/calendar-util';
+import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
-import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
+import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 
 @Component({
     selector: 'calendar-desktop-month',
-    standalone: true,
-    imports: [NgClass, FaIconComponent, NgbPopover, CalendarDayBadgeComponent, CalendarEventDetailPopoverComponent, ArtemisTranslatePipe],
+    imports: [NgClass, NgTemplateOutlet, NgbPopover, FaIconComponent, ArtemisTranslatePipe, TranslateDirective, CalendarDayBadgeComponent, CalendarEventDetailPopoverComponent],
     templateUrl: './calendar-month-presentation.component.html',
     styleUrls: ['./calendar-month-presentation.component.scss'],
 })
@@ -22,9 +21,9 @@ export class CalendarMonthPresentationComponent {
     firstDayOfCurrentMonth = input.required<Dayjs>();
     selectedEvent = signal<CalendarEvent | undefined>(undefined);
 
-    readonly utils = Utils;
+    readonly utils = utils;
     readonly weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
-    readonly eventMap;
+    readonly eventMap: Signal<Map<string, CalendarEvent[]>>;
 
     private popover?: NgbPopover;
 
@@ -34,8 +33,7 @@ export class CalendarMonthPresentationComponent {
 
     getEventsOf(day: Dayjs): CalendarEvent[] {
         const key = day.format('YYYY-MM-DD');
-        const result = this.eventMap().get(key) ?? [];
-        return result;
+        return this.eventMap().get(key) ?? [];
     }
 
     openPopover(event: CalendarEvent, popover: NgbPopover) {

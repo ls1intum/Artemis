@@ -41,6 +41,7 @@ public class ModelingExerciseFactory {
      * Generates a ModelingExercise for a Course.
      *
      * @param releaseDate       The release date of the exercise
+     * @param startDate         The start date of the exercise
      * @param dueDate           The due date of the exercise
      * @param assessmentDueDate The assessment due date of the exercise
      * @param diagramType       The DiagramType of the exercise

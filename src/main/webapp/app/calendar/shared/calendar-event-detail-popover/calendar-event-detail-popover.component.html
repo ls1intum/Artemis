@@ -1,5 +1,5 @@
-<div class="popover-content">
-    <div class="event-popover-header">
+<div class="frame">
+    <div class="header">
         @let eventSubtypeDescriptor = utils.getEventSubtypeNameKey(event());
         @if (eventSubtypeDescriptor) {
             <div>{{ eventSubtypeDescriptor | artemisTranslate }}: {{ event().title }}</div>
@@ -8,38 +8,38 @@
         }
         <fa-icon [icon]="faXmark" class="close-button" (click)="closePopover()" />
     </div>
-    <div class="popover-info-row">
-        <div class="popover-icon-frame">
+    <div class="info-row">
+        <div class="icon-frame">
             <fa-icon class="popover-icon" [icon]="utils.getIconForEvent(event())" />
         </div>
         <div jhiTranslate="{{ utils.getEventNameKey(event()) }}"></div>
     </div>
     @if (event().endDate) {
-        <div class="popover-info-row" id="start-and-end-row">
-            <div class="popover-icon-frame">
+        <div class="info-row" id="start-and-end-row">
+            <div class="icon-frame">
                 <fa-icon [icon]="faClock" />
             </div>
             <div>{{ utils.getTimeString(event().startDate) }}-{{ utils.getTimeString(event().endDate!) }}</div>
         </div>
     } @else {
-        <div class="popover-info-row" id="start-row">
-            <div class="popover-icon-frame">
+        <div class="info-row" id="start-row">
+            <div class="icon-frame">
                 <fa-icon [icon]="faClock" />
             </div>
             <div>{{ utils.getTimeString(event().startDate) }}</div>
         </div>
     }
     @if (event().location) {
-        <div class="popover-info-row" id="location-row">
-            <div class="popover-icon-frame">
+        <div class="info-row" id="location-row">
+            <div class="icon-frame">
                 <fa-icon [icon]="faLocationDot" />
             </div>
             <div>{{ event().location }}</div>
         </div>
     }
     @if (event().facilitator) {
-        <div class="popover-info-row" id="facilitator-row">
-            <div class="popover-icon-frame">
+        <div class="info-row" id="facilitator-row">
+            <div class="icon-frame">
                 <fa-icon class="popover-icon" [icon]="faUser" />
             </div>
             <div>{{ event().facilitator }}</div>

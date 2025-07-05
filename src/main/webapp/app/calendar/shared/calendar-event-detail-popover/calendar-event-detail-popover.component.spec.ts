@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CalendarEventDetailPopoverComponent } from './calendar-event-detail-popover.component';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarEventDetailPopoverComponent } from './calendar-event-detail-popover.component';
 
 describe('CalendarEventDetailPopoverComponent', () => {
     let fixture: ComponentFixture<CalendarEventDetailPopoverComponent>;

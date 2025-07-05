@@ -1,10 +1,10 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { CalendarEvent, CalendarEventDTO } from 'app/calendar/shared/entities/calendar-event.model';
 import { HttpClient } from '@angular/common/http';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import timezone from 'dayjs/plugin/timezone';
+import { CalendarEvent, CalendarEventDTO } from 'app/calendar/shared/entities/calendar-event.model';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 
 dayjs.extend(timezone);
@@ -38,11 +38,11 @@ export class CalendarEventService {
         const nextMonthKey = firstDayOfCurrentMonth.add(1, 'month').format('YYYY-MM');
         const monthKeys = `${previousMonthKey},${currentMonthKey},${nextMonthKey}`;
         const timeZone = dayjs.tz.guess();
-        const params = new HttpParams().set('monthKeys', monthKeys).set('timeZone', timeZone);
+        const parameters = new HttpParams().set('monthKeys', monthKeys).set('timeZone', timeZone);
 
         return this.httpClient
             .get<Record<string, CalendarEventDTO[]>>(`${this.resourceUrl}/${courseId}/calendar-events`, {
-                params,
+                params: parameters,
                 observe: 'response',
             })
             .pipe(

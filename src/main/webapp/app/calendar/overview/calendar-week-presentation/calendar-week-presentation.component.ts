@@ -2,13 +2,13 @@ import { AfterViewInit, Component, ElementRef, computed, input, signal, viewChil
 import { NgClass, NgStyle } from '@angular/common';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { Dayjs } from 'dayjs/esm';
-import * as Utils from 'app/calendar/shared/util/calendar-util';
-import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CalendarEventAndPositioning, PositionInfo } from 'app/calendar/shared/entities/calendar-event-positioning.model';
+import * as utils from 'app/calendar/shared/util/calendar-util';
+import { CalendarEventAndPosition, PositionInfo } from 'app/calendar/shared/entities/calendar-event-and-position.model';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
 import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
+import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 
 @Component({
     selector: 'calendar-desktop-week',
@@ -19,26 +19,27 @@ import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calenda
 export class CalendarWeekPresentationComponent implements AfterViewInit {
     firstDayOfCurrentWeek = input.required<Dayjs>();
     selectedEvent = signal<CalendarEvent | undefined>(undefined);
+    scrollContainer = viewChild<ElementRef>('scrollContainer');
 
-    readonly utils = Utils;
+    readonly utils = utils;
     readonly weekDays = computed(() => this.computeWeekDaysFrom(this.firstDayOfCurrentWeek()));
 
-    scrollContainer = viewChild<ElementRef>('scrollContainer');
     private popover?: NgbPopover;
-    private dayToEventAndPositioningMap = computed(() => this.computeDayToEventAndPositioningMap(this.eventService.eventMap(), this.weekDays()));
-    private static HOUR_SEGMENT_HEIGHT = 16 * 3.5;
+    private dayToEventAndPositionMap = computed(() => this.computeDayToEventAndPositionMap(this.eventService.eventMap(), this.weekDays()));
+    private static readonly PIXELS_PER_REM = 16;
+    private static readonly HOUR_SEGMENT_HEIGHT_IN_PIXEL = 3.5 * CalendarWeekPresentationComponent.PIXELS_PER_REM;
 
     constructor(private eventService: CalendarEventService) {}
 
     ngAfterViewInit(): void {
         const container = this.scrollContainer();
         if (container) {
-            container.nativeElement.scrollTop = 7.5 * CalendarWeekPresentationComponent.HOUR_SEGMENT_HEIGHT;
+            container.nativeElement.scrollTop = 7.5 * CalendarWeekPresentationComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
         }
     }
 
-    getEventsAndPositioningsFor(day: Dayjs): CalendarEventAndPositioning[] {
-        return this.dayToEventAndPositioningMap().get(day.format('YYYY-MM-DD')) ?? [];
+    getEventsAndPositionsFor(day: Dayjs): CalendarEventAndPosition[] {
+        return this.dayToEventAndPositionMap().get(day.format('YYYY-MM-DD')) ?? [];
     }
 
     openPopover(event: CalendarEvent, popover: NgbPopover) {
@@ -59,60 +60,60 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
     }
 
     private computeWeekDaysFrom(firstDayOfWeek: Dayjs): Dayjs[] {
-        return Array.from({ length: 7 }, (_, i) => firstDayOfWeek.add(i, 'day'));
+        return Array.from({ length: 7 }, (_, index) => firstDayOfWeek.add(index, 'day'));
     }
 
-    private computeDayToEventAndPositioningMap(eventMap: Map<string, CalendarEvent[]>, days: Dayjs[]): Map<string, CalendarEventAndPositioning[]> {
-        const allowedKeys = new Set(days.map((day) => day.format('YYYY-MM-DD')));
+    private computeDayToEventAndPositionMap(eventMap: Map<string, CalendarEvent[]>, days: Dayjs[]): Map<string, CalendarEventAndPosition[]> {
+        const dayKeysToBeIncluded = new Set(days.map((day) => day.format('YYYY-MM-DD')));
         return new Map(
             Array.from(eventMap)
-                .filter(([key]) => allowedKeys.has(key))
+                .filter(([key]) => dayKeysToBeIncluded.has(key))
                 .map(([key, events]) => {
-                    const positioned = this.addPositioningsToCalendarEvents(events);
+                    const positioned = this.addPositionsToCalendarEvents(events);
                     return [key, positioned];
                 }),
         );
     }
 
-    private addPositioningsToCalendarEvents(calendarEvents: CalendarEvent[]): CalendarEventAndPositioning[] {
+    private addPositionsToCalendarEvents(calendarEvents: CalendarEvent[]): CalendarEventAndPosition[] {
         if (calendarEvents.length === 0) {
             return [];
         }
 
-        const sorted = [...calendarEvents].sort((a, b) => a.startDate.diff(b.startDate));
-        const positionedEvents: CalendarEventAndPositioning[] = [];
+        const sorted = [...calendarEvents].sort((firstEvent, secondEvent) => firstEvent.startDate.diff(secondEvent.startDate));
 
+        const positionedEvents: CalendarEventAndPosition[] = [];
         let currentGroup: CalendarEvent[] = [];
-
         for (const event of sorted) {
-            if (currentGroup.length === 0 || currentGroup.some((e) => this.overlaps(e, event))) {
+            if (currentGroup.length === 0 || currentGroup.some((otherEvent) => this.overlaps(otherEvent, event))) {
                 currentGroup.push(event);
             } else {
-                positionedEvents.push(...this.calculatePositioningsForEventGroup(currentGroup));
+                positionedEvents.push(...this.calculatePositionsForEventGroup(currentGroup));
                 currentGroup = [event];
             }
         }
-        positionedEvents.push(...this.calculatePositioningsForEventGroup(currentGroup));
+        positionedEvents.push(...this.calculatePositionsForEventGroup(currentGroup));
 
         return positionedEvents;
     }
 
-    private calculatePositioningsForEventGroup(currentGroup: CalendarEvent[]): CalendarEventAndPositioning[] {
-        const pixelsPerMinute = CalendarWeekPresentationComponent.HOUR_SEGMENT_HEIGHT / 60;
+    private calculatePositionsForEventGroup(currentGroup: CalendarEvent[]): CalendarEventAndPosition[] {
+        const pixelsPerMinute = CalendarWeekPresentationComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL / 60;
 
-        const horizontalMargin = 1.5;
-        const gapBetweenEvents = 1.5;
-        const totalGapBetweenEvents = currentGroup.length > 1 ? gapBetweenEvents * (currentGroup.length - 1) : 0;
+        const horizontalMarginAsPercentage = 1.5;
+        const gapBetweenEventsAsPercentage = 1.5;
+        const totalGapBetweenEventsAsPercentage = currentGroup.length > 1 ? gapBetweenEventsAsPercentage * (currentGroup.length - 1) : 0;
 
-        const availableWidth = 100 - totalGapBetweenEvents - 2 * horizontalMargin;
-        const eventWidth = availableWidth / currentGroup.length;
+        const availableWidthAsPercentage = 100 - totalGapBetweenEventsAsPercentage - 2 * horizontalMarginAsPercentage;
+        const eventWidthAsPercentage = availableWidthAsPercentage / currentGroup.length;
 
+        const defaultHeightInPixel = 24;
         return currentGroup.map((event, index) => {
             const top = event.startDate.diff(event.startDate.startOf('day'), 'minute') * pixelsPerMinute;
-            const height = event.endDate ? event.endDate.diff(event.startDate, 'minute') * pixelsPerMinute : 24;
-            const left = horizontalMargin + index * (eventWidth + gapBetweenEvents);
+            const height = event.endDate ? event.endDate.diff(event.startDate, 'minute') * pixelsPerMinute : defaultHeightInPixel;
+            const left = horizontalMarginAsPercentage + index * (eventWidthAsPercentage + gapBetweenEventsAsPercentage);
 
-            const pos: PositionInfo = { top, height, left, width: eventWidth };
+            const pos: PositionInfo = { top, height, left, width: eventWidthAsPercentage };
             return { event, position: pos };
         });
     }

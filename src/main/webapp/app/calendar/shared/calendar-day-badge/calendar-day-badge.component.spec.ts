@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CalendarDayBadgeComponent } from './calendar-day-badge.component';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
+import { CalendarDayBadgeComponent } from './calendar-day-badge.component';
 
 describe('CalendarDayBadgeComponent', () => {
     let component: CalendarDayBadgeComponent;

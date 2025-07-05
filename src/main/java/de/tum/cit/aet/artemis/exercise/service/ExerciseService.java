@@ -810,17 +810,18 @@ public class ExerciseService {
      * logged-in user is course staff member (either tutor, editor ot student of the {@link Course})
      *
      * @param courseId      the ID of the course
-     * @param userIsStudent indicates whether the logged-in user is a course staff member
+     * @param userIsStudent indicates whether the logged-in user is a student
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromFileUploadAndTextAndModellingAndProgrammingExercises(Long courseId, boolean userIsStudent) {
-        List<Exercise> exercises = exerciseRepository.findFileUploadAndTextAndModellingExercisesByCourseId(courseId);
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromNonQuizExercises(Long courseId, boolean userIsStudent) {
+        List<Exercise> exercises = exerciseRepository.findNonQuizExercisesByCourseId(courseId);
         return exercises.stream().flatMap(exercise -> deriveEvents(exercise, !userIsStudent).stream()).collect(Collectors.toSet());
     }
 
     /**
      * Derives the following events for a given {@link Exercise}:
      * <ul>
+     * <li>One event representing the release date if available</li>
      * <li>One event representing the start date if available</li>
      * <li>One event representing the due date if available</li>
      * <li>One event representing the assessment due date if available</li>

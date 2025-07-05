@@ -595,21 +595,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * The events are only derived given that either the exercise is visible to students or the logged-in user is a course
      * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
      * <p>
-     * Context:
-     * <ul>
-     * <li>
+     * Context: <br>
      * For {@link QuizExercise}s in {@code QuizMode.INDIVIDUAL} the user can decide when to start the quiz himself.
-     * If set, the releaseDate constrains the duration during which the user can participate in the quiz by defining a start.
-     * If set, the dueDate constrains the duration during which the user can participate in the quiz by defining an end.
-     * The dueDate and startDate can be set independent of each other.
-     * </li>
-     * <li>
      * For {@link QuizExercise}s in {@code QuizMode.BATCHED} the user can join a quiz by using a password. The instructor can then start the quiz manually.
-     * If set, the releaseDate constrains the duration during which the user can join the quiz by defining a start.
-     * If set, the dueDate constrains the duration during which the user can join the quiz by defining an end.
+     * For both modes, the period in which the quiz can be held may be constrained by releaseDate (defining a start of the period) or dueDate (defining an end of the period).
      * The dueDate and startDate can be set independent of each other.
-     * </li>
-     * </ul>
      *
      * @param quizExercise      the quiz from which to derive the events
      * @param userIsCourseStaff indicates whether the logged-in user is a course staff member

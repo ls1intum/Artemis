@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CalendarEventFilterComponent } from './calendar-event-filter.component';
-import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
+import { signal } from '@angular/core';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
-import { signal } from '@angular/core';
-import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective } from 'ng-mocks';
+import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
+import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
+import { CalendarEventFilterComponent } from './calendar-event-filter.component';
 
 describe('CalendarEventFilterComponent', () => {
     let component: CalendarEventFilterComponent;
@@ -46,7 +46,7 @@ describe('CalendarEventFilterComponent', () => {
     });
 
     it('should call toggleOption when chip remove icon is clicked', () => {
-        const chipRemoveButtons = fixture.debugElement.queryAll(By.css('.remove-btn'));
+        const chipRemoveButtons = fixture.debugElement.queryAll(By.css('.remove-button'));
         chipRemoveButtons[0].nativeElement.click();
         fixture.detectChanges();
 
@@ -98,9 +98,9 @@ describe('CalendarEventFilterComponent', () => {
     });
 
     it('should return correct CSS class for each option', () => {
-        expect(component.getColorClassForFilteringOption('examEvents')).toBe('exam');
-        expect(component.getColorClassForFilteringOption('lectureEvents')).toBe('lecture');
-        expect(component.getColorClassForFilteringOption('tutorialEvents')).toBe('tutorial');
-        expect(component.getColorClassForFilteringOption('exerciseEvents')).toBe('exercise');
+        expect(component.getColorClassForFilteringOption('examEvents')).toBe('exam-chip');
+        expect(component.getColorClassForFilteringOption('lectureEvents')).toBe('lecture-chip');
+        expect(component.getColorClassForFilteringOption('tutorialEvents')).toBe('tutorial-chip');
+        expect(component.getColorClassForFilteringOption('exerciseEvents')).toBe('exercise-chip');
     });
 });

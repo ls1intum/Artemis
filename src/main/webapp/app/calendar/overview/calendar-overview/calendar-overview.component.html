@@ -5,7 +5,7 @@
         <jhi-calendar-event-filter />
         <button id="today-button" type="button" class="btn btn-outline-primary" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
         <div class="btn-group" role="group">
-            <div
+            <button
                 id="week-button"
                 class="btn"
                 [ngClass]="{
@@ -14,9 +14,9 @@
                 }"
                 (click)="presentation.set('week')"
                 jhiTranslate="artemisApp.calendar.weekButtonLabel"
-            ></div>
+            ></button>
 
-            <div
+            <button
                 id="month-button"
                 class="btn"
                 [ngClass]="{
@@ -25,7 +25,7 @@
                 }"
                 (click)="presentation.set('month')"
                 jhiTranslate="artemisApp.calendar.monthButtonLabel"
-            ></div>
+            ></button>
         </div>
         <div class="btn-group" role="group" aria-label="Navigation controls">
             <button id="previous-button" type="button" class="btn btn-outline-primary" (click)="goToPrevious()">

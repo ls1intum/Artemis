@@ -181,6 +181,7 @@ public class QuizExerciseUtilService {
     /**
      * Creates and saves a new synchronized quiz exercise.
      *
+     * @param course      The course for which to create the quiz.
      * @param releaseDate The release date of the quiz.
      * @param startTime   The start time of the batch.
      * @param duration    The duration of the quiz in seconds.

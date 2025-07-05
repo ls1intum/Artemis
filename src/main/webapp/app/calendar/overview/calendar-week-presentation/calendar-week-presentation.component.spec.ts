@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CalendarWeekPresentationComponent } from './calendar-week-presentation.component';
-import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
-import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
+import { By } from '@angular/platform-browser';
+import dayjs from 'dayjs/esm';
 import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { By } from '@angular/platform-browser';
-import dayjs from 'dayjs/esm';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarWeekPresentationComponent } from './calendar-week-presentation.component';
+import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
+import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 
 describe('CalendarDesktopWeekComponent', () => {
     let component: CalendarWeekPresentationComponent;
@@ -66,38 +66,39 @@ describe('CalendarDesktopWeekComponent', () => {
         const weekDays = component.weekDays();
         expect(weekDays).toHaveLength(7);
 
-        const start = firstDayOfTestWeek;
-        for (let i = 0; i < 7; i++) {
-            expect(weekDays[i].isSame(start.add(i, 'day'), 'day')).toBeTrue();
+        for (let index = 0; index < 7; index++) {
+            expect(weekDays[index].isSame(firstDayOfTestWeek.add(index, 'day'), 'day')).toBeTrue();
         }
     });
 
     it('should display correct events', async () => {
-        const examEventEl = fixture.debugElement.query(By.css('[data-testid="exam-3-startAndEndDate"]'))?.nativeElement;
-        const lectureEventEl = fixture.debugElement.query(By.css('[data-testid="lecture-1-startAndEndDate"]'))?.nativeElement;
-        const tutorialEventEl = fixture.debugElement.query(By.css('[data-testid="tutorial-1"]'))?.nativeElement;
-        const textExerciseEventEl = fixture.debugElement.query(By.css('[data-testid="textExercise-31-startDate"]'))?.nativeElement;
+        const examEventCell = fixture.debugElement.query(By.css('[data-testid="exam-3-startAndEndDate"]'))?.nativeElement;
+        const lectureEventCell = fixture.debugElement.query(By.css('[data-testid="lecture-1-startAndEndDate"]'))?.nativeElement;
+        const tutorialEventCell = fixture.debugElement.query(By.css('[data-testid="tutorial-1"]'))?.nativeElement;
+        const textExerciseEventCell = fixture.debugElement.query(By.css('[data-testid="textExercise-31-startDate"]'))?.nativeElement;
 
-        expect(examEventEl).toBeTruthy();
-        expect(lectureEventEl).toBeTruthy();
-        expect(tutorialEventEl).toBeTruthy();
-        expect(textExerciseEventEl).toBeTruthy();
+        expect(examEventCell).toBeTruthy();
+        expect(lectureEventCell).toBeTruthy();
+        expect(tutorialEventCell).toBeTruthy();
+        expect(textExerciseEventCell).toBeTruthy();
 
-        const getStyle = (el: HTMLElement) => {
+        const getStyle = (element: HTMLElement) => {
             return {
-                top: parseFloat(el.style.top),
-                height: parseFloat(el.style.height),
-                left: parseFloat(el.style.left),
-                width: parseFloat(el.style.width),
+                top: parseFloat(element.style.top),
+                height: parseFloat(element.style.height),
+                left: parseFloat(element.style.left),
+                width: parseFloat(element.style.width),
             };
         };
 
-        const examStyle = getStyle(examEventEl);
-        const lectureStyle = getStyle(lectureEventEl);
-        const tutorialStyle = getStyle(tutorialEventEl);
-        const textExerciseStyle = getStyle(textExerciseEventEl);
+        const examStyle = getStyle(examEventCell);
+        const lectureStyle = getStyle(lectureEventCell);
+        const tutorialStyle = getStyle(tutorialEventCell);
+        const textExerciseStyle = getStyle(textExerciseEventCell);
 
-        const pixelsPerMinute = (16 * 3.5) / 60;
+        const pixelsPerRem = 16;
+        const hourSegmentHeightInPixel = 3.5 * pixelsPerRem;
+        const pixelsPerMinute = hourSegmentHeightInPixel / 60;
 
         expect(examStyle.top).toBeCloseTo(12 * 60 * pixelsPerMinute, 0);
         expect(lectureStyle.top).toBeCloseTo(10 * 60 * pixelsPerMinute, 0);

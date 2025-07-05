@@ -335,7 +335,8 @@ public class LectureService {
     }
 
     /**
-     * Derives events for a given {@link Lecture} that represent both startDate and endDate.
+     * Derives an event for a given {@link Lecture} that represents either startDate if exclusively available, or endDate
+     * if exclusively available or both startDate and endDate if both are available.
      * <p>
      * The event is only derived given that either the lecture is visible to students or the logged-in user is a course
      * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).

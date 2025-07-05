@@ -1,10 +1,10 @@
 import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faClock, faLocationDot, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as utils from 'app/calendar/shared/util/calendar-util';
 import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-calendar-event-detail-popover',

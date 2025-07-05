@@ -3,7 +3,7 @@
         <div class="header-spacer"></div>
         @for (day of weekDays(); track utils.identify(day)) {
             <div class="day-info">
-                <div class="fs-6 fw-semibold">
+                <div class="day-name">
                     {{ utils.getWeekDayNameKey(day) | artemisTranslate }}
                 </div>
                 <day-badge [day]="day" />
@@ -11,7 +11,7 @@
         }
     </div>
     <div class="scroll-container" #scrollContainer [class.no-scroll]="selectedEvent()">
-        <div class="specific-time-event-section">
+        <div class="event-section">
             <div class="info-column">
                 <div class="info-column-spacer"></div>
                 @for (hour of utils.getHoursOfDay(); track hour) {
@@ -23,7 +23,7 @@
                     @for (index of utils.range(24); track index) {
                         <div class="hour-segment"></div>
                     }
-                    @for (item of getEventsAndPositioningsFor(day); track item.event.id) {
+                    @for (item of getEventsAndPositionsFor(day); track item.event.id) {
                         @let event = item.event;
                         @let position = item.position;
                         @let eventSubtypeDescriptor = utils.getEventSubtypeNameKey(event);

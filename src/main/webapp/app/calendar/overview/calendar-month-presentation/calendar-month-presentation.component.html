@@ -1,7 +1,7 @@
 <div class="frame">
     <div class="header">
         @for (dayNameKey of utils.getWeekDayNameKeys(); track dayNameKey) {
-            <div class="day-name">{{ dayNameKey | artemisTranslate }}</div>
+            <div class="day-name" jhiTranslate="{{ dayNameKey }}"></div>
         }
     </div>
     @for (week of weeks(); track utils.identify(week)) {
@@ -13,59 +13,12 @@
                         @let events = getEventsOf(day);
                         @if (events.length > 3) {
                             @for (event of utils.limitToLengthTwo(events); track event.id) {
-                                @let eventSubtypeDescriptor = utils.getEventSubtypeNameKey(event);
-                                <div
-                                    class="event-cell"
-                                    [ngClass]="{
-                                        'exam-event-cell': event.isExamEvent,
-                                        'lecture-event-cell': event.isLectureEvent(),
-                                        'tutorial-event-cell': event.isTutorialEvent(),
-                                        'exercise-event-cell': event.isExerciseEvent(),
-                                    }"
-                                    [ngbPopover]="eventPopover"
-                                    triggers="manual"
-                                    [autoClose]="false"
-                                    [placement]="['bottom', 'right', 'left', 'top']"
-                                    (click)="openPopover(event, popover)"
-                                    #popover="ngbPopover"
-                                    [attr.data-testid]="event.id"
-                                >
-                                    @if (eventSubtypeDescriptor) {
-                                        {{ eventSubtypeDescriptor | artemisTranslate }}: {{ event.title }}
-                                    } @else {
-                                        {{ event.title }}
-                                    }
-                                </div>
+                                <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: event }" />
                             }
                             <div class="more-events-info">+{{ events.length - 2 }} more</div>
                         } @else {
                             @for (event of events; track event.id) {
-                                @let eventSubtypeDescriptor = utils.getEventSubtypeNameKey(event);
-                                <div
-                                    class="event-cell"
-                                    [ngClass]="{
-                                        'exam-event-cell': event.isExamEvent,
-                                        'lecture-event-cell': event.isLectureEvent(),
-                                        'tutorial-event-cell': event.isTutorialEvent(),
-                                        'exercise-event-cell': event.isExerciseEvent(),
-                                    }"
-                                    [ngbPopover]="eventPopover"
-                                    triggers="manual"
-                                    [autoClose]="false"
-                                    [placement]="['bottom', 'right', 'left', 'top']"
-                                    (click)="openPopover(event, popover)"
-                                    #popover="ngbPopover"
-                                    [attr.data-testid]="event.id"
-                                >
-                                    <div class="event-label">
-                                        @if (eventSubtypeDescriptor) {
-                                            {{ eventSubtypeDescriptor | artemisTranslate }}: {{ event.title }}
-                                        } @else {
-                                            {{ event.title }}
-                                        }
-                                    </div>
-                                    <fa-icon [icon]="utils.getIconForEvent(event)" />
-                                </div>
+                                <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: event }" />
                             }
                         }
                     }
@@ -80,4 +33,33 @@
     @if (event) {
         <jhi-calendar-event-detail-popover [event]="event" (onClosePopover)="closePopover()" />
     }
+</ng-template>
+
+<ng-template #eventCell let-event>
+    @let eventSubtypeDescriptor = utils.getEventSubtypeNameKey(event);
+    <div
+        class="event-cell"
+        [ngClass]="{
+            'exam-event-cell': event.isExamEvent,
+            'lecture-event-cell': event.isLectureEvent(),
+            'tutorial-event-cell': event.isTutorialEvent(),
+            'exercise-event-cell': event.isExerciseEvent(),
+        }"
+        [ngbPopover]="eventPopover"
+        triggers="manual"
+        [autoClose]="false"
+        [placement]="['bottom', 'right', 'left', 'top']"
+        (click)="openPopover(event, popover)"
+        #popover="ngbPopover"
+        [attr.data-testid]="event.id"
+    >
+        <div class="event-label">
+            @if (eventSubtypeDescriptor) {
+                {{ eventSubtypeDescriptor | artemisTranslate }}: {{ event.title }}
+            } @else {
+                {{ event.title }}
+            }
+        </div>
+        <fa-icon [icon]="utils.getIconForEvent(event)" />
+    </div>
 </ng-template>
