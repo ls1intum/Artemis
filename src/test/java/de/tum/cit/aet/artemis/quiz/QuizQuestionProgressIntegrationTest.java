@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizQuestionProgressTestRepos
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizQuestionTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
+@Transactional
 class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
@@ -64,8 +66,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @BeforeEach
     void setUp() {
-        quizQuestionProgressTestRepository.deleteAll();
-        userTestRepository.deleteAll();
 
         User user = new User();
         user.setLogin("testuser");
