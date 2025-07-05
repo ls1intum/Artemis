@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.net.URI;
+import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,8 @@ public class PyrisHealthIndicator implements HealthIndicator {
     private int CACHE_TTL;
 
     private final RestTemplate restTemplate;
+
+    private static final String IRIS_URL_KEY = "url";
 
     @Value("${artemis.iris.url}")
     private URI irisUrl;
@@ -62,10 +65,12 @@ public class PyrisHealthIndicator implements HealthIndicator {
         }
 
         ConnectorHealth health;
+        var additionalInfo = new HashMap<String, Object>();
+        additionalInfo.put(IRIS_URL_KEY, irisUrl);
         try {
             PyrisHealthStatusDTO[] status = restTemplate.getForObject(irisUrl + "/api/v1/health/", PyrisHealthStatusDTO[].class);
             var isUp = status != null;
-            health = new ConnectorHealth(isUp, null, null);
+            health = new ConnectorHealth(isUp, additionalInfo, null);
         }
         catch (RestClientException e) {
             health = new ConnectorHealth(false, null, e);
