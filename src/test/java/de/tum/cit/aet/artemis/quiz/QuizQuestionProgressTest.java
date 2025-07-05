@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +64,10 @@ class QuizQuestionProgressTest extends AbstractSpringIntegrationIndependentTest 
 
     @BeforeEach
     void setUp() {
+        quizQuestionProgressTestRepository.deleteAll();
+        quizQuestionTestRepository.deleteAll();
+        userTestRepository.deleteAll();
+
         User user = new User();
         user.setLogin("testuser");
         userTestRepository.save(user);
@@ -90,13 +93,6 @@ class QuizQuestionProgressTest extends AbstractSpringIntegrationIndependentTest 
         quizQuestionProgress.setLastAnsweredAt(ZonedDateTime.now());
         quizQuestionProgressService.save(quizQuestionProgress);
         quizQuestionProgressTestRepository.save(quizQuestionProgress);
-    }
-
-    @AfterEach
-    void cleanUp() {
-        quizQuestionProgressTestRepository.deleteAll();
-        quizQuestionTestRepository.deleteAll();
-        userTestRepository.deleteAll();
     }
 
     @WithMockUser(username = "testuser")
