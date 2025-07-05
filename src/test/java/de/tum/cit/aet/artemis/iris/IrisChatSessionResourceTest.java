@@ -127,9 +127,12 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         irisSessionRepository.save(IrisChatSessionFactory.createLectureSessionForUser(lecture, user));
         irisSessionRepository.save(IrisChatSessionFactory.createTextExerciseChatSessionForUser(textExercise, user));
         irisSessionRepository.save(IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(soloExercise, user));
+        IrisChatSession latestSessionThatShouldBeIncluded = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
+        irisSessionRepository.save(latestSessionThatShouldBeIncluded);
 
         List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
-        assertThat(irisChatSessions).hasSize(0);
+        assertThat(irisChatSessions).hasSize(1);
+        assertThat(irisChatSessions.stream().anyMatch(session -> session.id().equals(latestSessionThatShouldBeIncluded.getId()))).isTrue();
     }
 
     private void saveChatSessionWithMessages(IrisChatSession session) {
@@ -142,17 +145,22 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     void getAllSessionsForCourseWithSessions_shouldReturnSessionsWithMessages() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
+        irisSessionRepository.save(IrisChatSessionFactory.createCourseChatSessionForUser(course, user)); // empty session, should be filtered out
         saveChatSessionWithMessages(IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user));
         saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
         saveChatSessionWithMessages(IrisChatSessionFactory.createTextExerciseSessionForUserWithMessages(textExercise, user));
         saveChatSessionWithMessages(IrisChatSessionFactory.createProgrammingExerciseChatSessionForUserWithMessages(soloExercise, user));
+        IrisChatSession latestSessionThatShouldBeIncluded = IrisChatSessionFactory.createCourseChatSessionForUser(course, user); // empty session but created last (opening
+                                                                                                                                 // dashboard), should be included
+        irisSessionRepository.save(latestSessionThatShouldBeIncluded);
 
         List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
 
-        assertThat(irisChatSessions).hasSize(4);
+        assertThat(irisChatSessions).hasSize(5);
         assertThat(irisChatSessions.stream().anyMatch(session -> session.entityId().equals(lecture.getId()))).isTrue();
         assertThat(irisChatSessions.stream().anyMatch(session -> session.entityId().equals(course.getId()))).isTrue();
         assertThat(irisChatSessions.stream().anyMatch(session -> session.entityId().equals(textExercise.getId()))).isTrue();
         assertThat(irisChatSessions.stream().anyMatch(session -> session.entityId().equals(soloExercise.getId()))).isTrue();
+        assertThat(irisChatSessions.stream().anyMatch(session -> session.id().equals(latestSessionThatShouldBeIncluded.getId()))).isTrue();
     }
 }
