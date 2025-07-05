@@ -1,4 +1,4 @@
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
 
 export interface PositionInfo {
     top: number;

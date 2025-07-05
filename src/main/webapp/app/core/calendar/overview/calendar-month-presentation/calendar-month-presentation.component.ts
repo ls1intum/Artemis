@@ -5,11 +5,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Dayjs } from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as utils from 'app/calendar/shared/util/calendar-util';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
-import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
-import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
-import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
+import * as utils from 'app/core/calendar/shared/util/calendar-util';
+import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
+import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 
 @Component({
     selector: 'calendar-desktop-month',

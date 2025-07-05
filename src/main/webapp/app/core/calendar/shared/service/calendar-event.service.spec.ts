@@ -2,8 +2,8 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
 
 describe('CalendarEventService', () => {
     let service: CalendarEventService;

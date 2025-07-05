@@ -8,13 +8,13 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
-import { CalendarWeekPresentationComponent } from 'app/calendar/overview/calendar-week-presentation/calendar-week-presentation.component';
-import { CalendarMonthPresentationComponent } from 'app/calendar/overview/calendar-month-presentation/calendar-month-presentation.component';
-import { CalendarEventFilterComponent } from 'app/calendar/shared/calendar-event-filter/calendar-event-filter.component';
-import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
-import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarWeekPresentationComponent } from 'app/core/calendar/overview/calendar-week-presentation/calendar-week-presentation.component';
+import { CalendarMonthPresentationComponent } from 'app/core/calendar/overview/calendar-month-presentation/calendar-month-presentation.component';
+import { CalendarEventFilterComponent } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
+import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
+import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarOverviewComponent } from './calendar-overview.component';
 
 describe('CalendarDesktopComponent', () => {

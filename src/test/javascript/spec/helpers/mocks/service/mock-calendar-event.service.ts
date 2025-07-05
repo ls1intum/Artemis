@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
 
 @Injectable()
 export class MockCalendarEventService {

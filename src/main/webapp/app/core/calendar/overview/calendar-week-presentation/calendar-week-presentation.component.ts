@@ -3,12 +3,12 @@ import { NgClass, NgStyle } from '@angular/common';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { Dayjs } from 'dayjs/esm';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as utils from 'app/calendar/shared/util/calendar-util';
-import { CalendarEventAndPosition, PositionInfo } from 'app/calendar/shared/entities/calendar-event-and-position.model';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
-import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
-import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
-import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
+import * as utils from 'app/core/calendar/shared/util/calendar-util';
+import { CalendarEventAndPosition, PositionInfo } from 'app/core/calendar/shared/entities/calendar-event-and-position.model';
+import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
+import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 
 @Component({
     selector: 'calendar-desktop-week',

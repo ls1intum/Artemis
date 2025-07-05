@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventDetailPopoverComponent } from './calendar-event-detail-popover.component';
 
 describe('CalendarEventDetailPopoverComponent', () => {

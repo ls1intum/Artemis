@@ -357,7 +357,7 @@ export const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.CALENDAR,
-                loadComponent: () => import('app/calendar/overview/calendar-overview/calendar-overview.component').then((m) => m.CalendarOverviewComponent),
+                loadComponent: () => import('app/core/calendar/overview/calendar-overview/calendar-overview.component').then((m) => m.CalendarOverviewComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.calendar',

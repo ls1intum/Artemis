@@ -5,11 +5,11 @@ import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';
-import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
-import { CalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarMonthPresentationComponent } from './calendar-month-presentation.component';
-import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
-import { CalendarEventDetailPopoverComponent } from 'app/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
+import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
+import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 
 describe('CalendarDesktopMonthComponent', () => {
     let fixture: ComponentFixture<CalendarMonthPresentationComponent>;

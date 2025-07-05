@@ -4,8 +4,8 @@ import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective } from 'ng-mocks';
-import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
-import { CalendarEventService } from 'app/calendar/shared/service/calendar-event.service';
+import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { CalendarEventFilterComponent } from './calendar-event-filter.component';
 
 describe('CalendarEventFilterComponent', () => {
