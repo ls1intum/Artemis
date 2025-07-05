@@ -31,5 +31,10 @@
                 referencedColumnNames="id"
                 constraintName="fk_quiz_question_progress_quiz_question"
                 onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_quiz_question_progress_userid_quizquestionid" tableName="quiz_question_progress">
+            <column name="user_id"/>
+            <column name="quiz_question_id"/>
+        </createIndex>
     </changeSet>
 </databaseChangeLog>
