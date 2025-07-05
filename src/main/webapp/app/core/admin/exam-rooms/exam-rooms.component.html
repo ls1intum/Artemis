@@ -4,7 +4,7 @@
     <button class="upload-btn" (click)="upload()" [disabled]="!selectedFile">Upload</button>
 
     @if (uploading) {
-        <div>Uploading...</div>
+        <div class="info">Uploading...</div>
     }
 
     @if (uploadSuccess) {
