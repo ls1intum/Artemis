@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,10 +21,12 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.athena.domain.AthenaModuleMode;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
@@ -61,7 +65,8 @@ public class AthenaModuleService {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record AthenaModuleDTO(String name, String type) {
+    private record AthenaModuleDTO(String name, String type, @JsonProperty("supports_graded_feedback_requests") boolean supportsGradedFeedbackRequests,
+            @JsonProperty("supports_non_graded_feedback_requests") boolean supportsNonGradedFeedbackRequests) {
     }
 
     /**
@@ -88,66 +93,88 @@ public class AthenaModuleService {
     /**
      * Get all available Athena modules for a specific course and exercise type
      *
-     * @param course       The course for which the modules should be retrieved
-     * @param exerciseType The exercise type for which the modules should be retrieved
+     * @param course           The course for which the modules should be retrieved
+     * @param exerciseType     The exercise type for which the modules should be retrieved
+     * @param athenaModuleMode the optional module type to filter the available modules
      * @return The list of available Athena text modules for the course
      * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
      */
-    public List<String> getAthenaModulesForCourse(Course course, ExerciseType exerciseType) throws NetworkingException {
+    public List<String> getAthenaModulesForCourse(Course course, ExerciseType exerciseType, @Nullable AthenaModuleMode athenaModuleMode) throws NetworkingException {
 
         final String exerciseTypeName = exerciseType.getExerciseTypeAsReadableString();
 
-        Stream<String> availableModules = getAthenaModules().stream().filter(module -> exerciseTypeName.equals(module.type)).map(module -> module.name);
+        Stream<AthenaModuleDTO> availableModules = getAthenaModules().stream().filter(module -> exerciseTypeName.equals(module.type()));
 
         if (!course.getRestrictedAthenaModulesAccess()) {
             // filter out restricted modules
-            availableModules = availableModules.filter(moduleName -> !restrictedModules.contains(moduleName));
+            availableModules = availableModules.filter(module -> !restrictedModules.contains(module.name()));
         }
-        return availableModules.toList();
+
+        if (athenaModuleMode != null) {
+            availableModules = switch (athenaModuleMode) {
+                case FEEDBACK_SUGGESTIONS -> availableModules.filter(AthenaModuleDTO::supportsGradedFeedbackRequests);
+                case PRELIMINARY_FEEDBACK -> availableModules.filter(AthenaModuleDTO::supportsNonGradedFeedbackRequests);
+            };
+        }
+
+        return availableModules.map(AthenaModuleDTO::name).toList();
     }
 
     /**
      * Get the URL for an Athena module, depending on the type of exercise.
      *
-     * @param exercise The exercise for which the URL to Athena should be returned
+     * @param exerciseType The exercise type for which the URL to Athena should be returned
+     * @param moduleName   The name of the Athena module to be consulted
      * @return The URL prefix to access the Athena module. Example: <a href="http://athena.example.com/modules/text/module_text_cofee"></a>
      */
-    public String getAthenaModuleUrl(Exercise exercise) {
-        switch (exercise.getExerciseType()) {
+    public String getAthenaModuleUrl(ExerciseType exerciseType, String moduleName) {
+        switch (exerciseType) {
             case TEXT -> {
-                return athenaUrl + "/modules/text/" + exercise.getFeedbackSuggestionModule();
+                return athenaUrl + "/modules/text/" + moduleName;
             }
             case PROGRAMMING -> {
-                return athenaUrl + "/modules/programming/" + exercise.getFeedbackSuggestionModule();
+                return athenaUrl + "/modules/programming/" + moduleName;
             }
             case MODELING -> {
-                return athenaUrl + "/modules/modeling/" + exercise.getFeedbackSuggestionModule();
+                return athenaUrl + "/modules/modeling/" + moduleName;
             }
-            default -> throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
+            default -> throw new IllegalArgumentException("Exercise type not supported: " + exerciseType);
         }
     }
 
     /**
      * Checks if an exercise has access to the provided Athena module.
      *
-     * @param exercise   The exercise for which the access should be checked
-     * @param course     The course to which the exercise belongs to.
-     * @param entityName Name of the entity
+     * @param exercise         The exercise for which the access should be checked
+     * @param course           The course to which the exercise belongs to.
+     * @param athenaModuleMode The module type for which the access should be checked.
+     * @param entityName       Name of the entity
      * @throws BadRequestAlertException when the exercise has no access to the exercise's provided module.
      */
-    public void checkHasAccessToAthenaModule(Exercise exercise, Course course, String entityName) throws BadRequestAlertException {
-        if (exercise.isExamExercise() && exercise.getFeedbackSuggestionModule() != null) {
+    public void checkHasAccessToAthenaModule(Exercise exercise, Course course, AthenaModuleMode athenaModuleMode, String entityName) throws BadRequestAlertException {
+        String module = getModule(exercise, athenaModuleMode);
+        if (exercise.isExamExercise() && module != null) {
             throw new BadRequestAlertException("The exam exercise has no access to Athena", entityName, "examExerciseNoAccessToAthena");
         }
-        if (!course.getRestrictedAthenaModulesAccess() && restrictedModules.contains(exercise.getFeedbackSuggestionModule())) {
+        if (!course.getRestrictedAthenaModulesAccess() && restrictedModules.contains(module)) {
             // Course does not have access to the restricted Athena modules
-            throw new BadRequestAlertException("The exercise has no access to the selected Athena module", entityName, "noAccessToAthenaModule");
+            throw new BadRequestAlertException("The exercise has no access to the selected Athena module of type " + athenaModuleMode, entityName, "noAccessToAthenaModule");
         }
+    }
+
+    private static String getModule(Exercise exercise, AthenaModuleMode athenaModuleMode) {
+        String module = null;
+        switch (athenaModuleMode) {
+            case AthenaModuleMode.FEEDBACK_SUGGESTIONS -> module = exercise.getFeedbackSuggestionModule();
+            case AthenaModuleMode.PRELIMINARY_FEEDBACK -> module = exercise.getPreliminaryFeedbackModule();
+        }
+        return module;
     }
 
     /**
      * Checks if a module change is valid or not. In case it is not allowed it throws an exception.
      * Modules cannot be changed after the exercise due date has passed.
+     * Holds only for feedback suggestion modules.
      *
      * @param originalExercise The exercise before the update
      * @param updatedExercise  The exercise after the update
@@ -156,9 +183,13 @@ public class AthenaModuleService {
      */
     public void checkValidAthenaModuleChange(Exercise originalExercise, Exercise updatedExercise, String entityName) throws BadRequestAlertException {
         var dueDate = originalExercise.getDueDate();
-        if (!Objects.equals(originalExercise.getFeedbackSuggestionModule(), updatedExercise.getFeedbackSuggestionModule()) && dueDate != null
-                && dueDate.isBefore(ZonedDateTime.now())) {
-            throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, "athenaModuleChangeAfterDueDate");
+        checkValidityOfAnAthenaModuleBasedOnDueDate(originalExercise.getFeedbackSuggestionModule(), updatedExercise.getFeedbackSuggestionModule(), entityName, dueDate);
+        checkValidityOfAnAthenaModuleBasedOnDueDate(originalExercise.getPreliminaryFeedbackModule(), updatedExercise.getPreliminaryFeedbackModule(), entityName, dueDate);
+    }
+
+    private static void checkValidityOfAnAthenaModuleBasedOnDueDate(String originalExerciseModule, String updatedExerciseModule, String entityName, ZonedDateTime dueDate) {
+        if (!Objects.equals(originalExerciseModule, updatedExerciseModule) && dueDate != null && dueDate.isBefore(ZonedDateTime.now())) {
+            throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, " ");
         }
     }
 
@@ -167,7 +198,8 @@ public class AthenaModuleService {
      *
      * @param course The course for which the access to restricted modules should be revoked
      */
-    public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
+    public void revokeAccessToRestrictedFeedbackModules(Course course) {
         exerciseRepository.revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(course.getId(), restrictedModules);
+        exerciseRepository.revokeAccessToRestrictedPreliminaryFeedbackModulesByCourseId(course.getId(), restrictedModules);
     }
 }

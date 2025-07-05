@@ -22,6 +22,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExercisePreliminaryFeedbackOptionsComponent } from 'app/exercises/shared/preliminary-feedback/exercise-preliminary-feedback-options.component';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -35,6 +36,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         FaIconComponent,
         NgStyle,
         ExerciseFeedbackSuggestionOptionsComponent,
+        ExercisePreliminaryFeedbackOptionsComponent,
         ArtemisTranslatePipe,
     ],
 })
@@ -153,9 +155,9 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         }
     }
 
-    toggleFeedbackRequests() {
-        this.exercise.allowFeedbackRequests = !this.exercise.allowFeedbackRequests;
-        if (this.exercise.allowFeedbackRequests) {
+    toggleManualFeedbackRequests() {
+        this.exercise.allowManualFeedbackRequests = !this.exercise.allowManualFeedbackRequests;
+        if (this.exercise.allowManualFeedbackRequests) {
             this.exercise.assessmentDueDate = undefined;
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         }
@@ -175,7 +177,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         } else {
             this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
-            this.exercise.allowFeedbackRequests = false;
+            this.exercise.allowManualFeedbackRequests = false;
         }
     }
 
