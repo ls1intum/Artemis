@@ -125,6 +125,7 @@ public class QuizQuestionProgressService {
      * Save the progress of a quiz question to the database
      *
      * @param quizQuestionProgress The progress object containing the user's progress for a quiz question
+     * @return The saved QuizQuestionProgress object
      */
     public QuizQuestionProgress save(QuizQuestionProgress quizQuestionProgress) {
         return quizQuestionProgressRepository.save(quizQuestionProgress);
@@ -134,6 +135,7 @@ public class QuizQuestionProgressService {
      * Get the sorted List of 10 quiz questions based on their priority
      *
      * @param courseId ID of the course for which the quiz questions are to be fetched
+     * @return A list of 10 quiz questions sorted by priority
      */
     public List<QuizQuestion> getQuestionsForSession(Long courseId) {
         Set<QuizQuestion> allQuestions = getQuizQuestions(courseId);
@@ -150,6 +152,7 @@ public class QuizQuestionProgressService {
      *
      * @param score The score achieved for the question
      * @param data  The progress data for the question
+     * @return The repetition count for the question, which is the number of consecutive correct answers
      */
     public int calculateRepetition(double score, QuizQuestionProgressDataDAO data) {
         if (score != 1.0) {
@@ -175,6 +178,7 @@ public class QuizQuestionProgressService {
      *
      * @param score                  The score achieved for the question
      * @param previousEasinessFactor The easiness factor from the previous progress
+     * @return The new easiness factor for the question, which shows how easy the question is for the user
      */
     public double calculateEasinessFactor(double score, double previousEasinessFactor) {
         double newEasinessFactor = previousEasinessFactor + (0.1 - (5 - score * 5) * (0.08 + (1 - score * 5) * 0.02));
@@ -187,6 +191,7 @@ public class QuizQuestionProgressService {
      * @param easinessFactor   The easiness factor for the question
      * @param previousInterval The interval form the previous progress
      * @param repetition       The repetition count for the question
+     * @return The interval to determine the next session in which the question should be repeated
      */
     public int calculateInterval(double easinessFactor, int previousInterval, int repetition) {
         if (repetition <= 1) {
@@ -208,6 +213,7 @@ public class QuizQuestionProgressService {
      *
      * @param sessionCount The number of sessions in which the question has been answered
      * @param interval     The interval for the next session in which the question should be repeated
+     * @return The priority for the question, which is higher the lower the number
      */
     public int calculatePriority(int sessionCount, int interval) {
         if (sessionCount == 0) {
@@ -222,6 +228,7 @@ public class QuizQuestionProgressService {
      * They will be used for gamification elements
      *
      * @param interval The interval for the next session in which the question should be repeated
+     * @return The box number for the question, which is used to determine the learning progress of the student
      */
     public int calculateBox(int interval) {
         if (interval == 1) {
