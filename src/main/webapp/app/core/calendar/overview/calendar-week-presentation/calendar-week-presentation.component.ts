@@ -91,7 +91,7 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
         const positionedEvents: CalendarEventAndPosition[] = [];
         let currentGroup: CalendarEvent[] = [];
         for (const event of sorted) {
-            if (currentGroup.length === 0 || currentGroup.some((otherEvent) => this.overlaps(otherEvent, event))) {
+            if (currentGroup.length === 0 || currentGroup.some((otherEvent) => this.doEventsOverlap(otherEvent, event))) {
                 currentGroup.push(event);
             } else {
                 positionedEvents.push(...this.calculatePositionsForEventGroup(currentGroup));
@@ -103,44 +103,75 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
         return positionedEvents;
     }
 
-    private calculatePositionsForEventGroup(currentGroup: CalendarEvent[]): CalendarEventAndPosition[] {
+    private calculatePositionsForEventGroup(group: CalendarEvent[]): CalendarEventAndPosition[] {
         const pixelsPerMinute = CalendarWeekPresentationComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL / 60;
 
-        const horizontalMarginAsPercentage = 1.5;
-        const gapBetweenEventsAsPercentage = 1.5;
-        const totalGapBetweenEventsAsPercentage = currentGroup.length > 1 ? gapBetweenEventsAsPercentage * (currentGroup.length - 1) : 0;
+        const widthAndLeftOffsetFunction = this.getWidthAndLeftOffsetFunction(group.length);
 
-        const availableWidthAsPercentage = 100 - totalGapBetweenEventsAsPercentage - 2 * horizontalMarginAsPercentage;
-        const eventWidthAsPercentage = availableWidthAsPercentage / currentGroup.length;
+        return group.map((event, index) => {
+            const top = this.getTop(event, pixelsPerMinute);
+            const height = this.getHeight(event, pixelsPerMinute);
+            const left = widthAndLeftOffsetFunction.leftOffset(index);
 
-        const defaultHeightInPixel = 24;
-        return currentGroup.map((event, index) => {
-            const top = event.startDate.diff(event.startDate.startOf('day'), 'minute') * pixelsPerMinute;
-            const height = event.endDate ? event.endDate.diff(event.startDate, 'minute') * pixelsPerMinute : defaultHeightInPixel;
-            const left = horizontalMarginAsPercentage + index * (eventWidthAsPercentage + gapBetweenEventsAsPercentage);
-
-            const pos: PositionInfo = { top, height, left, width: eventWidthAsPercentage };
-            return { event, position: pos };
+            const position: PositionInfo = { top, height, left, width: widthAndLeftOffsetFunction.eventWidth };
+            return { event: event, position: position };
         });
     }
 
-    private overlaps(firstEvent: CalendarEvent, secondEvent: CalendarEvent): boolean {
+    private getWidthAndLeftOffsetFunction(groupSize: number) {
+        const horizontalMarginAsPercentage = 1.5;
+        const gapBetweenEventsAsPercentage = 1.5;
+        const totalGapBetweenEventsAsPercentage = groupSize > 1 ? gapBetweenEventsAsPercentage * (groupSize - 1) : 0;
+        const availableWidthAsPercentage = 100 - totalGapBetweenEventsAsPercentage - 2 * horizontalMarginAsPercentage;
+        const eventWidthAsPercentage = availableWidthAsPercentage / groupSize;
+
+        return {
+            eventWidth: eventWidthAsPercentage,
+            leftOffset: (index: number) => horizontalMarginAsPercentage + index * (eventWidthAsPercentage + gapBetweenEventsAsPercentage),
+        };
+    }
+
+    private getTop(event: CalendarEvent, pixelsPerMinute: number): number {
+        const minutes = event.startDate.diff(event.startDate.startOf('day'), 'minute');
+        return minutes * pixelsPerMinute;
+    }
+
+    private getHeight(event: CalendarEvent, pixelsPerMinute: number): number {
+        const defaultHeightInPixel = 24;
+        return event.endDate ? event.endDate.diff(event.startDate, 'minute') * pixelsPerMinute : defaultHeightInPixel;
+    }
+
+    private doEventsOverlap(firstEvent: CalendarEvent, secondEvent: CalendarEvent): boolean {
         const firstStartDate = firstEvent.startDate;
         const firstEndDate = firstEvent.endDate;
         const secondStartDate = secondEvent.startDate;
         const secondEndDate = secondEvent.endDate;
 
         if (!firstEndDate && !secondEndDate) {
-            return firstStartDate.isSame(secondStartDate, 'minute');
-        } else if (!firstEndDate) {
-            return firstStartDate.isSameOrBefore(secondEndDate!, 'minute') && secondStartDate.isSameOrBefore(firstStartDate, 'minute');
-        } else if (!secondEndDate) {
-            return secondStartDate.isSameOrBefore(firstEndDate, 'minute') && firstStartDate.isSameOrBefore(secondStartDate, 'minute');
-        } else {
-            const firstStartFallsInSecondRange = firstStartDate.isSameOrBefore(secondEndDate, 'minute') && secondStartDate.isSameOrBefore(firstStartDate, 'minute');
-            const firstEndFallsInSecondRange = firstEndDate.isSameOrBefore(secondEndDate, 'minute') && secondStartDate.isSameOrBefore(firstEndDate, 'minute');
-            const firstEventHugsSecondEvent = firstStartDate.isSameOrBefore(secondStartDate, 'minute') && secondEndDate.isSameOrBefore(firstEndDate, 'minute');
-            return firstStartFallsInSecondRange || firstEndFallsInSecondRange || firstEventHugsSecondEvent;
+            return this.areDatesSameMinute(firstStartDate, secondStartDate);
         }
+        if (!firstEndDate) {
+            return this.doesDateFallInRange(firstStartDate, secondStartDate, secondEndDate!);
+        }
+        if (!secondEndDate) {
+            return this.doesDateFallInRange(secondStartDate, firstStartDate, firstEndDate!);
+        }
+
+        const firstStartFallsInSecondRange = this.doesDateFallInRange(firstStartDate, secondStartDate, secondEndDate!);
+        const firstEndFallsInSecondRange = this.doesDateFallInRange(firstEndDate, secondStartDate, secondEndDate!);
+        const firstEventEngulfsSecondEvent = this.doesFirstRangeEngulfSecondRange(firstStartDate, firstEndDate, secondStartDate, secondEndDate);
+        return firstStartFallsInSecondRange || firstEndFallsInSecondRange || firstEventEngulfsSecondEvent;
+    }
+
+    private areDatesSameMinute(firstDate: Dayjs, secondDate: Dayjs): boolean {
+        return firstDate.isSame(secondDate, 'minute');
+    }
+
+    private doesDateFallInRange(date: Dayjs, rangeStart: Dayjs, rangeEnd: Dayjs): boolean {
+        return rangeStart.isSameOrBefore(date, 'minute') && date.isSameOrBefore(rangeEnd, 'minute');
+    }
+
+    private doesFirstRangeEngulfSecondRange(firstRangeStart: Dayjs, firstRangeEnd: Dayjs, secondRangeStart: Dayjs, secondRangeEnd: Dayjs): boolean {
+        return firstRangeStart.isSameOrBefore(secondRangeStart, 'minute') && secondRangeEnd.isSameOrBefore(firstRangeEnd, 'minute');
     }
 }
