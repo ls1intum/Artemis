@@ -297,7 +297,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
         if (currentCourse?.lectures) {
             const lecturesItem = this.sidebarItemService.getLecturesItem();
-            sidebarItems.splice(-1, 0, lecturesItem);
+            sidebarItems.splice(-2, 0, lecturesItem);
         }
 
         if (currentCourse?.exams && this.hasVisibleExams()) {

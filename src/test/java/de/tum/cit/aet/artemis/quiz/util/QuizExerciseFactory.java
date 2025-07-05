@@ -68,6 +68,32 @@ public class QuizExerciseFactory {
     }
 
     /**
+     * Creates a synchronized quiz exercise with the given dates and adds it to the course.
+     * The quiz consist of one multiple choice, one drag and drop, and one short answer question.
+     *
+     * @param course      The course the quiz should be added to.
+     * @param releaseDate The release date of the quiz.
+     * @param startTime   The startTime of the batch (synchronized quizzes have exactly one batch in which all participate).
+     * @param duration    The duration of the quiz in seconds.
+     * @return The created quiz.
+     */
+    public static QuizExercise createSynchronizedQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime startTime, int duration) {
+        QuizExercise quizExercise = (QuizExercise) ExerciseFactory.populateExercise(new QuizExercise(), releaseDate, null, null, course);
+        quizExercise.setTitle("Synchronized Quiz");
+        quizExercise.setProblemStatement(null);
+        quizExercise.setGradingInstructions(null);
+        quizExercise.setPresentationScoreEnabled(false);
+        quizExercise.setIsOpenForPractice(false);
+        quizExercise.setAllowedNumberOfAttempts(1);
+        quizExercise.setDuration(duration);
+        quizExercise.setRandomizeQuestionOrder(true);
+        quizExercise.setQuizMode(QuizMode.SYNCHRONIZED);
+        quizExercise.setQuizBatches(Set.of(generateQuizBatch(quizExercise, startTime)));
+        addQuestionsToQuizExercise(quizExercise);
+        return quizExercise;
+    }
+
+    /**
      * Creates a quiz exercise for an exam with the given dates and adds it to the course.
      * The quiz consist of one multiple choice, one drag and drop, and one short answer question.
      *

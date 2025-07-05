@@ -1,0 +1,42 @@
+{
+    "artemisApp": {
+        "calendar": {
+            "mondayShort": "Mo",
+            "tuesdayShort": "Di",
+            "wednesdayShort": "Mi",
+            "thursdayShort": "Do",
+            "fridayShort": "Fr",
+            "saturdayShort": "Sa",
+            "sundayShort": "So",
+            "eventSubtypeName": {
+                "lectureStart": "Anfang",
+                "lectureEnd": "Ende",
+                "examPublishResults": "Veröffentlichung Ergebnisse",
+                "examReviewStart": "Einsicht Start",
+                "examReviewEnd": "Einsicht Ende",
+                "exerciseRelease": "Veröffentlichung",
+                "exerciseStart": "Start",
+                "exerciseDue": "Ende",
+                "exerciseAssessmentDue": "Korrektur Ende"
+            },
+            "exerciseFilterOption": "Übungsevents",
+            "lectureFilterOption": "Vorlesungsevents",
+            "tutorialFilterOption": "Tutorialevents",
+            "examFilterOption": "Klausurevents",
+            "eventName": {
+                "programming": "Programmieraufgabenevent",
+                "text": "Textaufgabenevent",
+                "fileUpload": "File-Upload-Aufgabenevent",
+                "modeling": "Modellieraufgabenevent",
+                "quiz": "Quizaufgabenevent",
+                "lecture": "Vorlesungsevent",
+                "tutorial": "Tutorialevent",
+                "exam": "Examevent"
+            },
+            "filterButtonLabel": "Filter",
+            "todayButtonLabel": "Heute",
+            "weekButtonLabel": "Woche",
+            "monthButtonLabel": "Monat"
+        }
+    }
+}

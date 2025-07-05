@@ -38,7 +38,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        userUtilService.addInstructor("other-instructors", TEST_PREFIX + "instructorother");
+        userUtilService.addInstructor("other-instructors", TEST_PREFIX + "instructorother1");
         additionalEmptyCourse = courseUtilService.addEmptyCourse();
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);

@@ -1,0 +1,42 @@
+{
+    "artemisApp": {
+        "calendar": {
+            "mondayShort": "Mon",
+            "tuesdayShort": "Tue",
+            "wednesdayShort": "Wed",
+            "thursdayShort": "Thu",
+            "fridayShort": "Fri",
+            "saturdayShort": "Sat",
+            "sundayShort": "Sun",
+            "eventSubtypeName": {
+                "lectureStart": "Start",
+                "lectureEnd": "End",
+                "examPublishResults": "Results Out",
+                "examReviewStart": "Review Start",
+                "examReviewEnd": "Review End",
+                "exerciseRelease": "Release",
+                "exerciseStart": "Start",
+                "exerciseDue": "Due",
+                "exerciseAssessmentDue": "Assessment Due"
+            },
+            "exerciseFilterOption": "Exercise Events",
+            "lectureFilterOption": "Lecture Events",
+            "tutorialFilterOption": "Tutorial Events",
+            "examFilterOption": "Exam Events",
+            "eventName": {
+                "programming": "Programming Exercise Event",
+                "text": "Text Exercise Event",
+                "fileUpload": "File-Upload Exercise Event",
+                "modeling": "Modeling Exercise Event",
+                "quiz": "Quiz Exercise Event",
+                "lecture": "Lecture Event",
+                "tutorial": "Tutorial Event",
+                "exam": "Exam Event"
+            },
+            "filterButtonLabel": "Filter",
+            "todayButtonLabel": "Today",
+            "weekButtonLabel": "Week",
+            "monthButtonLabel": "Month"
+        }
+    }
+}
