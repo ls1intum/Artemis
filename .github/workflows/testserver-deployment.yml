@@ -28,6 +28,21 @@ env:
   PR_AUTO_BUILD_FILE_NAME: "build.yml"
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.inputs.branch_name }}
 
+# ------------------------------------------------------------------------------
+#  Deployment to a Test Server
+#
+#  Trigger             : workflow_dispatch                 (GitHub UI / API)
+#  Required parameters : branch_name, environment_name
+#
+#  High-level flow
+#  ────────────────
+#  1. Log the incoming parameters (log-inputs)
+#  2. Decide which build artifact to use (determine-build-context)
+#     • PR exists → reuse its successful build
+#     • branch == main OR branch == develop → reuse latest push build
+#     • anything else → build the branch on-the-fly
+#  3. Deploy the resolved Docker image to the requested environment
+# ------------------------------------------------------------------------------
 jobs:
   # Log the inputs for debugging
   log-inputs:
@@ -47,8 +62,9 @@ jobs:
     needs: log-inputs
     outputs:
       pr_number: ${{ steps.get_pr.outputs.pr_number }}
-      pr_head_sha: ${{ steps.get_pr.outputs.pr_head_sha }}
+      head_sha: ${{ steps.get_pr.outputs.head_sha }}
       tag: ${{ steps.get_pr.outputs.tag }}
+      is_main_or_develop: ${{ steps.get_pr.outputs.is_main_or_develop }}
     steps:
       - name: Check if a PR exists for the branch
         id: get_pr
@@ -56,11 +72,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME=${{ github.event.inputs.branch_name }}
-          echo "Checking if PR exists for branch: $BRANCH_NAME targeting 'develop'."
+          IS_MAIN_OR_DEVELOP=false
+
+          REPO_NAME=${{ github.repository }}
+          echo "Checking if PR exists for branch: $BRANCH_NAME targeting 'develop' in $REPO_NAME (excluding forks)."
 
           PR_DETAILS=$(gh api repos/${{ github.repository }}/pulls \
             --paginate \
-            --jq ".[] | select(.head.ref == \"$BRANCH_NAME\" and .base.ref == \"develop\") | {number: .number, sha: .head.sha}")
+            --jq ".[] | select(.head.repo.full_name == \"$REPO_NAME\" and .head.ref == \"$BRANCH_NAME\" and .base.ref == \"develop\") | {number: .number, sha: .head.sha}")
 
           PR_NUMBER=$(echo "$PR_DETAILS" | jq -r ".number")
           PR_HEAD_SHA=$(echo "$PR_DETAILS" | jq -r ".sha")
@@ -68,12 +87,11 @@ jobs:
           if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
             echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME targeting 'develop' with Head: $PR_HEAD_SHA."
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-            echo "pr_head_sha=$PR_HEAD_SHA" >> $GITHUB_OUTPUT
+            echo "head_sha=$PR_HEAD_SHA" >> $GITHUB_OUTPUT
             echo "tag=pr-$PR_NUMBER" >> $GITHUB_OUTPUT
           else
             echo "No PR found for branch: $BRANCH_NAME targeting 'develop'."
             echo "pr_number=" >> $GITHUB_OUTPUT
-            echo "pr_head_sha=" >> $GITHUB_OUTPUT
 
             # Fetch the latest commit SHA of the branch
             LATEST_SHA=$(gh api repos/${{ github.repository }}/git/refs/heads/$BRANCH_NAME --jq '.object.sha')
@@ -84,14 +102,22 @@ jobs:
             fi
 
             echo "Latest SHA for branch $BRANCH_NAME is $LATEST_SHA."
-            # Set tag as branch-SHA
-            echo "tag=branch-$LATEST_SHA" >> $GITHUB_OUTPUT
+            echo "head_sha=$LATEST_SHA" >> $GITHUB_OUTPUT
+
+            if [[ "$BRANCH_NAME" == "develop" || "$BRANCH_NAME" == "main" ]]; then
+              IS_MAIN_OR_DEVELOP=true
+              echo "tag=$BRANCH_NAME" >> $GITHUB_OUTPUT
+            else
+              # Set tag as branch-SHA
+              echo "tag=branch-$LATEST_SHA" >> $GITHUB_OUTPUT
+            fi
           fi
+          echo "is_main_or_develop=$IS_MAIN_OR_DEVELOP" >> $GITHUB_OUTPUT
 
 
   # Build the Docker image (branch without PR)
   conditional-build:
-    if: ${{ needs.determine-build-context.outputs.pr_number == '' }}
+    if: ${{ needs.determine-build-context.outputs.pr_number == '' && needs.determine-build-context.outputs.is_main_or_develop == 'false' }}
     needs: determine-build-context
     uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.1.0
     with:
@@ -101,8 +127,8 @@ jobs:
       tags: ${{ needs.determine-build-context.outputs.tag }}
 
   # Check if the build has run successfully (PR)
-  check-existing-build:
-    name: Check Existing Build
+  check-existing-build-for-pull-request:
+    name: Check Existing Build of Pull Request
     if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
     needs: determine-build-context
     runs-on: ubuntu-latest
@@ -111,13 +137,34 @@ jobs:
         id: check_build
         uses: octokit/request-action@v2.x
         with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=pull_request&status=success&head_sha=${{ needs.determine-build-context.outputs.pr_head_sha }}
+          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=pull_request&status=success&head_sha=${{ needs.determine-build-context.outputs.head_sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Fail if no successful build found
         if: ${{ steps.check_build.conclusion == 'success' && fromJSON(steps.check_build.outputs.data).total_count == 0 }}
         run: |
-          echo "::error::No successful build found for branch '${{ github.event.inputs.branch_name }}' with SHA '${{ needs.determine-build-context.outputs.pr_head_sha }}'."
+          echo "::error::No successful build found for branch '${{ github.event.inputs.branch_name }}' with SHA '${{ needs.determine-build-context.outputs.head_sha }}'."
+          exit 1
+
+  # Check if the build has run successfully (main or develop)
+  check-existing-build-for-branch:
+    name: Check Existing Build of main or develop branch
+    if: ${{ needs.determine-build-context.outputs.is_main_or_develop == 'true' }}
+    needs: determine-build-context
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get latest successful build for main or develop branch
+        id: check_main_build
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=push&status=success&branch=${{ github.event.inputs.branch_name }}&head_sha=${{ needs.determine-build-context.outputs.head_sha }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fail if no successful build found
+        if: ${{ steps.check_main_build.conclusion == 'success' && fromJSON(steps.check_main_build.outputs.data).total_count == 0 }}
+        run: |
+          echo "::error::No successful build found for branch '${{ github.event.inputs.branch_name }}'."
           exit 1
 
   check-database-migration-approval:
@@ -151,10 +198,10 @@ jobs:
 
   # Deploy to the test-server
   deploy:
-    needs: [ determine-build-context, conditional-build, check-existing-build, check-database-migration-approval ]
+    needs: [ determine-build-context, conditional-build, check-existing-build-for-pull-request, check-existing-build-for-branch, check-database-migration-approval ]
     # Run if either the conditional-build or check-existing-build job was successful
     # Use always() since one of the jobs will always skip
-    if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build.result == 'success') && (needs.check-database-migration-approval.result == 'success' || needs.check-database-migration-approval.result == 'skipped')
+    if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build-for-pull-request.result == 'success' || needs.check-existing-build-for-branch.result == 'success') && (needs.check-database-migration-approval.result == 'success' || needs.check-database-migration-approval.result == 'skipped')
     name: Deploy to Test-Server
     runs-on: ubuntu-latest
     environment:
