@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, effect, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
     Competency,
@@ -67,7 +67,7 @@ import { ScienceService } from 'app/shared/science/science.service';
         HtmlForMarkdownPipe,
     ],
 })
-export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
+export class CourseCompetenciesDetailsComponent {
     private featureToggleService = inject(FeatureToggleService);
     private courseStorageService = inject(CourseStorageService);
     private alertService = inject(AlertService);
@@ -94,7 +94,14 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     faPencilAlt = faPencilAlt;
     getIcon = getIcon;
 
-    ngOnInit(): void {
+    constructor() {
+        effect(() => this.initialize());
+        inject(DestroyRef).onDestroy(() => {
+            this.paramsSubscription?.unsubscribe();
+        });
+    }
+
+    private initialize(): void {
         // example route looks like: /courses/1/competencies/10
         const courseIdParams$ = this.activatedRoute.parent?.parent?.params;
         const competencyIdParams$ = this.activatedRoute.params;
@@ -115,10 +122,6 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                 },
             );
         }
-    }
-
-    ngOnDestroy(): void {
-        this.paramsSubscription?.unsubscribe();
     }
 
     private loadData() {

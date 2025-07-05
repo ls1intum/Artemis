@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, effect, forwardRef, inject, input, output } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -35,17 +35,17 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     ],
     imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe],
 })
-export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
+export class CompetencySelectionComponent implements ControlValueAccessor {
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
     private courseCompetencyService = inject(CourseCompetencyService);
     private changeDetector = inject(ChangeDetectorRef);
     private profileService = inject(ProfileService);
 
-    @Input() labelName: string;
-    @Input() labelTooltip: string;
+    labelName = input<string>();
+    labelTooltip = input<string>();
 
-    @Output() valueChange = new EventEmitter();
+    valueChange = output<CompetencyLearningObjectLink[]>();
 
     disabled: boolean;
     // selected competencies
@@ -68,11 +68,13 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF;
     // halfway between medium and high
 
-    ngOnInit(): void {
-        // it's an explicit design decision to not clutter every component that uses this component with the need to check if the atlas profile is enabled
-        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
-            this.initialize();
-        }
+    constructor() {
+        effect(() => {
+            // it's an explicit design decision to not clutter every component that uses this component with the need to check if the atlas profile is enabled
+            if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
+                this.initialize();
+            }
+        });
     }
 
     initialize(): void {
@@ -146,7 +148,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             }
 
             this._onChange(this.selectedCompetencyLinks);
-            this.valueChange.emit(this.selectedCompetencyLinks);
+            this.valueChange.emit(this.selectedCompetencyLinks ?? []);
         }
     }
 
@@ -154,7 +156,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         link.weight = value;
 
         this._onChange(this.selectedCompetencyLinks);
-        this.valueChange.emit(this.selectedCompetencyLinks);
+        this.valueChange.emit(this.selectedCompetencyLinks ?? []);
     }
 
     writeValue(value?: CompetencyLearningObjectLink[]): void {
