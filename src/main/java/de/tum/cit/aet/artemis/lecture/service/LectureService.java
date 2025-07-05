@@ -350,11 +350,11 @@ public class LectureService {
             return Optional.empty();
         }
         if (lecture.getStartDate() == null && lecture.getEndDate() != null) {
-            return Optional.of(new CalendarEventDTO("lecture-" + lecture.getId() + "-endDate", lecture.getTitle(), lecture.getEndDate(), null, null, null));
+            return Optional.of(new CalendarEventDTO("lecture", "endDate", lecture.getTitle(), lecture.getEndDate(), null, null, null));
         }
         if (lecture.getStartDate() != null && lecture.getEndDate() == null) {
-            return Optional.of(new CalendarEventDTO("lecture-" + lecture.getId() + "-startDate", lecture.getTitle(), lecture.getStartDate(), null, null, null));
+            return Optional.of(new CalendarEventDTO("lecture", "startDate", lecture.getTitle(), lecture.getStartDate(), null, null, null));
         }
-        return Optional.of(new CalendarEventDTO("lecture-" + lecture.getId() + "-startAndEndDate", lecture.getTitle(), lecture.getStartDate(), lecture.getEndDate(), null, null));
+        return Optional.of(new CalendarEventDTO("lecture", "startAndEndDate", lecture.getTitle(), lecture.getStartDate(), lecture.getEndDate(), null, null));
     }
 }

@@ -17,7 +17,7 @@ import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/ca
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarOverviewComponent } from './calendar-overview.component';
 
-describe('CalendarDesktopComponent', () => {
+describe('CalendarOverviewComponent', () => {
     let component: CalendarOverviewComponent;
     let fixture: ComponentFixture<CalendarOverviewComponent>;
 

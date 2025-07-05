@@ -23,9 +23,9 @@
                     @for (index of utils.range(24); track index) {
                         <div class="hour-segment"></div>
                     }
-                    @for (item of getEventsAndPositionsFor(day); track item.event.id) {
-                        @let event = item.event;
-                        @let position = item.position;
+                    @for (eventAndPosition of getEventsAndPositionsFor(day); track eventAndPosition.event.id) {
+                        @let event = eventAndPosition.event;
+                        @let position = eventAndPosition.position;
                         @let eventSubtypeDescriptor = utils.getEventSubtypeNameKey(event);
                         <div
                             class="event"
@@ -48,7 +48,7 @@
                             [placement]="['top', 'bottom', 'right', 'left']"
                             (click)="openPopover(event, popover)"
                             #popover="ngbPopover"
-                            [attr.data-testid]="event.id"
+                            [attr.data-testid]="event.title"
                         >
                             @if (eventSubtypeDescriptor) {
                                 {{ eventSubtypeDescriptor | artemisTranslate }}: {{ event.title }}

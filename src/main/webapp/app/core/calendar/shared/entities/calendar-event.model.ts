@@ -1,57 +1,86 @@
 import { Dayjs } from 'dayjs/esm';
+import { v4 as uuidv4 } from 'uuid';
+
+export enum CalendarEventType {
+    Lecture = 'lecture',
+    Tutorial = 'tutorial',
+    Exam = 'exam',
+    QuizExercise = 'quizExercise',
+    TextExercise = 'textExercise',
+    ModelingExercise = 'modelingExercise',
+    ProgrammingExercise = 'programmingExercise',
+    FileUploadExercise = 'fileUploadExercise',
+}
+
+export enum CalendarEventSubtype {
+    StartDate = 'startDate',
+    EndDate = 'endDate',
+    StartAndEndDate = 'startAndEndDate',
+    ReleaseDate = 'releaseDate',
+    DueDate = 'dueDate',
+    PublishResultsDate = 'publishResultsDate',
+    StudentReviewStartDate = 'studentReviewStartDate',
+    StudentReviewEndDate = 'studentReviewEndDate',
+    AssessmentDueDate = 'assessmentDueDate',
+}
 
 export class CalendarEvent {
+    public id: string;
+
     constructor(
-        public id: string,
+        public type: CalendarEventType,
+        public subtype: CalendarEventSubtype,
         public title: string,
         public startDate: Dayjs,
         public endDate?: Dayjs,
         public location?: string,
         public facilitator?: string,
-    ) {}
+    ) {
+        this.id = uuidv4();
+    }
 
     isTutorialEvent(): boolean {
-        return this.id.startsWith('tutorial');
+        return this.type === 'tutorial';
     }
 
     isLectureEvent(): boolean {
-        return this.id.startsWith('lecture');
+        return this.type === 'lecture';
     }
 
     isExamEvent(): boolean {
-        return this.id.startsWith('exam');
+        return this.type === 'exam';
     }
 
     isQuizExerciseEvent(): boolean {
-        return this.id.startsWith('quizExercise');
+        return this.type === 'quizExercise';
     }
 
     isTextExerciseEvent(): boolean {
-        return this.id.startsWith('textExercise');
+        return this.type === 'textExercise';
     }
 
     isModelingExerciseEvent(): boolean {
-        return this.id.startsWith('modelingExercise');
+        return this.type === 'modelingExercise';
     }
 
     isProgrammingExercise(): boolean {
-        return this.id.startsWith('programmingExercise');
+        return this.type === 'programmingExercise';
     }
 
     isExerciseEvent(): boolean {
-        const id = this.id;
-        return (
-            id.startsWith('quizExercise') ||
-            id.startsWith('fileUploadExercise') ||
-            id.startsWith('textExercise') ||
-            id.startsWith('modelingExercise') ||
-            id.startsWith('programmingExercise')
-        );
+        return [
+            CalendarEventType.ProgrammingExercise,
+            CalendarEventType.QuizExercise,
+            CalendarEventType.TextExercise,
+            CalendarEventType.FileUploadExercise,
+            CalendarEventType.ModelingExercise,
+        ].includes(this.type);
     }
 }
 
 export interface CalendarEventDTO {
-    id: string;
+    type: string;
+    subtype: string;
     title: string;
     startDate: string;
     endDate?: string;

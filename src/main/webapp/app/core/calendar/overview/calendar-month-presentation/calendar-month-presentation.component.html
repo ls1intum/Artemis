@@ -51,7 +51,7 @@
         [placement]="['bottom', 'right', 'left', 'top']"
         (click)="openPopover(event, popover)"
         #popover="ngbPopover"
-        [attr.data-testid]="event.id"
+        [attr.data-testid]="event.title"
     >
         <div class="event-label">
             @if (eventSubtypeDescriptor) {

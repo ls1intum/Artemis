@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import timezone from 'dayjs/plugin/timezone';
-import { CalendarEvent, CalendarEventDTO } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent, CalendarEventDTO, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 
 dayjs.extend(timezone);
@@ -67,13 +67,31 @@ export class CalendarEventService {
     private createCalendarEventMap(dtoMap: Record<string, CalendarEventDTO[]>): Map<string, CalendarEvent[]> {
         const result = new Map<string, CalendarEvent[]>();
         for (const [dayKey, dtoList] of Object.entries(dtoMap)) {
-            result.set(dayKey, dtoList.map(this.createCalendarEvent));
+            result.set(
+                dayKey,
+                dtoList.map((dto) => this.createCalendarEvent(dto)).filter((element): element is CalendarEvent => element !== undefined),
+            );
         }
         return result;
     }
 
-    private createCalendarEvent(dto: CalendarEventDTO): CalendarEvent {
-        return new CalendarEvent(dto.id, dto.title, dayjs(dto.startDate), dto.endDate ? dayjs(dto.endDate) : undefined, dto.location ?? undefined, dto.facilitator ?? undefined);
+    createCalendarEvent(dto: CalendarEventDTO): CalendarEvent | undefined {
+        const type = this.createCalendarEventType(dto.type);
+        const subtype = this.createCalendarEventSubtype(dto.subtype);
+
+        if (!type || !subtype) {
+            return undefined;
+        }
+
+        return new CalendarEvent(type, subtype, dto.title, dayjs(dto.startDate), dto.endDate ? dayjs(dto.endDate) : undefined, dto.location, dto.facilitator);
+    }
+
+    createCalendarEventType(value: string): CalendarEventType | undefined {
+        return Object.values(CalendarEventType).includes(value as CalendarEventType) ? (value as CalendarEventType) : undefined;
+    }
+
+    createCalendarEventSubtype(value: string): CalendarEventSubtype | undefined {
+        return Object.values(CalendarEventSubtype).includes(value as CalendarEventSubtype) ? (value as CalendarEventSubtype) : undefined;
     }
 
     private filterEventMapByOptions(eventMap: Map<string, CalendarEvent[]>, filterOptions: CalendarEventFilterOption[]): Map<string, CalendarEvent[]> {

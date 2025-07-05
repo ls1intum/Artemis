@@ -2,7 +2,7 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChalkboardUser, faCheckDouble, faDiagramProject, faFileArrowUp, faFont, faGraduationCap, faKeyboard, faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
-import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 
 dayjs.extend(isoWeek);
 
@@ -75,84 +75,69 @@ export function getWeekDayNameKeys(): string[] {
     ];
 }
 
+const eventTypeNameKeyMap: Record<CalendarEventType, string> = {
+    [CalendarEventType.Lecture]: 'artemisApp.calendar.eventName.lecture',
+    [CalendarEventType.Tutorial]: 'artemisApp.calendar.eventName.tutorial',
+    [CalendarEventType.Exam]: 'artemisApp.calendar.eventName.exam',
+    [CalendarEventType.QuizExercise]: 'artemisApp.calendar.eventName.quiz',
+    [CalendarEventType.TextExercise]: 'artemisApp.calendar.eventName.text',
+    [CalendarEventType.ModelingExercise]: 'artemisApp.calendar.eventName.modeling',
+    [CalendarEventType.ProgrammingExercise]: 'artemisApp.calendar.eventName.programming',
+    [CalendarEventType.FileUploadExercise]: 'artemisApp.calendar.eventName.fileUpload',
+};
+
 export function getEventTypeNameKey(event: CalendarEvent): string {
-    if (event.isExerciseEvent()) {
-        if (event.isProgrammingExercise()) {
-            return 'artemisApp.calendar.eventName.programming';
-        } else if (event.isTextExerciseEvent()) {
-            return 'artemisApp.calendar.eventName.text';
-        } else if (event.isModelingExerciseEvent()) {
-            return 'artemisApp.calendar.eventName.modeling';
-        } else if (event.isQuizExerciseEvent()) {
-            return 'artemisApp.calendar.eventName.quiz';
-        } else {
-            return 'artemisApp.calendar.eventName.fileUpload';
-        }
-    } else if (event.isLectureEvent()) {
-        return 'artemisApp.calendar.eventName.lecture';
-    } else if (event.isTutorialEvent()) {
-        return 'artemisApp.calendar.eventName.tutorial';
-    } else {
-        return 'artemisApp.calendar.eventName.exam';
-    }
+    return eventTypeNameKeyMap[event.type];
 }
+
+type EventTypeAndSubtype = `${CalendarEventType}:${CalendarEventSubtype}`;
+
+const eventSubtypeNameKeyMap: Partial<Record<EventTypeAndSubtype, string>> = {
+    [`${CalendarEventType.Lecture}:${CalendarEventSubtype.StartDate}`]: 'artemisApp.calendar.eventSubtypeName.lectureStart',
+    [`${CalendarEventType.Lecture}:${CalendarEventSubtype.EndDate}`]: 'artemisApp.calendar.eventSubtypeName.lectureEnd',
+
+    [`${CalendarEventType.Exam}:${CalendarEventSubtype.PublishResultsDate}`]: 'artemisApp.calendar.eventSubtypeName.examPublishResults',
+    [`${CalendarEventType.Exam}:${CalendarEventSubtype.StudentReviewStartDate}`]: 'artemisApp.calendar.eventSubtypeName.examReviewStart',
+    [`${CalendarEventType.Exam}:${CalendarEventSubtype.StudentReviewEndDate}`]: 'artemisApp.calendar.eventSubtypeName.examReviewEnd',
+
+    [`${CalendarEventType.QuizExercise}:${CalendarEventSubtype.ReleaseDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseRelease',
+    [`${CalendarEventType.QuizExercise}:${CalendarEventSubtype.DueDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseDue',
+
+    [`${CalendarEventType.TextExercise}:${CalendarEventSubtype.ReleaseDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseRelease',
+    [`${CalendarEventType.TextExercise}:${CalendarEventSubtype.StartDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseStart',
+    [`${CalendarEventType.TextExercise}:${CalendarEventSubtype.DueDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseDue',
+    [`${CalendarEventType.TextExercise}:${CalendarEventSubtype.AssessmentDueDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseAssessmentDue',
+
+    [`${CalendarEventType.ModelingExercise}:${CalendarEventSubtype.ReleaseDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseRelease',
+    [`${CalendarEventType.ModelingExercise}:${CalendarEventSubtype.StartDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseStart',
+    [`${CalendarEventType.ModelingExercise}:${CalendarEventSubtype.DueDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseDue',
+    [`${CalendarEventType.ModelingExercise}:${CalendarEventSubtype.AssessmentDueDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseAssessmentDue',
+
+    [`${CalendarEventType.ProgrammingExercise}:${CalendarEventSubtype.ReleaseDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseRelease',
+    [`${CalendarEventType.ProgrammingExercise}:${CalendarEventSubtype.StartDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseStart',
+    [`${CalendarEventType.ProgrammingExercise}:${CalendarEventSubtype.DueDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseDue',
+    [`${CalendarEventType.ProgrammingExercise}:${CalendarEventSubtype.AssessmentDueDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseAssessmentDue',
+
+    [`${CalendarEventType.FileUploadExercise}:${CalendarEventSubtype.ReleaseDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseRelease',
+    [`${CalendarEventType.FileUploadExercise}:${CalendarEventSubtype.StartDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseStart',
+    [`${CalendarEventType.FileUploadExercise}:${CalendarEventSubtype.DueDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseDue',
+    [`${CalendarEventType.FileUploadExercise}:${CalendarEventSubtype.AssessmentDueDate}`]: 'artemisApp.calendar.eventSubtypeName.exerciseAssessmentDue',
+};
 
 export function getEventSubtypeNameKey(event: CalendarEvent): string | undefined {
-    const eventId = event.id;
-    if (event.isTutorialEvent()) {
-        return undefined;
-    } else if (event.isLectureEvent()) {
-        if (eventId.endsWith('startAndEndDate')) {
-            return undefined;
-        } else if (eventId.endsWith('startDate')) {
-            return 'artemisApp.calendar.eventSubtypeName.lectureStart';
-        } else {
-            return 'artemisApp.calendar.eventSubtypeName.lectureEnd';
-        }
-    } else if (event.isExamEvent()) {
-        if (eventId.endsWith('startAndEndDate')) {
-            return undefined;
-        } else if (eventId.endsWith('publishResultsDate')) {
-            return 'artemisApp.calendar.eventSubtypeName.examPublishResults';
-        } else if (eventId.endsWith('studentReviewStartDate')) {
-            return 'artemisApp.calendar.eventSubtypeName.examReviewStart';
-        } else {
-            return 'artemisApp.calendar.eventSubtypeName.examReviewEnd';
-        }
-    } else {
-        if (event.isQuizExerciseEvent()) {
-            if (eventId.endsWith('startAndEndDate')) {
-                return undefined;
-            } else if (eventId.endsWith('releaseDate')) {
-                return 'artemisApp.calendar.eventSubtypeName.exerciseRelease';
-            } else {
-                return 'artemisApp.calendar.eventSubtypeName.exerciseDue';
-            }
-        } else {
-            if (eventId.endsWith('releaseDate')) {
-                return 'artemisApp.calendar.eventSubtypeName.exerciseRelease';
-            } else if (eventId.endsWith('startDate')) {
-                return 'artemisApp.calendar.eventSubtypeName.exerciseStart';
-            } else if (eventId.endsWith('dueDate')) {
-                return 'artemisApp.calendar.eventSubtypeName.exerciseDue';
-            } else {
-                return 'artemisApp.calendar.eventSubtypeName.exerciseAssessmentDue';
-            }
-        }
-    }
-}
-
-export function getFilterOptionNameKey(option: CalendarEventFilterOption): string {
-    switch (option) {
-        case 'exerciseEvents':
-            return 'artemisApp.calendar.exerciseFilterOption';
-        case 'lectureEvents':
-            return 'artemisApp.calendar.lectureFilterOption';
-        case 'tutorialEvents':
-            return 'artemisApp.calendar.tutorialFilterOption';
-        case 'examEvents':
-            return 'artemisApp.calendar.examFilterOption';
-    }
+    const key = `${event.type}:${event.subtype}` as EventTypeAndSubtype;
+    return eventSubtypeNameKeyMap[key];
 }
 
 export type CalendarEventFilterOption = 'examEvents' | 'lectureEvents' | 'tutorialEvents' | 'exerciseEvents';
+
+const filterOptionNameKeyMap: Record<CalendarEventFilterOption, string> = {
+    exerciseEvents: 'artemisApp.calendar.exerciseFilterOption',
+    lectureEvents: 'artemisApp.calendar.lectureFilterOption',
+    tutorialEvents: 'artemisApp.calendar.tutorialFilterOption',
+    examEvents: 'artemisApp.calendar.examFilterOption',
+};
+
+export function getFilterOptionNameKey(option: CalendarEventFilterOption): string {
+    return filterOptionNameKeyMap[option];
+}

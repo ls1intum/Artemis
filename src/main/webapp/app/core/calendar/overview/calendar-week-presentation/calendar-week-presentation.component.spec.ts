@@ -6,31 +6,60 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
-import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarWeekPresentationComponent } from './calendar-week-presentation.component';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 
-describe('CalendarDesktopWeekComponent', () => {
+describe('CalendarWeekPresentationComponent', () => {
     let component: CalendarWeekPresentationComponent;
     let fixture: ComponentFixture<CalendarWeekPresentationComponent>;
-    const firstDayOfTestWeek = dayjs('2025-05-05');
 
     let mockMap: Map<string, CalendarEvent[]>;
 
+    const startOfMonday = dayjs('2025-05-05');
+    const startOfTuesday = startOfMonday.add(1, 'day');
+    const startOfWednesday = startOfTuesday.add(1, 'day');
+    const events = [
+        new CalendarEvent(
+            CalendarEventType.Exam,
+            CalendarEventSubtype.StartAndEndDate,
+            'Exam',
+            startOfTuesday.add(12, 'hour'),
+            startOfTuesday.add(13, 'hour'),
+            undefined,
+            'Marlon Nienaber',
+        ),
+        new CalendarEvent(
+            CalendarEventType.Lecture,
+            CalendarEventSubtype.StartAndEndDate,
+            'Object Design',
+            startOfWednesday.add(10, 'hour'),
+            startOfWednesday.add(12, 'hour'),
+            undefined,
+            undefined,
+        ),
+        new CalendarEvent(
+            CalendarEventType.Tutorial,
+            CalendarEventSubtype.StartAndEndDate,
+            'Tutorial',
+            startOfWednesday.add(11, 'hour'),
+            startOfWednesday.add(13, 'hour'),
+            'Zoom',
+            'Marlon Nienaber',
+        ),
+        new CalendarEvent(
+            CalendarEventType.TextExercise,
+            CalendarEventSubtype.StartDate,
+            'Your aspirations as a programmer',
+            startOfWednesday.add(12, 'hour'),
+            undefined,
+            undefined,
+        ),
+    ];
+
     beforeAll(() => {
-        const startOfMonday = firstDayOfTestWeek;
-        const startOfTuesday = startOfMonday.add(1, 'day');
-        const startOfWednesday = startOfTuesday.add(1, 'day');
         mockMap = new Map();
-
-        const events = [
-            new CalendarEvent('exam-3-startAndEndDate', 'Exam', startOfTuesday.add(12, 'hour'), startOfTuesday.add(13, 'hour'), undefined, 'Marlon Nienaber'),
-            new CalendarEvent('lecture-1-startAndEndDate', 'Object Design', startOfWednesday.add(10, 'hour'), startOfWednesday.add(12, 'hour'), undefined, undefined),
-            new CalendarEvent('tutorial-1', 'Tutorial', startOfWednesday.add(11, 'hour'), startOfWednesday.add(13, 'hour'), 'Zoom', 'Marlon Nienaber'),
-            new CalendarEvent('textExercise-31-startDate', 'Your aspirations as a programmer', startOfWednesday.add(12, 'hour'), undefined, undefined),
-        ];
-
         for (const event of events) {
             const key = event.startDate.format('YYYY-MM-DD');
             const current = mockMap.get(key) ?? [];
@@ -54,7 +83,7 @@ describe('CalendarDesktopWeekComponent', () => {
         fixture = TestBed.createComponent(CalendarWeekPresentationComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('firstDayOfCurrentWeek', firstDayOfTestWeek);
+        fixture.componentRef.setInput('firstDayOfCurrentWeek', startOfMonday);
         fixture.detectChanges();
     });
 
@@ -67,15 +96,15 @@ describe('CalendarDesktopWeekComponent', () => {
         expect(weekDays).toHaveLength(7);
 
         for (let index = 0; index < 7; index++) {
-            expect(weekDays[index].isSame(firstDayOfTestWeek.add(index, 'day'), 'day')).toBeTrue();
+            expect(weekDays[index].isSame(startOfMonday.add(index, 'day'), 'day')).toBeTrue();
         }
     });
 
     it('should display correct events', async () => {
-        const examEventCell = fixture.debugElement.query(By.css('[data-testid="exam-3-startAndEndDate"]'))?.nativeElement;
-        const lectureEventCell = fixture.debugElement.query(By.css('[data-testid="lecture-1-startAndEndDate"]'))?.nativeElement;
-        const tutorialEventCell = fixture.debugElement.query(By.css('[data-testid="tutorial-1"]'))?.nativeElement;
-        const textExerciseEventCell = fixture.debugElement.query(By.css('[data-testid="textExercise-31-startDate"]'))?.nativeElement;
+        const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'))?.nativeElement;
+        const lectureEventCell = fixture.debugElement.query(By.css('[data-testid="Object Design"]'))?.nativeElement;
+        const tutorialEventCell = fixture.debugElement.query(By.css('[data-testid="Tutorial"]'))?.nativeElement;
+        const textExerciseEventCell = fixture.debugElement.query(By.css('[data-testid="Your aspirations as a programmer"]'))?.nativeElement;
 
         expect(examEventCell).toBeTruthy();
         expect(lectureEventCell).toBeTruthy();
@@ -122,7 +151,7 @@ describe('CalendarDesktopWeekComponent', () => {
     });
 
     it('should open popover', () => {
-        const examEventCell = fixture.debugElement.query(By.css('[data-testid="exam-3-startAndEndDate"]'));
+        const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
         expect(examEventCell).toBeTruthy();
 
         examEventCell.nativeElement.click();
@@ -133,7 +162,7 @@ describe('CalendarDesktopWeekComponent', () => {
     });
 
     it('should close popover only when close button used', () => {
-        const examEventCell = fixture.debugElement.query(By.css('[data-testid="exam-3-startAndEndDate"]'));
+        const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
         examEventCell.nativeElement.click();
         fixture.detectChanges();
 
@@ -158,21 +187,21 @@ describe('CalendarDesktopWeekComponent', () => {
     });
 
     it('should replace popover when other event selected', () => {
-        const examEventCell = fixture.debugElement.query(By.css('[data-testid="exam-3-startAndEndDate"]'));
-        const lectureEventCell = fixture.debugElement.query(By.css('[data-testid="lecture-1-startAndEndDate"]'));
+        const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
+        const lectureEventCell = fixture.debugElement.query(By.css('[data-testid="Object Design"]'));
 
         examEventCell.nativeElement.click();
         fixture.detectChanges();
 
         let popover = document.querySelector('jhi-calendar-event-detail-popover');
         expect(popover).toBeTruthy();
-        expect(component.selectedEvent()?.id).toBe('exam-3-startAndEndDate');
+        expect(component.selectedEvent()?.id).toBe(events[0].id);
 
         lectureEventCell.nativeElement.click();
         fixture.detectChanges();
 
         popover = document.querySelector('jhi-calendar-event-detail-popover');
         expect(popover).toBeTruthy();
-        expect(component.selectedEvent()?.id).toBe('lecture-1-startAndEndDate');
+        expect(component.selectedEvent()?.id).toBe(events[1].id);
     });
 });

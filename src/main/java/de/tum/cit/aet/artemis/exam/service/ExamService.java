@@ -1398,12 +1398,12 @@ public class ExamService {
     private Set<CalendarEventDTO> deriveEvents(Exam exam, boolean userIsCourseStaff) {
         Set<CalendarEventDTO> events = new HashSet<>();
         if (userIsCourseStaff || (exam.getVisibleDate() != null && exam.getVisibleDate().isBefore(now()))) {
-            events.add(new CalendarEventDTO("exam-" + exam.getId() + "-startAndEndDate", exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null, exam.getExaminer()));
+            events.add(new CalendarEventDTO("exam", "startAndEndDate", exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null, exam.getExaminer()));
             if (exam.getPublishResultsDate() != null) {
-                events.add(new CalendarEventDTO("exam-" + exam.getId() + "-publishResultsDate", exam.getTitle(), exam.getPublishResultsDate(), null, null, null));
+                events.add(new CalendarEventDTO("exam", "publishResultsDate", exam.getTitle(), exam.getPublishResultsDate(), null, null, null));
                 if (exam.getExamStudentReviewStart() != null) {
-                    events.add(new CalendarEventDTO("exam-" + exam.getId() + "-studentReviewStartDate", exam.getTitle(), exam.getExamStudentReviewStart(), null, null, null));
-                    events.add(new CalendarEventDTO("exam-" + exam.getId() + "-studentReviewEndDate", exam.getTitle(), exam.getExamStudentReviewEnd(), null, null, null));
+                    events.add(new CalendarEventDTO("exam", "studentReviewStartDate", exam.getTitle(), exam.getExamStudentReviewStart(), null, null, null));
+                    events.add(new CalendarEventDTO("exam", "studentReviewEndDate", exam.getTitle(), exam.getExamStudentReviewEnd(), null, null, null));
                 }
             }
         }
