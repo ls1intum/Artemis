@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizQuestionProgressTestRepos
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizQuestionTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class QuizQuestionProgressTest extends AbstractSpringIntegrationIndependentTest {
+class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private QuizQuestionProgressService quizQuestionProgressService;
@@ -65,7 +65,6 @@ class QuizQuestionProgressTest extends AbstractSpringIntegrationIndependentTest 
     @BeforeEach
     void setUp() {
         quizQuestionProgressTestRepository.deleteAll();
-        quizQuestionTestRepository.deleteAll();
         userTestRepository.deleteAll();
 
         User user = new User();
