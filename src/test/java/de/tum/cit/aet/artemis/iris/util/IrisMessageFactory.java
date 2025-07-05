@@ -5,8 +5,10 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 
 public class IrisMessageFactory {
 
+    /**
+     * This is a utility class that should not be instantiated, which is why the constructor is private.
+     */
     private IrisMessageFactory() {
-        // Prevent instantiation of this utility class
     }
 
     public static IrisMessage createIrisMessage(IrisMessageSender irisMessageSender) {

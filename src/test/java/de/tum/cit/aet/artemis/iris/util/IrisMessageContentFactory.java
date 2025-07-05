@@ -8,8 +8,10 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 
 public class IrisMessageContentFactory {
 
+    /**
+     * This is a utility class that should not be instantiated, which is why the constructor is private.
+     */
     private IrisMessageContentFactory() {
-        // Prevent instantiation of this utility class
     }
 
     public static List<IrisMessageContent> createIrisMessageContents() {

@@ -18,8 +18,10 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 public class IrisChatSessionFactory {
 
+    /**
+     * This is a utility class that should not be instantiated, which is why the constructor is private.
+     */
     private IrisChatSessionFactory() {
-        // Prevent instantiation of this utility class
     }
 
     public static IrisLectureChatSession createLectureSessionForUser(Lecture lecture, User user) {
