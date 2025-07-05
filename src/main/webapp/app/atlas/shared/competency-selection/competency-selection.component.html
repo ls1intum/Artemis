@@ -1,12 +1,12 @@
 @if (isLoading || competencyLinks?.length) {
     <div>
-        @if (labelName) {
+        @if (labelName()) {
             <label for="competency-selector">
-                {{ labelName }}
+                {{ labelName() }}
             </label>
         }
-        @if (labelTooltip) {
-            <fa-stack class="text-secondary icon-full-size" [ngbTooltip]="labelTooltip">
+        @if (labelTooltip()) {
+            <fa-stack class="text-secondary icon-full-size" [ngbTooltip]="labelTooltip()">
                 <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
             </fa-stack>
         }

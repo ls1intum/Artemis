@@ -10,6 +10,14 @@ import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { RouterModule } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { InputSignal, signal } from '@angular/core';
+import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
+
+class TestWrapperComponent {
+    navigateTo: 'competencyManagement' | 'courseCompetencies' = 'courseCompetencies';
+    competencyLinks = [{ competency: { id: 1, title: 'competency' }, weight: 1 }];
+    courseId = 1;
+}
 
 @Component({
     selector: 'jhi-statistics',
@@ -24,8 +32,8 @@ class DummyStatisticsComponent {}
 class DummyManagementComponent {}
 
 describe('CompetencyPopoverComponent', () => {
-    let competencyPopoverComponentFixture: ComponentFixture<CompetenciesPopoverComponent>;
-    let competencyPopoverComponent: CompetenciesPopoverComponent;
+    let wrapperFixture: ComponentFixture<TestWrapperComponent>;
+    let wrapperComponent: TestWrapperComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -62,9 +70,11 @@ describe('CompetencyPopoverComponent', () => {
         'should navigate',
         fakeAsync((navigateTo: 'competencyManagement' | 'courseCompetencies', expectedPath: string) => {
             const location: Location = TestBed.inject(Location);
-            competencyPopoverComponent.navigateTo = navigateTo;
-            competencyPopoverComponent.competencyLinks = [{ competency: { id: 1, title: 'competency' }, weight: 1 }];
-            competencyPopoverComponent.courseId = 1;
+            const wrapperFixture = TestBed.createComponent(TestWrapperComponent);
+            const wrapperComponent = wrapperFixture.componentInstance;
+            wrapperComponent.navigateTo = navigateTo;
+            wrapperComponent.competencyLinks = [{ competency: { id: 1, title: 'competency' }, weight: 1 }];
+            wrapperComponent.courseId = 1;
             competencyPopoverComponentFixture.detectChanges();
             const popoverButton = competencyPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
             popoverButton.click();
