@@ -91,6 +91,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizMessagingService;
+import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
 import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
@@ -107,8 +108,6 @@ public class QuizExerciseResource {
     private static final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
 
     private static final String ENTITY_NAME = "quizExercise";
-
-    private final QuizQuestionRepository quizQuestionRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -159,14 +158,16 @@ public class QuizExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final QuizQuestionProgressService quizQuestionsProgressService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
             QuizBatchRepository quizBatchRepository, ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService,
-            QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            QuizQuestionRepository quizQuestionRepository) {
+            QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, QuizQuestionRepository quizQuestionRepository,
+            QuizQuestionProgressService quizQuestionsProgressService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -190,7 +191,7 @@ public class QuizExerciseResource {
         this.quizResultService = quizResultService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
-        this.quizQuestionRepository = quizQuestionRepository;
+        this.quizQuestionsProgressService = quizQuestionsProgressService;
     }
 
     /**
@@ -823,9 +824,9 @@ public class QuizExerciseResource {
      */
     @GetMapping("courses/{courseId}/practice/quiz")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<QuizQuestion>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
+    public ResponseEntity<List<QuizQuestion>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
-        Set<QuizQuestion> quizQuestions = quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
+        List<QuizQuestion> quizQuestions = quizQuestionsProgressService.getQuestionsForSession(courseId);
         return ResponseEntity.ok(quizQuestions);
     }
 
