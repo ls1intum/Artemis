@@ -22,6 +22,8 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
 
     /**
      * Finds a list of {@link IrisChatSession} based on the course and user ID. Filters sessions without messages and sorts them by creation date in descending order.
+     * Always includes the most recent session for the user, even if it has no messages (e.g. when opening the dashboard for the first time, we want to display the new session in
+     * the history)
      *
      * @param courseId The ID of the course.
      * @param userId   The ID of the user.
