@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.DONE;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.NOT_STARTED;
+import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.statusDTO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
@@ -11,7 +12,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -356,33 +355,6 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
             @Override
             public String toString() {
                 return "IrisChatWebsocketService.IrisWebsocketDTO with type MESSAGE and content " + content;
-            }
-        };
-    }
-
-    private ArgumentMatcher<Object> statusDTO(PyrisStageState... stageStates) {
-        return new ArgumentMatcher<>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                if (!(argument instanceof IrisChatWebsocketDTO websocketDTO)) {
-                    return false;
-                }
-                if (websocketDTO.type() != IrisChatWebsocketDTO.IrisWebsocketMessageType.STATUS) {
-                    return false;
-                }
-                if (websocketDTO.stages() == null) {
-                    return stageStates == null;
-                }
-                if (websocketDTO.stages().size() != stageStates.length) {
-                    return false;
-                }
-                return websocketDTO.stages().stream().map(PyrisStageDTO::state).toList().equals(List.of(stageStates));
-            }
-
-            @Override
-            public String toString() {
-                return "IrisChatWebsocketService.IrisWebsocketDTO with type STATUS and stage states " + Arrays.toString(stageStates);
             }
         };
     }
