@@ -60,15 +60,19 @@ export class IrisChatService implements OnDestroy {
         [ChatServiceMode.TUTOR_SUGGESTION, false],
     ]);
 
-    private sessionIdSubject = new BehaviorSubject<number | undefined>(undefined);
-    public sessionId$ = this.sessionIdSubject.asObservable();
+    private currentSessionIdSubject = new BehaviorSubject<number | undefined>(undefined);
+    private currentSessionId$ = this.currentSessionIdSubject.asObservable();
+    private currentRelatedEntityIdSubject = new BehaviorSubject<number | undefined>(undefined);
+    private currentRelatedEntityId$ = this.currentRelatedEntityIdSubject.asObservable();
+    private currentChatModeSubject = new BehaviorSubject<ChatServiceMode | undefined>(undefined);
+    private currentChatMode$ = this.currentChatModeSubject.asObservable();
 
     public get sessionId(): number | undefined {
-        return this.sessionIdSubject.value;
+        return this.currentSessionIdSubject.value;
     }
 
     public set sessionId(id: number | undefined) {
-        this.sessionIdSubject.next(id);
+        this.currentSessionIdSubject.next(id);
     }
 
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
@@ -464,7 +468,15 @@ export class IrisChatService implements OnDestroy {
     }
 
     public currentSessionId(): Observable<number | undefined> {
-        return this.sessionId$;
+        return this.currentSessionId$;
+    }
+
+    public currentRelatedEntityId(): Observable<number | undefined> {
+        return this.currentRelatedEntityId$;
+    }
+
+    public currentChatMode(): Observable<ChatServiceMode | undefined> {
+        return this.currentChatMode$;
     }
 
     public currentMessages(): Observable<IrisMessage[]> {
