@@ -31,6 +31,9 @@ plugins {
 }
 
 graalvmNative {
+    metadataRepository {
+        enabled = true
+    }
     testSupport = false // disables test AOT and related metadata
     binaries {
         main {
@@ -66,20 +69,20 @@ graalvmNative {
             // Optional: trace offending classes
             buildArgs.add('--trace-class-initialization=org.slf4j.LoggerFactory,ch.qos.logback,com.ibm.icu')
 
-            // Hazelcast
-            buildArgs.add("--initialize-at-build-time=com.hazelcast")
-            buildArgs.add("-H:IncludeResources=hazelcast-build-info.properties")
-            // OS specific Hazelcast classes must be initialized at runtime
-            buildArgs.add('--initialize-at-run-time=com.hazelcast.internal.util.ICMPHelper')
-            buildArgs.addAll([
-                '--initialize-at-run-time=com.sun.jmx.mbeanserver.MBeanInstantiator',
-                '--initialize-at-run-time=com.sun.jmx.defaults.JmxProperties',
-                '--initialize-at-run-time=com.sun.jmx.mbeanserver.Introspector',
-                '--initialize-at-run-time=com.sun.jmx.mbeanserver.MXBeanLookup',
-                '--initialize-at-run-time=com.sun.jmx.mbeanserver.MXBeanIntrospector',
-                '--initialize-at-run-time=jdk.management.jfr.SettingDescriptorInfo',
-                '--initialize-at-run-time=javax.script.ScriptEngineManager'
-            ])
+//            // Hazelcast
+//            buildArgs.add("--initialize-at-build-time=com.hazelcast")
+//            buildArgs.add("-H:IncludeResources=hazelcast-build-info.properties")
+//            // OS specific Hazelcast classes must be initialized at runtime
+//            buildArgs.add('--initialize-at-run-time=com.hazelcast.internal.util.ICMPHelper')
+//            buildArgs.addAll([
+//                '--initialize-at-run-time=com.sun.jmx.mbeanserver.MBeanInstantiator',
+//                '--initialize-at-run-time=com.sun.jmx.defaults.JmxProperties',
+//                '--initialize-at-run-time=com.sun.jmx.mbeanserver.Introspector',
+//                '--initialize-at-run-time=com.sun.jmx.mbeanserver.MXBeanLookup',
+//                '--initialize-at-run-time=com.sun.jmx.mbeanserver.MXBeanIntrospector',
+//                '--initialize-at-run-time=jdk.management.jfr.SettingDescriptorInfo',
+//                '--initialize-at-run-time=javax.script.ScriptEngineManager'
+//            ])
         }
     }
 }
