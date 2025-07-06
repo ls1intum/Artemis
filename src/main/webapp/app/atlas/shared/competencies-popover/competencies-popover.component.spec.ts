@@ -68,10 +68,10 @@ describe('CompetenciesPopoverComponent (host + provideRouter)', () => {
         expect(popoverCmp).toBeTruthy();
     });
 
-    it.each([
+    it.each<['courseCompetencies' | 'competencyManagement', string]>([
         ['courseCompetencies', '/courses/1/competencies'],
         ['competencyManagement', '/course-management/1/competency-management'],
-    ] as const)(
+    ])(
         'should navigate to %s',
         fakeAsync((navigateTo, expectedPath) => {
             const location = TestBed.inject(Location);
