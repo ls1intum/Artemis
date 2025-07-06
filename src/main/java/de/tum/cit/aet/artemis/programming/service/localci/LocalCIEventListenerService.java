@@ -202,7 +202,9 @@ public class LocalCIEventListenerService {
             log.warn("No internal admin user found. Cannot notify admin about self pausing build agent.");
             return;
         }
-        mailService.sendBuildAgentSelfPausedEmailToAdmin(admin.get(), buildAgentInformation.buildAgent().name());
+        int failures = buildAgentInformation.buildAgentDetails() != null ? buildAgentInformation.buildAgentDetails().consecutiveBuildFailures()
+                : buildAgentInformation.pauseAfterConsecutiveBuildFailures();
+        mailService.sendBuildAgentSelfPausedEmailToAdmin(admin.get(), buildAgentInformation.buildAgent().name(), failures);
     }
 
     private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime submissionDate, ZonedDateTime buildStartDate,

@@ -38,11 +38,12 @@ import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 
 describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
+    let fixture: ComponentFixture<IrisBaseChatbotComponent>;
+
     let chatService: IrisChatService;
     let httpService: jest.Mocked<IrisChatHttpService>;
     let wsMock: jest.Mocked<IrisWebsocketService>;
     let mockModalService: jest.Mocked<NgbModal>;
-    let fixture: ComponentFixture<IrisBaseChatbotComponent>;
 
     const statusMock = {
         currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
@@ -78,7 +79,6 @@ describe('IrisBaseChatbotComponent', () => {
             ],
             providers: [
                 MockProvider(NgbModal),
-                { provide: ActivatedRoute, useValue: {} },
                 { provide: LocalStorageService, useValue: {} },
                 { provide: TranslateService, useValue: {} },
                 { provide: SessionStorageService, useValue: {} },
@@ -86,6 +86,7 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: AccountService, useValue: accountMock },
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
+                MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
             ],
@@ -99,6 +100,7 @@ describe('IrisBaseChatbotComponent', () => {
 
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 chatService = TestBed.inject(IrisChatService);
+                chatService.setCourseId(456);
                 httpService = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
                 wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
                 mockModalService = TestBed.inject(NgbModal) as jest.Mocked<NgbModal>;
