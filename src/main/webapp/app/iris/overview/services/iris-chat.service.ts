@@ -293,6 +293,8 @@ export class IrisChatService implements OnDestroy {
     private handleNewSession() {
         return {
             next: (r: IrisSession) => {
+                // eslint-disable-next-line no-undef
+                console.log('Parsed Iris Session: \n', r);
                 this.sessionId = r.id;
                 this.messages.next(r.messages || []);
                 this.parseLatestSuggestions(r.latestSuggestions);
@@ -394,6 +396,8 @@ export class IrisChatService implements OnDestroy {
         if (courseId) {
             this.chatSessionSubscription?.unsubscribe();
             this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
+                // eslint-disable-next-line no-undef
+                console.error(`Loaded Sessions for course (${courseId}):\n`, sessions);
                 this.chatSessions.next(sessions ?? []);
             });
         } else {
