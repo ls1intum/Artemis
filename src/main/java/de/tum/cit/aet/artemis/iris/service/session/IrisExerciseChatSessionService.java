@@ -115,6 +115,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @return The created session
      */
     // TODO: This function is only used in tests. Replace with createSession once the tests are refactored.
+    @Deprecated
     public IrisProgrammingExerciseChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
         checkIfExamExercise(exercise);
         return irisSessionRepository.save(new IrisProgrammingExerciseChatSession(exercise, user));
