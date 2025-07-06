@@ -99,7 +99,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessage() throws Exception {
         var irisSession = createSessionForUser("student1");
-        var messageToSend = createDefaultMockMessage(irisSession);
+        var messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         messageToSend.setMessageDifferentiator(1453);
 
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
@@ -131,7 +131,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
 
         // Prepare session and message
         var irisSession = createSessionForUser("student1");
-        var messageToSend = createDefaultMockMessage(irisSession);
+        var messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         messageToSend.setMessageDifferentiator(789101112);
 
         // Mock Pyris response and assert customInstructions in DTO
@@ -152,7 +152,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
     void sendOneMessageToWrongSession() throws Exception {
         createSessionForUser("student1");
         IrisSession irisSession = createSessionForUser("student2");
-        IrisMessage messageToSend = createDefaultMockMessage(irisSession);
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.FORBIDDEN);
     }
 
@@ -168,7 +168,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendTwoMessages() throws Exception {
         IrisSession irisSession = createSessionForUser("student1");
-        IrisMessage messageToSend1 = createDefaultMockMessage(irisSession);
+        IrisMessage messageToSend1 = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
             assertThat(dto.execution().settings().authenticationToken()).isNotNull();
@@ -188,7 +188,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
 
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, HttpStatus.CREATED);
 
-        IrisMessage messageToSend2 = createDefaultMockMessage(irisSession);
+        IrisMessage messageToSend2 = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend2, HttpStatus.CREATED);
 
         verify(websocketMessagingService, times(8)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()), any());
@@ -202,10 +202,10 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
     void getMessages() throws Exception {
         var irisSession = createSessionForUser("student1");
 
-        IrisMessage message1 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.USER);
-        IrisMessage message2 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.LLM);
-        IrisMessage message3 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.USER);
-        IrisMessage message4 = irisMessageService.saveMessage(createDefaultMockMessage(irisSession), irisSession, IrisMessageSender.LLM);
+        IrisMessage message1 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession), irisSession, IrisMessageSender.USER);
+        IrisMessage message2 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession), irisSession, IrisMessageSender.LLM);
+        IrisMessage message3 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession), irisSession, IrisMessageSender.USER);
+        IrisMessage message4 = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession), irisSession, IrisMessageSender.LLM);
 
         var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
         assertThat(messages).hasSize(4).containsAll(List.of(message1, message2, message3, message4));
@@ -267,7 +267,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resendMessage() throws Exception {
         var irisSession = createSessionForUser("student1");
-        var messageToSend = createDefaultMockMessage(irisSession);
+        var messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
             assertThat(dto.execution().settings().authenticationToken()).isNotNull();
@@ -291,8 +291,8 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "ADMIN")
     void sendMessageRateLimitReached() throws Exception {
         var irisSession = createSessionForUser("student2");
-        var messageToSend1 = createDefaultMockMessage(irisSession);
-        var messageToSend2 = createDefaultMockMessage(irisSession);
+        var messageToSend1 = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+        var messageToSend2 = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
             assertThat(dto.execution().settings().authenticationToken()).isNotNull();
@@ -324,11 +324,6 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
             globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(null);
             irisSettingsService.saveIrisSettings(globalSettings);
         }
-    }
-
-    // TODO remove usages
-    private IrisMessage createDefaultMockMessage(IrisSession irisSession) {
-        return IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
     }
 
     private ArgumentMatcher<Object> messageDTO(String message) {
