@@ -54,7 +54,6 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
-import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -65,9 +64,6 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "irismessageintegration";
-
-    @Autowired
-    private IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     @Autowired
     private IrisMessageService irisMessageService;
