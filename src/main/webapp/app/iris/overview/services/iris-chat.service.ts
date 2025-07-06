@@ -374,6 +374,10 @@ export class IrisChatService implements OnDestroy {
         }
 
         return this.http.getCurrentSessionOrCreateIfNotExists(this.sessionCreationIdentifier).pipe(
+            tap((response: HttpResponse<IrisExerciseChatSession>) => {
+                // eslint-disable-next-line no-undef
+                console.log('Full Iris Session HTTP response: \n', response);
+            }),
             map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
                     return response.body;
