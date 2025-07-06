@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -343,8 +342,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         // TODO move more of this logic to the factory
-        IrisMessage message = IrisMessageFactory.createIrisMessageForSession(irisSession);
-        message.addContent(createMockTextContent());
+        IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessage.class, HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
@@ -356,8 +354,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void rateMessageHelpfulFalse() throws Exception {
         IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisMessage message = IrisMessageFactory.createIrisMessageForSession(irisSession);
-        message.addContent(createMockTextContent());
+        IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", false, IrisMessage.class, HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
@@ -369,8 +366,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void rateMessageHelpfulNull() throws Exception {
         IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisMessage message = IrisMessageFactory.createIrisMessageForSession(irisSession);
-        message.addContent(createMockTextContent());
+        IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", null, IrisMessage.class, HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
@@ -382,8 +378,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void rateMessageWrongSender() throws Exception {
         IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisMessage message = IrisMessageFactory.createIrisMessageForSession(irisSession);
-        message.addContent(createMockTextContent());
+        IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.USER);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessage.class, HttpStatus.BAD_REQUEST);
     }
@@ -395,8 +390,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisProgrammingExerciseChatSession irisSession2 = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
-        IrisMessage message = IrisMessageFactory.createIrisMessageForSession(irisSession1);
-        message.addContent(createMockTextContent());
+        IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession1);
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession1, IrisMessageSender.USER);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessage.class, HttpStatus.CONFLICT);
     }
@@ -466,22 +460,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         }
     }
 
+    // TODO remove usages
     private IrisMessage createDefaultMockMessage(IrisSession irisSession) {
-        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSession(irisSession);
-        messageToSend.addContent(createMockTextContent(), createMockTextContent(), createMockTextContent());
-        return messageToSend;
-    }
-
-    private IrisMessageContent createMockTextContent() {
-        String[] adjectives = { "happy", "sad", "angry", "funny", "silly", "crazy", "beautiful", "smart" };
-        String[] nouns = { "dog", "cat", "house", "car", "book", "computer", "phone", "shoe" };
-
-        var rdm = ThreadLocalRandom.current();
-        String randomAdjective = adjectives[rdm.nextInt(adjectives.length)];
-        String randomNoun = nouns[rdm.nextInt(nouns.length)];
-
-        var text = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
-        return new IrisTextMessageContent(text);
+        return IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
     }
 
     private ArgumentMatcher<Object> messageDTO(String message) {

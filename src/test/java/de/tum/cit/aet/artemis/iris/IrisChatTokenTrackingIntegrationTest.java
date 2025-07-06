@@ -34,8 +34,6 @@ import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -211,15 +209,9 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         }
     }
 
+    // TODO remove usages
     private IrisMessage createDefaultMockMessage(IrisSession irisSession) {
-        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSession(irisSession);
-        messageToSend.addContent(createMockTextContent(), createMockTextContent(), createMockTextContent());
-        return messageToSend;
-    }
-
-    private IrisMessageContent createMockTextContent() {
-        var text = "The happy dog jumped over the lazy dog.";
-        return new IrisTextMessageContent(text);
+        return IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
     }
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, List<LLMRequest> tokens) throws Exception {

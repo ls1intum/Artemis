@@ -24,4 +24,10 @@ public class IrisMessageFactory {
         message.setSession(irisSession);
         return message;
     }
+
+    public static IrisMessage createIrisMessageForSessionWithContent(IrisSession irisSession) {
+        IrisMessage message = createIrisMessageForSession(irisSession);
+        message.setContent(IrisMessageContentFactory.createIrisMessageContents());
+        return message;
+    }
 }
