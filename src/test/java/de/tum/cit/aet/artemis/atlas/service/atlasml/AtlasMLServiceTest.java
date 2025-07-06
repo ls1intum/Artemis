@@ -110,7 +110,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveCompetencies() {
         // Given
-        AtlasMLCompetencyDTO competencyDTO = new AtlasMLCompetencyDTO("Test Competency", "Test Description", "APPLY");
+        AtlasMLCompetencyDTO competencyDTO = new AtlasMLCompetencyDTO("comp-001", "Test Competency", "Test Description", "APPLY");
         AtlasMLCompetencyRelationDTO relation = new AtlasMLCompetencyRelationDTO("comp-001", "comp-002", "ASSUMES");
 
         SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO("test-id", "test description", List.of(competencyDTO), List.of(relation));
@@ -130,6 +130,7 @@ class AtlasMLServiceTest {
     void testSaveCompetencies_WithDomainObjects() {
         // Given
         Competency competency = new Competency();
+        competency.setId(1L);
         competency.setTitle("Test Competency");
         competency.setDescription("Test Description");
         competency.setTaxonomy(CompetencyTaxonomy.APPLY);

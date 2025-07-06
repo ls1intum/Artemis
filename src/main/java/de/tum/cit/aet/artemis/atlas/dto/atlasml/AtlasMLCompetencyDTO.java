@@ -11,7 +11,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
  * This is a simplified version that matches the Python AtlasML API structure.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasMLCompetencyDTO(@JsonProperty("title") String title, @JsonProperty("description") String description, @JsonProperty("taxonomy") String taxonomy) {
+public record AtlasMLCompetencyDTO(@JsonProperty("id") String id, @JsonProperty("title") String title, @JsonProperty("description") String description,
+        @JsonProperty("taxonomy") String taxonomy) {
 
     /**
      * Convert from domain Competency to AtlasML DTO.
@@ -23,7 +24,7 @@ public record AtlasMLCompetencyDTO(@JsonProperty("title") String title, @JsonPro
 
         String taxonomyCode = competency.getTaxonomy() != null ? competency.getTaxonomy().name() : CompetencyTaxonomy.UNDERSTAND.name();
 
-        return new AtlasMLCompetencyDTO(competency.getTitle(), competency.getDescription(), taxonomyCode);
+        return new AtlasMLCompetencyDTO(competency.getId().toString(), competency.getTitle(), competency.getDescription(), taxonomyCode);
     }
 
     /**
