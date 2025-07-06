@@ -15,7 +15,6 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -30,17 +29,16 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
-import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -105,8 +103,8 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
         await().until(pipelineDone::get);
 
         var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
-        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
-                statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), IrisChatWebsocketMatchers.messageDTO(messageToSend.getContent()),
+                statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
     }
 
     @Test
@@ -302,8 +300,8 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, HttpStatus.TOO_MANY_REQUESTS);
 
             var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
-            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend1.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
-                    statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), IrisChatWebsocketMatchers.messageDTO(messageToSend1.getContent()),
+                    statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
         }
         finally {
             // Reset to not interfere with other tests
@@ -319,29 +317,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
     }
 
     private ArgumentMatcher<Object> messageDTO(String message) {
-        return messageDTO(List.of(new IrisTextMessageContent(message)));
-    }
-
-    private ArgumentMatcher<Object> messageDTO(List<IrisMessageContent> content) {
-        return new ArgumentMatcher<>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                if (!(argument instanceof IrisChatWebsocketDTO websocketDTO)) {
-                    return false;
-                }
-                if (websocketDTO.type() != IrisChatWebsocketDTO.IrisWebsocketMessageType.MESSAGE) {
-                    return false;
-                }
-                return Objects.equals(websocketDTO.message().getContent().stream().map(IrisMessageContent::getContentAsString).toList(),
-                        content.stream().map(IrisMessageContent::getContentAsString).toList());
-            }
-
-            @Override
-            public String toString() {
-                return "IrisChatWebsocketService.IrisWebsocketDTO with type MESSAGE and content " + content;
-            }
-        };
+        return IrisChatWebsocketMatchers.messageDTO(List.of(new IrisTextMessageContent(message)));
     }
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages) throws Exception {
