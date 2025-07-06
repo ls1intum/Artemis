@@ -4,7 +4,7 @@
     </div>
 } @else {
     @if (exercise?.problemStatement) {
-        <div class="row mb-2 align-items-baseline" id="problem-statement">
+        <div [ngClass]="isStandalone ? 'p-3' : 'mb-2'" class="row align-items-baseline" id="problem-statement">
             <div class="col-12 col-md-12 markdown-preview problem-statement">
                 <h3 jhiTranslate="artemisApp.courseOverview.exerciseDetails.problemStatement"></h3>
                 <p [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></p>
