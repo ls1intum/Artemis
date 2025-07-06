@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import java.util.zip.ZipOutputStream;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -621,6 +622,36 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         catch (IOException ex) {
             log.error("Creating zip file for programming exercise {} did not work correctly: {} ", programmingExercise.getTitle(), ex.getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Stream the repositories of the given participations directly into the provided {@link ZipOutputStream} without creating any zip files on disk.
+     *
+     * @param programmingExercise     the exercise entity
+     * @param participations          participations that should be exported
+     * @param repositoryExportOptions the options that should be used for the export
+     * @param zipOutputStream         the zip output stream to write the repositories to
+     * @throws IOException if any repository cannot be streamed
+     */
+    public void streamStudentRepositories(ProgrammingExercise programmingExercise, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
+            RepositoryExportOptionsDTO repositoryExportOptions, ZipOutputStream zipOutputStream) throws IOException {
+        Path workingDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 10);
+        Path outputDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 10);
+
+        for (ProgrammingExerciseStudentParticipation participation : participations) {
+            try {
+                Path repoDir = getRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, workingDir, outputDir, false);
+                if (repoDir != null) {
+                    String prefix = repoDir.getFileName().toString();
+                    Predicate<Path> filter = repositoryExportOptions.anonymizeRepository() ? path -> !path.endsWith(".git") : null;
+                    zipFileService.appendFolderToZipStream(repoDir, prefix, zipOutputStream, filter);
+                }
+            }
+            catch (Exception exception) {
+                log.warn("Failed to export the student repository with participation {} for programming exercise {}", participation.getId(), programmingExercise.getId(),
+                        exception);
+            }
         }
     }
 

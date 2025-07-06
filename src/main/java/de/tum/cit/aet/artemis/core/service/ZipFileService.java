@@ -136,6 +136,29 @@ public class ZipFileService {
     }
 
     /**
+     * Append the contents of a folder directly into the provided {@link ZipOutputStream} using an optional prefix for all entries.
+     *
+     * @param contentRootPath the folder whose content should be added
+     * @param prefix          the prefix to prepend to each zip entry (e.g. directory name inside the zip)
+     * @param zipOutputStream the output stream of the target zip file
+     * @param contentFilter   optional filter to exclude certain paths
+     * @throws IOException if an I/O error occurs while reading files
+     */
+    public void appendFolderToZipStream(Path contentRootPath, String prefix, ZipOutputStream zipOutputStream, @Nullable Predicate<Path> contentFilter) throws IOException {
+        try (var paths = Files.walk(contentRootPath)) {
+            var filteredPaths = paths.filter(path -> Files.isReadable(path) && !Files.isDirectory(path));
+            if (contentFilter != null) {
+                filteredPaths = filteredPaths.filter(contentFilter);
+            }
+            filteredPaths.filter(path -> !IGNORED_ZIP_FILE_NAMES.contains(path)).forEach(path -> {
+                String entryName = prefix + "/" + contentRootPath.relativize(path).toString();
+                ZipEntry zipEntry = new ZipEntry(entryName);
+                copyToZipFile(zipOutputStream, path, zipEntry);
+            });
+        }
+    }
+
+    /**
      * Common method to add filtered paths to a ZipOutputStream
      */
     private void addPathsToZipStream(ZipOutputStream zipOutputStream, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter) {

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.zip.ZipOutputStream;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -39,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -442,7 +444,7 @@ public class ProgrammingExerciseExportImportResource {
     @PostMapping("programming-exercises/{exerciseId}/export-repos-by-participant-identifiers/{participantIdentifiers}")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.Exports)
-    public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
+    public ResponseEntity<StreamingResponseBody> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -464,7 +466,7 @@ public class ProgrammingExerciseExportImportResource {
 
         // Select the participations that should be exported
         final var exportedStudentParticipations = getExportedStudentParticipations(repositoryExportOptions, programmingExercise, participantIdentifierList);
-        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
+        return streamZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
     }
 
     private static List<ProgrammingExerciseStudentParticipation> getExportedStudentParticipations(RepositoryExportOptionsDTO repositoryExportOptions,
@@ -537,6 +539,30 @@ public class ProgrammingExerciseExportImportResource {
                 programmingExercise.getId(), programmingExercise.getTitle(), formatDurationFrom(start));
 
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
+    private ResponseEntity<StreamingResponseBody> streamZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations,
+            ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+        long start = System.nanoTime();
+
+        if (exportedStudentParticipations.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
+                    .body(null);
+        }
+
+        StreamingResponseBody body = outputStream -> {
+            try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+                programmingExerciseExportService.streamStudentRepositories(programmingExercise, exportedStudentParticipations, repositoryExportOptions, zipOut);
+                zipOut.finish();
+            }
+            log.info("Export {} student repositories of programming exercise {} with title '{}' was successful in {}.", exportedStudentParticipations.size(),
+                    programmingExercise.getId(), programmingExercise.getTitle(), formatDurationFrom(start));
+        };
+
+        String fileName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getShortName() + ".zip";
+
+        return ResponseEntity.ok().header("filename", fileName).contentType(MediaType.APPLICATION_OCTET_STREAM).body(body);
     }
 
     /**
