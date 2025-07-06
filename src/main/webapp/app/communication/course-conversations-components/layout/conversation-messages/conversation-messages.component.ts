@@ -404,9 +404,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 const { fetchedPosts, fetchedAnswerPosts } = this.extractFetchedSources(responses);
 
                 this.posts = this.attachForwardedMessages(this.posts, forwardedMessagesMap, fetchedPosts, fetchedAnswerPosts);
-
                 this.groupPosts();
                 this.cdr.markForCheck();
+                if (this.createdNewMessage) {
+                    this.scrollToBottomOfMessages();
+                }
             });
         });
     };
@@ -599,13 +601,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     findFirstVisiblePostId(): number | null {
         const container = document.getElementById('scrollableDiv');
         const containerTop = container!.getBoundingClientRect().top;
-        const threads = container!.querySelectorAll<HTMLElement>('jhi-posting-thread[id^="item-"]');
+        const threads = container!.querySelectorAll<HTMLElement>('div[id^="post-"]');
 
         for (const thread of Array.from(threads)) {
             const rect = thread.getBoundingClientRect();
             if (rect.bottom > containerTop + 5) {
                 const id = thread.id;
-                const postId = parseInt(id.replace('item-', ''), 10);
+                const postId = parseInt(id.replace('post-', ''), 10);
                 return isNaN(postId) ? null : postId;
             }
         }

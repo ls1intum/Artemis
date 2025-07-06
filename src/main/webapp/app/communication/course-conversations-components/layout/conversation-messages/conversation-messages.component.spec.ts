@@ -172,9 +172,13 @@ examples.forEach((activeConversation) => {
             container.id = 'scrollableDiv';
             document.body.appendChild(container);
 
+            const postContainer = document.createElement('div');
+            postContainer.id = 'post-42';
+            container.appendChild(postContainer);
+
             const post = document.createElement('jhi-posting-thread');
             post.id = 'item-42';
-            container.appendChild(post);
+            postContainer.appendChild(post);
 
             component.canStartSaving = true;
             const saveSpy = jest.spyOn(component, 'saveScrollPosition');
@@ -182,6 +186,7 @@ examples.forEach((activeConversation) => {
             component.findElementsAtScrollPosition();
             expect(saveSpy).toHaveBeenCalledWith(42);
             expect(firstIdSpy).toHaveBeenCalledOnce();
+
             document.body.removeChild(container);
         });
 
@@ -202,12 +207,12 @@ examples.forEach((activeConversation) => {
             const container = document.createElement('div');
             container.id = 'scrollableDiv';
 
-            const post = document.createElement('jhi-posting-thread');
-            post.id = 'item-42';
+            const postContainer = document.createElement('div');
+            postContainer.id = 'post-42';
+            container.appendChild(postContainer);
 
-            container.appendChild(post);
             document.body.appendChild(container);
-            Object.defineProperty(post, 'getBoundingClientRect', {
+            Object.defineProperty(postContainer, 'getBoundingClientRect', {
                 value: () => ({ top: 10, bottom: 60 }),
             });
             Object.defineProperty(container, 'getBoundingClientRect', {
@@ -313,7 +318,6 @@ examples.forEach((activeConversation) => {
             });
 
             jest.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(mockResponse));
-
             metisService.getForwardedMessagesByIds([1], PostingType.POST)?.subscribe((response) => {
                 expect(response.body).toEqual(mockResponse.body);
             });
