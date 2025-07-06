@@ -101,7 +101,7 @@ public class IrisChatSessionResource {
     }
 
     /**
-     * GET chat-history/{courseId}/sessions: Retrieve all Iris Sessions for the course
+     * GET chat-history/{courseId}/sessions: Retrieve all Iris Sessions for the course and the current user.
      *
      * @param courseId of the course
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the course or {@code 404 (Not Found)} if no session exists
