@@ -3,9 +3,7 @@ package de.tum.cit.aet.artemis.core.exception;
 import java.io.IOException;
 import java.util.List;
 
-import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAllowedException;
 
@@ -56,10 +54,16 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     private String applicationName;
 
     /**
-     * Post-process the Problem payload to add the message key for the front-end if needed.
+     * This method is called for all exceptions that are handled by the ProblemHandling interface.
+     * It modifies the Problem payload to include additional information such as the request path and
+     * a message key for the front-end.
+     *
+     * @param entity  the ResponseEntity containing the Problem (potentially null)
+     * @param request the NativeWebRequest to get the request path
+     * @return a modified ResponseEntity with additional information in the Problem payload
      */
     @Override
-    public ResponseEntity<Problem> process(@Nullable ResponseEntity<Problem> entity, @NotNull NativeWebRequest request) {
+    public ResponseEntity<Problem> process(ResponseEntity<Problem> entity, NativeWebRequest request) {
         if (entity == null) {
             return null;
         }
@@ -84,7 +88,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     @Override
-    public ResponseEntity<Problem> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, @NotNull NativeWebRequest request) {
+    public ResponseEntity<Problem> handleMethodArgumentNotValid(final MethodArgumentNotValidException ex, final NativeWebRequest request) {
         BindingResult result = ex.getBindingResult();
         List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream().map(f -> new FieldErrorVM(f.getObjectName().replaceFirst("DTO$", ""), f.getField(), f.getCode()))
                 .toList();

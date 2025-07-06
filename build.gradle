@@ -38,6 +38,22 @@ graalvmNative {
             imageName = 'ArtemisNativeApp'
             buildArgs.add('--no-fallback')
             buildArgs.add('--report-unsupported-elements-at-runtime')
+            buildArgs.add('-Dspring.profiles.active=dev,localci,localvc,artemis,scheduling,iris,buildagent,core,local')
+
+            // ⬇️ Delay class initialization
+
+            // ICU4J (for JPlag)
+            buildArgs.add('--initialize-at-build-time=com.ibm.icu.impl.ICUConfig,com.ibm.icu.impl.ICUBinary,com.ibm.icu.charset.CharsetProviderICU')
+
+            // SLF4J + Logback
+            // Prevent heap violations by fully initializing known early logback classes
+            buildArgs.add('--initialize-at-build-time=ch.qos.logback.core.status.InfoStatus,ch.qos.logback.core.status.StatusBase,ch.qos.logback.core.status.Status')
+            buildArgs.add('--initialize-at-build-time=ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.util.StatusPrinter2')
+            buildArgs.add('--initialize-at-build-time=ch.qos.logback.classic.Level,ch.qos.logback.classic.Logger')
+            buildArgs.add('--initialize-at-build-time=org.slf4j.LoggerFactory,org.slf4j.helpers.Reporter')
+
+            // Optional: trace offending classes
+            buildArgs.add('--trace-class-initialization=org.slf4j.LoggerFactory,ch.qos.logback,com.ibm.icu')
         }
     }
 }
@@ -143,6 +159,8 @@ configurations.configureEach {
 
     exclude group: "org.jasypt", module: "jasypt"
 
+    exclude group: "org.apache.sshd", module: "sshd-sftp"
+
     // required by eureka client, but not used in this project
     exclude group: "com.thoughtworks.xstream", module: "xstream"
     // required by JPlag, but not used in this project
@@ -216,7 +234,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-core:${sshd_version}"
     implementation "org.apache.sshd:sshd-git:${sshd_version}"
     implementation "org.apache.sshd:sshd-osgi:${sshd_version}"
-    implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
+//    implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:1.2025.2"
@@ -550,6 +568,7 @@ tasks.named("dependencyUpdates").configure {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
+// 1a) Native build production:                     ./gradlew nativeCompile -x webapp
 // 2) Execute tests with coverage report:           ./gradlew test jacocoTestReport -x webapp
 // 2a) Execute tests without coverage report:       ./gradlew test -x webapp
 // 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
