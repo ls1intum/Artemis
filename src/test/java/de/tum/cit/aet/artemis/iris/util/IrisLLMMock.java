@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.iris.utils;
+package de.tum.cit.aet.artemis.iris.util;
 
 import java.util.ArrayList;
 import java.util.List;
