@@ -1,11 +1,16 @@
 .chat-history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     cursor: pointer;
     padding: 0.4rem 1rem;
     font-size: 1rem;
     min-width: 17rem;
 
-    p {
-        margin: 0;
+    .chat-history-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     &:hover {

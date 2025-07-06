@@ -7,8 +7,14 @@
     (keydown.space)="onItemClick()"
     (keydown.enter)="onItemClick()"
 >
-    @let s = session();
-    @if (s !== undefined) {
-        <p>{{ s.creationDate | date: 'dd.MM.yy HH:mm' }}</p>
+    @let displayedSession = session();
+    @if (displayedSession) {
+        <div class="chat-history-text">
+            {{ displayedSession.creationDate | date: 'dd.MM.yy HH:mm' }}
+        </div>
+    }
+    @let contextIcon = icon;
+    @if (contextIcon) {
+        <fa-icon [icon]="contextIcon" />
     }
 </div>
