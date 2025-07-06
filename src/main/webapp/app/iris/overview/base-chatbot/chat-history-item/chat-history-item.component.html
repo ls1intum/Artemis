@@ -13,8 +13,8 @@
             {{ displayedSession.creationDate | date: 'dd.MM.yy HH:mm' }}
         </div>
     }
-    @let contextIcon = icon;
-    @if (contextIcon) {
-        <fa-icon [icon]="contextIcon" />
+    @let contextIconAndTooltipKey = iconAndTooltipKey;
+    @if (contextIconAndTooltipKey) {
+        <fa-icon [icon]="contextIconAndTooltipKey.icon" [ngbTooltip]="contextIconAndTooltipKey.tooltipKey | artemisTranslate" />
     }
 </div>

@@ -4,6 +4,8 @@ import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChalkboardUser, faKeyboard } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 
 @Component({
@@ -11,7 +13,7 @@ import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
     templateUrl: './chat-history-item.component.html',
     styleUrls: ['./chat-history-item.component.scss'],
     standalone: true,
-    imports: [DatePipe, NgClass, FaIconComponent],
+    imports: [DatePipe, NgClass, FaIconComponent, NgbTooltipModule, ArtemisTranslatePipe],
 })
 export class ChatHistoryItemComponent {
     session = input<IrisSessionDTO>();
@@ -22,12 +24,12 @@ export class ChatHistoryItemComponent {
         this.sessionClicked.emit(this.session()!);
     }
 
-    get icon(): IconProp | undefined {
+    get iconAndTooltipKey(): { icon: IconProp; tooltipKey: string } | undefined {
         switch (this.session()?.chatMode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
-                return faKeyboard;
+                return { icon: faKeyboard, tooltipKey: 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise' };
             case ChatServiceMode.LECTURE:
-                return faChalkboardUser;
+                return { icon: faChalkboardUser, tooltipKey: 'artemisApp.iris.chatHistory.relatedEntityTooltip.lecture' };
             default:
                 return undefined;
         }

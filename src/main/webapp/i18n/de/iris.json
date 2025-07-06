@@ -148,7 +148,11 @@
                 "yesterday": "Gestern",
                 "last7Days": "Letzten 7 Tage",
                 "last30Days": "Letzten 30 Tage",
-                "older": "Älter"
+                "older": "Älter",
+                "relatedEntityTooltip": {
+                    "programmingExercise": "Diese Konversation bezieht sich auf eine Programmieraufgabe.",
+                    "lecture": "Diese Konversation bezieht sich auf eine Vorlesung."
+                }
             }
         }
     }

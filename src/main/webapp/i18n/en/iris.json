@@ -148,7 +148,11 @@
                 "yesterday": "Yesterday",
                 "last7Days": "Last 7 Days",
                 "last30Days": "Last 30 Days",
-                "older": "Older"
+                "older": "Older",
+                "relatedEntityTooltip": {
+                    "programmingExercise": "This chat is related to a programming exercise.",
+                    "lecture": "This chat is related to a lecture."
+                }
             }
         }
     }
