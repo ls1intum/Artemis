@@ -9,13 +9,13 @@ import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.comp
     imports: [IrisBaseChatbotComponent],
 })
 export class CourseChatbotComponent implements OnChanges {
-    chatService = inject(IrisChatService);
+    private readonly chatService = inject(IrisChatService);
 
     @Input() courseId?: number;
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.courseId) {
-            this.chatService.setCourseId(this.courseId!);
+            this.chatService.setCourseId(this.courseId);
             this.chatService.switchTo(ChatServiceMode.COURSE, this.courseId);
         }
     }
