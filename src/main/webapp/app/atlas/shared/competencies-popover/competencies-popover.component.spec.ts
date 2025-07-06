@@ -73,7 +73,7 @@ describe('CompetenciesPopoverComponent (host + provideRouter)', () => {
         ['competencyManagement', '/course-management/1/competency-management'],
     ])(
         'should navigate to %s',
-        fakeAsync((navigateTo, expectedPath) => {
+        fakeAsync((navigateTo: 'courseCompetencies' | 'competencyManagement', expectedPath: string) => {
             const location = TestBed.inject(Location);
 
             host.navigateTo = navigateTo;
