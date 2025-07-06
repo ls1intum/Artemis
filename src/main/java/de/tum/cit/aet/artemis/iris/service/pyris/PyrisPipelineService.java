@@ -240,10 +240,14 @@ public class PyrisPipelineService {
      * - The messages of the session
      * - The user that created the session
      *
-     * @param variant      the variant of the pipeline
-     * @param session      the chat session
-     * @param eventVariant the event variant if this function triggers a pipeline execution due to a specific event
-     * @param post         the post the session is about
+     * @param variant                 the variant of the pipeline
+     * @param session                 the chat session
+     * @param eventVariant            the event variant if this function triggers a pipeline execution due to a specific event
+     * @param lectureIdOptional       the optional lecture ID if this is due to a specific event
+     * @param textExerciseDTOOptional the optional text exercise DTO if this is due to a specific event
+     * @param submissionDTO           the optional submission DTO if this is due to a specific event
+     * @param exerciseDTO             the optional programming exercise DTO if this is due to a specific event
+     * @param post                    the post the session is about
      */
     public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureIdOptional,
             Optional<PyrisTextExerciseDTO> textExerciseDTOOptional, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> exerciseDTO, Post post) {
