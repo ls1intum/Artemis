@@ -21,7 +21,7 @@ public class IrisChatSessionUtilService {
     private IrisSessionRepository irisSessionRepository;
 
     public IrisProgrammingExerciseChatSession createAndSaveProgrammingExerciseChatSessionForUser(ProgrammingExercise exercise, User user) {
-        return irisSessionRepository.save(new IrisProgrammingExerciseChatSession(exercise, user));
+        return irisSessionRepository.save(IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(exercise, user));
     }
 
 }
