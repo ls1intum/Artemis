@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service.atlasml;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -159,9 +160,9 @@ class AtlasMLServiceTest {
                 .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // When & Then
-        org.junit.jupiter.api.Assertions.assertThrows(AtlasMLServiceException.class, () -> {
+        assertThatThrownBy(() -> {
             atlasMLService.saveCompetencies(request);
-        });
+        }).isInstanceOf(AtlasMLServiceException.class);
     }
 
     @Test
@@ -173,9 +174,9 @@ class AtlasMLServiceTest {
                 eq(SuggestCompetencyResponseDTO.class))).thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // When & Then
-        org.junit.jupiter.api.Assertions.assertThrows(AtlasMLServiceException.class, () -> {
+        assertThatThrownBy(() -> {
             atlasMLService.suggestCompetencies(request);
-        });
+        }).isInstanceOf(AtlasMLServiceException.class);
     }
 
     @Test

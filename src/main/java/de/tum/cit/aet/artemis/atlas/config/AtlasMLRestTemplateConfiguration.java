@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
@@ -15,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
  */
 @Profile(PROFILE_CORE)
 @Configuration
+@Lazy
 public class AtlasMLRestTemplateConfiguration {
 
     private static final int ATLASML_CONNECTION_TIMEOUT = 30 * 1000; // 30 seconds

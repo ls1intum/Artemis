@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
  */
 @Profile(PROFILE_CORE)
 @Component
+@Lazy
 public class AtlasMLHealthIndicator implements HealthIndicator {
 
     private static final Logger log = LoggerFactory.getLogger(AtlasMLHealthIndicator.class);

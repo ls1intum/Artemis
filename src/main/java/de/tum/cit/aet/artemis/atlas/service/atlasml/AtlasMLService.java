@@ -3,11 +3,11 @@ package de.tum.cit.aet.artemis.atlas.service.atlasml;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
  */
 @Profile(PROFILE_CORE)
 @Service
+@Lazy
 public class AtlasMLService {
 
     private static final Logger log = LoggerFactory.getLogger(AtlasMLService.class);
@@ -205,7 +206,7 @@ public class AtlasMLService {
             return List.of();
         }
 
-        List<Long> competencyIds = response.competencies().stream().map(Long::parseLong).collect(Collectors.toList());
+        List<Long> competencyIds = response.competencies().stream().map(Long::parseLong).toList();
 
         return competencyRepository.findAllById(competencyIds);
     }
@@ -232,7 +233,7 @@ public class AtlasMLService {
 
         List<Competency> competencies = List.of();
         if (response.competencies() != null && !response.competencies().isEmpty()) {
-            List<Long> competencyIds = response.competencies().stream().map(Long::parseLong).collect(Collectors.toList());
+            List<Long> competencyIds = response.competencies().stream().map(Long::parseLong).toList();
             competencies = competencyRepository.findAllById(competencyIds);
         }
 

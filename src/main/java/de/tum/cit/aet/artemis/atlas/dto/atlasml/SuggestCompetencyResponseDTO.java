@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.dto.atlasml;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,6 +24,6 @@ public record SuggestCompetencyResponseDTO(@JsonProperty("competencies") List<St
         if (competencyRelations == null) {
             return List.of();
         }
-        return competencyRelations.stream().map(AtlasMLCompetencyRelationDTO::toDomain).collect(Collectors.toList());
+        return competencyRelations.stream().map(AtlasMLCompetencyRelationDTO::toDomain).toList();
     }
 }

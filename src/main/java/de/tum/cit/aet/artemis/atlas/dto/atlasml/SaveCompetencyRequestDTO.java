@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.dto.atlasml;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,11 +20,9 @@ public record SaveCompetencyRequestDTO(@JsonProperty("id") String id, @JsonPrope
      * Create a SaveCompetencyRequestDTO from domain objects.
      */
     public static SaveCompetencyRequestDTO fromDomain(String id, String description, List<Competency> competencies, List<CompetencyRelation> competencyRelations) {
-        List<AtlasMLCompetencyDTO> atlasMLCompetencies = competencies != null ? competencies.stream().map(AtlasMLCompetencyDTO::fromDomain).collect(Collectors.toList())
-                : List.of();
+        List<AtlasMLCompetencyDTO> atlasMLCompetencies = competencies != null ? competencies.stream().map(AtlasMLCompetencyDTO::fromDomain).toList() : List.of();
 
-        List<AtlasMLCompetencyRelationDTO> atlasMLRelations = competencyRelations != null
-                ? competencyRelations.stream().map(AtlasMLCompetencyRelationDTO::fromDomain).collect(Collectors.toList())
+        List<AtlasMLCompetencyRelationDTO> atlasMLRelations = competencyRelations != null ? competencyRelations.stream().map(AtlasMLCompetencyRelationDTO::fromDomain).toList()
                 : List.of();
 
         return new SaveCompetencyRequestDTO(id, description, atlasMLCompetencies, atlasMLRelations);
