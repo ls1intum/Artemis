@@ -62,6 +62,9 @@ public class BuildAgentConfiguration {
     @Value("${artemis.continuous-integration.specify-concurrent-builds:false}")
     boolean specifyConcurrentBuilds;
 
+    @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs:100}")
+    int pauseAfterConsecutiveFailedJobs;
+
     public BuildAgentConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
@@ -82,6 +85,10 @@ public class BuildAgentConfiguration {
 
     public DockerClient getDockerClient() {
         return dockerClient;
+    }
+
+    public int getPauseAfterConsecutiveFailedJobs() {
+        return pauseAfterConsecutiveFailedJobs;
     }
 
     /**

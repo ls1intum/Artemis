@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.util.ClientEnvironment;
 
@@ -97,14 +98,21 @@ public class ArtemisSuccessfulLoginService {
      * Handles successful authentication events.
      * Sends a login notification email to users when they successfully authenticate.
      *
-     * @param username             the username of the user who has successfully logged in
+     * @param loginOrEmail         the username or email of the user who has successfully logged in
      * @param authenticationMethod the method used for authentication
      * @param clientEnvironment    the environment information of the client (optional)
      * @see AuthenticationMethod for available authentication methods
      */
-    public void sendLoginEmail(String username, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
+    public void sendLoginEmail(String loginOrEmail, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
         try {
-            User recipient = userRepository.getUserByLoginElseThrow(username);
+            User recipient;
+
+            if (SecurityUtils.isEmail(loginOrEmail)) {
+                recipient = userRepository.getUserByEmailElseThrow(loginOrEmail);
+            }
+            else {
+                recipient = userRepository.getUserByLoginElseThrow(loginOrEmail);
+            }
 
             if (!globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.NEW_LOGIN)) {
                 return;
@@ -112,7 +120,7 @@ public class ArtemisSuccessfulLoginService {
 
             String localeKey = recipient.getLangKey();
             if (localeKey == null) {
-                log.warn("User {} has no language set, using default language 'en'", username);
+                log.warn("User {} has no language set, using default language 'en'", loginOrEmail);
                 localeKey = "en";
             }
             Language language = Language.fromLanguageShortName(localeKey);
@@ -141,7 +149,7 @@ public class ArtemisSuccessfulLoginService {
             mailSendingService.buildAndSendAsync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
         }
         catch (EntityNotFoundException ignored) {
-            log.error("User with login {} not found when trying to send newLoginEmail", username);
+            log.error("User with login {} not found when trying to send newLoginEmail", loginOrEmail);
         }
     }
 }
