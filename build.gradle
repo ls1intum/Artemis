@@ -31,8 +31,8 @@ plugins {
     id 'org.graalvm.buildtools.native' version '0.10.6'
 }
 
-
 graalvmNative {
+    testSupport = false // disables test AOT and related metadata
     binaries {
         main {
             imageName = 'ArtemisNativeApp'
