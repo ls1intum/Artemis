@@ -86,8 +86,7 @@ class AtlasMLServiceTest {
         SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test-id", "test description");
 
         List<String> competencyIds = List.of("comp-001", "comp-002");
-        CompetencyRelation relation = new CompetencyRelation();
-        relation.setType(RelationType.SUPERSET);
+        AtlasMLCompetencyRelationDTO relation = new AtlasMLCompetencyRelationDTO("comp-001", "comp-002", "ASSUMES");
 
         SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencyIds, List.of(relation));
 
@@ -104,15 +103,14 @@ class AtlasMLServiceTest {
         assertThat(result.getCompetencies()).hasSize(2);
         assertThat(result.getCompetencyRelations()).hasSize(1);
         assertThat(result.getCompetencies()).contains("comp-001", "comp-002");
-        assertThat(result.getCompetencyRelations().get(0).getType()).isEqualTo(RelationType.SUPERSET);
+        assertThat(result.getCompetencyRelations().get(0).getRelationType()).isEqualTo("ASSUMES");
     }
 
     @Test
     void testSaveCompetencies() {
         // Given
         AtlasMLCompetencyDTO competencyDTO = new AtlasMLCompetencyDTO("Test Competency", "Test Description", "APPLY");
-        CompetencyRelation relation = new CompetencyRelation();
-        relation.setType(RelationType.SUBSET);
+        AtlasMLCompetencyRelationDTO relation = new AtlasMLCompetencyRelationDTO("comp-001", "comp-002", "ASSUMES");
 
         SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO("test-id", "test description", List.of(competencyDTO), List.of(relation));
 
@@ -137,7 +135,7 @@ class AtlasMLServiceTest {
         competency.setOptional(false);
 
         CompetencyRelation relation = new CompetencyRelation();
-        relation.setType(RelationType.EXTENDS);
+        relation.setType(RelationType.ASSUMES);
 
         SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromDomain("test-id", "test description", List.of(competency), List.of(relation));
 
@@ -184,9 +182,9 @@ class AtlasMLServiceTest {
     void testSuggestCompetenciesAsDomain() {
         // Given
         List<String> competencyIds = List.of("1", "2");
-        AtlasMLCompetencyRelationDTO relationDTO = new AtlasMLCompetencyRelationDTO("tail-id", "head-id", "SUPERSET");
+        AtlasMLCompetencyRelationDTO relation = new AtlasMLCompetencyRelationDTO("1", "2", "ASSUMES");
 
-        SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencyIds, List.of(relationDTO));
+        SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencyIds, List.of(relation));
 
         ResponseEntity<SuggestCompetencyResponseDTO> response = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
 
@@ -215,9 +213,9 @@ class AtlasMLServiceTest {
     void testSuggestCompetencyIds() {
         // Given
         List<String> competencyIds = List.of("comp-001", "comp-002");
-        AtlasMLCompetencyRelationDTO relationDTO = new AtlasMLCompetencyRelationDTO("tail-id", "head-id", "SUPERSET");
+        AtlasMLCompetencyRelationDTO relation = new AtlasMLCompetencyRelationDTO("comp-001", "comp-002", "ASSUMES");
 
-        SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencyIds, List.of(relationDTO));
+        SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencyIds, List.of(relation));
 
         ResponseEntity<SuggestCompetencyResponseDTO> response = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
 
@@ -236,9 +234,9 @@ class AtlasMLServiceTest {
     void testSuggestCompetenciesWithRelations() {
         // Given
         List<String> competencyIds = List.of("1", "2");
-        AtlasMLCompetencyRelationDTO relationDTO = new AtlasMLCompetencyRelationDTO("1", "2", "SUPERSET");
+        AtlasMLCompetencyRelationDTO relation = new AtlasMLCompetencyRelationDTO("1", "2", "ASSUMES");
 
-        SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencyIds, List.of(relationDTO));
+        SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencyIds, List.of(relation));
 
         ResponseEntity<SuggestCompetencyResponseDTO> response = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
 

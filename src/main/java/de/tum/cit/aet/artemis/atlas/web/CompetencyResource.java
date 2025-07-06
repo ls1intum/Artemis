@@ -43,6 +43,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
 @Conditional(AtlasEnabled.class)
@@ -335,6 +337,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the suggested competencies
      */
     @PostMapping("competencies/suggest")
+    @FeatureToggle(Feature.AtlasML)
     public ResponseEntity<Object> suggestCompetencies() {
         log.debug("REST request to suggest competencies using AtlasML");
 
@@ -359,6 +362,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) if successful
      */
     @PostMapping("competencies/save")
+    @FeatureToggle(Feature.AtlasML)
     public ResponseEntity<Object> saveCompetencies() {
         log.debug("REST request to save competencies using AtlasML");
 
