@@ -2,7 +2,6 @@ import { Component, ElementRef, OnChanges, OnDestroy, SimpleChanges, computed, i
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { faArrowsToEye, faHexagonNodes, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { Subscription } from 'rxjs';
 import {
     MemirisConnectionType,
     MemirisGraphData,
@@ -36,6 +35,21 @@ import {
 } from 'd3';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 
+/**
+ * The MemirisGraphViewComponent is responsible for rendering and managing an interactive graph visualization.
+ * It uses D3.js to display nodes and links that represent memories, learnings, and their connections.
+ *
+ * The component offers dynamic features such as zooming, panning, and node highlighting.
+ * It responds to changes in its inputs, automatically updating the graph visualization when the data,
+ * filters, or selected node are modified.
+ *
+ * Features:
+ * - Displays nodes representing memories and learnings.
+ * - Renders links showing relationships or connections between the nodes.
+ * - Integrates filtering, allowing the graph to adapt based on provided filters.
+ * - Supports zooming and panning for better navigation through the graph.
+ * - Highlights nodes when they are selected.
+ */
 @Component({
     selector: 'jhi-memiris-graph-view',
     imports: [LoadingIndicatorContainerComponent, FontAwesomeModule, ButtonComponent],
@@ -43,12 +57,10 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
     styleUrl: './memiris-graph-view.component.scss',
 })
 export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
-    svgContainer = viewChild<ElementRef>('svgContainer');
-
+    // Inputs and Outputs
     graphData = input<MemirisGraphData>();
     initialSelectedMemoryId = input<string>();
     filters = input<MemirisGraphFilters>(new MemirisGraphFilters());
-
     nodeSelected = output<MemirisSimulationNode>();
 
     // Icons
@@ -58,6 +70,7 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
     faHexagonNodes = faHexagonNodes;
 
     // Internal state
+    svgContainer = viewChild<ElementRef>('svgContainer');
     loading = computed(() => !this.graphData());
     selectedNode?: MemirisSimulationNode;
     nodes: MemirisSimulationNode[] = [];
@@ -66,14 +79,13 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
     allLinks: MemirisSimulationLink[] = [];
 
     // D3-related properties
-    private simulation: Simulation<MemirisSimulationNode, MemirisSimulationLink> | null = null;
-    private svg: Selection<SVGSVGElement, unknown, null, undefined> | null = null;
-    private linkElements: Selection<SVGLineElement, MemirisSimulationLink, SVGGElement, unknown> | null = null;
-    private nodeElements: Selection<SVGCircleElement, MemirisSimulationNode, SVGGElement, unknown> | null = null;
-    private textElements: Selection<SVGTextElement, MemirisSimulationNode, SVGGElement, unknown> | null = null;
-    private linkLabelElements: Selection<SVGTextElement, MemirisSimulationLink, SVGGElement, unknown> | null = null;
-    private zoom: ZoomBehavior<SVGSVGElement, unknown> | null = null;
-    private subscriptions: Subscription[] = [];
+    private simulation?: Simulation<MemirisSimulationNode, MemirisSimulationLink> = undefined;
+    private svg?: Selection<SVGSVGElement, unknown, null, undefined> = undefined;
+    private linkElements?: Selection<SVGLineElement, MemirisSimulationLink, SVGGElement, unknown> = undefined;
+    private nodeElements?: Selection<SVGCircleElement, MemirisSimulationNode, SVGGElement, unknown> = undefined;
+    private textElements?: Selection<SVGTextElement, MemirisSimulationNode, SVGGElement, unknown> = undefined;
+    private linkLabelElements?: Selection<SVGTextElement, MemirisSimulationLink, SVGGElement, unknown> = undefined;
+    private zoom?: ZoomBehavior<SVGSVGElement, unknown> = undefined;
     private width = 0;
     private height = 0;
     private graphGroup: Selection<SVGGElement, unknown, null, undefined>;
@@ -94,8 +106,10 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
         }
     }
 
+    /**
+     * Ensures that the simulation is stopped when the component is destroyed.
+     */
     ngOnDestroy(): void {
-        this.subscriptions.forEach((sub) => sub.unsubscribe());
         if (this.simulation) {
             this.simulation.stop();
         }
@@ -385,8 +399,8 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
                 if (!event.active && this.simulation) {
                     this.simulation.alphaTarget(0);
                 }
-                d.fx = null;
-                d.fy = null;
+                d.fx = undefined;
+                d.fy = undefined;
             });
     }
 
@@ -675,8 +689,8 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
             node.y = centerY + radius * Math.sin(angle);
 
             // Reset fixed positions
-            node.fx = null;
-            node.fy = null;
+            node.fx = undefined;
+            node.fy = undefined;
         });
     }
 }
