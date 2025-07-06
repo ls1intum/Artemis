@@ -8,6 +8,8 @@
 # ===================================================================
 # TODO: we should make sure this is not required here, because build agent could never enable those modules / features
 artemis:
+    core:
+      enabled: false # The core module is not needed for the build agent
     atlas:
       enabled: false
     exam:

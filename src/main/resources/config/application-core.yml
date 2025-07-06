@@ -1,4 +1,6 @@
 artemis:
+    core:
+        enabled: true
     atlas:
         enabled: true
     exam:

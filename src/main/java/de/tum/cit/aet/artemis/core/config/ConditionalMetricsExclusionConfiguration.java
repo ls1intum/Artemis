@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+
 import org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Conditional configuration class that excludes {@link MetricsAutoConfiguration}
@@ -17,7 +20,8 @@ import org.springframework.context.annotation.Lazy;
  */
 @Configuration
 @Lazy
-@Conditional(BuildAgentWithoutCoreCondition.class)
+@Profile(PROFILE_BUILDAGENT)
+@ConditionalOnProperty(name = "artemis.core.enabled", havingValue = "false")
 @EnableAutoConfiguration(exclude = MetricsAutoConfiguration.class)
 public class ConditionalMetricsExclusionConfiguration {
 }
