@@ -5,7 +5,6 @@ import { MockDirective } from 'ng-mocks';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { InputSignal, signal } from '@angular/core';
 
 describe('TaxonomySelectComponent', () => {
     let componentFixture: ComponentFixture<TaxonomySelectComponent>;
