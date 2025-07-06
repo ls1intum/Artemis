@@ -68,7 +68,6 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
 
     private AtomicBoolean pipelineDone;
 
-    // TODO replace this with factory method
     private IrisTextExerciseChatSession createSessionForUser(String userLogin) {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
         return irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(exercise, user));

@@ -336,7 +336,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void rateMessageHelpfulTrue() throws Exception {
         IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        // TODO move more of this logic to the factory
         IrisMessage message = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessage.class, HttpStatus.OK);
