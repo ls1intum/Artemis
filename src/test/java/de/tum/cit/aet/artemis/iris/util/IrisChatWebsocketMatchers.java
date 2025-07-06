@@ -7,6 +7,7 @@ import java.util.Objects;
 import org.mockito.ArgumentMatcher;
 
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
@@ -38,6 +39,10 @@ public class IrisChatWebsocketMatchers {
                 return "IrisChatWebsocketService.IrisWebsocketDTO with type STATUS and stage states " + Arrays.toString(stageStates);
             }
         };
+    }
+
+    public static ArgumentMatcher<Object> messageDTO(String message) {
+        return IrisChatWebsocketMatchers.messageDTO(List.of(new IrisTextMessageContent(message)));
     }
 
     public static ArgumentMatcher<Object> messageDTO(List<IrisMessageContent> content) {

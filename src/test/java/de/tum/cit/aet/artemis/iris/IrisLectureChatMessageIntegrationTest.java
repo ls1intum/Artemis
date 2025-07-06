@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.DONE;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.NOT_STARTED;
+import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.messageDTO;
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.statusDTO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
@@ -19,7 +20,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -38,7 +37,6 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -103,8 +101,8 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
         await().until(pipelineDone::get);
 
         var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
-        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), IrisChatWebsocketMatchers.messageDTO(messageToSend.getContent()),
-                statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
+                statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
     }
 
     @Test
@@ -300,8 +298,8 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, HttpStatus.TOO_MANY_REQUESTS);
 
             var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
-            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), IrisChatWebsocketMatchers.messageDTO(messageToSend1.getContent()),
-                    statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend1.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
+                    statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
         }
         finally {
             // Reset to not interfere with other tests
@@ -309,10 +307,6 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
             globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(null);
             irisSettingsService.saveIrisSettings(globalSettings);
         }
-    }
-
-    private ArgumentMatcher<Object> messageDTO(String message) {
-        return IrisChatWebsocketMatchers.messageDTO(List.of(new IrisTextMessageContent(message)));
     }
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages) throws Exception {
