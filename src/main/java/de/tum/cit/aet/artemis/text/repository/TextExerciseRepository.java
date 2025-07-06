@@ -8,7 +8,7 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -18,13 +18,12 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Spring Data JPA repository for the TextExercise entity.
  */
-@Conditional(TextEnabled.class)
+@ConditionalOnProperty(name = "artemis.text.enabled", havingValue = "true")
 @Lazy
 @Repository
 public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercise, Long>, JpaSpecificationExecutor<TextExercise> {

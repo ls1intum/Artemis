@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.atlas.web;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceEventDTO;
 import de.tum.cit.aet.artemis.atlas.service.ScienceEventService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -20,7 +19,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 /**
  * REST controller providing the science related endpoints.
  */
-@Conditional(AtlasEnabled.class)
+@ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
 @FeatureToggle(Feature.Science)
 @Lazy
 @RestController

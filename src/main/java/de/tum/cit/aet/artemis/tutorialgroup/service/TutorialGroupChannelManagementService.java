@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
@@ -29,7 +28,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 /**
  * Service for managing the channel connected to a tutorial group.
  */
-@Conditional(TutorialGroupEnabled.class)
+@ConditionalOnProperty(name = "artemis.tutorialgroup.enabled", havingValue = "true")
 @Lazy
 @Service
 public class TutorialGroupChannelManagementService {

@@ -13,7 +13,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -28,7 +28,6 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.AndroidFingerprintService;
@@ -39,7 +38,7 @@ import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
  * Configurer for WebAuthn passkey authentication in Artemis.
  */
 @Component
-@Conditional(PasskeyEnabled.class)
+@ConditionalOnProperty(name = "artemis.user-management.passkey.enabled", havingValue = "true")
 @Lazy
 public class ArtemisPasskeyWebAuthnConfigurer {
 

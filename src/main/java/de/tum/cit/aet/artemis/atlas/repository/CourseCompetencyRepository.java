@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +13,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
@@ -26,7 +25,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 /**
  * Spring Data JPA repository for the {@link CourseCompetency} entity.
  */
-@Conditional(AtlasEnabled.class)
+@ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
 @Lazy
 @Repository
 public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseCompetency, Long> {

@@ -3,17 +3,16 @@ package de.tum.cit.aet.artemis.atlas.repository;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
-@Conditional(AtlasEnabled.class)
+@ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
 @Lazy
 @Repository
 public interface CompetencyExerciseLinkRepository extends ArtemisJpaRepository<CompetencyExerciseLink, Long> {

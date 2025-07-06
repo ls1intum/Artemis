@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import java.time.ZonedDateTime;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +13,6 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -22,7 +21,7 @@ import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 /**
  * Service implementation to check student exam access.
  */
-@Conditional(ExamEnabled.class)
+@ConditionalOnProperty(name = "artemis.exam.enabled", havingValue = "true")
 @Lazy
 @Service
 public class StudentExamAccessService {

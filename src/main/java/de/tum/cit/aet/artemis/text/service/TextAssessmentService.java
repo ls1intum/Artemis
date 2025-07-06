@@ -7,7 +7,7 @@ import java.util.Optional;
 
 import jakarta.annotation.Nullable;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -28,10 +28,9 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
-import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
-@Conditional(TextEnabled.class)
+@ConditionalOnProperty(name = "artemis.text.enabled", havingValue = "true")
 @Lazy
 @Service
 public class TextAssessmentService extends AssessmentService {

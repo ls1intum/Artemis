@@ -5,21 +5,20 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the {@link KnowledgeArea} entity.
  */
-@Conditional(AtlasEnabled.class)
+@ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
 @Lazy
 @Repository
 public interface KnowledgeAreaRepository extends ArtemisJpaRepository<KnowledgeArea, Long> {

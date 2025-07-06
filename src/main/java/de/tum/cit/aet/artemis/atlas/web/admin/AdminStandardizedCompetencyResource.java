@@ -7,7 +7,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaResultDTO;
@@ -37,7 +36,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 /**
  * Admin REST controller for managing {@link StandardizedCompetency} entities.
  */
-@Conditional(AtlasEnabled.class)
+@ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
 @FeatureToggle(Feature.StandardizedCompetencies)
 @EnforceAdmin
 @Lazy

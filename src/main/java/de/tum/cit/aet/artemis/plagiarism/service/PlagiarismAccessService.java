@@ -7,20 +7,19 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
-import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 
 @Service
-@Conditional(PlagiarismEnabled.class)
+@ConditionalOnProperty(name = "artemis.plagiarism.enabled", havingValue = "true")
 @Lazy
 public class PlagiarismAccessService {
 

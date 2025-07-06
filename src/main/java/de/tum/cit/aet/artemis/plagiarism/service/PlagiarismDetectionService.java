@@ -7,11 +7,10 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.exception.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
@@ -22,7 +21,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 /**
  * Service for triggering plagiarism checks.
  */
-@Conditional(PlagiarismEnabled.class)
+@ConditionalOnProperty(name = "artemis.plagiarism.enabled", havingValue = "true")
 @Lazy
 @Service
 public class PlagiarismDetectionService {

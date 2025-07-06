@@ -3,12 +3,11 @@ package de.tum.cit.aet.artemis.atlas.competency.util;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyProgressTestRepository;
@@ -20,7 +19,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
-@Conditional(AtlasEnabled.class)
+@ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
 public class CompetencyProgressUtilService {
 
     @Autowired

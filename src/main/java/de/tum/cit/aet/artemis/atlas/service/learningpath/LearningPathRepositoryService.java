@@ -3,11 +3,10 @@ package de.tum.cit.aet.artemis.atlas.service.learningpath;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
@@ -18,7 +17,7 @@ import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 /**
  * Service to fetch learning paths with transient competencies.
  */
-@Conditional(AtlasEnabled.class)
+@ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
 @Service
 @Lazy
 public class LearningPathRepositoryService {

@@ -5,7 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
@@ -15,14 +15,13 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 
 /**
  * Spring Data JPA repository for the PlagiarismComparison entity.
  */
-@Conditional(PlagiarismEnabled.class)
+@ConditionalOnProperty(name = "artemis.plagiarism.enabled", havingValue = "true")
 @Lazy
 @Repository
 public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<PlagiarismComparison, Long> {

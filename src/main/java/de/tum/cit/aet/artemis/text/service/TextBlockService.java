@@ -8,16 +8,15 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
-import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
-@Conditional(TextEnabled.class)
+@ConditionalOnProperty(name = "artemis.text.enabled", havingValue = "true")
 @Lazy
 @Service
 public class TextBlockService {

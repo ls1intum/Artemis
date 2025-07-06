@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.atlas.repository;
 
 import java.util.Set;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -10,7 +10,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -18,7 +17,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 /**
  * Spring Data JPA repository for the Competency Relation entity.
  */
-@Conditional(AtlasEnabled.class)
+@ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
 @Lazy
 @Repository
 public interface CompetencyRelationRepository extends ArtemisJpaRepository<CompetencyRelation, Long> {

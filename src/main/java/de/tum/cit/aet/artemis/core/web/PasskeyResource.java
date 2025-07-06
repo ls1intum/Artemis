@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.webauthn.api.Bytes;
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.core.config.validator.Base64Url;
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -34,7 +33,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
  * <p>
  * This controller is only active when the "core" profile is enabled.
  */
-@Conditional(PasskeyEnabled.class)
+@ConditionalOnProperty(name = "artemis.user-management.passkey.enabled", havingValue = "true")
 @Lazy
 @RestController
 @RequestMapping("api/core/passkey/")

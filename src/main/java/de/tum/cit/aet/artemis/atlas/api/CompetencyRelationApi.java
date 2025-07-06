@@ -2,11 +2,10 @@ package de.tum.cit.aet.artemis.atlas.api;
 
 import java.util.List;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
@@ -14,7 +13,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkReposito
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 
 @Controller
-@Conditional(AtlasEnabled.class)
+@ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
 @Lazy
 public class CompetencyRelationApi extends AbstractAtlasApi {
 

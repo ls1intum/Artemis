@@ -5,13 +5,12 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
-import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
@@ -19,7 +18,7 @@ import de.tum.cit.aet.artemis.text.service.TextBlockService;
 import de.tum.cit.aet.artemis.text.service.TextExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
 
-@Conditional(TextEnabled.class)
+@ConditionalOnProperty(name = "artemis.text.enabled", havingValue = "true")
 @Controller
 @Lazy
 public class TextSubmissionExportApi extends AbstractTextApi {

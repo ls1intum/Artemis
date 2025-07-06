@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.ImmutablePublicKeyCredentialUserEntity;
@@ -12,7 +12,6 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEnti
 import org.springframework.security.web.webauthn.management.PublicKeyCredentialUserEntityRepository;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -34,7 +33,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
  * @see UserRepository
  * @see de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnConfigurer
  */
-@Conditional(PasskeyEnabled.class)
+@ConditionalOnProperty(name = "artemis.user-management.passkey.enabled", havingValue = "true")
 @Lazy
 @Repository
 public class ArtemisPublicKeyCredentialUserEntityRepository implements PublicKeyCredentialUserEntityRepository {
