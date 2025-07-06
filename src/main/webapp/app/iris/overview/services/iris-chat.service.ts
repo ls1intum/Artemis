@@ -401,7 +401,7 @@ export class IrisChatService implements OnDestroy {
             this.chatSessionSubscription?.unsubscribe();
             this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
                 // eslint-disable-next-line no-undef
-                console.error(`Loaded Sessions for course (${courseId}):\n`, sessions);
+                console.log(`Loaded Sessions for course (${courseId}):\n`, sessions);
                 this.chatSessions.next(sessions ?? []);
             });
         } else {
@@ -441,6 +441,8 @@ export class IrisChatService implements OnDestroy {
     }
 
     switchToSession(session: IrisSessionDTO): void {
+        // eslint-disable-next-line no-undef
+        console.log(`switchToSession called for: `, session);
         if (this.sessionId === session.id) {
             return;
         }

@@ -238,6 +238,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             });
         });
         this.chatSessionsSubscription = this.chatService.availableChatSessions().subscribe((sessions) => {
+            // eslint-disable-next-line no-undef
+            console.log(`Received new chatSessiosn in component: \n`, sessions);
             this.chatSessions = sessions;
         });
         this.stagesSubscription = this.chatService.currentStages().subscribe((stages) => {
@@ -534,7 +536,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             rangeStartDate.setHours(0, 0, 0, 0); // Set to the start of the 'daysAgoOlder' day
         }
 
-        return this.chatSessions
+        const result = this.chatSessions
             .filter((session) => {
                 const sessionCreationDate = new Date(session.creationDate);
 
@@ -550,6 +552,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             .toSorted((a, b) => {
                 return new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime();
             });
+        // eslint-disable-next-line no-undef
+        console.log('Returning sessions to template in component: ', result);
+        return result;
     }
 
     openNewSession() {
@@ -559,6 +564,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     getRelatedEntityRoute(): string | undefined {
         const currentChatMode = this.currentChatMode();
         const currentRelatedEntityId = this.currentRelatedEntityId();
+        // eslint-disable-next-line no-undef
+        console.log(`Calculating related entity route for entityId and chatMode: ${currentRelatedEntityId}`, currentChatMode);
         if (!currentChatMode || !currentRelatedEntityId) {
             return undefined;
         }
@@ -574,6 +581,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     getRelatedEntityLinkButtonLabel(): string | undefined {
         const currentChatMode = this.currentChatMode();
+        // eslint-disable-next-line no-undef
+        console.log(`Calculating related entity link label for chatMode: `, currentChatMode);
         switch (currentChatMode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
                 return `artemisApp.exerciseChatbot.goToRelatedEntityButton.exerciseLabel`;
