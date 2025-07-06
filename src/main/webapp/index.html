@@ -19,24 +19,116 @@
         <meta name="apple-mobile-web-app-title" content="Artemis" />
         <meta name="application-name" content="Artemis" />
         <meta name="msapplication-TileColor" content="#2b5797" />
+
+        <!-- Performance optimizations -->
+        <link rel="preconnect" href="/" />
+        <link rel="preconnect" href="https://sentry.ase.in.tum.de" crossorigin />
+        <link rel="dns-prefetch" href="/" />
+
+        <!-- Preload critical resources -->
+        <link rel="modulepreload" href="/app/app.main.js" />
+        <link rel="modulepreload" href="/app/polyfills.js" />
+
+        <!-- Critical inline CSS for loading spinner -->
+        <style>
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            /* Hide initial loading screen when Angular app loads */
+            body.app-loaded #initial-loading {
+                display: none !important;
+            }
+        </style>
+
+        <!-- Performance timing marks -->
+        <script>
+            // Mark when HTML parsing starts
+            performance.mark('html-parse-start');
+
+            // Hide loading screen when Angular app is ready
+            document.addEventListener('DOMContentLoaded', function () {
+                // Check if Angular app has rendered
+                const checkAppReady = setInterval(() => {
+                    const appContent = document.querySelector('jhi-app > div:not(#initial-loading):not(#loading-error)');
+                    if (appContent) {
+                        document.body.classList.add('app-loaded');
+                        performance.mark('app-ready');
+                        clearInterval(checkAppReady);
+                    }
+                }, 100);
+
+                // Fallback: hide loading screen after 10 seconds
+                setTimeout(() => {
+                    document.body.classList.add('app-loaded');
+                    clearInterval(checkAppReady);
+                }, 10000);
+            });
+
+            // Optimize resource loading
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(() => {
+                    // Prefetch likely next resources during idle time
+                    const link = document.createElement('link');
+                    link.rel = 'prefetch';
+                    link.href = '/courses';
+                    document.head.appendChild(link);
+                });
+            }
+        </script>
     </head>
     <body>
         <jhi-app>
-            <div>
-                <div id="loading-error" style="display: none">
-                    <!-- This content is for troubleshooting purpose and will be removed when app renders -->
-                    <h1>An error has occurred while loading and displaying the Artemis website :-(</h1>
-                    <p>Troubleshooting:</p>
-                    <p>1. Try to reload the page</p>
-                    <p>
-                        2. Please <a href="https://browsehappy.com">upgrade your browser</a>: the latest version of
-                        <a href="https://www.chromium.org/getting-involved/download-chromium">Chromium</a> based browsers such as Google Chrome or Microsoft Edge is always a good
-                        choice. The latest version of Firefox and Safari is also supported.
-                    </p>
-                    <p>3. Make sure you have a stable Internet connection.</p>
-                    <p>4. Consider to switch to a different computer (try out a desktop/laptop environment, in case you experience problems on a mobile device).</p>
-                    <!-- end of troubleshooting content -->
+            <div
+                id="initial-loading"
+                style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 100vh;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    background-color: #f8f9fa;
+                "
+            >
+                <!-- Artemis logo is the lcp -->
+                <img src="/public/images/logo.png" alt="Artemis" style="width: 256px; height: 256px; margin-bottom: 1rem" />
+                <div style="text-align: center; margin-bottom: 2rem">
+                    <h1 style="margin: 0 0 0.5rem; color: #212529; font-weight: 300; font-size: 4rem">Artemis</h1>
+                    <p style="margin: 0; color: #6c757d; font-size: 1.1rem">Interactive Learning with Individual Feedback</p>
                 </div>
+
+                <!-- Loading spinner -->
+                <div style="width: 40px; height: 40px; border: 3px solid #e9ecef; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite"></div>
+
+                <!-- Loading text -->
+                <p style="margin-top: 1rem; color: #6c757d; font-size: 0.9rem">Loading...</p>
+            </div>
+
+            <div
+                id="loading-error"
+                style="display: none; padding: 2rem; max-width: 600px; margin: 2rem auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+            >
+                <!-- This content is for troubleshooting purpose and will be removed when app renders -->
+                <h1 style="margin-bottom: 1rem">An error has occurred while loading Artemis</h1>
+                <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 0.375rem; padding: 1rem; margin-bottom: 1rem">
+                    <strong>Troubleshooting steps:</strong>
+                </div>
+                <ol style="line-height: 1.6">
+                    <li style="margin-bottom: 0.5rem">Try to reload the page</li>
+                    <li style="margin-bottom: 0.5rem">
+                        Please <a href="https://browsehappy.com" style="color: #007bff">upgrade your browser</a>: the latest version of
+                        <a href="https://www.chromium.org/getting-involved/download-chromium" style="color: #007bff">Chromium</a>
+                        based browsers such as Google Chrome or Microsoft Edge is always a good choice. The latest version of Firefox and Safari is also supported.
+                    </li>
+                    <li style="margin-bottom: 0.5rem">Make sure you have a stable Internet connection</li>
+                    <li>Consider switching to a different computer (try a desktop/laptop environment if you experience problems on a mobile device)</li>
+                </ol>
             </div>
         </jhi-app>
         <noscript>
