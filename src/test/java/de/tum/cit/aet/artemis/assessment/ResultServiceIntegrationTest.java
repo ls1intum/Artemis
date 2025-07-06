@@ -287,9 +287,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         ZonedDateTime dateInFuture = now.plusHours(1);
         ZonedDateTime dateInPast = now.minusHours(1);
         ZonedDateTime dateClosePast = now.minusSeconds(5);
+        ZonedDateTime dateWithinGracePeriod = now.minusSeconds(1);
         return Stream.of(
-                // The result was created shortly after the due date and should still be considered rated
-                Arguments.of(true, dateInPast, SubmissionType.MANUAL, dateClosePast, now),
+                // The result was created shortly after the due date within the grace period => rated
+                Arguments.of(true, dateInPast, SubmissionType.MANUAL, dateWithinGracePeriod, now),
+                // The result was created shortly after the due date and grace period => unrated
+                Arguments.of(false, dateInPast, SubmissionType.MANUAL, dateClosePast, now),
                 // The due date has not passed, normal student submission => rated result.
                 Arguments.of(true, null, SubmissionType.MANUAL, dateInFuture, now),
                 // The due date is not set, normal student submission => rated result.

@@ -496,8 +496,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, false);
 
-        studentParticipation = programmingExerciseStudentParticipationRepository
-                .findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(studentParticipation.getId(), ZonedDateTime.now()).orElseThrow();
+        studentParticipation = programmingExerciseParticipationService.findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(studentParticipation.getId());
         var result = participationUtilService.getResultsForParticipation(studentParticipation).iterator().next();
 
         var noPrintTest = result.getFeedbacks().stream().filter(feedback -> feedback.getTestCase().getTestName().equals("testMergeSort()")).findFirst().orElseThrow();
@@ -549,8 +548,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, true);
 
-        studentParticipation = programmingExerciseStudentParticipationRepository
-                .findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(studentParticipation.getId(), ZonedDateTime.now()).orElseThrow();
+        studentParticipation = programmingExerciseParticipationService.findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(studentParticipation.getId());
         var result = participationUtilService.getResultsForParticipation(studentParticipation).iterator().next();
 
         var buildLogs = buildLogEntryService.getLatestBuildLogs((ProgrammingSubmission) result.getSubmission());
