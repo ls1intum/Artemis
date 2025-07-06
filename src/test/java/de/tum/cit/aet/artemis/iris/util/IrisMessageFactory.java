@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.util;
 
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 
 public class IrisMessageFactory {
 
@@ -15,6 +16,12 @@ public class IrisMessageFactory {
         IrisMessage message = new IrisMessage();
         message.setSender(irisMessageSender);
         message.setContent(IrisMessageContentFactory.createIrisMessageContents());
+        return message;
+    }
+
+    public static IrisMessage createIrisMessageForSession(IrisSession irisSession) {
+        IrisMessage message = new IrisMessage();
+        message.setSession(irisSession);
         return message;
     }
 }

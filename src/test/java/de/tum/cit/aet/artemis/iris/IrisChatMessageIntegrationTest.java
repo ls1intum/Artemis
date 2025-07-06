@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateD
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
+import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -284,7 +285,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void sendMessageWithoutContent() throws Exception {
         IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisMessage messageToSend = irisSession.newMessage();
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSession(irisSession);
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.BAD_REQUEST);
     }
 
@@ -341,7 +342,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void rateMessageHelpfulTrue() throws Exception {
         IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisMessage message = irisSession.newMessage();
+        // TODO move more of this logic to the factory
+        IrisMessage message = IrisMessageFactory.createIrisMessageForSession(irisSession);
         message.addContent(createMockTextContent());
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessage.class, HttpStatus.OK);
@@ -354,7 +356,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void rateMessageHelpfulFalse() throws Exception {
         IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisMessage message = irisSession.newMessage();
+        IrisMessage message = IrisMessageFactory.createIrisMessageForSession(irisSession);
         message.addContent(createMockTextContent());
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", false, IrisMessage.class, HttpStatus.OK);
@@ -367,7 +369,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void rateMessageHelpfulNull() throws Exception {
         IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisMessage message = irisSession.newMessage();
+        IrisMessage message = IrisMessageFactory.createIrisMessageForSession(irisSession);
         message.addContent(createMockTextContent());
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", null, IrisMessage.class, HttpStatus.OK);
@@ -380,7 +382,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void rateMessageWrongSender() throws Exception {
         IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisMessage message = irisSession.newMessage();
+        IrisMessage message = IrisMessageFactory.createIrisMessageForSession(irisSession);
         message.addContent(createMockTextContent());
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.USER);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessage.class, HttpStatus.BAD_REQUEST);
@@ -393,7 +395,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisProgrammingExerciseChatSession irisSession2 = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
-        IrisMessage message = irisSession1.newMessage();
+        IrisMessage message = IrisMessageFactory.createIrisMessageForSession(irisSession1);
         message.addContent(createMockTextContent());
         IrisMessage irisMessage = irisMessageService.saveMessage(message, irisSession1, IrisMessageSender.USER);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages/" + irisMessage.getId() + "/helpful", true, IrisMessage.class, HttpStatus.CONFLICT);
@@ -465,7 +467,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private IrisMessage createDefaultMockMessage(IrisSession irisSession) {
-        var messageToSend = irisSession.newMessage();
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSession(irisSession);
         messageToSend.addContent(createMockTextContent(), createMockTextContent(), createMockTextContent());
         return messageToSend;
     }

@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
+import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
@@ -52,7 +53,7 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
     void sendMessage() {
         IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        IrisMessage message = irisSession.newMessage();
+        IrisMessage message = IrisMessageFactory.createIrisMessageForSession(irisSession);
         message.addContent(createMockContent(), createMockContent());
         message.setMessageDifferentiator(101010);
         irisChatWebsocketService.sendMessage(irisSession, message, List.of());

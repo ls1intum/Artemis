@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSes
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
+import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
@@ -59,7 +60,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     void createMessageUnauthorized() throws Exception {
         IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
-        IrisMessage messageToSend = irisSession.newMessage();
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSession(irisSession);
         messageToSend.addContent(createMockContent());
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
     }
@@ -69,9 +70,9 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     void getMessagesUnauthorized() throws Exception {
         IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student4"));
-        IrisMessage message1 = irisSession.newMessage();
+        IrisMessage message1 = IrisMessageFactory.createIrisMessageForSession(irisSession);
         message1.addContent(createMockContent(), createMockContent(), createMockContent());
-        IrisMessage message2 = irisSession.newMessage();
+        IrisMessage message2 = IrisMessageFactory.createIrisMessageForSession(irisSession);
         message2.addContent(createMockContent(), createMockContent(), createMockContent());
 
         irisMessageService.saveMessage(message1, irisSession, IrisMessageSender.LLM);
