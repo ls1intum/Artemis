@@ -450,13 +450,15 @@ export class IrisChatService implements OnDestroy {
         this.close();
 
         const courseId = this.getCourseId();
+        const entityId = session.entityId;
+        const chatMode = session.chatMode;
         if (courseId) {
             this.chatSessionByIdSubscription?.unsubscribe();
             this.chatSessionByIdSubscription = this.http.getChatSessionById(courseId, session.id).subscribe((session) => {
                 // eslint-disable-next-line no-undef
                 console.log(`Setting new entityId and chatMode: ${session.entityId},`, session.chatMode);
-                this.currentChatModeSubject.next(session.chatMode);
-                this.currentRelatedEntityIdSubject.next(session.entityId);
+                this.currentChatModeSubject.next(chatMode);
+                this.currentRelatedEntityIdSubject.next(entityId);
                 this.handleNewSession().next(session);
             });
         } else {
