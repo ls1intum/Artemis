@@ -1,0 +1,1 @@
+/Users/krusche/Projects/Artemis/build/native/nativeCompile/ArtemisNativeApp --spring.profiles.active=prod,localci,localvc,artemis,scheduling,iris,buildagent,core,local --spring.config.additional-location=file:/Users/krusche/Projects/Artemis/build/native/nativeCompile/

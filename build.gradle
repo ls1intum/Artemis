@@ -1,4 +1,3 @@
-
 buildscript {
     dependencies {
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
@@ -38,24 +37,55 @@ graalvmNative {
             imageName = 'ArtemisNativeApp'
             buildArgs.add('--no-fallback')
             buildArgs.add('--report-unsupported-elements-at-runtime')
-            buildArgs.add('-Dspring.profiles.active=dev,localci,localvc,artemis,scheduling,iris,buildagent,core,local')
+            buildArgs.add('-Dspring.profiles.active=prod,localci,localvc,artemis,scheduling,iris,buildagent,core,local')
 
             // ⬇️ Delay class initialization
-
             // ICU4J (for JPlag)
-            buildArgs.add('--initialize-at-build-time=com.ibm.icu.impl.ICUConfig,com.ibm.icu.impl.ICUBinary,com.ibm.icu.charset.CharsetProviderICU')
+            buildArgs.add('--initialize-at-build-time=com.ibm.icu.charset.CharsetProviderICU')
+            buildArgs.add('--initialize-at-build-time=com.ibm.icu.impl.ICUBinary')
+            buildArgs.add('--initialize-at-build-time=com.ibm.icu.impl.ICUConfig')
 
             // SLF4J + Logback
             // Prevent heap violations by fully initializing known early logback classes
-            buildArgs.add('--initialize-at-build-time=ch.qos.logback.core.status.InfoStatus,ch.qos.logback.core.status.StatusBase,ch.qos.logback.core.status.Status')
-            buildArgs.add('--initialize-at-build-time=ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.util.StatusPrinter2')
-            buildArgs.add('--initialize-at-build-time=ch.qos.logback.classic.Level,ch.qos.logback.classic.Logger')
-            buildArgs.add('--initialize-at-build-time=org.slf4j.LoggerFactory,org.slf4j.helpers.Reporter')
+            buildArgs.add('--initialize-at-build-time=ch.qos.logback.classic.Level')
+            buildArgs.add('--initialize-at-build-time=ch.qos.logback.classic.Logger')
+            buildArgs.add('--initialize-at-build-time=ch.qos.logback.core.status.InfoStatus')
+            buildArgs.add('--initialize-at-build-time=ch.qos.logback.core.status.Status')
+            buildArgs.add('--initialize-at-build-time=ch.qos.logback.core.status.StatusBase')
+            buildArgs.add('--initialize-at-build-time=ch.qos.logback.core.util.Loader')
+            buildArgs.add('--initialize-at-build-time=ch.qos.logback.core.util.StatusPrinter')
+            buildArgs.add('--initialize-at-build-time=ch.qos.logback.core.util.StatusPrinter2')
+            buildArgs.add('--initialize-at-build-time=org.slf4j.helpers.Reporter')
+            buildArgs.add('--initialize-at-build-time=org.slf4j.LoggerFactory')
+
+            // Optional: prevent liquibase issues at runtime
+            buildArgs.add('--initialize-at-build-time=liquibase.ui.LoggerUIService')
+            buildArgs.add('--enable-all-security-services')
+            buildArgs.add('--enable-url-protocols=http,https')
 
             // Optional: trace offending classes
             buildArgs.add('--trace-class-initialization=org.slf4j.LoggerFactory,ch.qos.logback,com.ibm.icu')
+
+            // Hazelcast
+            buildArgs.add("--initialize-at-build-time=com.hazelcast")
+            buildArgs.add("-H:IncludeResources=hazelcast-build-info.properties")
+            // OS specific Hazelcast classes must be initialized at runtime
+            buildArgs.add('--initialize-at-run-time=com.hazelcast.internal.util.ICMPHelper')
+            buildArgs.addAll([
+                '--initialize-at-run-time=com.sun.jmx.mbeanserver.MBeanInstantiator',
+                '--initialize-at-run-time=com.sun.jmx.defaults.JmxProperties',
+                '--initialize-at-run-time=com.sun.jmx.mbeanserver.Introspector',
+                '--initialize-at-run-time=com.sun.jmx.mbeanserver.MXBeanLookup',
+                '--initialize-at-run-time=com.sun.jmx.mbeanserver.MXBeanIntrospector',
+                '--initialize-at-run-time=jdk.management.jfr.SettingDescriptorInfo',
+                '--initialize-at-run-time=javax.script.ScriptEngineManager'
+            ])
         }
     }
+}
+
+tasks.named("processAot") {
+    systemProperty "spring.profiles.active", "prod,localci,localvc,artemis,scheduling,iris,buildagent,core,local"
 }
 
 group = "de.tum.cit.aet.artemis"

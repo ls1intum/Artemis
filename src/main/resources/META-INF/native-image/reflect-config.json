@@ -1,0 +1,183 @@
+[
+    {
+        "name": "liquibase.ui.LoggerUIService",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Async",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Http",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Http.Cache",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Database",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Database.Couchbase",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Cache",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Cache.Hazelcast",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Cache.Caffeine",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Cache.Ehcache",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Cache.Infinispan",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Cache.Infinispan.Local",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Cache.Infinispan.Distributed",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Cache.Infinispan.Replicated",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Cache.Memcached",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Cache.Memcached.Authentication",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Cache.Redis",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Mail",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Security",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Security.ClientAuthorization",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Security.Authentication",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Security.Authentication.Jwt",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Security.RememberMe",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Security.OAuth2",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.ApiDocs",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.ApiDocs.Server",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Logging",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Logging.Logstash",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Social",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Gateway",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Gateway.RateLimiting",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.Registry",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.ClientApp",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "tech.jhipster.config.JHipsterProperties.AuditEvents",
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.hazelcast.internal.util.BuildInfoProvider",
+        "allDeclaredFields": true,
+        "allDeclaredConstructors": true,
+        "allPublicMethods": true
+    }
+]

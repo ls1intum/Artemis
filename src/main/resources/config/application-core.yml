@@ -19,7 +19,7 @@ artemis:
 
 spring:
     liquibase:
-        enabled: true
+        enabled: false
     autoconfigure:
         # These AutoConfiguration are excluded as they include metrics which are not evaluated and only cause unnecessary network load
         # They can be included once they are processed

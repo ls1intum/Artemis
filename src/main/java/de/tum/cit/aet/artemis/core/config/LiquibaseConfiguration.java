@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseDataSource;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
@@ -32,6 +33,7 @@ import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
 
 @Profile(PROFILE_CORE)
 @Configuration
+@ConditionalOnProperty(name = "spring.liquibase.enabled", havingValue = "true")
 @Lazy
 public class LiquibaseConfiguration {
 
