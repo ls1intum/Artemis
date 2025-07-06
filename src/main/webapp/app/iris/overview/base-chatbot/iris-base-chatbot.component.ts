@@ -212,9 +212,13 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             this.currentSessionId = sessionId;
         });
         this.relatedEntityIdSubscription = this.chatService.currentRelatedEntityId().subscribe((entityId) => {
+            // eslint-disable-next-line no-undef
+            console.log(`Received new entityId in component: ${entityId}`);
             this.currentRelatedEntityId.set(entityId);
         });
         this.chatModeSubscription = this.chatService.currentChatMode().subscribe((chatMode) => {
+            // eslint-disable-next-line no-undef
+            console.log(`Received new chatMode in component: `, chatMode);
             this.currentChatMode.set(chatMode);
         });
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
