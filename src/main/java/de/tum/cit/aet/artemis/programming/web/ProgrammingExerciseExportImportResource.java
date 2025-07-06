@@ -541,6 +541,16 @@ public class ProgrammingExerciseExportImportResource {
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
+    /**
+     * Stream zip for participations using in-memory repository operations without file system operations.
+     * This method uses the new GitService methods to export repositories directly to the ZipOutputStream.
+     *
+     * @param exportedStudentParticipations the participations to export
+     * @param programmingExercise           the programming exercise
+     * @param repositoryExportOptions       the export options
+     * @return ResponseEntity with StreamingResponseBody
+     * @throws IOException if streaming fails
+     */
     private ResponseEntity<StreamingResponseBody> streamZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations,
             ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         long start = System.nanoTime();
@@ -553,10 +563,10 @@ public class ProgrammingExerciseExportImportResource {
 
         StreamingResponseBody body = outputStream -> {
             try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
-                programmingExerciseExportService.streamStudentRepositories(programmingExercise, exportedStudentParticipations, repositoryExportOptions, zipOut);
+                programmingExerciseExportService.streamStudentRepositoriesInMemory(programmingExercise, exportedStudentParticipations, repositoryExportOptions, zipOut);
                 zipOut.finish();
             }
-            log.info("Export {} student repositories of programming exercise {} with title '{}' was successful in {}.", exportedStudentParticipations.size(),
+            log.info("Export {} student repositories of programming exercise {} with title '{}' was successful in {} (in-memory).", exportedStudentParticipations.size(),
                     programmingExercise.getId(), programmingExercise.getTitle(), formatDurationFrom(start));
         };
 

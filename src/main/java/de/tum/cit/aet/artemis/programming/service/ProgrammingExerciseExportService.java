@@ -656,6 +656,45 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     }
 
     /**
+     * Stream the repositories of the given participations directly into the provided {@link ZipOutputStream} without creating any files on disk.
+     * This method uses in-memory repository operations and does not require temporary directories.
+     * Note: This method only works when all export options are false (no anonymization, no commit combining, etc.).
+     *
+     * @param programmingExercise     the exercise entity
+     * @param participations          participations that should be exported
+     * @param repositoryExportOptions the options that should be used for the export
+     * @param zipOutputStream         the zip output stream to write the repositories to
+     * @throws IOException if any repository cannot be streamed
+     */
+    public void streamStudentRepositoriesInMemory(ProgrammingExercise programmingExercise, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
+            RepositoryExportOptionsDTO repositoryExportOptions, ZipOutputStream zipOutputStream) throws IOException {
+
+        // Check if all export options are false - if not, fall back to file-based approach
+        if (repositoryExportOptions.anonymizeRepository() || repositoryExportOptions.combineStudentCommits() || repositoryExportOptions.normalizeCodeStyle()
+                || repositoryExportOptions.filterLateSubmissionsDate() != null) {
+            log.debug("Export options require file operations, falling back to file-based streaming");
+            streamStudentRepositories(programmingExercise, participations, repositoryExportOptions, zipOutputStream);
+            return;
+        }
+
+        for (ProgrammingExerciseStudentParticipation participation : participations) {
+            try {
+                VcsRepositoryUri repositoryUri = participation.getVcsRepositoryUri();
+                if (repositoryUri != null) {
+                    String prefix = gitService.generateRepositoryNameForParticipation(participation, false);
+
+                    // Use the new GitService method to add repository with full history directly to zip
+                    gitService.addRepositoryWithFullHistoryToZip(repositoryUri, prefix, zipOutputStream);
+                }
+            }
+            catch (Exception exception) {
+                log.warn("Failed to export the student repository with participation {} for programming exercise {}", participation.getId(), programmingExercise.getId(),
+                        exception);
+            }
+        }
+    }
+
+    /**
      * Creates directories of the participations of programming exercises of a requested list of students.
      *
      * @param programmingExercise     the programming exercise

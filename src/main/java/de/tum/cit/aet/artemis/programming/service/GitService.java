@@ -1212,19 +1212,17 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Get the content of a git repository that contains a participation, as zip or directory.
+     * Generate a consistent repository name for a participation that matches the naming pattern used in exports.
+     * The naming pattern is: courseShortName-exerciseTitle-participationId-participantIdentifier
      *
-     * @param repo            Local Repository Object.
-     * @param repositoryDir   path where the repo is located on disk
-     * @param hideStudentName option to hide the student name for the zip file or directory
-     * @param zipOutput       If true the method returns a zip file otherwise a directory.
-     * @return path to zip file or directory.
-     * @throws IOException if the zipping or copying process failed.
+     * @param participation   the programming exercise student participation
+     * @param hideStudentName whether to hide the student name (anonymize)
+     * @return the repository name
      */
-    public Path getRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName, boolean zipOutput) throws IOException, UncheckedIOException {
-        var exercise = repo.getParticipation().getProgrammingExercise();
+    // TODO: move this to somewhere more relevant
+    public String generateRepositoryNameForParticipation(ProgrammingExerciseStudentParticipation participation, boolean hideStudentName) {
+        var exercise = participation.getProgrammingExercise();
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
         String repoName = FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
@@ -1232,11 +1230,28 @@ public class GitService extends AbstractGitService {
         }
         else {
             // The zip filename is either the student login, team short name or some default string.
-            var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
-
+            var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + participation.getId());
             repoName += "-" + studentTeamOrDefault;
         }
         repoName = participation.addPracticePrefixIfTestRun(repoName);
+
+        return repoName;
+    }
+
+    /**
+     * Get a repository with participation and store it in a directory.
+     *
+     * @param repo            the repository
+     * @param repositoryDir   the directory where the repository should be stored
+     * @param hideStudentName whether to hide the student name (anonymize)
+     * @param zipOutput       whether to zip the output
+     * @return the path to the repository
+     * @throws IOException if the repository cannot be stored
+     */
+    public Path getRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName, boolean zipOutput) throws IOException, UncheckedIOException {
+        var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
+
+        String repoName = generateRepositoryNameForParticipation(participation, hideStudentName);
 
         if (zipOutput) {
             return zipFiles(repo.getLocalPath(), repoName, repositoryDir, null);
@@ -1247,7 +1262,6 @@ public class GitService extends AbstractGitService {
             FileUtils.copyDirectory(repo.getLocalPath().toFile(), targetDir.toFile());
             return targetDir;
         }
-
     }
 
     /**
@@ -1498,52 +1512,9 @@ public class GitService extends AbstractGitService {
     public InputStreamResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
         log.debug("Exporting repository with full history to memory using JGit archive: {}", repositoryUri);
 
-        Repository repository = getBareRepository(repositoryUri);
-        String branch = determineDefaultBranch(repository);
-
-        if (branch == null) {
-            // Empty repository case - just return the .git directory
-            log.debug("No branches found, returning .git directory only");
-            return zipDirectoryToMemory(repository.getDirectory().toPath(), filename, null);
-        }
-
-        String treeish = "refs/heads/" + branch;
-        log.debug("Using branch '{}' for export", branch);
-
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
 
-            // Step 1: Add the .git directory (full history)
-            Path bareRepoPath = repository.getDirectory().toPath();
-            addDirectoryToZip(zipOutputStream, bareRepoPath, bareRepoPath, ".git");
-
-            // Step 2: Add the working tree snapshot using ArchiveCommand
-            try {
-                ObjectId treeId = repository.resolve(treeish);
-                if (treeId != null) {
-                    try (ByteArrayOutputStream archiveStream = new ByteArrayOutputStream()) {
-                        try (Git git = new Git(repository)) {
-                            git.archive().setTree(treeId).setFormat("zip").setOutputStream(archiveStream).call();
-                        }
-
-                        // Extract the archive contents and add them to our main zip
-                        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(archiveStream.toByteArray()))) {
-                            ZipEntry entry;
-                            while ((entry = zipInputStream.getNextEntry()) != null) {
-                                zipOutputStream.putNextEntry(new ZipEntry(entry.getName()));
-                                zipInputStream.transferTo(zipOutputStream);
-                                zipOutputStream.closeEntry();
-                            }
-                        }
-                    }
-                }
-                else {
-                    log.debug("Could not resolve tree for branch '{}', repository might be empty", branch);
-                }
-            }
-            catch (Exception e) {
-                log.debug("Could not create archive for branch '{}': {}", branch, e.getMessage());
-                // Continue without the working tree content, just include .git directory
-            }
+            addRepositoryWithFullHistoryToZip(repositoryUri, filename, zipOutputStream);
 
             zipOutputStream.finish();
             byte[] zipData = outputStream.toByteArray();
@@ -1560,6 +1531,69 @@ public class GitService extends AbstractGitService {
                     return zipData.length;
                 }
             };
+        }
+    }
+
+    /**
+     * Adds a repository with full history including the .git directory directly to an existing ZipOutputStream.
+     * This method uses JGit's ArchiveCommand to create a zip of the working tree and combines it
+     * with the .git directory for full history, all done in memory without disk checkout.
+     *
+     * @param repositoryUri   the URI of the repository to export
+     * @param prefix          the prefix to use for zip entries (e.g., directory name inside the zip)
+     * @param zipOutputStream the ZipOutputStream to add the repository content to
+     * @throws GitAPIException if the git operation fails
+     * @throws IOException     if IO operations fail
+     */
+    public void addRepositoryWithFullHistoryToZip(VcsRepositoryUri repositoryUri, String prefix, ZipOutputStream zipOutputStream) throws GitAPIException, IOException {
+        log.debug("Adding repository with full history to zip using JGit archive: {}", repositoryUri);
+
+        Repository repository = getBareRepository(repositoryUri);
+        String branch = determineDefaultBranch(repository);
+
+        if (branch == null) {
+            // Empty repository case - just add the .git directory
+            log.debug("No branches found, adding .git directory only");
+            Path bareRepoPath = repository.getDirectory().toPath();
+            addDirectoryToZip(zipOutputStream, bareRepoPath, bareRepoPath, prefix + "/.git");
+            return;
+        }
+
+        String treeish = "refs/heads/" + branch;
+        log.debug("Using branch '{}' for export", branch);
+
+        // Step 1: Add the .git directory (full history)
+        Path bareRepoPath = repository.getDirectory().toPath();
+        addDirectoryToZip(zipOutputStream, bareRepoPath, bareRepoPath, prefix + "/.git");
+
+        // Step 2: Add the working tree snapshot using ArchiveCommand
+        try {
+            ObjectId treeId = repository.resolve(treeish);
+            if (treeId != null) {
+                try (ByteArrayOutputStream archiveStream = new ByteArrayOutputStream()) {
+                    try (Git git = new Git(repository)) {
+                        git.archive().setTree(treeId).setFormat("zip").setOutputStream(archiveStream).call();
+                    }
+
+                    // Extract the archive contents and add them to our main zip with the prefix
+                    try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(archiveStream.toByteArray()))) {
+                        ZipEntry entry;
+                        while ((entry = zipInputStream.getNextEntry()) != null) {
+                            String entryName = prefix + "/" + entry.getName();
+                            zipOutputStream.putNextEntry(new ZipEntry(entryName));
+                            zipInputStream.transferTo(zipOutputStream);
+                            zipOutputStream.closeEntry();
+                        }
+                    }
+                }
+            }
+            else {
+                log.debug("Could not resolve tree for branch '{}', repository might be empty", branch);
+            }
+        }
+        catch (Exception e) {
+            log.debug("Could not create archive for branch '{}': {}", branch, e.getMessage());
+            // Continue without the working tree content, just include .git directory
         }
     }
 
