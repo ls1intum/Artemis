@@ -8,6 +8,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-competencies-popover',
+    standalone: true,
     templateUrl: './competencies-popover.component.html',
     styleUrls: ['./competencies-popover.component.scss'],
     encapsulation: ViewEncapsulation.None,
