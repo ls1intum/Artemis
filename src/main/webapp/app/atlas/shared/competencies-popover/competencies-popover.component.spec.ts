@@ -1,87 +1,94 @@
 import { Location } from '@angular/common';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
-import { By } from '@angular/platform-browser';
 import { Component } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { RouterModule, provideRouter } from '@angular/router';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
-import { RouterModule } from '@angular/router';
+
+import { CompetenciesPopoverComponent } from './competencies-popover.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { InputSignal, signal } from '@angular/core';
-import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
+import type { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 
+@Component({
+    template: ` <jhi-competencies-popover [navigateTo]="navigateTo" [competencyLinks]="competencyLinks" [courseId]="courseId"> </jhi-competencies-popover> `,
+    imports: [CompetenciesPopoverComponent],
+})
 class TestWrapperComponent {
     navigateTo: 'competencyManagement' | 'courseCompetencies' = 'courseCompetencies';
-    competencyLinks = [{ competency: { id: 1, title: 'competency' }, weight: 1 }];
+    competencyLinks: CompetencyLectureUnitLink[] = [{ competency: { id: 1, title: 'competency' }, weight: 1 }];
     courseId = 1;
 }
 
-@Component({
-    selector: 'jhi-statistics',
-    template: '',
-})
+@Component({ selector: 'jhi-statistics', template: '' })
 class DummyStatisticsComponent {}
 
-@Component({
-    selector: 'jhi-course-management',
-    template: '',
-})
+@Component({ selector: 'jhi-course-management', template: '' })
 class DummyManagementComponent {}
 
-describe('CompetencyPopoverComponent', () => {
-    let wrapperFixture: ComponentFixture<TestWrapperComponent>;
-    let wrapperComponent: TestWrapperComponent;
+describe('CompetenciesPopoverComponent (host + provideRouter)', () => {
+    let fixture: ComponentFixture<TestWrapperComponent>;
+    let host: TestWrapperComponent;
+    let popoverDebugEl: any;
+    let popoverCmp: CompetenciesPopoverComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [
                 NgbPopoverModule,
-                RouterModule.forRoot([
+                // also import RouterModule to pick up <a routerLink> directives:
+                RouterModule,
+            ],
+            declarations: [TestWrapperComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), DummyStatisticsComponent, DummyManagementComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideRouter([
                     { path: 'courses/:courseId/competencies', component: DummyStatisticsComponent },
                     { path: 'course-management/:courseId/competency-management', component: DummyManagementComponent },
                 ]),
             ],
-            declarations: [CompetenciesPopoverComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), DummyStatisticsComponent, DummyManagementComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                competencyPopoverComponentFixture = TestBed.createComponent(CompetenciesPopoverComponent);
-                competencyPopoverComponent = competencyPopoverComponentFixture.componentInstance;
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TestWrapperComponent);
+        host = fixture.componentInstance;
+        fixture.detectChanges();
+
+        popoverDebugEl = fixture.debugElement.query(By.directive(CompetenciesPopoverComponent));
+        popoverCmp = popoverDebugEl.componentInstance;
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        competencyPopoverComponentFixture.detectChanges();
-        expect(competencyPopoverComponent).toBeDefined();
+    it('should create the popover component', () => {
+        expect(popoverCmp).toBeTruthy();
     });
 
     it.each([
         ['courseCompetencies', '/courses/1/competencies'],
         ['competencyManagement', '/course-management/1/competency-management'],
-    ])(
-        'should navigate',
-        fakeAsync((navigateTo: 'competencyManagement' | 'courseCompetencies', expectedPath: string) => {
-            const location: Location = TestBed.inject(Location);
-            const wrapperFixture = TestBed.createComponent(TestWrapperComponent);
-            const wrapperComponent = wrapperFixture.componentInstance;
-            wrapperComponent.navigateTo = navigateTo;
-            wrapperComponent.competencyLinks = [{ competency: { id: 1, title: 'competency' }, weight: 1 }];
-            wrapperComponent.courseId = 1;
-            competencyPopoverComponentFixture.detectChanges();
-            const popoverButton = competencyPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
-            popoverButton.click();
+    ] as const)(
+        'should navigate to %s',
+        fakeAsync((navigateTo, expectedPath) => {
+            const location = TestBed.inject(Location);
+
+            host.navigateTo = navigateTo;
+            fixture.detectChanges();
+
+            // open the popover
+            const btn = popoverDebugEl.nativeElement.querySelector('button');
+            btn.click();
             tick();
-            const anchor = competencyPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
+
+            // click the first <a> inside the popover
+            const anchor = popoverDebugEl.query(By.css('a')).nativeElement;
             anchor.click();
             tick();
+
             expect(location.path()).toBe(expectedPath);
         }),
     );
