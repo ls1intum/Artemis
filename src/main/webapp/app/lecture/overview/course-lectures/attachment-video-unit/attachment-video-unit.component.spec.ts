@@ -158,8 +158,10 @@ describe('AttachmentVideoUnitComponent', () => {
         const segmentsMock: TranscriptSegment[] = [{ startTime: 0, endTime: 5, text: 'Hello World', slideNumber: 1 }];
         const httpSpy = jest.spyOn(httpClient, 'get').mockReturnValue(of({ segments: segmentsMock }));
 
-        component.toggleCollapse(false); // expand
+        component.toggleCollapse(false); // triggers fetchTranscript
         fixture.detectChanges();
+
+        await fixture.whenStable(); // ⏳ wait for async code in fetchTranscript()
 
         expect(httpSpy).toHaveBeenCalledWith('/api/lecture/lecture-unit/1/transcript');
         expect(component.transcriptSegments()).toEqual(segmentsMock);
