@@ -47,12 +47,12 @@ class AtlasMLServiceTest {
     @Mock
     private CompetencyRepository competencyRepository;
 
-    private AtlasMLServiceImpl atlasMLService;
+    private AtlasMLService atlasMLService;
 
     @BeforeEach
     void setUp() {
         when(config.getAtlasmlBaseUrl()).thenReturn("http://localhost:8000");
-        atlasMLService = new AtlasMLServiceImpl(atlasmlRestTemplate, shortTimeoutAtlasmlRestTemplate, config, competencyRepository);
+        atlasMLService = new AtlasMLService(atlasmlRestTemplate, shortTimeoutAtlasmlRestTemplate, config, competencyRepository);
     }
 
     @Test
@@ -100,10 +100,10 @@ class AtlasMLServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.getCompetencies()).hasSize(2);
-        assertThat(result.getCompetencyRelations()).hasSize(1);
-        assertThat(result.getCompetencies()).contains("comp-001", "comp-002");
-        assertThat(result.getCompetencyRelations().get(0).getRelationType()).isEqualTo("ASSUMES");
+        assertThat(result.competencies()).hasSize(2);
+        assertThat(result.competencyRelations()).hasSize(1);
+        assertThat(result.competencies()).contains("comp-001", "comp-002");
+        assertThat(result.competencyRelations().get(0).relationType()).isEqualTo("ASSUMES");
     }
 
     @Test
@@ -153,7 +153,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveCompetencies_WhenServiceThrowsException() {
         // Given
-        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO();
+        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO("test-id", "test description", List.of(), List.of());
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));

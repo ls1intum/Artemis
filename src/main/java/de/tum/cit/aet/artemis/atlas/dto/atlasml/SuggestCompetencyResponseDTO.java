@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.dto.atlasml;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
@@ -12,38 +13,9 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
  * Maps to the Python SuggestCompetencyResponse model.
  * Note: competencies is now a list of ids
  */
-public class SuggestCompetencyResponseDTO {
-
-    @JsonProperty("competencies")
-    private List<String> competencies;
-
-    @JsonProperty("competency_relations")
-    private List<AtlasMLCompetencyRelationDTO> competencyRelations;
-
-    // Default constructor for Jackson
-    public SuggestCompetencyResponseDTO() {
-    }
-
-    public SuggestCompetencyResponseDTO(List<String> competencies, List<AtlasMLCompetencyRelationDTO> competencyRelations) {
-        this.competencies = competencies;
-        this.competencyRelations = competencyRelations;
-    }
-
-    public List<String> getCompetencies() {
-        return competencies;
-    }
-
-    public void setCompetencies(List<String> competencies) {
-        this.competencies = competencies;
-    }
-
-    public List<AtlasMLCompetencyRelationDTO> getCompetencyRelations() {
-        return competencyRelations;
-    }
-
-    public void setCompetencyRelations(List<AtlasMLCompetencyRelationDTO> competencyRelations) {
-        this.competencyRelations = competencyRelations;
-    }
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record SuggestCompetencyResponseDTO(@JsonProperty("competencies") List<String> competencies,
+        @JsonProperty("competency_relations") List<AtlasMLCompetencyRelationDTO> competencyRelations) {
 
     /**
      * Convert the AtlasML response to domain relation objects.
@@ -54,10 +26,5 @@ public class SuggestCompetencyResponseDTO {
             return List.of();
         }
         return competencyRelations.stream().map(AtlasMLCompetencyRelationDTO::toDomain).collect(Collectors.toList());
-    }
-
-    @Override
-    public String toString() {
-        return "SuggestCompetencyResponseDTO{" + "competencies=" + competencies + ", competencyRelations=" + competencyRelations + '}';
     }
 }

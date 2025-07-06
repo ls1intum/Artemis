@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.dto.atlasml;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -9,50 +10,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
  * DTO for AtlasML API communication representing a competency.
  * This is a simplified version that matches the Python AtlasML API structure.
  */
-public class AtlasMLCompetencyDTO {
-
-    @JsonProperty("title")
-    private String title;
-
-    @JsonProperty("description")
-    private String description;
-
-    @JsonProperty("taxonomy")
-    private String taxonomy;
-
-    // Default constructor for Jackson
-    public AtlasMLCompetencyDTO() {
-    }
-
-    public AtlasMLCompetencyDTO(String title, String description, String taxonomy) {
-        this.title = title;
-        this.description = description;
-        this.taxonomy = taxonomy;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getTaxonomy() {
-        return taxonomy;
-    }
-
-    public void setTaxonomy(String taxonomy) {
-        this.taxonomy = taxonomy;
-    }
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record AtlasMLCompetencyDTO(@JsonProperty("title") String title, @JsonProperty("description") String description, @JsonProperty("taxonomy") String taxonomy) {
 
     /**
      * Convert from domain Competency to AtlasML DTO.
@@ -83,10 +42,5 @@ public class AtlasMLCompetencyDTO {
         }
 
         return new Competency(title, description, null, null, taxonomy, false);
-    }
-
-    @Override
-    public String toString() {
-        return "AtlasMLCompetencyDTO{" + "title='" + title + '\'' + ", description='" + description + '\'' + ", taxonomy='" + taxonomy + '\'' + '}';
     }
 }

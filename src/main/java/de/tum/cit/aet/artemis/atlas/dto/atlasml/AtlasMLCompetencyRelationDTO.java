@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.dto.atlasml;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
@@ -9,50 +10,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
  * DTO for AtlasML API communication representing a competency relation.
  * This contains only IDs and matches the Python AtlasML API structure.
  */
-public class AtlasMLCompetencyRelationDTO {
-
-    @JsonProperty("tail_id")
-    private String tailId;
-
-    @JsonProperty("head_id")
-    private String headId;
-
-    @JsonProperty("relation_type")
-    private String relationType;
-
-    // Default constructor for Jackson
-    public AtlasMLCompetencyRelationDTO() {
-    }
-
-    public AtlasMLCompetencyRelationDTO(String tailId, String headId, String relationType) {
-        this.tailId = tailId;
-        this.headId = headId;
-        this.relationType = relationType;
-    }
-
-    public String getTailId() {
-        return tailId;
-    }
-
-    public void setTailId(String tailId) {
-        this.tailId = tailId;
-    }
-
-    public String getHeadId() {
-        return headId;
-    }
-
-    public void setHeadId(String headId) {
-        this.headId = headId;
-    }
-
-    public String getRelationType() {
-        return relationType;
-    }
-
-    public void setRelationType(String relationType) {
-        this.relationType = relationType;
-    }
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record AtlasMLCompetencyRelationDTO(@JsonProperty("tail_id") String tailId, @JsonProperty("head_id") String headId, @JsonProperty("relation_type") String relationType) {
 
     /**
      * Convert from domain CompetencyRelation to AtlasML DTO.
@@ -90,10 +49,5 @@ public class AtlasMLCompetencyRelationDTO {
         // as they require full CourseCompetency objects
 
         return relation;
-    }
-
-    @Override
-    public String toString() {
-        return "AtlasMLCompetencyRelationDTO{" + "tailId='" + tailId + '\'' + ", headId='" + headId + '\'' + ", relationType='" + relationType + '\'' + '}';
     }
 }
