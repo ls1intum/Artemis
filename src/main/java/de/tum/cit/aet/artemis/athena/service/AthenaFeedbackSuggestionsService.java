@@ -112,12 +112,6 @@ public class AthenaFeedbackSuggestionsService {
         if (latestResult != null) {
             latestSubmission = latestResult.getSubmission();
         }
-        System.out.println("--------------------------------");
-        System.out.println("--------------------------------");
-        System.out.println("--------------------------------");
-        System.out.println("latestSubmission: " + latestSubmission);
-        System.out.println("--------------------------------");
-        System.out.println("--------------------------------");
         return latestSubmission;
     }
 
@@ -158,7 +152,7 @@ public class AthenaFeedbackSuggestionsService {
             throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), isGraded,
-                athenaDTOConverterService.ofSubmission(exercise.getId(), getLatestSubmission((StudentParticipation) submission.getParticipation())));
+                null);
         ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
@@ -182,7 +176,7 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), isGraded,
-                athenaDTOConverterService.ofSubmission(exercise.getId(), getLatestSubmission((StudentParticipation) submission.getParticipation())));
+                null);
         ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
