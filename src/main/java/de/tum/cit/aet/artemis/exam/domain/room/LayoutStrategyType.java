@@ -5,9 +5,9 @@ import org.springframework.context.annotation.Conditional;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 
 /**
- * Enum representing the conditions of a seat, i.e., if it's usable, broken, wheelchair-accessible, etc.
+ * Enum representing the type of a specific layout strategy.
  */
 @Conditional(ExamEnabled.class)
-public enum SeatCondition {
-    USABLE, NO_TABLE, DEFECT, WHEELCHAIR
+public enum LayoutStrategyType {
+    FIXED_SELECTION, RELATIVE_DISTANCE
 }

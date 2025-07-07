@@ -12,29 +12,47 @@ import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.context.annotation.Conditional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 
+@Conditional(ExamEnabled.class)
 @Entity
 @Table(name = "exam_room")
 public class ExamRoom extends DomainObject {
 
+    /**
+     * The name of the exam room.
+     */
     @Column(name = "name", nullable = false)
     private String name;
 
+    /**
+     * An alternative name for the exam room, doesn't need to exist.
+     */
     @Column(name = "alternative_name", nullable = true)
-    private String alternativeName; // JSON filename
+    private String alternativeName;
 
+    /**
+     * Maximum capacity of the room. Doesn't need to exist, i.e., be pre-calculated.
+     */
     @Column(name = "capacity", nullable = true)
     private Integer capacity;
 
+    /**
+     * All seats of this exam room.
+     */
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "examRoom")
     private List<ExamSeat> seats = new ArrayList<>();
 
+    /**
+     * All layout strategies for this exam room.
+     */
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "examRoom")

@@ -6,22 +6,39 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import org.springframework.context.annotation.Conditional;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
+
+@Conditional(ExamEnabled.class)
 @Entity
 @Table(name = "layout_strategy")
 public class LayoutStrategy extends DomainObject {
 
+    /**
+     * The name of the layout strategy. Can be anything, but common ones are "default", "wide", and "corona"
+     */
     @Column(name = "name", nullable = false)
-    private String name; // e.g., "default", "wide", "corona"
+    private String name;
 
+    /**
+     * The type of this layout strategy. May be one of {@link LayoutStrategyType}.
+     */
     @Column(name = "type", nullable = false)
-    private String type; // e.g., "fixed_selection", "relative_distance"
+    private LayoutStrategyType type;
 
+    /**
+     * The room this layout strategy belongs to. One room may have multiple layout strategies.
+     */
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
     private ExamRoom room;
 
+    /**
+     * The parameters of the layout strategy, i.e. the data that tells the strategy how to distribute the students.
+     * Contents of this differ as the {@link LayoutStrategy#type} differs.
+     */
     @Column(name = "parameters", columnDefinition = "json", nullable = false)
     private String parametersJson;
 
@@ -33,11 +50,11 @@ public class LayoutStrategy extends DomainObject {
         this.name = name;
     }
 
-    public String getType() {
+    public LayoutStrategyType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(LayoutStrategyType type) {
         this.type = type;
     }
 

@@ -6,30 +6,44 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import org.springframework.context.annotation.Conditional;
 
-// TODO: @Conditional(ExamEnabled.class) ? (Also relevant for other tables)
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
+
+@Conditional(ExamEnabled.class)
 @Entity
 @Table(name = "exam_seat")
 public class ExamSeat extends DomainObject {
 
     /**
-     * The name of the seat
+     * The name of the seat.
      */
     @Column(name = "label", nullable = false)
     private String label; // For example, "A1", "4", or "{row},{column}"
 
+    /**
+     * The condition of the seat.
+     */
     @Column(name = "seat_condition", nullable = false)
     private SeatCondition seatCondition = SeatCondition.USABLE;
 
+    /**
+     * The exam room this seat is located in.
+     */
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
     private ExamRoom room;
 
-    // Optional: Store visual layout information
+    /**
+     * The x-coordinate of the seat in the respective exam room.
+     */
     @Column(name = "x_position", nullable = false)
     private int x;
 
+    /**
+     * The y-coordinate of the seat in the respective exam room
+     */
     @Column(name = "y_position", nullable = false)
     private int y;
 
