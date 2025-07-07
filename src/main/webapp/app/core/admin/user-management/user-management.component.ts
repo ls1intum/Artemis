@@ -30,7 +30,7 @@ import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { addPublicFilePrefix } from 'app/app.constants';
+import { PROFILE_LDAP, addPublicFilePrefix } from 'app/app.constants';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -212,7 +212,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
             this.handleNavigation();
         });
-        this.isLdapProfileActive = this.profileService.isProfileActive('ldap');
+        this.isLdapProfileActive = this.profileService.isProfileActive(PROFILE_LDAP);
     }
 
     /**

@@ -86,26 +86,43 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
         }
     }
 
+    /**
+     * Invokes the edit functionality from the child reaction bar.
+     * Closes the dropdown afterward.
+     */
     editPosting() {
         this.reactionsBar.editPosting();
         this.showDropdown = false;
     }
 
+    /**
+     * Invokes the pin toggle from the child reaction bar.
+     * Closes dropdown and updates the view.
+     */
     togglePin() {
         this.reactionsBar.togglePin();
         this.showDropdown = false;
         this.changeDetector.detectChanges();
     }
 
+    /**
+     * Deletes the post by invoking the delete method from the reaction bar.
+     */
     deletePost() {
         this.reactionsBar.deletePosting();
         this.showDropdown = false;
     }
 
+    /**
+     * Initiates the forward message logic from the reaction bar.
+     */
     forwardMessage() {
         this.reactionsBar.forwardMessage();
     }
 
+    /**
+     * Delegates pin status retrieval to the reaction bar (used for dropdown display).
+     */
     checkIfPinned(): DisplayPriority {
         return this.reactionsBar.checkIfPinned();
     }
@@ -127,6 +144,9 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
         this.showReactionSelector = true;
     }
 
+    /**
+     * Toggles visibility of the emoji picker (used by emoji button in dropdown).
+     */
     toggleEmojiSelect() {
         this.showReactionSelector = !this.showReactionSelector;
     }

@@ -513,7 +513,7 @@ public class ProgrammingExerciseGradingService {
      */
     private Optional<Result> updateLatestResult(ProgrammingExercise exercise, Participation participation, Set<ProgrammingExerciseTestCase> allTestCases,
             Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate, Set<ProgrammingExerciseTestCase> testCasesAfterDueDate, boolean applySubmissionPolicy) {
-        final Result result = participation.findLatestLegalResult();
+        final Result result = participation.findLatestResult();
         if (result == null) {
             return Optional.empty();
         }
