@@ -39,6 +39,15 @@ public class DeferredEagerBeanInitializer {
      * This method should be called after the application is fully started to not block the startup process.
      */
     public void initializeDeferredEagerBeans() {
+        // Force eager initialization of HazelcastConnection first, so that connections are established as early as possible.
+        try {
+            context.getBean(HazelcastConnection.class);
+            log.debug("Priority initialization of HazelcastConnection completed");
+        }
+        catch (Throwable ex) {
+            log.warn("Priority initialization of HazelcastConnection failed", ex);
+        }
+
         DefaultListableBeanFactory bf = (DefaultListableBeanFactory) context.getBeanFactory();
         Arrays.stream(bf.getBeanDefinitionNames()).filter(name -> {
             BeanDefinition def = bf.getBeanDefinition(name);
