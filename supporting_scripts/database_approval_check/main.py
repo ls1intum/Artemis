@@ -34,10 +34,22 @@ def is_db_maintainer(user: NamedUser):
     return user in db_team.get_members()
 
 
+# Check if the PR has any changes to the database folder at all, before checking commits
+if not any(
+    file.filename.startswith(MIGRATION_DIRECTORY) for file in pr.get_files()
+):
+    print(f"PR #{pr_number} has no changes in the database folder.")
+    sys.exit(0)
+
+
 last_commit_with_db_changes = None
 for commit in pr.get_commits().reversed:
-    # Ignore merges from the develop branch
-    if commit.commit.message.startswith("Merge branch 'develop' into"):
+    # Ignore merges from the develop branch (local and remote-tracking)
+    if (
+        commit.commit.message.startswith("Merge branch 'develop' into")
+        or commit.commit.message.startswith("Merge branch 'origin/develop' into")
+        or commit.commit.message.startswith("Merge remote-tracking branch 'origin/develop' into")
+    ):
         continue
     if has_db_changes(commit):
         last_commit_with_db_changes = commit
@@ -73,6 +85,7 @@ for approval in approvals_from_db_maintainers:
             f"after the last commit with database changes."
         )
         sys.exit(0)
+
 print(
     f"PR #{pr_number} has not been approved by a database maintainer after the last commit with database changes."
 )
