@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'jhi-knowledge-area-tree',
+    standalone: true,
     templateUrl: './knowledge-area-tree.component.html',
     styleUrls: ['./knowledge-area-tree.component.scss'],
     imports: [MatTreeModule, FaIconComponent, NgbCollapse, TranslateDirective, CommonModule],
@@ -17,7 +18,6 @@ import { CommonModule } from '@angular/common';
 export class KnowledgeAreaTreeComponent {
     dataSource = input<MatTreeNestedDataSource<KnowledgeAreaForTree>>(new MatTreeNestedDataSource<KnowledgeAreaForTree>());
     treeControl = input<NestedTreeControl<KnowledgeAreaForTree>>(new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children));
-
     knowledgeAreaTemplate = contentChild<TemplateRef<any>>('knowledgeAreaTemplate');
     competencyTemplate = contentChild<TemplateRef<any>>('competencyTemplate');
 
