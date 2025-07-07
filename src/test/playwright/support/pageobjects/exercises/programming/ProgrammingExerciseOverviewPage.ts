@@ -52,6 +52,15 @@ export class ProgrammingExerciseOverviewPage {
         return await this.page.locator('.clone-url').innerText();
     }
 
+    async openInOnlineIDE() {
+        const codeButtonLocator = this.getCodeButton();
+        await Commands.reloadUntilFound(this.page, codeButtonLocator, 4000, 20000);
+        await codeButtonLocator.click();
+        const openOnlineIDEButton = this.getOpenOnlineIDEButton();
+        await Commands.reloadUntilFound(this.page, openOnlineIDEButton);
+        await openOnlineIDEButton.click();
+    }
+
     async copyCloneUrl() {
         await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
         await this.getCloneUrlButton().click();
@@ -70,6 +79,10 @@ export class ProgrammingExerciseOverviewPage {
 
     getCloneUrlButton() {
         return this.page.getByTestId('copyRepoUrlButton');
+    }
+
+    getOpenOnlineIDEButton() {
+        return this.page.getByTestId('openOnlineIDEButton');
     }
 }
 

@@ -31,7 +31,7 @@ import {
 } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -40,7 +40,7 @@ import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
-import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 
 type PatchProgrammingExerciseTestVisibilityDto = {
     id: number;
@@ -91,6 +91,8 @@ export class ExerciseAPIRequests {
         assessmentType?: ProgrammingExerciseAssessmentType;
         mode?: ExerciseMode;
         teamAssignmentConfig?: TeamAssignmentConfig;
+        allowOnlineIDE?: boolean;
+        buildConfig?: ProgrammingExerciseBuildConfig;
     }): Promise<ProgrammingExercise> {
         const {
             course,
@@ -106,6 +108,8 @@ export class ExerciseAPIRequests {
             assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
             mode = ExerciseMode.INDIVIDUAL,
             teamAssignmentConfig,
+            allowOnlineIDE = false,
+            buildConfig = {},
         } = options;
 
         let programmingExerciseTemplate = {};
@@ -127,6 +131,8 @@ export class ExerciseAPIRequests {
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
             ...(course ? { course } : {}),
             ...(exerciseGroup ? { exerciseGroup } : {}),
+            allowOnlineIde: allowOnlineIDE,
+            buildConfig: buildConfig,
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {
