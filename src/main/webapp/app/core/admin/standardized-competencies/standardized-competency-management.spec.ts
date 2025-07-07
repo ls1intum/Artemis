@@ -151,7 +151,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     it('should close competency', () => {
         const cancelModalSpy = jest.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
         const expectedCompetency = createCompetencyDTO(1, 'title1', 'description1');
-        component['selectedCompetency'] = expectedCompetency;
+        component['selectedCompetency'].set(expectedCompetency);
         component['isEditing'] = false;
 
         component.closeCompetency();
@@ -159,7 +159,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(cancelModalSpy).not.toHaveBeenCalled();
         expect(component['selectedCompetency']).toBeUndefined();
 
-        component['selectedCompetency'] = expectedCompetency;
+        component['selectedCompetency'].set(expectedCompetency);
         component['isEditing'] = true;
 
         component.closeCompetency();
@@ -181,7 +181,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
             },
         ];
         getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
-        component['selectedCompetency'] = competencyToDelete;
+        component['selectedCompetency'].set(competencyToDelete);
         componentFixture.detectChanges();
 
         const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyEditComponent)).componentInstance;
@@ -206,7 +206,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const competencyToCreate: StandardizedCompetencyDTO = { title: 'competency1', knowledgeAreaId: 1 };
         const createdCompetency: StandardizedCompetencyDTO = { id: 5, ...competencyToCreate };
         const expectedCompetencyInTree: StandardizedCompetencyForTree = { ...createdCompetency, isVisible: true };
-        component['selectedCompetency'] = competencyToCreate;
+        component['selectedCompetency'].set(competencyToCreate);
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
         const createSpy = jest.spyOn(adminStandardizedCompetencyService, 'createStandardizedCompetency');
         createSpy.mockReturnValue(of(new HttpResponse({ body: createdCompetency })));
@@ -304,7 +304,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     it('should close knowledgeArea', () => {
         const cancelModalSpy = jest.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
         const expectedKnowledgeArea = createKnowledgeAreaDTO(1, 'title1', 't1');
-        component['selectedKnowledgeArea'] = expectedKnowledgeArea;
+        component['selectedKnowledgeArea'].set(expectedKnowledgeArea);
         component['isEditing'] = false;
 
         component.closeKnowledgeArea();
@@ -312,7 +312,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(cancelModalSpy).not.toHaveBeenCalled();
         expect(component['selectedKnowledgeArea']).toBeUndefined();
 
-        component['selectedKnowledgeArea'] = expectedKnowledgeArea;
+        component['selectedKnowledgeArea'].set(expectedKnowledgeArea);
         component['isEditing'] = true;
 
         component.closeKnowledgeArea();
@@ -329,7 +329,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const ka3: KnowledgeAreaForTree = { id: 3, title: 'title2', isVisible: true, level: 0 };
         const tree: KnowledgeAreaDTO[] = [knowledgeAreaToDelete, ka2, ka3];
         getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
-        component['selectedKnowledgeArea'] = knowledgeAreaToDelete;
+        component['selectedKnowledgeArea'].set(knowledgeAreaToDelete);
         componentFixture.detectChanges();
 
         const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaEditComponent)).componentInstance;
@@ -363,7 +363,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
             },
         ];
         getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
-        component['selectedKnowledgeArea'] = knowledgeAreaToDelete;
+        component['selectedKnowledgeArea'].set(knowledgeAreaToDelete);
         componentFixture.detectChanges();
 
         const detailComponent = componentFixture.debugElement.query(By.directive(KnowledgeAreaEditComponent)).componentInstance;
@@ -391,7 +391,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const knowledgeAreaToCreate: KnowledgeAreaDTO = { title: 'ka1', parentId: 1 };
         const createdKnowledgeArea: KnowledgeAreaDTO = { id: 5, ...knowledgeAreaToCreate };
         const expectedKnowledgeAreaInTree = convertToKnowledgeAreaForTree(createdKnowledgeArea, true, 1);
-        component['selectedKnowledgeArea'] = knowledgeAreaToCreate;
+        component['selectedKnowledgeArea'].set(knowledgeAreaToCreate);
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
         const createSpy = jest.spyOn(adminStandardizedCompetencyService, 'createKnowledgeArea');
         createSpy.mockReturnValue(of(new HttpResponse({ body: createdKnowledgeArea })));
@@ -483,7 +483,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
     function prepareAndExecuteCompetencyUpdate(tree: KnowledgeAreaDTO[], competencyToUpdate: StandardizedCompetencyDTO, updatedCompetency: StandardizedCompetencyDTO) {
         getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
-        component['selectedCompetency'] = competencyToUpdate;
+        component['selectedCompetency'].set(competencyToUpdate);
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
         const updateSpy = jest.spyOn(adminStandardizedCompetencyService, 'updateStandardizedCompetency');
         updateSpy.mockReturnValue(of(new HttpResponse({ body: updatedCompetency })));
@@ -497,7 +497,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
     function prepareAndExecuteKnowledgeAreaUpdate(tree: KnowledgeAreaDTO[], knowledgeAreaToUpdate: KnowledgeAreaDTO, updatedKnowledgeArea: KnowledgeAreaDTO) {
         getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
-        component['selectedKnowledgeArea'] = knowledgeAreaToUpdate;
+        component['selectedKnowledgeArea'].set(knowledgeAreaToUpdate);
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
         const updateSpy = jest.spyOn(adminStandardizedCompetencyService, 'updateKnowledgeArea');
         updateSpy.mockReturnValue(of(new HttpResponse({ body: updatedKnowledgeArea })));
