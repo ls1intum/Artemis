@@ -140,6 +140,14 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected readonly faChevronRight = faChevronRight;
     protected readonly facSidebar = facSidebar;
 
+    // Types
+    protected readonly IrisLogoSize = IrisLogoSize;
+    protected readonly IrisMessageContentType = IrisMessageContentType;
+    protected readonly IrisAssistantMessage = IrisAssistantMessage;
+    protected readonly IrisTextMessageContent = IrisTextMessageContent;
+    protected readonly IrisSender = IrisSender;
+    protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
+
     // State variables
     sessionIdSubscription: Subscription;
     messagesSubscription: Subscription;
@@ -190,14 +198,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     @ViewChild('scrollArrow') scrollArrow!: ElementRef;
     @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
     @ViewChild('acceptButton') acceptButton: ElementRef<HTMLButtonElement>;
-
-    // Types
-    protected readonly IrisLogoSize = IrisLogoSize;
-    protected readonly IrisMessageContentType = IrisMessageContentType;
-    protected readonly IrisAssistantMessage = IrisAssistantMessage;
-    protected readonly IrisTextMessageContent = IrisTextMessageContent;
-    protected readonly IrisSender = IrisSender;
-    protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
 
     ngOnInit() {
         this.routeSubscription = this.route.queryParams?.subscribe((params: any) => {
@@ -514,7 +514,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         rangeEndDate.setDate(today.getDate() - daysAgoNewer);
         rangeEndDate.setHours(23, 59, 59, 999); // Set to the end of the 'daysAgoNewer' day
 
-        let rangeStartDate: Date | null = null;
+        let rangeStartDate: Date | undefined = undefined;
         if (!ignoreOlderBoundary && daysAgoOlder !== undefined) {
             rangeStartDate = new Date(today);
             rangeStartDate.setDate(today.getDate() - daysAgoOlder);
