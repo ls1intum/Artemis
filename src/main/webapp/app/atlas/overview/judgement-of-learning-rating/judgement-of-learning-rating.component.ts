@@ -1,5 +1,6 @@
-import { Component, inject, input, model } from '@angular/core';
+import { Component, inject, input, model, signal } from '@angular/core';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
+import { NgIf } from '@angular/common';
 
 import { AlertService } from 'app/shared/service/alert.service';
 
@@ -9,7 +10,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-judgement-of-learning-rating',
-    imports: [StarRatingComponent, HelpIconComponent, TranslateDirective],
+    standalone: true,
+    imports: [NgIf, StarRatingComponent, HelpIconComponent, TranslateDirective],
     templateUrl: './judgement-of-learning-rating.component.html',
 })
 export class JudgementOfLearningRatingComponent {
@@ -20,6 +22,7 @@ export class JudgementOfLearningRatingComponent {
     competencyId = input.required<number>();
     rating = model<number>();
     mastery = input<number>();
+    readonly helpText = signal<string>('artemisApp.courseStudentDashboard.judgementOfLearning.info');
 
     /**
      * Handle the event when a new rating is selected.
