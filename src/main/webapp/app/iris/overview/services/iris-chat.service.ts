@@ -16,6 +16,7 @@ import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { Router } from '@angular/router';
+import { captureException } from '@sentry/angular';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -393,8 +394,16 @@ export class IrisChatService implements OnDestroy {
                 this.chatSessions.next(sessions ?? []);
             });
         } else {
-            // eslint-disable-next-line no-undef
-            console.error('Could not load chat sessions, courseId is not set.');
+            captureException(new Error('Could not load chat sessions, courseId is not set.'), {
+                extra: {
+                    currentUrl: this.router.url,
+                    userId: this.accountService.userIdentity?.id,
+                    sessionCreationIdentifier: this.sessionCreationIdentifier,
+                },
+                tags: {
+                    category: 'Iris',
+                },
+            });
             this.chatSessions.next([]);
         }
     }
@@ -440,8 +449,17 @@ export class IrisChatService implements OnDestroy {
             this.chatSessionByIdSubscription?.unsubscribe();
             this.chatSessionByIdSubscription = this.http.getChatSessionById(courseId, session.id).subscribe((session) => this.handleNewSession().next(session));
         } else {
-            // eslint-disable-next-line no-undef
-            console.error('Could not switch session, courseId is not set.');
+            captureException(new Error('Could not switch session, courseId is not set.'), {
+                extra: {
+                    currentUrl: this.router.url,
+                    userId: this.accountService.userIdentity?.id,
+                    sessionId: this.sessionId,
+                    sessionCreationIdentifier: this.sessionCreationIdentifier,
+                },
+                tags: {
+                    category: 'Iris',
+                },
+            });
         }
     }
 
