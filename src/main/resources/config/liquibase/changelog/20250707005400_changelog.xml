@@ -37,10 +37,10 @@
                 <constraints nullable="false" foreignKeyName="fk_seat_room"
                              referencedTableName="exam_room" referencedColumnNames="id"/>
             </column>
-            <column name="x_position" type="integer">
+            <column name="x_position" type="float">
                 <constraints nullable="false"/>
             </column>
-            <column name="y_position" type="integer">
+            <column name="y_position" type="float">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -109,5 +109,25 @@
         <modifySql dbms="postgresql">
             <replace replace="varchar(4000)" with="jsonb"/>
         </modifySql>
+    </changeSet>
+
+    <!-- Add exam-room-id column to the exam_user table -->
+    <changeSet id="20250707005400-04-add-planned-room-id-to-exam-user" author="röttgermann">
+        <addColumn tableName="exam_user">
+            <column name="planned_room_id" type="bigint"/>
+        </addColumn>
+
+        <!-- Unique Constraints -->
+        <addForeignKeyConstraint baseTableName="exam_user"
+                                 baseColumnNames="planned_room_id"
+                                 constraintName="fk_exam_user_planned_room"
+                                 referencedTableName="exam_room"
+                                 referencedColumnNames="id"/>
+
+        <!-- Rollback section -->
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="exam_user" constraintName="fk_exam_user_planned_room"/>
+            <dropColumn tableName="exam_user" columnName="planned_room_id"/>
+        </rollback>
     </changeSet>
 </databaseChangeLog>

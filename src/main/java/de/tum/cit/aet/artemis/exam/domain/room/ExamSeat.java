@@ -42,13 +42,13 @@ public class ExamSeat extends DomainObject {
      * The x-coordinate of the seat in the respective exam room.
      */
     @Column(name = "x_position", nullable = false)
-    private int x;
+    private float x;
 
     /**
      * The y-coordinate of the seat in the respective exam room
      */
     @Column(name = "y_position", nullable = false)
-    private int y;
+    private float y;
 
     public String getLabel() {
         return label;
@@ -74,19 +74,19 @@ public class ExamSeat extends DomainObject {
         this.room = room;
     }
 
-    public int getX() {
+    public float getX() {
         return x;
     }
 
-    public void setX(int x) {
+    public void setX(float x) {
         this.x = x;
     }
 
-    public int getY() {
+    public float getY() {
         return y;
     }
 
-    public void setY(int y) {
+    public void setY(float y) {
         this.y = y;
     }
 }
