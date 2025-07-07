@@ -4,6 +4,7 @@ import { Component } from '@angular/core';
 import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO, convertToKnowledgeAreaForTree } from 'app/atlas/shared/entities/standardized-competency.model';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
+import { MatTreeNestedDataSource } from '@angular/material/tree'; // <-- Add this import
 
 @Component({ template: '' })
 class DummyImportComponent extends StandardizedCompetencyFilterPageComponent {
@@ -26,6 +27,7 @@ describe('StandardizedCompetencyFilterPageComponent', () => {
             .then(() => {
                 componentFixture = TestBed.createComponent(DummyImportComponent);
                 component = componentFixture.componentInstance;
+                (component as any).dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
                 const dtoTree = [
                     {
                         id: 1,
