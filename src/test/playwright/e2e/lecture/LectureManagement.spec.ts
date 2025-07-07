@@ -96,7 +96,6 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         });
 
         test('Can open page to add attachment unit to the lecture', async ({ exerciseAPIRequests, lectureManagement, page }) => {
-            await exerciseAPIRequests.createModelingExercise({ course });
             await lectureManagement.openAttachmentUnitCreationPage(lecture.id!);
             await expect(page.getByText('Create Attachment Unit')).toBeVisible();
         });
