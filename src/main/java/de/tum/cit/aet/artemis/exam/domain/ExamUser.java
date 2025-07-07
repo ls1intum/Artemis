@@ -33,8 +33,8 @@ public class ExamUser extends AbstractAuditingEntity {
     @Column(name = "planned_seat")
     private String plannedSeat;
 
-    @Transient
-    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "planned_room_id")
     private ExamRoom plannedRoomEntity;
 
     @Transient
