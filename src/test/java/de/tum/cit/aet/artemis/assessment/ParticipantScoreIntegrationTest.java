@@ -293,7 +293,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         StudentParticipation programmingParticipation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
         Submission programmingSubmission = new ProgrammingSubmission();
-        programmingSubmission.setSubmissionDate(programmingExercise.getDueDate().minusMinutes(2));
+        // submission date is after the due date, but before the individual due date --> included
+        programmingSubmission.setSubmissionDate(programmingExercise.getDueDate().plusMinutes(2));
+        programmingParticipation.setIndividualDueDate(programmingExercise.getDueDate().plusMinutes(5));
         programmingSubmission = participationUtilService.addSubmission(programmingParticipation, programmingSubmission);
         Result programmingResult = participationUtilService.addResultToSubmission(programmingParticipation, programmingSubmission);
         programmingResult.setCompletionDate(programmingExercise.getDueDate().minusMinutes(2));

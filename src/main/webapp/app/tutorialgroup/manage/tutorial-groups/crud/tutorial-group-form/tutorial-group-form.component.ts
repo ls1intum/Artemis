@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnChanges, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
@@ -50,8 +50,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
 
-    @Input()
-    formData: TutorialGroupFormData = {
+    readonly formData = input<TutorialGroupFormData>({
         title: undefined,
         teachingAssistant: undefined,
         additionalInformation: undefined,
@@ -59,10 +58,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
         isOnline: undefined,
         language: undefined,
         campus: undefined,
-    };
-    @Input() course: Course;
-    @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<TutorialGroupFormData> = new EventEmitter<TutorialGroupFormData>();
+    });
+    readonly course = input.required<Course>();
+    readonly isEditMode = input(false);
+    readonly formSubmitted = output<TutorialGroupFormData>();
 
     form: FormGroup;
     // not included in reactive form
@@ -70,24 +69,24 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     teachingAssistantsAreLoading = false;
     teachingAssistants: UserWithLabel[];
-    @ViewChild('teachingAssistantInput', { static: true }) taTypeAhead: NgbTypeahead;
+    readonly taTypeAhead = viewChild.required<NgbTypeahead>('teachingAssistantInput');
     taFocus$ = new Subject<string>();
     taClick$ = new Subject<string>();
 
     campusAreLoading = false;
     campus: string[];
-    @ViewChild('campusInput', { static: true }) campusTypeAhead: NgbTypeahead;
+    readonly campusTypeAhead = viewChild.required<NgbTypeahead>('campusInput');
     campusFocus$ = new Subject<string>();
     campusClick$ = new Subject<string>();
 
     languagesAreLoading = false;
     languages: string[];
-    @ViewChild('languageInput', { static: true }) languageTypeAhead: NgbTypeahead;
+    readonly languageTypeAhead = viewChild.required<NgbTypeahead>('languageInput');
     languageFocus$ = new Subject<string>();
     languageClick$ = new Subject<string>();
 
     configureSchedule = true;
-    @ViewChild('scheduleForm') scheduleFormComponent: ScheduleFormComponent;
+    readonly scheduleFormComponent = viewChild<ScheduleFormComponent>('scheduleForm');
     existingScheduleFormDate: ScheduleFormData | undefined;
 
     existingTitle: string | undefined;
@@ -147,7 +146,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     }
 
     get showUpdateChannelNameCheckbox() {
-        if (!this.isEditMode) {
+        if (!this.isEditMode()) {
             return false;
         }
         if (!this.existingTitle) {
@@ -160,7 +159,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     }
 
     get showScheduledChangedWarning() {
-        if (!this.isEditMode) {
+        if (!this.isEditMode()) {
             return false;
         }
         const originalHasSchedule = !!this.existingScheduleFormDate;
@@ -199,8 +198,9 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     ngOnChanges() {
         this.initializeForm();
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+        const formData = this.formData();
+        if (this.isEditMode() && formData) {
+            this.setFormValues(formData);
         }
     }
 
@@ -219,7 +219,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     taFormatter = (user: UserWithLabel) => user.label;
     taSearch: OperatorFunction<string, readonly UserWithLabel[]> = (text$: Observable<string>) => {
-        return this.mergeSearch$(text$, this.taFocus$, this.taClick$, this.taTypeAhead).pipe(
+        return this.mergeSearch$(text$, this.taFocus$, this.taClick$, this.taTypeAhead()).pipe(
             map((term) => (term === '' ? this.teachingAssistants : this.teachingAssistants.filter((ta) => ta.label.toLowerCase().indexOf(term.toLowerCase()) > -1))),
         );
     };
@@ -227,7 +227,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     campusFormatter = (campus: string) => campus;
 
     campusSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
-        return this.mergeSearch$(text$, this.campusFocus$, this.campusClick$, this.campusTypeAhead).pipe(
+        return this.mergeSearch$(text$, this.campusFocus$, this.campusClick$, this.campusTypeAhead()).pipe(
             map((term) => (term === '' ? this.campus : this.campus.filter((campus) => campus.toLowerCase().indexOf(term.toLowerCase()) > -1))),
         );
     };
@@ -235,7 +235,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     languageFormatter = (language: string) => language;
 
     languageSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
-        return this.mergeSearch$(text$, this.languageFocus$, this.languageClick$, this.languageTypeAhead).pipe(
+        return this.mergeSearch$(text$, this.languageFocus$, this.languageClick$, this.languageTypeAhead()).pipe(
             map((term) => (term === '' ? this.languages : this.languages.filter((language) => language.toLowerCase().indexOf(term.toLowerCase()) > -1))),
         );
     };
@@ -261,7 +261,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
             campus: [undefined, Validators.maxLength(255)],
         });
 
-        if (this.isEditMode) {
+        if (this.isEditMode()) {
             this.form.addControl('notificationText', new FormControl(undefined, [Validators.maxLength(1000)]));
             this.form.addControl('updateTutorialGroupChannelName', new FormControl(true));
         }
@@ -298,7 +298,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     private getTeachingAssistantsInCourse() {
         const generateUserObservable = (group: CourseGroup) => {
-            return this.courseManagementService.getAllUsersInCourseGroup(this.course.id!, group).pipe(
+            return this.courseManagementService.getAllUsersInCourseGroup(this.course().id!, group).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
                     return of([]);
@@ -336,7 +336,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     private getUniqueCampusValuesOfCourse() {
         return concat(
             of([]), // default items
-            this.tutorialGroupService.getUniqueCampusValues(this.course.id!).pipe(
+            this.tutorialGroupService.getUniqueCampusValues(this.course().id!).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
                     return of([]);
@@ -355,7 +355,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     private getUniqueLanguageValuesOfCourse() {
         return concat(
             of([]), // default items
-            this.tutorialGroupService.getUniqueLanguageValues(this.course.id!).pipe(
+            this.tutorialGroupService.getUniqueLanguageValues(this.course().id!).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
                     return of([]);

@@ -64,7 +64,7 @@ public class SingleUserNotificationService {
 
         // Find student participations with eager legal submissions and latest results that have a completion date
         Set<StudentParticipation> filteredStudentParticipations = Set
-                .copyOf(studentParticipationRepository.findByExerciseIdAndTestRunWithEagerLegalSubmissionsAndLatestResultWithCompletionDate(exercise.getId(), false));
+                .copyOf(studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsAndLatestResultWithCompletionDate(exercise.getId(), false));
 
         // Load and assign all studentParticipations with results (this information is needed for the emails later)
         exercise.setStudentParticipations(filteredStudentParticipations);

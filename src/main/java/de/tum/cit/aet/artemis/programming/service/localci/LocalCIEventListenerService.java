@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -20,7 +21,10 @@ import com.hazelcast.map.listener.EntryUpdatedListener;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
@@ -53,12 +57,18 @@ public class LocalCIEventListenerService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final UserService userService;
+
+    private final MailService mailService;
+
     public LocalCIEventListenerService(DistributedDataAccessService distributedDataAccessService, LocalCIQueueWebsocketService localCIQueueWebsocketService,
-            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService) {
+            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, UserService userService, MailService mailService) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
         this.buildJobRepository = buildJobRepository;
         this.programmingMessagingService = programmingMessagingService;
+        this.userService = userService;
+        this.mailService = mailService;
     }
 
     /**
@@ -90,7 +100,7 @@ public class LocalCIEventListenerService {
      */
     @Scheduled(fixedRateString = "${artemis.continuous-integration.check-job-status-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.check-job-status-delay-seconds:60}", timeUnit = TimeUnit.SECONDS)
     public void checkPendingBuildJobsStatus() {
-        log.info("Checking pending build jobs status");
+        log.debug("Checking pending build jobs status");
         List<BuildJob> pendingBuildJobs = buildJobRepository.findAllByBuildStatusIn(List.of(BuildStatus.QUEUED, BuildStatus.BUILDING));
         ZonedDateTime now = ZonedDateTime.now();
         final int buildJobExpirationInMinutes = 5; // If a build job is older than 5 minutes, and it's status can't be determined, set it to missing
@@ -174,9 +184,27 @@ public class LocalCIEventListenerService {
 
         @Override
         public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent updated: {}", event.getValue());
-            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.getValue().buildAgent().name());
+            BuildAgentInformation oldValue = event.getOldValue();
+            BuildAgentInformation newValue = event.getValue();
+
+            log.debug("Build agent updated: {}", newValue);
+            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(newValue.buildAgent().name());
+            if (oldValue != null && oldValue.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED
+                    && newValue.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED) {
+                notifyAdminAboutAgentPausing(newValue);
+            }
         }
+    }
+
+    private void notifyAdminAboutAgentPausing(BuildAgentInformation buildAgentInformation) {
+        Optional<User> admin = userService.findInternalAdminUser();
+        if (admin.isEmpty()) {
+            log.warn("No internal admin user found. Cannot notify admin about self pausing build agent.");
+            return;
+        }
+        int failures = buildAgentInformation.buildAgentDetails() != null ? buildAgentInformation.buildAgentDetails().consecutiveBuildFailures()
+                : buildAgentInformation.pauseAfterConsecutiveBuildFailures();
+        mailService.sendBuildAgentSelfPausedEmailToAdmin(admin.get(), buildAgentInformation.buildAgent().name(), failures);
     }
 
     private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime submissionDate, ZonedDateTime buildStartDate,

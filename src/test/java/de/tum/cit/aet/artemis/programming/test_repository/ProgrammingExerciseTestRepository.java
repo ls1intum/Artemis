@@ -43,6 +43,7 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
                 LEFT JOIN FETCH t.testCases
                 LEFT JOIN FETCH p.plagiarismDetectionConfig
                 LEFT JOIN FETCH p.buildConfig
+                LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
             """)
     ProgrammingExercise findOneWithEagerEverything(@Param("exerciseId") long exerciseId);
