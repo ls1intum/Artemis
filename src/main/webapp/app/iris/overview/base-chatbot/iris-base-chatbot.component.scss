@@ -68,14 +68,20 @@
     border: 1px solid var(--border-color);
     border-radius: var(--bs-border-radius-lg);
     display: flex;
-    gap: 6px;
 
     button:hover {
         color: white !important;
     }
+
+    a:hover {
+        color: white !important;
+    }
 }
 
-.toolbox-text {
+.related-entity-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 0.8rem;
     color: var(--secondary);
 }
