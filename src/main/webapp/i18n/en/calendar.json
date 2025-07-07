@@ -11,7 +11,7 @@
             "eventSubtypeName": {
                 "lectureStart": "Start",
                 "lectureEnd": "End",
-                "examPublishResults": "Results Out",
+                "examPublishResults": "Results Release",
                 "examReviewStart": "Review Start",
                 "examReviewEnd": "Review End",
                 "exerciseRelease": "Release",
@@ -19,19 +19,21 @@
                 "exerciseDue": "Due",
                 "exerciseAssessmentDue": "Assessment Due"
             },
-            "exerciseFilterOption": "Exercise Events",
-            "lectureFilterOption": "Lecture Events",
-            "tutorialFilterOption": "Tutorial Events",
-            "examFilterOption": "Exam Events",
-            "eventName": {
-                "programming": "Programming Exercise Event",
-                "text": "Text Exercise Event",
-                "fileUpload": "File-Upload Exercise Event",
-                "modeling": "Modeling Exercise Event",
-                "quiz": "Quiz Exercise Event",
-                "lecture": "Lecture Event",
-                "tutorial": "Tutorial Event",
-                "exam": "Exam Event"
+            "eventTypeName": {
+                "programming": "Programming Exercise",
+                "text": "Text Exercise",
+                "fileUpload": "File-Upload Exercise",
+                "modeling": "Modeling Exercise",
+                "quiz": "Quiz Exercise",
+                "lecture": "Lecture",
+                "tutorial": "Tutorial",
+                "exam": "Exam"
+            },
+            "filterOption": {
+                "exercises": "Exercises",
+                "lectures": "Lectures",
+                "tutorials": "Tutorials",
+                "exams": "Exams"
             },
             "filterButtonLabel": "Filter",
             "todayButtonLabel": "Today",

@@ -19,19 +19,21 @@
                 "exerciseDue": "Ende",
                 "exerciseAssessmentDue": "Korrektur Ende"
             },
-            "exerciseFilterOption": "Übungsevents",
-            "lectureFilterOption": "Vorlesungsevents",
-            "tutorialFilterOption": "Tutorialevents",
-            "examFilterOption": "Klausurevents",
-            "eventName": {
-                "programming": "Programmieraufgabenevent",
-                "text": "Textaufgabenevent",
-                "fileUpload": "File-Upload-Aufgabenevent",
-                "modeling": "Modellieraufgabenevent",
-                "quiz": "Quizaufgabenevent",
-                "lecture": "Vorlesungsevent",
-                "tutorial": "Tutorialevent",
-                "exam": "Examevent"
+            "eventTypeName": {
+                "programming": "Programmieraufgabe",
+                "text": "Textaufgabe",
+                "fileUpload": "Datei-Upload-Aufgabe",
+                "modeling": "Modellierungsaufgabe",
+                "quiz": "Quizaufgabe",
+                "lecture": "Vorlesung",
+                "tutorial": "Tutorium",
+                "exam": "Klausur"
+            },
+            "filterOption": {
+                "exercises": "Übungen",
+                "lectures": "Vorlesungen",
+                "tutorials": "Tutorien",
+                "exams": "Klausuren"
             },
             "filterButtonLabel": "Filter",
             "todayButtonLabel": "Heute",

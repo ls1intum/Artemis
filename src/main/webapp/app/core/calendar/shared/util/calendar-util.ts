@@ -69,14 +69,14 @@ export function getWeekDayNameKeys(): string[] {
 }
 
 const eventTypeNameKeyMap: Record<CalendarEventType, string> = {
-    [CalendarEventType.Lecture]: 'artemisApp.calendar.eventName.lecture',
-    [CalendarEventType.Tutorial]: 'artemisApp.calendar.eventName.tutorial',
-    [CalendarEventType.Exam]: 'artemisApp.calendar.eventName.exam',
-    [CalendarEventType.QuizExercise]: 'artemisApp.calendar.eventName.quiz',
-    [CalendarEventType.TextExercise]: 'artemisApp.calendar.eventName.text',
-    [CalendarEventType.ModelingExercise]: 'artemisApp.calendar.eventName.modeling',
-    [CalendarEventType.ProgrammingExercise]: 'artemisApp.calendar.eventName.programming',
-    [CalendarEventType.FileUploadExercise]: 'artemisApp.calendar.eventName.fileUpload',
+    [CalendarEventType.Lecture]: 'artemisApp.calendar.eventTypeName.lecture',
+    [CalendarEventType.Tutorial]: 'artemisApp.calendar.eventTypeName.tutorial',
+    [CalendarEventType.Exam]: 'artemisApp.calendar.eventTypeName.exam',
+    [CalendarEventType.QuizExercise]: 'artemisApp.calendar.eventTypeName.quiz',
+    [CalendarEventType.TextExercise]: 'artemisApp.calendar.eventTypeName.text',
+    [CalendarEventType.ModelingExercise]: 'artemisApp.calendar.eventTypeName.modeling',
+    [CalendarEventType.ProgrammingExercise]: 'artemisApp.calendar.eventTypeName.programming',
+    [CalendarEventType.FileUploadExercise]: 'artemisApp.calendar.eventTypeName.fileUpload',
 };
 
 export function getEventTypeNameKey(event: CalendarEvent): string {
@@ -125,10 +125,10 @@ export function getEventSubtypeNameKey(event: CalendarEvent): string | undefined
 export type CalendarEventFilterOption = 'examEvents' | 'lectureEvents' | 'tutorialEvents' | 'exerciseEvents';
 
 const filterOptionNameKeyMap: Record<CalendarEventFilterOption, string> = {
-    exerciseEvents: 'artemisApp.calendar.exerciseFilterOption',
-    lectureEvents: 'artemisApp.calendar.lectureFilterOption',
-    tutorialEvents: 'artemisApp.calendar.tutorialFilterOption',
-    examEvents: 'artemisApp.calendar.examFilterOption',
+    exerciseEvents: 'artemisApp.calendar.filterOption.exercises',
+    lectureEvents: 'artemisApp.calendar.filterOption.lectures',
+    tutorialEvents: 'artemisApp.calendar.filterOption.tutorials',
+    examEvents: 'artemisApp.calendar.filterOption.exams',
 };
 
 export function getFilterOptionNameKey(option: CalendarEventFilterOption): string {
