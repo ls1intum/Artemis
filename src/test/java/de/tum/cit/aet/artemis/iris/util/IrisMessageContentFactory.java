@@ -23,12 +23,12 @@ public class IrisMessageContentFactory {
         String[] adjectives = { "happy", "sad", "angry", "funny", "silly", "crazy", "beautiful", "smart" };
         String[] nouns = { "dog", "cat", "house", "car", "book", "computer", "phone", "shoe" };
 
-        var rdm = ThreadLocalRandom.current();
-        String randomAdjective = adjectives[rdm.nextInt(adjectives.length)];
-        String randomNoun = nouns[rdm.nextInt(nouns.length)];
+        ThreadLocalRandom randomGenerator = ThreadLocalRandom.current();
+        String randomAdjective = adjectives[randomGenerator.nextInt(adjectives.length)];
+        String randomNoun = nouns[randomGenerator.nextInt(nouns.length)];
 
-        var text = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
-        return new IrisTextMessageContent(text);
+        String randomizedText = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
+        return new IrisTextMessageContent(randomizedText);
     }
 
     public static List<IrisMessageContent> createIrisMessageContents(int numberOfMessages) {
