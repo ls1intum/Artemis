@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,10 +10,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
-import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
 
 /**
  * Service for managing slide unhiding operations in a multi-node environment.
@@ -31,13 +28,9 @@ public class SlideUnhideService {
 
     private final SlideUnhideExecutionService slideUnhideExecutionService;
 
-    private final Optional<ScheduleService> scheduleService;
-
-    public SlideUnhideService(InstanceMessageSendService instanceMessageSendService, SlideUnhideExecutionService slideUnhideExecutionService,
-            Optional<ScheduleService> scheduleService) {
+    public SlideUnhideService(InstanceMessageSendService instanceMessageSendService, SlideUnhideExecutionService slideUnhideExecutionService) {
         this.instanceMessageSendService = instanceMessageSendService;
         this.slideUnhideExecutionService = slideUnhideExecutionService;
-        this.scheduleService = scheduleService;
     }
 
     /**
@@ -54,9 +47,6 @@ public class SlideUnhideService {
         // Cancel any existing tasks through the messaging service
         instanceMessageSendService.sendSlideUnhideScheduleCancel(slide.getId());
 
-        // Also cancel locally if schedule service is available
-        scheduleService.ifPresent(service -> service.cancelScheduledTaskForSlideLifecycle(slide.getId(), SlideLifecycle.UNHIDE));
-
         if (hiddenUntil == null) {
             log.debug("Slide {} is not hidden, no need to schedule unhiding", slide.getId());
             return;
@@ -72,10 +62,6 @@ public class SlideUnhideService {
             // Send message to scheduling node to schedule unhiding
             instanceMessageSendService.sendSlideUnhideSchedule(slide.getId());
             log.debug("Sent slide unhide schedule message for slide {} with unhide time {}", slide.getId(), hiddenUntil);
-
-            // Also schedule locally if schedule service is available and we're on a scheduling node
-            scheduleService
-                    .ifPresent(service -> service.scheduleSlideTask(slide, SlideLifecycle.UNHIDE, () -> slideUnhideExecutionService.unhideSlide(slide.getId()), "Slide Unhiding"));
         }
     }
 }
