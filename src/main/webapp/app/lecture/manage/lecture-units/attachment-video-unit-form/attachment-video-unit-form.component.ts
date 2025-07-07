@@ -126,6 +126,10 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
+    private readonly http = inject(HttpClient);
+    canGenerateTranscript = signal(false);
+    playlistUrl = signal<string | undefined>(undefined);
+
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
 
@@ -277,8 +281,12 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     setEmbeddedVideoUrl(event: any) {
         event.stopPropagation();
-        const embeddedUrl = this.extractEmbeddedUrl(this.urlHelperControl!.value);
+
+        const originalUrl = this.urlHelperControl!.value;
+        const embeddedUrl = this.extractEmbeddedUrl(originalUrl);
         this.videoSourceControl!.setValue(embeddedUrl);
+
+        this.checkTumLivePlaylist(originalUrl);
     }
 
     extractEmbeddedUrl(videoUrl: string) {

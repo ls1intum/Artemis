@@ -167,15 +167,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        const {
-            description,
-            name,
-            releaseDate,
-            videoSource,
-            updateNotificationText,
-            competencyLinks,
-            generateTranscript, // <-- new field
-        } = attachmentVideoUnitFormData.formProperties;
+        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
 
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
         const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
@@ -351,16 +343,22 @@ export class LectureUpdateUnitsComponent implements OnInit {
             });
     }
 
-    private triggerTranscriptionIfEnabled(unit: AttachmentVideoUnit | undefined, generateTranscript: boolean | undefined): void {
-        if (!this.isEditingLectureUnit && generateTranscript && unit?.id && unit?.videoSource) {
+    private triggerTranscriptionIfEnabled(unit: AttachmentVideoUnit | undefined, generateTranscript: boolean | undefined, playlistUrl?: string): void {
+        if (!this.isEditingLectureUnit && generateTranscript && unit?.id) {
+            const transcriptionUrl = playlistUrl ?? unit.videoSource;
+
             // eslint-disable-next-line no-undef
             console.log('[DEBUG] Starting transcription with:', {
                 lectureId: this.lecture.id,
                 unitId: unit.id,
-                videoSource: unit.videoSource,
+                transcriptionUrl,
             });
-
-            this.attachmentVideoUnitService.startTranscription(this.lecture.id!, unit.id, unit.videoSource).subscribe({
+            if (!transcriptionUrl) {
+                // eslint-disable-next-line no-undef
+                console.log('[INFO] Skipping transcription: No transcription URL available.');
+                return;
+            }
+            this.attachmentVideoUnitService.startTranscription(this.lecture.id!, unit.id, transcriptionUrl).subscribe({
                 next: (res) => {
                     if (res.status === 200) {
                         this.alertService.success('Transcript generation started.');

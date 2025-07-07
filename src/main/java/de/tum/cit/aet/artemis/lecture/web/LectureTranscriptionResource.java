@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
@@ -149,6 +150,33 @@ public class LectureTranscriptionResource {
         catch (Exception e) {
             log.error("❌ Error initiating transcription for Lecture ID: {}, Unit ID: {} → {}", lectureId, lectureUnitId, e.getMessage(), e);
             return ResponseEntity.internalServerError().body("Failed to start transcription: " + e.getMessage());
+        }
+    }
+
+    /**
+     * REST endpoint to fetch the TUM Live playlist URL for a given TUM Live video page URL.
+     * <p>
+     * This endpoint checks whether a playlist (e.g., an .m3u8 stream) is available for the
+     * specified video URL from TUM Live and returns it if found.
+     * </p>
+     *
+     * @param url the full TUM Live video page URL
+     * @return {@code 200 OK} with the playlist URL if available,
+     *         or {@code 404 Not Found} if no playlist could be retrieved.
+     */
+    @GetMapping("/video-utils/get-tum-live-playlist")
+    public ResponseEntity<String> getTumLivePlaylist(@RequestParam String url) {
+        log.info("📥 Received request to fetch playlist for TUM Live URL: {}", url);
+
+        Optional<String> playlistUrl = tumLiveService.getTumLivePlaylistLink(url);
+
+        if (playlistUrl.isPresent()) {
+            log.info("✅ Playlist URL found: {}", playlistUrl.get());
+            return ResponseEntity.ok(playlistUrl.get());
+        }
+        else {
+            log.warn("❌ No playlist URL found for: {}", url);
+            return ResponseEntity.notFound().build();
         }
     }
 
