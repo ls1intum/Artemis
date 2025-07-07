@@ -10,11 +10,6 @@ class IrisCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
     }
 
     @Override
-    protected int dtoAsAnnotatedRecordThreshold() {
-        return 2;
-    }
-
-    @Override
     protected int dtoNameEndingThreshold() {
         return 5;
     }

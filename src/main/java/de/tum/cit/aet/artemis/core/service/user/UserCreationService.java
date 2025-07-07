@@ -212,7 +212,9 @@ public class UserCreationService {
             user.setLastName(lastName);
             user.setEmail(email.toLowerCase());
             user.setLangKey(langKey);
-            user.setImageUrl(imageUrl);
+            if (imageUrl != null) {
+                user.setImageUrl(imageUrl);
+            }
             saveUser(user);
             log.info("Changed Information for User: {}", user);
             optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, null));
@@ -237,7 +239,9 @@ public class UserCreationService {
         if (StringUtils.hasText(updatedUserDTO.getVisibleRegistrationNumber())) {
             user.setRegistrationNumber(updatedUserDTO.getVisibleRegistrationNumber());
         }
-        user.setImageUrl(updatedUserDTO.getImageUrl());
+        if (updatedUserDTO.getImageUrl() != null) {
+            user.setImageUrl(updatedUserDTO.getImageUrl());
+        }
         user.setActivated(updatedUserDTO.isActivated());
         user.setLangKey(updatedUserDTO.getLangKey());
         user.setGroups(updatedUserDTO.getGroups());

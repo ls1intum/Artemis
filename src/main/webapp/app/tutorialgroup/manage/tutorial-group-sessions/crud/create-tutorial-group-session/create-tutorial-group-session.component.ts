@@ -29,11 +29,9 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
     tutorialGroupSessionToCreate: TutorialGroupSessionDTO = new TutorialGroupSessionDTO();
     isLoading: boolean;
 
-    @Input()
-    tutorialGroup: TutorialGroup;
-
-    @Input()
-    course: Course;
+    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
+    @Input() tutorialGroup: TutorialGroup;
+    @Input() course: Course;
 
     isInitialized = false;
 
