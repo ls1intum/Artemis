@@ -11,10 +11,10 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageReceiveService;
@@ -32,7 +32,7 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ScheduleService scheduleService;
 
-    @MockitoSpyBean
+    @Mock
     private SlideUnhideExecutionService slideUnhideExecutionService;
 
     @Autowired
