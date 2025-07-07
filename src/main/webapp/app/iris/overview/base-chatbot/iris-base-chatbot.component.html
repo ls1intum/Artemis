@@ -35,7 +35,7 @@
         @let relatedEntityLinkButtonLabel = getRelatedEntityLinkButtonLabel();
         @if (relatedEntityRoute && relatedEntityLinkButtonLabel && isChatHistoryAvailable()) {
             <div class="toolbox">
-                <button [routerLink]="relatedEntityRoute" [queryParamsHandling]="'preserve'" class="related-entity-link header-control" (click)="onNavigateToRelatedEntity()">
+                <button [routerLink]="relatedEntityRoute" [queryParamsHandling]="'preserve'" class="related-entity-link header-control">
                     <div>
                         {{ relatedEntityLinkButtonLabel | artemisTranslate }}
                     </div>

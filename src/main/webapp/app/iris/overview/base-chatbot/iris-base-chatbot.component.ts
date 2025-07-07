@@ -592,8 +592,4 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
                 return undefined;
         }
     }
-
-    onNavigateToRelatedEntity() {
-        this.chatService.close();
-    }
 }

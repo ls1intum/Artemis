@@ -358,7 +358,7 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
-    close(): void {
+    protected close(): void {
         if (this.sessionId) {
             this.ws.unsubscribeFromSession(this.sessionId);
             this.sessionId = undefined;
