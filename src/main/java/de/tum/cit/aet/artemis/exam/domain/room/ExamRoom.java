@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.exam.domain.room;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -19,12 +21,25 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
+import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 
 @Conditional(ExamEnabled.class)
 @Entity
 @Table(name = "exam_room")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamRoom extends DomainObject {
+
+    /**
+     * The verbose room number.
+     */
+    @Column(name = "long_room_number", nullable = false)
+    private String longRoomNumber;
+
+    /**
+     * The short room number.
+     */
+    @Column(name = "short_room_number", nullable = false)
+    private String shortRoomNumber;
 
     /**
      * The name of the exam room.
@@ -59,6 +74,14 @@ public class ExamRoom extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "examRoom")
     private List<LayoutStrategy> layoutStrategies = new ArrayList<>();
+
+    /**
+     * All exam users that sit in this room for any exam.
+     */
+    @OneToMany(mappedBy = "plannedRoomEntity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties(value = "examRoom")
+    private Set<ExamUser> examRoomUsers = new HashSet<>();
 
     public String getName() {
         return name;

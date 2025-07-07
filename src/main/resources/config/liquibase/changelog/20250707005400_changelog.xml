@@ -8,6 +8,12 @@
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true"/>
             </column>
+            <column name="long_room_number" type="varchar(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="short_room_number" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
             <column name="name" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
