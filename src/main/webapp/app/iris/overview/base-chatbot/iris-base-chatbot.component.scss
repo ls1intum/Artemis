@@ -68,6 +68,7 @@
     border: 1px solid var(--border-color);
     border-radius: var(--bs-border-radius-lg);
     display: flex;
+    gap: 6px;
 
     button:hover {
         color: white !important;
