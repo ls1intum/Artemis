@@ -21,3 +21,22 @@ export interface QuizExerciseUpdateDto {
     includedInOverallScore?: IncludedInOverallScore;
     quizQuestions?: QuizQuestion[];
 }
+
+export function toQuizExerciseUpdateDto(quizExercise: QuizExerciseUpdateDto): QuizExerciseUpdateDto {
+    return {
+        title: quizExercise.title,
+        channelName: quizExercise.channelName,
+        categories: quizExercise.categories,
+        competencyLinks: quizExercise.competencyLinks,
+        difficulty: quizExercise.difficulty,
+        duration: quizExercise.duration,
+        randomizeQuestionOrder: quizExercise.randomizeQuestionOrder,
+        quizMode: quizExercise.quizMode,
+        quizBatches: quizExercise.quizBatches,
+        releaseDate: quizExercise.releaseDate,
+        startDate: quizExercise.startDate,
+        dueDate: quizExercise.dueDate,
+        includedInOverallScore: quizExercise.includedInOverallScore,
+        quizQuestions: quizExercise.quizQuestions,
+    };
+}

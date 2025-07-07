@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
@@ -528,5 +529,22 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         return newQuizExercise;
+    }
+
+    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, QuizExerciseFromEditorDTO quizExerciseFromEditorDTO) {
+        quizExercise.setTitle(quizExerciseFromEditorDTO.title());
+        quizExercise.setChannelName(quizExerciseFromEditorDTO.channelName());
+        quizExercise.setCategories(quizExerciseFromEditorDTO.categories());
+        quizExercise.setCompetencyLinks(quizExerciseFromEditorDTO.competencyLinks() != null ? quizExerciseFromEditorDTO.competencyLinks() : new HashSet<>());
+        quizExercise.setDifficulty(quizExerciseFromEditorDTO.difficulty());
+        quizExercise.setDuration(quizExerciseFromEditorDTO.duration());
+        quizExercise.setRandomizeQuestionOrder(quizExerciseFromEditorDTO.randomizeQuestionOrder());
+        quizExercise.setQuizMode(quizExerciseFromEditorDTO.quizMode());
+        quizExercise.setQuizBatches(quizExerciseFromEditorDTO.quizBatches() != null ? quizExerciseFromEditorDTO.quizBatches() : new HashSet<>());
+        quizExercise.setReleaseDate(quizExerciseFromEditorDTO.releaseDate());
+        quizExercise.setStartDate(quizExerciseFromEditorDTO.startDate());
+        quizExercise.setDueDate(quizExerciseFromEditorDTO.dueDate());
+        quizExercise.setIncludedInOverallScore(quizExerciseFromEditorDTO.includedInOverallScore());
+        quizExercise.setQuizQuestions(quizExerciseFromEditorDTO.quizQuestions());
     }
 }
