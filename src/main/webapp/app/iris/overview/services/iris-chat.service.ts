@@ -297,8 +297,6 @@ export class IrisChatService implements OnDestroy {
     private handleNewSession() {
         return {
             next: (r: IrisSession) => {
-                // eslint-disable-next-line no-undef
-                console.log('Parsed Iris Session: \n', r);
                 this.sessionId = r.id;
                 this.messages.next(r.messages || []);
                 this.parseLatestSuggestions(r.latestSuggestions);
@@ -382,10 +380,6 @@ export class IrisChatService implements OnDestroy {
         }
 
         return this.http.getCurrentSessionOrCreateIfNotExists(this.sessionCreationIdentifier).pipe(
-            tap((response: HttpResponse<IrisExerciseChatSession>) => {
-                // eslint-disable-next-line no-undef
-                console.log('Full Iris Session HTTP response: \n', response);
-            }),
             map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
                     return response.body;
@@ -402,8 +396,6 @@ export class IrisChatService implements OnDestroy {
         if (courseId) {
             this.chatSessionSubscription?.unsubscribe();
             this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
-                // eslint-disable-next-line no-undef
-                console.log(`Loaded Sessions for course (${courseId}):\n`, sessions);
                 this.chatSessions.next(sessions ?? []);
             });
         } else {
@@ -443,8 +435,6 @@ export class IrisChatService implements OnDestroy {
     }
 
     switchToSession(session: IrisSessionDTO): void {
-        // eslint-disable-next-line no-undef
-        console.log(`switchToSession called for: `, session);
         if (this.sessionId === session.id) {
             return;
         }
@@ -457,8 +447,6 @@ export class IrisChatService implements OnDestroy {
         if (courseId) {
             this.chatSessionByIdSubscription?.unsubscribe();
             this.chatSessionByIdSubscription = this.http.getChatSessionById(courseId, session.id).subscribe((session) => {
-                // eslint-disable-next-line no-undef
-                console.log(`Setting new entityId and chatMode: ${session.entityId},`, session.chatMode);
                 this.currentChatModeSubject.next(chatMode);
                 this.currentRelatedEntityIdSubject.next(entityId);
                 this.handleNewSession().next(session);

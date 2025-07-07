@@ -249,7 +249,7 @@ describe('IrisChatService', () => {
 
     it('should emit sessionId when set', () => {
         const expectedId = 456;
-        service.sessionId$.subscribe((id) => {
+        service.currentSessionId().subscribe((id) => {
             expect(id).toBe(expectedId);
         });
         service.sessionId = expectedId;

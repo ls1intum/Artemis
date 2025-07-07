@@ -408,6 +408,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         expect(sendButton.disabled).toBeTruthy();
     });
+
     it('should not render submit button if hasUserAcceptedExternalLLMUsage is false', () => {
         component.userAccepted = false;
         component.isLoading = false;
@@ -745,5 +746,53 @@ describe('IrisBaseChatbotComponent', () => {
             const expectedOrder = [sessionToday.id, sessionYesterday.id, session7DaysAgo.id, session8DaysAgo.id, session30DaysAgo.id];
             expect(result.map((s) => s.id)).toEqual(expectedOrder);
         });
+    });
+
+    describe('Related entity button', () => {
+        it('should display correct related entity button when lecture session selected', fakeAsync(() => {
+            jest.spyOn(chatService, 'switchToSession').mockImplementation(() => {
+                component['currentChatMode'].set(session.chatMode);
+                component['currentRelatedEntityId'].set(session.entityId);
+            });
+            const session: IrisSession = {
+                id: 10,
+                messages: [],
+                creationDate: new Date(),
+                chatMode: ChatServiceMode.LECTURE,
+                entityId: 55,
+            };
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+
+            chatService.switchToSession(session);
+            fixture.detectChanges();
+            tick();
+
+            const relatedButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            expect(relatedButton).not.toBeNull();
+            expect(relatedButton.getAttribute('ng-reflect-router-link')).toContain('../lectures/55');
+        }));
+
+        it('should display correct related entity button when programming exercise session selected', fakeAsync(() => {
+            const session: IrisSession = {
+                id: 11,
+                messages: [],
+                creationDate: new Date(),
+                chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+                entityId: 99,
+            };
+            jest.spyOn(chatService, 'switchToSession').mockImplementation(() => {
+                component['currentChatMode'].set(session.chatMode);
+                component['currentRelatedEntityId'].set(session.entityId);
+            });
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+
+            chatService.switchToSession(session);
+            fixture.detectChanges();
+            tick();
+
+            const relatedButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            expect(relatedButton).not.toBeNull();
+            expect(relatedButton.getAttribute('ng-reflect-router-link')).toContain('../exercises/99');
+        }));
     });
 });

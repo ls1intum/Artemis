@@ -1,8 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item.component';
 import { By } from '@angular/platform-browser';
 import { DatePipe } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faChalkboardUser, faKeyboard } from '@fortawesome/free-solid-svg-icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 
 describe('ChatHistoryItemComponent', () => {
     let component: ChatHistoryItemComponent;
@@ -12,6 +17,7 @@ describe('ChatHistoryItemComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ChatHistoryItemComponent],
             providers: [DatePipe],
+            declarations: [MockPipe(ArtemisTranslatePipe)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ChatHistoryItemComponent);
@@ -35,9 +41,8 @@ describe('ChatHistoryItemComponent', () => {
 
         const datePipe = new DatePipe('en-US');
         const expectedDate = datePipe.transform(component.session()!.creationDate, 'dd.MM.yy HH:mm');
-        const pElem: HTMLElement = fixture.nativeElement.querySelector('p');
-
-        expect(pElem.textContent).toContain(expectedDate);
+        const historyItemLabel: HTMLElement = fixture.nativeElement.querySelector('.chat-history-text');
+        expect(historyItemLabel.textContent).toContain(expectedDate);
     });
 
     it('should emit sessionClicked when item is clicked', () => {
@@ -67,5 +72,57 @@ describe('ChatHistoryItemComponent', () => {
 
         const itemDiv: HTMLElement = fixture.nativeElement.querySelector('.chat-history-item');
         expect(itemDiv.classList).not.toContain('chat-history-item-selected');
+    });
+
+    it('should render correct icon and tooltip for lecture session', () => {
+        const session: IrisSessionDTO = {
+            id: 1,
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.LECTURE,
+            entityId: 42,
+        };
+
+        fixture.componentRef.setInput('session', session);
+        fixture.detectChanges();
+
+        const iconDebugEl = fixture.debugElement.query(By.directive(FaIconComponent));
+        const iconInstance = iconDebugEl.componentInstance as FaIconComponent;
+
+        expect(iconInstance.icon).toBe(faChalkboardUser);
+        expect(component.iconAndTooltipKey?.tooltipKey).toBe('artemisApp.iris.chatHistory.relatedEntityTooltip.lecture');
+    });
+
+    it('should render correct icon and tooltip for programming exercise session', () => {
+        const session: IrisSessionDTO = {
+            id: 2,
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 77,
+        };
+
+        fixture.componentRef.setInput('session', session);
+        fixture.detectChanges();
+
+        const iconDebugEl = fixture.debugElement.query(By.directive(FaIconComponent));
+        const iconInstance = iconDebugEl.componentInstance as FaIconComponent;
+
+        expect(iconInstance.icon).toBe(faKeyboard);
+        expect(component.iconAndTooltipKey?.tooltipKey).toBe('artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise');
+    });
+
+    it('should not render an icon for unsupported chat mode', () => {
+        const session: IrisSessionDTO = {
+            id: 3,
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 123,
+        };
+
+        fixture.componentRef.setInput('session', session);
+        fixture.detectChanges();
+
+        const iconDebugEl = fixture.debugElement.query(By.directive(FaIconComponent));
+        expect(iconDebugEl).toBeNull();
+        expect(component.iconAndTooltipKey).toBeUndefined();
     });
 });
