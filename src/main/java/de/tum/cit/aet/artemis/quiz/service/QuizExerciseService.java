@@ -40,8 +40,10 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventSubtype;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventType;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
@@ -544,16 +546,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param userIsStudent indicates whether the logged-in user is a student of the course
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromQuizExercises(Long courseId, boolean userIsStudent) {
-        Set<QuizExercise> quizExercises = quizExerciseRepository.findByCourseIdWithBatches(courseId);
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromQuizExercises(long courseId, boolean userIsStudent) {
+        Set<QuizExercise> quizExercises = quizExerciseRepository.findWithBatchesByCourseId(courseId);
         return quizExercises.stream().flatMap(quizExercise -> deriveEvents(quizExercise, userIsStudent).stream()).collect(Collectors.toSet());
     }
 
     private Set<CalendarEventDTO> deriveEvents(QuizExercise quizExercise, boolean userIsStudent) {
         if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
-            Set<CalendarEventDTO> events = new HashSet<>();
-            deriveEventForSynchronizedQuizExercise(quizExercise, userIsStudent).ifPresent(events::add);
-            return events;
+            return deriveEventForSynchronizedQuizExercise(quizExercise, userIsStudent).map(Set::of).orElseGet(Collections::emptySet);
         }
         else {
             return deriveEventsForIndividualAndBatchedQuizExercises(quizExercise, !userIsStudent);
@@ -585,7 +585,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
         QuizBatch synchronizedBatch = synchronizedBatchOptional.get();
 
-        return Optional.of(new CalendarEventDTO("quizExercise", "startAndEndDate", quizExercise.getTitle(), synchronizedBatch.getStartTime(),
+        return Optional.of(new CalendarEventDTO(CalendarEventType.QUIZ_EXERCISE, CalendarEventSubtype.START_AND_END_DATE, quizExercise.getTitle(), synchronizedBatch.getStartTime(),
                 synchronizedBatch.getStartTime().plusSeconds(quizExercise.getDuration()), null, null));
     }
 
@@ -609,10 +609,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Set<CalendarEventDTO> events = new HashSet<>();
         if (userIsCourseStaff || quizExercise.getReleaseDate() == null || (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isBefore(now()))) {
             if (quizExercise.getReleaseDate() != null) {
-                events.add(new CalendarEventDTO("quizExercise", "releaseDate", quizExercise.getTitle(), quizExercise.getReleaseDate(), null, null, null));
+                events.add(new CalendarEventDTO(CalendarEventType.QUIZ_EXERCISE, CalendarEventSubtype.RELEASE_DATE, quizExercise.getTitle(), quizExercise.getReleaseDate(), null,
+                        null, null));
             }
             if (quizExercise.getDueDate() != null) {
-                events.add(new CalendarEventDTO("quizExercise", "dueDate", quizExercise.getTitle(), quizExercise.getDueDate(), null, null, null));
+                events.add(
+                        new CalendarEventDTO(CalendarEventType.QUIZ_EXERCISE, CalendarEventSubtype.DUE_DATE, quizExercise.getTitle(), quizExercise.getDueDate(), null, null, null));
             }
         }
         return events;

@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 @Lazy
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping("api/core/calendar")
 public class CalendarResource {
 
     private static final Logger log = LoggerFactory.getLogger(CalendarResource.class);
@@ -77,7 +77,7 @@ public class CalendarResource {
     }
 
     /**
-     * GET /course/:courseId/calendar-events : gets all {@link CalendarEventDTO}s associated to the given course falling into the requested month
+     * GET calendar/course/:courseId/calendar-events : gets all {@link CalendarEventDTO}s associated to the given course falling into the requested month
      *
      * @param courseId  the id of the course for which the events should be fetched
      * @param monthKeys a list of ISO 8601 formatted strings representing months
@@ -87,9 +87,9 @@ public class CalendarResource {
      * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user does not have at least student role or if the user is not at least student in the course
      * @throws BadRequestException      {@code 400 (Bad Request)} if the monthKeys are empty or formatted incorrectly or if the timeZone is formatted incorrectly.
      */
-    @GetMapping("calendar/courses/{courseId}/calendar-events")
+    @GetMapping("/courses/{courseId}/calendar-events")
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<String, List<CalendarEventDTO>>> getCalendarEventsOverlappingMonths(@PathVariable Long courseId, @RequestParam List<String> monthKeys,
+    public ResponseEntity<Map<String, List<CalendarEventDTO>>> getCalendarEventsOverlappingMonths(@PathVariable long courseId, @RequestParam List<String> monthKeys,
             @RequestParam String timeZone) {
         log.debug("REST request to get calendar events falling into: {}", monthKeys);
 

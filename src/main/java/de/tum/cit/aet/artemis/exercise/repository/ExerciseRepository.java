@@ -669,5 +669,5 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Exercise exercise
             WHERE exercise.course.id = :courseId AND TYPE(exercise) IN (ModelingExercise, FileUploadExercise, TextExercise, ProgrammingExercise)
             """)
-    List<Exercise> findNonQuizExercisesByCourseId(@Param("courseId") Long courseId);
+    List<Exercise> findNonQuizExercisesByCourseId(@Param("courseId") long courseId);
 }

@@ -53,11 +53,13 @@ import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificat
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventSubtype;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -813,7 +815,7 @@ public class ExerciseService {
      * @param userIsStudent indicates whether the logged-in user is a student
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromNonQuizExercises(Long courseId, boolean userIsStudent) {
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromNonQuizExercises(long courseId, boolean userIsStudent) {
         List<Exercise> exercises = exerciseRepository.findNonQuizExercisesByCourseId(courseId);
         return exercises.stream().flatMap(exercise -> deriveEvents(exercise, !userIsStudent).stream()).collect(Collectors.toSet());
     }
@@ -841,19 +843,20 @@ public class ExerciseService {
 
         Set<CalendarEventDTO> events = new HashSet<>();
         if (userIsCourseStaff || exercise.getReleaseDate() == null || (exercise.getReleaseDate() != null && exercise.getReleaseDate().isBefore(now()))) {
-            String eventType = exercise instanceof FileUploadExercise ? "fileUploadExercise"
-                    : exercise instanceof TextExercise ? "textExercise" : exercise instanceof ModelingExercise ? "modelingExercise" : "programmingExercise";
+            CalendarEventType eventType = exercise instanceof FileUploadExercise ? CalendarEventType.FILE_UPLOAD_EXERCISE
+                    : exercise instanceof TextExercise ? CalendarEventType.TEXT_EXERCISE
+                            : exercise instanceof ModelingExercise ? CalendarEventType.MODELING_EXERCISE : CalendarEventType.PROGRAMMING_EXERCISE;
             if (exercise.getReleaseDate() != null) {
-                events.add(new CalendarEventDTO(eventType, "releaseDate", exercise.getTitle(), exercise.getReleaseDate(), null, null, null));
+                events.add(new CalendarEventDTO(eventType, CalendarEventSubtype.RELEASE_DATE, exercise.getTitle(), exercise.getReleaseDate(), null, null, null));
             }
             if (exercise.getStartDate() != null) {
-                events.add(new CalendarEventDTO(eventType, "startDate", exercise.getTitle(), exercise.getStartDate(), null, null, null));
+                events.add(new CalendarEventDTO(eventType, CalendarEventSubtype.START_DATE, exercise.getTitle(), exercise.getStartDate(), null, null, null));
             }
             if (exercise.getDueDate() != null) {
-                events.add(new CalendarEventDTO(eventType, "dueDate", exercise.getTitle(), exercise.getDueDate(), null, null, null));
+                events.add(new CalendarEventDTO(eventType, CalendarEventSubtype.DUE_DATE, exercise.getTitle(), exercise.getDueDate(), null, null, null));
             }
             if (exercise.getAssessmentDueDate() != null) {
-                events.add(new CalendarEventDTO(eventType, "assessmentDueDate", exercise.getTitle(), exercise.getAssessmentDueDate(), null, null, null));
+                events.add(new CalendarEventDTO(eventType, CalendarEventSubtype.ASSESSMENT_DUE_DATE, exercise.getTitle(), exercise.getAssessmentDueDate(), null, null, null));
             }
         }
         return events;

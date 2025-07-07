@@ -5,7 +5,7 @@ import { Dayjs } from 'dayjs/esm';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEventAndPosition, PositionInfo } from 'app/core/calendar/shared/entities/calendar-event-and-position.model';
-import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
@@ -22,6 +22,7 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
     scrollContainer = viewChild<ElementRef>('scrollContainer');
 
     readonly utils = utils;
+    readonly CalendarEventType = CalendarEventType;
     readonly weekDays = computed(() => this.computeWeekDaysFrom(this.firstDayOfCurrentWeek()));
 
     private popover?: NgbPopover;

@@ -58,11 +58,13 @@ import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventSubtype;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventType;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -1375,7 +1377,7 @@ public class ExamService {
      * @param userIsStudent indicates whether the logged-in user is a student of the course
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(Long courseId, boolean userIsStudent) {
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(long courseId, boolean userIsStudent) {
         List<Exam> exams = examRepository.findByCourseId(courseId);
         return exams.stream().flatMap(exam -> deriveEvents(exam, !userIsStudent).stream()).collect(Collectors.toSet());
     }
@@ -1398,12 +1400,16 @@ public class ExamService {
     private Set<CalendarEventDTO> deriveEvents(Exam exam, boolean userIsCourseStaff) {
         Set<CalendarEventDTO> events = new HashSet<>();
         if (userIsCourseStaff || (exam.getVisibleDate() != null && exam.getVisibleDate().isBefore(now()))) {
-            events.add(new CalendarEventDTO("exam", "startAndEndDate", exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null, exam.getExaminer()));
+            events.add(new CalendarEventDTO(CalendarEventType.EXAM, CalendarEventSubtype.START_AND_END_DATE, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
+                    exam.getExaminer()));
             if (exam.getPublishResultsDate() != null) {
-                events.add(new CalendarEventDTO("exam", "publishResultsDate", exam.getTitle(), exam.getPublishResultsDate(), null, null, null));
+                events.add(
+                        new CalendarEventDTO(CalendarEventType.EXAM, CalendarEventSubtype.PUBLISH_RESULTS_DATE, exam.getTitle(), exam.getPublishResultsDate(), null, null, null));
                 if (exam.getExamStudentReviewStart() != null) {
-                    events.add(new CalendarEventDTO("exam", "studentReviewStartDate", exam.getTitle(), exam.getExamStudentReviewStart(), null, null, null));
-                    events.add(new CalendarEventDTO("exam", "studentReviewEndDate", exam.getTitle(), exam.getExamStudentReviewEnd(), null, null, null));
+                    events.add(new CalendarEventDTO(CalendarEventType.EXAM, CalendarEventSubtype.STUDENT_REVIEW_START_DATE, exam.getTitle(), exam.getExamStudentReviewStart(), null,
+                            null, null));
+                    events.add(new CalendarEventDTO(CalendarEventType.EXAM, CalendarEventSubtype.STUDENT_REVIEW_END_DATE, exam.getTitle(), exam.getExamStudentReviewEnd(), null,
+                            null, null));
                 }
             }
         }

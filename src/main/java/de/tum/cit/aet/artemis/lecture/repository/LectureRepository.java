@@ -42,7 +42,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             FROM Lecture lecture
             WHERE lecture.course.id = :courseId AND (lecture.startDate IS NOT NULL OR lecture.endDate IS NOT NULL)
             """)
-    Set<Lecture> findAllByCourseIdWhereStartDateOrEndDateIsNotNull(@Param("courseId") Long courseId);
+    Set<Lecture> findAllByCourseIdWhereStartDateOrEndDateIsNotNull(@Param("courseId") long courseId);
 
     @Query("""
             SELECT lecture

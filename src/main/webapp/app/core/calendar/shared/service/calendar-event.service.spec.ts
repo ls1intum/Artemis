@@ -16,23 +16,23 @@ describe('CalendarEventService', () => {
     const testRequestResponse = {
         '2025-10-01': [
             {
-                type: 'lecture',
-                subtype: 'startAndEndDate',
+                type: 'LECTURE',
+                subtype: 'START_AND_END_DATE',
                 title: 'Object Design',
                 startDate: '2025-10-01T08:00:00Z',
                 endDate: '2025-10-01T10:00:00Z',
             },
             {
-                type: 'textExercise',
-                subtype: 'startDate',
+                type: 'TEXT_EXERCISE',
+                subtype: 'START_DATE',
                 title: 'Exercise Session',
                 startDate: '2025-10-01T10:00:00Z',
             },
         ],
         '2025-10-02': [
             {
-                type: 'exam',
-                subtype: 'startAndEndDate',
+                type: 'EXAM',
+                subtype: 'START_AND_END_DATE',
                 title: 'Final Exam',
                 startDate: '2025-10-02T09:00:00Z',
                 endDate: '2025-10-02T11:00:00Z',
@@ -41,8 +41,8 @@ describe('CalendarEventService', () => {
         ],
         '2025-10-03': [
             {
-                type: 'tutorial',
-                subtype: 'startAndEndDate',
+                type: 'TUTORIAL',
+                subtype: 'START_AND_END_DATE',
                 title: 'Tutorial Session',
                 startDate: '2025-10-03T13:00:00Z',
                 endDate: '2025-10-03T14:00:00Z',
@@ -162,8 +162,8 @@ describe('CalendarEventService', () => {
         const smallHttpResponse = {
             '2025-10-01': [
                 {
-                    type: 'lecture',
-                    subtype: 'startAndEndDate',
+                    type: 'LECTURE',
+                    subtype: 'START_AND_END_DATE',
                     title: 'Object Design',
                     startDate: '2025-10-01T08:00:00Z',
                     endDate: '2025-10-01T10:00:00Z',

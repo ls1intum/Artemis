@@ -1,7 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import timezone from 'dayjs/plugin/timezone';
 import { CalendarEvent, CalendarEventDTO, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
@@ -75,7 +74,7 @@ export class CalendarEventService {
         return result;
     }
 
-    createCalendarEvent(dto: CalendarEventDTO): CalendarEvent | undefined {
+    private createCalendarEvent(dto: CalendarEventDTO): CalendarEvent | undefined {
         const type = this.createCalendarEventType(dto.type);
         const subtype = this.createCalendarEventSubtype(dto.subtype);
 
@@ -86,11 +85,11 @@ export class CalendarEventService {
         return new CalendarEvent(type, subtype, dto.title, dayjs(dto.startDate), dto.endDate ? dayjs(dto.endDate) : undefined, dto.location, dto.facilitator);
     }
 
-    createCalendarEventType(value: string): CalendarEventType | undefined {
+    private createCalendarEventType(value: string): CalendarEventType | undefined {
         return Object.values(CalendarEventType).includes(value as CalendarEventType) ? (value as CalendarEventType) : undefined;
     }
 
-    createCalendarEventSubtype(value: string): CalendarEventSubtype | undefined {
+    private createCalendarEventSubtype(value: string): CalendarEventSubtype | undefined {
         return Object.values(CalendarEventSubtype).includes(value as CalendarEventSubtype) ? (value as CalendarEventSubtype) : undefined;
     }
 
@@ -108,16 +107,16 @@ export class CalendarEventService {
     }
 
     private eventMatchesFilter(event: CalendarEvent, filterOptions: CalendarEventFilterOption[]): boolean {
-        if (filterOptions.includes('examEvents') && event.isExamEvent()) {
+        if (filterOptions.includes('examEvents') && event.isOfType(CalendarEventType.Exam)) {
             return true;
         }
-        if (filterOptions.includes('lectureEvents') && event.isLectureEvent()) {
+        if (filterOptions.includes('lectureEvents') && event.isOfType(CalendarEventType.Lecture)) {
             return true;
         }
-        if (filterOptions.includes('tutorialEvents') && event.isTutorialEvent()) {
+        if (filterOptions.includes('tutorialEvents') && event.isOfType(CalendarEventType.Tutorial)) {
             return true;
         }
-        if (filterOptions.includes('exerciseEvents') && event.isExerciseEvent()) {
+        if (filterOptions.includes('exerciseEvents') && event.isOfExerciseType()) {
             return true;
         }
         return false;

@@ -28,8 +28,10 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventSubtype;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventType;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -329,9 +331,9 @@ public class LectureService {
      * @param userIsStudent indicates whether the logged-in user is a student of the course
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(Long courseId, boolean userIsStudent) {
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent) {
         Set<Lecture> lectures = lectureRepository.findAllByCourseIdWhereStartDateOrEndDateIsNotNull(courseId);
-        return lectures.stream().map(lecture -> deriveEvent(lecture, userIsStudent)).flatMap(Optional::stream).collect(Collectors.toSet());
+        return lectures.stream().map(lecture -> deriveEvent(lecture, userIsStudent)).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
     }
 
     /**
@@ -350,11 +352,12 @@ public class LectureService {
             return Optional.empty();
         }
         if (lecture.getStartDate() == null && lecture.getEndDate() != null) {
-            return Optional.of(new CalendarEventDTO("lecture", "endDate", lecture.getTitle(), lecture.getEndDate(), null, null, null));
+            return Optional.of(new CalendarEventDTO(CalendarEventType.LECTURE, CalendarEventSubtype.END_DATE, lecture.getTitle(), lecture.getEndDate(), null, null, null));
         }
         if (lecture.getStartDate() != null && lecture.getEndDate() == null) {
-            return Optional.of(new CalendarEventDTO("lecture", "startDate", lecture.getTitle(), lecture.getStartDate(), null, null, null));
+            return Optional.of(new CalendarEventDTO(CalendarEventType.LECTURE, CalendarEventSubtype.START_DATE, lecture.getTitle(), lecture.getStartDate(), null, null, null));
         }
-        return Optional.of(new CalendarEventDTO("lecture", "startAndEndDate", lecture.getTitle(), lecture.getStartDate(), lecture.getEndDate(), null, null));
+        return Optional.of(new CalendarEventDTO(CalendarEventType.LECTURE, CalendarEventSubtype.START_AND_END_DATE, lecture.getTitle(), lecture.getStartDate(),
+                lecture.getEndDate(), null, null));
     }
 }

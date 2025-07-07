@@ -30,10 +30,10 @@
                         <div
                             class="event"
                             [ngClass]="{
-                                'exam-event-cell': event.isExamEvent,
-                                'lecture-event-cell': event.isLectureEvent(),
-                                'tutorial-event-cell': event.isTutorialEvent(),
-                                'exercise-event-cell': event.isExerciseEvent(),
+                                'exam-event-cell': event.isOfType(CalendarEventType.Exam),
+                                'lecture-event-cell': event.isOfType(CalendarEventType.Lecture),
+                                'tutorial-event-cell': event.isOfType(CalendarEventType.Tutorial),
+                                'exercise-event-cell': event.isOfExerciseType(),
                             }"
                             [ngStyle]="{
                                 top: position.top + 'px',

@@ -6,7 +6,7 @@ import { Dayjs } from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
-import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
@@ -22,6 +22,7 @@ export class CalendarMonthPresentationComponent {
     selectedEvent = signal<CalendarEvent | undefined>(undefined);
 
     readonly utils = utils;
+    readonly CalendarEventType = CalendarEventType;
     readonly weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
     readonly eventMap: Signal<Map<string, CalendarEvent[]>>;
 

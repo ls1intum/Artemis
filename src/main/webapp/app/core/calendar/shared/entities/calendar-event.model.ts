@@ -2,26 +2,26 @@ import { Dayjs } from 'dayjs/esm';
 import { v4 as uuidv4 } from 'uuid';
 
 export enum CalendarEventType {
-    Lecture = 'lecture',
-    Tutorial = 'tutorial',
-    Exam = 'exam',
-    QuizExercise = 'quizExercise',
-    TextExercise = 'textExercise',
-    ModelingExercise = 'modelingExercise',
-    ProgrammingExercise = 'programmingExercise',
-    FileUploadExercise = 'fileUploadExercise',
+    Lecture = 'LECTURE',
+    Tutorial = 'TUTORIAL',
+    Exam = 'EXAM',
+    QuizExercise = 'QUIZ_EXERCISE',
+    TextExercise = 'TEXT_EXERCISE',
+    ModelingExercise = 'MODELING_EXERCISE',
+    ProgrammingExercise = 'PROGRAMMING_EXERCISE',
+    FileUploadExercise = 'FILE_UPLOAD_EXERCISE',
 }
 
 export enum CalendarEventSubtype {
-    StartDate = 'startDate',
-    EndDate = 'endDate',
-    StartAndEndDate = 'startAndEndDate',
-    ReleaseDate = 'releaseDate',
-    DueDate = 'dueDate',
-    PublishResultsDate = 'publishResultsDate',
-    StudentReviewStartDate = 'studentReviewStartDate',
-    StudentReviewEndDate = 'studentReviewEndDate',
-    AssessmentDueDate = 'assessmentDueDate',
+    StartDate = 'START_DATE',
+    EndDate = 'END_DATE',
+    StartAndEndDate = 'START_AND_END_DATE',
+    ReleaseDate = 'RELEASE_DATE',
+    DueDate = 'DUE_DATE',
+    PublishResultsDate = 'PUBLISH_RESULTS_DATE',
+    StudentReviewStartDate = 'STUDENT_REVIEW_START_DATE',
+    StudentReviewEndDate = 'STUDENT_REVIEW_END_DATE',
+    AssessmentDueDate = 'ASSESSMENT_DUE_DATE',
 }
 
 export class CalendarEvent {
@@ -39,35 +39,11 @@ export class CalendarEvent {
         this.id = uuidv4();
     }
 
-    isTutorialEvent(): boolean {
-        return this.type === 'tutorial';
+    isOfType(type: CalendarEventType) {
+        return this.type === type;
     }
 
-    isLectureEvent(): boolean {
-        return this.type === 'lecture';
-    }
-
-    isExamEvent(): boolean {
-        return this.type === 'exam';
-    }
-
-    isQuizExerciseEvent(): boolean {
-        return this.type === 'quizExercise';
-    }
-
-    isTextExerciseEvent(): boolean {
-        return this.type === 'textExercise';
-    }
-
-    isModelingExerciseEvent(): boolean {
-        return this.type === 'modelingExercise';
-    }
-
-    isProgrammingExercise(): boolean {
-        return this.type === 'programmingExercise';
-    }
-
-    isExerciseEvent(): boolean {
+    isOfExerciseType(): boolean {
         return [
             CalendarEventType.ProgrammingExercise,
             CalendarEventType.QuizExercise,

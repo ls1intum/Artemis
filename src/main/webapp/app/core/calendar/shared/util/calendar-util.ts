@@ -41,26 +41,19 @@ export function range(n: number): number[] {
     return Array.from({ length: n }, (_, i) => i);
 }
 
+const eventTypeIconMap: Record<CalendarEventType, IconProp> = {
+    [CalendarEventType.Lecture]: faChalkboardUser,
+    [CalendarEventType.Tutorial]: faPersonChalkboard,
+    [CalendarEventType.Exam]: faGraduationCap,
+    [CalendarEventType.QuizExercise]: faCheckDouble,
+    [CalendarEventType.TextExercise]: faFont,
+    [CalendarEventType.ModelingExercise]: faDiagramProject,
+    [CalendarEventType.ProgrammingExercise]: faKeyboard,
+    [CalendarEventType.FileUploadExercise]: faFileArrowUp,
+};
+
 export function getIconForEvent(event: CalendarEvent): IconProp {
-    if (event.isExerciseEvent()) {
-        if (event.isTextExerciseEvent()) {
-            return faFont;
-        } else if (event.isModelingExerciseEvent()) {
-            return faDiagramProject;
-        } else if (event.isQuizExerciseEvent()) {
-            return faCheckDouble;
-        } else if (event.isProgrammingExercise()) {
-            return faKeyboard;
-        } else {
-            return faFileArrowUp;
-        }
-    } else if (event.isLectureEvent()) {
-        return faChalkboardUser;
-    } else if (event.isTutorialEvent()) {
-        return faPersonChalkboard;
-    } else {
-        return faGraduationCap;
-    }
+    return eventTypeIconMap[event.type];
 }
 
 export function getWeekDayNameKeys(): string[] {
