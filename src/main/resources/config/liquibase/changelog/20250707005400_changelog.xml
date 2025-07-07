@@ -1,6 +1,113 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!-- 1. Add Exam Room Table -->
+    <changeSet id="20250707005400-01-add-exam-room" author="röttgermann">
+        <createTable tableName="exam_room">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="alternative_name" type="varchar(255)"/>
+            <column name="capacity" type="integer"/>
+        </createTable>
 
-</beans>
+        <!-- Rollback section -->
+        <rollback>
+            <dropTable tableName="exam_room"/>
+        </rollback>
+    </changeSet>
+
+    <!-- 2. Add Exam Seat Table -->
+    <changeSet id="20250707005400-02-add-exam-seat" author="röttgermann">
+        <createTable tableName="exam_seat">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="label" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seat_condition" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="room_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_seat_room"
+                             referencedTableName="exam_room" referencedColumnNames="id"/>
+            </column>
+            <column name="x_position" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="y_position" type="integer">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Indexes for the Exam Seat table -->
+        <createIndex indexName="idx_exam_seat_room_id" tableName="exam_seat">
+            <column name="room_id"/>
+        </createIndex>
+
+        <!-- Rollback section -->
+        <rollback>
+            <dropTable tableName="exam_seat"/>
+        </rollback>
+    </changeSet>
+
+    <!-- 3. Add Layout Strategy table -->
+    <changeSet id="20250707005400-03-add-layout-strategy" author="röttgermann">
+        <createTable tableName="layout_strategy">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- default type for compatibility between MySQL and PostgreSQL -->
+            <column name="parameters" type="varchar(4000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="room_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_strategy_room"
+                             referencedTableName="exam_room" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+
+        <!-- Unique constraint - ensures no room has the same layout strategy twice -->
+        <addUniqueConstraint tableName="layout_strategy"
+                             columnNames="room_id, name"
+                             constraintName="uc_layout_strategy_room_name"/>
+
+        <!-- Indexes for Layout Strategy table -->
+        <createIndex indexName="idx_layout_strategy_room_id" tableName="layout_strategy">
+            <column name="room_id"/>
+        </createIndex>
+        <createIndex indexName="idx_layout_strategy_room_name" tableName="layout_strategy">
+            <!--
+             Because of the unique constraint, this is probably not required as
+             a smart DB would probably automatically create this index anyway to enforce the
+             unique constraint, which means this index might be redundant, but it doesn't harm.
+            -->
+            <column name="room_id"/>
+            <column name="name"/>
+        </createIndex>
+
+        <!-- Rollback section -->
+        <rollback>
+            <dropTable tableName="layout_strategy"/>
+        </rollback>
+
+        <!-- Modify parameter column to json/jsonb for MySQL/PostgreSQL -->
+        <modifySql dbms="mysql">
+            <replace replace="varchar(4000)" with="json"/>
+        </modifySql>
+        <modifySql dbms="postgresql">
+            <replace replace="varchar(4000)" with="jsonb"/>
+        </modifySql>
+    </changeSet>
+</databaseChangeLog>
