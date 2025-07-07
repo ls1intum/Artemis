@@ -23,4 +23,6 @@ public abstract class IrisChatSession extends IrisSession {
     public void setUserId(long userId) {
         this.userId = userId;
     }
+
+    public abstract IrisChatMode getMode();
 }
