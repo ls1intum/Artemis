@@ -10,7 +10,7 @@
         <div id="message-body">
             <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}"/>
             <div class="notification-content">
-                <span th:text="#{email.buildAgent.SelfPaused.text1(${buildAgentName})}">
+                <span th:text="#{email.buildAgent.SelfPaused.text1(${buildAgentName}, ${consecutiveBuildFailures})}">
                     Build agent paused itself due to consecutive failed or timed out build jobs.
                 </span>
                 <span th:text="#{email.buildAgent.SelfPaused.text2}">
