@@ -29,6 +29,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CourseDescriptionFormStubComponent } from 'test/helpers/stubs/atlas/course-description-form-stub.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { MockComponent } from 'ng-mocks';
 
 describe('GenerateCompetenciesComponent', () => {
     let fixture: ComponentFixture<GenerateCompetenciesComponent>;
@@ -42,9 +43,8 @@ describe('GenerateCompetenciesComponent', () => {
             imports: [GenerateCompetenciesComponent],
             declarations: [
                 CourseDescriptionFormStubComponent,
-                CompetencyRecommendationDetailComponent,
-                DocumentationButtonComponent,
-                CourseDescriptionFormComponent,
+                MockComponent(CompetencyRecommendationDetailComponent),
+                MockComponent(DocumentationButtonComponent),
                 ButtonComponent,
                 ArtemisTranslatePipe,
                 MockDirective(FeatureToggleDirective),
