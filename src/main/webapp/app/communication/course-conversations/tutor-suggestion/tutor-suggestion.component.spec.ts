@@ -188,7 +188,7 @@ describe('TutorSuggestionComponent', () => {
 
         jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
         jest.spyOn(chatService, 'currentError').mockReturnValue(of());
-        (chatService as any).sessionId$ = of(123);
+        jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
         component['irisEnabled'] = true;
         jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
         jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
@@ -198,7 +198,7 @@ describe('TutorSuggestionComponent', () => {
     }));
 
     it('should not call requestSuggestion if iris is active but no sessionId', fakeAsync(() => {
-        (chatService as any).sessionId$ = of(undefined);
+        jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(undefined));
         jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
         const requestSuggestionSpy = jest.spyOn(component as any, 'requestSuggestion');
         (component as any).subscribeToIrisActivation();
@@ -215,7 +215,7 @@ describe('TutorSuggestionComponent', () => {
         jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([])));
         jest.spyOn(chatService, 'currentError').mockReturnValue(of());
         jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
-        (chatService as any).sessionId$ = of(123);
+        jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
         component.ngOnInit();
         const irisUnsubSpy = jest.spyOn(component['irisSettingsSubscription'], 'unsubscribe');
         const msgUnsubSpy = jest.spyOn(component['messagesSubscription'], 'unsubscribe');
@@ -245,7 +245,7 @@ describe('TutorSuggestionComponent', () => {
 
     describe('requestSuggestion', () => {
         it('should request suggestion when there are no messages after error fallback', fakeAsync(() => {
-            (chatService as any).sessionId$ = of(123);
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
             jest.spyOn(chatService, 'currentMessages').mockReturnValue(
                 concat(
                     throwError(() => new Error('empty')),
@@ -259,8 +259,7 @@ describe('TutorSuggestionComponent', () => {
         }));
 
         it('should request suggestion when second message emission contains LLM message', fakeAsync(() => {
-            (chatService as any).sessionId$ = of(123);
-
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
             jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
             const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
             component['requestSuggestion']();
@@ -269,7 +268,7 @@ describe('TutorSuggestionComponent', () => {
         }));
 
         it('should not request suggestion when last message is not from LLM', fakeAsync(() => {
-            (chatService as any).sessionId$ = of(123);
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
             const mockMessages = [{ id: 1, sender: 'USER' }] as IrisMessage[];
             jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
             const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
@@ -286,7 +285,7 @@ describe('TutorSuggestionComponent', () => {
             jest.spyOn(chatService, 'currentError').mockReturnValue(of());
             jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
             const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
-            (chatService as any).sessionId$ = of(123);
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
             jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([])));
             component.ngOnInit();
             tick();
