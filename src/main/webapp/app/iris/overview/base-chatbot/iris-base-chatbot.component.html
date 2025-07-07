@@ -35,11 +35,11 @@
         @let relatedEntityLinkButtonLabel = getRelatedEntityLinkButtonLabel();
         @if (relatedEntityRoute && relatedEntityLinkButtonLabel) {
             <div class="toolbox">
-                <button [routerLink]="relatedEntityRoute" [queryParamsHandling]="'preserve'" class="related-entity-link">
+                <button [routerLink]="relatedEntityRoute" [queryParamsHandling]="'preserve'" class="related-entity-link header-control">
                     <div>
                         {{ relatedEntityLinkButtonLabel | artemisTranslate }}
                     </div>
-                    <fa-icon [icon]="faLink" class="header-icon" />
+                    <fa-icon [icon]="faLink" />
                 </button>
             </div>
         }
@@ -52,13 +52,13 @@
         }
         <div class="toolbox">
             @if (this.messages.length >= 1) {
-                <button id="clear-chat-button" (click)="openNewSession()" class="header-icon">
+                <button id="clear-chat-button" (click)="openNewSession()" class="header-control">
                     <fa-icon [icon]="faPenToSquare" />
                 </button>
             }
 
             @if (fullSize !== undefined) {
-                <button (click)="fullSizeToggle.next()" class="header-icon">
+                <button (click)="fullSizeToggle.next()" class="header-control">
                     @if (!fullSize) {
                         <fa-icon [icon]="faExpand" />
                     } @else {
@@ -68,7 +68,7 @@
             }
 
             @if (showCloseButton) {
-                <button (click)="closeChat()" class="header-icon">
+                <button (click)="closeChat()" class="header-control">
                     <fa-icon [icon]="faXmark" />
                 </button>
             }

@@ -83,7 +83,6 @@
     align-items: center;
     gap: 6px;
     font-size: 0.8rem;
-    color: var(--secondary);
 }
 
 .chat-header {
@@ -105,7 +104,7 @@
     }
 }
 
-.header-icon {
+.header-control {
     border: none;
     background: transparent;
     color: var(--secondary);
