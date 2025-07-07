@@ -8,12 +8,15 @@ import jakarta.persistence.Table;
 
 import org.springframework.context.annotation.Conditional;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 
 @Conditional(ExamEnabled.class)
 @Entity
 @Table(name = "layout_strategy")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LayoutStrategy extends DomainObject {
 
     /**
