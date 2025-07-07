@@ -7,18 +7,17 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageReceiveService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
@@ -30,17 +29,17 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "slideunhideservicetest";
 
-    @Mock
+    @Autowired
     private ScheduleService scheduleService;
 
-    @Mock
-    private InstanceMessageSendService instanceMessageSendService;
-
-    @Mock
+    @MockitoSpyBean
     private SlideUnhideExecutionService slideUnhideExecutionService;
 
     @Autowired
     private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private InstanceMessageReceiveService instanceMessageReceiveService;
 
     @Autowired
     private SlideTestRepository slideRepository;
@@ -55,7 +54,7 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
         MockitoAnnotations.openMocks(this);
 
         // Create the service with mocks
-        slideUnhideService = new SlideUnhideService(instanceMessageSendService, slideUnhideExecutionService, Optional.of(scheduleService));
+        slideUnhideService = new SlideUnhideService(instanceMessageSendService, slideUnhideExecutionService);
 
         // AttachmentVideoUnit with hidden slides
         AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(5, true);
@@ -146,6 +145,9 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
         // Verify message cancel occurred
         verify(instanceMessageSendService).sendSlideUnhideScheduleCancel(slideToUpdate.getId());
 
+        // Simulate message receive
+        // instanceMessageReceiveService.processCancelSlideUnhide(slideToUpdate.getId());
+
         // Verify cancellation occurred locally
         verify(scheduleService).cancelScheduledTaskForSlideLifecycle(slideToUpdate.getId(), SlideLifecycle.UNHIDE);
 
@@ -169,6 +171,7 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         // Verify cancellation occurred
         verify(instanceMessageSendService).sendSlideUnhideScheduleCancel(slideToUnhide.getId());
+
         verify(scheduleService).cancelScheduledTaskForSlideLifecycle(slideToUnhide.getId(), SlideLifecycle.UNHIDE);
 
         // Verify unhideSlide was called
