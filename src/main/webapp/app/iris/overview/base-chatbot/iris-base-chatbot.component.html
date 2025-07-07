@@ -35,12 +35,12 @@
         @let relatedEntityLinkButtonLabel = getRelatedEntityLinkButtonLabel();
         @if (relatedEntityRoute && relatedEntityLinkButtonLabel) {
             <div class="toolbox">
-                <a [routerLink]="relatedEntityRoute" [queryParamsHandling]="'preserve'" class="related-entity-link">
+                <button [routerLink]="relatedEntityRoute" [queryParamsHandling]="'preserve'" class="related-entity-link">
                     <div>
                         {{ relatedEntityLinkButtonLabel | artemisTranslate }}
                     </div>
                     <fa-icon [icon]="faLink" class="header-icon" />
-                </a>
+                </button>
             </div>
         }
         @if (rateLimitInfo.rateLimit > 0) {
