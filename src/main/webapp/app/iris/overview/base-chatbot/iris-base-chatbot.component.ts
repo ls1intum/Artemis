@@ -125,7 +125,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
 
-    // Icons
     protected readonly faTrash = faTrash;
     protected readonly faCircle = faCircle;
     protected readonly faPaperPlane = faPaperPlane;
@@ -141,15 +140,27 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected readonly faChevronRight = faChevronRight;
     protected readonly facSidebar = facSidebar;
 
-    // Types
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly IrisMessageContentType = IrisMessageContentType;
     protected readonly IrisAssistantMessage = IrisAssistantMessage;
     protected readonly IrisTextMessageContent = IrisTextMessageContent;
     protected readonly IrisSender = IrisSender;
     protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
+    protected readonly ButtonType = ButtonType;
 
-    // State variables
+    showDeclineButton = input<boolean>(true);
+    isChatHistoryAvailable = input<boolean>(false);
+    @Input() fullSize: boolean | undefined;
+    @Input() showCloseButton = false;
+    @Input() isChatGptWrapper = false;
+    @Output() fullSizeToggle = new EventEmitter<void>();
+    @Output() closeClicked = new EventEmitter<void>();
+
+    @ViewChild('messagesElement') messagesElement!: ElementRef;
+    @ViewChild('scrollArrow') scrollArrow!: ElementRef;
+    @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
+    @ViewChild('acceptButton') acceptButton: ElementRef<HTMLButtonElement>;
+
     sessionIdSubscription: Subscription;
     messagesSubscription: Subscription;
     stagesSubscription: Subscription;
@@ -184,21 +195,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     isScrolledToBottom = true;
     rows = 1;
     resendAnimationActive: boolean;
-    public ButtonType = ButtonType;
-
-    showDeclineButton = input<boolean>(true);
-    isChatHistoryAvailable = input<boolean>(false);
-    @Input() fullSize: boolean | undefined;
-    @Input() showCloseButton = false;
-    @Input() isChatGptWrapper = false;
-    @Output() fullSizeToggle = new EventEmitter<void>();
-    @Output() closeClicked = new EventEmitter<void>();
-
-    // ViewChilds
-    @ViewChild('messagesElement') messagesElement!: ElementRef;
-    @ViewChild('scrollArrow') scrollArrow!: ElementRef;
-    @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
-    @ViewChild('acceptButton') acceptButton: ElementRef<HTMLButtonElement>;
 
     ngOnInit() {
         this.routeSubscription = this.route.queryParams?.subscribe((params: any) => {
