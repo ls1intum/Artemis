@@ -4,9 +4,9 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class QuizQuestionProgressDataDAO {
+public class QuizQuestionProgressData {
 
-    public QuizQuestionProgressDataDAO() {
+    public QuizQuestionProgressData() {
     };
 
     private double lastScore;

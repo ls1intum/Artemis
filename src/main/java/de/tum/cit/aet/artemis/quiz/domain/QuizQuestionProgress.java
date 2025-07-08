@@ -21,7 +21,7 @@ public class QuizQuestionProgress extends DomainObject {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "progress_json", columnDefinition = "json")
-    private QuizQuestionProgressDataDAO progress;
+    private QuizQuestionProgressData progress;
 
     @Column(name = "last_modified")
     private ZonedDateTime lastModified;
@@ -42,11 +42,11 @@ public class QuizQuestionProgress extends DomainObject {
         this.quizQuestionId = quizQuestionId;
     }
 
-    public QuizQuestionProgressDataDAO getProgressJson() {
+    public QuizQuestionProgressData getProgressJson() {
         return progress;
     }
 
-    public void setProgressJson(QuizQuestionProgressDataDAO progress) {
+    public void setProgressJson(QuizQuestionProgressData progress) {
         this.progress = progress;
     }
 

@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressDataDAO;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
@@ -91,7 +91,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizQuestionProgress.setUserId(userId);
         quizQuestionProgress.setQuizQuestionId(quizQuestionId);
 
-        QuizQuestionProgressDataDAO progressData = new QuizQuestionProgressDataDAO();
+        QuizQuestionProgressData progressData = new QuizQuestionProgressData();
         progressData.setEasinessFactor(2.5);
         progressData.setInterval(1);
         progressData.setSessionCount(0);
@@ -134,7 +134,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(progress.get().getQuizQuestionId()).isEqualTo(quizQuestionId);
         assertThat(progress.get().getLastAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
 
-        QuizQuestionProgressDataDAO data = progress.get().getProgressJson();
+        QuizQuestionProgressData data = progress.get().getProgressJson();
         assertThat(data.getEasinessFactor()).isEqualTo(2.6);
         assertThat(data.getRepetition()).isEqualTo(1);
         assertThat(data.getInterval()).isEqualTo(1);
@@ -154,7 +154,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(progressEmpty.get().getQuizQuestionId()).isEqualTo(quizQuestionId);
         assertThat(progressEmpty.get().getLastAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
 
-        QuizQuestionProgressDataDAO dataEmpty = progress.get().getProgressJson();
+        QuizQuestionProgressData dataEmpty = progress.get().getProgressJson();
         assertThat(dataEmpty.getEasinessFactor()).isEqualTo(2.6);
         assertThat(dataEmpty.getRepetition()).isEqualTo(1);
         assertThat(dataEmpty.getInterval()).isEqualTo(1);
@@ -200,7 +200,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
             QuizQuestionProgress progress = new QuizQuestionProgress();
             progress.setUserId(userId);
             progress.setQuizQuestionId(question.getId());
-            QuizQuestionProgressDataDAO data = new QuizQuestionProgressDataDAO();
+            QuizQuestionProgressData data = new QuizQuestionProgressData();
             data.setPriority(priorities[i]);
             progress.setProgressJson(data);
             progress.setLastAnsweredAt(ZonedDateTime.now());
@@ -259,11 +259,11 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     void testCalculateRepetition() {
-        QuizQuestionProgressDataDAO data = new QuizQuestionProgressDataDAO();
+        QuizQuestionProgressData data = new QuizQuestionProgressData();
         data.setAttempts(null);
         assertThat(quizQuestionProgressService.calculateRepetition(1, data)).isEqualTo(0);
-        QuizQuestionProgressDataDAO.Attempt attempt1 = new QuizQuestionProgressDataDAO.Attempt();
-        QuizQuestionProgressDataDAO.Attempt attempt2 = new QuizQuestionProgressDataDAO.Attempt();
+        QuizQuestionProgressData.Attempt attempt1 = new QuizQuestionProgressData.Attempt();
+        QuizQuestionProgressData.Attempt attempt2 = new QuizQuestionProgressData.Attempt();
         attempt1.setScore(1);
         attempt2.setScore(1);
         quizQuestionProgress.getProgressJson().setAttempts(List.of(attempt1));

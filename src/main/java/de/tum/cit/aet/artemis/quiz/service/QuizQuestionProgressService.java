@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressDataDAO;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
@@ -56,7 +56,7 @@ public class QuizQuestionProgressService {
      */
     public void retrieveProgressFromResultAndSubmission(QuizExercise quizExercise, QuizSubmission quizSubmission, StudentParticipation participation) {
         ZonedDateTime lastAnsweredAt = quizSubmission.getSubmissionDate();
-        Map<QuizQuestion, QuizQuestionProgressDataDAO> answeredQuestions = new HashMap<>();
+        Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions = new HashMap<>();
         log.info("Starte erfolgreich Speichern des QuizQuestionProgress für Submission {}", quizSubmission.getId());
         Long userId = participation.getParticipant().getId();
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
@@ -65,8 +65,8 @@ public class QuizQuestionProgressService {
                 continue;
             }
             QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(null);
-            QuizQuestionProgressDataDAO data = new QuizQuestionProgressDataDAO();
-            QuizQuestionProgressDataDAO.Attempt attempt = new QuizQuestionProgressDataDAO.Attempt();
+            QuizQuestionProgressData data = new QuizQuestionProgressData();
+            QuizQuestionProgressData.Attempt attempt = new QuizQuestionProgressData.Attempt();
             if (existingProgress != null) {
                 data = existingProgress.getProgressJson();
             }
@@ -122,7 +122,7 @@ public class QuizQuestionProgressService {
      * @param lastAnsweredAt    Time when the question was last answered
      * @param userId            The ID of the user for the participation
      */
-    public void updateProgress(Map<QuizQuestion, QuizQuestionProgressDataDAO> answeredQuestions, ZonedDateTime lastAnsweredAt, Long userId) {
+    public void updateProgress(Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions, ZonedDateTime lastAnsweredAt, Long userId) {
         answeredQuestions.forEach((question, data) -> {
             QuizQuestionProgress progress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
             progress.setUserId(userId);
@@ -166,14 +166,14 @@ public class QuizQuestionProgressService {
      * @param data  The progress data for the question
      * @return The repetition count for the question, which is the number of consecutive correct answers
      */
-    public int calculateRepetition(double score, QuizQuestionProgressDataDAO data) {
+    public int calculateRepetition(double score, QuizQuestionProgressData data) {
         if (score != 1.0) {
             return 0;
         }
         int repetition = 0;
-        List<QuizQuestionProgressDataDAO.Attempt> attempts = data.getAttempts();
+        List<QuizQuestionProgressData.Attempt> attempts = data.getAttempts();
         if (attempts != null) {
-            for (QuizQuestionProgressDataDAO.Attempt attempt : attempts) {
+            for (QuizQuestionProgressData.Attempt attempt : attempts) {
                 if (attempt.getScore() == 1.0) {
                     repetition++;
                 }
