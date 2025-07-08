@@ -211,8 +211,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
             if (!this.createdNewMessage && this.posts.length > 0) {
                 this.scrollToStoredId();
-            } else {
-                this.createdNewMessage = false;
             }
         });
         this.content.nativeElement.addEventListener('scroll', () => {
@@ -407,6 +405,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
                 this.groupPosts();
                 this.cdr.markForCheck();
+                if (this.createdNewMessage) {
+                    this.scrollToBottomOfMessages();
+                    this.createdNewMessage = false;
+                }
             });
         });
     };
