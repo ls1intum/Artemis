@@ -13,6 +13,20 @@
         white-space: nowrap;
     }
 
+    .related-entity-info {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+
+        .related-entity-name {
+            font-size: 0.25rem;
+            max-width: 4rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
     &:hover {
         color: var(--primary);
         background-color: var(--iris-client-chat-background);

@@ -15,6 +15,11 @@
     }
     @let contextIconAndTooltipKey = iconAndTooltipKey;
     @if (contextIconAndTooltipKey) {
-        <fa-icon [icon]="contextIconAndTooltipKey.icon" [ngbTooltip]="contextIconAndTooltipKey.tooltipKey | artemisTranslate" />
+        <div class="related-entity-info">
+            <div class="related-entity-name">
+                {{ session().entityName }}
+            </div>
+            <fa-icon [icon]="contextIconAndTooltipKey.icon" [ngbTooltip]="contextIconAndTooltipKey.tooltipKey | artemisTranslate" />
+        </div>
     }
 </div>

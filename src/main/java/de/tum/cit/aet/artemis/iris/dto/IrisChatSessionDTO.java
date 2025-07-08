@@ -7,6 +7,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisChatSessionDTO(Long id, Long entityId, ZonedDateTime creationDate, IrisChatMode chatMode) {
+public record IrisChatSessionDTO(Long id, Long entityId, String entityName, ZonedDateTime creationDate, IrisChatMode chatMode) {
 
 }
