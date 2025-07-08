@@ -2,8 +2,13 @@ package de.tum.cit.aet.artemis.atlas.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -103,72 +108,6 @@ class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUpdateLearnerProfile_FeedbackAlternativeStandardTooLow() throws Exception {
-        LearnerProfileDTO updateDTO = new LearnerProfileDTO(testProfile.getId(), 0, // feedbackAlternativeStandard - below minimum
-                2, // feedbackFollowupSummary
-                2  // feedbackBriefDetailed
-        );
-
-        request.put("/api/atlas/learner-profile", updateDTO, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUpdateLearnerProfile_FeedbackAlternativeStandardTooHigh() throws Exception {
-        LearnerProfileDTO updateDTO = new LearnerProfileDTO(testProfile.getId(), 4, // feedbackAlternativeStandard - above maximum
-                2, // feedbackFollowupSummary
-                2  // feedbackBriefDetailed
-        );
-
-        request.put("/api/atlas/learner-profile", updateDTO, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUpdateLearnerProfile_FeedbackFollowupSummaryTooLow() throws Exception {
-        LearnerProfileDTO updateDTO = new LearnerProfileDTO(testProfile.getId(), 2, // feedbackAlternativeStandard
-                0, // feedbackFollowupSummary - below minimum
-                2  // feedbackBriefDetailed
-        );
-
-        request.put("/api/atlas/learner-profile", updateDTO, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUpdateLearnerProfile_FeedbackFollowupSummaryTooHigh() throws Exception {
-        LearnerProfileDTO updateDTO = new LearnerProfileDTO(testProfile.getId(), 2, // feedbackAlternativeStandard
-                4, // feedbackFollowupSummary - above maximum
-                2  // feedbackBriefDetailed
-        );
-
-        request.put("/api/atlas/learner-profile", updateDTO, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUpdateLearnerProfile_FeedbackBriefDetailedTooLow() throws Exception {
-        LearnerProfileDTO updateDTO = new LearnerProfileDTO(testProfile.getId(), 2, // feedbackAlternativeStandard
-                2, // feedbackFollowupSummary
-                0  // feedbackBriefDetailed - below minimum
-        );
-
-        request.put("/api/atlas/learner-profile", updateDTO, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUpdateLearnerProfile_FeedbackBriefDetailedTooHigh() throws Exception {
-        LearnerProfileDTO updateDTO = new LearnerProfileDTO(testProfile.getId(), 2, // feedbackAlternativeStandard
-                2, // feedbackFollowupSummary
-                4  // feedbackBriefDetailed - above maximum
-        );
-
-        request.put("/api/atlas/learner-profile", updateDTO, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateLearnerProfile_AllFieldsAtBoundaries() throws Exception {
         // Test minimum values
         LearnerProfileDTO minDTO = new LearnerProfileDTO(testProfile.getId(), 1, // feedbackAlternativeStandard - minimum
@@ -259,5 +198,28 @@ class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
         assertThat(finalProfile.getFeedbackAlternativeStandard()).isEqualTo(1);
         assertThat(finalProfile.getFeedbackFollowupSummary()).isEqualTo(3);
         assertThat(finalProfile.getFeedbackBriefDetailed()).isEqualTo(1);
+    }
+
+    // Parameterized test for invalid values (too low/too high) for each field
+    static Stream<Arguments> invalidFieldValues() {
+        return Stream.of(
+                // feedbackAlternativeStandard too low/high
+                Arguments.of(0, 2, 2), // too low
+                Arguments.of(4, 2, 2), // too high
+                // feedbackFollowupSummary too low/high
+                Arguments.of(2, 0, 2), // too low
+                Arguments.of(2, 4, 2), // too high
+                // feedbackBriefDetailed too low/high
+                Arguments.of(2, 2, 0), // too low
+                Arguments.of(2, 2, 4)  // too high
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidFieldValues")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateLearnerProfile_InvalidFieldValues(int feedbackAlternativeStandard, int feedbackFollowupSummary, int feedbackBriefDetailed) throws Exception {
+        LearnerProfileDTO updateDTO = new LearnerProfileDTO(testProfile.getId(), feedbackAlternativeStandard, feedbackFollowupSummary, feedbackBriefDetailed);
+        request.put("/api/atlas/learner-profile", updateDTO, HttpStatus.BAD_REQUEST);
     }
 }
