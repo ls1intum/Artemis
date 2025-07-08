@@ -70,12 +70,20 @@ You only need to modify them if your specific work or production environments re
        athena:
             # If you want to use Athena, refer to the dedicated configuration section. Under Administration Guide, Setup of Extension Services.
 
-       hyperion:
-            # If you want to use Hyperion for programming exercise creation assistance, configure the service connection below.
-            # For production, enable TLS and configure certificates. See Hyperion Service section below.
-            host: localhost
-            port: 50051
-            use-tls: false
+   # Edutelligence
+   grpc:
+       client:
+           # If you want to use Hyperion for programming exercise creation assistance, configure the service connection below.
+           # For production, enable TLS and configure certificates. See Hyperion Service section below.
+           hyperion:
+               address: hyperion.aet.cit.tum.de:8080  # Default for development
+               negotiationType: PLAINTEXT  # Override to TLS in production profiles
+               # For production with client certificates (mTLS), uncomment and configure:
+               # security:
+               #   clientAuthEnabled: true
+               #   certificateChain: file:certs/client.crt
+               #   privateKey: file:certs/client.key
+               #   trustCertCollection: file:certs/server-ca.crt
 
 **Note:**
 If you use a password for authentication, update it in ``gradle/liquibase.gradle``.
@@ -269,7 +277,7 @@ Hyperion is an AI-powered Edutelligence microservice for programming exercise cr
 
 1. **Setup Hyperion Service** (external dependency)
 
-   - Deploy Hyperion service separately (see Hyperion documentation)
+   - Deploy Hyperion service separately (see `Hyperion documentation <https://github.com/ls1intum/edutelligence/tree/main/hyperion>`__)
    - Ensure it's accessible from Artemis server
 
 2. **Configure Connection**
@@ -278,24 +286,38 @@ Hyperion is an AI-powered Edutelligence microservice for programming exercise cr
 
    .. code-block:: yaml
 
-      artemis:
-        hyperion:
-          host: localhost         # Hyperion service host  
-          port: 50051             # Hyperion gRPC port
-          use-tls: false          # Disable TLS for development
+    # See https://grpc-ecosystem.github.io/grpc-spring/en/client/configuration.html
+    grpc:
+        client:
+            hyperion:
+                address: static://localhost:50051  # Default for development
+                negotiationType: PLAINTEXT  # Override to TLS in production profiles
+                enableKeepAlive: true
+                keepAliveWithoutCalls: true
+                keepAliveTime: 30s
+                keepAliveTimeout: 5s
+                maxInboundMessageSize: 16MB
+
 
    For production, enable TLS in ``application-artemis.yml``:
 
    .. code-block:: yaml
 
-      artemis:
-        hyperion:
-          host: hyperion.domain.com
-          port: 50051
-          use-tls: true
-          client-cert-path: "/certs/artemis-client.crt"
-          client-key-path: "/certs/artemis-client.key"  
-          server-ca-path: "/certs/hyperion-ca.crt"
+    # See https://grpc-ecosystem.github.io/grpc-spring/en/client/security.html
+    grpc:
+        client:
+            hyperion:
+                address: hyperion.domain.com:8080
+                negotiationType: TLS
+                security: # Mutual Certificate Authentication
+                    clientAuthEnabled: true
+                    certificateChain:file: certificates/client.crt
+                    privateKey:file: certificates/client.key
+                enableKeepAlive: true
+                keepAliveWithoutCalls: true
+                keepAliveTime: 30s
+                keepAliveTimeout: 5s
+                maxInboundMessageSize: 16MB
 
 3. **Enable Profile**
 
@@ -304,7 +326,3 @@ Hyperion is an AI-powered Edutelligence microservice for programming exercise cr
    .. code-block:: bash
 
       ./gradlew bootRun --args='--spring.profiles.active=dev,localci,localvc,artemis,hyperion'
-
-4. **Verify Setup**
-
-   Check health endpoint: ``http://localhost:8080/actuator/health/hyperion``

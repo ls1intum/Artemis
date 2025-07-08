@@ -103,7 +103,7 @@ artemis:
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
 
-# gRPC client configuration for Hyperion integration
+# gRPC client configuration for Edutelligence microservices (currently only Hyperion)
 grpc:
   client:
     hyperion:

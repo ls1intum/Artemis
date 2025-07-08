@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.GRPC_CHANNEL_HYPERION;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 
 import java.io.IOException;
@@ -43,7 +44,7 @@ public class HyperionReviewAndRefineService extends AbstractHyperionGrpcService 
 
     private static final int REWRITE_PROBLEM_STATEMENT_TIMEOUT = 60;
 
-    @GrpcClient("hyperion")
+    @GrpcClient(GRPC_CHANNEL_HYPERION)
     private ReviewAndRefineBlockingStub reviewAndRefineStub;
 
     private final RepositoryService repositoryService;

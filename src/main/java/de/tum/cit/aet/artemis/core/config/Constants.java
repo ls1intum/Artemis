@@ -498,6 +498,11 @@ public final class Constants {
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
+    /**
+     * The name of the gRPC channel used to connect to the Hyperion service.
+     */
+    public static final String GRPC_CHANNEL_HYPERION = "hyperion";
+
     private Constants() {
     }
 }

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.GRPC_CHANNEL_HYPERION;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,7 +45,7 @@ class HyperionReviewAndRefineIntegrationTest extends AbstractSpringIntegrationLo
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
-    @GrpcClient("hyperion")
+    @GrpcClient(GRPC_CHANNEL_HYPERION)
     private ReviewAndRefineGrpc.ReviewAndRefineBlockingStub reviewAndRefineStub;
 
     private Long courseId;

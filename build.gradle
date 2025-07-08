@@ -459,8 +459,8 @@ dependencies {
     // make sure to use the latest version to avoid security vulnerabilities
     runtimeOnly "commons-beanutils:commons-beanutils:1.11.0"
     checkstyle "commons-beanutils:commons-beanutils:1.11.0"
-
     implementation "com.google.errorprone:error_prone_annotations:2.39.0"
+
     implementation "io.grpc:grpc-services:${grpc_services_version}"
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
@@ -505,7 +505,7 @@ dependencies {
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.3"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 
-    // gRPC testing dependencies - production ready, minimal dependencies
+    // gRPC testing dependencies
     testImplementation platform("io.grpc:grpc-bom:${grpc_version}")
     testImplementation "io.grpc:grpc-testing"
     testImplementation "io.grpc:grpc-inprocess"
