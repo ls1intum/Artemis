@@ -24,14 +24,16 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            text-decoration: none;
         }
     }
 
     &:hover {
         color: var(--primary);
         background-color: var(--iris-client-chat-background);
-        text-decoration: underline;
+
+        .chat-history-text {
+            text-decoration: underline;
+        }
     }
 }
 
