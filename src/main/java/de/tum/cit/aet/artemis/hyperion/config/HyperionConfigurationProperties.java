@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.config;
 
+import java.time.Duration;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -7,10 +9,20 @@ import org.springframework.context.annotation.Lazy;
 /**
  * Configuration properties for Hyperion integration.
  *
- * Connection settings (host, port, TLS, timeouts, etc.) are now handled
- * by the gRPC Spring Boot starter through standard grpc.client.hyperion.* properties.
+ * <p>
+ * These properties can be configured via application.yml under the prefix {@code artemis.hyperion}.
+ * All timeout configurations support standard Spring Boot duration formats (e.g., "5m", "120s", "PT2M").
  *
- * This class now only contains application-specific business logic properties.
+ * <p>
+ * Example configuration:
+ *
+ * <pre>
+ * artemis:
+ *   hyperion:
+ *     timeouts:
+ *       consistency-check: 5m
+ *       rewrite-problem-statement: 2m
+ * </pre>
  */
 @Configuration
 @ConfigurationProperties(prefix = "artemis.hyperion")
@@ -18,21 +30,56 @@ import org.springframework.context.annotation.Lazy;
 public class HyperionConfigurationProperties {
 
     /**
-     * Timeout for consistency check operations in seconds.
-     * This is a business logic timeout, not a gRPC connection timeout.
+     * Timeout configurations for various Hyperion operations.
      */
-    private int consistencyCheckTimeoutSeconds = 300; // 5 minutes
+    private final Timeouts timeouts = new Timeouts();
 
-    public int getConsistencyCheckTimeoutSeconds() {
-        return consistencyCheckTimeoutSeconds;
+    public Timeouts getTimeouts() {
+        return timeouts;
     }
 
-    public void setConsistencyCheckTimeoutSeconds(int consistencyCheckTimeoutSeconds) {
-        this.consistencyCheckTimeoutSeconds = consistencyCheckTimeoutSeconds;
+    /**
+     * Timeout configurations for Hyperion service operations.
+     * These are business logic timeouts, not gRPC connection timeouts.
+     */
+    public static class Timeouts {
+
+        /**
+         * Timeout for consistency check operations.
+         * Default: 5 minutes
+         */
+        private Duration consistencyCheck = Duration.ofMinutes(5);
+
+        /**
+         * Timeout for problem statement rewriting operations.
+         * Default: 2 minutes
+         */
+        private Duration rewriteProblemStatement = Duration.ofMinutes(2);
+
+        public Duration getConsistencyCheck() {
+            return consistencyCheck;
+        }
+
+        public void setConsistencyCheck(Duration consistencyCheck) {
+            this.consistencyCheck = consistencyCheck;
+        }
+
+        public Duration getRewriteProblemStatement() {
+            return rewriteProblemStatement;
+        }
+
+        public void setRewriteProblemStatement(Duration rewriteProblemStatement) {
+            this.rewriteProblemStatement = rewriteProblemStatement;
+        }
+
+        @Override
+        public String toString() {
+            return "Timeouts{" + "consistencyCheck=" + consistencyCheck + ", rewriteProblemStatement=" + rewriteProblemStatement + '}';
+        }
     }
 
     @Override
     public String toString() {
-        return "HyperionConfigurationProperties{" + "consistencyCheckTimeoutSeconds=" + consistencyCheckTimeoutSeconds + '}';
+        return "HyperionConfigurationProperties{" + "timeouts=" + timeouts + '}';
     }
 }
