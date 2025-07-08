@@ -64,6 +64,7 @@ import { CourseNotificationService } from 'app/communication/course-notification
 import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
 import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
 import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -210,6 +211,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(TeamService),
                 MockProvider(WebsocketService),
                 MockProvider(ArtemisServerDateService),
+                MockProvider(CalendarEventService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
                 MockProvider(TutorialGroupsService),
@@ -506,9 +508,14 @@ describe('CourseOverviewComponent', () => {
         const subscribeStub = jest.spyOn(findOneForDashboardResponse, 'subscribe');
         findOneForDashboardStub.mockReturnValue(findOneForDashboardResponse);
 
+        // check that calendar events are refreshed
+        const calendarEventService = TestBed.inject(CalendarEventService);
+        const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+
         component.loadCourse(true);
 
         expect(subscribeStub).toHaveBeenCalledOnce();
+        expect(refreshSpy).toHaveBeenCalledOnce();
     });
 
     it('should have visible exams', () => {

@@ -17,22 +17,24 @@ export class CalendarEventService {
     private httpClient = inject(HttpClient);
     private readonly resourceUrl = '/api/core/calendar/courses';
 
-    private currentMonthKey?: string;
+    private currentCourseId?: number;
+    private firstDayOfCurrentMonth?: Dayjs;
     private currentEventMap = signal<Map<string, CalendarEvent[]>>(new Map());
     readonly eventMap = computed(() => this.filterEventMapByOptions(this.currentEventMap(), this.includedEventFilterOptions()));
 
     eventFilterOptions: CalendarEventFilterOption[] = ['lectureEvents', 'exerciseEvents', 'tutorialEvents', 'examEvents'];
     includedEventFilterOptions = signal<CalendarEventFilterOption[]>(this.eventFilterOptions);
 
+    refresh() {
+        const currentCourseId = this.currentCourseId;
+        const firstDayOfCurrentMonth = this.firstDayOfCurrentMonth;
+        if (currentCourseId && firstDayOfCurrentMonth) {
+            this.loadEventsForCurrentMonth(currentCourseId, firstDayOfCurrentMonth).subscribe();
+        }
+    }
+
     loadEventsForCurrentMonth(courseId: number, firstDayOfCurrentMonth: Dayjs): Observable<void> {
         const currentMonthKey = firstDayOfCurrentMonth.format('YYYY-MM');
-        if (this.currentMonthKey === currentMonthKey) {
-            return new Observable<void>((observer) => {
-                observer.next();
-                observer.complete();
-            });
-        }
-
         const previousMonthKey = firstDayOfCurrentMonth.subtract(1, 'month').format('YYYY-MM');
         const nextMonthKey = firstDayOfCurrentMonth.add(1, 'month').format('YYYY-MM');
         const monthKeys = `${previousMonthKey},${currentMonthKey},${nextMonthKey}`;
@@ -48,7 +50,8 @@ export class CalendarEventService {
                 map((res: CalendarEventMapResponse) => {
                     const parsed = this.createCalendarEventMap(res.body ?? {});
                     this.currentEventMap.set(parsed);
-                    this.currentMonthKey = currentMonthKey;
+                    this.currentCourseId = courseId;
+                    this.firstDayOfCurrentMonth = firstDayOfCurrentMonth;
                 }),
             );
     }

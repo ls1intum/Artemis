@@ -197,10 +197,20 @@ describe('CalendarEventService', () => {
         tick();
     }));
 
-    it('should not reload for current month key', fakeAsync(() => {
-        service['currentMonthKey'] = date.format('YYYY-MM');
+    it('should refresh', fakeAsync(() => {
+        service.includedEventFilterOptions.set(['lectureEvents', 'examEvents']);
         service.loadEventsForCurrentMonth(courseId, date).subscribe();
-        httpMock.expectNone(expectedUrl);
+
+        const initialRequest = httpMock.expectOne((request) => request.url === expectedUrl);
+        expect(initialRequest.request.method).toBe('GET');
+        initialRequest.flush({});
+        tick();
+
+        service.refresh();
+
+        const refreshRequest = httpMock.expectOne((request) => request.url === expectedUrl);
+        expect(refreshRequest.request.method).toBe('GET');
+        refreshRequest.flush({});
         tick();
     }));
 });
