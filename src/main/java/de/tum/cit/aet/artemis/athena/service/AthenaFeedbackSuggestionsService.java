@@ -4,6 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +28,9 @@ import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
 import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
+import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
+import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -43,7 +50,8 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
  * Service for receiving feedback suggestions from the Athena service.
- * Assumes that submissions and already given feedback have already been sent to Athena or that the feedback is non-graded.
+ * Assumes that submissions and already given feedback have already been sent to
+ * Athena or that the feedback is non-graded.
  */
 @Lazy
 @Service
@@ -64,29 +72,37 @@ public class AthenaFeedbackSuggestionsService {
 
     private final LLMTokenUsageService llmTokenUsageService;
 
+    private final Optional<LearnerProfileApi> learnerProfileApi;
+
     @Value("${artemis.athena.allowed-feedback-requests:10}")
     private int allowedFeedbackRequests;
 
     /**
-     * Create a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
+     * Create a new AthenaFeedbackSuggestionsService to receive feedback suggestions
+     * from the Athena service.
      *
-     * @param athenaRestTemplate        REST template used for the communication with Athena
-     * @param athenaModuleService       Athena module serviced used to determine the urls for different modules
-     * @param athenaDTOConverterService Service to convert exrcises and submissions to DTOs
+     * @param athenaRestTemplate        REST template used for the communication
+     *                                      with Athena
+     * @param athenaModuleService       Athena module serviced used to determine the
+     *                                      urls for different modules
+     * @param athenaDTOConverterService Service to convert exrcises and submissions
+     *                                      to DTOs
      * @param llmTokenUsageService      Service to store the usage of LLM tokens
+     * @param learnerProfileApi         API for learner profile operations
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
-            AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService) {
+            AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, Optional<LearnerProfileApi> learnerProfileApi) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
         modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
         this.athenaDTOConverterService = athenaDTOConverterService;
         this.athenaModuleService = athenaModuleService;
         this.llmTokenUsageService = llmTokenUsageService;
+        this.learnerProfileApi = learnerProfileApi;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record RequestDTO(ExerciseBaseDTO exercise, SubmissionBaseDTO submission, boolean isGraded) {
+    private record RequestDTO(@NotNull ExerciseBaseDTO exercise, @NotNull SubmissionBaseDTO submission, @Nullable LearnerProfileDTO learnerProfile, @NotNull boolean isGraded) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -99,6 +115,45 @@ public class AthenaFeedbackSuggestionsService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record ResponseDTOModeling(List<ModelingFeedbackDTO> data, ResponseMetaDTO meta) {
+    }
+
+    /**
+     * Extract the learner profile from a submission if it's a student
+     * participation.
+     * This method handles the extraction of learner profile information from a
+     * submission,
+     * with proper error handling and logging.
+     *
+     * @param submission the submission to extract the profile from
+     * @return the learner profile or null if not available
+     */
+    private LearnerProfile extractLearnerProfile(Submission submission) {
+        if (submission == null) {
+            log.debug("Cannot extract learner profile: submission is null");
+            return null;
+        }
+
+        if (!(submission.getParticipation() instanceof StudentParticipation studentParticipation)) {
+            log.debug("Cannot extract learner profile: submission is not from a student participation");
+            return null;
+        }
+
+        // Get the student from the participation
+        var studentOpt = studentParticipation.getStudent();
+        if (studentOpt.isEmpty()) {
+            log.debug("Cannot extract learner profile: no student found in participation");
+            return null;
+        }
+
+        var student = studentOpt.get();
+
+        try {
+            return learnerProfileApi.map(api -> api.getOrCreateLearnerProfile(student)).orElse(null);
+        }
+        catch (Exception e) {
+            log.error("Error retrieving learner profile for student {}: {}", student.getId(), e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -119,7 +174,7 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                !isPreliminary);
+                LearnerProfileDTO.of(extractLearnerProfile(submission)), !isPreliminary);
         ResponseDTOText response = textAthenaConnector.invokeWithRetry(
                 athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
                         + "/feedback_suggestions",
@@ -130,17 +185,21 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Calls the remote Athena service to get feedback suggestions for a given programming submission.
+     * Calls the remote Athena service to get feedback suggestions for a given
+     * programming submission.
      *
-     * @param exercise      the {@link ProgrammingExercise} the suggestions are fetched for
-     * @param submission    the {@link ProgrammingSubmission} the suggestions are fetched for
-     * @param isPreliminary the {@link Boolean} should Athena generate grade suggestions or not
+     * @param exercise      the {@link ProgrammingExercise} the suggestions are
+     *                          fetched for
+     * @param submission    the {@link ProgrammingSubmission} the suggestions are
+     *                          fetched for
+     * @param isPreliminary the {@link Boolean} should Athena generate grade
+     *                          suggestions or not
      * @return a list of feedback suggestions
      */
     public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isPreliminary)
             throws NetworkingException {
         log.debug("Start Athena {} Feedback Suggestions Service for Exercise '{}' (#{}).", isPreliminary ? "Non Graded" : "Graded", exercise.getTitle(), exercise.getId());
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 !isPreliminary);
         ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(
                 athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
@@ -152,11 +211,15 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Retrieve feedback suggestions for a given modeling exercise submission from Athena
+     * Retrieve feedback suggestions for a given modeling exercise submission from
+     * Athena
      *
-     * @param exercise      the {@link ModelingExercise} the suggestions are fetched for
-     * @param submission    the {@link ModelingSubmission} the suggestions are fetched for
-     * @param isPreliminary the {@link Boolean} should Athena generate grade suggestions or not
+     * @param exercise      the {@link ModelingExercise} the suggestions are fetched
+     *                          for
+     * @param submission    the {@link ModelingSubmission} the suggestions are
+     *                          fetched for
+     * @param isPreliminary the {@link Boolean} should Athena generate grade
+     *                          suggestions or not
      * @return a list of feedback suggestions generated by Athena
      */
     public List<ModelingFeedbackDTO> getModelingFeedbackSuggestions(ModelingExercise exercise, ModelingSubmission submission, boolean isPreliminary) throws NetworkingException {
@@ -167,7 +230,7 @@ public class AthenaFeedbackSuggestionsService {
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 !isPreliminary);
         ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(
                 athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
@@ -175,6 +238,7 @@ public class AthenaFeedbackSuggestionsService {
                 request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Non Graded" : "Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isPreliminary);
+
         return response.data;
     }
 
@@ -212,7 +276,8 @@ public class AthenaFeedbackSuggestionsService {
      * the allowed threshold and throws an exception if the limit is reached.
      *
      * @param participation the student participation to check
-     * @throws BadRequestAlertException if the maximum number of Athena feedback requests is exceeded
+     * @throws BadRequestAlertException if the maximum number of Athena feedback
+     *                                      requests is exceeded
      */
     public void checkRateLimitOrThrow(StudentParticipation participation) {
         List<Result> athenaResults = participation.getSubmissions().stream()
@@ -230,7 +295,8 @@ public class AthenaFeedbackSuggestionsService {
      * Throws an exception if Athena result already exists.
      *
      * @param submission the student's submission to validate
-     * @throws BadRequestAlertException if an Athena result is already present for the submission
+     * @throws BadRequestAlertException if an Athena result is already present for
+     *                                      the submission
      */
     public void checkLatestSubmissionHasNoAthenaResultOrThrow(Submission submission) {
         Result latestResult = submission.getLatestResult();
