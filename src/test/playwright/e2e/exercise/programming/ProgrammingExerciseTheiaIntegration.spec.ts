@@ -3,8 +3,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
-import { expect } from '@playwright/test';
-import { ProgrammingExerciseAssessmentType, ProgrammingLanguage } from '../../../support/constants';
+import { ProgrammingExerciseAssessmentType, ProgrammingLanguage, THEIA_BASE } from '../../../support/constants';
 import dayjs from 'dayjs';
 
 test.describe('Programming exercise Theia integration', { tag: '@sequential' }, () => {
@@ -35,15 +34,16 @@ test.describe('Programming exercise Theia integration', { tag: '@sequential' }, 
         });
     });
 
-    test('Opens the programming exercise in theia and make a submission', async ({ page, login, programmingExerciseOverview }) => {
+    test('Opens the programming exercise in theia and make a submission', async ({ page, login, programmingExerciseOverview, landingPage }) => {
         console.log(exercise);
         await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
         await login(studentOne, `/courses/${course.id!}/exercises/${exercise.id!}`);
         const [theiaPage] = await Promise.all([page.context().waitForEvent('page'), programmingExerciseOverview.openInOnlineIDE()]);
-
-        await theiaPage.waitForURL('**/theia.artemis.cit.tum.de/**');
-
-        expect(theiaPage.url()).toContain('theia.artemis.cit.tum.de');
+        await theiaPage.waitForURL(`**/${THEIA_BASE}/**`);
+        landingPage.setPage(theiaPage);
+        //await landingPage.login(studentOne.username, studentOne.password);
+        await landingPage.login('pr00mte', 'VRe4K6Jqil');
+        await theiaPage.waitForURL(/.*#\/home\/project/); //signalizes that theia session is loading
     });
 
     test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
