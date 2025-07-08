@@ -16,7 +16,7 @@ export class PlagiarismCaseVerdictComponent {
     readonly plagiarismVerdict = PlagiarismVerdict;
 
     get verdictTranslationString(): string {
-        switch (this.plagiarismCase()?.verdict) {
+        switch (this.plagiarismCase().verdict) {
             case PlagiarismVerdict.PLAGIARISM: {
                 return 'artemisApp.plagiarism.plagiarismCases.verdict.plagiarism';
             }
