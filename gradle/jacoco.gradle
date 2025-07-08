@@ -5,7 +5,7 @@ ext {
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.925, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.873, "CLASS":  2],
-        "atlas"         :          ["INSTRUCTION": 0.900, "CLASS":  7],
+        "atlas"         :          ["INSTRUCTION": 0.903, "CLASS":  6],
         "buildagent"    :          ["INSTRUCTION": 0.798, "CLASS":  1],
         "communication" :          ["INSTRUCTION": 0.846, "CLASS":  5],
         "core"          :          ["INSTRUCTION": 0.833, "CLASS": 47],
