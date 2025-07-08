@@ -208,7 +208,7 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise-participations")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationByRepoName(@RequestParam(required = false, name = "repoName") String repoNameParam) {
+    public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationByRepoName(@RequestParam(required = true, name = "repoName") String repoNameParam) {
         String repoUri;
         if (StringUtils.hasText(repoNameParam)) {
             try {
