@@ -1,10 +1,10 @@
 package de.tum.cit.aet.artemis.hyperion;
 
-import de.tum.cit.aet.artemis.hyperion.generated.InconsistencyCheckRequest;
-import de.tum.cit.aet.artemis.hyperion.generated.InconsistencyCheckResponse;
-import de.tum.cit.aet.artemis.hyperion.generated.ReviewAndRefineGrpc;
-import de.tum.cit.aet.artemis.hyperion.generated.RewriteProblemStatementRequest;
-import de.tum.cit.aet.artemis.hyperion.generated.RewriteProblemStatementResponse;
+import de.tum.cit.aet.artemis.hyperion.proto.InconsistencyCheckRequest;
+import de.tum.cit.aet.artemis.hyperion.proto.InconsistencyCheckResponse;
+import de.tum.cit.aet.artemis.hyperion.proto.ReviewAndRefineGrpc;
+import de.tum.cit.aet.artemis.hyperion.proto.RewriteProblemStatementRequest;
+import de.tum.cit.aet.artemis.hyperion.proto.RewriteProblemStatementResponse;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;

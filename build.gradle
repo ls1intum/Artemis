@@ -152,10 +152,19 @@ configurations.configureEach {
     exclude group: "commons-configuration", module: "commons-configuration"
 }
 
+// SourceSets Configuration for gRPC Generated Files
+sourceSets {
+    main {
+        java {
+            srcDirs 'src/main/java'
+            srcDirs 'build/generated/sources/proto/main/java'
+            srcDirs 'build/generated/sources/proto/main/grpc'
+        }
+    }
+}
+
 // Protobuf Configuration for gRPC Integration
 protobuf {
-    generatedFilesBaseDir = "$projectDir/src"
-
     protoc {
         artifact = "com.google.protobuf:protoc:${protobuf_version}"
     }
@@ -168,51 +177,17 @@ protobuf {
         all().each { task ->
             task.builtins {
                 java {
-                    outputSubDir = 'main/java'
+                    outputSubDir = 'java'
                 }
             }
             task.plugins {
                 grpc {
-                    outputSubDir = 'main/java'
+                    outputSubDir = 'grpc'
                 }
             }
         }
     }
 }
-
-// Task to move generated files to correct location
-tasks.register("moveGeneratedFiles") {
-    doLast {
-        // Find all generated directories under src/main/main/java/de/tum/cit/aet/artemis/*/generated
-        def incorrectMainDir = file("src/main/main")
-        if (incorrectMainDir.exists()) {
-            def artemisPath = file("src/main/main/java/de/tum/cit/aet/artemis")
-            if (artemisPath.exists()) {
-                artemisPath.listFiles().each { moduleDir ->
-                    if (moduleDir.isDirectory()) {
-                        def generatedDir = new File(moduleDir, "generated")
-                        if (generatedDir.exists()) {
-                            def moduleName = moduleDir.name
-                            def targetDir = file("src/main/java/de/tum/cit/aet/artemis/${moduleName}/generated")
-
-                            println "Moving generated files for module: ${moduleName}"
-                            targetDir.parentFile.mkdirs()
-                            ant.move(todir: targetDir) {
-                                fileset(dir: generatedDir)
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Clean up the incorrect main directory after moving all files
-            incorrectMainDir.deleteDir()
-        }
-    }
-}
-
-// Make sure generated files are moved after generation
-generateProto.finalizedBy moveGeneratedFiles
 
 compileJava.dependsOn generateProto
 compileTestJava.dependsOn generateProto
@@ -568,6 +543,13 @@ dependencyManagement {
 tasks.register("cleanResources", Delete) {
     delete "build/resources"
 }
+
+tasks.register("cleanGenerated", Delete) {
+    delete "build/generated"
+}
+
+// Clean task should also clean generated files
+clean.dependsOn cleanGenerated
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << "-Xlint:deprecation"

@@ -18,9 +18,9 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionTestConfiguration;
-import de.tum.cit.aet.artemis.hyperion.generated.InconsistencyCheckRequest;
-import de.tum.cit.aet.artemis.hyperion.generated.ReviewAndRefineGrpc;
-import de.tum.cit.aet.artemis.hyperion.generated.RewriteProblemStatementRequest;
+import de.tum.cit.aet.artemis.hyperion.proto.InconsistencyCheckRequest;
+import de.tum.cit.aet.artemis.hyperion.proto.ReviewAndRefineGrpc;
+import de.tum.cit.aet.artemis.hyperion.proto.RewriteProblemStatementRequest;
 import de.tum.cit.aet.artemis.hyperion.web.HyperionReviewAndRefineResource;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;

@@ -15,11 +15,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.hyperion.generated.InconsistencyCheckRequest;
-import de.tum.cit.aet.artemis.hyperion.generated.Repository;
-import de.tum.cit.aet.artemis.hyperion.generated.RepositoryFile;
-import de.tum.cit.aet.artemis.hyperion.generated.ReviewAndRefineGrpc.ReviewAndRefineBlockingStub;
-import de.tum.cit.aet.artemis.hyperion.generated.RewriteProblemStatementRequest;
+import de.tum.cit.aet.artemis.hyperion.proto.InconsistencyCheckRequest;
+import de.tum.cit.aet.artemis.hyperion.proto.Repository;
+import de.tum.cit.aet.artemis.hyperion.proto.RepositoryFile;
+import de.tum.cit.aet.artemis.hyperion.proto.ReviewAndRefineGrpc.ReviewAndRefineBlockingStub;
+import de.tum.cit.aet.artemis.hyperion.proto.RewriteProblemStatementRequest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
