@@ -14,7 +14,7 @@
             "SyntaxTree": "Syntaxbaum",
             "Flowchart": "Flussdiagramm",
             "BPMN": "BPMN",
-            "Sfc": "SFC"
+            "SequentialFunctionChart": "Ablaufsprache"
         }
     }
 }
