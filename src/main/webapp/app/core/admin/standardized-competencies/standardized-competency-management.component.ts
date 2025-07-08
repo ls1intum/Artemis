@@ -130,7 +130,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     }
 
     selectKnowledgeArea(knowledgeArea: KnowledgeAreaDTO) {
-        if (this.selectedKnowledgeArea()!.id === knowledgeArea.id) {
+        if (this.selectedKnowledgeArea()?.id === knowledgeArea.id) {
             return;
         }
         this.setSelectedKnowledgeAreaAndEditing(knowledgeArea, false);
@@ -144,11 +144,11 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         const deletedKnowledgeArea = this.selectedKnowledgeArea();
         this.adminStandardizedCompetencyService.deleteKnowledgeArea(id).subscribe({
             next: () => {
-                this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.delete', { title: this.selectedKnowledgeArea()!.title });
+                this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.delete', { title: this.selectedKnowledgeArea()?.title });
                 this.dialogErrorSource.next('');
                 this.updateAfterDeleteKnowledgeArea(deletedKnowledgeArea);
                 // close the detail component if it is still open
-                if (this.selectedKnowledgeArea()!.id === id) {
+                if (this.selectedKnowledgeArea()?.id === id) {
                     this.isEditing = false;
                     this.selectedKnowledgeArea.set(undefined);
                 }
@@ -172,7 +172,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.create', { title: resultKnowledgeArea.title });
                         this.updateAfterCreateKnowledgeArea(resultKnowledgeArea);
                         // update the detail view if no other was opened
-                        if (!(this.selectedKnowledgeArea()!.id || this.selectedCompetency) && !this.isEditing) {
+                        if (!(this.selectedKnowledgeArea()?.id || this.selectedCompetency()?.id) && !this.isEditing) {
                             this.selectedKnowledgeArea.set(resultKnowledgeArea);
                         }
                         this.changeDetectorRef.detectChanges();
@@ -188,7 +188,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                         this.alertService.success('artemisApp.knowledgeArea.manage.successAlerts.update', { title: resultKnowledgeArea.title });
                         this.updateAfterUpdateKnowledgeArea(resultKnowledgeArea);
                         // update the detail view if it is still open
-                        if (resultKnowledgeArea.id === this.selectedKnowledgeArea()!.id) {
+                        if (resultKnowledgeArea.id === this.selectedKnowledgeArea()?.id) {
                             this.selectedKnowledgeArea.set(resultKnowledgeArea);
                         }
                         this.changeDetectorRef.detectChanges();
@@ -208,7 +208,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     }
 
     selectCompetency(competency: StandardizedCompetencyDTO) {
-        if (this.selectedCompetency()!.id === competency.id) {
+        if (this.selectedCompetency()?.id === competency.id) {
             return;
         }
         this.setSelectedCompetencyAndEditing(competency, false);

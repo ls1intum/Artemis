@@ -1,6 +1,13 @@
 <table class="table table-striped align-middle flex">
     <thead class="thead-dark">
-        <tr (sortChange)="onSortChange($event)" [(ascending)]="ascending" [(predicate)]="search().sortedColumn" class="flex-row" jhiSort>
+        <tr
+            (sortChange)="onSortChange($event)"
+            [(ascending)]="ascending"
+            [predicate]="search().sortedColumn"
+            (predicateChange)="onSortChange({ predicate: $event, ascending })"
+            class="flex-row"
+            jhiSort
+        >
             <th jhiSortBy="ID" class="col-0.5">
                 <span>#</span>
                 <fa-icon [icon]="faSort" />
@@ -41,12 +48,12 @@
 @if (displayPagination()) {
     <div class="d-flex justify-content-between p-2">
         <ngb-pagination
-            (pageChange)="onPageChange($event)"
-            [(page)]="search().page"
+            (pageChange)="onPageChange($any($event))"
+            [page]="search().page"
             [collectionSize]="search().pageSize * content().numberOfPages"
             [maxSize]="10"
             [pageSize]="search().pageSize"
-            [rotate]="true"
+            (pageSizeChange)="onPageSizeChange($any($event))"
         />
     </div>
 }

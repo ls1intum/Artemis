@@ -49,4 +49,11 @@ export class ImportCompetenciesTableComponent {
     onSortChange(change: { predicate: string; ascending: boolean }) {
         this.search.update((search) => ({ ...search, sortedColumn: change.predicate, sortingOrder: change.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING }));
     }
+
+    /**
+     * Callback function for when the user changes the page size
+     */
+    onPageSizeChange(newSize: number) {
+        this.search.update((s) => ({ ...s, pageSize: newSize }));
+    }
 }
