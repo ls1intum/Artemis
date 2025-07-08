@@ -16,10 +16,10 @@
     .related-entity-info {
         display: flex;
         align-items: center;
-        gap: 0.25rem;
+        gap: 0.5rem;
 
         .related-entity-name {
-            font-size: 0.25rem;
+            font-size: 0.5rem;
             max-width: 4rem;
             overflow: hidden;
             text-overflow: ellipsis;
