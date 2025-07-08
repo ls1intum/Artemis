@@ -199,7 +199,6 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
             sendQuizResultToUser(quizExerciseId, participation);
 
-            log.info("Starte Speichern des QuizQuestionProgress für Submission {}", quizSubmission.getId());
             // save the question progress
             quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
         });

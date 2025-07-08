@@ -57,7 +57,6 @@ public class QuizQuestionProgressService {
     public void retrieveProgressFromResultAndSubmission(QuizExercise quizExercise, QuizSubmission quizSubmission, StudentParticipation participation) {
         ZonedDateTime lastAnsweredAt = quizSubmission.getSubmissionDate();
         Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions = new HashMap<>();
-        log.info("Starte erfolgreich Speichern des QuizQuestionProgress für Submission {}", quizSubmission.getId());
         Long userId = participation.getParticipant().getId();
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
             SubmittedAnswer answer = quizSubmission.getSubmittedAnswerForQuestion(question);
