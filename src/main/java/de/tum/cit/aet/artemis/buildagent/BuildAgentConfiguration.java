@@ -10,6 +10,7 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -47,7 +48,7 @@ public class BuildAgentConfiguration {
 
     private ThreadPoolExecutor buildExecutor;
 
-    private int threadPoolSize = 0;
+    private final AtomicInteger threadPoolSize = new AtomicInteger(0);
 
     private DockerClient dockerClient;
 
@@ -80,7 +81,7 @@ public class BuildAgentConfiguration {
     }
 
     public int getThreadPoolSize() {
-        return threadPoolSize;
+        return threadPoolSize.get();
     }
 
     public DockerClient getDockerClient() {
@@ -89,6 +90,39 @@ public class BuildAgentConfiguration {
 
     public int getPauseAfterConsecutiveFailedJobs() {
         return pauseAfterConsecutiveFailedJobs;
+    }
+
+    /**
+     * Dynamically adjusts the thread pool size for concurrent build jobs.
+     *
+     * @param newConcurrentBuildSize the new number of concurrent builds
+     * @return true if the adjustment was successful, false otherwise
+     */
+    public boolean adjustConcurrentBuildSize(int newConcurrentBuildSize) {
+        if (newConcurrentBuildSize <= 0) {
+            log.error("Invalid concurrent build size: {}. Must be greater than 0.", newConcurrentBuildSize);
+            return false;
+        }
+
+        if (buildExecutor == null) {
+            log.error("Build executor is not initialized yet");
+            return false;
+        }
+
+        int currentSize = threadPoolSize.get();
+
+        // We need this check since maximumPoolSize >= corePoolSize should hold at all times.
+        if (newConcurrentBuildSize > currentSize) {
+            buildExecutor.setMaximumPoolSize(newConcurrentBuildSize);
+            buildExecutor.setCorePoolSize(newConcurrentBuildSize);
+        }
+        else {
+            buildExecutor.setCorePoolSize(newConcurrentBuildSize);
+            buildExecutor.setMaximumPoolSize(newConcurrentBuildSize);
+        }
+
+        threadPoolSize.set(newConcurrentBuildSize);
+        return true;
     }
 
     /**
@@ -163,7 +197,7 @@ public class BuildAgentConfiguration {
             int availableProcessors = Runtime.getRuntime().availableProcessors();
             threadPoolSize = Math.max(1, (availableProcessors - 2) / 2);
         }
-        this.threadPoolSize = threadPoolSize;
+        this.threadPoolSize.set(threadPoolSize);
 
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
                 .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).build();
