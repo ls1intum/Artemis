@@ -75,20 +75,6 @@ You only need to modify them if your specific work or production environments re
             # refer to the dedicated configuration section.
             # See: Hyperion Service section below.
 
-   # Edutelligence
-   grpc:
-       client:
-           # If you want to use Hyperion for programming exercise creation assistance, configure the service connection below.
-           # For production, enable TLS and configure certificates. See Hyperion Service section below.
-           hyperion:
-               address: hyperion.aet.cit.tum.de:8080  # Default for development
-               negotiationType: PLAINTEXT  # Override to TLS in production profiles
-               # For production with client certificates (mTLS), uncomment and configure:
-               # security:
-               #   clientAuthEnabled: true
-               #   certificateChain: file:certs/client.crt
-               #   privateKey: file:certs/client.key
-               #   trustCertCollection: file:certs/server-ca.crt
 
 **Note:**
 If you use a password for authentication, update it in ``gradle/liquibase.gradle``.
@@ -273,25 +259,12 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 
    ./gradlew bootRun --args='--spring.profiles.active=dev,jenkins,localvc,artemis,scheduling'
 
-.. _athena-service:
-
-Athena Service
-^^^^^^^^^^^^^^
-
-Athena is Artemis's intelligent tutoring system that provides automated feedback and grading assistance.
-
-To enable Athena, add ``athena`` to your active profiles and configure the service connection. For detailed configuration instructions, refer to the `Administration Guide - Setup of Extension Services <../../../admin/setup/athena.html>`__.
-
-.. code-block:: bash
-
-   ./gradlew bootRun --args='--spring.profiles.active=dev,localci,localvc,artemis,athena'
-
 .. _hyperion-service:
 
 Hyperion Service
 ^^^^^^^^^^^^^^^^
 
-Hyperion is an AI-powered Edutelligence microservice for programming exercise creation assistance. It provides intelligent feedback on exercise consistency and problem statement optimization.
+Hyperion is an AI-powered Edutelligence microservice for programming exercise creation assistance.
 
 Prerequisites
 """""""""""""
@@ -422,24 +395,3 @@ Common configuration properties:
    * - ``grpc.client.hyperion.keepAliveTime``
      - ``30s``
      - Keep-alive ping interval
-
-Troubleshooting
-'''''''''''''''
-
-**Common Issues:**
-
-1. **Connection Refused**: Ensure Hyperion service is running and accessible
-2. **Timeout Errors**: Increase timeout values for slower environments
-3. **Certificate Errors**: Verify TLS certificates are properly configured
-4. **Large Message Errors**: Increase ``maxInboundMessageSize`` if needed
-
-**Logging:**
-
-Enable debug logging for troubleshooting:
-
-.. code-block:: yaml
-
-   logging:
-       level:
-           de.tum.cit.aet.artemis.hyperion: DEBUG
-           io.grpc: DEBUG
