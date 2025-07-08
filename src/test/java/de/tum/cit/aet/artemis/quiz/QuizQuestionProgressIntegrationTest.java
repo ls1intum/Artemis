@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -62,6 +63,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     private Long quizQuestionId;
 
+    StudentParticipation participation;
+
     @BeforeEach
     void setUp() {
         String login = "testuser";
@@ -76,6 +79,9 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
             userTestRepository.save(user);
         }
         userId = user.getId();
+
+        participation = new StudentParticipation();
+        participation.setParticipant(user);
 
         quizQuestion = new MultipleChoiceQuestion();
         quizQuestion = quizQuestionTestRepository.save(quizQuestion);
@@ -119,7 +125,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizSubmission.setSubmissionDate(time);
         quizSubmission.setSubmittedAnswers(Set.of(submittedAnswer));
 
-        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission);
+        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
 
         // Progress exists in database
         Optional<QuizQuestionProgress> progress = quizQuestionProgressTestRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
@@ -142,7 +148,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         // Progress does not exist in database
         quizQuestionProgressTestRepository.deleteAll();
-        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission);
+        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
         Optional<QuizQuestionProgress> progressEmpty = quizQuestionProgressTestRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
         assertThat(progressEmpty.get().getUserId()).isEqualTo(userId);
         assertThat(progressEmpty.get().getQuizQuestionId()).isEqualTo(quizQuestionId);
@@ -159,6 +165,9 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(dataEmpty.getAttempts().size()).isEqualTo(1);
         assertThat(dataEmpty.getAttempts().get(0).getAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
         assertThat(dataEmpty.getAttempts().get(0).getScore()).isEqualTo(1.0);
+
+        quizSubmission.setSubmittedAnswers(Set.of());
+        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
     }
 
     @Test
@@ -229,9 +238,9 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     void testCalculatePriority() {
-        assertThat(quizQuestionProgressService.calculatePriority(0, 3)).isEqualTo(1);
-        assertThat(quizQuestionProgressService.calculatePriority(1, 1)).isEqualTo(2);
-        assertThat(quizQuestionProgressService.calculatePriority(4, 3)).isEqualTo(7);
+        assertThat(quizQuestionProgressService.calculatePriority(1, 3, 0)).isEqualTo(1);
+        assertThat(quizQuestionProgressService.calculatePriority(1, 1, 1)).isEqualTo(2);
+        assertThat(quizQuestionProgressService.calculatePriority(4, 3, 1)).isEqualTo(7);
     }
 
     @Test

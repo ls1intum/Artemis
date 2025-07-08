@@ -9,11 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
@@ -27,6 +30,8 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 @Lazy
 @Service
 public class QuizQuestionProgressService {
+
+    private static final Logger log = LoggerFactory.getLogger(QuizQuestionProgressService.class);
 
     private final QuizQuestionProgressRepository quizQuestionProgressRepository;
 
@@ -48,17 +53,22 @@ public class QuizQuestionProgressService {
      * @param quizExercise   The quiz exercise for which the progress is to be retrieved
      * @param quizSubmission The quiz submission containing the user's answers
      */
-    public void retrieveProgressFromResultAndSubmission(QuizExercise quizExercise, QuizSubmission quizSubmission) {
+    public void retrieveProgressFromResultAndSubmission(QuizExercise quizExercise, QuizSubmission quizSubmission, StudentParticipation participation) {
         ZonedDateTime lastAnsweredAt = quizSubmission.getSubmissionDate();
         Map<QuizQuestion, QuizQuestionProgressDataDAO> answeredQuestions = new HashMap<>();
+        log.info("Starte erfolgreich Speichern des QuizQuestionProgress für Submission {}", quizSubmission.getId());
+        Long userId = participation.getParticipant().getId();
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-            QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(getUserId(), question.getId()).orElse(null);
+            SubmittedAnswer answer = quizSubmission.getSubmittedAnswerForQuestion(question);
+            if (answer == null) {
+                continue;
+            }
+            QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(null);
             QuizQuestionProgressDataDAO data = new QuizQuestionProgressDataDAO();
             QuizQuestionProgressDataDAO.Attempt attempt = new QuizQuestionProgressDataDAO.Attempt();
             if (existingProgress != null) {
                 data = existingProgress.getProgressJson();
             }
-            SubmittedAnswer answer = quizSubmission.getSubmittedAnswerForQuestion(question);
 
             // Calculate the achieved score for the question
             double score = question.scoreForAnswer(answer) / question.getPoints();
@@ -92,7 +102,7 @@ public class QuizQuestionProgressService {
             data.setSessionCount(sessionCount);
 
             // Set new due date based on the last answered time and calculated interval
-            data.setPriority(calculatePriority(sessionCount, interval));
+            data.setPriority(calculatePriority(sessionCount, interval, score));
 
             // Set the box for the question
             data.setBox(calculateBox(interval));
@@ -100,7 +110,8 @@ public class QuizQuestionProgressService {
             // Add the question and its progress data to the map
             answeredQuestions.put(question, data);
         }
-        updateProgress(answeredQuestions, lastAnsweredAt);
+        updateProgress(answeredQuestions, lastAnsweredAt, userId);
+        answeredQuestions.forEach((q, d) -> System.out.println(q.getId() + " -> " + d));
     }
 
     /**
@@ -109,9 +120,8 @@ public class QuizQuestionProgressService {
      * @param answeredQuestions List of quiz questions that were answered
      * @param lastAnsweredAt    Time when the question was last answered
      */
-    public void updateProgress(Map<QuizQuestion, QuizQuestionProgressDataDAO> answeredQuestions, ZonedDateTime lastAnsweredAt) {
+    public void updateProgress(Map<QuizQuestion, QuizQuestionProgressDataDAO> answeredQuestions, ZonedDateTime lastAnsweredAt, Long userId) {
         answeredQuestions.forEach((question, data) -> {
-            long userId = getUserId();
             QuizQuestionProgress progress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
             progress.setUserId(userId);
             progress.setQuizQuestionId(question.getId());
@@ -215,8 +225,8 @@ public class QuizQuestionProgressService {
      * @param interval     The interval for the next session in which the question should be repeated
      * @return The priority for the question, which is higher the lower the number
      */
-    public int calculatePriority(int sessionCount, int interval) {
-        if (sessionCount == 0) {
+    public int calculatePriority(int sessionCount, int interval, double score) {
+        if (sessionCount == 1 && score != 1.0) {
             return 1;
         }
         return sessionCount + interval;

@@ -143,7 +143,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         quizStatisticService.recalculateStatistics(quizExercise);
 
         // save the question progress
-        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission);
+        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, (StudentParticipation) participation);
 
         log.debug("submit practice quiz finished: {}", quizSubmission);
         return result;
@@ -198,6 +198,10 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             quizSubmission.setResults(List.of(result));
 
             sendQuizResultToUser(quizExerciseId, participation);
+
+            log.info("Starte Speichern des QuizQuestionProgress für Submission {}", quizSubmission.getId());
+            // save the question progress
+            quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
         });
         quizStatisticService.recalculateStatistics(quizExercise);
         // notify users via websocket about new results for the statistics, filter out solution information
