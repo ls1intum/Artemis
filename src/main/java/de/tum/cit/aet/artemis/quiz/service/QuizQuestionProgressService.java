@@ -111,7 +111,6 @@ public class QuizQuestionProgressService {
             answeredQuestions.put(question, data);
         }
         updateProgress(answeredQuestions, lastAnsweredAt, userId);
-        answeredQuestions.forEach((q, d) -> System.out.println(q.getId() + " -> " + d));
     }
 
     /**
