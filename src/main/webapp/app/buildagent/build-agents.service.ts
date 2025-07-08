@@ -84,4 +84,27 @@ export class BuildAgentsService {
             }),
         );
     }
+
+    /**
+     * Adjust the concurrent build capacity of a specific build agent
+     */
+    adjustBuildAgentCapacity(agentName: string, newSize: number): Observable<void> {
+        const encodedAgentName = encodeURIComponent(agentName);
+        return this.http.put<void>(`${this.adminResourceUrl}/agents/${encodedAgentName}/concurrent-builds/${newSize}`, null).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to adjust build agent capacity ${agentName}\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
+     * Adjust the concurrent build capacity of all build agents
+     */
+    adjustAllBuildAgentsCapacity(newSize: number): Observable<void> {
+        return this.http.put<void>(`${this.adminResourceUrl}/agents/concurrent-builds/${newSize}`, null).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to adjust all build agents capacity\n${err.message}`));
+            }),
+        );
+    }
 }

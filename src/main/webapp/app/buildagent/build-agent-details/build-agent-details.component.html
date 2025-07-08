@@ -10,7 +10,7 @@
                     </div>
                     <span class="text-muted" id="build-agent-info">{{ buildAgent.buildAgent?.name }} - {{ buildAgent.buildAgent?.memberAddress }}</span>
                 </div>
-                <div class="ms-3 d-flex justify-content-center gap-2">
+                <div class="ms-3 d-flex justify-content-center gap-2 align-items-center">
                     @if (buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED') {
                         <button class="btn btn-success" (click)="resumeBuildAgent()">
                             <fa-icon [icon]="faPlay" />
@@ -22,6 +22,15 @@
                             <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.buildAgents.pause"></span>
                         </button>
                     }
+                    <div class="d-flex align-items-center ms-3">
+                        <label class="form-label mb-0 me-2" jhiTranslate="artemisApp.buildAgents.concurrencyLabel"></label>
+                        <jhi-two-stage-stepper
+                            [currentValue]="buildAgent.maxNumberOfConcurrentBuildJobs || 1"
+                            [minValue]="1"
+                            [maxValue]="maxConcurrentJobs"
+                            (valueChange)="onConcurrencyChange($event)"
+                        />
+                    </div>
                 </div>
             </div>
             <div class="mb-4">

@@ -1,7 +1,19 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
-import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faPause, faPauseCircle, faPlay, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import {
+    faCircleCheck,
+    faCog,
+    faExclamationCircle,
+    faExclamationTriangle,
+    faFilter,
+    faPause,
+    faPauseCircle,
+    faPlay,
+    faSort,
+    faSync,
+    faTimes,
+} from '@fortawesome/free-solid-svg-icons';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -31,6 +43,7 @@ import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { TwoStageStepperComponent } from 'app/buildagent/shared/twostagestepper/two-stage-stepper.component';
 
 @Component({
     selector: 'jhi-build-agent-details',
@@ -55,6 +68,7 @@ import { BuildAgentsService } from 'app/buildagent/build-agents.service';
         NgxDatatableModule,
         NgbPagination,
         FormsModule,
+        TwoStageStepperComponent,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
@@ -81,6 +95,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     readonly runningBuildJobsChannel = '/topic/admin/running-jobs';
 
     finishedBuildJobs: FinishedBuildJob[] = [];
+    newConcurrency: number;
+    maxConcurrentJobs: number = navigator.hardwareConcurrency || 16;
 
     //icons
     readonly faCircleCheck = faCircleCheck;
@@ -92,6 +108,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     readonly faPlay = faPlay;
     readonly faSort = faSort;
     readonly faSync = faSync;
+    readonly faCog = faCog;
 
     //Filter
     searchSubscription: Subscription;
@@ -184,6 +201,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     private updateBuildAgent(buildAgent: BuildAgentInformation) {
         this.buildAgent = buildAgent;
+        this.newConcurrency = this.buildAgent.maxNumberOfConcurrentBuildJobs || 1;
         this.buildJobStatistics = {
             successfulBuilds: this.buildAgent.buildAgentDetails?.successfulBuilds || 0,
             failedBuilds: this.buildAgent.buildAgentDetails?.failedBuilds || 0,
@@ -246,6 +264,40 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                     this.alertService.addAlert({
                         type: AlertType.DANGER,
                         message: 'artemisApp.buildAgents.alerts.buildAgentResumeFailed',
+                    });
+                },
+            });
+        } else {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName',
+            });
+        }
+    }
+
+    onConcurrencyChange(newValue: number) {
+        this.newConcurrency = newValue;
+        this.adjustBuildAgentCapacity();
+    }
+
+    adjustBuildAgentCapacity(): void {
+        if (!this.newConcurrency || this.newConcurrency < 1 || this.newConcurrency > this.maxConcurrentJobs) {
+            return;
+        }
+
+        if (this.buildAgent.buildAgent?.name) {
+            this.buildAgentsService.adjustBuildAgentCapacity(this.buildAgent.buildAgent.name, this.newConcurrency).subscribe({
+                next: () => {
+                    this.load();
+                    this.alertService.addAlert({
+                        type: AlertType.SUCCESS,
+                        message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjusted',
+                    });
+                },
+                error: () => {
+                    this.alertService.addAlert({
+                        type: AlertType.DANGER,
+                        message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjustFailed',
                     });
                 },
             });
