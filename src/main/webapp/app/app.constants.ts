@@ -33,11 +33,7 @@ export const addPublicFilePrefix = (filePath?: string): string | undefined => {
 
 export const FILES_PATH_PREFIX = 'api/core/files/';
 
-export const PROFILE_LOCALCI = 'localci';
-
-export const PROFILE_AEOLUS = 'aeolus';
-
-export const FEATURE_PASSKEY = 'passkey';
+export const MODULE_FEATURE_PASSKEY = 'passkey';
 
 export const MODULE_FEATURE_ATLAS = 'atlas';
 
@@ -48,6 +44,18 @@ export const MODULE_FEATURE_PLAGIARISM = 'plagiarism';
 export const MODULE_FEATURE_TEXT = 'text';
 
 export const MODULE_FEATURE_TUTORIALGROUP = 'tutorialgroup';
+
+export type ModuleFeature =
+    | typeof MODULE_FEATURE_PASSKEY
+    | typeof MODULE_FEATURE_ATLAS
+    | typeof MODULE_FEATURE_EXAM
+    | typeof MODULE_FEATURE_PLAGIARISM
+    | typeof MODULE_FEATURE_TEXT
+    | typeof MODULE_FEATURE_TUTORIALGROUP;
+
+export const PROFILE_LOCALCI = 'localci';
+
+export const PROFILE_AEOLUS = 'aeolus';
 
 export const PROFILE_IRIS = 'iris';
 
@@ -66,3 +74,19 @@ export const PROFILE_APOLLON = 'apollon';
 export const PROFILE_ATHENA = 'athena';
 
 export const PROFILE_THEIA = 'theia';
+
+export const PROFILE_LDAP = 'ldap';
+
+export type ProfileFeature =
+    | typeof PROFILE_LOCALCI
+    | typeof PROFILE_AEOLUS
+    | typeof PROFILE_IRIS
+    | typeof PROFILE_LTI
+    | typeof PROFILE_PROD
+    | typeof PROFILE_DEV
+    | typeof PROFILE_TEST
+    | typeof PROFILE_JENKINS
+    | typeof PROFILE_APOLLON
+    | typeof PROFILE_ATHENA
+    | typeof PROFILE_THEIA
+    | typeof PROFILE_LDAP;

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
-import static de.tum.cit.aet.artemis.iris.utils.IrisLLMMock.getMockLLMCosts;
+import static de.tum.cit.aet.artemis.iris.util.IrisLLMMock.getMockLLMCosts;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;

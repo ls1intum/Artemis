@@ -148,18 +148,13 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @EnforceAtLeastStudent
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
-        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository
-                .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId)
-                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-
+    public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithLatestResultForStudentParticipation(@PathVariable long participationId) {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService
+                .findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(participationId);
         hasAccessToParticipationElseThrow(participation);
         filterParticipationSubmissionResults(participation);
-
-        Optional<Submission> latestSubmission = participation.getSubmissions().stream().findFirst();
-        Optional<Result> latestResult = latestSubmission.flatMap(submission -> submission.getResults().stream().findFirst());
-        Set<Result> results = latestResult.map(Set::of).orElseGet(Set::of);
         // hide details that should not be shown to the students
+        List<Result> results = participation.getSubmissions().isEmpty() ? List.of() : participation.getSubmissions().iterator().next().getResults();
         resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
         return ResponseEntity.ok(participation);
     }

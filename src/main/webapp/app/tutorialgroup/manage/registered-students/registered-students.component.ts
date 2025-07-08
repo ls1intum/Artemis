@@ -28,6 +28,7 @@ export class RegisteredStudentsComponent implements OnDestroy {
     private courseManagementService = inject(CourseManagementService);
     private cdr = inject(ChangeDetectorRef);
 
+    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
     @Input() course: Course;
     @Input() tutorialGroupId: number;
 

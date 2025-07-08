@@ -66,15 +66,23 @@ export interface LectureUnitCompletionEvent {
     ],
 })
 export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
-    private alertService = inject(AlertService);
-    private lectureService = inject(LectureService);
-    private lectureUnitService = inject(LectureUnitService);
-    private activatedRoute = inject(ActivatedRoute);
-    private fileService = inject(FileService);
-    private router = inject(Router);
-    private profileService = inject(ProfileService);
-    private irisSettingsService = inject(IrisSettingsService);
+    private readonly alertService = inject(AlertService);
+    private readonly lectureService = inject(LectureService);
+    private readonly lectureUnitService = inject(LectureUnitService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly fileService = inject(FileService);
+    private readonly router = inject(Router);
+    private readonly profileService = inject(ProfileService);
+    private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly scienceService = inject(ScienceService);
+
+    protected readonly LectureUnitType = LectureUnitType;
+    protected readonly isCommunicationEnabled = isCommunicationEnabled;
+    protected readonly isMessagingEnabled = isMessagingEnabled;
+    protected readonly ChatServiceMode = ChatServiceMode;
+
+    protected readonly faSpinner = faSpinner;
+    protected readonly faChalkboardTeacher = faChalkboardTeacher;
 
     lectureId?: number;
     courseId?: number;
@@ -90,14 +98,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     isTestServer = false;
     irisEnabled = false;
     informationBoxData: InformationBox[] = [];
-
-    readonly LectureUnitType = LectureUnitType;
-    readonly isCommunicationEnabled = isCommunicationEnabled;
-    readonly isMessagingEnabled = isMessagingEnabled;
-    readonly ChatServiceMode = ChatServiceMode;
-
-    readonly faSpinner = faSpinner;
-    readonly faChalkboardTeacher = faChalkboardTeacher;
 
     ngOnInit(): void {
         this.isProduction = this.profileService.isProduction();

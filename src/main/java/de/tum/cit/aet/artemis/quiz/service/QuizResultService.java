@@ -105,7 +105,7 @@ public class QuizResultService {
      */
     private Set<Result> evaluateSubmissions(@NotNull QuizExercise quizExercise) {
         Set<Result> createdResults = new HashSet<>();
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(studentParticipations);
 
         for (var participation : studentParticipations) {

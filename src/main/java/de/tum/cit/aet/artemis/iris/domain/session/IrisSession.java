@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 // @formatter:off
 @JsonSubTypes({
     @JsonSubTypes.Type(value = IrisProgrammingExerciseChatSession.class, name = "programming_exercise_chat"),
+    @JsonSubTypes.Type(value = IrisTextExerciseChatSession.class, name = "text_exercise_chat"),
     @JsonSubTypes.Type(value = IrisCourseChatSession.class, name = "course_chat"),
     @JsonSubTypes.Type(value = IrisLectureChatSession.class, name = "lecture_chat"),
     @JsonSubTypes.Type(value = IrisTutorSuggestionSession.class, name = "tutor_suggestion"),
@@ -63,6 +64,7 @@ public abstract class IrisSession extends DomainObject {
     private String latestSuggestions;
 
     // TODO: This is only used in the tests -> Remove
+    @Deprecated
     public IrisMessage newMessage() {
         var message = new IrisMessage();
         message.setSession(this);

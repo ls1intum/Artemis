@@ -363,27 +363,29 @@ describe('CourseOverviewComponent', () => {
         tabs.forEach((tab) => {
             jest.spyOn(router, 'url', 'get').mockReturnValue(baseUrl + '/' + tab);
             component.onSubRouteActivate({ controlConfiguration: undefined });
-
-            expect(metisConversationServiceStub).toHaveBeenCalledOnce();
+            fixture.detectChanges();
         });
+        expect(metisConversationServiceStub).toHaveBeenCalledOnce();
     });
 
     it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
         const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         metisConversationService._hasUnreadMessages$.next(hasNewMessages);
         jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of());
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/communication');
 
         await component.ngOnInit();
 
         route.snapshot.firstChild!.routeConfig!.path = 'exercises';
         component.onSubRouteActivate({ controlConfiguration: undefined });
-
+        fixture.detectChanges();
         expect(component.hasUnreadMessages()).toBe(hasNewMessages);
 
         const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
+            fixture.detectChanges();
 
             expect(spy).toHaveBeenCalledOnce();
         });
@@ -857,12 +859,19 @@ describe('CourseOverviewComponent', () => {
         expect((component as any).selectedSettingPreset).toBeDefined();
     }));
 
-    it('should only show practice tab on test server', () => {
+    it('should only show practice tab on test server or development', () => {
         component.isTestServer = true;
+        component.isDevelopment = false;
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.some((item) => item.title.includes('Practice'))).toBeTruthy();
 
         component.isTestServer = false;
+        component.isDevelopment = true;
+        const sidebarItemsDev = component.getSidebarItems();
+        expect(sidebarItemsDev.some((item) => item.title.includes('Practice'))).toBeTruthy();
+
+        component.isTestServer = false;
+        component.isDevelopment = false;
         const sidebarItemsProd = component.getSidebarItems();
         expect(sidebarItemsProd.some((item) => item.title.includes('Practice'))).toBeFalsy();
     });

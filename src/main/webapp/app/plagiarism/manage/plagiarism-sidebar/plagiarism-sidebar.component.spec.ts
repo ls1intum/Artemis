@@ -103,13 +103,10 @@ describe('Plagiarism Sidebar Component', () => {
             { id: 12 } as PlagiarismComparison,
         ];
         const pagedComparisons = comparisons.slice(0, 10);
-        comp.comparisons = comparisons;
+        fixture.componentRef.setInput('comparisons', comparisons);
         comp.ngOnChanges({
-            comparisons: {
-                currentValue: comparisons,
-            } as SimpleChange,
+            comparisons: new SimpleChange([], comparisons, true),
         });
-
         expect(comp.currentPage).toBe(0);
         expect(comp.numberOfPages).toBe(2);
         expect(comp.pagedComparisons).toEqual(pagedComparisons);

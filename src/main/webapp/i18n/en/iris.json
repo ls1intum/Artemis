@@ -141,6 +141,14 @@
             },
             "controlCenter": {
                 "tooltip": "By toggling you enable or disable ALL Iris features for this course. For a more precise control, please use the Iris settings by clicking on Custom."
+            },
+            "chatHistory": {
+                "title": "Chats",
+                "today": "Today",
+                "yesterday": "Yesterday",
+                "last7Days": "Last 7 Days",
+                "last30Days": "Last 30 Days",
+                "older": "Older"
             }
         }
     }

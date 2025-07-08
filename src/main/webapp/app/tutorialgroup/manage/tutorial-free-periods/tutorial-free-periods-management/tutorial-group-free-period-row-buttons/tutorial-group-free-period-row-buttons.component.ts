@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, OnDestroy, Output, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output } from '@angular/core';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { EMPTY, Subject, from } from 'rxjs';
@@ -32,8 +32,8 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     tutorialGroupConfiguration = input.required<TutorialGroupsConfiguration>();
     tutorialFreePeriod = input.required<TutorialGroupFreePeriod>();
 
-    @Output() tutorialFreePeriodDeleted = new EventEmitter<void>();
-    @Output() tutorialFreePeriodEdited = new EventEmitter<void>();
+    readonly tutorialFreePeriodDeleted = output<void>();
+    readonly tutorialFreePeriodEdited = output<void>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 

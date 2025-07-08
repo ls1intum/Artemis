@@ -109,13 +109,21 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected readonly CachingStrategy = CachingStrategy;
 
     constructor() {
-        // Use effect to react to navigation changes
         effect(() => {
-            // This effect will run whenever navigationEnd signal changes
             const navEvent = this.navigationEnd();
 
             if (navEvent) {
                 this.handleNavigationEndActions();
+            }
+        });
+
+        effect(() => {
+            const updatedCourse = this.course();
+            const communicationRouteLoaded = this.communicationRouteLoaded();
+            if (isCommunicationEnabled(updatedCourse) && communicationRouteLoaded) {
+                this.setupConversationService();
+            } else if (!isCommunicationEnabled(updatedCourse) && this.conversationServiceInstantiated()) {
+                this.disableConversationService();
             }
         });
     }
@@ -199,6 +207,11 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.ngUnsubscribe.complete();
     }
 
+    private disableConversationService() {
+        this.conversationServiceInstantiated.set(false);
+        this.metisConversationService.disableConversationService();
+    }
+
     /** Initialize courses attribute by retrieving all courses from the server */
     async updateRecentlyAccessedCourses() {
         this.dashboardSubscription = this.courseManagementService.findAllForDropdown().subscribe({
@@ -230,8 +243,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.communicationRouteLoaded.set(urlSegments.length > 3 && urlSegments[3] === 'communication');
 
         this.hasSidebar.set(this.getHasSidebar());
-        this.setupConversationService();
-
         if (componentRef.controlConfiguration) {
             const provider = componentRef;
             this.controlConfiguration.set(provider.controlConfiguration);
