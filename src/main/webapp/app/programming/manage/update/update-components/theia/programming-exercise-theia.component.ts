@@ -70,9 +70,12 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
                 this.theiaImages = images;
 
                 // Set the first image as default if none is selected and not in the language-specified ones
-                if (this.programmingExercise && this.programmingExercise.buildConfig && 
-                    (!this.programmingExercise.buildConfig.theiaImage || !Object.values(images).includes(this.programmingExercise.buildConfig.theiaImage)) && 
-                    Object.values(images).length > 0) {
+                if (
+                    this.programmingExercise &&
+                    this.programmingExercise.buildConfig &&
+                    (!this.programmingExercise.buildConfig.theiaImage || !Object.values(images).includes(this.programmingExercise.buildConfig.theiaImage)) &&
+                    Object.values(images).length > 0
+                ) {
                     this.programmingExercise.buildConfig.theiaImage = Object.values(images).first() as string;
                 }
             },
