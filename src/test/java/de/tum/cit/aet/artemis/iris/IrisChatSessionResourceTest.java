@@ -57,7 +57,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
 
-    private ProgrammingExercise soloExercise;
+    private ProgrammingExercise programmingExercise;
 
     private TextExercise textExercise;
 
@@ -79,7 +79,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         studentParticipation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         studentParticipationRepository.save(studentParticipation);
 
-        soloExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExercise teamExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         teamExercise.setMode(ExerciseMode.TEAM);
         programmingExerciseRepository.save(teamExercise);
@@ -97,7 +97,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         activateIrisFor(course);
         activateIrisFor(textExercise);
         activateIrisFor(teamExercise);
-        activateIrisFor(soloExercise);
+        activateIrisFor(programmingExercise);
     }
 
     @Test
@@ -126,7 +126,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         irisSessionRepository.save(IrisChatSessionFactory.createCourseChatSessionForUser(course, user));
         irisSessionRepository.save(IrisChatSessionFactory.createLectureSessionForUser(lecture, user));
         irisSessionRepository.save(IrisChatSessionFactory.createTextExerciseChatSessionForUser(textExercise, user));
-        irisSessionRepository.save(IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(soloExercise, user));
+        irisSessionRepository.save(IrisChatSessionFactory.createProgrammingExerciseChatSessionForUser(programmingExercise, user));
 
         List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
         assertThat(irisChatSessions).hasSize(0);
@@ -145,14 +145,25 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         saveChatSessionWithMessages(IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user));
         saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
         saveChatSessionWithMessages(IrisChatSessionFactory.createTextExerciseSessionForUserWithMessages(textExercise, user));
-        saveChatSessionWithMessages(IrisChatSessionFactory.createProgrammingExerciseChatSessionForUserWithMessages(soloExercise, user));
+        saveChatSessionWithMessages(IrisChatSessionFactory.createProgrammingExerciseChatSessionForUserWithMessages(programmingExercise, user));
 
         List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
 
         assertThat(irisChatSessions).hasSize(4);
-        assertThat(irisChatSessions.stream().anyMatch(session -> session.entityId().equals(lecture.getId()))).isTrue();
-        assertThat(irisChatSessions.stream().anyMatch(session -> session.entityId().equals(course.getId()))).isTrue();
-        assertThat(irisChatSessions.stream().anyMatch(session -> session.entityId().equals(textExercise.getId()))).isTrue();
-        assertThat(irisChatSessions.stream().anyMatch(session -> session.entityId().equals(soloExercise.getId()))).isTrue();
+        var lectureSession = irisChatSessions.stream().filter(session -> session.entityId().equals(lecture.getId())).findFirst()
+                .orElseThrow(() -> new AssertionError("Lecture session not found"));
+
+        var courseSession = irisChatSessions.stream().filter(session -> session.entityId().equals(course.getId())).findFirst()
+                .orElseThrow(() -> new AssertionError("Course session not found"));
+
+        var textExerciseSession = irisChatSessions.stream().filter(session -> session.entityId().equals(textExercise.getId())).findFirst()
+                .orElseThrow(() -> new AssertionError("Text exercise session not found"));
+
+        var programmingExerciseSession = irisChatSessions.stream().filter(session -> session.entityId().equals(programmingExercise.getId())).findFirst()
+                .orElseThrow(() -> new AssertionError("Programming exercise session not found"));
+
+        assertThat(lectureSession.entityName()).isEqualTo(lecture.getTitle());
+        assertThat(textExerciseSession.entityName()).isEqualTo(textExercise.getShortName());
+        assertThat(programmingExerciseSession.entityName()).isEqualTo(programmingExercise.getShortName());
     }
 }
