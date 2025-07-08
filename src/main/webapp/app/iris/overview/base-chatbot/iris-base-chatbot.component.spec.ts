@@ -34,7 +34,7 @@ import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model'
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
+import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 
 describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
@@ -651,7 +651,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should switch to the selected session on session click', () => {
-        const mockSession: IrisSession = { id: 2, messages: [], creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1 };
+        const mockSession: IrisSessionDTO = { id: 2, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Course 1' };
         const switchToSessionSpy = jest.spyOn(chatService, 'switchToSession').mockReturnValue();
 
         component.onSessionClick(mockSession);
@@ -679,11 +679,35 @@ describe('IrisBaseChatbotComponent', () => {
 
     describe('getSessionsBetween', () => {
         const mockDate = new Date('2025-06-23T12:00:00.000Z');
-        const sessionToday: IrisSession = { id: 1, messages: [], creationDate: new Date('2025-06-23T10:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
-        const sessionYesterday: IrisSession = { id: 2, messages: [], creationDate: new Date('2025-06-22T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
-        const session7DaysAgo: IrisSession = { id: 3, messages: [], creationDate: new Date('2025-06-16T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
-        const session8DaysAgo: IrisSession = { id: 4, messages: [], creationDate: new Date('2025-06-15T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
-        const session30DaysAgo: IrisSession = { id: 5, messages: [], creationDate: new Date('2025-05-24T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
+        const sessionToday: IrisSessionDTO = { id: 1, creationDate: new Date('2025-06-23T10:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Course 1' };
+        const sessionYesterday: IrisSessionDTO = {
+            id: 2,
+            creationDate: new Date('2025-06-22T12:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+        const session7DaysAgo: IrisSessionDTO = {
+            id: 3,
+            creationDate: new Date('2025-06-16T12:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+        const session8DaysAgo: IrisSessionDTO = {
+            id: 4,
+            creationDate: new Date('2025-06-15T12:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+        const session30DaysAgo: IrisSessionDTO = {
+            id: 5,
+            creationDate: new Date('2025-05-24T12:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
 
         const unsortedSessions = [session7DaysAgo, sessionToday, session30DaysAgo, sessionYesterday, session8DaysAgo];
 
@@ -754,12 +778,12 @@ describe('IrisBaseChatbotComponent', () => {
                 component['currentChatMode'].set(session.chatMode);
                 component['currentRelatedEntityId'].set(session.entityId);
             });
-            const session: IrisSession = {
+            const session: IrisSessionDTO = {
                 id: 10,
-                messages: [],
                 creationDate: new Date(),
                 chatMode: ChatServiceMode.LECTURE,
                 entityId: 55,
+                entityName: 'Lecture 1',
             };
             fixture.componentRef.setInput('isChatHistoryAvailable', true);
 
@@ -773,12 +797,12 @@ describe('IrisBaseChatbotComponent', () => {
         }));
 
         it('should display correct related entity button when programming exercise session selected', fakeAsync(() => {
-            const session: IrisSession = {
+            const session: IrisSessionDTO = {
                 id: 11,
-                messages: [],
                 creationDate: new Date(),
                 chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
                 entityId: 99,
+                entityName: 'Exercise 1',
             };
             jest.spyOn(chatService, 'switchToSession').mockImplementation(() => {
                 component['currentChatMode'].set(session.chatMode);
