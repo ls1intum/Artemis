@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import io.grpc.StatusRuntimeException;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 
 /**
@@ -61,7 +60,7 @@ public class HyperionReviewAndRefineService extends AbstractHyperionGrpcService 
      * @param user     the user executing the check
      * @param exercise the programming exercise to check
      * @return the consistency check result with any found inconsistencies
-     * @throws HyperionServiceException if the service call fails
+     * @throws HttpStatusException if the service call fails
      */
     public String checkConsistency(User user, ProgrammingExercise exercise) {
         log.info("Performing consistency check for exercise {} by user {}", exercise.getId(), user.getLogin());
@@ -89,7 +88,7 @@ public class HyperionReviewAndRefineService extends AbstractHyperionGrpcService 
      * @param user             the user requesting the rewrite
      * @param problemStatement the problem statement text to be rewritten
      * @return the rewritten problem statement
-     * @throws HyperionServiceException if the service call fails
+     * @throws HttpStatusException if the service call fails
      */
     public String rewriteProblemStatement(User user, String problemStatement) {
         log.info("Rewriting problem statement for user {}", user.getLogin());
@@ -104,9 +103,9 @@ public class HyperionReviewAndRefineService extends AbstractHyperionGrpcService 
             return response.getRewrittenText();
 
         }
-        catch (StatusRuntimeException e) {
-            log.error("Failed to rewrite problem statement for user {}: {}", user.getLogin(), e.getMessage(), e);
-            throw new HyperionServiceException("Problem statement rewriting failed", e);
+        catch (Exception e) {
+            handleGrpcException("problem statement rewriting for user " + user.getLogin(), e);
+            return null; // unreachable due to exception
         }
     }
 
