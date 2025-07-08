@@ -52,6 +52,7 @@ public class QuizQuestionProgressService {
      *
      * @param quizExercise   The quiz exercise for which the progress is to be retrieved
      * @param quizSubmission The quiz submission containing the user's answers
+     * @param participation  The student participation for the submission
      */
     public void retrieveProgressFromResultAndSubmission(QuizExercise quizExercise, QuizSubmission quizSubmission, StudentParticipation participation) {
         ZonedDateTime lastAnsweredAt = quizSubmission.getSubmissionDate();
@@ -119,6 +120,7 @@ public class QuizQuestionProgressService {
      *
      * @param answeredQuestions List of quiz questions that were answered
      * @param lastAnsweredAt    Time when the question was last answered
+     * @param userId            The ID of the user for the participation
      */
     public void updateProgress(Map<QuizQuestion, QuizQuestionProgressDataDAO> answeredQuestions, ZonedDateTime lastAnsweredAt, Long userId) {
         answeredQuestions.forEach((question, data) -> {
@@ -223,6 +225,7 @@ public class QuizQuestionProgressService {
      *
      * @param sessionCount The number of sessions in which the question has been answered
      * @param interval     The interval for the next session in which the question should be repeated
+     * @param score        The score achieved for the question
      * @return The priority for the question, which is higher the lower the number
      */
     public int calculatePriority(int sessionCount, int interval, double score) {
