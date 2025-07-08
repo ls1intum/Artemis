@@ -14,10 +14,11 @@
         </div>
     }
     @let contextIconAndTooltipKey = iconAndTooltipKey;
-    @if (contextIconAndTooltipKey) {
+    @let relatedEntityName = session()?.entityName;
+    @if (contextIconAndTooltipKey && relatedEntityName) {
         <div class="related-entity-info">
             <div class="related-entity-name">
-                {{ session().entityName }}
+                {{ relatedEntityName }}
             </div>
             <fa-icon [icon]="contextIconAndTooltipKey.icon" [ngbTooltip]="contextIconAndTooltipKey.tooltipKey | artemisTranslate" />
         </div>
