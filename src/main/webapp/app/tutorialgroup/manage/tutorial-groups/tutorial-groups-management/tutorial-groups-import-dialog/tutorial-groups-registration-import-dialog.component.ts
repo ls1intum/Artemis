@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, input } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, inject, input, viewChild } from '@angular/core';
 import { faBan, faCheck, faCircleNotch, faFileImport, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { cleanString } from 'app/shared/util/utils';
 import { ParseResult, parse } from 'papaparse';
@@ -56,8 +56,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     private csvDownloadService = inject(CsvDownloadService);
 
     ngUnsubscribe = new Subject<void>();
-
-    @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
+    fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     selectedFile?: File;
 
     courseId = input.required<number>();
@@ -288,7 +287,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     }
 
     resetFileUpload() {
-        this.fileInput.nativeElement.value = ''; // remove selected file so user can fix the file and select it again
+        this.fileInput().nativeElement.value = ''; // remove selected file so user can fix the file and select it again
         this.selectedFile = undefined;
     }
 

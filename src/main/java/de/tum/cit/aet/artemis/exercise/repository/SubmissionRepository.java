@@ -577,4 +577,17 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 AND s.submitted = TRUE
             """)
     boolean existsByExerciseIdAndParticipantIdAndSubmitted(@Param("exerciseId") long exerciseId, @Param("userId") long userId);
+
+    @Query("""
+            SELECT s
+            FROM Submission s
+            WHERE s.participation.id = :participationId
+              AND s.id = (
+              SELECT MAX(s2.id)
+              FROM Submission s2
+              WHERE s2.participation.id = :participationId
+                 )
+             """)
+    Optional<Submission> findLatestSubmissionByParticipationId(@Param("participationId") long participationId);
+
 }
