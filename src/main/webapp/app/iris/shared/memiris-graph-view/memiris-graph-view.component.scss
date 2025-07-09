@@ -155,6 +155,10 @@
         }
     }
 
+    .link-arrow {
+        fill: var(--memiris-memory-memory-link-color);
+    }
+
     text {
         font-family: sans-serif;
         fill: var(--memiris-node-label-color);
