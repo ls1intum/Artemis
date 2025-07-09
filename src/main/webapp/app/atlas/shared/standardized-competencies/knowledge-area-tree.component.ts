@@ -1,5 +1,4 @@
-import { NestedTreeControl } from '@angular/cdk/tree';
-import { Component, TemplateRef, contentChild, input } from '@angular/core';
+import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeAreaForTree } from 'app/atlas/shared/entities/standardized-competency.model';
 import { MatTreeModule, MatTreeNestedDataSource } from '@angular/material/tree';
@@ -16,13 +15,32 @@ import { CommonModule } from '@angular/common';
     imports: [MatTreeModule, FaIconComponent, NgbCollapse, TranslateDirective, CommonModule],
 })
 export class KnowledgeAreaTreeComponent {
-    dataSource = input<MatTreeNestedDataSource<KnowledgeAreaForTree>>(new MatTreeNestedDataSource<KnowledgeAreaForTree>());
-    treeControl = input<NestedTreeControl<KnowledgeAreaForTree>>(new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children));
-    knowledgeAreaTemplate = contentChild<TemplateRef<any>>('knowledgeAreaTemplate');
-    competencyTemplate = contentChild<TemplateRef<any>>('competencyTemplate');
+    @Input() dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
 
-    //Icons
+    @ContentChild('knowledgeAreaTemplate', { static: true })
+    knowledgeAreaTemplate!: TemplateRef<any>;
+
+    @ContentChild('competencyTemplate', { static: true })
+    competencyTemplate!: TemplateRef<any>;
+
+    childrenAccessor = (node: KnowledgeAreaForTree) => node.children;
+
     protected readonly faChevronRight = faChevronRight;
-    //constants
-    readonly trackBy = (_: number, node: KnowledgeAreaForTree) => node.id;
+
+    readonly trackBy = (_: number, node: KnowledgeAreaForTree) => node.id!;
+
+    expandedNodes = new Set<number>();
+
+    isExpanded(node: KnowledgeAreaForTree): boolean {
+        return node.id !== undefined && this.expandedNodes.has(node.id);
+    }
+
+    toggleNode(node: KnowledgeAreaForTree): void {
+        if (node.id === undefined) return;
+        if (this.isExpanded(node)) {
+            this.expandedNodes.delete(node.id);
+        } else {
+            this.expandedNodes.add(node.id);
+        }
+    }
 }

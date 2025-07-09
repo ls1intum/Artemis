@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, inject, input, output } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, computed, inject, input, output } from '@angular/core';
 import { faFile, faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
 import { MIN_SCORE_GREEN } from 'app/app.constants';
 import { Competency, CompetencyJol, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/atlas/shared/entities/competency.model';
@@ -72,6 +72,10 @@ export class CompetencyAccordionComponent implements OnChanges {
     protected readonly getConfidence = getConfidence;
     protected readonly getMastery = getMastery;
     protected readonly round = round;
+
+    readonly progressSignal = computed(() => this.progress);
+    readonly masterySignal = computed(() => this.mastery);
+    readonly hideProgressSignal = computed(() => this.promptForRating && this.jolRating === undefined);
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.openedIndex && this.index !== this.openedIndex) {
