@@ -64,54 +64,80 @@ public class QuizQuestionProgressService {
             if (answer == null) {
                 continue;
             }
-            QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(null);
-            QuizQuestionProgressData data = new QuizQuestionProgressData();
-            QuizQuestionProgressData.Attempt attempt = new QuizQuestionProgressData.Attempt();
-            if (existingProgress != null) {
-                data = existingProgress.getProgressJson();
-            }
-
-            // Calculate the achieved score for the question
-            double score = question.scoreForAnswer(answer) / question.getPoints();
-            data.setLastScore(score);
-
-            // Set the attempt
-            attempt.setScore(score);
-            attempt.setAnsweredAt(quizSubmission.getSubmissionDate());
-
-            data.addAttempt(attempt);
-
-            // Set the repetition
-            int repetition = calculateRepetition(score, data);
-            data.setRepetition(repetition);
-
-            // Set the easiness factor based on the previous progress or default value & set the interval days & set session count
-            double prevEasinessFactor = 2.5;
-            int prevInterval = 1;
-            int prevSessionCount = 0;
-
-            if (existingProgress != null) {
-                prevEasinessFactor = existingProgress.getProgressJson().getEasinessFactor();
-                prevInterval = existingProgress.getProgressJson().getInterval();
-                prevSessionCount = existingProgress.getProgressJson().getSessionCount();
-            }
-            double easinessFactor = calculateEasinessFactor(score, prevEasinessFactor);
-            data.setEasinessFactor(easinessFactor);
-            int interval = calculateInterval(easinessFactor, prevInterval, repetition);
-            data.setInterval(interval);
-            int sessionCount = prevSessionCount + 1;
-            data.setSessionCount(sessionCount);
-
-            // Set new due date based on the last answered time and calculated interval
-            data.setPriority(calculatePriority(sessionCount, interval, score));
-
-            // Set the box for the question
-            data.setBox(calculateBox(interval));
-
-            // Add the question and its progress data to the map
+            QuizQuestionProgressData data = processQuestionProgress(question, answer, quizSubmission, userId);
             answeredQuestions.put(question, data);
         }
         updateProgress(answeredQuestions, lastAnsweredAt, userId);
+    }
+
+    /**
+     * Processes the progress for a single quiz question: retrieves existing progress if available,
+     * calculates the score, adds a new attempt, and updates all relevant fields.
+     *
+     * @param question       The quiz question
+     * @param answer         The submitted answer
+     * @param quizSubmission The entire quiz submission
+     * @param userId         The ID of the user
+     * @return The updated progress data object for the question
+     */
+    private QuizQuestionProgressData processQuestionProgress(QuizQuestion question, SubmittedAnswer answer, QuizSubmission quizSubmission, Long userId) {
+        QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(null);
+        QuizQuestionProgressData data = existingProgress != null ? existingProgress.getProgressJson() : new QuizQuestionProgressData();
+
+        double score = question.scoreForAnswer(answer) / question.getPoints();
+        updateProgressWithNewAttempt(data, score, quizSubmission.getSubmissionDate());
+
+        updateProgressCalculations(data, score, existingProgress);
+
+        return data;
+    }
+
+    /**
+     * Adds a new attempt with the current score and answer time to the progress data.
+     *
+     * @param data       The progress data object for the question
+     * @param score      The achieved score for the question
+     * @param answeredAt The time when the question was answered
+     */
+    private void updateProgressWithNewAttempt(QuizQuestionProgressData data, double score, ZonedDateTime answeredAt) {
+        QuizQuestionProgressData.Attempt attempt = new QuizQuestionProgressData.Attempt();
+        attempt.setScore(score);
+        attempt.setAnsweredAt(answeredAt);
+        data.addAttempt(attempt);
+        data.setLastScore(score);
+    }
+
+    /**
+     * Updates the repetition count, easiness factor, interval, session count, priority, and box in the progress data.
+     *
+     * @param data             The progress data object for the question
+     * @param score            The achieved score for the question
+     * @param existingProgress The previous progress (can be null)
+     */
+    private void updateProgressCalculations(QuizQuestionProgressData data, double score, QuizQuestionProgress existingProgress) {
+        int repetition = calculateRepetition(score, data);
+        data.setRepetition(repetition);
+
+        double prevEasinessFactor = 2.5;
+        int prevInterval = 1;
+        int prevSessionCount = 0;
+
+        if (existingProgress != null) {
+            QuizQuestionProgressData prevData = existingProgress.getProgressJson();
+            prevEasinessFactor = prevData.getEasinessFactor();
+            prevInterval = prevData.getInterval();
+            prevSessionCount = prevData.getSessionCount();
+        }
+
+        double easinessFactor = calculateEasinessFactor(score, prevEasinessFactor);
+        data.setEasinessFactor(easinessFactor);
+        int interval = calculateInterval(easinessFactor, prevInterval, repetition);
+        data.setInterval(interval);
+        int sessionCount = prevSessionCount + 1;
+        data.setSessionCount(sessionCount);
+
+        data.setPriority(calculatePriority(sessionCount, interval, score));
+        data.setBox(calculateBox(interval));
     }
 
     /**
