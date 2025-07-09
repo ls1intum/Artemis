@@ -19,10 +19,6 @@ logging:
         de.tum.cit.aet.artemis: DEBUG
         tech.jhipster: DEBUG
         liquibase: ERROR
-        javax.management.remote.rmi: WARN
-        de.tum.cit.aet.artemis.core.config.BeanInstantiationTracer: INFO
-        de.tum.cit.aet.artemis.core.config.BeanInstantiationLogger: INFO
-        de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer: INFO
 
 spring:
     devtools:

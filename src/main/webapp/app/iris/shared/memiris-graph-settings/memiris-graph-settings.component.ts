@@ -9,7 +9,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-memiris-graph-settings',
     imports: [FormsModule, FontAwesomeModule, ArtemisTranslatePipe],
     templateUrl: './memiris-graph-settings.component.html',
-    styleUrl: './memiris-graph-settings.component.scss',
 })
 export class MemirisGraphSettingsComponent {
     settings = model(new MemirisGraphSettings());
