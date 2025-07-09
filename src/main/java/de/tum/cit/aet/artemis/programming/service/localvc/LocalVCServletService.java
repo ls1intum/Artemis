@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonal
 import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -478,7 +479,12 @@ public class LocalVCServletService {
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
         var urlString = request.getRequestURL().toString().replace("/info/refs", "");
         log.info("parseRepositoryUri; urlString: {}, localVCBaseUrl: {}", urlString, localVCBaseUrl);
-        return new LocalVCRepositoryUri(Path.of(urlString), localVCBaseUrl);
+        try {
+            return new LocalVCRepositoryUri(Path.of(urlString), new URL(localVCBaseUrl.toString().replace("49152", "8000")));
+        }
+        catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private LocalVCRepositoryUri parseRepositoryUri(Path repositoryPath) {
