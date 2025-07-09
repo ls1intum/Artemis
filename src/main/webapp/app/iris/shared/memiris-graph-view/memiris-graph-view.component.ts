@@ -96,6 +96,9 @@ export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
     private height = 0;
     private graphGroup: Selection<SVGGElement, unknown, null, undefined>;
 
+    // Define padding for collision detection
+    private PADDING = 8;
+
     ngOnInit(): void {
         this.subscriptions.push(
             this.translateService.onLangChange.subscribe(() => {
@@ -267,12 +270,9 @@ export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
 
         this.updateGraph();
 
-        // Define padding for collision detection
-        const PADDING = 8; // extra "personal-space" in pixels
-
         // 1. Setup dynamic collision force with proper radius for each node
         const collide = forceCollide<MemirisSimulationNode>()
-            .radius((node: MemirisSimulationNode) => this.getNodeRadius(node) + PADDING) // Use node's actual radius + padding
+            .radius((node: MemirisSimulationNode) => this.getNodeRadius(node) + this.PADDING)
             .iterations(2); // Run collision detection twice per tick for better resolution
 
         // 2. Setup charge force with stronger repulsion for memory nodes
@@ -286,9 +286,6 @@ export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
             .distance((link: MemirisSimulationLink) => this.getLinkDistance(link))
             .strength(0.1); // Mid-range spring strength
 
-        // 4. Setup center force with mild strength
-        // const center = forceCenter(this.width / 2, this.height / 2).strength(0.05);
-
         // 5. Configure the simulation with all forces
         this.simulation = forceSimulation<MemirisSimulationNode>(this.nodes)
             .force('link', link)
@@ -296,7 +293,7 @@ export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
             .force('collide', collide)
             .force('x', forceX(this.width / 2).strength(0.0001))
             .force('y', forceY(this.height / 2).strength(0.0001))
-            .alpha(1) // Start with high energy
+            .alpha(2) // Start with high energy
             .alphaDecay(0.03) // Cool down slower to resolve overlaps
             .velocityDecay(0.25) // Lower velocity decay to maintain momentum longer
             .on('tick', () => this.updatePositions());
