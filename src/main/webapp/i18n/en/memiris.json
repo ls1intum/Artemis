@@ -1,0 +1,62 @@
+{
+    "artemisApp": {
+        "memiris": {
+            "breadcrumb": "Memiris",
+            "admin": {
+                "title": "Memiris Admin Panel",
+                "graphTitle": "Memory Graph"
+            },
+            "memory": {
+                "singular": "Memory",
+                "plural": "Memories"
+            },
+            "learning": {
+                "singular": "Learning",
+                "plural": "Learnings"
+            },
+            "connection": {
+                "memory-memory": "Memory to Memory Connection",
+                "memory-learning": "Memory to Learning Connection",
+                "related": {
+                    "name": "Related",
+                    "graphName": "related",
+                    "action": "Related to {{ memory }}",
+                    "description": "The memories are conceptually related to each other while not being duplicates or contradicting each other."
+                },
+                "contradicts": {
+                    "name": "Contradicts",
+                    "graphName": "contradicts",
+                    "action": "Contradicts {{ memory }}",
+                    "description": "The memories contradict each other, meaning they cannot both be true at the same time."
+                },
+                "same_topic": {
+                    "name": "Same Topic",
+                    "graphName": "same topic",
+                    "action": "Same Topic as {{ memory }}",
+                    "description": "The memories are about the same topic, but they do not contradict each other."
+                },
+                "duplicate": {
+                    "name": "Duplicate",
+                    "graphName": "duplicate",
+                    "action": "Duplicate of {{ memory }}",
+                    "description": "The memories are duplicates of each other, meaning they contain (partially) the same information."
+                },
+                "created_from": {
+                    "name": "Created From",
+                    "graphName": "created from",
+                    "actionFrom": "Created from {{ memory }}",
+                    "actionTo": "Used to create {{ memory }}",
+                    "description": "One memory was created from multiple other memories, meaning it contains the aggregated information from those memories."
+                }
+            },
+            "graphSettings": {
+                "title": "Settings",
+                "otherTitle": "Other",
+                "showMemories": "Show Memories",
+                "hideDeleted": "Hide Deleted",
+                "showLearnings": "Show Learnings",
+                "showConnections": "Show Connections"
+            }
+        }
+    }
+}

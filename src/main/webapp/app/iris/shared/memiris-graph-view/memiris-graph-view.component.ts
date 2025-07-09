@@ -1,11 +1,11 @@
-import { Component, ElementRef, OnChanges, OnDestroy, SimpleChanges, computed, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, computed, inject, input, output, viewChild } from '@angular/core';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { faArrowsToEye, faHexagonNodes, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
     MemirisConnectionType,
     MemirisGraphData,
-    MemirisGraphFilters,
+    MemirisGraphSettings,
     MemirisLearningNode,
     MemirisMemoryNode,
     MemirisSimulationLink,
@@ -34,6 +34,9 @@ import {
     zoomIdentity,
 } from 'd3';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
 
 /**
  * The MemirisGraphViewComponent is responsible for rendering and managing an interactive graph visualization.
@@ -41,27 +44,29 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
  *
  * The component offers dynamic features such as zooming, panning, and node highlighting.
  * It responds to changes in its inputs, automatically updating the graph visualization when the data,
- * filters, or selected node are modified.
+ * settings, or selected node are modified.
  *
  * Features:
  * - Displays nodes representing memories and learnings.
  * - Renders links showing relationships or connections between the nodes.
- * - Integrates filtering, allowing the graph to adapt based on provided filters.
+ * - Integrates filtering, allowing the graph to adapt based on provided settings.
  * - Supports zooming and panning for better navigation through the graph.
  * - Highlights nodes when they are selected.
  */
 @Component({
     selector: 'jhi-memiris-graph-view',
-    imports: [LoadingIndicatorContainerComponent, FontAwesomeModule, ButtonComponent],
+    imports: [LoadingIndicatorContainerComponent, FontAwesomeModule, ButtonComponent, ArtemisTranslatePipe],
     templateUrl: './memiris-graph-view.component.html',
     styleUrl: './memiris-graph-view.component.scss',
 })
-export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
+export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
     // Inputs and Outputs
     graphData = input<MemirisGraphData>();
     initialSelectedMemoryId = input<string>();
-    filters = input<MemirisGraphFilters>(new MemirisGraphFilters());
+    settings = input<MemirisGraphSettings>(new MemirisGraphSettings());
     nodeSelected = output<MemirisSimulationNode>();
+    artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    translateService = inject(TranslateService);
 
     // Icons
     faPlus = faPlus;
@@ -77,6 +82,7 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
     links: MemirisSimulationLink[] = [];
     allNodes: MemirisSimulationNode[] = [];
     allLinks: MemirisSimulationLink[] = [];
+    subscriptions: Subscription[] = [];
 
     // D3-related properties
     private simulation?: Simulation<MemirisSimulationNode, MemirisSimulationLink> = undefined;
@@ -90,9 +96,17 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
     private height = 0;
     private graphGroup: Selection<SVGGElement, unknown, null, undefined>;
 
+    ngOnInit(): void {
+        this.subscriptions.push(
+            this.translateService.onLangChange.subscribe(() => {
+                requestAnimationFrame(() => this.updateGraph());
+            }),
+        );
+    }
+
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes['filters']) {
-            this.applyFilters();
+        if (changes['settings']) {
+            this.applySettings();
             requestAnimationFrame(() => this.updateGraph());
         }
 
@@ -113,12 +127,13 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
         if (this.simulation) {
             this.simulation.stop();
         }
+        this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     }
 
     /**
      * Updates the graph data by creating nodes and links based on the provided `MemirisGraphData`.
      * This method processes memories, learnings, and connections to populate the graph structure
-     * and applies filters before then updating the graph visualization.
+     * and applies settings before then updating the graph visualization.
      *
      * @param {MemirisGraphData} data - The input data for the graph, containing memories, learnings, and connections.
      */
@@ -187,7 +202,7 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
             }
         });
 
-        this.applyFilters();
+        this.applySettings();
 
         requestAnimationFrame(() => this.updateGraph());
     }
@@ -290,7 +305,7 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
     /**
      * Updates the graph visualization by binding data to SVG elements,
      * creating or updating nodes, links, and labels based on the current state.
-     * This method is called whenever the graph data or filters change.
+     * This method is called whenever the graph data or settings change.
      */
     updateGraph(): void {
         if (!this.svg) {
@@ -358,7 +373,7 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
             .attr('text-anchor', 'middle')
             .attr('dy', -5)
             .attr('pointer-events', 'none')
-            .text((node: MemirisSimulationLink) => node.getLabel());
+            .text((link: MemirisSimulationLink) => link.getLabel(this.artemisTranslatePipe));
 
         // Restart simulation with new nodes and links
         if (this.simulation) {
@@ -462,31 +477,31 @@ export class MemirisGraphViewComponent implements OnDestroy, OnChanges {
     }
 
     /**
-     * Applies the specified filters to nodes and links in the graph.
+     * Applies the specified settings to nodes and links in the graph.
      * Nodes and links that do not meet the filter criteria are excluded.
      *
      * @return {void} Doesn't return a value.
      */
-    private applyFilters(): void {
-        // Apply filters to nodes
+    private applySettings(): void {
+        // Apply settings to nodes
         this.nodes = this.allNodes.filter((node) => {
             // Filter out memory nodes when showMemories is false
-            if (node instanceof MemirisMemoryNode && !this.filters().showMemories) {
+            if (node instanceof MemirisMemoryNode && !this.settings().showMemories) {
                 return false;
             }
 
             // Filter out learning nodes when showLearnings is false
-            if (node instanceof MemirisLearningNode && !this.filters().showLearnings) {
+            if (node instanceof MemirisLearningNode && !this.settings().showLearnings) {
                 return false;
             }
 
             // Filter out deleted memory nodes when hideDeleted is true
-            return !(node instanceof MemirisMemoryNode && this.filters().hideDeleted && node.memory.deleted);
+            return !(node instanceof MemirisMemoryNode && this.settings().hideDeleted && node.memory.deleted);
         });
 
-        // Apply filters to links
+        // Apply settings to links
         this.links = this.allLinks.filter((link) => {
-            if (!this.filters().showConnections) return false;
+            if (!this.settings().showConnections) return false;
 
             // Only include links where both source and target nodes are visible after filtering
             const sourceId = link.source.getId();

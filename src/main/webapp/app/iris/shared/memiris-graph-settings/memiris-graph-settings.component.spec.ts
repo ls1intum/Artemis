@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MemirisGraphFiltersComponent } from './memiris-graph-filters.component';
+import { MemirisGraphSettingsComponent } from './memiris-graph-settings.component';
 
 describe('MemirisGraphFiltersComponent', () => {
-    let component: MemirisGraphFiltersComponent;
-    let fixture: ComponentFixture<MemirisGraphFiltersComponent>;
+    let component: MemirisGraphSettingsComponent;
+    let fixture: ComponentFixture<MemirisGraphSettingsComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MemirisGraphFiltersComponent],
+            imports: [MemirisGraphSettingsComponent],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(MemirisGraphFiltersComponent);
+        fixture = TestBed.createComponent(MemirisGraphSettingsComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });

@@ -1,0 +1,39 @@
+<h3>{{ 'artemisApp.memiris.graphSettings.title' | artemisTranslate }}</h3>
+<hr class="mb-1 mt-1" />
+<hr class="mt-0" />
+<h4>{{ 'artemisApp.memiris.memory.plural' | artemisTranslate }}</h4>
+<div class="form-check">
+    <input id="showMemories" type="checkbox" class="form-check-input" [checked]="settings().showMemories" (change)="updateSetting($event, 'showMemories')" />
+    <label class="form-check-label" for="showMemories">
+        <fa-icon [icon]="faBrain" class="me-1" />
+        {{ 'artemisApp.memiris.graphSettings.showMemories' | artemisTranslate }}
+    </label>
+</div>
+
+<div class="form-check">
+    <input id="hideDeleted" type="checkbox" class="form-check-input" [checked]="settings().hideDeleted" (change)="updateSetting($event, 'hideDeleted')" />
+    <label class="form-check-label" for="hideDeleted">
+        <fa-icon [icon]="faTrash" class="me-1" />
+        {{ 'artemisApp.memiris.graphSettings.hideDeleted' | artemisTranslate }}
+    </label>
+</div>
+<hr />
+
+<h4>{{ 'artemisApp.memiris.learning.plural' | artemisTranslate }}</h4>
+<div class="form-check">
+    <input id="showLearnings" type="checkbox" class="form-check-input" [checked]="settings().showLearnings" (change)="updateSetting($event, 'showLearnings')" />
+    <label class="form-check-label" for="showLearnings">
+        <fa-icon [icon]="faBookOpen" class="me-1" />
+        {{ 'artemisApp.memiris.graphSettings.showLearnings' | artemisTranslate }}
+    </label>
+</div>
+
+<hr />
+<h4>{{ 'artemisApp.memiris.graphSettings.otherTitle' | artemisTranslate }}</h4>
+<div class="form-check">
+    <input id="showConnections" type="checkbox" class="form-check-input" [checked]="settings().showConnections" (change)="updateSetting($event, 'showConnections')" />
+    <label class="form-check-label" for="showConnections">
+        <fa-icon [icon]="faCircleNodes" class="me-1" />
+        {{ 'artemisApp.memiris.graphSettings.showConnections' | artemisTranslate }}
+    </label>
+</div>

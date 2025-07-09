@@ -1,4 +1,5 @@
 import { SimulationLinkDatum, SimulationNodeDatum } from 'd3';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export class MemirisLearning {
     id: string;
@@ -125,7 +126,7 @@ export abstract class MemirisSimulationLink implements SimulationLinkDatum<Memir
     index?: number;
 
     abstract getId(): string;
-    abstract getLabel(): string;
+    abstract getLabel(translatePipe: ArtemisTranslatePipe): string;
 }
 
 export class MemirisSimulationLinkMemoryMemory extends MemirisSimulationLink {
@@ -142,8 +143,8 @@ export class MemirisSimulationLinkMemoryMemory extends MemirisSimulationLink {
         return this.connection.id;
     }
 
-    getLabel(): string {
-        return this.connection.connection_type.toLowerCase();
+    getLabel(translatePipe: ArtemisTranslatePipe): string {
+        return translatePipe.transform(`artemisApp.memiris.connection.${this.connection.connection_type.toLowerCase()}.graphName`, {});
     }
 }
 
@@ -162,14 +163,19 @@ export class MemirisSimulationLinkMemoryLearning extends MemirisSimulationLink {
     getId(): string {
         return `${this.memory.id}-${this.learning.id}`;
     }
-    getLabel(): string {
+    getLabel(_translatePipe: ArtemisTranslatePipe): string {
         return '';
     }
 }
 
-export class MemirisGraphFilters {
+export class MemirisGraphSettings {
+    // Memory settings
     showMemories: boolean = true;
-    showLearnings: boolean = true;
-    showConnections: boolean = true;
+    showMemoryLabels: boolean = true;
     hideDeleted: boolean = true;
+    // Learning settings
+    showLearnings: boolean = true;
+    showLearningLabels: boolean = true;
+    // Other settings
+    showConnections: boolean = true;
 }

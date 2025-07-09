@@ -8,9 +8,8 @@
 .graph-wrapper {
     flex: 1;
     position: relative;
-    background-color: white;
+    background-color: var(--memiris-graph-view-background);
     overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .graph-controls {
@@ -18,9 +17,9 @@
     top: 10px;
     right: 10px;
     z-index: 10;
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: var(--memiris-graph-view-controls-background);
     border-radius: 4px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 5px var(--memiris-graph-shadow);
     padding: 5px;
     display: flex;
     flex-direction: column;
@@ -52,17 +51,17 @@
         font-size: 64px;
         height: 64px;
         width: 64px;
-        color: #ccc;
+        color: var(--memiris-empty-state-icon-color);
     }
 
     h3 {
         margin-top: 15px;
         margin-bottom: 10px;
-        color: #555;
+        color: var(--memiris-empty-state-title-color);
     }
 
     p {
-        color: #777;
+        color: var(--memiris-empty-state-description-color);
         font-size: 14px;
     }
 }
@@ -85,11 +84,11 @@
             border-radius: 6px;
 
             &.memory {
-                background-color: #4f86f7;
+                background-color: var(--memiris-memory-node-color);
             }
 
             &.learning {
-                background-color: #f7a14f;
+                background-color: var(--memiris-learning-node-color);
             }
         }
 
@@ -98,11 +97,11 @@
             height: 2px;
 
             &.memory-memory {
-                background-color: #6c8ebf;
+                background-color: var(--memiris-memory-memory-link-color);
             }
 
             &.memory-learning {
-                background-color: #d79b00;
+                background-color: var(--memiris-memory-learning-link-color);
             }
         }
     }
@@ -111,24 +110,24 @@
 ::ng-deep .memiris-graph-svg {
     .node {
         cursor: pointer;
-        stroke: #fff;
+        stroke: var(--memiris-node-border-color);
         stroke-width: 2px;
 
         &.memory {
-            fill: #4f86f7;
+            fill: var(--memiris-memory-node-color);
         }
 
         &.learning {
-            fill: #f7a14f;
+            fill: var(--memiris-learning-node-color);
         }
 
         &.deleted {
-            stroke: #ff3333;
+            stroke: var(--memiris-deleted-node-color);
             stroke-width: 3px;
         }
 
         &.selected {
-            stroke: #333;
+            stroke: var(--memiris-selected-node-color);
             stroke-width: 3px;
         }
     }
@@ -138,26 +137,26 @@
         stroke-opacity: 0.6;
 
         &.memory-memory {
-            stroke: #6c8ebf;
+            stroke: var(--memiris-memory-memory-link-color);
         }
 
         &.memory-learning {
-            stroke: #d79b00;
+            stroke: var(--memiris-memory-learning-link-color);
         }
     }
 
     .link-label {
         &.memory-memory {
-            fill: #6c8ebf;
+            fill: var(--memiris-memory-memory-link-color);
         }
 
         &.memory-learning {
-            fill: #d79b00;
+            fill: var(--memiris-memory-learning-link-color);
         }
     }
 
     text {
         font-family: sans-serif;
-        fill: #333;
+        fill: var(--memiris-node-label-color);
     }
 }

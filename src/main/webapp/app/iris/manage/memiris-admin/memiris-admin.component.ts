@@ -1,19 +1,19 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MemirisGraphViewComponent } from 'app/iris/shared/memiris-graph-view/memiris-graph-view.component';
-import { MemirisConnectionType, MemirisGraphData, MemirisGraphFilters, MemirisLearning, MemirisMemory, MemirisMemoryConnection } from 'app/iris/shared/entities/memiris.model';
+import { MemirisConnectionType, MemirisGraphData, MemirisGraphSettings, MemirisLearning, MemirisMemory, MemirisMemoryConnection } from 'app/iris/shared/entities/memiris.model';
 import { v4 as uuid } from 'uuid';
-import { MemirisGraphFiltersComponent } from 'app/iris/shared/memiris-graph-filters/memiris-graph-filters.component';
+import { MemirisGraphSettingsComponent } from 'app/iris/shared/memiris-graph-settings/memiris-graph-settings.component';
 
 @Component({
     selector: 'jhi-memiris-admin',
-    imports: [TranslateDirective, MemirisGraphViewComponent, MemirisGraphFiltersComponent],
+    imports: [TranslateDirective, MemirisGraphViewComponent, MemirisGraphSettingsComponent],
     templateUrl: './memiris-admin.component.html',
     styleUrl: './memiris-admin.component.scss',
 })
 export class MemirisAdminComponent implements OnInit {
     graphData?: MemirisGraphData;
-    readonly filters = signal(new MemirisGraphFilters());
+    readonly settings = signal(new MemirisGraphSettings());
 
     ngOnInit(): void {
         setTimeout(() => {
