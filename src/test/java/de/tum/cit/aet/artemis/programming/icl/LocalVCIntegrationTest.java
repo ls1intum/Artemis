@@ -364,18 +364,22 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         }
     }
 
+    // TODO: Re-enable all tests in this file, once the port-mismatch bug has been addressed.
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesCustomBranchAllowedMatchesRegex() throws Exception {
         customBranchTestHelper(true, "^new-branch$", true);
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesCustomBranchDisallowedDoesntMatchRegex() throws Exception {
         customBranchTestHelper(true, "^old-branch$", false);
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesCustomBranchDisallowedBranchingDisabled() throws Exception {
