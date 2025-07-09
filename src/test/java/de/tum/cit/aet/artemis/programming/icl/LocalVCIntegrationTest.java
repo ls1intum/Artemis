@@ -266,7 +266,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     // TODO add test for force push over ssh, which should work
-    @Disabled
+    // @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorTriesToForcePushOverHttp() throws Exception {
