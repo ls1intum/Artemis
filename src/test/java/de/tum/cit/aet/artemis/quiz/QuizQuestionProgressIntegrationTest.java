@@ -263,6 +263,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(quizQuestionProgressService.calculateRepetition(1, data)).isEqualTo(0);
         QuizQuestionProgressData.Attempt attempt1 = new QuizQuestionProgressData.Attempt();
         QuizQuestionProgressData.Attempt attempt2 = new QuizQuestionProgressData.Attempt();
+        QuizQuestionProgressData.Attempt attempt3 = new QuizQuestionProgressData.Attempt();
         attempt1.setScore(1);
         attempt2.setScore(1);
         quizQuestionProgress.getProgressJson().setAttempts(List.of(attempt1));
@@ -271,7 +272,9 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizQuestionProgress.getProgressJson().setAttempts(List.of(attempt1, attempt2));
         assertThat(quizQuestionProgressService.calculateRepetition(1, quizQuestionProgress.getProgressJson())).isEqualTo(2);
         attempt1.setScore(0);
-        assertThat(quizQuestionProgressService.calculateRepetition(1, quizQuestionProgress.getProgressJson())).isEqualTo(0);
+        attempt3.setScore(1);
+        quizQuestionProgress.getProgressJson().setAttempts(List.of(attempt1, attempt2, attempt3));
+        assertThat(quizQuestionProgressService.calculateRepetition(1, quizQuestionProgress.getProgressJson())).isEqualTo(2);
     }
 
 }

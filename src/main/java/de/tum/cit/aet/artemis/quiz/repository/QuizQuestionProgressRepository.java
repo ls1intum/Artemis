@@ -19,6 +19,6 @@ public interface QuizQuestionProgressRepository extends ArtemisJpaRepository<Qui
 
     Optional<QuizQuestionProgress> findByUserIdAndQuizQuestionId(Long userId, Long quizQuestionId);
 
-    Optional<List<QuizQuestionProgress>> findAllByUserId(Long userId);
+    List<QuizQuestionProgress> findAllByUserId(Long userId);
 
 }

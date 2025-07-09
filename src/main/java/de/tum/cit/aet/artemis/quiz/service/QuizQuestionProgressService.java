@@ -151,7 +151,7 @@ public class QuizQuestionProgressService {
     public List<QuizQuestion> getQuestionsForSession(Long courseId) {
         Set<QuizQuestion> allQuestions = getQuizQuestions(courseId);
         long userId = getUserId();
-        List<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserId(userId).orElse(List.of());
+        List<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserId(userId);
         Map<Long, Integer> priorityMap = progressList.stream()
                 .collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> progress.getProgressJson().getPriority()));
         List<QuizQuestion> selectedQuestions = allQuestions.stream().sorted(Comparator.comparingInt(q -> priorityMap.getOrDefault(q.getId(), 0))).limit(10).toList();
@@ -173,8 +173,8 @@ public class QuizQuestionProgressService {
         int repetition = 0;
         List<QuizQuestionProgressData.Attempt> attempts = data.getAttempts();
         if (attempts != null) {
-            for (QuizQuestionProgressData.Attempt attempt : attempts) {
-                if (attempt.getScore() == 1.0) {
+            for (int i = attempts.size() - 1; i >= 0; i--) {
+                if (attempts.get(i).getScore() == 1.0) {
                     repetition++;
                 }
                 else {
