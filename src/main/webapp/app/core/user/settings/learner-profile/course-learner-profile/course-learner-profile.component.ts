@@ -2,12 +2,12 @@ import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { LearnerProfileApiService } from 'app/core/learner-profile/service/learner-profile-api.service';
-import { CourseLearnerProfileDTO } from 'app/core/learner-profile/shared/entities/learner-profile.model';
+import { LearnerProfileApiService } from 'app/core/user/settings/learner-profile/learner-profile-api.service';
+import { CourseLearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/course-learner-profile-dto.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
-import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/core/learner-profile/shared/entities/learner-profile-options.model';
+import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/core/user/settings/learner-profile/entities/course-learner-profile-options.model';
 
 /**
  * Component for managing course-specific learner profiles.
@@ -17,7 +17,7 @@ import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/core/learner-profile/shared/
 @Component({
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
-    styleUrls: ['./course-learner-profile.component.scss'],
+    styleUrls: ['../learner-profile.component.scss'],
     imports: [TranslateDirective, NgClass, SegmentedToggleComponent],
 })
 export class CourseLearnerProfileComponent implements OnInit {
@@ -149,8 +149,7 @@ export class CourseLearnerProfileComponent implements OnInit {
         if (!updatedProfile.isValid()) {
             this.alertService.addAlert({
                 type: AlertType.DANGER,
-                message: `Values must be between ${CourseLearnerProfileDTO.MIN_VALUE} and ${CourseLearnerProfileDTO.MAX_VALUE}`,
-                translationKey: 'artemisApp.learnerProfile.courseLearnerProfile.invalidRange',
+                message: 'artemisApp.learnerProfile.courseLearnerProfile.invalidRange',
             });
             return;
         }
@@ -167,8 +166,7 @@ export class CourseLearnerProfileComponent implements OnInit {
             this.alertService.closeAll();
             this.alertService.addAlert({
                 type: AlertType.SUCCESS,
-                message: 'Profile saved',
-                translationKey: 'artemisApp.learnerProfile.courseLearnerProfile.profileSaved',
+                message: 'artemisApp.learnerProfile.courseLearnerProfile.profileSaved',
             });
         } catch (error) {
             this.handleError(error);
