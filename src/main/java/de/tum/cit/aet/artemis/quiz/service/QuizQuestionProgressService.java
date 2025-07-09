@@ -177,7 +177,8 @@ public class QuizQuestionProgressService {
     public List<QuizQuestion> getQuestionsForSession(Long courseId) {
         Set<QuizQuestion> allQuestions = getQuizQuestions(courseId);
         long userId = getUserId();
-        List<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserId(userId);
+        Set<Long> questionIds = allQuestions.stream().map(QuizQuestion::getId).collect(Collectors.toSet());
+        List<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIds);
         Map<Long, Integer> priorityMap = progressList.stream()
                 .collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> progress.getProgressJson().getPriority()));
         List<QuizQuestion> selectedQuestions = allQuestions.stream().sorted(Comparator.comparingInt(q -> priorityMap.getOrDefault(q.getId(), 0))).limit(10).toList();

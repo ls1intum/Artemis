@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -19,6 +20,6 @@ public interface QuizQuestionProgressRepository extends ArtemisJpaRepository<Qui
 
     Optional<QuizQuestionProgress> findByUserIdAndQuizQuestionId(Long userId, Long quizQuestionId);
 
-    List<QuizQuestionProgress> findAllByUserId(Long userId);
+    List<QuizQuestionProgress> findAllByUserIdAndQuizQuestionIdIn(Long userId, Set<Long> quizQuestionIds);
 
 }
