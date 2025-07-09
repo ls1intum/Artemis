@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -150,9 +151,10 @@ public class QuizQuestionProgressService {
     public List<QuizQuestion> getQuestionsForSession(Long courseId) {
         Set<QuizQuestion> allQuestions = getQuizQuestions(courseId);
         long userId = getUserId();
-        List<QuizQuestion> selectedQuestions = allQuestions.stream().sorted(Comparator.comparingInt(q -> {
-            return quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, q.getId()).map(progress -> progress.getProgressJson().getPriority()).orElse(0);
-        })).limit(10).toList();
+        List<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserId(userId).orElse(List.of());
+        Map<Long, Integer> priorityMap = progressList.stream()
+                .collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> progress.getProgressJson().getPriority()));
+        List<QuizQuestion> selectedQuestions = allQuestions.stream().sorted(Comparator.comparingInt(q -> priorityMap.getOrDefault(q.getId(), 0))).limit(10).toList();
 
         return selectedQuestions;
     }

@@ -102,7 +102,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizQuestionProgress.setProgressJson(progressData);
         quizQuestionProgress.setLastAnsweredAt(ZonedDateTime.now());
         quizQuestionProgressService.save(quizQuestionProgress);
-        quizQuestionProgressTestRepository.save(quizQuestionProgress);
     }
 
     @WithMockUser(username = "testuser")
@@ -154,7 +153,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(progressEmpty.get().getQuizQuestionId()).isEqualTo(quizQuestionId);
         assertThat(progressEmpty.get().getLastAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
 
-        QuizQuestionProgressData dataEmpty = progress.get().getProgressJson();
+        QuizQuestionProgressData dataEmpty = progressEmpty.get().getProgressJson();
         assertThat(dataEmpty.getEasinessFactor()).isEqualTo(2.6);
         assertThat(dataEmpty.getRepetition()).isEqualTo(1);
         assertThat(dataEmpty.getInterval()).isEqualTo(1);
