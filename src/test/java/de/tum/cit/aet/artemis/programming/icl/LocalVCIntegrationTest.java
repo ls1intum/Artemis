@@ -28,8 +28,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -43,8 +41,6 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
  * This class contains integration tests for edge cases pertaining to the local VC system.
  */
 class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
-
-    private static final Logger log = LoggerFactory.getLogger(LocalVCIntegrationTest.class);
 
     private static final String TEST_PREFIX = "localvcint";
 
@@ -354,10 +350,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
         String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
-
-        var debugBuildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        log.info("Exercise, id: {}, key: {}; repo: {}", programmingExercise.getId(), programmingExercise.getProjectKey(), repositoryUri);
-        log.info("Wanted config: allowBranching={}, regex={}; Actual config: {}", allowBranching, regex, debugBuildConfig);
 
         // Push the new branch.
         PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()

@@ -250,7 +250,6 @@ public class LocalVCServletService {
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
         String projectKey = localVCRepositoryUri.getProjectKey();
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
-        log.warn("Parsed repository Uri: {}, project: {}, user: {}", localVCRepositoryUri, projectKey, repositoryTypeOrUserName);
 
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
 
@@ -547,7 +546,6 @@ public class LocalVCServletService {
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
         var urlString = request.getRequestURL().toString().replace("/info/refs", "");
-        log.info("parseRepositoryUri; urlString: {}, localVCBaseUrl: {}", urlString, localVCBaseUrl);
         return new LocalVCRepositoryUri(Path.of(urlString), localVCBaseUrl);
     }
 
@@ -639,7 +637,6 @@ public class LocalVCServletService {
             ProgrammingExercise exercise) throws LocalVCInternalException {
         ProgrammingExerciseParticipation participation;
         try {
-            log.info("Trying to find a participation for uri {} in exercise {}", localVCRepositoryUri, exercise.getId());
             if (usingSSH) {
                 participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString(),
                         exercise);
