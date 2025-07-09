@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { ExternalDataGuard } from 'app/core/user/settings/external-data.guard';
 
 export const routes: Routes = [
     {
@@ -24,6 +25,15 @@ export const routes: Routes = [
                 data: {
                     pageTitle: 'artemisApp.userSettings.accountInformation',
                 },
+            },
+            {
+                path: 'external-data',
+                loadComponent: () =>
+                    import('app/core/user/settings/external-llm-usage-settings/external-llm-usage-settings.component').then((m) => m.ExternalLlmUsageSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.externalLLMUsage',
+                },
+                canActivate: [ExternalDataGuard],
             },
             {
                 path: 'profile',
@@ -92,6 +102,14 @@ export const routes: Routes = [
                 loadComponent: () => import('app/core/user/settings/ide-preferences/ide-settings.component').then((m) => m.IdeSettingsComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.IDE_PREFERENCES',
+                },
+            },
+            {
+                path: 'notifications',
+                loadComponent: () =>
+                    import('app/core/user/settings/global-notifications-settings/global-notifications-settings.component').then((m) => m.GlobalNotificationsSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.GLOBAL_NOTIFICATIONS',
                 },
             },
         ],

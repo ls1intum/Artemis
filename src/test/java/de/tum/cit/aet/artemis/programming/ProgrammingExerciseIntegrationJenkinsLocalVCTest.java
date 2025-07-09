@@ -412,7 +412,7 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
         programmingExercise.setShortName("testuniqueshortname");
         jenkinsRequestMockProvider.mockCheckIfProjectExistsJobIsNull(programmingExercise);
 
-        assertThatNoException().isThrownBy(() -> programmingExerciseService.checkIfProjectExists(programmingExercise));
+        assertThatNoException().isThrownBy(() -> programmingExerciseValidationService.checkIfProjectExists(programmingExercise));
     }
 
     @Test

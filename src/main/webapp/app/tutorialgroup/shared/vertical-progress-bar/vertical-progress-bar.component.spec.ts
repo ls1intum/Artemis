@@ -26,9 +26,9 @@ describe('VerticalProgressBarComponent', () => {
     it('should change color', () => {
         component.lowerBorder = 20;
         component.upperBorder = 40;
-        component.lowerColor = 'red';
-        component.intermediateColor = 'orange';
-        component.upperColor = 'green';
+        fixture.componentRef.setInput('lowerColor', 'red');
+        fixture.componentRef.setInput('intermediateColor', 'orange');
+        fixture.componentRef.setInput('upperColor', 'green');
         component.animateFilling = false;
         component.heightInPixels = 100;
         component.widthInPixels = 100;

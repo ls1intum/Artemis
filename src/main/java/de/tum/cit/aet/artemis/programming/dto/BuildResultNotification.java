@@ -39,7 +39,7 @@ public interface BuildResultNotification {
      */
     @Nullable
     default String commitHash(SubmissionType submissionType) {
-        final var isAssignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR, SubmissionType.ILLEGAL).contains(submissionType);
+        final var isAssignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR).contains(submissionType);
         if (isAssignmentSubmission) {
             return assignmentRepoCommitHash();
         }

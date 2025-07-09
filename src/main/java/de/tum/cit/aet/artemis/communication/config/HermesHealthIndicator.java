@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
  */
 @Profile(PROFILE_CORE)
 @Component
+@Lazy
 public class HermesHealthIndicator implements HealthIndicator {
 
     private final RestTemplate shortTimeoutRestTemplate;

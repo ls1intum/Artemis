@@ -4,11 +4,9 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { downloadFile, downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -76,7 +74,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     /**
      * Result of the automated plagiarism detection
      */
-    plagiarismResult?: TextPlagiarismResult;
+    plagiarismResult?: PlagiarismResult;
 
     /**
      * Statistics for the automated plagiarism detection result
@@ -137,7 +135,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     /**
      * Comparisons that are currently visible (might differ from the original set as filtering can be applied)
      */
-    visibleComparisons?: PlagiarismComparison<any>[];
+    visibleComparisons?: PlagiarismComparison[];
     chartFilterApplied = false;
     /**
      * Offset of the currently visible comparisons to the original set in order to keep the numbering even if comparisons are filtered
@@ -310,7 +308,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.detectionInProgress = false;
     }
 
-    handlePlagiarismResult(result: PlagiarismResultDTO<TextPlagiarismResult>) {
+    handlePlagiarismResult(result: PlagiarismResultDTO) {
         this.detectionInProgress = false;
 
         if (result?.plagiarismResult?.comparisons) {
@@ -323,7 +321,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.visibleComparisons = result?.plagiarismResult?.comparisons;
     }
 
-    sortComparisonsForResult(result: PlagiarismResult<any>) {
+    sortComparisonsForResult(result: PlagiarismResult) {
         result.comparisons = result.comparisons.sort((a, b) => {
             // if the cases share the same similarity, we sort by the id
             if (b.similarity - a.similarity === 0) {
@@ -362,7 +360,7 @@ export class PlagiarismInspectorComponent implements OnInit {
                 columnHeaders: ['Similarity', 'Status', 'Participant 1', 'Submission 1', 'Score 1', 'Size 1', 'Participant 2', 'Submission 2', 'Score 2', 'Size 2'],
             };
 
-            const rowData = (this.plagiarismResult.comparisons as PlagiarismComparison<TextSubmissionElement>[]).map((comparison) => {
+            const rowData = (this.plagiarismResult.comparisons as PlagiarismComparison[]).map((comparison) => {
                 return Object.assign({
                     Similarity: comparison.similarity,
                     Status: comparison.status,
@@ -432,7 +430,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     /**
      * Auxiliary method that returns the comparison currently selected by the user
      */
-    getSelectedComparison(): PlagiarismComparison<any> {
+    getSelectedComparison(): PlagiarismComparison {
         // as the id is unique, the filtered array should always have length 1
         return this.visibleComparisons!.filter((comparison) => comparison.id === this.selectedComparisonId)[0];
     }

@@ -535,6 +535,32 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(3);
             expect(component.isValidNumberOfCorrectionRounds).toBeFalse();
         });
+
+        it('should correctly validate number of exercises', () => {
+            fixture.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBeUndefined();
+            expect(component.isValidNumberOfExercises).toBeTrue();
+
+            examWithoutExercises.numberOfExercisesInExam = 0;
+            fixture.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(0);
+            expect(component.isValidNumberOfExercises).toBeFalse();
+
+            examWithoutExercises.numberOfExercisesInExam = 1;
+            fixture.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(1);
+            expect(component.isValidNumberOfExercises).toBeTrue();
+
+            examWithoutExercises.numberOfExercisesInExam = -20;
+            fixture.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(-20);
+            expect(component.isValidNumberOfExercises).toBeFalse();
+
+            examWithoutExercises.numberOfExercisesInExam = 40;
+            fixture.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(40);
+            expect(component.isValidNumberOfExercises).toBeTrue();
+        });
     });
 
     describe('import exams', () => {

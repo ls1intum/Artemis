@@ -2,20 +2,22 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
-import jakarta.annotation.PostConstruct;
-
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.UploadPack;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * This class configures the JGit Servlet, which is used to receive Git push and fetch requests for local VC.
  */
 @Profile(PROFILE_LOCALVC)
+@Lazy
 @Service
 public class ArtemisGitServletService extends GitServlet {
 
@@ -40,7 +42,7 @@ public class ArtemisGitServletService extends GitServlet {
      * <p>
      * <a href="https://git-scm.com/docs/git-upload-pack">https://git-scm.com/docs/git-upload-pack</a>
      */
-    @PostConstruct
+    @EventListener(FullStartupEvent.class)
     @Override
     public void init() {
         this.setRepositoryResolver((request, name) -> {
@@ -59,9 +61,10 @@ public class ArtemisGitServletService extends GitServlet {
             ReceivePack receivePack = new ReceivePack(repository);
             // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
             // the user inside the request is always null here
-            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, (User) request.getAttribute("user")));
+            var user = (User) request.getAttribute("user");
+            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
-            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
+            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, user));
             return receivePack;
         });
 

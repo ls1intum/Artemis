@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild, effect, inject, input, output, signal } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
@@ -22,7 +22,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     @Input() isImport: boolean;
     @Input() hideTitleLabel: boolean;
 
-    @ViewChild(TitleChannelNameComponent) titleChannelNameComponent: TitleChannelNameComponent;
+    readonly titleChannelNameComponent = viewChild.required(TitleChannelNameComponent);
 
     onTitleChange = output<string>();
     onChannelNameChange = output<string>();
@@ -51,14 +51,14 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
         }
     }
 
-    updateTitle(newTitle: string) {
+    updateTitle(newTitle: string | undefined) {
         this.exercise.title = newTitle;
-        this.onTitleChange.emit(newTitle);
+        this.onTitleChange.emit(newTitle ?? '');
     }
 
-    updateChannelName(newName: string) {
+    updateChannelName(newName: string | undefined) {
         this.exercise.channelName = newName;
-        this.onChannelNameChange.emit(newName);
+        this.onChannelNameChange.emit(newName ?? '');
     }
 
     /**

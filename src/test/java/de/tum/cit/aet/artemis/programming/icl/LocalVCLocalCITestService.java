@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 /**
  * This class contains helper methods for all tests of the local VC and local CI system..
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class LocalVCLocalCITestService {
@@ -409,14 +411,13 @@ public class LocalVCLocalCITestService {
             log.info("Submission with commit hash: {}", submission.getCommitHash());
         }
         await().until(() -> {
-            // get the latest valid submission (!ILLEGAL and with results) of the participation
+            // get the latest valid submission (with results) of the participation
             SecurityContextHolder.getContext().setAuthentication(auth);
-            var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId);
+            var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId);
             return submission.orElseThrow().getLatestResult() != null;
         });
-        // get the latest valid submission (!ILLEGAL and with results) of the participation
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId)
-                .orElseThrow();
+        // get the latest valid submission (with results) of the participation
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).orElseThrow();
         if (expectedCommitHash != null) {
             assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);
         }

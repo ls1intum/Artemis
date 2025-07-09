@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
  * REST controller for managing TextAssessmentEventResource.
  */
 @Conditional(TextEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/text/")
 public class TextAssessmentEventResource {

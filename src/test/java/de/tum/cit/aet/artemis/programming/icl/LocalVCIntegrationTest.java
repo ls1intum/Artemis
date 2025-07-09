@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.icl;
 
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -27,10 +28,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
@@ -39,7 +44,12 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
  */
 class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
+    private static final Logger log = LoggerFactory.getLogger(LocalVCIntegrationTest.class);
+
     private static final String TEST_PREFIX = "localvcint";
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private LocalRepository assignmentRepository;
 
@@ -313,7 +323,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         return remoteRefUpdate;
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesNewBranchBranchingDisallowed() throws Exception {
@@ -332,15 +341,23 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     void customBranchTestHelper(boolean allowBranching, String regex, boolean shouldSucceed) throws Exception {
-        programmingExercise.getBuildConfig().setAllowBranching(allowBranching);
-        programmingExercise.getBuildConfig().setBranchRegex(regex);
-        programmingExerciseRepository.saveAndFlush(programmingExercise);
-        programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
+        var buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        buildConfig.setAllowBranching(allowBranching);
+        buildConfig.setBranchRegex(regex);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
+        await().until(() -> programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), student1Login).isPresent());
+        await().until(() -> assignmentRepository.originRepoFile.exists());
+        await().until(() -> assignmentRepository.localRepoFile.exists());
+
         assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
         String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+
+        var debugBuildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        log.info("Exercise, id: {}, key: {}; repo: {}", programmingExercise.getId(), programmingExercise.getProjectKey(), repositoryUri);
+        log.info("Wanted config: allowBranching={}, regex={}; Actual config: {}", allowBranching, regex, debugBuildConfig);
 
         // Push the new branch.
         PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
@@ -375,7 +392,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @Test
     void testRepositoryFolderName() {
-
         // we specifically choose logins containing "git" to test it does not accidentally get replaced
         String login1 = "ab123git";
         String login2 = "git123ab";

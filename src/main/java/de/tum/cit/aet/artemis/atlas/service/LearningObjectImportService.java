@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.function.ThrowingBiFunction;
 
@@ -70,6 +71,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Service for importing learning objects related to competencies.
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class LearningObjectImportService {
 

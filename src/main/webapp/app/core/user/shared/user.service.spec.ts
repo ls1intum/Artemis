@@ -42,7 +42,7 @@ describe('User Service', () => {
         });
 
         it('should call correct URL to accept external LLM', () => {
-            service.acceptExternalLLMUsage().subscribe();
+            service.updateExternalLLMUsageConsent(true).subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
             const resourceUrl = 'api/core/users/accept-external-llm-usage';
             expect(req.request.url).toBe(`${resourceUrl}`);
