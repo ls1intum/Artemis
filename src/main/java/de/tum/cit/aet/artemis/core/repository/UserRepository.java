@@ -866,6 +866,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
+     * Retrieve a user by its email (ignoring case), or else throw exception
+     *
+     * @param email the email of the user to search
+     * @return the user entity if it exists
+     */
+    @NotNull
+    default User getUserByEmailElseThrow(String email) {
+        return getValueElseThrow(findOneByEmailIgnoreCase(email));
+    }
+
+    /**
      * Get user with user groups and authorities of currently logged-in user
      *
      * @return currently logged-in user
