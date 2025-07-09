@@ -219,7 +219,7 @@ public class QuizQuestionProgressService {
      * @return The new easiness factor for the question, which shows how easy the question is for the user
      */
     public double calculateEasinessFactor(double score, double previousEasinessFactor) {
-        double newEasinessFactor = previousEasinessFactor + (0.1 - (5 - score * 5) * (0.08 + (1 - score * 5) * 0.02));
+        double newEasinessFactor = previousEasinessFactor + (0.1 - (5 - score * 5) * (0.08 + (5 - score * 5) * 0.02));
         return Math.max(1.3, newEasinessFactor);
     }
 
