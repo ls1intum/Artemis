@@ -61,7 +61,7 @@
             />
             @if (isEditFieldDisplayedRecord().plagiarismControl && !isExamMode) {
                 <jhi-feature-overlay [enabled]="plagiarismEnabled" placement="right">
-                    <jhi-exercise-update-plagiarism [exercise]="programmingExercise" />
+                    <jhi-exercise-update-plagiarism [(exercise)]="programmingExercise" />
                 </jhi-feature-overlay>
             }
             <jhi-form-footer

@@ -411,14 +411,13 @@ public class LocalVCLocalCITestService {
             log.info("Submission with commit hash: {}", submission.getCommitHash());
         }
         await().until(() -> {
-            // get the latest valid submission (!ILLEGAL and with results) of the participation
+            // get the latest valid submission (with results) of the participation
             SecurityContextHolder.getContext().setAuthentication(auth);
-            var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId);
+            var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId);
             return submission.orElseThrow().getLatestResult() != null;
         });
-        // get the latest valid submission (!ILLEGAL and with results) of the participation
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId)
-                .orElseThrow();
+        // get the latest valid submission (with results) of the participation
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).orElseThrow();
         if (expectedCommitHash != null) {
             assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);
         }

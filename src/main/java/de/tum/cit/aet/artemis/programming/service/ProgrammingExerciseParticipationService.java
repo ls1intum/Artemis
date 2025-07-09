@@ -5,8 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -20,13 +22,17 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -65,9 +71,14 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
+    private final ResultRepository resultRepository;
+
+    private final SubmissionRepository submissionRepository;
+
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService) {
+            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
+            ResultRepository resultRepository, SubmissionRepository submissionRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -75,6 +86,8 @@ public class ProgrammingExerciseParticipationService {
         this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
+        this.resultRepository = resultRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -408,6 +421,36 @@ public class ProgrammingExerciseParticipationService {
                 }
             }
         }
+        return participation;
+    }
+
+    /**
+     * Retrieves the {@link ProgrammingExerciseStudentParticipation} for the given ID, including
+     * its latest {@link Submission} and the most recent {@link Result} with feedback (if available).
+     *
+     * <p>
+     * If no submission exists for the participation, the returned participation will contain
+     * an empty set of submissions. If a submission exists but no result with feedback is found,
+     * the submission will contain an empty list of results.
+     * </p>
+     *
+     * @param participationId the ID of the student participation to retrieve
+     * @return the participation enriched with its latest submission and corresponding result (if available)
+     * @throws EntityNotFoundException if no participation exists with the given ID
+     */
+    public ProgrammingExerciseStudentParticipation findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(long participationId) throws EntityNotFoundException {
+        ProgrammingExerciseStudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
+        Optional<Submission> latestSubmissionOptional = submissionRepository.findLatestSubmissionByParticipationId(participationId);
+        if (latestSubmissionOptional.isEmpty()) {
+            participation.setSubmissions(Set.of());
+            return participation;
+        }
+        Submission latestSubmission = latestSubmissionOptional.get();
+        Optional<Result> latestResultOptional = resultRepository.findLatestResultWithFeedbacksBySubmissionId(latestSubmission.getId(), ZonedDateTime.now());
+        latestResultOptional.ifPresentOrElse(latestResult -> {
+            latestSubmission.setResults(List.of(latestResult));
+        }, () -> latestSubmission.setResults(List.of()));
+        participation.setSubmissions(Set.of(latestSubmission));
         return participation;
     }
 }

@@ -42,6 +42,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
+import { signal } from '@angular/core';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -1197,13 +1198,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             formValidChanges: new Subject(),
             formValid: true,
         } as ProgrammingExerciseGradingComponent;
-        comp.exercisePlagiarismComponent = {
-            formValidChanges: new Subject(),
-            formValid: true,
-        } as ExerciseUpdatePlagiarismComponent;
+
+        (comp as any).exercisePlagiarismComponent = signal<ExerciseUpdatePlagiarismComponent>({
+            isFormValid: signal<boolean>(true),
+        } as unknown as ExerciseUpdatePlagiarismComponent).asReadonly();
 
         comp.ngAfterViewInit();
-        expect(comp.inputFieldSubscriptions).toHaveLength(5);
+        // we migrate from subscriptions to signals eventually
+        expect(comp.inputFieldSubscriptions).toHaveLength(4);
         comp.calculateFormStatusSections();
 
         for (const section of comp.formStatusSections()) {
@@ -1218,9 +1220,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         comp.exerciseLanguageComponent.formValidChanges.next(false);
         comp.exerciseGradingComponent.formValidChanges.next(false);
         comp.exerciseDifficultyComponent.teamConfigComponent.formValidChanges.next(false);
-        comp.exercisePlagiarismComponent.formValidChanges.next(false);
 
-        expect(calculateFormValidSectionsSpy).toHaveBeenCalledTimes(6);
+        expect(calculateFormValidSectionsSpy).toHaveBeenCalledTimes(5);
 
         comp.programmingExercise.allowOfflineIde = false;
         comp.programmingExercise.allowOnlineEditor = false;

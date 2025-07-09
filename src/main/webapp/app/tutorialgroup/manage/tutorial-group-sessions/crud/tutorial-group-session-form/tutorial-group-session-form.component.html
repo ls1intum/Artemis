@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col-12 mb-2">
-        <div class="alert alert-info" jhiTranslate="artemisApp.generic.timeZone" [translateValues]="{ timeZone }"></div>
+        <div class="alert alert-info" jhiTranslate="artemisApp.generic.timeZone" [translateValues]="{ timeZone: timeZone() }"></div>
     </div>
     <div class="col-12">
         @if (form) {
@@ -75,7 +75,7 @@
                 <div class="row mt-2">
                     <div class="col-12">
                         <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                            <span jhiTranslate="{{ isEditMode ? 'global.generic.edit' : 'global.generic.create' }}"></span>
+                            <span jhiTranslate="{{ isEditMode() ? 'global.generic.edit' : 'global.generic.create' }}"></span>
                         </button>
                     </div>
                 </div>

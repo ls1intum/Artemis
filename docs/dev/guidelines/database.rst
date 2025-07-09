@@ -2,6 +2,40 @@
 Database
 ********
 
+General Guidelines
+==================
+
+**Weekly Database Meeting**
+-------------------------------------------
+
+We hold a weekly, in-person, cross-functional meeting involving database, infrastructure, and operations teams. Attendance is required whenever changes to the database, configurations, or related operations are proposed.
+Please prepare for the meeting and enter your PR and a short description of the changes in the `meeting agenda <https://confluence.aet.cit.tum.de/x/SaC5Bw>`__.
+
+**Approval Process**
+---------------------
+
+- **Mandatory Review:** Every change affecting the database or configuration must be explicitly discussed and approved during the weekly meeting. Final approval is granted by `Stephan Krusche <https://github.com/krusche>`__ or `Patrick Bassner <https://github.com/bassner>`__.
+- **Deployment Restrictions:** Database-affecting deployments cannot proceed without prior approval from designated reviewers to ensure accountability and prevent unauthorized changes. For test server deployments, approval is required from `Timor Morrien <https://github.com/Hialus>`__ or `Benjamin Schmitz <https://github.com/bensofficial>`__.
+
+**Database Review Guidelines**
+------------------------------
+
+- **Third Normal Form (3NF):** Database schema changes should adhere strictly to the third normal form to avoid redundancy and ensure data integrity.
+- **Cross-Compatibility:** Ensure compatibility with both MySQL and PostgreSQL databases.
+- **Foreign Keys:** Deletions involving foreign keys must be verified thoroughly to maintain referential integrity.
+- **Advisor/Maintainer Approval:** The database schema must always be reviewed and approved by an advisor or maintainer prior to implementation.
+- **Joins Limitation:** Limit the number of ``LEFT JOIN`` operations to a maximum of 5, unless proven that the resulting dataset remains small and performant.
+- **Indexed Columns:** ``WHERE`` clauses must leverage appropriate indices to optimize query performance.
+- **Nullable Fields:** Use nullable fields sparingly and only when explicitly necessary.
+- **Optimized Data Types:** Minimize the size of ``VARCHAR`` and ``DATETIME`` fields (e.g., ``DATETIME(3)`` precision). For enumeration fields, use actual ENUM types in MySQL and ``TEXT`` types in PostgreSQL.
+- **Atomic Changesets:** Implement small, atomic database changesets that are easy to roll back in case of issues.
+- **Redundancy and Cleanup:** Identify and avoid unnecessary redundancy; implement periodic cleanup services to manage and remove obsolete data.
+- **Rollback Procedures:** Ensure robust and sensible rollback procedures are always available and tested. Rollbacks can be performed and tested using the corresponding rollback Gradle tasks provided by Liquibase. Information about this can be found in the `Liquibase documentation <https://docs.liquibase.com/workflows/liquibase-community/automatic-custom-rollbacks.html>`__.
+- **Delete Policy:** Adopt a rename-first approach before deleting database objects, enabling safer rollback.
+- **Major Migrations:** Major database migrations should only occur during ``X.X.0`` releases.
+- **Hibernate Fetching Strategies:** Carefully handle Hibernate fetching strategies (``ManyToOne``, ``OneToMany``, etc.), always preferring lazy loading over eager loading.
+- **Use of DTOs:** Prefer the use of Data Transfer Objects (DTOs) in queries to manage database fetch size and improve performance.
+
 1. Retrieving and Building Objects
 ==================================
 

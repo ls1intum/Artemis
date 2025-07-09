@@ -1,3 +1,4 @@
+
 buildscript {
     dependencies {
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
@@ -25,10 +26,13 @@ plugins {
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.1.3"
     id "org.springframework.boot" version "${spring_boot_version}"
+    id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
+    id "org.openapi.generator" version "7.12.0"
+
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.1.4"
+version = "8.2.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -125,7 +129,6 @@ configurations.configureEach {
     exclude group: "org.apache.lucene", module: "lucene-queryparser"
     exclude group: "org.apache.lucene", module: "lucene-core"
     exclude group: "org.apache.lucene", module: "lucene-analyzers-common"
-    exclude group: "com.google.protobuf", module: "protobuf-java"
 
     exclude group: "org.jasypt", module: "jasypt"
 
@@ -209,7 +212,7 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
-            strictly "2.4"
+            strictly "${snakeyaml_version}"
             // needed to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml
         }
     }
@@ -225,7 +228,7 @@ dependencies {
     // required by Saml2, should NOT be used in other places, we explicitly use the newest version to avoid security vulnerabilities
     implementation "org.apache.santuario:xmlsec:4.0.4"
 
-    implementation "org.jsoup:jsoup:1.20.1"
+    implementation "org.jsoup:jsoup:1.21.1"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
     implementation "commons-codec:commons-codec:1.18.0"
 
@@ -261,6 +264,9 @@ dependencies {
     implementation "io.micrometer:micrometer-commons:${micrometer_version}"
     implementation "io.micrometer:micrometer-observation:${micrometer_version}"
     implementation "io.micrometer:micrometer-jakarta9:${micrometer_version}"
+
+    // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
+    implementation "com.google.protobuf:protobuf-java:4.31.1"
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
 
@@ -313,7 +319,6 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
-    implementation "org.springframework.data:spring-data-jpa:3.5.1"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
@@ -328,6 +333,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
+    implementation "org.springframework.data:spring-data-jpa:3.5.1"
     implementation "org.springframework.data:spring-data-ldap:3.5.1"
     implementation "org.springframework.ldap:spring-ldap-core:3.3.1"
 
@@ -386,7 +392,7 @@ dependencies {
     implementation "org.apache.maven:maven-model:3.9.10"
     implementation "org.apache.pdfbox:pdfbox:3.0.5"
     implementation "org.apache.commons:commons-csv:1.14.0"
-    implementation "org.commonmark:commonmark:0.24.0"
+    implementation "org.commonmark:commonmark:0.25.0"
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
@@ -399,13 +405,16 @@ dependencies {
     implementation "com.google.code.gson:gson:2.13.1"
 
     // explicitly only use this at runtime (required by liquibase, because developers should prefer org.apache.commons:csv
-    runtimeOnly "com.opencsv:opencsv:5.11.1"
+    runtimeOnly "com.opencsv:opencsv:5.11.2"
     // make sure to use the latest version to avoid security vulnerabilities
     runtimeOnly "commons-beanutils:commons-beanutils:1.11.0"
     checkstyle "commons-beanutils:commons-beanutils:1.11.0"
 
 
-    implementation "com.google.errorprone:error_prone_annotations:2.38.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.39.0"
+    // needed for OpenAPI generation
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8'
+
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") { version {              strictly byte_buddy_version } }
@@ -442,7 +451,7 @@ dependencies {
     }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.179"
+    testImplementation "io.github.classgraph:classgraph:4.8.180"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:8.14.2"
@@ -452,7 +461,8 @@ dependencies {
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
-    testImplementation "com.h2database:h2:2.3.232"
+    // we only need the database present at runtime
+    runtimeOnly "com.h2database:h2:2.3.232"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20250517"
@@ -470,6 +480,7 @@ dependencies {
 
 // we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ":mockitoAgent" after it has been resolved
 apply from: "gradle/test.gradle"
+apply from: "gradle/openapi.gradle"
 
 
 dependencyManagement {
@@ -545,3 +556,5 @@ tasks.named("dependencyUpdates").configure {
 // 11) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
 // 12) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
+// 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups at the moment)
+// 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups at the moment)

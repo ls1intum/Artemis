@@ -91,6 +91,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
     >(undefined);
     isTestServer = this.profileService.isTestServer();
+    isDevelopment = this.profileService.isDevelopment();
 
     // Icons
     faTimes = faTimes;
@@ -222,8 +223,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                     this.course.set(res.body);
                 }
 
-                this.setupConversationService();
-
                 setTimeout(() => this.refreshingCourse.set(false), 500); // ensure min animation duration
             }),
             // catch 403 errors where registration is possible
@@ -331,7 +330,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             sidebarItems.push(faqItem);
         }
 
-        if (this.isTestServer) {
+        if (this.isTestServer || this.isDevelopment) {
             sidebarItems.push(this.sidebarItemService.getPracticeItem());
         }
 

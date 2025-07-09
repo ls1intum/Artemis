@@ -22,6 +22,10 @@ import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
 } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
+import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
@@ -42,6 +46,8 @@ examples.forEach((activeConversation) => {
                     provideHttpClientTesting(),
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
+                    { provide: Router, useClass: MockRouter },
+                    { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 ],
             })
                 .compileComponents()
