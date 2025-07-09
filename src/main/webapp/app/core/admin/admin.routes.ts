@@ -152,7 +152,7 @@ const routes: Routes = [
         loadComponent: () => import('app/iris/manage/memiris-admin/memiris-admin.component').then((m) => m.MemirisAdminComponent),
         data: {
             authorities: [Authority.ADMIN],
-            pageTitle: 'artemisApp.iris.memiris.admin.title',
+            pageTitle: 'artemisApp.memiris.admin.title',
         },
         canActivate: [UserRouteAccessService, IrisGuard],
     },
