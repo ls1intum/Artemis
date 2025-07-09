@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIResultService;
@@ -95,9 +94,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     @Autowired
     protected TeamRepository teamRepository;
-
-    @Autowired
-    protected VcsAccessLogRepository vcsAccessLogRepository;
 
     // Services
     @Autowired

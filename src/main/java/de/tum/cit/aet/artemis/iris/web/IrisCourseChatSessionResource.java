@@ -6,7 +6,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,7 +30,6 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
  * REST controller for managing {@link IrisCourseChatSession}.
  */
 @Profile(PROFILE_IRIS)
-@Lazy
 @RestController
 @RequestMapping("api/iris/course-chat/")
 public class IrisCourseChatSessionResource {

@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { CoursesForDashboardDTO } from 'app/core/course/shared/entities/courses-for-dashboard-dto';
-import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { BehaviorSubject, Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
@@ -10,11 +9,13 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Submission, reconnectSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/core/course/shared/entities/course-management-detail-view-dto.model';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
@@ -34,29 +35,6 @@ export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
 
 export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
-
-export class CourseGradeInformationDTO {
-    gradeScores: GradeScoreDTO[];
-    students: StudentGradeDTO[];
-}
-
-export class StudentGradeDTO {
-    id: number;
-    login: string;
-    firstName: string;
-    lastName: string;
-    name: string;
-    registrationNumber?: string;
-    email: string;
-}
-
-export class GradeScoreDTO {
-    participationId: number;
-    userId: number;
-    exerciseId: number;
-    score: number;
-    presentationScore: number;
-}
 
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
@@ -265,8 +243,8 @@ export class CourseManagementService {
      * finds all participants of the course corresponding to the given unique identifier
      * @param courseId - the id of the course
      */
-    findGradeScores(courseId: number): Observable<CourseGradeInformationDTO> {
-        return this.http.get<CourseGradeInformationDTO>(`api/assessment/courses/${courseId}/grade-scores`);
+    findAllParticipationsWithResults(courseId: number): Observable<StudentParticipation[]> {
+        return this.http.get<StudentParticipation[]>(`api/exercise/courses/${courseId}/participations`);
     }
 
     /**

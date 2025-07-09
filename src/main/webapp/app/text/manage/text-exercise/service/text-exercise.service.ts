@@ -6,6 +6,7 @@ import { map } from 'rxjs/operators';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
+import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { PlagiarismResultDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
@@ -100,15 +101,15 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @param exerciseId
      * @param options
      */
-    checkPlagiarism(exerciseId: number, options?: PlagiarismOptions): Observable<PlagiarismResultDTO> {
+    checkPlagiarism(exerciseId: number, options?: PlagiarismOptions): Observable<PlagiarismResultDTO<TextPlagiarismResult>> {
         return this.http
-            .get<PlagiarismResultDTO>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
+            .get<PlagiarismResultDTO<TextPlagiarismResult>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
                 observe: 'response',
                 params: {
                     ...options?.toParams(),
                 },
             })
-            .pipe(map((response: HttpResponse<PlagiarismResultDTO>) => response.body!));
+            .pipe(map((response: HttpResponse<PlagiarismResultDTO<TextPlagiarismResult>>) => response.body!));
     }
 
     /**
@@ -116,12 +117,12 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      *
      * @param exerciseId
      */
-    getLatestPlagiarismResult(exerciseId: number): Observable<PlagiarismResultDTO> {
+    getLatestPlagiarismResult(exerciseId: number): Observable<PlagiarismResultDTO<TextPlagiarismResult>> {
         return this.http
-            .get<PlagiarismResultDTO>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
+            .get<PlagiarismResultDTO<TextPlagiarismResult>>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
                 observe: 'response',
             })
-            .pipe(map((response: HttpResponse<PlagiarismResultDTO>) => response.body!));
+            .pipe(map((response: HttpResponse<PlagiarismResultDTO<TextPlagiarismResult>>) => response.body!));
     }
 
     /**

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.lecture.api;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -16,7 +15,6 @@ import de.tum.cit.aet.artemis.lecture.service.SlideService;
  */
 @Profile(PROFILE_CORE)
 @Controller
-@Lazy
 public class SlideApi extends AbstractLectureApi {
 
     private final SlideService slideService;

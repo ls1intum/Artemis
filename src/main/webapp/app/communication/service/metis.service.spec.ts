@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
@@ -76,7 +76,6 @@ describe('Metis Service', () => {
     let targetConversation: Conversation;
     let newContent: string;
     let forwardedMessageCreateSpy: jest.SpyInstance;
-    let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -110,7 +109,6 @@ describe('Metis Service', () => {
         metisServiceUserStub = jest.spyOn(metisService, 'getUser');
         // @ts-ignore method is private
         setIsSavedAndStatusOfPostSpy = jest.spyOn(metisService, 'setIsSavedAndStatusOfPost');
-        httpMock = TestBed.inject(HttpTestingController);
 
         post = metisPostExerciseUser1;
         post.displayPriority = DisplayPriority.PINNED;
@@ -1129,14 +1127,4 @@ describe('Metis Service', () => {
             expect(answer.post?.conversation).toEqual({ id: 123 });
         });
     }));
-
-    it('should make PUT request to enable communication with messaging', () => {
-        metisService.enable(1, true).subscribe((resp) => expect(resp).toEqual(of()));
-        httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/enable?withMessaging=true` });
-    });
-
-    it('should make PUT request to enable communication without messaging', () => {
-        metisService.enable(1, false).subscribe((resp) => expect(resp).toEqual(of()));
-        httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/enable?withMessaging=false` });
-    });
 });

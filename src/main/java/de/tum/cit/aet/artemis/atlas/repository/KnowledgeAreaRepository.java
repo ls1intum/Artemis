@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Spring Data JPA repository for the {@link KnowledgeArea} entity.
  */
 @Conditional(AtlasEnabled.class)
-@Lazy
 @Repository
 public interface KnowledgeAreaRepository extends ArtemisJpaRepository<KnowledgeArea, Long> {
 

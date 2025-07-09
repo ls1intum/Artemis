@@ -169,9 +169,6 @@ const routes: Routes = [
     {
         path: 'courses/:courseId/exercises/:exerciseId/participations/:participationId/results/:resultId/feedback',
         pathMatch: 'full',
-        data: {
-            pageTitle: 'artemisApp.feedback.home.title',
-        },
         loadComponent: () => import('app/exercise/feedback/standalone-feedback/standalone-feedback.component').then((m) => m.StandaloneFeedbackComponent),
     },
 

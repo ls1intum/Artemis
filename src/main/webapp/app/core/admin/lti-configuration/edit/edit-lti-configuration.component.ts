@@ -112,7 +112,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     private initializeForm() {
         this.platformConfigurationForm = new FormGroup({
             id: new FormControl(this.platform?.id),
-            registrationId: new FormControl({ value: this.platform?.registrationId, disabled: true }),
+            registrationId: new FormControl(this.platform?.registrationId),
             originalUrl: new FormControl(this.platform?.originalUrl),
             customName: new FormControl(this.platform?.customName),
             clientId: new FormControl(this.platform?.clientId),

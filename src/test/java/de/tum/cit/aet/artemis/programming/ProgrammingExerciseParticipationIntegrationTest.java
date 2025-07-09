@@ -14,7 +14,6 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -109,12 +108,13 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExerciseRepository.save(programmingExercise);
         var result = addStudentParticipationWithResult(assessmentType, completionDate);
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
-        var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
+        var expectedStatus = expectLastCreatedResult ? HttpStatus.OK : HttpStatus.NOT_FOUND;
+        var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", expectedStatus,
                 ProgrammingExerciseStudentParticipation.class);
-        if (expectLastCreatedResult) {
-            Set<Result> results = participationUtilService.getResultsForParticipation(requestedParticipation);
-            assertThat(results).hasSize(1);
-            var requestedResult = results.iterator().next();
+
+        if (expectedStatus == HttpStatus.OK) {
+            assertThat(requestedParticipation.getResults()).hasSize(1);
+            var requestedResult = requestedParticipation.getResults().iterator().next();
             assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
         }
     }
@@ -131,16 +131,15 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExerciseRepository.save(programmingExercise);
         // Add a parameterized second result
-        StudentParticipation participation = (StudentParticipation) firstResult.getSubmission().getParticipation();
-        Result secondResult = participationUtilService.addResultToSubmission(participation, participation.getSubmissions().iterator().next());
-        secondResult.successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
-        secondResult = participationUtilService.addVariousVisibilityFeedbackToResult(secondResult);
+        Result secondResult = addStudentParticipationWithResult(assessmentType, completionDate);
+        StudentParticipation participation = (StudentParticipation) secondResult.getSubmission().getParticipation();
+
+        // Expect the request to always be ok because it should at least return the first automatic result
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
 
-        Set<Result> results = participationUtilService.getResultsForParticipation(requestedParticipation);
-        assertThat(results).hasSize(1);
-        var requestedResult = results.iterator().next();
+        assertThat(requestedParticipation.getResults()).hasSize(1);
+        var requestedResult = requestedParticipation.getResults().iterator().next();
 
         assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
         assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isAfterDueDate);
@@ -154,6 +153,15 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             firstResult.filterSensitiveFeedbacks(true);
             assertThat(requestedResult).isEqualTo(firstResult);
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetParticipationWithLatestResultAsAnInstructor_noCompletionDate_notFound() throws Exception {
+        var result = addStudentParticipationWithResult(AssessmentType.SEMI_AUTOMATIC, null);
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.NOT_FOUND,
+                ProgrammingExerciseStudentParticipation.class);
     }
 
     @Test
@@ -197,7 +205,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
-        assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).hasSize(1);
+        assertThat(requestedParticipation.getResults()).hasSize(1);
     }
 
     @Test
@@ -207,7 +215,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
-        assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).isEmpty();
+        assertThat(requestedParticipation.getResults()).isEmpty();
     }
 
     @Test
@@ -217,7 +225,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
-        assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).hasSize(1);
+        assertThat(requestedParticipation.getResults()).hasSize(1);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -242,27 +250,27 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         // Expect the request to always be ok because it should at least return the first automatic result
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
-        Set<Result> results = participationUtilService.getResultsForParticipation(requestedParticipation);
+
         if (expectLastCreatedResult) {
-            assertThat(results).hasSize(3);
+            assertThat(requestedParticipation.getResults()).hasSize(3);
         }
         else {
-            assertThat(results).hasSize(2);
+            assertThat(requestedParticipation.getResults()).hasSize(2);
         }
-        for (var result : results) {
+        for (var result : requestedParticipation.getResults()) {
             assertThat(result.getFeedbacks()).noneMatch(Feedback::isInvisible);
             assertThat(result.getFeedbacks()).noneMatch(Feedback::isAfterDueDate);
         }
         firstResult.filterSensitiveInformation();
         firstResult.filterSensitiveFeedbacks(true);
-        assertThat(results).contains(firstResult);
+        assertThat(requestedParticipation.getResults()).contains(firstResult);
         secondResult.filterSensitiveInformation();
         secondResult.filterSensitiveFeedbacks(true);
-        assertThat(results).contains(secondResult);
+        assertThat(requestedParticipation.getResults()).contains(secondResult);
 
         // Depending on the parameters we expect to get the third result too
         if (expectLastCreatedResult) {
-            assertThat(results).contains(thirdResult);
+            assertThat(requestedParticipation.getResults()).contains(thirdResult);
         }
     }
 
@@ -344,7 +352,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         submissionRepository.save(submission);
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
-        assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).hasSize(2);
+        assertThat(requestedParticipation.getResults()).hasSize(2);
     }
 
     @Test
@@ -355,7 +363,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), result.getSubmission());
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
-        assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).isEmpty();
+        assertThat(requestedParticipation.getResults()).isEmpty();
     }
 
     @Test
@@ -368,7 +376,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         submissionRepository.save(submission);
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
-        assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).hasSize(2);
+        assertThat(requestedParticipation.getResults()).hasSize(2);
     }
 
     @Test

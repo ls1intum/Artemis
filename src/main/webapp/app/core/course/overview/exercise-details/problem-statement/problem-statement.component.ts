@@ -1,5 +1,4 @@
 import { HttpResponse } from '@angular/common/http';
-import { NgClass } from '@angular/common';
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -14,7 +13,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     selector: 'jhi-problem-statement',
     templateUrl: './problem-statement.component.html',
     styleUrls: ['../../course-overview/course-overview.scss'],
-    imports: [ProgrammingExerciseInstructionComponent, TranslateDirective, HtmlForMarkdownPipe, NgClass],
+    imports: [ProgrammingExerciseInstructionComponent, TranslateDirective, HtmlForMarkdownPipe],
 })
 export class ProblemStatementComponent implements OnInit {
     private route = inject(ActivatedRoute);
@@ -23,7 +22,6 @@ export class ProblemStatementComponent implements OnInit {
 
     @Input() public exercise?: Exercise;
     @Input() participation?: StudentParticipation;
-    isStandalone: boolean = false;
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
@@ -44,13 +42,6 @@ export class ProblemStatementComponent implements OnInit {
                 });
             }
         });
-        // Check whether problem statement is displayed standalone (mobile apps)
-        const url = this.route.url;
-        if (url) {
-            url.subscribe((segments) => {
-                this.isStandalone = segments.some((segment) => segment.path == 'problem-statement');
-            });
-        }
     }
 
     get isProgrammingExercise(): boolean {

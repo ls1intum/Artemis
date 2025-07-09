@@ -23,7 +23,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
-import { expectComponentRendered } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 
 describe('EditTutorialGroupComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupComponent>;
@@ -89,14 +88,14 @@ describe('EditTutorialGroupComponent', () => {
     });
 
     it('should set form data correctly', () => {
-        const tutorialGroupFormComponent = expectComponentRendered<TutorialGroupFormComponent>(fixture, 'jhi-tutorial-group-form');
+        const tutorialGroupFormComponent: TutorialGroupFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFormComponent)).componentInstance;
 
         expect(component.tutorialGroup).toEqual(exampleTutorialGroup);
         expect(findTutorialGroupSpy).toHaveBeenCalledWith(2, 1);
         expect(findTutorialGroupSpy).toHaveBeenCalledOnce();
 
         expect(component.formData).toEqual(tutorialGroupToTutorialGroupFormData(exampleTutorialGroup));
-        expect(tutorialGroupFormComponent.formData()).toEqual(component.formData);
+        expect(tutorialGroupFormComponent.formData).toEqual(component.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {

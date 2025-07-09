@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * Service for managing user course notification statuses.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class UserCourseNotificationStatusService {
 

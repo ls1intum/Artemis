@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -54,12 +55,12 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
      * @param path The provided path to the rest endpoint
      * @return plagiarism result DTO
      */
-    private PlagiarismResultDTO createPlagiarismResult(String path) throws Exception {
+    private PlagiarismResultDTO<TextPlagiarismResult> createPlagiarismResult(String path) throws Exception {
         var plagiarismOptions = plagiarismUtilService.getDefaultPlagiarismOptions();
         return request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismOptions);
     }
 
-    private static void verifyPlagiarismResult(PlagiarismResultDTO result) {
+    private static void verifyPlagiarismResult(PlagiarismResultDTO<?> result) {
         // verify comparisons
         for (var comparison : result.plagiarismResult().getComparisons()) {
             var submissionA = comparison.getSubmissionA();

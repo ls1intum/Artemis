@@ -12,7 +12,6 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class UserSshPublicKeyService {
 

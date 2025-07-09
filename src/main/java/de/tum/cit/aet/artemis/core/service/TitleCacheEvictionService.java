@@ -16,13 +16,12 @@ import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.persister.entity.EntityPersister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -36,7 +35,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ApollonDiagram;
  * This is used in endpoints that return only the title of an entity which are consumed by breadcrumbs in the client.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class TitleCacheEvictionService implements PostUpdateEventListener, PostDeleteEventListener {
 
@@ -58,7 +56,7 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
      * If the {@link EventListenerRegistry} is available, the listeners are appended and a debug message is logged.
      * If the registry is null, a warning is logged indicating a possible misconfiguration.
      */
-    @EventListener(FullStartupEvent.class)
+    @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
         var eventListenerRegistry = entityManagerFactory.unwrap(SessionFactoryImpl.class).getServiceRegistry().getService(EventListenerRegistry.class);
         if (eventListenerRegistry != null) {

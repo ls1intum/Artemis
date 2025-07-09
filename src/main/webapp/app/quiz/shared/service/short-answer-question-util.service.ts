@@ -421,20 +421,4 @@ export class ShortAnswerQuestionUtil {
             return words[0].startsWith('`') ? words[0].substring(1) : words[0];
         }
     }
-
-    prepareShortAnswerQuestion(question: ShortAnswerQuestion): void {
-        question.correctMappings?.forEach((value) => {
-            delete value.id;
-            delete value.shortAnswerSpotIndex;
-            delete value.shortAnswerSolutionIndex;
-            delete value.solution?.tempID;
-            delete value.spot?.tempID;
-        });
-        question.spots?.forEach((value) => {
-            delete value.tempID;
-        });
-        question.solutions?.forEach((value) => {
-            delete value.tempID;
-        });
-    }
 }

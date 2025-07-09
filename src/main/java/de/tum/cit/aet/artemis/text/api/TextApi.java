@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.text.api;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
@@ -9,7 +8,6 @@ import de.tum.cit.aet.artemis.text.service.TextExerciseService;
 
 @Conditional(TextEnabled.class)
 @Controller
-@Lazy
 public class TextApi extends AbstractTextApi {
 
     private final TextExerciseService textExerciseService;

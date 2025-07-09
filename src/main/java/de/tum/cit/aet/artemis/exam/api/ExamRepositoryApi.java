@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -19,7 +18,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Conditional(ExamEnabled.class)
 @Controller
-@Lazy
 public class ExamRepositoryApi extends AbstractExamApi {
 
     private final ExamRepository examRepository;

@@ -9,9 +9,9 @@ import {
     OnInit,
     Output,
     SimpleChanges,
+    ViewChild,
     ViewEncapsulation,
     inject,
-    viewChild,
 } from '@angular/core';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
@@ -115,9 +115,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     private changeDetector = inject(ChangeDetectorRef);
     private fileService = inject(FileService);
 
-    private readonly clickLayer = viewChild.required<ElementRef>('clickLayer');
-    private readonly backgroundImage = viewChild.required<SecuredImageComponent>('backgroundImage');
-    private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
+    @ViewChild('clickLayer', { static: false }) private clickLayer: ElementRef;
+    @ViewChild('backgroundImage ', { static: false }) private backgroundImage: SecuredImageComponent;
+    @ViewChild('markdownEditor', { static: false }) private markdownEditor: MarkdownEditorMonacoComponent;
 
     @Input() question: DragAndDropQuestion;
     @Input() questionIndex: number;
@@ -233,8 +233,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             }
         }
 
-        this.backgroundImage()
-            .endLoadingProcess.pipe(
+        this.backgroundImage.endLoadingProcess
+            .pipe(
                 filter((loadingStatus) => loadingStatus === ImageLoadingStatus.SUCCESS),
                 // Some time until image render. Need to wait until image width is computed.
                 debounceTime(300),
@@ -253,11 +253,11 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         // Make the background image visible upon successful image load. Initially it is set to hidden and not
         // conditionally loaded via '*ngIf' because otherwise the reference would be undefined and hence we
         // wouldn't be able to subscribe to the loading process updates.
-        this.backgroundImage().element.nativeElement.style.visibility = 'visible';
+        this.backgroundImage.element.nativeElement.style.visibility = 'visible';
 
         // Adjust the click layer to correspond to the area of the background image.
-        this.clickLayer().nativeElement.style.width = `${this.backgroundImage().element.nativeElement.offsetWidth}px`;
-        this.clickLayer().nativeElement.style.left = `${this.backgroundImage().element.nativeElement.offsetLeft}px`;
+        this.clickLayer.nativeElement.style.width = `${this.backgroundImage.element.nativeElement.offsetWidth}px`;
+        this.clickLayer.nativeElement.style.left = `${this.backgroundImage.element.nativeElement.offsetLeft}px`;
     }
 
     /**
@@ -325,7 +325,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     mouseMove(event: MouseEvent): void {
         // Update mouse x and y value
-        const backgroundElement = this.clickLayer().nativeElement as HTMLElement;
+        const backgroundElement = this.clickLayer.nativeElement as HTMLElement;
         const backgroundOffsetLeft = backgroundElement.getBoundingClientRect().x + window.scrollX;
         const backgroundOffsetTop = backgroundElement.getBoundingClientRect().y + window.scrollY;
         const backgroundWidth = backgroundElement.offsetWidth;
@@ -384,7 +384,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (this.draggingState !== DragState.NONE) {
             switch (this.draggingState) {
                 case DragState.CREATE:
-                    const backgroundElement = this.clickLayer().nativeElement as HTMLElement;
+                    const backgroundElement = this.clickLayer.nativeElement as HTMLElement;
                     const backgroundWidth = backgroundElement.offsetWidth;
                     const backgroundHeight = backgroundElement.offsetHeight;
                     if ((this.currentDropLocation!.width! / MAX_SIZE_UNIT) * backgroundWidth < 14 && (this.currentDropLocation!.height! / MAX_SIZE_UNIT) * backgroundHeight < 14) {
@@ -442,7 +442,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     dropLocationMouseDown(dropLocation: DropLocation): void {
         if (this.draggingState === DragState.NONE) {
-            const backgroundElement = this.clickLayer().nativeElement as HTMLElement;
+            const backgroundElement = this.clickLayer.nativeElement as HTMLElement;
             const backgroundWidth = backgroundElement.offsetWidth;
             const backgroundHeight = backgroundElement.offsetHeight;
 
@@ -489,7 +489,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     resizeMouseDown(dropLocation: DropLocation, resizeLocationY: string, resizeLocationX: string): void {
         if (this.draggingState === DragState.NONE) {
-            const backgroundElement = this.clickLayer().nativeElement as HTMLElement;
+            const backgroundElement = this.clickLayer.nativeElement as HTMLElement;
             const backgroundWidth = backgroundElement.offsetWidth;
             const backgroundHeight = backgroundElement.offsetHeight;
 
@@ -905,7 +905,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     prepareForSave(): void {
         this.cleanupQuestion();
-        this.markdownEditor().parseMarkdown();
+        this.markdownEditor.parseMarkdown();
     }
 
     /**
@@ -950,7 +950,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                         this.question.correctMappings!.push(dndMapping);
                     }
                 };
-                image.src = this.backgroundImage().src;
+                image.src = this.backgroundImage.src;
             }
         }
         this.blankOutBackgroundImage();
@@ -991,7 +991,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                 this.setBackgroundFileFromFile(this.dataUrlToFile(dataUrlCanvas, 'background'));
             }
         };
-        image.src = this.backgroundImage().src;
+        image.src = this.backgroundImage.src;
     }
 
     /**

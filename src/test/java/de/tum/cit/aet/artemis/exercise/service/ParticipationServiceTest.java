@@ -1,12 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -18,7 +12,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +26,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
@@ -41,9 +33,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -182,36 +173,22 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         assertThat(programmingExercise.getStudentParticipations()).hasSize(2);
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @EnumSource(value = ExerciseType.class, names = { "PROGRAMMING", "TEXT" })
-    void testStartExercise_newParticipation(ExerciseType exerciseType) {
-        Course course;
-        if (exerciseType == ExerciseType.PROGRAMMING) {
-            course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-            setUpProgrammingExerciseMocks();
-        }
-        else {
-            course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        }
-        Exercise exercise = course.getExercises().iterator().next();
+    void testStartExercise_newParticipation() {
+        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Exercise modelling = course.getExercises().iterator().next();
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        StudentParticipation studentParticipationReceived = participationService.startExercise(exercise, participant, true);
+        StudentParticipation studentParticipationReceived = participationService.startExercise(modelling, participant, true);
 
-        assertThat(studentParticipationReceived.getExercise()).isEqualTo(exercise);
+        assertThat(studentParticipationReceived.getExercise()).isEqualTo(modelling);
         assertThat(studentParticipationReceived.getStudent()).isPresent();
         assertThat(studentParticipationReceived.getStudent().get()).isEqualTo(participant);
         // Acceptance range, initializationDate is to be set to now()
         assertThat(studentParticipationReceived.getInitializationDate()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(10));
         assertThat(studentParticipationReceived.getInitializationDate()).isBeforeOrEqualTo(ZonedDateTime.now().plusSeconds(10));
         assertThat(studentParticipationReceived.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
-    }
-
-    private void setUpProgrammingExerciseMocks() {
-        doReturn(new VcsRepositoryUri()).when(versionControlService).copyRepository(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt());
-        doReturn("fake-build-plan-id").when(continuousIntegrationService).copyBuildPlan(any(), anyString(), any(), anyString(), anyString(), anyBoolean());
-        doNothing().when(continuousIntegrationService).configureBuildPlan(any(ProgrammingExerciseParticipation.class));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -236,4 +213,45 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         assertThat(studentParticipationReceived.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteParticipation_removesBuildLogEntries() {
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+
+        // Setup: Create participation, submission and build log entries for template, solution and student
+        var templateParticipation = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
+        var templateSubmission = programmingExerciseUtilService.createProgrammingSubmission(templateParticipation, true);
+        BuildLogEntry buildLogEntryTemplate = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
+        var templateSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntryTemplate), templateSubmission);
+        templateSubmission.setBuildLogEntries(templateSavedBuildLogs);
+        programmingSubmissionRepository.save(templateSubmission);
+
+        var solutionParticipation = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
+        var solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, true);
+        BuildLogEntry buildLogEntrySolution = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
+        var solutionSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntrySolution), solutionSubmission);
+        solutionSubmission.setBuildLogEntries(solutionSavedBuildLogs);
+        programmingSubmissionRepository.save(solutionSubmission);
+
+        var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var studentSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, true);
+        BuildLogEntry buildLogEntryStudent = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
+        var studentSavedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntryStudent), studentSubmission);
+        studentSubmission.setBuildLogEntries(studentSavedBuildLogs);
+        programmingSubmissionRepository.save(studentSubmission);
+
+        // Delete and assert removal
+        assertThat(buildLogEntryRepository.findById(templateSavedBuildLogs.getFirst().getId())).isPresent();
+        participationService.deleteResultsAndSubmissionsOfParticipation(templateParticipation.getId(), true);
+        assertThat(buildLogEntryRepository.findById(templateSavedBuildLogs.getFirst().getId())).isEmpty();
+
+        assertThat(buildLogEntryRepository.findById(solutionSavedBuildLogs.getFirst().getId())).isPresent();
+        participationService.deleteResultsAndSubmissionsOfParticipation(solutionParticipation.getId(), true);
+        assertThat(buildLogEntryRepository.findById(solutionSavedBuildLogs.getFirst().getId())).isEmpty();
+
+        assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.getFirst().getId())).isPresent();
+        participationService.deleteResultsAndSubmissionsOfParticipation(studentParticipation.getId(), true);
+        assertThat(buildLogEntryRepository.findById(studentSavedBuildLogs.getFirst().getId())).isEmpty();
+    }
 }

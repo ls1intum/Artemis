@@ -11,13 +11,12 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 
@@ -30,7 +29,6 @@ import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 
@@ -40,7 +38,6 @@ import de.tum.cit.aet.artemis.core.exception.LocalCIException;
  */
 @Configuration
 @Profile(PROFILE_BUILDAGENT)
-@Lazy
 public class BuildAgentConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
@@ -62,14 +59,11 @@ public class BuildAgentConfiguration {
     @Value("${artemis.continuous-integration.specify-concurrent-builds:false}")
     boolean specifyConcurrentBuilds;
 
-    @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs:100}")
-    int pauseAfterConsecutiveFailedJobs;
-
     public BuildAgentConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
-    @EventListener(FullStartupEvent.class)
+    @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
         buildExecutor = createBuildExecutor();
         dockerClient = createDockerClient();
@@ -87,17 +81,14 @@ public class BuildAgentConfiguration {
         return dockerClient;
     }
 
-    public int getPauseAfterConsecutiveFailedJobs() {
-        return pauseAfterConsecutiveFailedJobs;
-    }
-
     /**
      * Creates a HostConfig object that is used to configure the Docker container for build jobs.
      * The configuration is based on the default Docker flags for build jobs as specified in artemis.continuous-integration.build.
      *
      * @return The HostConfig bean.
      */
-    @NotNull
+    @Bean
+    // TODO: reconsider if a bean is necessary here, this could also be created after application startup with @EventListener(ApplicationReadyEvent.class) to speed up the startup
     public HostConfig hostConfig() {
         long cpuCount = 0;
         long cpuPeriod = 100000L;

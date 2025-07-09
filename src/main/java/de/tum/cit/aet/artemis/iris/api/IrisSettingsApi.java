@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.Set;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 @Profile(PROFILE_IRIS)
 @Controller
-@Lazy
 public class IrisSettingsApi extends AbstractIrisApi {
 
     private final IrisExerciseSettingsRepository irisExerciseSettingsRepository;

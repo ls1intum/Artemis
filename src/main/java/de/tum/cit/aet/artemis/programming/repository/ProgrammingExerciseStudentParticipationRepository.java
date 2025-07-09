@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,9 +25,35 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
  * Spring Data JPA repository for the Participation entity.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends ArtemisJpaRepository<ProgrammingExerciseStudentParticipation, Long> {
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results pr
+                LEFT JOIN FETCH pr.feedbacks f
+                LEFT JOIN FETCH f.testCase
+                LEFT JOIN FETCH pr.submission
+            WHERE p.id = :participationId
+                AND (
+                    pr.id = (
+                        SELECT MAX(r2.id)
+                        FROM Submission s2 JOIN s2.results r2
+                        WHERE s2.participation = p
+                          AND (
+                              r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                              OR (r2.completionDate IS NOT NULL
+                                  AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime)
+                              )
+                          )
+                    )
+                    OR pr.id IS NULL
+                )
+            """)
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") long participationId,
+            @Param("dateTime") ZonedDateTime dateTime);
 
     @Query("""
             SELECT DISTINCT p
@@ -59,6 +84,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
 
+    Optional<ProgrammingExerciseStudentParticipation> findFirstByExerciseIdAndStudentLoginOrderByIdDesc(long exerciseId, String username);
+
     List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
@@ -73,6 +100,36 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     default ProgrammingExerciseStudentParticipation findByRepositoryUriElseThrow(String repositoryUri) {
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
     }
+
+    default ProgrammingExerciseStudentParticipation findFirstByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
+        return getValueElseThrow(findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, username));
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(long exerciseId, String username);
+
+    @Query("""
+            SELECT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN FETCH participation.submissions s
+            WHERE participation.exercise.id = :exerciseId
+                AND participation.student.login = :username
+            ORDER BY participation.id DESC
+            """)
+    List<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(@Param("exerciseId") long exerciseId,
+            @Param("username") String username);
+
+    default ProgrammingExerciseStudentParticipation findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
+        return getValueElseThrow(findWithSubmissionsByExerciseIdAndStudentLogin(exerciseId, username));
+    }
+
+    default ProgrammingExerciseStudentParticipation findFirstWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
+        return getValueElseThrow(findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, username).stream().findFirst());
+    }
+
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
+
+    Optional<ProgrammingExerciseStudentParticipation> findFirstByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(long exerciseId, String username, boolean testRun);
 
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
@@ -169,6 +226,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = "team.students")
     Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(long participationId);
 
+    default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(long participationId) {
+        return findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
+    }
+
     default Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(long participationId) {
         return findByIdWithAllResultsAndRelatedSubmissions(participationId, ZonedDateTime.now());
     }
@@ -194,5 +255,4 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 AND p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.INITIALIZED
             """)
     void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
-
 }

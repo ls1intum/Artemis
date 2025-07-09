@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
@@ -33,7 +33,6 @@ import com.hazelcast.map.listener.EntryUpdatedListener;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -44,7 +43,6 @@ import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 /**
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.
  */
-@Lazy
 @Service
 @Profile(PROFILE_LOCALCI)
 public class SharedQueueManagementService {
@@ -70,9 +68,9 @@ public class SharedQueueManagementService {
     /**
      * Initialize relevant data from hazelcast
      */
-    @EventListener(FullStartupEvent.class)
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
-        this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), true);
+        this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), false);
         this.updateBuildAgentCapacity();
     }
 
@@ -89,7 +87,7 @@ public class SharedQueueManagementService {
             for (DockerImageBuild dockerImageBuild : lastBuildDatesForDockerImages) {
                 distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(dockerImageBuild.dockerImage(), dockerImageBuild.lastBuildCompletionDate());
             }
-            log.debug("pushDockerImageCleanupInfo took {}ms", System.currentTimeMillis() - startDate);
+            log.info("pushDockerImageCleanupInfo took {}ms", System.currentTimeMillis() - startDate);
         }
     }
 

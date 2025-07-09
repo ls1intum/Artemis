@@ -72,12 +72,11 @@ export class ResultService implements IResultService {
      * If either of the arguments is undefined the error is forwarded to sentry and an empty string is returned
      * @param result the result containing all necessary information like the achieved points
      * @param exercise the exercise where the result belongs to
-     * @param participation the participation of the exercise and result
      * @param short flag that indicates if the resultString should use the short format
      */
-    getResultString(result: Result | undefined, exercise: Exercise | undefined, participation: Participation | undefined, short?: boolean): string {
-        if (result && exercise && participation) {
-            return this.getResultStringDefinedParameters(result, exercise, participation, short);
+    getResultString(result: Result | undefined, exercise: Exercise | undefined, short?: boolean): string {
+        if (result && exercise) {
+            return this.getResultStringDefinedParameters(result, exercise, short);
         } else {
             captureException('Tried to generate a result string, but either the result or exercise was undefined');
             return '';
@@ -89,10 +88,9 @@ export class ResultService implements IResultService {
      * Contains the score, achieved points and if it's a programming exercise the tests and code issues as well
      * @param result the result containing all necessary information like the achieved points
      * @param exercise the exercise where the result belongs to
-     * @param participation the participation of the exercise and result
      * @param short flag that indicates if the resultString should use the short format
      */
-    private getResultStringDefinedParameters(result: Result, exercise: Exercise, participation: Participation, short: boolean | undefined): string {
+    private getResultStringDefinedParameters(result: Result, exercise: Exercise, short: boolean | undefined): string {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type !== ExerciseType.PROGRAMMING) {
@@ -101,7 +99,7 @@ export class ResultService implements IResultService {
             }
             return this.getResultStringNonProgrammingExercise(relativeScore, points, short);
         } else {
-            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, participation, relativeScore, points, short);
+            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
         }
     }
 
@@ -148,20 +146,11 @@ export class ResultService implements IResultService {
      * If the result is a build failure or no tests were executed, the string replaces some parts with a helpful explanation
      * @param result the result containing all necessary information like the achieved points
      * @param exercise the exercise where the result belongs to
-     * @param participation the participation of the exercise and result
      * @param relativeScore the achieved score in percent
      * @param points the amount of achieved points
      * @param short flag that indicates if the resultString should use the short format
      */
-    private getResultStringProgrammingExercise(
-        result: Result,
-        exercise: ProgrammingExercise,
-        participation: Participation,
-        relativeScore: number,
-        points: number,
-        short: boolean | undefined,
-    ): string {
-        const latestSubmission = (result.submission ?? participation.submissions?.[0]) as ProgrammingSubmission;
+    private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, short: boolean | undefined): string {
         let buildAndTestMessage: string;
         if (isAIResultAndFailed(result)) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
@@ -171,7 +160,7 @@ export class ResultService implements IResultService {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
         } else if (isAIResultAndProcessed(result)) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
-        } else if (latestSubmission?.buildFailed) {
+        } else if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildFailed');
         } else if (!result.testCaseCount) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulNoTests');
@@ -185,7 +174,7 @@ export class ResultService implements IResultService {
 
         let resultString = this.getBaseResultStringProgrammingExercise(result, relativeScore, points, buildAndTestMessage, short);
 
-        if (isStudentParticipation(result) && isResultPreliminary(result, participation, exercise)) {
+        if (isStudentParticipation(result) && isResultPreliminary(result, exercise)) {
             resultString += ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
         }
 
@@ -241,7 +230,7 @@ export class ResultService implements IResultService {
             .pipe(map((res: ResultsWithPointsArrayResponseType) => this.convertResultsWithPointsResponse(res)));
     }
 
-    getFeedbackDetailsForResult(participationId: number | undefined, result: Result): Observable<HttpResponse<Feedback[]>> {
+    getFeedbackDetailsForResult(participationId: number, result: Result): Observable<HttpResponse<Feedback[]>> {
         return this.http.get<Feedback[]>(`${this.participationResourceUrl}/${participationId}/results/${result.id!}/details`, { observe: 'response' }).pipe(
             map((res) => {
                 const feedbacks = res.body ?? [];

@@ -58,7 +58,6 @@ describe('ResultService', () => {
     const participation2: StudentParticipation = { type: ParticipationType.STUDENT, exercise: programmingExercise };
     const submission1: ProgrammingSubmission = { buildFailed: true, participation: participation1 };
     const submission2: ProgrammingSubmission = { buildFailed: false, participation: participation2 };
-    const participation3: StudentParticipation = { type: ParticipationType.STUDENT, exercise: programmingExercise, submissions: [submission1] };
     const result1: Result = { id: 1, completionDate: dayjs().add(1, 'hours'), submission: submission1, score: 0 };
     const result2: Result = { id: 2, submission: submission2, completionDate: dayjs().add(2, 'hours'), score: 20 };
     const result3: Result = {
@@ -223,20 +222,20 @@ describe('ResultService', () => {
         });
 
         it('should return correct string for non programming exercise long format', () => {
-            expect(resultService.getResultString(modelingResult, modelingExercise, modelingParticipation)).toBe('artemisApp.result.resultString.nonProgramming');
+            expect(resultService.getResultString(modelingResult, modelingExercise)).toBe('artemisApp.result.resultString.nonProgramming');
             expect(translateServiceSpy).toHaveBeenCalledOnce();
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.nonProgramming', { relativeScore: 42, points: 21 });
         });
 
         it('should return correct string for non programming exercise short format', () => {
-            expect(resultService.getResultString(modelingResult, modelingExercise, modelingParticipation, true)).toBe('artemisApp.result.resultString.short');
+            expect(resultService.getResultString(modelingResult, modelingExercise, true)).toBe('artemisApp.result.resultString.short');
             expect(translateServiceSpy).toHaveBeenCalledOnce();
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.short', { relativeScore: 42 });
         });
 
         it.each([true, false])('should return correct string for programming exercise with build failure', (short: boolean) => {
             const expectedProgrammingString = short ? 'artemisApp.result.resultString.programmingShort' : 'artemisApp.result.resultString.programming';
-            expect(resultService.getResultString(result1, programmingExercise, participation3, short)).toBe(expectedProgrammingString);
+            expect(resultService.getResultString(result1, programmingExercise, short)).toBe(expectedProgrammingString);
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildFailed');
             if (short) {
@@ -255,7 +254,7 @@ describe('ResultService', () => {
 
         it.each([true, false])('should return correct string for programming exercise with no tests', (short: boolean) => {
             const expectedProgrammingString = short ? 'artemisApp.result.resultString.programmingShort' : 'artemisApp.result.resultString.programming';
-            expect(resultService.getResultString(result2, programmingExercise, participation2, short)).toBe(expectedProgrammingString);
+            expect(resultService.getResultString(result2, programmingExercise, short)).toBe(expectedProgrammingString);
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulNoTests');
             if (short) {
@@ -274,7 +273,7 @@ describe('ResultService', () => {
 
         it.each([true, false])('should return correct string for programming exercise with tests', (short: boolean) => {
             const expectedProgrammingString = short ? 'artemisApp.result.resultString.short' : 'artemisApp.result.resultString.programming';
-            expect(resultService.getResultString(result3, programmingExercise, participation1, short)).toBe(expectedProgrammingString);
+            expect(resultService.getResultString(result3, programmingExercise, short)).toBe(expectedProgrammingString);
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
             if (short) {
@@ -291,7 +290,7 @@ describe('ResultService', () => {
         });
 
         it('should return correct string for programming exercise with code issues', () => {
-            expect(resultService.getResultString(result4, programmingExercise, participation1)).toBe('artemisApp.result.resultString.programmingCodeIssues');
+            expect(resultService.getResultString(result4, programmingExercise)).toBe('artemisApp.result.resultString.programmingCodeIssues');
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
             expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultString.programmingCodeIssues`, {
@@ -305,7 +304,7 @@ describe('ResultService', () => {
         it('should return correct string for programming exercise preliminary', () => {
             programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
 
-            expect(resultService.getResultString(result5, programmingExercise, participation1)).toBe('artemisApp.result.resultString.programming (artemisApp.result.preliminary)');
+            expect(resultService.getResultString(result5, programmingExercise)).toBe('artemisApp.result.resultString.programming (artemisApp.result.preliminary)');
             expect(translateServiceSpy).toHaveBeenCalledTimes(3);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulNoTests');
             expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultString.programming`, {
@@ -319,7 +318,7 @@ describe('ResultService', () => {
         it('should return correct string for Athena non graded successful feedback', () => {
             programmingExercise.assessmentDueDate = dayjs().subtract(5, 'minutes');
 
-            expect(resultService.getResultString(result6, programmingExercise, participation1)).toBe(
+            expect(resultService.getResultString(result6, programmingExercise)).toBe(
                 'artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)',
             );
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
@@ -328,14 +327,14 @@ describe('ResultService', () => {
         it('should return correct string for Athena non graded unsuccessful feedback', () => {
             programmingExercise.assessmentDueDate = dayjs().subtract(5, 'minutes');
 
-            expect(resultService.getResultString(result7, programmingExercise, participation1)).toBe('artemisApp.result.resultString.automaticAIFeedbackFailed');
+            expect(resultService.getResultString(result7, programmingExercise)).toBe('artemisApp.result.resultString.automaticAIFeedbackFailed');
             expect(translateServiceSpy).toHaveBeenCalledOnce();
         });
 
         it('should return correct string for Athena timed out non graded feedback', () => {
             programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
 
-            expect(resultService.getResultString(result8, programmingExercise, participation1)).toBe('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+            expect(resultService.getResultString(result8, programmingExercise)).toBe('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
             expect(translateServiceSpy).toHaveBeenCalledOnce();
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
         });
@@ -343,7 +342,7 @@ describe('ResultService', () => {
         it('should return correct string for in progress Athena non-graded feedback', () => {
             programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
 
-            expect(resultService.getResultString(result9, programmingExercise, participation1)).toBe('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+            expect(resultService.getResultString(result9, programmingExercise)).toBe('artemisApp.result.resultString.automaticAIFeedbackInProgress');
             expect(translateServiceSpy).toHaveBeenCalledOnce();
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         });
@@ -352,7 +351,7 @@ describe('ResultService', () => {
             // Re-mock to get reference because direct import doesn't work here
             const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
             captureExceptionSpy.mockClear();
-            expect(resultService.getResultString(undefined, undefined, undefined)).toBe('');
+            expect(resultService.getResultString(undefined, undefined)).toBe('');
             expect(captureExceptionSpy).toHaveBeenCalledOnce();
             expect(captureExceptionSpy).toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
         });

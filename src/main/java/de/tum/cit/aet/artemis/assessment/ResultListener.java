@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
  */
 @Profile(PROFILE_CORE)
 @Component
-@Lazy
 public class ResultListener {
 
     private InstanceMessageSendService instanceMessageSendService;

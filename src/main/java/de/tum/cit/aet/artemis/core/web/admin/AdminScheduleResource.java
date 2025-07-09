@@ -5,7 +5,6 @@ import static tech.jhipster.web.util.PaginationUtil.generatePaginationHttpHeader
 
 import java.util.List;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.core.service.ScheduleService;
  */
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 @EnforceAdmin
-@Lazy
 @RestController
 @RequestMapping("api/core/admin/")
 public class AdminScheduleResource {
@@ -44,21 +42,8 @@ public class AdminScheduleResource {
      * @return the ResponseEntity with status 200 (OK) and the list of ScheduledExerciseEvents in body
      */
     @GetMapping("exercise-schedules")
-    public ResponseEntity<List<ScheduleService.ScheduledExerciseEvent>> getAllExerciseSchedules(Pageable pageable) {
+    public ResponseEntity<List<ScheduleService.ScheduledExerciseEvent>> getAll(Pageable pageable) {
         Page<ScheduleService.ScheduledExerciseEvent> page = scheduleService.findAllExerciseEvents(pageable);
-        HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
-
-    /**
-     * GET /slide-schedules : get a page of scheduled slide events.
-     *
-     * @param pageable the pagination information
-     * @return the ResponseEntity with status 200 (OK) and the list of ScheduledSlideEvents in body
-     */
-    @GetMapping("slide-schedules")
-    public ResponseEntity<List<ScheduleService.ScheduledSlideEvent>> getAllSlideSchedules(Pageable pageable) {
-        Page<ScheduleService.ScheduledSlideEvent> page = scheduleService.findAllSlideEvents(pageable);
         HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

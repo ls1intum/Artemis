@@ -6,7 +6,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.hibernate.Hibernate;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +14,6 @@ import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class FeedbackService {
 

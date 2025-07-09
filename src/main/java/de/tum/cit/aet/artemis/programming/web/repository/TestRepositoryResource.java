@@ -12,7 +12,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -52,7 +51,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
  * Executes requested actions on the test repository of a programming exercise. Only available to TAs, Instructors and Admins.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class TestRepositoryResource extends RepositoryResource {

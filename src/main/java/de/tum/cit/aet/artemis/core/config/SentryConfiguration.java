@@ -2,19 +2,18 @@ package de.tum.cit.aet.artemis.core.config;
 
 import java.util.Optional;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 
 import io.sentry.Sentry;
 import tech.jhipster.config.JHipsterConstants;
 
 @Configuration
-@Lazy
 @Profile({ JHipsterConstants.SPRING_PROFILE_PRODUCTION })
 public class SentryConfiguration {
 
@@ -32,7 +31,7 @@ public class SentryConfiguration {
     /**
      * init sentry with the correct package name and Artemis version
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void init() {
         if (sentryDsn.isEmpty() || sentryDsn.get().isEmpty()) {
             log.info("Sentry is disabled: Provide a DSN to enable Sentry.");

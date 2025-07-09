@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
  * Note: Because the ContinuousIntegrationSystem was designed with Jenkins integration in mind, some methods here are not
  * needed and thus contain an empty implementation.
  */
-@Lazy
 @Service
 @Profile(PROFILE_LOCALCI)
 public class LocalCIService implements ContinuousIntegrationService {

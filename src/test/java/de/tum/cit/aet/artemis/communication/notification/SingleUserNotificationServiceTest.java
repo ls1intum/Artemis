@@ -35,9 +35,10 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
@@ -130,13 +131,13 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         answerPost.setAuthor(userThree);
         answerPost.setContent(ANSWER_POST_CONTENT);
 
-        PlagiarismSubmission plagiarismSubmission = new PlagiarismSubmission();
+        PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission = new PlagiarismSubmission<>();
         plagiarismSubmission.setStudentLogin(user.getLogin());
 
-        PlagiarismResult plagiarismResult = new PlagiarismResult();
+        TextPlagiarismResult plagiarismResult = new TextPlagiarismResult();
         plagiarismResult.setExercise(exercise);
 
-        PlagiarismComparison plagiarismComparison = new PlagiarismComparison();
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         plagiarismComparison.setSubmissionA(plagiarismSubmission);
         plagiarismComparison.setPlagiarismResult(plagiarismResult);
 

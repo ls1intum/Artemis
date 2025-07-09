@@ -158,9 +158,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     clearDate() {
         this.dateInput.reset(undefined);
-        if (this.onChange) {
-            this.onChange(undefined);
-        }
         this.updateSignals();
     }
 

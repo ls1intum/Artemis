@@ -51,9 +51,6 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
-    @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs}")
-    private int pauseAfterConsecutiveFailures;
-
     private IQueue<BuildJobQueueItem> buildJobQueue;
 
     private IMap<String, BuildJobQueueItem> processingJobs;
@@ -367,43 +364,6 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
-        });
-    }
-
-    @Test
-    void testBuildAgentPausesAfterConsecutiveFailures() {
-        // run 1 successful job to ensure no previous jobs failed already
-        var queueItem = createBaseBuildJobQueueItemForTrigger();
-
-        buildJobQueue.add(queueItem);
-
-        await().until(() -> {
-            var resultQueueItem = resultQueue.poll();
-            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
-                    && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
-        });
-
-        // then 5 failings jobs
-        StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
-        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
-        when(startContainerCmd.exec()).thenThrow(new RuntimeException("Container start failed"));
-
-        for (int i = 0; i < pauseAfterConsecutiveFailures; i++) {
-            buildJobQueue.add(createBaseBuildJobQueueItemForTrigger());
-        }
-
-        await().until(() -> resultQueue.size() >= pauseAfterConsecutiveFailures);
-
-        await().until(() -> {
-            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
-            return buildAgent != null && buildAgent.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
-        });
-
-        // resume and wait for unpause not interfere with other tests
-        resumeBuildAgentTopic.publish(buildAgentShortName);
-        await().until(() -> {
-            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
-            return buildAgent.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
         });
     }
 }

@@ -13,7 +13,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -47,7 +46,6 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCombinedTutorSuggestionSubSettingsDTO
  * This server provides methods to update and combine sub settings objects.
  * See {@link IrisSettingsService} for more information about handling {@link IrisSettings}.
  */
-@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisSubSettingsService {
@@ -207,9 +205,6 @@ public class IrisSubSettingsService {
         if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAutoIngestOnLectureAttachmentUpload(newSettings.getAutoIngestOnLectureAttachmentUpload());
-            currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
-            currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
-                    parentSettings != null ? parentSettings.allowedVariants() : null));
         }
 
         return currentSettings;
@@ -280,9 +275,6 @@ public class IrisSubSettingsService {
         if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAutoIngestOnFaqCreation(newSettings.getAutoIngestOnFaqCreation());
-            currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
-            currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
-                    parentSettings != null ? parentSettings.allowedVariants() : null));
         }
 
         return currentSettings;

@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.core.web.open.PublicAccountResource;
  * Service class for {@link AccountResource} and {@link PublicAccountResource}.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class AccountService {
 

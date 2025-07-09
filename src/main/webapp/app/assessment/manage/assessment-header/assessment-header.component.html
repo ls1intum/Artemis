@@ -6,6 +6,9 @@
         } @else {
             <span jhiTranslate="artemisApp.assessment.assessment"></span>
         }
+        @if (isIllegalSubmission) {
+            <span class="badge bg-danger ms-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"></span>
+        }
     </div>
     @if (hasAssessmentDueDatePassed && !result?.completionDate) {
         <ngb-alert [style.fontSize]="'65%'" [type]="'warning'" (close)="hasAssessmentDueDatePassed = false" jhiTranslate="artemisApp.assessment.assessmentDueDateIsOver" />

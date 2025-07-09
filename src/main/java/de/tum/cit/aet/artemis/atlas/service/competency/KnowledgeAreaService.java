@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.atlas.service.competency;
 import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -16,7 +15,6 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
  * Service for managing {@link KnowledgeArea} entities.
  */
 @Conditional(AtlasEnabled.class)
-@Lazy
 @Service
 public class KnowledgeAreaService {
 

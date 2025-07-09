@@ -214,6 +214,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 if (res.body) {
                     this.course.set(res.body);
                 }
+                this.setupConversationService();
             }),
         );
     }
@@ -283,7 +284,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         }
         const nonInstructorItems: SidebarItem[] = [];
 
-        const communicationItem = this.addCommunicationItem(currentCourse);
+        const communicationItem = this.addCommunicationsItem(currentCourse);
         const tutorialGroupItem = this.addTutorialGroupsItem(currentCourse, isInstructor);
         this.addAssessmentItem(nonInstructorItems);
         this.addFaqItem(currentCourse, nonInstructorItems);
@@ -320,7 +321,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private addFaqItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (currentCourse.isAtLeastInstructor || currentCourse.faqEnabled) {
+        if (currentCourse.isAtLeastTutor && currentCourse.faqEnabled) {
             sidebarItems.push(this.sidebarItemService.getFaqManagementItem(this.courseId()));
         }
     }
@@ -352,9 +353,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return tutorialGroupsItem;
     }
 
-    private addCommunicationItem(currentCourse: Course) {
+    private addCommunicationsItem(currentCourse: Course) {
         const communicationItem: SidebarItem[] = [];
-        if (currentCourse.isAtLeastInstructor || isCommunicationEnabled(currentCourse)) {
+        if (isCommunicationEnabled(currentCourse)) {
             communicationItem.push(this.sidebarItemService.getCommunicationsItem(this.courseId()));
         }
         return communicationItem;

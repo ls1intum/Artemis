@@ -31,21 +31,7 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
-    private readonly profileService = inject(ProfileService);
-    private readonly alertService = inject(AlertService);
-    private readonly courseExerciseService = inject(CourseExerciseService);
-    private readonly translateService = inject(TranslateService);
-    private readonly exerciseService = inject(ExerciseService);
-    private readonly participationService = inject(ParticipationService);
-    private readonly accountService = inject(AccountService);
-    private readonly userService = inject(UserService);
-    private readonly modalService = inject(NgbModal);
-    private readonly participationWebsocketService = inject(ParticipationWebsocketService);
-
-    protected readonly faPenSquare = faPenSquare;
-
-    protected readonly ExerciseType = ExerciseType;
-
+    faPenSquare = faPenSquare;
     athenaEnabled = false;
     requestFeedbackEnabled = false;
     isExamExercise: boolean;
@@ -62,8 +48,21 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     exercise = input.required<Exercise>();
     generatingFeedback = output<void>();
 
+    private profileService = inject(ProfileService);
+    private alertService = inject(AlertService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private translateService = inject(TranslateService);
+    private exerciseService = inject(ExerciseService);
+    private participationService = inject(ParticipationService);
+    private accountService = inject(AccountService);
+    private userService = inject(UserService);
+    private modalService = inject(NgbModal);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+
     private athenaResultUpdateListener?: Subscription;
     private acceptSubscription?: Subscription;
+
+    protected readonly ExerciseType = ExerciseType;
 
     ngOnInit() {
         this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
@@ -106,7 +105,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     acceptExternalLLMUsage(modal: any) {
         this.acceptSubscription?.unsubscribe();
-        this.acceptSubscription = this.userService.updateExternalLLMUsageConsent(true).subscribe(() => {
+        this.acceptSubscription = this.userService.acceptExternalLLMUsage().subscribe(() => {
             this.hasUserAcceptedExternalLLMUsage = true;
             this.accountService.setUserAcceptedExternalLLMUsage();
             modal.close();

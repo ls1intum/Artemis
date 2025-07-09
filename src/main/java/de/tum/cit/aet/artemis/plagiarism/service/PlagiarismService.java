@@ -1,20 +1,26 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
+import static java.util.function.Predicate.isEqual;
+import static java.util.function.Predicate.not;
+
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
@@ -23,7 +29,6 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonReposito
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 
 @Conditional(PlagiarismEnabled.class)
-@Lazy
 @Service
 public class PlagiarismService {
 
@@ -37,13 +42,60 @@ public class PlagiarismService {
 
     private final UserRepository userRepository;
 
+    private final ExerciseDateService exerciseDateService;
+
     public PlagiarismService(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService, AuthorizationCheckService authCheckService,
-            SubmissionRepository submissionRepository, UserRepository userRepository) {
+            SubmissionRepository submissionRepository, UserRepository userRepository, ExerciseDateService exerciseDateService) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.plagiarismCaseService = plagiarismCaseService;
         this.authCheckService = authCheckService;
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
+        this.exerciseDateService = exerciseDateService;
+    }
+
+    /**
+     * A student should not see both answers from both students for the comparison before the due date
+     *
+     * @param submissionId  the id of the submission to check.
+     * @param userLogin     the user login of the student asking to see his plagiarism comparison.
+     * @param participation the participation of the student asking to see his plagiarism comparison.
+     * @return true is the user has access to the submission
+     */
+    public boolean hasAccessToSubmission(Long submissionId, String userLogin, Participation participation) {
+        var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
+        return comparisonOptional.filter(not(Set::isEmpty)).isPresent() && isOwnSubmissionOrIsAfterExerciseDueDate(submissionId, userLogin, comparisonOptional.get(), participation)
+                && wasUserNotifiedByInstructor(userLogin, comparisonOptional.get());
+    }
+
+    private boolean isOwnSubmissionOrIsAfterExerciseDueDate(Long submissionId, String userLogin, Set<PlagiarismComparison<?>> comparisons, Participation participation) {
+        var isOwnSubmission = comparisons.stream().flatMap(it -> Stream.of(it.getSubmissionA(), it.getSubmissionB())).filter(Objects::nonNull)
+                .filter(it -> it.getSubmissionId() == submissionId).findFirst().map(PlagiarismSubmission::getStudentLogin).filter(isEqual(userLogin)).isPresent();
+        return isOwnSubmission || exerciseDateService.isAfterDueDate(participation);
+    }
+
+    /**
+     * Checks whether the student with the given user login is involved in a plagiarism case which contains the given submissionId and the student is notified by the instructor.
+     *
+     * @param submission the submission to check
+     * @param userLogin  the user login of the student
+     * @return true if the student with user login owns one of the submissions in a PlagiarismComparison which contains the given submissionId and is notified by the instructor,
+     *         otherwise false
+     */
+    public boolean wasUserNotifiedByInstructor(Submission submission, String userLogin) {
+        var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submission.getId(), submission.getId());
+        return comparisonOptional.filter(not(Set::isEmpty)).isPresent() && wasUserNotifiedByInstructor(userLogin, comparisonOptional.get());
+    }
+
+    private boolean wasUserNotifiedByInstructor(String userLogin, Set<PlagiarismComparison<?>> comparisons) {
+        // disallow requests from users who are not notified about this case:
+        return comparisons.stream()
+                .anyMatch(comparison -> (comparison.getSubmissionA().getPlagiarismCase() != null
+                        && (comparison.getSubmissionA().getPlagiarismCase().getPost() != null || comparison.getSubmissionA().getPlagiarismCase().getVerdict() != null)
+                        && (comparison.getSubmissionA().getStudentLogin().equals(userLogin)))
+                        || (comparison.getSubmissionB().getPlagiarismCase() != null
+                                && (comparison.getSubmissionB().getPlagiarismCase().getPost() != null || comparison.getSubmissionB().getPlagiarismCase().getVerdict() != null)
+                                && (comparison.getSubmissionB().getStudentLogin().equals(userLogin))));
     }
 
     /**
@@ -71,7 +123,7 @@ public class PlagiarismService {
      */
     public long getNumberOfPotentialPlagiarismCasesForExercise(long exerciseId) {
         var comparisons = plagiarismComparisonRepository.findAllByPlagiarismResultExerciseId(exerciseId);
-        Set<PlagiarismSubmission> submissionsWithoutDeletedUsers = new HashSet<>();
+        Set<PlagiarismSubmission<?>> submissionsWithoutDeletedUsers = new HashSet<>();
         for (var comparison : comparisons) {
             addSubmissionsIfUserHasNotBeenDeleted(comparison, submissionsWithoutDeletedUsers);
         }
@@ -84,7 +136,7 @@ public class PlagiarismService {
      * @param comparison                     the comparison for which we want check if the user of the submission has been deleted.
      * @param submissionsWithoutDeletedUsers a set of plagiarism submissions for which the user still exists.
      */
-    private void addSubmissionsIfUserHasNotBeenDeleted(PlagiarismComparison comparison, Set<PlagiarismSubmission> submissionsWithoutDeletedUsers) {
+    private void addSubmissionsIfUserHasNotBeenDeleted(PlagiarismComparison<?> comparison, Set<PlagiarismSubmission<?>> submissionsWithoutDeletedUsers) {
         var plagiarismSubmissionA = comparison.getSubmissionA();
         var plagiarismSubmissionB = comparison.getSubmissionB();
         var submissionA = submissionRepository.findById(plagiarismSubmissionA.getSubmissionId()).orElseThrow();

@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -36,8 +36,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private modalService = inject(NgbModal);
     private route = inject(ActivatedRoute);
 
-    readonly editorContainer = viewChild.required<ElementRef>('editorContainer');
-    readonly titleField = viewChild<NgModel>('titleField');
+    @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
+    @ViewChild('titleField') titleField?: NgModel;
 
     @Input() courseId: number;
     @Input() apollonDiagramId: number;
@@ -143,7 +143,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             this.apollonEditor.destroy();
         }
 
-        this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, {
+        this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Exporting,
             model: initialModel,
             type: this.apollonDiagram!.diagramType,

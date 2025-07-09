@@ -21,7 +21,6 @@ import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
@@ -41,7 +40,6 @@ import tech.jhipster.config.JHipsterProperties;
  */
 @Profile(PROFILE_CORE)
 @Configuration
-@Lazy
 public class WebConfigurer implements ServletContextInitializer, WebServerFactoryCustomizer<WebServerFactory>, WebMvcConfigurer {
 
     private static final Logger log = LoggerFactory.getLogger(WebConfigurer.class);
@@ -98,12 +96,6 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     private void setLocationForStaticAssets(WebServerFactory server) {
         if (server instanceof ConfigurableServletWebServerFactory servletWebServer) {
             String prefixPath = resolvePathPrefix();
-            boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
-            String INVALID_PREFIX_ON_WINDOWS = "/";
-            boolean isInvalidPrefixOnWindows = prefixPath.startsWith(INVALID_PREFIX_ON_WINDOWS);
-            if (isWindows && isInvalidPrefixOnWindows) {
-                prefixPath = prefixPath.substring(INVALID_PREFIX_ON_WINDOWS.length());
-            }
             Path root = Path.of(prefixPath + "build/resources/main/static/");
             if (Files.exists(root) && Files.isDirectory(root)) {
                 servletWebServer.setDocumentRoot(root.toFile());

@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ProgrammingExerciseTestCaseService {
 
@@ -40,18 +38,17 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
+    private final ProgrammingTriggerService programmingTriggerService;
 
     private final AuditEventRepository auditEventRepository;
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, AuditEventRepository auditEventRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService) {
+            ProgrammingTriggerService programmingTriggerService, AuditEventRepository auditEventRepository, ProgrammingExerciseTaskService programmingExerciseTaskService) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
+        this.programmingTriggerService = programmingTriggerService;
         this.auditEventRepository = auditEventRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
     }
@@ -94,7 +91,7 @@ public class ProgrammingExerciseTestCaseService {
         testCaseRepository.saveAll(updatedTests);
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
-        programmingExerciseTestCaseChangedService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
+        programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return updatedTests;
     }
 
@@ -140,7 +137,7 @@ public class ProgrammingExerciseTestCaseService {
         List<ProgrammingExerciseTestCase> updatedTestCases = testCaseRepository.saveAll(testCases);
 
         // The tests' weights were updated. We use this flag to inform the instructor about outdated student results.
-        programmingExerciseTestCaseChangedService.setTestCasesChangedAndTriggerTestCaseUpdate(programmingExercise.getId());
+        programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(programmingExercise.getId());
         return updatedTestCases;
     }
 

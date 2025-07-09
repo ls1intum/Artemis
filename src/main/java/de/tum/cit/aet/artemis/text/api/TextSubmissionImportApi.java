@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -16,7 +15,6 @@ import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
 
 @Conditional(TextEnabled.class)
 @Controller
-@Lazy
 public class TextSubmissionImportApi extends AbstractTextApi {
 
     private final TextSubmissionRepository textSubmissionRepository;

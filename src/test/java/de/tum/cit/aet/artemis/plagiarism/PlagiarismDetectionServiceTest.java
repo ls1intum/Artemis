@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import de.jplag.exceptions.ExitException;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.exception.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionService;
@@ -47,7 +47,7 @@ class PlagiarismDetectionServiceTest {
         // given
         var textExercise = new TextExercise();
         textExercise.setPlagiarismDetectionConfig(config);
-        var textPlagiarismResult = new PlagiarismResult();
+        var textPlagiarismResult = new TextPlagiarismResult();
         textPlagiarismResult.setComparisons(emptySet());
         when(textPlagiarismDetectionService.checkPlagiarism(textExercise, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize()))
                 .thenReturn(textPlagiarismResult);
@@ -65,7 +65,7 @@ class PlagiarismDetectionServiceTest {
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(1L);
         programmingExercise.setPlagiarismDetectionConfig(config);
-        var programmingPlagiarismResult = new PlagiarismResult();
+        var programmingPlagiarismResult = new TextPlagiarismResult();
         programmingPlagiarismResult.setComparisons(emptySet());
         when(programmingPlagiarismDetectionService.checkPlagiarism(1L, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize()))
                 .thenReturn(programmingPlagiarismResult);

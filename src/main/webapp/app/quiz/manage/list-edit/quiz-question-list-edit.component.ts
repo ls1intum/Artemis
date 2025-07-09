@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewEncapsulation, inject, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, QueryList, ViewChildren, ViewEncapsulation, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -43,11 +43,14 @@ export class QuizQuestionListEditComponent {
     @Output() onQuestionUpdated = new EventEmitter();
     @Output() onQuestionDeleted = new EventEmitter<QuizQuestion>();
 
-    readonly editMultipleChoiceQuestionComponents = viewChildren<MultipleChoiceQuestionEditComponent>('editMultipleChoice');
+    @ViewChildren('editMultipleChoice')
+    editMultipleChoiceQuestionComponents: QueryList<MultipleChoiceQuestionEditComponent> = new QueryList<MultipleChoiceQuestionEditComponent>();
 
-    readonly editDragAndDropQuestionComponents = viewChildren<DragAndDropQuestionEditComponent>('editDragAndDrop');
+    @ViewChildren('editDragAndDrop')
+    editDragAndDropQuestionComponents: QueryList<DragAndDropQuestionEditComponent> = new QueryList<DragAndDropQuestionEditComponent>();
 
-    readonly editShortAnswerQuestionComponents = viewChildren<ShortAnswerQuestionEditComponent>('editShortAnswer');
+    @ViewChildren('editShortAnswer')
+    editShortAnswerQuestionComponents: QueryList<ShortAnswerQuestionEditComponent> = new QueryList<ShortAnswerQuestionEditComponent>();
 
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -204,9 +207,9 @@ export class QuizQuestionListEditComponent {
      */
     parseAllQuestions() {
         const editQuestionComponents: Array<QuizQuestionEdit> = [
-            ...this.editMultipleChoiceQuestionComponents(),
-            ...this.editDragAndDropQuestionComponents(),
-            ...this.editShortAnswerQuestionComponents(),
+            ...this.editMultipleChoiceQuestionComponents.toArray(),
+            ...this.editDragAndDropQuestionComponents.toArray(),
+            ...this.editShortAnswerQuestionComponents.toArray(),
         ];
         editQuestionComponents.forEach((component) => component.prepareForSave());
     }

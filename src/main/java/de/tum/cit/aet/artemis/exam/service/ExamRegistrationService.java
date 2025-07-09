@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -37,13 +36,12 @@ import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 
 /**
  * Service Implementation for registering students in the exam.
  */
 @Conditional(ExamEnabled.class)
-@Lazy
 @Service
 public class ExamRegistrationService {
 
@@ -55,7 +53,7 @@ public class ExamRegistrationService {
 
     private final UserService userService;
 
-    private final ParticipationDeletionService participationDeletionService;
+    private final ParticipationService participationService;
 
     private final StudentExamRepository studentExamRepository;
 
@@ -75,14 +73,14 @@ public class ExamRegistrationService {
 
     private final StudentExamService studentExamService;
 
-    public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService,
-            ParticipationDeletionService participationDeletionService, UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository,
-            StudentExamRepository studentExamRepository, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService,
-            ExamUserService examUserService, StudentExamService studentExamService) {
+    public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, ParticipationService participationService,
+            UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExamUserService examUserService,
+            StudentExamService studentExamService) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
-        this.participationDeletionService = participationDeletionService;
+        this.participationService = participationService;
         this.auditEventRepository = auditEventRepository;
         this.courseRepository = courseRepository;
         this.studentExamRepository = studentExamRepository;
@@ -306,7 +304,7 @@ public class ExamRegistrationService {
         if (deleteParticipationsAndSubmission) {
             List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam);
             for (var participation : participations) {
-                participationDeletionService.delete(participation.getId(), true);
+                participationService.delete(participation.getId(), true);
             }
         }
 

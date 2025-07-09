@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.google.common.util.concurrent.AtomicDouble;
@@ -56,7 +55,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * Service Implementation for the recommendation of competencies and learning objects in learning paths.
  */
 @Conditional(AtlasEnabled.class)
-@Lazy
 @Service
 public class LearningPathRecommendationService {
 

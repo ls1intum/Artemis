@@ -6,7 +6,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
  * Spring Data JPA repository for the ModelingSubmission entity.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface ModelingSubmissionRepository extends ArtemisJpaRepository<ModelingSubmission, Long> {
 

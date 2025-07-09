@@ -9,13 +9,12 @@ import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial
 import { AlertService } from 'app/shared/service/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TutorialGroupRegistrationImportDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-import-dto.model';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { ParseError, ParseResult, ParseWorkerConfig, parse } from 'papaparse';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
-import { Student } from 'app/openapi/model/student';
-import ErrorEnum = TutorialGroupRegistrationImport.ErrorEnum;
 jest.mock('papaparse', () => {
     const original = jest.requireActual('papaparse');
     return {
@@ -294,7 +293,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
 
     it('should read registrations from csv string with additional headers', async () => {
         // given
-        const exampleDTO = generateImportDTO('Tutorial Group 1', generateStudentDTO('123456', 'John', 'Doe', 'john-doe'), 'Main Campus', 'German', undefined, 25, undefined);
+        const exampleDTO = generateImportDTO('Tutorial Group 1', generateStudentDTO('123456', 'John', 'Doe', 'john-doe'), 'Main Campus', 'German', '', 25, '');
         mockParserWithDTOs([exampleDTO], []);
 
         // when
@@ -307,7 +306,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(component.registrationsDisplayedInTable[0].language).toBe('German');
         expect(component.registrationsDisplayedInTable[0].additionalInformation).toBe('');
         expect(component.registrationsDisplayedInTable[0].capacity).toBe(25);
-        expect(component.registrationsDisplayedInTable[0].isOnline).toBeUndefined();
+        expect(component.registrationsDisplayedInTable[0].isOnline).toBe('');
     });
     it('should remove spaces from header names correctly', () => {
         const headerWithSpaces = ' Header Name ';
@@ -337,7 +336,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         expect(removeChildSpy).toHaveBeenCalledWith(link);
     });
 
-    async function validationTest(data: TutorialGroupRegistrationImport[], translationKey: string, errorAddition?: string) {
+    async function validationTest(data: TutorialGroupRegistrationImportDTO[], translationKey: string, errorAddition?: string) {
         // given
         const translateService = TestBed.inject(TranslateService);
         const instantSpy = jest.spyOn(translateService, 'instant').mockReturnValue('testError:');
@@ -376,16 +375,16 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
 
     const generateImportDTO = (
         title?: string,
-        student?: Student,
+        student?: StudentDTO,
         campus?: string,
         language?: string,
         additionalInformation?: string,
         capacity?: number,
-        isOnline?: boolean,
+        isOnline?: string,
         importSuccessful?: boolean,
-        error?: ErrorEnum,
+        error?: string,
     ) => {
-        const dto = {} as TutorialGroupRegistrationImport;
+        const dto = new TutorialGroupRegistrationImportDTO();
         dto.title = title ?? 'Mo 12-13';
         dto.student = student ?? generateStudentDTO();
         dto.importSuccessful = importSuccessful ?? undefined;
@@ -394,12 +393,12 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         dto.language = language ?? 'English';
         dto.additionalInformation = additionalInformation ?? '';
         dto.capacity = capacity ?? 20;
-        dto.isOnline = isOnline ?? undefined;
+        dto.isOnline = isOnline ?? '';
         return dto;
     };
 
     const generateStudentDTO = (registrationNumber?: string, firstName?: string, lastName?: string, login?: string) => {
-        const dto = {} as Student;
+        const dto = new StudentDTO();
         dto.registrationNumber = registrationNumber ?? '123456';
         dto.firstName = firstName ?? 'John';
         dto.lastName = lastName ?? 'Doe';
@@ -407,7 +406,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         return dto;
     };
 
-    function mockParserWithDTOs(data: TutorialGroupRegistrationImport[], errors: ParseError[]) {
+    function mockParserWithDTOs(data: TutorialGroupRegistrationImportDTO[], errors: ParseError[]) {
         mockParserWithRawCSVRows(
             data.map((dto) => generateRowObjectFromDTO(dto)),
             errors,
@@ -439,13 +438,13 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         status?: string;
     }
 
-    const generateRowObjectFromDTO = (dto: TutorialGroupRegistrationImport, status?: string) => {
+    const generateRowObjectFromDTO = (dto: TutorialGroupRegistrationImportDTO, status?: string) => {
         return {
             group: dto.title,
-            registrationnumber: dto.student!.registrationNumber,
-            login: dto.student!.login,
-            firstname: dto.student!.firstName,
-            lastname: dto.student!.lastName,
+            registrationnumber: dto.student.registrationNumber,
+            login: dto.student.login,
+            firstname: dto.student.firstName,
+            lastname: dto.student.lastName,
             campus: dto.campus,
             language: dto.language,
             additionalInformation: dto.additionalInformation,

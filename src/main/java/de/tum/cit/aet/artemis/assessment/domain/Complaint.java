@@ -156,14 +156,18 @@ public class Complaint extends DomainObject {
      * @param participant either a team or user
      */
     public void setParticipant(Participant participant) {
-        switch (participant) {
-            case User user -> this.student = user;
-            case Team team -> this.team = team;
-            case null -> {
-                this.student = null;
-                this.team = null;
-            }
-            default -> throw new Error("Unknown participant type");
+        if (participant instanceof User) {
+            this.student = (User) participant;
+        }
+        else if (participant instanceof Team) {
+            this.team = (Team) participant;
+        }
+        else if (participant == null) {
+            this.student = null;
+            this.team = null;
+        }
+        else {
+            throw new Error("Unknown participant type");
         }
     }
 

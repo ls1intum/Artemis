@@ -8,7 +8,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { Component, SimpleChange, input, viewChild, viewChildren } from '@angular/core';
+import { Component, Input, QueryList, SimpleChange, ViewChild, ViewChildren } from '@angular/core';
 import { TutorialGroupRowStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-groups-table-stub.component';
 import { Course, Language } from 'app/core/course/shared/entities/course.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -24,13 +24,13 @@ import { TutorialGroupUtilizationIndicatorComponent } from 'app/tutorialgroup/sh
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
-    readonly tutorialGroup = input<TutorialGroup>();
+    @Input() tutorialGroup: TutorialGroup;
 }
 
 @Component({
     selector: 'jhi-mock-wrapper',
     template: `
-        <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups()" [course]="course()" [showIdColumn]="true">
+        <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [course]="course" [showIdColumn]="true">
             <ng-template let-tutorialGroup>
                 <jhi-mock-extra-column [tutorialGroup]="tutorialGroup" />
             </ng-template>
@@ -39,11 +39,11 @@ class MockExtraColumnComponent {
     imports: [TutorialGroupsTableComponent, MockExtraColumnComponent],
 })
 class MockWrapperComponent {
-    readonly tutorialGroups = input<TutorialGroup[]>([]);
-    readonly course = input.required<Course>();
+    @Input() tutorialGroups: TutorialGroup[];
+    @Input() course: Course;
 
-    tutorialGroupTableInstance = viewChild.required(TutorialGroupsTableComponent);
-    mockExtraColumns = viewChildren(MockExtraColumnComponent);
+    @ViewChild(TutorialGroupsTableComponent) tutorialGroupTableInstance: TutorialGroupsTableComponent;
+    @ViewChildren(MockExtraColumnComponent) mockExtraColumns: QueryList<MockExtraColumnComponent>;
 }
 
 describe('TutorialGroupTableWrapperTest', () => {
@@ -88,11 +88,11 @@ describe('TutorialGroupTableWrapperTest', () => {
                 component = fixture.componentInstance;
                 tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
                 tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
-                fixture.componentRef.setInput('tutorialGroups', [tutorialGroupOne, tutorialGroupTwo]);
-                fixture.componentRef.setInput('course', course);
+                component.tutorialGroups = [tutorialGroupOne, tutorialGroupTwo];
+                component.course = course;
                 fixture.detectChanges();
-                tableInstance = component.tutorialGroupTableInstance();
-                mockExtraColumns = [...component.mockExtraColumns()]; // spread to make mutable
+                tableInstance = component.tutorialGroupTableInstance;
+                mockExtraColumns = component.mockExtraColumns.toArray();
             });
     });
 
@@ -101,12 +101,12 @@ describe('TutorialGroupTableWrapperTest', () => {
     });
 
     it('should pass the tutorialGroup to the headers', () => {
-        expect(tableInstance.tutorialGroups()).toEqual([tutorialGroupOne, tutorialGroupTwo]);
-        expect(tableInstance.course()).toEqual(course);
+        expect(tableInstance.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
+        expect(tableInstance.course).toEqual(course);
         expect(mockExtraColumns).toHaveLength(2);
-        mockExtraColumns.sort((a, b) => a.tutorialGroup()!.id! - b.tutorialGroup()!.id!);
-        expect(mockExtraColumns[0].tutorialGroup()).toEqual(tutorialGroupOne);
-        expect(mockExtraColumns[1].tutorialGroup()).toEqual(tutorialGroupTwo);
+        mockExtraColumns.sort((a, b) => a.tutorialGroup!.id! - b.tutorialGroup!.id!);
+        expect(mockExtraColumns[0].tutorialGroup).toEqual(tutorialGroupOne);
+        expect(mockExtraColumns[1].tutorialGroup).toEqual(tutorialGroupTwo);
         expect(fixture.nativeElement.querySelectorAll('jhi-mock-extra-column')).toHaveLength(2);
     });
 });
@@ -132,9 +132,9 @@ describe('TutorialGroupsTableComponent', () => {
                 component = fixture.componentInstance;
                 tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
                 tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
-                fixture.componentRef.setInput('tutorialGroups', [tutorialGroupOne, tutorialGroupTwo]);
-                fixture.componentRef.setInput('course', course);
-                fixture.componentRef.setInput('showIdColumn', true);
+                component.tutorialGroups = [tutorialGroupOne, tutorialGroupTwo];
+                component.course = course;
+                component.showIdColumn = true;
                 fixture.detectChanges();
             });
     });
@@ -151,16 +151,16 @@ describe('TutorialGroupsTableComponent', () => {
         tutorialGroupOne.language = Language.ENGLISH;
         tutorialGroupTwo.language = Language.GERMAN;
 
-        fixture.componentRef.setInput('tutorialGroups', [tutorialGroupOne, tutorialGroupTwo]);
-        fixture.detectChanges();
+        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
+        runOnPushChangeDetection(fixture);
 
         expect(fixture.nativeElement.querySelector('#language-column')).not.toBeNull();
 
         tutorialGroupOne.language = Language.ENGLISH;
         tutorialGroupTwo.language = Language.ENGLISH;
 
-        fixture.componentRef.setInput('tutorialGroups', [tutorialGroupOne, tutorialGroupTwo]);
-        fixture.detectChanges();
+        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
+        runOnPushChangeDetection(fixture);
         expect(fixture.nativeElement.querySelector('#language-column')).toBeNull();
     });
 

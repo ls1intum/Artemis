@@ -29,9 +29,11 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodDTO = new TutorialGroupFreePeriodDTO();
     isLoading: boolean;
 
-    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
-    @Input() tutorialGroupConfigurationId: number;
-    @Input() course: Course;
+    @Input()
+    tutorialGroupConfigurationId: number;
+
+    @Input()
+    course: Course;
 
     isInitialized = false;
 

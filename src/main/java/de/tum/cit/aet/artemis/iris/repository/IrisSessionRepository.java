@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,7 +18,6 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 /**
  * Spring Data repository for the IrisSession entity.
  */
-@Lazy
 @Repository
 @Profile(PROFILE_IRIS)
 public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession, Long> {

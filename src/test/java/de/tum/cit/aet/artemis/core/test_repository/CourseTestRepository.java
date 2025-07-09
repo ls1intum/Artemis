@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 
-@Lazy
 @Repository
 @Primary
 public interface CourseTestRepository extends CourseRepository {
@@ -31,9 +29,6 @@ public interface CourseTestRepository extends CourseRepository {
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
     Optional<Course> findWithEagerLearningPathsById(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites" })
-    Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
-
     @NotNull
     default Course findWithEagerLearningPathsByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerLearningPathsById(courseId), courseId);
@@ -45,10 +40,5 @@ public interface CourseTestRepository extends CourseRepository {
     @NotNull
     default Course findWithEagerCompetenciesAndPrerequisitesAndLearningPathsByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerCompetenciesAndPrerequisitesAndLearningPathsById(courseId), courseId);
-    }
-
-    @NotNull
-    default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(long courseId) {
-        return getValueElseThrow(findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId), courseId);
     }
 }

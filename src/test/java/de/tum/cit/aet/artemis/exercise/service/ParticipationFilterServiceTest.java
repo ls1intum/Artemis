@@ -73,7 +73,7 @@ class ParticipationFilterServiceTest extends AbstractSpringIntegrationIndependen
         var studentParticipation = new StudentParticipation();
         studentParticipation.setSubmissions(Set.of());
         participationFilterService.filterParticipationForCourseDashboard(studentParticipation, true);
-        assertThat(studentParticipation.getSubmissions()).isEmpty();
+        assertThat(studentParticipation.getSubmissions()).isNull();
     }
 
     @ParameterizedTest

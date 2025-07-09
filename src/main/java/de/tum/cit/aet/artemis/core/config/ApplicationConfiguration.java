@@ -3,12 +3,10 @@ package de.tum.cit.aet.artemis.core.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 
 @Configuration
-@Lazy
 public class ApplicationConfiguration {
 
     /**

@@ -10,15 +10,15 @@ export class PlagiarismInspectorService {
      * @param range the similarity range the comparisons should be filtered against
      * @param comparisons the comparisons that should be filtered
      */
-    filterComparisons(range: Range, comparisons?: PlagiarismComparison[]): PlagiarismComparison[] {
+    filterComparisons(range: Range, comparisons?: PlagiarismComparison<any>[]): PlagiarismComparison<any>[] {
         if (!comparisons) {
             return [];
         }
         let filterFunction;
         if (range.upperBound === 100) {
-            filterFunction = (comparison: PlagiarismComparison) => comparison.similarity >= range.lowerBound && comparison.similarity <= range.upperBound;
+            filterFunction = (comparison: PlagiarismComparison<any>) => comparison.similarity >= range.lowerBound && comparison.similarity <= range.upperBound;
         } else {
-            filterFunction = (comparison: PlagiarismComparison) => comparison.similarity >= range.lowerBound && comparison.similarity < range.upperBound;
+            filterFunction = (comparison: PlagiarismComparison<any>) => comparison.similarity >= range.lowerBound && comparison.similarity < range.upperBound;
         }
         return comparisons.filter(filterFunction);
     }

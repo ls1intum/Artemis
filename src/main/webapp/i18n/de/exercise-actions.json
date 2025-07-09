@@ -71,7 +71,7 @@
             "deleteMultipleExercisesQuestion": "Sollen die ausgewählten Aufgaben wirklich dauerhaft gelöscht werden?",
             "externalLLMUsage": {
                 "popUpLabel": "Bestätigung der externen LLM-Verwendung",
-                "popUpMessage": "Indem du akzeptierst, bestätigst du, dass du mindestens 18 Jahre alt bist und damit einverstanden bist, dass deine Interaktionen mit Artemis sowie die dafür erforderlichen kontextbezogenen Daten, wie etwa dein Code, außerhalb des Rechenzentrums der Universität verarbeitet werden dürfen. Die Verarbeitung erfolgt in der Microsoft Azure Cloud gemäß den EU-Datenschutzstandards. Dabei werden alle Daten innerhalb der EU verarbeitet und nicht gespeichert.",
+                "popUpMessage": "Indem du fortfährst, bestätigst du, dass du mind. 18 Jahre alt bist und dass du damit einverstanden bist, dass deine Interaktionen mit Artemis und die notwendigen kontextbezogenen Daten, z.B. dein Code, von Microsoft und OpenAI (d.h. außerhalb unseres Universitätsrechenzentrums) verarbeitet werden.",
                 "accept": "Akzeptieren",
                 "decline": "Ablehnen"
             }

@@ -15,30 +15,25 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.JPlagComparison;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 
 /**
  * Pair of compared student submissions whose similarity is above a certain threshold.
  */
 @Entity
 @Table(name = "plagiarism_comparison")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PlagiarismComparison extends DomainObject implements Comparable<PlagiarismComparison> {
+public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends DomainObject implements Comparable<PlagiarismComparison<E>> {
 
     /**
      * The result this comparison belongs to.
      */
     @ManyToOne(targetEntity = PlagiarismResult.class)
-    private PlagiarismResult plagiarismResult;
+    private PlagiarismResult<E> plagiarismResult;
 
     /**
      * First submission compared. We maintain a bidirectional relationship manually with #PlagiarismSubmission.plagiarismComparison.
@@ -47,10 +42,10 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
      * which would leave empty references from other plagiarism comparisons. Comparisons are
      * always deleted all at once, so we can also cascade deletion.
      */
-    @JsonIgnoreProperties(value = "plagiarismComparison", allowSetters = true)
-    @ManyToOne(cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("plagiarismComparison")
+    @ManyToOne(targetEntity = PlagiarismSubmission.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "submission_a_id")
-    private PlagiarismSubmission submissionA;
+    private PlagiarismSubmission<E> submissionA;
 
     /**
      * Second submission compared. We maintain a bidirectional relationship manually with #PlagiarismSubmission.plagiarismComparison.
@@ -59,10 +54,10 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
      * which would leave empty references from other plagiarism comparisons. Comparisons are
      * always deleted all at once, so we can also cascade deletion.
      */
-    @JsonIgnoreProperties(value = "plagiarismComparison", allowSetters = true)
-    @ManyToOne(cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("plagiarismComparison")
+    @ManyToOne(targetEntity = PlagiarismSubmission.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "submission_b_id")
-    private PlagiarismSubmission submissionB;
+    private PlagiarismSubmission<E> submissionB;
 
     /**
      * List of matches between both submissions involved in this comparison.
@@ -91,8 +86,8 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
      * @param submissionDirectory the directory to which all student submissions have been downloaded / stored
      * @return a new instance with the content of the JPlagComparison
      */
-    public static PlagiarismComparison fromJPlagComparison(JPlagComparison jplagComparison, Exercise exercise, File submissionDirectory) {
-        PlagiarismComparison comparison = new PlagiarismComparison();
+    public static PlagiarismComparison<TextSubmissionElement> fromJPlagComparison(JPlagComparison jplagComparison, Exercise exercise, File submissionDirectory) {
+        PlagiarismComparison<TextSubmissionElement> comparison = new PlagiarismComparison<>();
 
         comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.firstSubmission(), exercise, submissionDirectory));
         comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.secondSubmission(), exercise, submissionDirectory));
@@ -109,8 +104,8 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
      *
      * @param submissionA the new submission which will be attached to the comparison
      */
-    public void setSubmissionA(PlagiarismSubmission submissionA) {
-        this.submissionA = submissionA;
+    public void setSubmissionA(PlagiarismSubmission<?> submissionA) {
+        this.submissionA = (PlagiarismSubmission<E>) submissionA;
         if (this.submissionA != null) {
             // Important: make sure to maintain the custom bidirectional association
             this.submissionA.setPlagiarismComparison(this);
@@ -122,27 +117,27 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
      *
      * @param submissionB the new submission which will be attached to the comparison
      */
-    public void setSubmissionB(PlagiarismSubmission submissionB) {
-        this.submissionB = submissionB;
+    public void setSubmissionB(PlagiarismSubmission<?> submissionB) {
+        this.submissionB = (PlagiarismSubmission<E>) submissionB;
         if (this.submissionB != null) {
             // Important: make sure to maintain the custom bidirectional association
             this.submissionB.setPlagiarismComparison(this);
         }
     }
 
-    public PlagiarismSubmission getSubmissionA() {
+    public PlagiarismSubmission<E> getSubmissionA() {
         return submissionA;
     }
 
-    public PlagiarismSubmission getSubmissionB() {
+    public PlagiarismSubmission<E> getSubmissionB() {
         return this.submissionB;
     }
 
-    public PlagiarismResult getPlagiarismResult() {
+    public PlagiarismResult<E> getPlagiarismResult() {
         return plagiarismResult;
     }
 
-    public void setPlagiarismResult(PlagiarismResult plagiarismResult) {
+    public void setPlagiarismResult(PlagiarismResult<E> plagiarismResult) {
         this.plagiarismResult = plagiarismResult;
     }
 
@@ -171,7 +166,7 @@ public class PlagiarismComparison extends DomainObject implements Comparable<Pla
     }
 
     @Override
-    public int compareTo(@NotNull PlagiarismComparison otherComparison) {
+    public int compareTo(@NotNull PlagiarismComparison<E> otherComparison) {
         return Double.compare(similarity, otherComparison.similarity);
     }
 

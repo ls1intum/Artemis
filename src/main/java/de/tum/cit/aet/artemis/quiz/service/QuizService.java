@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public abstract class QuizService<T extends QuizConfiguration> {
 
@@ -64,12 +62,14 @@ public abstract class QuizService<T extends QuizConfiguration> {
                 quizQuestion.initializeStatistic();
             }
 
-            switch (quizQuestion) {
-                case MultipleChoiceQuestion multipleChoiceQuestion -> fixReferenceMultipleChoice(multipleChoiceQuestion);
-                case DragAndDropQuestion dragAndDropQuestion -> fixReferenceDragAndDrop(dragAndDropQuestion);
-                case ShortAnswerQuestion shortAnswerQuestion -> fixReferenceShortAnswer(shortAnswerQuestion);
-                default -> {
-                }
+            if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
+                fixReferenceMultipleChoice(multipleChoiceQuestion);
+            }
+            else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
+                fixReferenceDragAndDrop(dragAndDropQuestion);
+            }
+            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
+                fixReferenceShortAnswer(shortAnswerQuestion);
             }
         }
 

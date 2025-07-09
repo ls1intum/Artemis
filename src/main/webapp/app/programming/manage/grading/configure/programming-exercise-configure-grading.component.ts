@@ -224,8 +224,12 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => (this.course = courseResponse.body!));
 
             if (this.programmingExercise == undefined || this.programmingExercise.id !== exerciseId) {
-                this.testCaseSubscription?.unsubscribe();
-                this.testCaseChangedSubscription?.unsubscribe();
+                if (this.testCaseSubscription) {
+                    this.testCaseSubscription.unsubscribe();
+                }
+                if (this.testCaseChangedSubscription) {
+                    this.testCaseChangedSubscription.unsubscribe();
+                }
 
                 const loadExercise = this.programmingExerciseService.find(exerciseId).pipe(
                     map((res) => res.body!),
@@ -276,9 +280,15 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * If there is an existing subscription, unsubscribe
      */
     ngOnDestroy(): void {
-        this.testCaseSubscription?.unsubscribe();
-        this.testCaseChangedSubscription?.unsubscribe();
-        this.paramSub?.unsubscribe();
+        if (this.testCaseSubscription) {
+            this.testCaseSubscription.unsubscribe();
+        }
+        if (this.testCaseChangedSubscription) {
+            this.testCaseChangedSubscription.unsubscribe();
+        }
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
+        }
     }
 
     /**
@@ -286,7 +296,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      *  updates the list of test cases
      */
     private subscribeForTestCaseUpdates() {
-        this.testCaseSubscription?.unsubscribe();
+        if (this.testCaseSubscription) {
+            this.testCaseSubscription.unsubscribe();
+        }
         this.testCaseSubscription = this.gradingService
             .subscribeForTestCases(this.programmingExercise.id!)
             .pipe(
@@ -303,7 +315,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      *  checks if the test cases have changed
      */
     private subscribeForExerciseTestCasesChangedUpdates() {
-        this.testCaseChangedSubscription?.unsubscribe();
+        if (this.testCaseChangedSubscription) {
+            this.testCaseChangedSubscription.unsubscribe();
+        }
         this.testCaseChangedSubscription = this.programmingExerciseWebsocketService
             .getTestCaseState(this.programmingExercise.id!)
             .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedGradingConfig = testCasesChanged)))

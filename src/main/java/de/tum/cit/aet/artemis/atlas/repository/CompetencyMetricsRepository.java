@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.atlas.repository;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Spring Data JPA repository to fetch competency related metrics.
  */
 @Conditional(AtlasEnabled.class)
-@Lazy
 @Repository
 public interface CompetencyMetricsRepository extends ArtemisJpaRepository<Competency, Long> {
 

@@ -15,10 +15,8 @@ export const ltiLaunchRoutes: Routes = [
         path: 'dynamic-registration',
         loadComponent: () => import('app/lti/overview/lti13-dynamic-registration/lti13-dynamic-registration.component').then((m) => m.Lti13DynamicRegistrationComponent),
         data: {
-            authorities: [Authority.ADMIN],
             pageTitle: 'artemisApp.lti13.dynamicRegistration.title',
         },
-        canActivate: [UserRouteAccessService],
     },
     {
         path: 'select-content',

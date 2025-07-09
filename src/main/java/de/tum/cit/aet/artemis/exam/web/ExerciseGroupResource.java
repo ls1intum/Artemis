@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,7 +45,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
  * REST controller for managing ExerciseGroup.
  */
 @Conditional(ExamEnabled.class)
-@Lazy
 @RestController
 @RequestMapping("api/exam/")
 public class ExerciseGroupResource {

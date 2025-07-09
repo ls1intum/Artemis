@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.tutorialgroup.api;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Controller;
 
@@ -13,7 +12,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 
 @Conditional(TutorialGroupEnabled.class)
 @Controller
-@Lazy
 public class TutorialGroupCommunicationApi extends AbstractTutorialGroupApi {
 
     private final TutorialGroupRepository tutorialGroupRepository;

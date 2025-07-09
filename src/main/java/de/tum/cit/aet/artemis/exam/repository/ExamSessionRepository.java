@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exam.repository;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -16,7 +15,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExamSession;
  * Spring Data JPA repository for the ExamSession entity.
  */
 @Conditional(ExamEnabled.class)
-@Lazy
 @Repository
 public interface ExamSessionRepository extends ArtemisJpaRepository<ExamSession, Long> {
 

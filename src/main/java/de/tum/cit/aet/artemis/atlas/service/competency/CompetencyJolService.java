@@ -11,7 +11,6 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -31,7 +30,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
  * Service Implementation for managing CompetencyJol.
  */
 @Conditional(AtlasEnabled.class)
-@Lazy
 @Service
 public class CompetencyJolService {
 

@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
@@ -37,7 +36,6 @@ import de.tum.cit.aet.artemis.lti.dto.LtiContentItem;
  * This includes building and returning appropriate LTI launch URLs
  * for various Artemis content types such as exercises, lectures, competencies, etc.
  */
-@Lazy
 @Service
 @Profile(PROFILE_LTI)
 public class LtiDeepLinkingService {

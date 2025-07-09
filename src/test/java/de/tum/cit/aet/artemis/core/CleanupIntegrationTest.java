@@ -56,8 +56,9 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismMatch;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -268,12 +269,12 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     void testDeletePlagiarismComparisons() throws Exception {
         // old course, should delete undecided plagiarism comparisons
         var textExercise1 = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
-        var textPlagiarismResult1 = textExerciseUtilService.createPlagiarismResultForExercise(textExercise1);
+        var textPlagiarismResult1 = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise1);
 
         var submission1 = participationUtilService.addSubmission(textExercise1, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student1");
         var submission2 = participationUtilService.addSubmission(textExercise1, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student2");
         var submission3 = participationUtilService.addSubmission(textExercise1, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student3");
-        var plagiarismComparison1 = getPlagiarismSubmissionElementPlagiarismComparison(textPlagiarismResult1, submission1, submission2);
+        var plagiarismComparison1 = getTextSubmissionElementPlagiarismComparison(textPlagiarismResult1, submission1, submission2);
         plagiarismComparison1 = plagiarismComparisonRepository.save(plagiarismComparison1);
 
         var plagiarismComparison2 = getSubmissionElementPlagiarismComparison(textPlagiarismResult1, submission2, submission3);
@@ -281,12 +282,12 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
 
         // new course, should not delete undecided plagiarism comparisons
         var textExercise2 = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
-        var textPlagiarismResult2 = textExerciseUtilService.createPlagiarismResultForExercise(textExercise2);
+        var textPlagiarismResult2 = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise2);
 
         var submission4 = participationUtilService.addSubmission(textExercise2, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student1");
         var submission5 = participationUtilService.addSubmission(textExercise2, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student2");
         var submission6 = participationUtilService.addSubmission(textExercise2, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student3");
-        var plagiarismComparison3 = getPlagiarismSubmissionElementPlagiarismComparison(textPlagiarismResult2, submission4, submission5);
+        var plagiarismComparison3 = getTextSubmissionElementPlagiarismComparison(textPlagiarismResult2, submission4, submission5);
         plagiarismComparison3 = plagiarismComparisonRepository.save(plagiarismComparison3);
 
         var plagiarismComparison4 = getSubmissionElementPlagiarismComparison(textPlagiarismResult2, submission2, submission6);
@@ -318,14 +319,15 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @NotNull
-    private static PlagiarismComparison getSubmissionElementPlagiarismComparison(PlagiarismResult textPlagiarismResult1, Submission submission2, Submission submission3) {
-        PlagiarismComparison plagiarismComparison2 = new PlagiarismComparison();
+    private static PlagiarismComparison<TextSubmissionElement> getSubmissionElementPlagiarismComparison(TextPlagiarismResult textPlagiarismResult1, Submission submission2,
+            Submission submission3) {
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison2 = new PlagiarismComparison<>();
         plagiarismComparison2.setPlagiarismResult(textPlagiarismResult1);
         plagiarismComparison2.setStatus(NONE);
-        var plagiarismSubmissionA2 = new PlagiarismSubmission();
+        var plagiarismSubmissionA2 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionA2.setStudentLogin(TEST_PREFIX + "student2");
         plagiarismSubmissionA2.setSubmissionId(submission2.getId());
-        var plagiarismSubmissionB2 = new PlagiarismSubmission();
+        var plagiarismSubmissionB2 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionB2.setStudentLogin(TEST_PREFIX + "student3");
         plagiarismSubmissionB2.setSubmissionId(submission3.getId());
         plagiarismComparison2.setSubmissionA(plagiarismSubmissionA2);
@@ -335,14 +337,15 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @NotNull
-    private static PlagiarismComparison getPlagiarismSubmissionElementPlagiarismComparison(PlagiarismResult textPlagiarismResult1, Submission submission1, Submission submission2) {
-        PlagiarismComparison plagiarismComparison1 = new PlagiarismComparison();
+    private static PlagiarismComparison<TextSubmissionElement> getTextSubmissionElementPlagiarismComparison(TextPlagiarismResult textPlagiarismResult1, Submission submission1,
+            Submission submission2) {
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison1 = new PlagiarismComparison<>();
         plagiarismComparison1.setPlagiarismResult(textPlagiarismResult1);
         plagiarismComparison1.setStatus(CONFIRMED);
-        var plagiarismSubmissionA1 = new PlagiarismSubmission();
+        var plagiarismSubmissionA1 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionA1.setStudentLogin(TEST_PREFIX + "student1");
         plagiarismSubmissionA1.setSubmissionId(submission1.getId());
-        var plagiarismSubmissionB1 = new PlagiarismSubmission();
+        var plagiarismSubmissionB1 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionB1.setStudentLogin(TEST_PREFIX + "student2");
         plagiarismSubmissionB1.setSubmissionId(submission2.getId());
         plagiarismComparison1.setSubmissionA(plagiarismSubmissionA1);

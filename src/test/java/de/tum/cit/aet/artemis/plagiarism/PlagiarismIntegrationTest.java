@@ -20,8 +20,9 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
@@ -57,43 +58,43 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     private TextExercise textExercise;
 
-    private PlagiarismResult textPlagiarismResult;
+    private TextPlagiarismResult textPlagiarismResult;
 
-    private PlagiarismComparison plagiarismComparison1;
+    private PlagiarismComparison<TextSubmissionElement> plagiarismComparison1;
 
-    private PlagiarismComparison plagiarismComparison2;
+    private PlagiarismComparison<TextSubmissionElement> plagiarismComparison2;
 
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
         course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-        textPlagiarismResult = textExerciseUtilService.createPlagiarismResultForExercise(textExercise);
+        textPlagiarismResult = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise);
         var textSubmission = ParticipationFactory.generateTextSubmission("", Language.GERMAN, true);
 
         var submission1 = participationUtilService.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         var submission2 = participationUtilService.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student2");
         var submission3 = participationUtilService.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student3");
-        plagiarismComparison1 = new PlagiarismComparison();
+        plagiarismComparison1 = new PlagiarismComparison<>();
         plagiarismComparison1.setPlagiarismResult(textPlagiarismResult);
         plagiarismComparison1.setStatus(CONFIRMED);
-        var plagiarismSubmissionA1 = new PlagiarismSubmission();
+        var plagiarismSubmissionA1 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionA1.setStudentLogin(TEST_PREFIX + "student1");
         plagiarismSubmissionA1.setSubmissionId(submission1.getId());
-        var plagiarismSubmissionB1 = new PlagiarismSubmission();
+        var plagiarismSubmissionB1 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionB1.setStudentLogin(TEST_PREFIX + "student2");
         plagiarismSubmissionB1.setSubmissionId(submission2.getId());
         plagiarismComparison1.setSubmissionA(plagiarismSubmissionA1);
         plagiarismComparison1.setSubmissionB(plagiarismSubmissionB1);
         plagiarismComparison1 = plagiarismComparisonRepository.save(plagiarismComparison1);
 
-        plagiarismComparison2 = new PlagiarismComparison();
+        plagiarismComparison2 = new PlagiarismComparison<>();
         plagiarismComparison2.setPlagiarismResult(textPlagiarismResult);
         plagiarismComparison2.setStatus(NONE);
-        var plagiarismSubmissionA2 = new PlagiarismSubmission();
+        var plagiarismSubmissionA2 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionA2.setStudentLogin(TEST_PREFIX + "student2");
         plagiarismSubmissionA2.setSubmissionId(submission2.getId());
-        var plagiarismSubmissionB2 = new PlagiarismSubmission();
+        var plagiarismSubmissionB2 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionB2.setStudentLogin(TEST_PREFIX + "student3");
         plagiarismSubmissionB2.setSubmissionId(submission3.getId());
         plagiarismComparison2.setSubmissionA(plagiarismSubmissionA2);
@@ -181,8 +182,9 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetPlagiarismComparisonsForSplitView_editor() throws Exception {
-        PlagiarismComparison comparison = request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view",
-                HttpStatus.OK, plagiarismComparison1.getClass());
+        PlagiarismComparison<?> comparison = request.get(
+                "/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
+                plagiarismComparison1.getClass());
         assertThat(comparison).isEqualTo(plagiarismComparison1);
         assertThat(comparison.getPlagiarismResult()).isNull();
         assertThat(comparison.getSubmissionA()).isEqualTo(plagiarismComparison1.getSubmissionA());

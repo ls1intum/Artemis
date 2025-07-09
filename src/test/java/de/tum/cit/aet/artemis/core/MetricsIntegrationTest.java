@@ -255,10 +255,10 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             Set<ResourceTimestampDTO> expectedSet = exercises.map(exercise -> {
                 exerciseIds.add(exercise.getId());
 
-                final var latestSubmission = exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun())
-                        .flatMap(participation -> participation.getSubmissions().stream()).max(Comparator.comparing(Submission::getSubmissionDate));
+                final var latestSubmissionDate = exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun())
+                        .flatMap(participation -> participation.getSubmissions().stream()).map(Submission::getSubmissionDate).max(Comparator.naturalOrder());
 
-                return latestSubmission.map(submission -> new ResourceTimestampDTO(exercise.getId(), submission.getSubmissionDate(), submission.getParticipation().getId()));
+                return latestSubmissionDate.map(date -> new ResourceTimestampDTO(exercise.getId(), date));
             }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
 
             Set<ResourceTimestampDTO> result = exerciseMetricsRepository.findLatestSubmissionDates(exerciseIds);
@@ -275,12 +275,11 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             Set<ResourceTimestampDTO> expectedSet = exercises.flatMap(exercise -> {
                 exerciseIds.add(exercise.getId());
-                final var latestSubmission = exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun())
+                final var latestSubmissionDate = exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun())
                         .filter(participation -> participation.getStudent().map(student -> student.getId().equals(userID)).orElse(false))
-                        .flatMap(participation -> participation.getSubmissions().stream()).max(Comparator.comparing(Submission::getSubmissionDate));
+                        .flatMap(participation -> participation.getSubmissions().stream()).map(Submission::getSubmissionDate).max(Comparator.naturalOrder());
 
-                return latestSubmission.map(submission -> new ResourceTimestampDTO(exercise.getId(), submission.getSubmissionDate(), submission.getParticipation().getId()))
-                        .stream();
+                return latestSubmissionDate.map(date -> new ResourceTimestampDTO(exercise.getId(), date)).stream();
             }).collect(Collectors.toSet());
 
             Set<ResourceTimestampDTO> result = exerciseMetricsRepository.findLatestIndividualSubmissionDatesForUser(exerciseIds, userID);

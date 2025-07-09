@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Component, computed, input, output, signal } from '@angular/core';
-import { IconDefinition, faCheckCircle, faCircle, faDownload, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faDownload, faExternalLinkAlt, faSquare, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -22,8 +22,8 @@ export class LectureUnitComponent {
     private router = inject(Router);
 
     protected faDownload = faDownload;
-    protected faCheckCircle = faCheckCircle;
-    protected faCircle = faCircle;
+    protected faSquareCheck = faSquareCheck;
+    protected faSquare = faSquare;
 
     courseId = input.required<number>();
 

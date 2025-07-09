@@ -7,13 +7,13 @@ import java.time.ZoneId;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -25,20 +25,17 @@ import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
-import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
-import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
 /**
  * Service to handle the course chat subsystem of Iris.
  */
-@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
@@ -139,28 +136,21 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     }
 
     /**
-     * Handles the CompetencyJolSetEvent by checking if Iris is activated for the course and if the user has accepted external LLM usage.
-     * If both conditions are met, it retrieves or creates a session and sends the request to the LLM.
+     * Triggers the course chat in response to a new judgement of learning.
+     * If the course chat is not enabled for the course, nothing happens.
      *
-     * @param competencyJolSetEvent The event containing the CompetencyJol
+     * @param competencyJol The judgement of learning instance to trigger the course chat for
      */
-    public void handleCompetencyJolSetEvent(CompetencyJolSetEvent competencyJolSetEvent) {
-        var competencyJol = competencyJolSetEvent.getEventObject();
+    public void onJudgementOfLearningSet(CompetencyJol competencyJol) {
         var course = competencyJol.getCompetency().getCourse();
+        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.COURSE_CHAT, course)) {
+            return;
+        }
         var user = competencyJol.getUser();
-
-        if (!user.hasAcceptedExternalLLMUsage()) {
-            return;
-        }
-
-        var combinedSettings = irisSettingsService.getCombinedIrisSettingsFor(course, false);
-        var settings = combinedSettings.irisCourseChatSettings();
-        if (!settings.enabled() || !IrisSettingsService.isEventEnabledInSettings(combinedSettings, IrisEventType.JOL)) {
-            return;
-        }
-
+        user.hasAcceptedExternalLLMUsageElseThrow();
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
 
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCourseChatSettings();
         var variant = settings.selectedVariant();
         var customInstructions = settings.customInstructions();
 

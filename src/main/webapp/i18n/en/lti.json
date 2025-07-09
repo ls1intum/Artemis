@@ -82,7 +82,7 @@
                 "configurationForCourse": "Edit LTI Configuration for course {{ title }}",
                 "userPrefixTooltip": "Prefix used for the new users created for this course. It is recommended to use a value that clearly identifies users as part of this course.",
                 "requireExistingUserTooltip": "If selected, launching the exercise requires an existing user on Artemis. If deselected, a user will be created on first launch if it does not yet exist",
-                "registrationIdTooltip": "ID used to identify the registration of the learning platform. This must be unique across all courses.",
+                "registrationIdTooltip": "ID used to identify the registration of the learning platform. This must be unique across all courses. You can freely change this value, but it is recommended to use the auto-generated value.",
                 "clientIdTooltip": "It is possible to configure this field and the URI fields below manually, but it is highly recommended to use the Dynamic Registration Service to configure them automatically.",
                 "form": {
                     "userPrefix": {
@@ -94,8 +94,7 @@
             "configuredPlatforms": "Configured Platforms",
             "viewAdvancedSettings": "View Advanced Settings",
             "closeAdvancedSettings": "Close Advanced Settings",
-            "addLtiPlatform": "Add LTI Platform Configuration",
-            "editLtiPlatform": "Edit LTI Platform Configuration"
+            "addOrEditLtiPlatform": "Add or edit LTI Platform Configuration"
         },
         "lti13": {
             "launch": {

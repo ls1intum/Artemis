@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
@@ -25,7 +24,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * We use the MailSendingService to send emails asynchronously.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class MailService {
 
@@ -40,10 +38,6 @@ public class MailService {
     private static final String DATA_EXPORTS = "dataExports";
 
     private static final String REASON = "reason";
-
-    private static final String BUILD_AGENT_NAME = "buildAgentName";
-
-    private static final String CONSECUTIVE_BUILD_FAILURES = "consecutiveBuildFailures";
 
     @Value("${server.url}")
     private URL artemisServerUrl;
@@ -139,21 +133,5 @@ public class MailService {
     public void sendSuccessfulDataExportsEmailToAdmin(User admin, Set<DataExport> dataExports) {
         log.debug("Sending successful creation of data exports email to admin email address '{}'", admin.getEmail());
         sendSuccessfulDataExportsEmailToAdmin(admin, "mail/successfulDataExportsAdminEmail", "email.successfulDataExportCreationsAdmin.title", dataExports);
-    }
-
-    /**
-     * Sends an email to admin users about a build agent paused itself.
-     *
-     * @param admin                    the admin user to notify
-     * @param buildAgentName           the name of the build agent that was paused
-     * @param consecutiveBuildFailures the number of consecutive build failures on the build agent
-     */
-    public void sendBuildAgentSelfPausedEmailToAdmin(User admin, String buildAgentName, int consecutiveBuildFailures) {
-        log.debug("Sending build agent self paused email to admin email address '{}'", admin.getEmail());
-        Locale locale = Locale.forLanguageTag(admin.getLangKey());
-        Context context = createBaseContext(admin, locale);
-        context.setVariable(BUILD_AGENT_NAME, buildAgentName);
-        context.setVariable(CONSECUTIVE_BUILD_FAILURES, consecutiveBuildFailures);
-        prepareTemplateAndSendEmail(admin, "mail/buildAgentSelfPausedEmail", "email.buildAgent.SelfPaused.title", context);
     }
 }

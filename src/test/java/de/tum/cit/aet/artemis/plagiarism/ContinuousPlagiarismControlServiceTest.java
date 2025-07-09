@@ -29,9 +29,10 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.exception.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
@@ -88,10 +89,10 @@ class ContinuousPlagiarismControlServiceTest {
         when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(exercises);
 
         // and: results of plagiarism checks
-        var textPlagiarismResult = new PlagiarismResult();
-        textPlagiarismResult.setComparisons(singleton(new PlagiarismComparison()));
+        var textPlagiarismResult = new TextPlagiarismResult();
+        textPlagiarismResult.setComparisons(singleton(new PlagiarismComparison<>()));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenReturn(textPlagiarismResult);
-        var programmingPlagiarismResult = new PlagiarismResult();
+        var programmingPlagiarismResult = new TextPlagiarismResult();
         when(plagiarismChecksService.checkProgrammingExercise(programmingExercise)).thenReturn(programmingPlagiarismResult);
 
         // and: mocked behavior for plagiarism cases logic
@@ -122,7 +123,7 @@ class ContinuousPlagiarismControlServiceTest {
         when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(exercise));
 
         // and: results of plagiarism checks
-        var textPlagiarismResult = new PlagiarismResult();
+        var textPlagiarismResult = new TextPlagiarismResult();
         var plagiarismComparison = createPlagiarismComparison(12, 1, 2);
         textPlagiarismResult.setComparisons(singleton(plagiarismComparison));
         when(plagiarismChecksService.checkTextExercise(exercise)).thenReturn(textPlagiarismResult);
@@ -152,7 +153,7 @@ class ContinuousPlagiarismControlServiceTest {
         when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(exercise));
 
         // and: results of plagiarism checks
-        var textPlagiarismResult = new PlagiarismResult();
+        var textPlagiarismResult = new TextPlagiarismResult();
         textPlagiarismResult.setComparisons(emptySet());
         when(plagiarismChecksService.checkTextExercise(exercise)).thenReturn(textPlagiarismResult);
 
@@ -238,16 +239,16 @@ class ContinuousPlagiarismControlServiceTest {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private static PlagiarismComparison createPlagiarismComparison(long comparisonId, long submissionIdA, long submissionIdB) {
-        var comparison = new PlagiarismComparison();
+    private static PlagiarismComparison<TextSubmissionElement> createPlagiarismComparison(long comparisonId, long submissionIdA, long submissionIdB) {
+        var comparison = new PlagiarismComparison<TextSubmissionElement>();
         comparison.setId(comparisonId);
 
-        var submissionA = new PlagiarismSubmission();
+        var submissionA = new PlagiarismSubmission<>();
         submissionA.setId(100 + submissionIdA);
         submissionA.setSubmissionId(submissionIdA);
         comparison.setSubmissionA(submissionA);
 
-        var submissionB = new PlagiarismSubmission();
+        var submissionB = new PlagiarismSubmission<>();
         submissionA.setId(100 + submissionIdB);
         submissionB.setSubmissionId(submissionIdB);
         comparison.setSubmissionB(submissionB);

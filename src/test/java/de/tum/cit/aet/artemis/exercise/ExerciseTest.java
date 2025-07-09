@@ -106,7 +106,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         studentParticipation.setSubmissions(null);
 
         exerciseService.filterExerciseForCourseDashboard(exercise, Set.of(studentParticipation), true);
-        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEmpty();
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isNull();
     }
 
     @Test

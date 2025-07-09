@@ -8,7 +8,6 @@ import java.util.Arrays;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
 @Profile(PROFILE_CORE)
 @Component
-@Lazy
 public class ToolsInterceptor implements HandlerInterceptor {
 
     private final TokenProvider tokenProvider;

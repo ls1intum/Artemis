@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -103,13 +102,8 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void deleteLtiPlatformConfigurationByIdAsAdmin() throws Exception {
-        long platformId = 1L;
-
-        LtiPlatformConfiguration platformToDelete = new LtiPlatformConfiguration();
-        platformToDelete.setId(platformId);
-        fillLtiPlatformConfig(platformToDelete);
-
-        doReturn(platformToDelete).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
+        Long platformId = 1L;
+        doReturn(new LtiPlatformConfiguration()).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
         doNothing().when(ltiPlatformConfigurationRepository).delete(any(LtiPlatformConfiguration.class));
 
         request.performMvcRequest(delete("/api/lti/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk());
@@ -121,49 +115,14 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void updateLtiPlatformConfigurationAsAdmin() throws Exception {
-        Long platformId = 1L;
-
         LtiPlatformConfiguration platformToUpdate = new LtiPlatformConfiguration();
-        platformToUpdate.setId(platformId);
+        platformToUpdate.setId(1L);
         fillLtiPlatformConfig(platformToUpdate);
-
-        doReturn(platformToUpdate).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
 
         request.performMvcRequest(put("/api/lti/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToUpdate)))
                 .andExpect(status().isOk());
 
         verify(ltiPlatformConfigurationRepository).save(platformToUpdate);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void updateLtiPlatformConfigurationWithoutId_badRequest() throws Exception {
-        LtiPlatformConfiguration platformToUpdate = new LtiPlatformConfiguration();
-        fillLtiPlatformConfig(platformToUpdate);
-
-        request.put("/api/lti/admin/lti-platform", platformToUpdate, HttpStatus.BAD_REQUEST);
-
-        verify(ltiPlatformConfigurationRepository, never()).save(platformToUpdate);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void updateLtiPlatformConfigurationWithDifferentRegistrationIds_badRequest() throws Exception {
-        Long platformId = 1L;
-
-        LtiPlatformConfiguration initialPlatform = new LtiPlatformConfiguration();
-        initialPlatform.setId(platformId);
-        fillLtiPlatformConfig(initialPlatform);
-
-        doReturn(initialPlatform).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
-
-        // Copy platform and change registrationId
-        LtiPlatformConfiguration platformWithNewRegistrationId = cloneLtiPlatformConfig(initialPlatform);
-        platformWithNewRegistrationId.setRegistrationId("newRegistrationId-" + UUID.randomUUID());
-
-        request.put("/api/lti/admin/lti-platform", platformWithNewRegistrationId, HttpStatus.BAD_REQUEST);
-
-        verify(ltiPlatformConfigurationRepository, never()).save(platformWithNewRegistrationId);
     }
 
     @Test
@@ -226,21 +185,10 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     private void fillLtiPlatformConfig(LtiPlatformConfiguration ltiPlatformConfiguration) {
-        ltiPlatformConfiguration.setRegistrationId("registrationId-" + UUID.randomUUID());
+        ltiPlatformConfiguration.setRegistrationId("registrationId");
         ltiPlatformConfiguration.setClientId("platform-" + UUID.randomUUID());
         ltiPlatformConfiguration.setAuthorizationUri("authUri");
         ltiPlatformConfiguration.setTokenUri("tokenUri");
         ltiPlatformConfiguration.setJwkSetUri("jwkUri");
-    }
-
-    private LtiPlatformConfiguration cloneLtiPlatformConfig(LtiPlatformConfiguration original) {
-        LtiPlatformConfiguration copy = new LtiPlatformConfiguration();
-        copy.setId(original.getId());
-        copy.setClientId(original.getClientId());
-        copy.setAuthorizationUri(original.getAuthorizationUri());
-        copy.setTokenUri(original.getTokenUri());
-        copy.setJwkSetUri(original.getJwkSetUri());
-        copy.setRegistrationId(original.getRegistrationId());
-        return copy;
     }
 }

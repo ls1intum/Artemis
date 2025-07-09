@@ -1,16 +1,13 @@
 @if (course) {
     <div>
         <div class="d-flex align-items-center justify-content-between flex-wrap mb-2">
-            <div class="d-flex align-items-center gap-1">
-                <h4>
-                    <small
-                        jhiTranslate="artemisApp.instructorDashboard.exerciseResultSummery"
-                        [translateValues]="{ exercisesLength: includedExercises.length, studentsLength: studentStatistics.length }"
-                        >{{ includedExercises.length }} released exercises, {{ studentStatistics.length }} students with results</small
-                    >
-                </h4>
-                <jhi-help-icon class="mb-1" text="artemisApp.instructorDashboard.courseScoresTooltip" />
-            </div>
+            <h4>
+                <small
+                    jhiTranslate="artemisApp.instructorDashboard.exerciseResultSummery"
+                    [translateValues]="{ exercisesLength: exercisesOfCourseThatAreIncludedInScoreCalculation.length, studentsLength: students.length }"
+                    >{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }} released exercises, {{ students.length }} students with results</small
+                >
+            </h4>
             @if (course?.isAtLeastInstructor) {
                 <a *titleBarActions [routerLink]="['/course-management', course.id, 'grading-system']" class="btn btn-info btn-sm">
                     <fa-icon [icon]="faClipboard" /> <span jhiTranslate="artemisApp.course.gradingSystem"></span>
@@ -50,7 +47,7 @@
                             <th>
                                 <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.amountOfReleasedExercises"></span>
                             </th>
-                            <td>{{ includedExercises.length }}</td>
+                            <td>{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }}</td>
                             <td>{{ this.numberOfReleasedExercises }}</td>
                         </tr>
                         <tr>
@@ -110,7 +107,7 @@
                 <jhi-csv-export-button
                     title="entity.action.export"
                     [icon]="faDownload"
-                    [disabled]="!(studentStatistics.length > 0)"
+                    [disabled]="!(students.length > 0)"
                     [buttonSize]="ButtonSize.SMALL"
                     (onExport)="exportResults($event)"
                 />
@@ -163,8 +160,8 @@
                         <tr>
                             <th><span jhiTranslate="artemisApp.instructorDashboard.max"></span></th>
                             <th></th>
-                            <th>{{ includedExercises.length }}</th>
-                            <th>{{ includedExercises.length }}</th>
+                            <th>{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }}</th>
+                            <th>{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }}</th>
                             @for (exerciseType of exerciseTypes; track exerciseType) {
                                 @if (maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0) {
                                     <th>{{ maxNumberOfPointsPerExerciseType.get(exerciseType) }}</th>
@@ -183,11 +180,25 @@
                             <th></th>
                             <th>
                                 {{ localize(averageNumberOfParticipatedExercises) }}
-                                ({{ localize(roundScorePercentSpecifiedByCourseSettings(averageNumberOfParticipatedExercises / includedExercises.length, course)) }}%)
+                                ({{
+                                    localize(
+                                        roundScorePercentSpecifiedByCourseSettings(
+                                            averageNumberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length,
+                                            course
+                                        )
+                                    )
+                                }}%)
                             </th>
                             <th>
                                 {{ localize(averageNumberOfSuccessfulExercises) }}
-                                ({{ localize(roundScorePercentSpecifiedByCourseSettings(averageNumberOfSuccessfulExercises / includedExercises.length, course)) }}%)
+                                ({{
+                                    localize(
+                                        roundScorePercentSpecifiedByCourseSettings(
+                                            averageNumberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length,
+                                            course
+                                        )
+                                    )
+                                }}%)
                             </th>
                             @for (exerciseType of exerciseTypes; track exerciseType) {
                                 @if (maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0) {
@@ -222,28 +233,40 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (studentStatistics of studentStatistics; track studentStatistics) {
+                        @for (student of students; track student) {
                             <tr>
-                                <td>{{ studentStatistics.student.name }}</td>
-                                <td>{{ studentStatistics.student.login }}</td>
+                                <td>{{ student.user.name }}</td>
+                                <td>{{ student.user.login }}</td>
                                 <td>
-                                    {{ studentStatistics.numberOfParticipatedExercises }}
+                                    {{ student.numberOfParticipatedExercises }}
                                     ({{
-                                        localize(roundScorePercentSpecifiedByCourseSettings(studentStatistics.numberOfParticipatedExercises / includedExercises.length, course))
+                                        localize(
+                                            roundScorePercentSpecifiedByCourseSettings(
+                                                student.numberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length,
+                                                course
+                                            )
+                                        )
                                     }}%)
                                 </td>
                                 <td>
-                                    {{ studentStatistics.numberOfSuccessfulExercises }}
-                                    ({{ localize(roundScorePercentSpecifiedByCourseSettings(studentStatistics.numberOfSuccessfulExercises / includedExercises.length, course)) }}%)
+                                    {{ student.numberOfSuccessfulExercises }}
+                                    ({{
+                                        localize(
+                                            roundScorePercentSpecifiedByCourseSettings(
+                                                student.numberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length,
+                                                course
+                                            )
+                                        )
+                                    }}%)
                                 </td>
                                 @for (exerciseType of exerciseTypes; track exerciseType) {
                                     @if (maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0) {
                                         <td>
-                                            {{ localize(studentStatistics.sumPointsPerExerciseType.get(exerciseType)!) }}
+                                            {{ localize(student.sumPointsPerExerciseType.get(exerciseType)!) }}
                                             ({{
                                                 localize(
                                                     roundScorePercentSpecifiedByCourseSettings(
-                                                        studentStatistics.sumPointsPerExerciseType.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!,
+                                                        student.sumPointsPerExerciseType.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!,
                                                         course
                                                     )
                                                 )
@@ -253,17 +276,17 @@
                                 }
                                 @if (maxNumberOfPresentationPoints > 0) {
                                     <td>
-                                        {{ localize(studentStatistics.presentationPoints) }}
-                                        ({{ localize(roundScorePercentSpecifiedByCourseSettings(studentStatistics.presentationPoints / maxNumberOfPresentationPoints, course)) }}%)
+                                        {{ localize(student.presentationPoints) }}
+                                        ({{ localize(roundScorePercentSpecifiedByCourseSettings(student.presentationPoints / maxNumberOfPresentationPoints, course)) }}%)
                                     </td>
                                 }
                                 <td>
-                                    {{ localize(studentStatistics.overallPoints) }}
-                                    ({{ localize(roundScorePercentSpecifiedByCourseSettings(studentStatistics.overallPoints / maxNumberOfOverallPoints, course)) }}%)
+                                    {{ localize(student.overallPoints) }}
+                                    ({{ localize(roundScorePercentSpecifiedByCourseSettings(student.overallPoints / maxNumberOfOverallPoints, course)) }}%)
                                 </td>
                                 @if (gradingScaleExists) {
                                     <td>
-                                        {{ studentStatistics.gradeStep?.gradeName }}
+                                        {{ student.gradeStep?.gradeName }}
                                     </td>
                                 }
                             </tr>

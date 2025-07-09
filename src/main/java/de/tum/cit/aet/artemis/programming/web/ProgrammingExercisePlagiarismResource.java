@@ -9,7 +9,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -32,6 +31,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismDetectionApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.plagiarism.exception.PlagiarismApiNotPresentException;
 import de.tum.cit.aet.artemis.plagiarism.exception.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  */
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
-@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExercisePlagiarismResource {
@@ -76,13 +75,13 @@ public class ProgrammingExercisePlagiarismResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/plagiarism-result")
     @EnforceAtLeastEditor
-    public ResponseEntity<PlagiarismResultDTO> getPlagiarismResult(@PathVariable long exerciseId) {
+    public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
         PlagiarismResultApi api = plagiarismResultApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismResultApi.class));
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-        var plagiarismResult = api.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(programmingExercise.getId());
+        var plagiarismResult = (TextPlagiarismResult) api.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(programmingExercise.getId());
         api.prepareResultForClient(plagiarismResult);
         return buildPlagiarismResultResponse(plagiarismResult);
     }
@@ -101,8 +100,8 @@ public class ProgrammingExercisePlagiarismResource {
     @GetMapping("programming-exercises/{exerciseId}/check-plagiarism")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.PlagiarismChecks)
-    public ResponseEntity<PlagiarismResultDTO> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold, @RequestParam int minimumScore,
-            @RequestParam int minimumSize) throws ExitException, IOException {
+    public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold,
+            @RequestParam int minimumScore, @RequestParam int minimumSize) throws ExitException, IOException {
         PlagiarismDetectionApi api = plagiarismDetectionApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismDetectionApi.class));
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);

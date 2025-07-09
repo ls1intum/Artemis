@@ -363,7 +363,7 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponent.isEditMode.set(true);
             lectureUpdateComponent.titleSection = signal({
                 titleChannelNameComponent: () => ({
-                    isValid: () => true,
+                    isFormValidSignal: () => true,
                 }),
             } as any);
             lectureUpdateComponent.lecturePeriodSection = signal({
@@ -390,7 +390,7 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponent.isEditMode.set(false);
             lectureUpdateComponent.titleSection = signal({
                 titleChannelNameComponent: () => ({
-                    isValid: () => false,
+                    isFormValidSignal: () => false,
                 }),
             } as any);
             lectureUpdateComponent.lecturePeriodSection = signal({
@@ -409,7 +409,7 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponent.isEditMode.set(true);
             lectureUpdateComponent.titleSection = signal({
                 titleChannelNameComponent: () => ({
-                    isValid: () => false,
+                    isFormValidSignal: () => false,
                 }),
             } as any);
             lectureUpdateComponent.lecturePeriodSection = signal({

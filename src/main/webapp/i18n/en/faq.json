@@ -11,11 +11,6 @@
                 "createOrEditLabel": "Create or edit FAQ",
                 "ingestLabel": "Send FAQs to Iris"
             },
-            "faqDisabled": {
-                "title": "Welcome to the FAQ!",
-                "description": "The FAQ feature is currently disabled.\nThis feature allows tutors, editors, and instructors to collect and answer frequently asked questions. Students can view these FAQs, which reduces redundant queries and lowers the workload for instructors.\nYou can enable or disable this feature anytime in the settings.",
-                "buttonLabel": "Enable FAQ"
-            },
             "created": "The FAQ {{ title }} was successfully created",
             "updated": "The FAQ {{ title }} was successfully updated",
             "proposed": "The FAQ {{ title }} was successfully proposed",

@@ -15,7 +15,6 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -33,7 +32,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepo
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 
 @Conditional(TutorialGroupEnabled.class)
-@Lazy
 @Service
 public class TutorialGroupScheduleService {
 

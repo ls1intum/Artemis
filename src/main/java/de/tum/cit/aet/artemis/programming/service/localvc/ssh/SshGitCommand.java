@@ -121,7 +121,7 @@ public class SshGitCommand extends GitPackCommand {
 
                         // Register pre- and post-receive hooks for Artemis push handling
                         receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
-                        receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, getServerSession(), user));
+                        receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, getServerSession()));
 
                         // Begin receive-pack operation
                         receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());

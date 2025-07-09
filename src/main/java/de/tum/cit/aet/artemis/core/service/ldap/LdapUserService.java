@@ -15,16 +15,13 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.ldap.query.SearchScope;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.ldap.LdapUserRepository;
 
-@Lazy
 @Service
 @Profile(PROFILE_LDAP)
 public class LdapUserService {
@@ -117,8 +114,7 @@ public class LdapUserService {
             if (ldapUserDto.getEmail() != null) {
                 user.setEmail(ldapUserDto.getEmail());
             }
-            // an empty string is considered as null to satisfy the unique constraint on registration number
-            if (StringUtils.hasText(ldapUserDto.getRegistrationNumber())) {
+            if (ldapUserDto.getRegistrationNumber() != null) {
                 user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
             }
         }

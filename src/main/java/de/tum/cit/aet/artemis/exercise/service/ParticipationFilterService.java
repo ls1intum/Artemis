@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +22,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 /**
  * A service to handle participation filtering.
  */
-@Lazy
 @Service
 @Profile(PROFILE_CORE)
 public class ParticipationFilterService {
@@ -89,8 +87,8 @@ public class ParticipationFilterService {
             submission.setResults(new ArrayList<>(results));
         }
 
-        // add submission to participation or set it to empty set if no submission is available
-        participation.setSubmissions(optionalSubmission.map(Set::of).orElse(Set.of()));
+        // add submission to participation or set it to null
+        participation.setSubmissions(optionalSubmission.map(Set::of).orElse(null));
 
         // remove inner exercise from participation
         participation.setExercise(null);

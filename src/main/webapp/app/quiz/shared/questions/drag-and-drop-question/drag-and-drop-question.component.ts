@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
@@ -64,7 +64,8 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     /** needed to trigger a manual reload of the drag and drop background picture */
-    readonly secureImageComponent = viewChild.required(SecuredImageComponent);
+    @ViewChild(SecuredImageComponent, { static: false })
+    secureImageComponent: SecuredImageComponent;
 
     _question: DragAndDropQuestion;
     _forceSampleSolution: boolean;

@@ -436,15 +436,14 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             }
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
             for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
-                Set<Result> results = participationUtilService.getResultsForParticipation(participation);
                 // Programming exercises should only have one automatic result
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(results).hasSize(1);
-                    assertThat(results.iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+                    assertThat(participation.getResults()).hasSize(1);
+                    assertThat(participation.getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
                 }
                 else {
                     // All other exercises should not display a result at all
-                    assertThat(results).isEmpty();
+                    assertThat(participation.getResults()).isEmpty();
                 }
             }
         }
@@ -464,16 +463,15 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
             for (var studentParticipation : exerciseWithDetails.exercise().getStudentParticipations()) {
-                Set<Result> results = participationUtilService.getResultsForParticipation(studentParticipation);
                 // Programming exercises should now how two results and the latest one is the manual result.
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(results).hasSize(resultSize);
-                    assertThat(results.stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
+                    assertThat(studentParticipation.getResults()).hasSize(resultSize);
+                    assertThat(studentParticipation.getResults().stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
                             .isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                 }
                 else {
                     // All other exercises have only one visible result now
-                    assertThat(results).hasSize(1);
+                    assertThat(studentParticipation.getResults()).hasSize(1);
                 }
             }
         }
@@ -511,18 +509,17 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             exerciseService.filterExerciseForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
 
             StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
-            Set<Result> results = participationUtilService.getResultsForParticipation(participation);
             if (exercise instanceof ProgrammingExercise) {
                 var submission = participation.getSubmissions().iterator().next();
                 // Programming exercises should only have one automatic result
-                assertThat(results).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
+                assertThat(participation.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
                 assertThat(participation.getSubmissions()).hasSize(1);
                 assertThat(submission.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
             }
             else {
                 // All other exercises have no visible result, and therefore no submission to transmit the result
-                assertThat(participation.getSubmissions()).isEmpty();
-                assertThat(results).isEmpty();
+                assertThat(participation.getSubmissions()).isNull();
+                assertThat(participation.getResults()).isEmpty();
             }
         }
     }
@@ -537,12 +534,11 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 addResultToSubmissionAndParticipation(exercise);
             }
             exerciseService.filterExerciseForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
-            Set<Result> results = participationUtilService.getResultsForParticipation(exercise.getStudentParticipations().iterator().next());
             // All exercises have one result
-            assertThat(results).hasSize(1);
+            assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
             // Programming exercises should now have one manual result
             if (exercise instanceof ProgrammingExercise) {
-                assertThat(results.iterator().next().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+                assertThat(exercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
             }
         }
     }

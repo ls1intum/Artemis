@@ -28,6 +28,7 @@
         [isAssessor]="isAssessor"
         [isTestRun]="isTestRun"
         [exerciseDashboardLink]="exerciseDashboardLink"
+        [isIllegalSubmission]="!!submission && submission.type! === SUBMISSION_TYPE_ILLEGAL"
         [canOverride]="canOverride"
         [result]="manualResult"
         [assessmentsAreValid]="assessmentsAreValid"

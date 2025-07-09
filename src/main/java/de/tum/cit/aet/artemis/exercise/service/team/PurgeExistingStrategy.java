@@ -5,15 +5,15 @@ import java.util.List;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 
 public class PurgeExistingStrategy extends TeamImportStrategy {
 
-    private final ParticipationDeletionService participationDeletionService;
+    private final ParticipationService participationService;
 
-    public PurgeExistingStrategy(TeamRepository teamRepository, ParticipationDeletionService participationDeletionService) {
+    public PurgeExistingStrategy(TeamRepository teamRepository, ParticipationService participationService) {
         super(teamRepository);
-        this.participationDeletionService = participationDeletionService;
+        this.participationService = participationService;
     }
 
     /**
@@ -56,7 +56,7 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
      */
     private void deleteExistingTeamsAndAddNewTeams(Exercise exercise, List<Team> teams) {
         // Delete participations of existing teams in destination exercise (must happen before deleting teams themselves)
-        participationDeletionService.deleteAllByExercise(exercise, true);
+        participationService.deleteAllByExercise(exercise, true);
 
         // Purge existing teams in destination exercise
         List<Team> destinationTeams = teamRepository.findAllByExerciseId(exercise.getId());

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Input, OnInit, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Input, OnInit, inject } from '@angular/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 /**
@@ -57,10 +57,14 @@ export class VerticalProgressBarComponent implements OnInit {
         this.setFillColor();
         this.cdr.markForCheck();
     }
-    readonly lowerColor = input('var(--success)');
-    readonly intermediateColor = input('var(--warning)');
-    readonly upperColor = input('var(--danger)');
-    readonly tooltip = input('');
+    @Input()
+    lowerColor = 'var(--success)';
+    @Input()
+    intermediateColor = 'var(--warning)';
+    @Input()
+    upperColor = 'var(--danger)';
+    @Input()
+    tooltip = '';
 
     @Input()
     set animateFilling(showAnimation: boolean) {
@@ -99,11 +103,11 @@ export class VerticalProgressBarComponent implements OnInit {
 
     private setFillColor() {
         if (this.fillLevelInPercentInternal <= this.lowerBorderInternal) {
-            this.fillColorCSS = this.lowerColor();
+            this.fillColorCSS = this.lowerColor;
         } else if (this.fillLevelInPercentInternal >= this.upperBorderInternal) {
-            this.fillColorCSS = this.upperColor();
+            this.fillColorCSS = this.upperColor;
         } else {
-            this.fillColorCSS = this.intermediateColor();
+            this.fillColorCSS = this.intermediateColor;
         }
     }
 }

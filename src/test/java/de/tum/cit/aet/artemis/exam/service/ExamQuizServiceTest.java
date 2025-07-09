@@ -278,7 +278,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
             // add another submission manually to trigger multiple submission branch of evaluateQuizSubmission
             final var studentParticipation = studentParticipationRepository
-                    .findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(quizExercise.getId(), user.getLogin(), false).orElseThrow();
+                    .findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(quizExercise.getId(), user.getLogin(), false).orElseThrow();
             QuizSubmission quizSubmission2 = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             quizSubmission2.setParticipation(studentParticipation);
             quizSubmissionRepository.save(quizSubmission2);

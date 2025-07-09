@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,7 +18,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  * Spring Data JPA repository for the QuizBatch entity.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface QuizBatchRepository extends ArtemisJpaRepository<QuizBatch, Long> {
 

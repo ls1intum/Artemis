@@ -9,7 +9,6 @@ import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +16,6 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 
 @Profile(PROFILE_CORE)
 @Component
-@Lazy
 @EnableConfigurationProperties
 @ConfigurationProperties("artemis.user-management.password-reset")
 public class ExternalPasswordResetInfoContributor implements InfoContributor {

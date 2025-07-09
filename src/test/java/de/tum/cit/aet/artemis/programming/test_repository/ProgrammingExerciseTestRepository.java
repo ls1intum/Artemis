@@ -10,7 +10,6 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -21,7 +20,6 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
-@Lazy
 @Repository
 @Primary
 public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRepository {
@@ -43,7 +41,6 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
                 LEFT JOIN FETCH t.testCases
                 LEFT JOIN FETCH p.plagiarismDetectionConfig
                 LEFT JOIN FETCH p.buildConfig
-                LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
             """)
     ProgrammingExercise findOneWithEagerEverything(@Param("exerciseId") long exerciseId);
@@ -127,6 +124,4 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
 
     @EntityGraph(type = LOAD, attributePaths = { "buildConfig" })
     Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
-
-    List<ProgrammingExercise> findAllByCourseId(long courseId);
 }

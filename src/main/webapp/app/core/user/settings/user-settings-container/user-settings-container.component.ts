@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
-import { MODULE_FEATURE_PASSKEY, addPublicFilePrefix } from 'app/app.constants';
+import { FEATURE_PASSKEY, addPublicFilePrefix } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -8,7 +8,6 @@ import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { tap } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ExternalDataGuard } from 'app/core/user/settings/external-data.guard';
 
 /**
  * UserSettingsContainerComponent serves as the common ground for different settings
@@ -24,18 +23,13 @@ export class UserSettingsContainerComponent implements OnInit {
 
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
-    private readonly externalDataGuard = inject(ExternalDataGuard);
 
     currentUser?: User;
-
     isPasskeyEnabled = false;
     isAtLeastTutor = false;
-    isUsingExternalLLM = false;
 
     ngOnInit() {
-        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
-
-        this.isUsingExternalLLM = this.externalDataGuard.isUsingExternalLLM();
+        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(FEATURE_PASSKEY);
 
         this.accountService
             .getAuthenticationState()

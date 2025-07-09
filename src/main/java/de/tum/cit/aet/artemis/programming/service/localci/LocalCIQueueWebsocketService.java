@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
  * NOTE: This service is only active if the profile "localci" and "scheduling" are active. This avoids sending the
  * same information multiple times and thus also avoids unnecessary load on the server.
  */
-@Lazy
 @Service
 @Profile("localci & scheduling")
 public class LocalCIQueueWebsocketService {
@@ -129,7 +127,7 @@ public class LocalCIQueueWebsocketService {
         for (BuildAgentInformation agent : buildAgentSummary) {
             var runningJobs = removeUnnecessaryInformation(agent.runningBuildJobs());
             filteredBuildAgentSummary.add(new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(), agent.numberOfCurrentBuildJobs(), runningJobs,
-                    agent.status(), null, null, agent.pauseAfterConsecutiveBuildFailures()));
+                    agent.status(), null, null));
         }
         return filteredBuildAgentSummary;
     }

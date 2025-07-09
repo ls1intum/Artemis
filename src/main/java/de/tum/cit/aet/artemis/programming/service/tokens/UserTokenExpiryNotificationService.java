@@ -9,19 +9,15 @@ import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
-import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Profile(PROFILE_CORE_AND_SCHEDULING)
-@Lazy
 @Service
 public class UserTokenExpiryNotificationService {
 
@@ -31,13 +27,9 @@ public class UserTokenExpiryNotificationService {
 
     private final MailSendingService mailSendingService;
 
-    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
-
-    public UserTokenExpiryNotificationService(UserRepository userRepository, MailSendingService mailSendingService,
-            GlobalNotificationSettingRepository globalNotificationSettingRepository) {
+    public UserTokenExpiryNotificationService(UserRepository userRepository, MailSendingService mailSendingService) {
         this.userRepository = userRepository;
         this.mailSendingService = mailSendingService;
-        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
     }
 
     /**
@@ -74,8 +66,6 @@ public class UserTokenExpiryNotificationService {
      * @param recipient the user to whose account the VCS access token was added
      */
     private void notifyUserAboutExpiredVcsAccessToken(User recipient) {
-        if (globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.VCS_TOKEN_EXPIRED)) {
-            mailSendingService.buildAndSendSync(recipient, "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail", new HashMap<>());
-        }
+        mailSendingService.buildAndSendSync(recipient, "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail", new HashMap<>());
     }
 }

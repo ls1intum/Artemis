@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +22,6 @@ import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
  * REST controller to serve the public JWKSet related to all OAuth2 clients.
  */
 @Profile(PROFILE_LTI)
-@Lazy
 @RestController
 public class PublicOAuth2JWKSResource {
 

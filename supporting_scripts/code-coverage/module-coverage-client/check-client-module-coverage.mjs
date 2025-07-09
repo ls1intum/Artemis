@@ -37,50 +37,50 @@ const moduleThresholds = {
     },
     buildagent: {
         statements: 93.16,
-        branches:   83.13,
+        branches:   82.93,
         functions:  88.07,
         lines:      93.04,
     },
     communication: {
         statements: 92.08,
-        branches:   78.05,
-        functions:  88.79,
+        branches:   77.28,
+        functions:  88.21,
         lines:      92.38,
     },
     core: {
-        statements: 89.03,
-        branches:   71.15,
-        functions:  80.59,
-        lines:      89.05,
+        statements: 88.98,
+        branches:   70.81,
+        functions:  80.61,
+        lines:      88.99,
     },
     exam: {
-        statements: 91.30,
-        branches:   78.12,
-        functions:  83.66,
-        lines:      91.53,
+        statements: 91.31,
+        branches:   78.07,
+        functions:  83.65,
+        lines:      91.54,
     },
     exercise: {
-        statements: 88.52,
-        branches:   78.91,
-        functions:  80.18,
-        lines:      88.63,
+        statements: 88.49,
+        branches:   78.98,
+        functions:  80.22,
+        lines:      88.58,
     },
     fileupload: {
-        statements: 92.59,
-        branches:   78.48,
-        functions:  84.80,
-        lines:      93.23,
+        statements: 92.57,
+        branches:   76.58,
+        functions:  84.62,
+        lines:      93.21,
     },
     iris: {
-        statements: 86.99,
-        branches:   71.18,
-        functions:  85.15,
-        lines:      87.54,
+        statements: 86.09,
+        branches:   67.62,
+        functions:  85.30,
+        lines:      86.66,
     },
     lecture: {
         statements: 92.19,
-        branches:   79.42,
-        functions:  86.93,
+        branches:   79.31,
+        functions:  86.91,
         lines:      92.30,
     },
     lti: {
@@ -90,46 +90,46 @@ const moduleThresholds = {
         lines:      93.45,
     },
     modeling: {
-        statements: 88.52,
+        statements: 87.00,
         branches:   73.50,
-        functions:  84.04,
-        lines:      88.66,
+        functions:  81.82,
+        lines:      87.19,
     },
     plagiarism: {
-        statements: 91.74,
-        branches:   84.72,
-        functions:  85.24,
-        lines:      92.20,
+        statements: 91.88,
+        branches:   81.91,
+        functions:  85.31,
+        lines:      91.91,
     },
     programming: {
-        statements: 88.75,
-        branches:   76.65,
-        functions:  80.97,
-        lines:      88.86,
+        statements: 88.67,
+        branches:   76.47,
+        functions:  80.86,
+        lines:      88.79,
     },
     quiz: {
-        statements: 86.25,
-        branches:   74.69,
-        functions:  78.69,
-        lines:      86.35,
+        statements: 86.22,
+        branches:   74.75,
+        functions:  78.74,
+        lines:      86.34,
     },
     shared: {
-        statements: 86.74,
-        branches:   71.49,
-        functions:  83.88,
-        lines:      86.53,
+        statements: 85.77,
+        branches:   71.12,
+        functions:  83.55,
+        lines:      85.57,
     },
     text: {
-        statements: 89.32,
-        branches:   74.75,
-        functions:  86.04,
-        lines:      89.63,
+        statements: 87.99,
+        branches:   72.37,
+        functions:  84.17,
+        lines:      88.38,
     },
     tutorialgroup: {
-        statements: 91.31,
-        branches:   75.85,
-        functions:  83.51,
-        lines:      91.20,
+        statements: 91.05,
+        branches:   75.00,
+        functions:  83.12,
+        lines:      90.92,
     },
 };
 
@@ -137,26 +137,19 @@ const moduleThresholds = {
 
 const metrics = ['statements', 'branches', 'functions', 'lines'];
 
-const AIMED_FOR_COVERAGE = 90;
-
-const roundToTwoDigits = (value) => Math.round(value * 100) / 100;
-
 const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
     let failed = false;
     console.log(`\nModule: ${module}`);
     for (const metric of metrics) {
         const { total, covered } = aggregatedMetrics[metric];
         const percentage = total > 0 ? (covered / total) * 100 : 0;
-        const roundedPercentage = roundToTwoDigits(percentage);
-        const roundedThreshold = roundToTwoDigits(thresholds[metric]);
-        const pass = roundedPercentage >= roundedThreshold;
-        const higherThanExpected = roundedPercentage > roundedThreshold && roundedThreshold < AIMED_FOR_COVERAGE;
-
-        const status = `${higherThanExpected ? '⬆️' : ''} ${pass ? '✅' : '❌'}`;
-        console.log(`${status.padStart(6)} ${metric.padEnd(12)}: ${roundedPercentage.toFixed(2).padStart(6)}%  (need ≥ ${roundedThreshold.toFixed(2)}%)`);
+        const threshold = thresholds[metric];
+        const pass = Math.round(percentage * 100) / 100 >= threshold;
+        console.log(`  ${pass ? '✅' : '❌'} ${metric.padEnd(10)} : ${percentage.toFixed(2)}%  (need ≥ ${threshold}%)`);
         if (!pass) failed = true;
     }
     return failed;
+
 };
 
 let anyModuleFailed = false;

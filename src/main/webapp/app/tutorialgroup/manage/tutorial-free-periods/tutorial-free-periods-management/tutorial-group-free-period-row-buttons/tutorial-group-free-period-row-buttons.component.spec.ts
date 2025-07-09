@@ -18,7 +18,6 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EditTutorialGroupFreePeriodComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { signal } from '@angular/core';
 
 describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodRowButtonsComponent>;
@@ -68,15 +67,12 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
 
     it('should open the edit free day dialog when the respective button is clicked', fakeAsync(() => {
         const modalService = TestBed.inject(NgbModal);
-        const mockCourse = { id: 1, title: 'Test Course' };
-        const mockTutorialFreePeriod = { id: 42, date: '2025-06-30' };
-        const mockConfiguration = { id: 99, timeSlots: ['08:00-09:00'] };
-
         const mockModalRef = {
             componentInstance: {
-                course: signal(mockCourse),
-                tutorialGroupFreePeriod: signal(mockTutorialFreePeriod),
-                tutorialGroupsConfiguration: signal(mockConfiguration),
+                course: undefined,
+                tutorialGroupFreePeriod: undefined,
+                tutorialGroupsConfiguration: undefined,
+
                 initialize: () => {},
             },
             result: of(),

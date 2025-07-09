@@ -6,7 +6,6 @@ import dayjs from 'dayjs/esm';
 export enum BuildAgentStatus {
     ACTIVE = 'ACTIVE',
     PAUSED = 'PAUSED',
-    SELF_PAUSED = 'SELF_PAUSED',
     IDLE = 'IDLE',
 }
 
@@ -18,7 +17,6 @@ export class BuildAgentInformation implements BaseEntity {
     public status?: BuildAgentStatus;
     public recentBuildJobs?: BuildJob[];
     public buildAgentDetails?: BuildAgentDetails;
-    public pauseAfterConsecutiveBuildFailures?: number;
 }
 
 export class BuildAgentDetails {
@@ -31,5 +29,4 @@ export class BuildAgentDetails {
     public lastBuildDate?: dayjs.Dayjs;
     public startDate?: dayjs.Dayjs;
     public gitRevision?: string;
-    public consecutiveBuildFailures?: number;
 }

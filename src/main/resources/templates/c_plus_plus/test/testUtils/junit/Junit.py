@@ -29,10 +29,6 @@ class Junit:
         root: Et.Element = Et.Element("testsuites")
         root.append(suiteXml)
         root.extend(self.additionalSuites)
-        # add another empty test suite
-        # to make sure the tests have consistent names
-        # independent of whether there are additional suites or not
-        root.append(TestSuite("empty-suite").toXml())
         tree: Et.ElementTree = Et.ElementTree(root)
         self.createOutputPath(outputPath)
         tree.write(outputPath, xml_declaration=True)
@@ -47,13 +43,7 @@ class Junit:
             r'(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?'  # Parameter bytes
             r'[0-9A-ORZcf-nqry=><~]')  # Final byte
 
-        # Filter any remaining non-ASCII characters that may be remaining
-        # from escape patterns that were truncated due to stdout limits
-        # from https://stackoverflow.com/questions/730133/what-are-invalid-characters-in-xml
-        nonprintable_pattern = re.compile(
-            r"[^\x09\x0A\x0D\x20-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]"
-        )
-        return nonprintable_pattern.sub("", ansi_escape_pattern.sub("", text))
+        return ansi_escape_pattern.sub('', text)
 
     @staticmethod
     def createOutputPath(outputPath: str) -> None:

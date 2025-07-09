@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ContentChild, OnChanges, SimpleChanges, TemplateRef, inject, input } from '@angular/core';
+import { ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef, inject } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { SafeHtml } from '@angular/platform-browser';
@@ -48,9 +48,9 @@ export class TutorialGroupDetailComponent implements OnChanges {
 
     @ContentChild(TemplateRef, { static: true }) header: TemplateRef<any>;
 
-    readonly timeZone = input<string>();
-    readonly tutorialGroup = input.required<TutorialGroup>();
-    readonly course = input<Course>();
+    @Input() timeZone?: string = undefined;
+    @Input() tutorialGroup: TutorialGroup;
+    @Input() course: Course;
 
     formattedAdditionalInformation?: SafeHtml;
 
@@ -76,7 +76,7 @@ export class TutorialGroupDetailComponent implements OnChanges {
                 const change = changes[propName];
 
                 if (change.currentValue && change.currentValue.additionalInformation) {
-                    this.formattedAdditionalInformation = this.artemisMarkdownService.safeHtmlForMarkdown(this.tutorialGroup().additionalInformation);
+                    this.formattedAdditionalInformation = this.artemisMarkdownService.safeHtmlForMarkdown(this.tutorialGroup.additionalInformation);
                 }
                 if (change.currentValue && change.currentValue.tutorialGroupSessions) {
                     this.sessions = change.currentValue.tutorialGroupSessions;
@@ -88,26 +88,25 @@ export class TutorialGroupDetailComponent implements OnChanges {
     }
 
     getTutorialTimeSlotString(): string | undefined {
-        const tutorialGroup = this.tutorialGroup();
-        if (!tutorialGroup.tutorialGroupSchedule) {
+        if (!this.tutorialGroup.tutorialGroupSchedule) {
             return undefined;
         }
-        const day = this.translateService.instant(getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek));
-        const start = tutorialGroup.tutorialGroupSchedule?.startTime?.split(':').slice(0, 2).join(':');
-        const end = tutorialGroup.tutorialGroupSchedule?.endTime?.split(':').slice(0, 2).join(':');
+        const day = this.translateService.instant(getDayTranslationKey(this.tutorialGroup.tutorialGroupSchedule?.dayOfWeek));
+        const start = this.tutorialGroup.tutorialGroupSchedule?.startTime?.split(':').slice(0, 2).join(':');
+        const end = this.tutorialGroup.tutorialGroupSchedule?.endTime?.split(':').slice(0, 2).join(':');
         const repetition = this.translateService.instant(
-            tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! === 1
+            this.tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! === 1
                 ? 'artemisApp.entities.tutorialGroupSchedule.repetitionOneWeek'
                 : 'artemisApp.entities.tutorialGroupSchedule.repetitionNWeeks',
-            { n: tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! },
+            { n: this.tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! },
         );
         return `${day} ${start}-${end}, ${repetition}`;
     }
 
     getTutorialDetail() {
-        const tutorialGroup = this.tutorialGroup();
+        const tutorialGroup = this.tutorialGroup;
 
-        this.isMessagingEnabled = isMessagingEnabled(this.course());
+        this.isMessagingEnabled = isMessagingEnabled(this.course);
         if (tutorialGroup.averageAttendance && tutorialGroup.capacity) {
             this.utilization = Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);
         } else {
@@ -118,13 +117,13 @@ export class TutorialGroupDetailComponent implements OnChanges {
 
     recalculateAttendanceDetails() {
         let activeAndFinishedSessions =
-            this.tutorialGroup().tutorialGroupSessions?.filter((session) => session.status === TutorialGroupSessionStatus.ACTIVE && dayjs().isAfter(session.end)) ?? [];
+            this.tutorialGroup.tutorialGroupSessions?.filter((session) => session.status === TutorialGroupSessionStatus.ACTIVE && dayjs().isAfter(session.end)) ?? [];
         activeAndFinishedSessions = this.sortService.sortByProperty(activeAndFinishedSessions, 'start', false);
         const relevantSessions = activeAndFinishedSessions.slice(0, 3).filter((session) => session.attendanceCount !== undefined);
 
         if (relevantSessions.length) {
             const averageAttendance = relevantSessions.map((session) => session.attendanceCount ?? 0).reduce((acc, attendance) => acc + attendance) / relevantSessions.length;
-            this.tutorialGroup().averageAttendance = Math.round(averageAttendance);
+            this.tutorialGroup.averageAttendance = Math.round(averageAttendance);
         }
 
         this.getTutorialDetail();

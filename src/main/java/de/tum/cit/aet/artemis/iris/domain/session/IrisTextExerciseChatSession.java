@@ -41,9 +41,4 @@ public class IrisTextExerciseChatSession extends IrisChatSession {
     public boolean shouldAcceptExternalLLMUsage() {
         return true;
     }
-
-    @Override
-    public IrisChatMode getMode() {
-        return IrisChatMode.TEXT_EXERCISE_CHAT;
-    }
 }

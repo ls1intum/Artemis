@@ -3,11 +3,9 @@ package de.tum.cit.aet.artemis.programming.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Comparator;
-import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,7 +45,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
  * REST controller for managing ProgrammingAssessment.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingAssessmentResource extends AssessmentResource {
@@ -135,8 +132,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // based on the locking mechanism we take the most recent manual result
-        Result existingManualResult = participation.getSubmissions().stream()
-                .flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull).filter(Result::isManual)).max(Comparator.comparing(Result::getId))
+        Result existingManualResult = participation.getResults().stream().filter(Result::isManual).max(Comparator.comparing(Result::getId))
                 .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
 
         // prevent that tutors create multiple manual results

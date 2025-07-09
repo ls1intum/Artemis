@@ -73,7 +73,6 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         this.defaultActions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new QuoteAction(), new CodeAction(), new CodeBlockAction(), new UrlAction()];
         this.filteredUsers = this.users();
 
-        // Combine users and channels into a single options list
         this.combinedOptions = [
             ...this.channels()
                 .filter((channel: ChannelDTO) => channel.name !== undefined)
@@ -101,9 +100,6 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         }, 0);
     }
 
-    /**
-     * Checks whether the forwarded message content exceeds its visible container height.
-     */
     checkIfContentOverflows(): void {
         if (this.messageContent) {
             const nativeElement = this.messageContent()!.nativeElement;
@@ -112,28 +108,19 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         }
     }
 
-    /** Toggles whether full forwarded message content should be shown */
     toggleShowFullForwardedMessage(): void {
         this.showFullForwardedMessage = !this.showFullForwardedMessage;
     }
 
-    /** Updates content of the new post with editor input */
     updateField(content: string): void {
         this.newPost.content = content;
     }
 
-    /**
-     * Triggered on user input to filter available user/channel options.
-     */
     filterItems(event: Event): void {
         this.searchTerm = (event.target as HTMLInputElement).value;
         this.filterOptions();
     }
 
-    /**
-     * Filters combined options list based on current search term.
-     * Makes remote API call to search users if query has sufficient length.
-     */
     filterOptions(): void {
         if (this.searchTerm) {
             const lowerCaseSearchTerm = this.searchTerm.toLowerCase();
@@ -166,9 +153,6 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         }
     }
 
-    /**
-     * Combines filtered channels and users into a unified options list.
-     */
     private updateCombinedOptions(): void {
         this.filteredOptions = [
             ...this.filteredChannels.map((channel) => ({
@@ -186,10 +170,6 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         ];
     }
 
-    /**
-     * Adds selected option (user or channel) to the appropriate list.
-     * Ensures no duplicates.
-     */
     selectOption(option: CombinedOption): void {
         if (option.type === 'channel') {
             const existing = this.selectedChannels.find((c) => (c as ChannelDTO).id === option.id);
@@ -214,7 +194,6 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         this.focusInput();
     }
 
-    /** Removes selected channel from the list */
     removeSelectedChannel(channel: ChannelDTO): void {
         const index = this.selectedChannels.findIndex((c) => c.id === channel.id);
         if (index > -1) {
@@ -223,7 +202,6 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         this.focusInput();
     }
 
-    /** Removes selected user from the list */
     removeSelectedUser(user: UserPublicInfoDTO): void {
         const index = this.selectedUsers.findIndex((u) => u.id === user.id);
         if (index > -1) {
@@ -232,10 +210,6 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         this.focusInput();
     }
 
-    /**
-     * Closes modal and emits selected recipients and message content
-     * to the parent component or caller.
-     */
     send(): void {
         const selectedItems = {
             channels: this.selectedChannels,
@@ -245,33 +219,26 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         this.activeModal.close(selectedItems);
     }
 
-    /** Returns true if any users or channels are selected */
     hasSelections(): boolean {
         return this.selectedChannels.length > 0 || this.selectedUsers.length > 0;
     }
 
-    /** Sets input focus and opens dropdown */
     onInputFocus(): void {
         this.isInputFocused = true;
         this.showDropdown = true;
     }
 
-    /** Hides dropdown when input loses focus */
     onInputBlur(): void {
         this.isInputFocused = false;
         this.showDropdown = false;
     }
 
-    /** Programmatically focuses on the search input field */
     focusInput(): void {
         if (this.searchInput) {
             this.renderer.selectRootElement(this.searchInput()!.nativeElement, true).focus();
         }
     }
 
-    /**
-     * Detects clicks outside the search input and hides dropdown accordingly.
-     */
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
         if (this.searchInput && !this.searchInput()!.nativeElement.contains(event.target)) {

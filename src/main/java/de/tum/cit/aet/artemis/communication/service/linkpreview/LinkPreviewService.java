@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +14,6 @@ import de.tum.cit.aet.artemis.communication.dto.LinkPreviewDTO;
  * Service for retrieving meta information from a given url.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class LinkPreviewService {
 

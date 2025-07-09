@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -21,7 +20,6 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
  * Spring Data JPA repository for the FileUploadSubmission entity.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<FileUploadSubmission, Long> {
 

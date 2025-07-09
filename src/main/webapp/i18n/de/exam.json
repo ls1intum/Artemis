@@ -474,7 +474,6 @@
             },
             "numberOfExerciseGroups": "Anzahl Aufgabengruppen:",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
-            "numberOfExercisesInExamTooltip": "Die Anzahl der Aufgaben muss mit der Anzahl der Aufgabengruppen übereinstimmen",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
             "examWithAttendanceCheck": "Klausur mit Anwesenheitskontrolle",

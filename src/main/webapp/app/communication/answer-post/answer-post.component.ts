@@ -117,19 +117,12 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         this.posting = { ...this.posting, reactions: updatedReactions };
     }
 
-    /**
-     * Closes dropdown if user clicks anywhere outside the component.
-     */
     @HostListener('document:click', ['$event'])
     onClickOutside() {
         this.showDropdown = false;
         this.enableBodyScroll();
     }
 
-    /**
-     * Disables vertical scrolling in the thread answer post container.
-     * Prevents background scroll when context menu is open.
-     */
     private disableBodyScroll() {
         const mainContainer = this.document.querySelector('.thread-answer-post');
         if (mainContainer) {
@@ -137,9 +130,6 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         }
     }
 
-    /**
-     * Re-enables vertical scrolling in the thread container.
-     */
     enableBodyScroll() {
         const mainContainer = this.document.querySelector('.thread-answer-post');
         if (mainContainer) {
@@ -147,20 +137,14 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         }
     }
 
-    /** Updates internal flag for delete permission */
     onMayDelete(value: boolean) {
         this.mayDelete = value;
     }
 
-    /** Updates internal flag for edit permission */
     onMayEdit(value: boolean) {
         this.mayEdit = value;
     }
 
-    /**
-     * Displays custom context menu on right-click,
-     * and sets this component as the currently active dropdown.
-     */
     onRightClick(event: MouseEvent) {
         const targetElement = event.target as HTMLElement;
         let isPointerCursor: boolean;
@@ -174,7 +158,6 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         if (!isPointerCursor) {
             event.preventDefault();
 
-            // Close any other active dropdown
             if (AnswerPostComponent.activeDropdownPost !== this) {
                 AnswerPostComponent.cleanupActiveDropdown();
             }
@@ -192,9 +175,6 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         }
     }
 
-    /**
-     * Adjusts dropdown position if it would overflow the screen.
-     */
     adjustDropdownPosition() {
         const dropdownWidth = 200;
         const screenWidth = window.innerWidth;
@@ -204,10 +184,6 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         }
     }
 
-    /**
-     * Static utility that clears the currently active dropdown post,
-     * re-enables scrolling and updates view.
-     */
     private static cleanupActiveDropdown(): void {
         if (AnswerPostComponent.activeDropdownPost) {
             AnswerPostComponent.activeDropdownPost.showDropdown = false;

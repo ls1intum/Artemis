@@ -25,8 +25,4 @@ public enum AuthenticationMechanism {
      * The user attempted to authenticate to the LocalVC using either a user token or a participation token
      */
     VCS_ACCESS_TOKEN,
-    /**
-     * The authentication header was missing
-     */
-    AUTH_HEADER_MISSING
 }

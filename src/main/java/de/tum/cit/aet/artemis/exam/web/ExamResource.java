@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -119,7 +118,6 @@ import tech.jhipster.web.util.PaginationUtil;
  * REST controller for managing Exam.
  */
 @Conditional(ExamEnabled.class)
-@Lazy
 @RestController
 @RequestMapping("api/exam/")
 public class ExamResource {

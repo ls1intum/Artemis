@@ -135,10 +135,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
     }
 
-    /**
-     * Applies pinned message filter based on current toggle state.
-     * If the toggle is active, only pinned posts are shown; otherwise, all posts.
-     */
     applyPinnedMessageFilter(): void {
         if (this.showOnlyPinned()) {
             this.posts = this.pinnedPosts;
@@ -161,7 +157,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
             });
 
-        // Fetch and subscribe to pinned posts, emit count to parent component
         this.metisService
             .getPinnedPosts()
             .pipe(takeUntil(this.ngUnsubscribe))
@@ -171,7 +166,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.cdr.detectChanges();
             });
 
-        // Ensure that all pinned posts are fetched when the component is initialized
         this.metisService.fetchAllPinnedPosts(this._activeConversation!.id!).subscribe();
         this.cdr.detectChanges();
     }
@@ -283,10 +277,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         };
     }
 
-    /**
-     * Groups posts by author and timestamp proximity (within 5 minutes),
-     * marking consecutive posts for visual grouping.
-     */
     private groupPosts(): void {
         // If there are no posts, clear groupedPosts and exit.
         if (!this.posts || this.posts.length === 0) {
@@ -643,9 +633,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
     }
 
-    /**
-     * Emits navigation event to a specific post (used by forwarded post component).
-     */
     onTriggerNavigateToPost(post: Posting) {
         this.onNavigateToPost.emit(post);
     }

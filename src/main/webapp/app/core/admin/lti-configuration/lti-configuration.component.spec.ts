@@ -127,7 +127,7 @@ describe('LtiConfigurationComponent', () => {
         const platformIdToDelete = 1;
         component.deleteLtiPlatform(platformIdToDelete);
         expect(mockLtiConfigurationService.deleteLtiPlatform).toHaveBeenCalledWith(platformIdToDelete);
-        expect(component.platforms).toHaveLength(0);
+        expect(mockRouter.navigate).toHaveBeenCalledWith(['admin', 'lti-configuration']);
     });
 
     it('should handle navigation on transition', () => {

@@ -8,7 +8,6 @@ import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
@@ -20,7 +19,6 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
 
-@Lazy
 @Service
 @Profile(PROFILE_APOLLON)
 public class ApollonConversionService {

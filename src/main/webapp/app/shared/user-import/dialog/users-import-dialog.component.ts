@@ -19,7 +19,6 @@ import { TranslateDirective } from '../../language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { Student } from 'app/openapi/model/student';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
@@ -232,10 +231,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.isImporting = true;
         if (this.tutorialGroup) {
             this.tutorialGroupService.registerMultipleStudents(this.courseId, this.tutorialGroup.id!, this.usersToImport).subscribe({
-                next: (res: HttpResponse<Array<Student>>) => {
-                    const convertedHttpResponse = this.convertGeneratedDtoToNonGenerated(res);
-                    this.onSaveSuccess(convertedHttpResponse);
-                },
+                next: (res) => this.onSaveSuccess(res),
                 error: () => this.onSaveError(),
             });
         } else if (this.courseGroup && !this.exam) {
@@ -266,33 +262,6 @@ export class UsersImportDialogComponent implements OnDestroy {
         } else {
             this.alertService.error('artemisApp.importUsers.genericErrorMessage');
         }
-    }
-
-    /**
-     * Helper method to convert the generated Student DTOs to non-generated StudentDTOs
-     * This is needed as long as not all methods in this component are converted to use the generated Student DTO.
-     * @param response The HttpResponse containing the DTOs converted to @link{StudentDTO}
-     */
-    private convertGeneratedDtoToNonGenerated(response: HttpResponse<Array<Student>>): HttpResponse<Partial<StudentDTO>[]> {
-        const nonGeneratedDtos: Partial<StudentDTO>[] = [];
-        if (response.body) {
-            for (const student of response.body) {
-                nonGeneratedDtos.push({
-                    login: student.login,
-                    firstName: student.firstName,
-                    lastName: student.lastName,
-                    registrationNumber: student.registrationNumber,
-                    email: student.email,
-                });
-            }
-        }
-        return new HttpResponse<Partial<StudentDTO>[]>({
-            body: nonGeneratedDtos,
-            headers: response.headers,
-            status: response.status,
-            statusText: response.statusText,
-            url: response.url ?? undefined,
-        });
     }
 
     /**

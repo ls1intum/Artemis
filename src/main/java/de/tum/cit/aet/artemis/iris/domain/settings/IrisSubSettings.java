@@ -58,7 +58,7 @@ public abstract class IrisSubSettings extends DomainObject {
     @Convert(converter = IrisListConverter.class)
     private SortedSet<String> allowedVariants = new TreeSet<>();
 
-    @Column(name = "selected_variant")
+    @Column(name = "selected_variant", nullable = false)
     private String selectedVariant;
 
     public boolean isEnabled() {

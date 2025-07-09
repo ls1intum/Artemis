@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
@@ -33,7 +32,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * so we can display them to the user if they reconnect to the exam or join late.
  */
 @Conditional(ExamEnabled.class)
-@Lazy
 @Service
 public class ExamLiveEventsService {
 

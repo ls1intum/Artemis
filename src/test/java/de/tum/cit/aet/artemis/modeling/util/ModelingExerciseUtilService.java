@@ -12,7 +12,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -49,7 +48,6 @@ import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRep
 /**
  * Service responsible for initializing the database with specific testdata related to modeling exercises for use in integration tests.
  */
-@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ModelingExerciseUtilService {
@@ -111,16 +109,6 @@ public class ModelingExerciseUtilService {
         assertThat(course.getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(modelingExercise);
         assertThat(modelingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
         return course;
-    }
-
-    public ModelingExercise addModelingExerciseToCourse(Course course) {
-        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
-                course);
-        modelingExercise.setTitle("ClassDiagram");
-        course.addExercises(modelingExercise);
-        courseRepo.save(course);
-        modelingExercise = exerciseRepository.save(modelingExercise);
-        return modelingExercise;
     }
 
     /**

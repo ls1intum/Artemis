@@ -7,7 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { MODULE_FEATURE_PASSKEY, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
+import { FEATURE_PASSKEY, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faCircleNotch, faKey } from '@fortawesome/free-solid-svg-icons';
@@ -164,7 +164,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
      */
     private initializeWithProfileInfo() {
         this.profileInfo = this.profileService.getProfileInfo();
-        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
+        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(FEATURE_PASSKEY);
 
         this.accountName = this.profileInfo.accountName;
         if (this.profileInfo.allowedLdapUsernamePattern) {

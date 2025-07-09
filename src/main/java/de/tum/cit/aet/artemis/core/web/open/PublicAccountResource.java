@@ -16,7 +16,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
@@ -50,7 +48,6 @@ import de.tum.cit.aet.artemis.core.service.user.UserService;
  * REST controller for public endpoints regarding the current user's account.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicAccountResource {
@@ -63,9 +60,6 @@ public class PublicAccountResource {
     @Value("${artemis.user-management.passkey.ask-users-to-setup:true}")
     private boolean askUsersToSetupPasskey;
 
-    @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
-    private boolean passkeyEnabled;
-
     private final AccountService accountService;
 
     private final UserService userService;
@@ -74,10 +68,10 @@ public class PublicAccountResource {
 
     private final UserRepository userRepository;
 
-    private final Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository;
+    private final PasskeyCredentialsRepository passkeyCredentialsRepository;
 
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
-            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository) {
+            PasskeyCredentialsRepository passkeyCredentialsRepository) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
@@ -176,8 +170,8 @@ public class PublicAccountResource {
 
         User user = userOptional.get();
         boolean shouldPromptUserToSetupPasskey = false;
-        if (askUsersToSetupPasskey && passkeyEnabled && passkeyCredentialsRepository.isPresent()) {
-            shouldPromptUserToSetupPasskey = !this.passkeyCredentialsRepository.orElseThrow().existsByUserId(user.getId());
+        if (askUsersToSetupPasskey) {
+            shouldPromptUserToSetupPasskey = !this.passkeyCredentialsRepository.existsByUserId(user.getId());
         }
         user.setVisibleRegistrationNumber();
         UserDTO userDTO = new UserDTO(user);

@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHE
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
 import tech.jhipster.config.JHipsterConstants;
 
-@Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class PushNotificationDeviceConfigurationCleanupService {

@@ -21,9 +21,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     imports: [RouterLink, NgClass, FaIconComponent, PieChartModule, ArtemisTranslatePipe],
 })
 export class DoughnutChartComponent implements OnChanges, OnInit {
-    protected readonly faSpinner = faSpinner;
-
-    private readonly router = inject(Router);
+    private router = inject(Router);
 
     @Input() course: Course;
     @Input() contentType: DoughnutChartType;
@@ -38,6 +36,10 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
     stats: number[];
     titleLink: string[] | undefined;
 
+    // Icons
+    faSpinner = faSpinner;
+
+    // ngx
     ngxDoughnutData: NgxChartsSingleSeriesDataEntry[] = [
         { name: 'Done', value: 0 },
         { name: 'Not done', value: 0 },

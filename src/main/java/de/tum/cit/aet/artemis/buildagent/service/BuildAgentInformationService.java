@@ -10,7 +10,6 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.GitProperties;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -23,13 +22,10 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 @Profile(PROFILE_BUILDAGENT)
-@Lazy
 @Service
 public class BuildAgentInformationService {
 
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(BuildAgentInformationService.class);
-
-    private static final int DEFAULT_CONSECUTIVE_FAILURES = 0;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
@@ -54,28 +50,21 @@ public class BuildAgentInformationService {
     }
 
     public void updateLocalBuildAgentInformation(boolean isPaused) {
-        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, false, DEFAULT_CONSECUTIVE_FAILURES);
-    }
-
-    public void updateLocalBuildAgentInformation(boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
-        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, isPausedDueToFailures, consecutiveFailures);
+        updateLocalBuildAgentInformationWithRecentJob(null, isPaused);
     }
 
     /**
      * Updates the local build agent information with the most recent build job.
      *
-     * @param recentBuildJob        the most recent build job
-     * @param isPaused              whether the build agent is paused
-     * @param isPausedDueToFailures whether the build agent is paused due to consecutive failures
-     * @param consecutiveFailures   number of consecutive build failures on the build agent
+     * @param recentBuildJob the most recent build job
+     * @param isPaused       whether the build agent is paused
      */
-    public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
+    public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         try {
             distributedDataAccessService.getDistributedBuildAgentInformation().lock(memberAddress);
             // Add/update
-            BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures);
-
+            BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused);
             try {
                 distributedDataAccessService.getDistributedBuildAgentInformation().put(info.buildAgent().memberAddress(), info);
             }
@@ -91,34 +80,27 @@ public class BuildAgentInformationService {
         }
     }
 
-    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
+    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
                 : buildAgentConfiguration.getThreadPoolSize();
         boolean hasJobs = numberOfCurrentBuildJobs > 0;
-        BuildAgentInformation.BuildAgentStatus status;
+        BuildAgentInformation.BuildAgentStatus status = isPaused ? BuildAgentInformation.BuildAgentStatus.PAUSED
+                : hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
         BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(memberAddress);
-        if (isPaused) {
-            boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
-            status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentInformation.BuildAgentStatus.SELF_PAUSED : BuildAgentInformation.BuildAgentStatus.PAUSED;
-        }
-        else {
-            status = hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
-        }
+
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
         BuildAgentDTO agentInfo = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
 
-        BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob, consecutiveFailures);
+        BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob);
 
-        int pauseAfterConsecutiveFailedJobs = buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs();
-        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails,
-                pauseAfterConsecutiveFailedJobs);
+        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails);
     }
 
-    private BuildAgentDetailsDTO getBuildAgentDetails(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob, int consecutiveFailures) {
+    private BuildAgentDetailsDTO getBuildAgentDetails(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob) {
         var gitRevision = gitProperties.getShortCommitId();
         var lastBuildDate = getLastBuildDate(agent, recentBuildJob);
         var startDate = getStartDate(agent);
@@ -130,8 +112,7 @@ public class BuildAgentInformationService {
         var cancelledBuilds = getCancelledBuilds(agent, recentBuildJob);
         var timedOutBuilds = getTimedOutBuilds(agent, recentBuildJob);
 
-        return new BuildAgentDetailsDTO(averageBuildDuration, successfulBuilds, failedBuilds, cancelledBuilds, timedOutBuilds, totalsBuilds, lastBuildDate, startDate, gitRevision,
-                consecutiveFailures);
+        return new BuildAgentDetailsDTO(averageBuildDuration, successfulBuilds, failedBuilds, cancelledBuilds, timedOutBuilds, totalsBuilds, lastBuildDate, startDate, gitRevision);
     }
 
     private ZonedDateTime getLastBuildDate(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob) {

@@ -15,7 +15,7 @@ import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOpti
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
-import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
+import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 
 describe('TextExercise Service', () => {
     let service: TextExerciseService;
@@ -44,7 +44,7 @@ describe('TextExercise Service', () => {
         elemDefault.dueDate = dayjs();
         elemDefault.releaseDate = dayjs();
         elemDefault.studentParticipations = new Array<StudentParticipation>();
-        plagiarismResults = new PlagiarismResult();
+        plagiarismResults = new TextPlagiarismResult();
         plagiarismResults.exercise = elemDefault;
         plagiarismResults.comparisons = [];
         plagiarismResults.duration = 40;

@@ -11,7 +11,6 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
  * Service for managing the channel connected to a tutorial group.
  */
 @Conditional(TutorialGroupEnabled.class)
-@Lazy
 @Service
 public class TutorialGroupChannelManagementService {
 

@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
@@ -15,7 +14,6 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 
 @Conditional(ExamEnabled.class)
 @Controller
-@Lazy
 public class ExamMetricsApi extends AbstractExamApi {
 
     private final ExamRepository examRepository;

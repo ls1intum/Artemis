@@ -95,28 +95,6 @@ export enum FilterProp {
     ],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
-    protected readonly faDownload = faDownload;
-    protected readonly faSync = faSync;
-    protected readonly faFolderOpen = faFolderOpen;
-    protected readonly faListAlt = faListAlt;
-    protected readonly farFileCode = faFileCode;
-    protected readonly faFilter = faFilter;
-    protected readonly faComment = faComment;
-    protected readonly RepositoryType = RepositoryType;
-    protected readonly ExerciseType = ExerciseType;
-    protected readonly FeatureToggle = FeatureToggle;
-    protected readonly AssessmentType = AssessmentType;
-    protected readonly assessmentNoteSortFieldProperty = 'submissions?.last()?.results?.last()?.assessmentNote?.note';
-    protected readonly durationSortFieldProperty = 'submissions?.last()?.results?.last()?.durationInMinutes';
-    protected readonly submissionCountSortFieldProperty = 'submissionCount';
-    protected readonly testRunSortFieldProperty = 'testRun';
-    protected readonly teamShortNameSortFieldProperty = 'team.shortName';
-    protected readonly studentLoginSortFieldProperty = 'student.login';
-    protected readonly completionDateSortFieldProperty = 'submissions?.last()?.results?.last()?.completionDate';
-    protected readonly resultSortFieldProperty = 'submissions?.last()?.results?.last()?.score';
-    protected readonly assessmentTypeSortFieldProperty = 'submissions?.last()?.results?.last()?.assessmentType';
-    readonly FilterProp = FilterProp;
-
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
     private exerciseService = inject(ExerciseService);
@@ -124,7 +102,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
-    protected nameSortFieldProperty: string;
+
+    // make constants available to html for comparison
+    readonly FilterProp = FilterProp;
+    readonly ExerciseType = ExerciseType;
+    readonly FeatureToggle = FeatureToggle;
+    readonly AssessmentType = AssessmentType;
+    protected readonly RepositoryType = RepositoryType;
 
     // represents all intervals selectable in the score distribution on the exercise statistics
     readonly scoreRanges = [
@@ -161,6 +145,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     localCIEnabled = true;
 
+    // Icons
+    faDownload = faDownload;
+    faSync = faSync;
+    faFolderOpen = faFolderOpen;
+    faListAlt = faListAlt;
+    farFileCode = faFileCode;
+    faFilter = faFilter;
+    faComment = faComment;
+
     /**
      * Fetches the course and exercise from the server
      */
@@ -178,7 +171,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
                 this.course = courseRes.body!;
                 this.exercise = exerciseRes.body!;
-                this.nameSortFieldProperty = this.exercise.teamMode ? 'team.name' : 'student.name';
                 this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
                 this.participationService.findAllParticipationsByExercise(this.exercise.id!, true).subscribe((participationsResponse) => {
@@ -219,7 +211,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.participations = participationsResponse.body ?? [];
         this.participations.forEach((participation) => {
             const results = getAllResultsOfAllSubmissions(participation.submissions);
-            results?.forEach((result) => {
+            results?.forEach((result, index) => {
                 result.durationInMinutes = dayjs(result.completionDate).diff(participation.initializationDate, 'seconds');
             });
             // sort the results from old to new.
@@ -227,8 +219,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             // the result of a complaints or the second correction at index 1.
             results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
             const resultsWithoutAthena = results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
-            if (resultsWithoutAthena?.length != 0 && participation?.submissions?.[0]) {
-                participation!.submissions[0]!.results = results;
+            if (resultsWithoutAthena?.length != 0) {
+                if (resultsWithoutAthena?.[0].submission) {
+                    participation.submissions = [resultsWithoutAthena?.[0].submission];
+                } else if (results?.[0].submission) {
+                    participation.submissions = [results?.[0].submission];
+                }
             }
         });
         this.filteredParticipations = this.filterByScoreRange(this.participations);

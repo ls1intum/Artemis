@@ -4,7 +4,6 @@ import org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfigu
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 
 /**
  * Conditional configuration class that excludes {@link MetricsAutoConfiguration}
@@ -16,7 +15,6 @@ import org.springframework.context.annotation.Lazy;
  * </p>
  */
 @Configuration
-@Lazy
 @Conditional(BuildAgentWithoutCoreCondition.class)
 @EnableAutoConfiguration(exclude = MetricsAutoConfiguration.class)
 public class ConditionalMetricsExclusionConfiguration {

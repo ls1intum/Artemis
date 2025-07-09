@@ -9,7 +9,6 @@ import java.util.Set;
 
 import jakarta.annotation.Nullable;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentPayload;
 
 @Profile(PROFILE_CORE)
 @Controller
-@Lazy
 public class TeamWebsocketService {
 
     private final WebsocketMessagingService websocketMessagingService;

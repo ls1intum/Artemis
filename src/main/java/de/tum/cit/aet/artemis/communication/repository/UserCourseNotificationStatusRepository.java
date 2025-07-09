@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Repository for the {@link UserCourseNotificationStatus} entity.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface UserCourseNotificationStatusRepository extends ArtemisJpaRepository<UserCourseNotificationStatus, Long> {
 

@@ -2,8 +2,8 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { BaseEntityWithTempId, CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
 
 export class ShortAnswerSpot extends BaseEntityWithTempId implements CanBecomeInvalid {
-    public spotNr?: number;
     public width?: number;
+    public spotNr?: number;
     public invalid = false; // default value
     public question?: ShortAnswerQuestion;
 

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lti.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -24,7 +23,6 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorization
  */
 @Profile(PROFILE_LTI)
 @Component
-@Lazy
 public class CustomLti13Configurer extends Lti13Configurer {
 
     /** Path for login. **/

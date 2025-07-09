@@ -109,9 +109,6 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
         this.imageNotFound = true;
     }
 
-    /**
-     * Processes content before and after any reference (user/channel/etc.)
-     */
     processContent() {
         if (this.postingContentPart()?.contentBeforeReference) {
             this.processedContentBeforeReference = this.normalizeSpacing(this.postingContentPart()?.contentBeforeReference || '');

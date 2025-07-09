@@ -245,7 +245,7 @@ public class Result extends DomainObject implements Comparable<Result> {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
         }
-        else if (submission.getParticipation().isPracticeMode()) {
+        else if (submission.getType() == SubmissionType.ILLEGAL || submission.getParticipation().isPracticeMode()) {
             this.rated = false;
         }
         else {

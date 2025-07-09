@@ -23,7 +23,7 @@ export const ltiConfigurationRoute: Routes = [
                 loadComponent: () => import('app/core/admin/lti-configuration/edit/edit-lti-configuration.component').then((m) => m.EditLtiConfigurationComponent),
                 data: {
                     authorities: [Authority.ADMIN],
-                    pageTitle: 'artemisApp.lti.addLtiPlatform',
+                    pageTitle: 'artemisApp.lti.addOrEditLtiPlatform',
                 },
                 canActivate: [UserRouteAccessService],
             },
@@ -38,7 +38,7 @@ export const ltiConfigurationRoute: Routes = [
                         loadComponent: () => import('app/core/admin/lti-configuration/edit/edit-lti-configuration.component').then((m) => m.EditLtiConfigurationComponent),
                         data: {
                             authorities: [Authority.ADMIN],
-                            pageTitle: 'artemisApp.lti.editLtiPlatform',
+                            pageTitle: 'artemisApp.lti.addOrEditLtiPlatform',
                         },
                         canActivate: [UserRouteAccessService],
                     },

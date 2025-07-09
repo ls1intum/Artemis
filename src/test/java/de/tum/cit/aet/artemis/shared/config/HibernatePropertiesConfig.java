@@ -6,12 +6,10 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomi
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 
 @Configuration
 @ComponentScan
-@Lazy
-public class HibernatePropertiesConfig {
+class HibernatePropertiesConfig {
 
     @Bean
     public HibernatePropertiesCustomizer hibernateCustomizer(StatementInspector statementInspector) {

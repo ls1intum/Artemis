@@ -9,7 +9,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,7 +37,6 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
  * REST controller for receiving build results for external CI systems. At the moment, only Jenkins is supported.
  */
 @Profile(PROFILE_JENKINS)
-@Lazy
 @RestController
 @RequestMapping("api/programming/public/")
 public class PublicProgrammingExerciseResultResource {

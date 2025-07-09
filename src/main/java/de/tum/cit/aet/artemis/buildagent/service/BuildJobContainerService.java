@@ -28,7 +28,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -53,7 +52,6 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.Repo
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
  * It is closely related to the {@link BuildJobExecutionService} which contains the methods that are used to execute the build jobs.
  */
-@Lazy
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildJobContainerService {
@@ -61,6 +59,8 @@ public class BuildJobContainerService {
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
 
     private final BuildAgentConfiguration buildAgentConfiguration;
+
+    private final HostConfig hostConfig;
 
     private final BuildLogsMap buildLogsMap;
 
@@ -85,8 +85,9 @@ public class BuildJobContainerService {
     @Value("${artemis.continuous-integration.container-flags-limit.max-memory-swap:0}")
     private int maxMemorySwap;
 
-    public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, BuildLogsMap buildLogsMap) {
+    public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, HostConfig hostConfig, BuildLogsMap buildLogsMap) {
         this.buildAgentConfiguration = buildAgentConfiguration;
+        this.hostConfig = hostConfig;
         this.buildLogsMap = buildLogsMap;
     }
 
@@ -114,25 +115,23 @@ public class BuildJobContainerService {
         if (exerciseEnvVars != null && !exerciseEnvVars.isEmpty()) {
             envVars.addAll(exerciseEnvVars);
         }
-        HostConfig defaultHostConfig = buildAgentConfiguration.hostConfig();
         HostConfig customHostConfig;
         if (cpuCount > 0 || memory > 0 || memorySwap > 0) {
             // Use provided values if they are greater than 0 and less than the maximum values, otherwise use either the maximum values or the default values from the host config.
-            long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount)
-                    : (defaultHostConfig.getCpuQuota() / defaultHostConfig.getCpuPeriod());
+            long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount) : (hostConfig.getCpuQuota() / hostConfig.getCpuPeriod());
 
             long adjustedMemory = (memory > 0)
                     ? ((maxMemory > 0) ? Math.min(convertMemoryFromMBToBytes(memory), convertMemoryFromMBToBytes(maxMemory)) : convertMemoryFromMBToBytes(memory))
-                    : defaultHostConfig.getMemory();
+                    : hostConfig.getMemory();
 
             long adjustedMemorySwap = (memorySwap > 0)
                     ? ((maxMemorySwap > 0) ? Math.min(convertMemoryFromMBToBytes(memorySwap), convertMemoryFromMBToBytes(maxMemorySwap)) : convertMemoryFromMBToBytes(memorySwap))
-                    : defaultHostConfig.getMemorySwap();
+                    : hostConfig.getMemorySwap();
 
-            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
+            customHostConfig = copyAndAdjustHostConfig(adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
         }
         else {
-            customHostConfig = defaultHostConfig;
+            customHostConfig = hostConfig;
         }
         try (final var createCommand = buildAgentConfiguration.getDockerClient().createContainerCmd(image)) {
             return createCommand.withName(containerName).withHostConfig(customHostConfig).withEnv(envVars)
@@ -149,10 +148,10 @@ public class BuildJobContainerService {
         }
     }
 
-    private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, long cpuCount, long memory, long memorySwap) {
-        long cpuPeriod = defaultHostConfig.getCpuPeriod();
+    private HostConfig copyAndAdjustHostConfig(long cpuCount, long memory, long memorySwap) {
+        long cpuPeriod = hostConfig.getCpuPeriod();
         return HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
-                .withPidsLimit(defaultHostConfig.getPidsLimit()).withAutoRemove(true);
+                .withPidsLimit(hostConfig.getPidsLimit()).withAutoRemove(true);
     }
 
     private long convertMemoryFromMBToBytes(long memory) {
@@ -533,12 +532,6 @@ public class BuildJobContainerService {
 
                     @Override
                     public void onComplete() {
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onError(Throwable throwable) {
-                        log.error("Error while executing Docker command: {} on container {}", String.join(" ", command), containerId, throwable);
                         latch.countDown();
                     }
                 });

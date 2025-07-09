@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.web.annotation.EndpointWebExtension;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Component;
@@ -19,7 +18,6 @@ import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
  * Extends the default JHI Metrics with custom metrics for Artemis.
  */
 @Component
-@Lazy
 @Profile(PROFILE_CORE)
 @EndpointWebExtension(endpoint = JHipsterMetricsEndpoint.class)
 public class CustomMetricsExtension {

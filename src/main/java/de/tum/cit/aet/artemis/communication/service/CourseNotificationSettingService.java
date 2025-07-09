@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +27,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * This class manages the application of notification preferences on a per-user, per-course basis.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class CourseNotificationSettingService {
 

@@ -85,9 +85,6 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
         this.markAsChangedAndClose();
     }
 
-    /**
-     * Callback for when the privacy setting is changed.
-     */
     onPrivacyChange() {
         this.markAsChangedAndClose();
     }
@@ -101,9 +98,6 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
         this.clear();
     }
 
-    /**
-     * Emits the user ID when a username is clicked, allowing the parent to handle user-specific actions.
-     */
     onUserNameClicked(userId: number) {
         this.userNameClicked.emit(userId);
     }

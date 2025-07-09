@@ -15,12 +15,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
@@ -30,8 +26,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 
 @Entity
 @Table(name = "plagiarism_case")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PlagiarismCase extends AbstractAuditingEntity {
 
     @ManyToOne
@@ -47,8 +41,8 @@ public class PlagiarismCase extends AbstractAuditingEntity {
     private Post post;
 
     @JsonIgnoreProperties("plagiarismCase")
-    @OneToMany(mappedBy = "plagiarismCase", fetch = FetchType.LAZY)
-    private Set<PlagiarismSubmission> plagiarismSubmissions;
+    @OneToMany(mappedBy = "plagiarismCase", targetEntity = PlagiarismSubmission.class, fetch = FetchType.LAZY)
+    private Set<PlagiarismSubmission<?>> plagiarismSubmissions;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "verdict")
@@ -121,11 +115,11 @@ public class PlagiarismCase extends AbstractAuditingEntity {
         this.post = post;
     }
 
-    public Set<PlagiarismSubmission> getPlagiarismSubmissions() {
+    public Set<PlagiarismSubmission<?>> getPlagiarismSubmissions() {
         return plagiarismSubmissions;
     }
 
-    public void setPlagiarismSubmissions(Set<PlagiarismSubmission> plagiarismSubmissions) {
+    public void setPlagiarismSubmissions(Set<PlagiarismSubmission<?>> plagiarismSubmissions) {
         this.plagiarismSubmissions = plagiarismSubmissions;
     }
 

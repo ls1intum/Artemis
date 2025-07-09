@@ -44,15 +44,17 @@ public final class Constants {
 
     /**
      * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
-     * Submissions after the grace period exceeded will be unrated.
+     * Submissions after the grace period exceeded will be flagged as illegal.
      * <p>
+     * This is needed because locking programming exercise repositories might take up to 60 seconds,
+     * especially for exercises with many participants.
      * If the student was able to successfully push their solution, this solution should still be graded, even if
-     * the processing of the push was up to 1s late.
+     * the push was a few seconds late.
      * <p>
-     * Have a look at setRatedIfNotAfterDueDate(Participation participation, ZonedDateTime submissionDate) in
-     * de.tum.cit.aet.artemis.assessment.domain.Result.
+     * Have a look at isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User, ProgrammingSubmission) in
+     * de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService
      */
-    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
+    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 60;
 
     public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
 
@@ -358,11 +360,6 @@ public final class Constants {
      * NOTE: secondary nodes should only use PROFILE_CORE
      */
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
-
-    /**
-     * Profile combination for one primary node, where LTI AND scheduling is active
-     */
-    public static final String PROFILE_LTI_AND_SCHEDULING = PROFILE_LTI + " & " + PROFILE_SCHEDULING;
 
     /**
      * The name of the Spring profile used for Theia as an external online IDE.

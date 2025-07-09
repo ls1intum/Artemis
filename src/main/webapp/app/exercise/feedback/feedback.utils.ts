@@ -11,7 +11,6 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 export type FeedbackComponentPreparedParams = {
     exercise: Exercise | undefined;
     result: Result;
-    participation: Participation;
     exerciseType?: ExerciseType;
     showScoreChart?: boolean;
     messageKey?: string;
@@ -33,7 +32,6 @@ export function prepareFeedbackComponentParameters(
     const preparedParameters: FeedbackComponentPreparedParams = {
         exercise: exercise,
         result: result,
-        participation: participation,
     };
 
     if (exercise) {

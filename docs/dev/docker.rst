@@ -25,7 +25,7 @@ There are currently docker containers for:
 Steps for Updating the DockerBuilds used in Artemis
 ---------------------------------------------------
 Updating can only be done with access to the account on Dockerhub. If you need access,
-contact Stephan Krusche.
+contact `Stephan Krusche <krusche@in.tum.de>`_.
 
 1. Update the dependencies via a pull request in the repository of the docker container.
    Each docker container has its own repository as listed above

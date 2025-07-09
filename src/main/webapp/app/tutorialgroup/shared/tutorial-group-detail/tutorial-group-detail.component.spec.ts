@@ -3,7 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
-import { ChangeDetectorRef, Component, input, viewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -25,25 +25,29 @@ import { IconCardComponent } from 'app/tutorialgroup/shared/icon-card/icon-card.
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {
-    readonly tutorialGroup = input.required<TutorialGroup>();
+    @Input() tutorialGroup: TutorialGroup;
 }
 
 @Component({
     selector: 'jhi-mock-wrapper',
     template: `
-        <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup()">
-            <ng-template>
-                <jhi-mock-header [tutorialGroup]="tutorialGroup()" />
+        <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup">
+            <ng-template let-tutorialGroup>
+                <jhi-mock-header [tutorialGroup]="tutorialGroup" />
             </ng-template>
         </jhi-tutorial-group-detail>
     `,
     imports: [TutorialGroupDetailComponent, MockHeaderComponent],
 })
 class MockWrapperComponent {
-    readonly tutorialGroup = input.required<TutorialGroup>();
+    @Input()
+    tutorialGroup: TutorialGroup;
 
-    tutorialGroupDetailInstance = viewChild.required(TutorialGroupDetailComponent);
-    mockHeaderInstance = viewChild.required(MockHeaderComponent);
+    @ViewChild(TutorialGroupDetailComponent)
+    tutorialGroupDetailInstance: TutorialGroupDetailComponent;
+
+    @ViewChild(MockHeaderComponent)
+    mockHeaderInstance: MockHeaderComponent;
 }
 
 describe('TutorialGroupDetailWrapperTest', () => {
@@ -83,10 +87,10 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 fixture = TestBed.createComponent(MockWrapperComponent);
                 component = fixture.componentInstance;
                 exampleTutorialGroup = generateExampleTutorialGroup({});
-                fixture.componentRef.setInput('tutorialGroup', exampleTutorialGroup);
+                component.tutorialGroup = exampleTutorialGroup;
                 fixture.detectChanges();
-                detailInstance = component.tutorialGroupDetailInstance();
-                headerInstance = component.mockHeaderInstance();
+                detailInstance = component.tutorialGroupDetailInstance;
+                headerInstance = component.mockHeaderInstance;
             });
     });
 
@@ -95,8 +99,8 @@ describe('TutorialGroupDetailWrapperTest', () => {
     });
 
     it('should pass the tutorialGroup to the header', () => {
-        expect(headerInstance.tutorialGroup()).toEqual(component.tutorialGroup());
-        expect(component.tutorialGroup()).toEqual(detailInstance.tutorialGroup());
+        expect(headerInstance.tutorialGroup).toEqual(component.tutorialGroup);
+        expect(component.tutorialGroup).toEqual(detailInstance.tutorialGroup);
         const mockHeader = fixture.debugElement.nativeElement.querySelector('#mockHeader');
         expect(mockHeader).toBeTruthy();
     });
@@ -125,7 +129,7 @@ describe('TutorialGroupDetailComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupDetailComponent);
                 component = fixture.componentInstance;
-                fixture.componentRef.setInput('tutorialGroup', generateExampleTutorialGroup({}));
+                component.tutorialGroup = generateExampleTutorialGroup({});
                 fixture.detectChanges();
             });
     });
@@ -174,8 +178,8 @@ describe('TutorialGroupDetailComponent', () => {
             24,
         ],
     ])('should calculate average attendance correctly', (tutorialGroup: TutorialGroup, expectedAttendance: number) => {
-        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        component.tutorialGroup = tutorialGroup;
         component.recalculateAttendanceDetails();
-        expect(component.tutorialGroup().averageAttendance).toBe(expectedAttendance);
+        expect(component.tutorialGroup.averageAttendance).toBe(expectedAttendance);
     });
 });

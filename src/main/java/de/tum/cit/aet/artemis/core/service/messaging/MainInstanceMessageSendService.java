@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.service.messaging;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Service;
  * As this node can handle all the processing without interaction with another node, everything is handled locally (without Hazelcast).
  * Important: There is no need to go through the broker, as this class is only active on the main instance!
  */
-@Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class MainInstanceMessageSendService implements InstanceMessageSendService {

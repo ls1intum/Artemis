@@ -28,16 +28,14 @@ $discussion-section-card-min-width: 370px;
     .card {
         width: inherit;
         min-width: $discussion-section-card-min-width;
-        border: 2px solid $border-color;
 
         .card-header {
             display: inline-flex;
             justify-content: space-between;
             align-items: center;
+            background-color: var(--artemis-dark);
             cursor: pointer;
             border-radius: 0.25em 0.25em 0 0;
-            background-color: transparent;
-            border-bottom: 2px solid $border-color;
 
             .card-title {
                 display: flex;
@@ -61,10 +59,9 @@ $discussion-section-card-min-width: 370px;
 
 .collapsed-discussion {
     width: 38px;
-    justify-content: start;
+    justify-content: space-between;
     flex-flow: column nowrap;
-    border: 2px solid $border-color;
-    border-radius: 0.25em 0 0 0.25em;
+    background-color: var(--artemis-dark);
     margin-left: auto;
     cursor: pointer;
 
@@ -77,11 +74,6 @@ $discussion-section-card-min-width: 370px;
         padding-top: 0.5rem;
         padding-bottom: 0.5rem;
         place-self: center;
-    }
-
-    .spacer {
-        flex: 1;
-        width: 100%;
     }
 }
 

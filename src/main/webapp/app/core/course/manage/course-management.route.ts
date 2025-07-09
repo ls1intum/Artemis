@@ -210,9 +210,6 @@ export const courseManagementState: Routes = [
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'overview.settings',
                         },
-                        resolve: {
-                            course: CourseManagementResolve,
-                        },
                         canActivate: [UserRouteAccessService],
                     },
                     {

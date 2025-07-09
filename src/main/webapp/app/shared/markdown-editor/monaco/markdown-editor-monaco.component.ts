@@ -369,14 +369,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         return action?.hideInEditor ? undefined : action;
     }
 
-    /**
-     * Handles the click event on a text editor action button (e.g., bold, italic, emoji).
-     * If the action is of type EmojiAction, it sets the cursor location for emoji placement.
-     * Then it executes the action in the currently focused Monaco editor instance.
-     *
-     * @param event The mouse event triggered by the button click
-     * @param action The editor action to be executed
-     */
     handleActionClick(event: MouseEvent, action: TextEditorAction): void {
         const x = event.clientX;
         const y = event.clientY;

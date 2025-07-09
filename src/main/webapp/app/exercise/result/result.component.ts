@@ -162,7 +162,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
         this.translateService.onLangChange.subscribe(() => {
             if (this.resultString) {
-                this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
+                this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
             }
         });
 
@@ -219,16 +219,16 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     evaluate() {
         this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding, this.missingResultInfo, this.isQueued);
         if (this.templateStatus === ResultTemplateStatus.LATE) {
-            this.textColorClass = getTextColorClass(this.result, this.participation, this.templateStatus);
-            this.resultIconClass = getResultIconClass(this.result, this.participation, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
+            this.textColorClass = getTextColorClass(this.result, this.templateStatus);
+            this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
         } else if (
             this.result &&
             ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) || isAthenaAIResult(this.result))
         ) {
-            this.textColorClass = getTextColorClass(this.result, this.participation, this.templateStatus);
-            this.resultIconClass = getResultIconClass(this.result, this.participation, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.participation, this.short);
+            this.textColorClass = getTextColorClass(this.result, this.templateStatus);
+            this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
             this.resultTooltip = this.buildResultTooltip();
         } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
@@ -272,7 +272,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.participation &&
             isProgrammingExerciseStudentParticipation(this.participation) &&
             !isPracticeMode(this.participation) &&
-            isResultPreliminary(this.result!, this.participation, programmingExercise)
+            isResultPreliminary(this.result!, programmingExercise)
         ) {
             if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
                 return 'artemisApp.result.preliminaryTooltipSemiAutomatic';
@@ -320,7 +320,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
         modalComponentInstance.exercise = this.exercise;
         modalComponentInstance.result = result;
-        modalComponentInstance.participation = this.participation;
         if (feedbackComponentParameters.exerciseType) {
             modalComponentInstance.exerciseType = feedbackComponentParameters.exerciseType;
         }

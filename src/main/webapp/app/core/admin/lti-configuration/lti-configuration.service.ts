@@ -20,8 +20,8 @@ export class LtiConfigurationService {
     }
 
     /**
-     * Adds an LTI platform configuration.
-     * @param ltiPlatformConfiguration The configuration to add.
+     * Updates an LTI platform configuration.
+     * @param ltiPlatformConfiguration The configuration to update.
      * @return Observable of the HTTP response.
      */
     addLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfiguration): Observable<HttpResponse<any>> {
@@ -38,7 +38,7 @@ export class LtiConfigurationService {
     }
 
     /**
-     * Deletes an LTI platform on the server using a DELETE request.
+     * Delete a lti platform on the server using a DELETE request.
      * @param platformId The platform id.
      */
     deleteLtiPlatform(platformId: number): Observable<HttpResponse<any>> {

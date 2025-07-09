@@ -7,7 +7,7 @@ import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.s
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { provideHttpClient } from '@angular/common/http';
 
-describe('IrisChatHttpService', () => {
+describe('Iris Chat Http Service', () => {
     let service: IrisChatHttpService;
     let httpMock: HttpTestingController;
 

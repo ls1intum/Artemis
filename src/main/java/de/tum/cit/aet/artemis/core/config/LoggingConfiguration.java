@@ -12,7 +12,6 @@ import java.util.Map;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -26,7 +25,6 @@ import tech.jhipster.config.JHipsterProperties;
  */
 @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Configuration
-@Lazy
 public class LoggingConfiguration {
 
     public LoggingConfiguration(@Value("${spring.application.name}") String appName, @Value("${server.port}") String serverPort, JHipsterProperties jHipsterProperties,

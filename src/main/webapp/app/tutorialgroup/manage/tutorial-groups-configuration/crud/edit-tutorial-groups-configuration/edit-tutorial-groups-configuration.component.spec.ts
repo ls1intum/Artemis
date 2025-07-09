@@ -18,7 +18,6 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { expectComponentRendered } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 
 describe('EditTutorialGroupsConfigurationComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupsConfigurationComponent>;
@@ -71,14 +70,14 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
     });
 
     it('should set form data correctly', () => {
-        const formStub = expectComponentRendered<TutorialGroupsConfigurationFormComponent>(fixture, 'jhi-tutorial-groups-configuration-form');
+        const formStub: TutorialGroupsConfigurationFormComponent = fixture.debugElement.query(By.directive(TutorialGroupsConfigurationFormComponent)).componentInstance;
 
         expect(component.tutorialGroupsConfiguration).toEqual(exampleConfiguration);
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
         expect(findConfigurationSpy).toHaveBeenCalledWith(course.id);
-        fixture.detectChanges();
+
         expect(component.formData.period).toEqual([exampleConfiguration.tutorialPeriodStartInclusive?.toDate(), exampleConfiguration.tutorialPeriodEndInclusive?.toDate()]);
-        expect(formStub.formData()).toEqual(component.formData);
+        expect(formStub.formData).toEqual(component.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {

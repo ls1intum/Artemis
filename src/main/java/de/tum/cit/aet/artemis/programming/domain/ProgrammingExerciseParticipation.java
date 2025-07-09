@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.domain;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Set;
 
 import jakarta.annotation.Nullable;
 
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 
 public interface ProgrammingExerciseParticipation extends ParticipationInterface {
@@ -28,6 +30,8 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
     ProgrammingExercise getProgrammingExercise();
 
     void setProgrammingExercise(ProgrammingExercise programmingExercise);
+
+    Set<Result> getResults();
 
     /**
      * This method is used to automatically create a user independent URL when serializing subclasses into json

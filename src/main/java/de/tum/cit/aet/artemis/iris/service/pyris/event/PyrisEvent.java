@@ -1,17 +1,14 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.event;
 
-public abstract class PyrisEvent<T> {
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.service.session.AbstractIrisChatSessionService;
 
-    private final T eventObject;
+public abstract class PyrisEvent<S extends AbstractIrisChatSessionService<? extends IrisChatSession>, T> {
 
-    protected PyrisEvent(T eventObject) {
-        if (eventObject == null) {
-            throw new IllegalArgumentException("Event object cannot be null");
-        }
-        this.eventObject = eventObject;
-    }
-
-    public T getEventObject() {
-        return eventObject;
-    }
+    /**
+     * Handles the event using the given service.
+     *
+     * @param service The service to handle the event for
+     */
+    public abstract void handleEvent(S service);
 }

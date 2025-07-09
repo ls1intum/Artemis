@@ -5,10 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -17,22 +15,17 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
-import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -51,7 +44,6 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ProgrammingExerciseParticipationService {
 
@@ -71,14 +63,9 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
-    private final ResultRepository resultRepository;
-
-    private final SubmissionRepository submissionRepository;
-
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository) {
+            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -86,8 +73,6 @@ public class ProgrammingExerciseParticipationService {
         this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
-        this.resultRepository = resultRepository;
-        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -285,18 +270,6 @@ public class ProgrammingExerciseParticipationService {
      */
     public ProgrammingExerciseParticipation fetchParticipationWithSubmissionsByRepository(String repositoryTypeOrUserName, String repositoryURI, ProgrammingExercise exercise) {
         var repositoryURL = repositoryURI.replace("/git-upload-pack", "").replace("/git-receive-pack", "");
-
-        // TODO: Revert before merge
-        log.warn("Fetching participation for user {} and uri {} in exercise {}", repositoryTypeOrUserName, repositoryURL, exercise.getId());
-        var participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), repositoryTypeOrUserName);
-        if (participation.isEmpty()) {
-            log.warn("Database contains no participation for user {} in exercise {}", repositoryTypeOrUserName, exercise.getId());
-        }
-        else {
-            log.warn("Database contains repo uri {}", participation.get().getRepositoryUri());
-        }
-        // TODO: end
-
         if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
             return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
         }
@@ -328,19 +301,6 @@ public class ProgrammingExerciseParticipationService {
         if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
             return templateParticipationRepository.findByRepositoryUriElseThrow(repositoryURL);
         }
-
-        log.warn("Fetching participation for user {} and uri {} in exercise {}", repositoryTypeOrUserName, repositoryURL, exercise.getId());
-        var participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), repositoryTypeOrUserName);
-        if (participation.isEmpty()) {
-            log.warn("Database contains no participation for user {} in exercise {}", repositoryTypeOrUserName, exercise.getId());
-        }
-        else {
-            log.warn("Database contains repo uri {}", participation.get().getRepositoryUri());
-        }
-
-        var uris = studentParticipationRepository.getAllRepoUris(exercise.getId());
-        log.warn("Found URIs: {}", uris);
-
         return studentParticipationRepository.findByRepositoryUriElseThrow(repositoryURL);
     }
 
@@ -421,36 +381,6 @@ public class ProgrammingExerciseParticipationService {
                 }
             }
         }
-        return participation;
-    }
-
-    /**
-     * Retrieves the {@link ProgrammingExerciseStudentParticipation} for the given ID, including
-     * its latest {@link Submission} and the most recent {@link Result} with feedback (if available).
-     *
-     * <p>
-     * If no submission exists for the participation, the returned participation will contain
-     * an empty set of submissions. If a submission exists but no result with feedback is found,
-     * the submission will contain an empty list of results.
-     * </p>
-     *
-     * @param participationId the ID of the student participation to retrieve
-     * @return the participation enriched with its latest submission and corresponding result (if available)
-     * @throws EntityNotFoundException if no participation exists with the given ID
-     */
-    public ProgrammingExerciseStudentParticipation findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(long participationId) throws EntityNotFoundException {
-        ProgrammingExerciseStudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
-        Optional<Submission> latestSubmissionOptional = submissionRepository.findLatestSubmissionByParticipationId(participationId);
-        if (latestSubmissionOptional.isEmpty()) {
-            participation.setSubmissions(Set.of());
-            return participation;
-        }
-        Submission latestSubmission = latestSubmissionOptional.get();
-        Optional<Result> latestResultOptional = resultRepository.findLatestResultWithFeedbacksBySubmissionId(latestSubmission.getId(), ZonedDateTime.now());
-        latestResultOptional.ifPresentOrElse(latestResult -> {
-            latestSubmission.setResults(List.of(latestResult));
-        }, () -> latestSubmission.setResults(List.of()));
-        participation.setSubmissions(Set.of(latestSubmission));
         return participation;
     }
 }

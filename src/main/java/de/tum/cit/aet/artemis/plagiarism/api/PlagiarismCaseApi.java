@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismMapping;
@@ -17,7 +16,6 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
 
 @Conditional(PlagiarismEnabled.class)
 @Controller
-@Lazy
 public class PlagiarismCaseApi extends AbstractPlagiarismApi {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;

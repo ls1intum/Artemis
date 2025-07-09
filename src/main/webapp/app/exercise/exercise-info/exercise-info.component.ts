@@ -14,7 +14,7 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
 @Component({
     selector: 'jhi-exercise-info',
     templateUrl: './exercise-info.component.html',
-    styleUrls: ['./exercise-info.component.scss'],
+    styleUrls: ['../../shared/side-panel/side-panel.scss'],
     imports: [TranslateDirective, NgTemplateOutlet, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class ExerciseInfoComponent implements OnInit {

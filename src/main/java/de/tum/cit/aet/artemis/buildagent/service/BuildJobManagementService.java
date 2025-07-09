@@ -19,12 +19,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.topic.ITopic;
@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
@@ -41,7 +40,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
  * This service is responsible for adding build jobs to the Integrated Code Lifecycle executor service.
  * It handles timeouts as well as exceptions that occur during the execution of the build job.
  */
-@Lazy
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildJobManagementService {
@@ -97,7 +95,7 @@ public class BuildJobManagementService {
      * Add a listener to the canceledBuildJobsTopic that cancels the build job for the given buildJobId.
      * It gets broadcast to all nodes in the cluster. Only the node that is running the build job will cancel it.
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void init() {
         ITopic<String> canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
         canceledBuildJobsTopic.addMessageListener(message -> {
@@ -166,9 +164,9 @@ public class BuildJobManagementService {
                 return future.get(buildJobTimeoutSeconds, TimeUnit.SECONDS);
             }
             catch (Exception ex) {
-                Throwable cause = ex.getCause();
-                if (cause != null && DockerUtil.isDockerNotAvailable(cause)) {
-                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! {}", cause.getMessage());
+                if (DockerUtil.isDockerNotAvailable(ex)) {
+                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! Error while listing containers for cleanup: {}",
+                            ex.getMessage());
                     throw new CompletionException(ex);
                 }
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.

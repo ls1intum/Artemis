@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
@@ -39,7 +39,6 @@ import com.github.dockerjava.api.model.PullResponseItem;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
@@ -47,7 +46,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
 /**
  * Service for Docker related operations in local CI
  */
-@Lazy
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildAgentDockerService {
@@ -99,7 +97,7 @@ public class BuildAgentDockerService {
         this.taskScheduler = taskScheduler;
     }
 
-    @EventListener(FullStartupEvent.class)
+    @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
         // Schedule the cleanup of dangling build containers once 10 seconds after the application has started and then every containerCleanupScheduleMinutes minutes
         taskScheduler.scheduleAtFixedRate(this::cleanUpContainers, Instant.now().plusSeconds(10), Duration.ofMinutes(containerCleanupScheduleMinutes));

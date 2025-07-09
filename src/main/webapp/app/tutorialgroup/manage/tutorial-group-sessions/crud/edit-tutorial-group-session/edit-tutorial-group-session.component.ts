@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSessionFormData } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -27,11 +27,14 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
 
     ngUnsubscribe = new Subject<void>();
 
-    readonly tutorialGroup = input.required<TutorialGroup>();
+    @Input()
+    tutorialGroup: TutorialGroup;
 
-    readonly course = input.required<Course>();
+    @Input()
+    course: Course;
 
-    readonly tutorialGroupSession = input.required<TutorialGroupSession>();
+    @Input()
+    tutorialGroupSession: TutorialGroupSession;
 
     isLoading = false;
     formData?: TutorialGroupSessionFormData = undefined;
@@ -39,16 +42,14 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
     isInitialized = false;
 
     initialize() {
-        const tutorialGroupSession = this.tutorialGroupSession();
-        const course = this.course();
-        if (!tutorialGroupSession || !course || !this.tutorialGroup()) {
+        if (!this.tutorialGroupSession || !this.course || !this.tutorialGroup) {
             captureException('Error: Component not fully configured');
         } else {
             this.formData = {
-                date: tutorialGroupSession.start?.tz(course.timeZone).toDate(),
-                startTime: tutorialGroupSession.start?.tz(course.timeZone).format('HH:mm:ss'),
-                endTime: tutorialGroupSession.end?.tz(course.timeZone).format('HH:mm:ss'),
-                location: tutorialGroupSession.location,
+                date: this.tutorialGroupSession.start?.tz(this.course.timeZone).toDate(),
+                startTime: this.tutorialGroupSession.start?.tz(this.course.timeZone).format('HH:mm:ss'),
+                endTime: this.tutorialGroupSession.end?.tz(this.course.timeZone).format('HH:mm:ss'),
+                location: this.tutorialGroupSession.location,
             };
             this.isInitialized = true;
         }
@@ -65,16 +66,9 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
         tutorialGroupSessionDTO.location = location;
 
         this.isLoading = true;
-        const course = this.course();
-        const tutorialGroup = this.tutorialGroup();
-        const tutorialGroupSession = this.tutorialGroupSession();
-        if (!course.id || !tutorialGroup.id || !tutorialGroupSession.id) {
-            captureException('Error: Course, TutorialGroup, or TutorialGroupSession ID is missing');
-            return;
-        }
 
         this.tutorialGroupSessionService
-            .update(course.id, tutorialGroup.id, tutorialGroupSession.id, tutorialGroupSessionDTO)
+            .update(this.course.id!, this.tutorialGroup.id!, this.tutorialGroupSession.id!, tutorialGroupSessionDTO)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

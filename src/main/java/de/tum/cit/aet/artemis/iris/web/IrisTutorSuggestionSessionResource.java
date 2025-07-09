@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -28,7 +27,6 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 @Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/iris/tutor-suggestion/")
-@Lazy
 public class IrisTutorSuggestionSessionResource {
 
     private final PostRepository postRepository;

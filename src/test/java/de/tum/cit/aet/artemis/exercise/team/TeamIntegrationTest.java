@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -550,9 +549,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         StudentParticipation participation = course3.getExercises().stream().filter(exercise -> exercise.equals(textExercise)).findAny().orElseThrow().getStudentParticipations()
                 .iterator().next();
         assertThat(participation.getSubmissions()).as("Latest submission is present").hasSize(1);
-        Submission returnedSubmission = participation.getSubmissions().iterator().next();
-        assertThat(((TextSubmission) returnedSubmission).getText()).as("Latest submission is present").isEqualTo(submissionText);
-        assertThat(returnedSubmission.getResults()).as("Latest result is present").hasSize(1);
+        assertThat(((TextSubmission) participation.getSubmissions().iterator().next()).getText()).as("Latest submission is present").isEqualTo(submissionText);
+        assertThat(participation.getResults()).as("Latest result is present").hasSize(1);
 
         // Submission and Result should not be present for a Team of which the user is not (!) the Team Owner
         submission = ParticipationFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
@@ -561,6 +559,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Course course4 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, Course.class);
         participation = course4.getExercises().stream().filter(exercise -> exercise.equals(textExercise)).findAny().orElseThrow().getStudentParticipations().iterator().next();
         assertThat(participation.getSubmissions()).as("Latest submission is not present").isEmpty();
+        assertThat(participation.getResults()).as("Latest result is not present").isEmpty();
     }
 
     @Test

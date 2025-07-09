@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.NonUniqueResultException;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
  * Spring Data JPA repository for the Lecture Unit entity.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit, Long> {
 

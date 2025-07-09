@@ -10,7 +10,6 @@ import org.eclipse.jgit.transport.PostReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -31,19 +30,15 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
     private final VcsAccessLog vcsAccessLog;
 
-    private final User user;
-
-    public LocalVCPostPushHook(LocalVCServletService localVCServletService, ServerSession serverSession, User user) {
+    public LocalVCPostPushHook(LocalVCServletService localVCServletService, ServerSession serverSession) {
         this.localVCServletService = localVCServletService;
         this.participation = serverSession.getAttribute(SshConstants.PARTICIPATION_KEY);
         this.exercise = serverSession.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
         this.vcsAccessLog = serverSession.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
-        this.user = user;
     }
 
-    public LocalVCPostPushHook(LocalVCServletService localVCServletService, User user) {
+    public LocalVCPostPushHook(LocalVCServletService localVCServletService) {
         this.localVCServletService = localVCServletService;
-        this.user = user;
         // For HTTPs we are unable to store the attributes in the session or request unfortunately
         this.participation = null;
         this.exercise = null;
@@ -85,8 +80,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         Repository repository = receivePack.getRepository();
 
         try {
-            localVCServletService.processNewPush(commitHash, repository, user, Optional.ofNullable(exercise), Optional.ofNullable(participation),
-                    Optional.ofNullable(vcsAccessLog));
+            localVCServletService.processNewPush(commitHash, repository, Optional.ofNullable(exercise), Optional.ofNullable(participation), Optional.ofNullable(vcsAccessLog));
         }
         catch (LocalCIException e) {
             // Return an error message to the user.

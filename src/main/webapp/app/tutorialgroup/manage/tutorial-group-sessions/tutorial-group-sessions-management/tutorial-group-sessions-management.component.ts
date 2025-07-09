@@ -50,7 +50,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     isLoading = false;
 
     faPlus = faPlus;
-    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
+
     @Input() tutorialGroupId: number;
     @Input() course: Course;
     tutorialGroup: TutorialGroup;
@@ -85,7 +85,9 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
                 next: (tutorialGroup) => {
                     if (tutorialGroup) {
                         this.tutorialGroup = tutorialGroup;
-                        this.sessions = tutorialGroup.tutorialGroupSessions ?? [];
+                        if (tutorialGroup.tutorialGroupSessions) {
+                            this.sessions = tutorialGroup.tutorialGroupSessions;
+                        }
                         if (tutorialGroup.tutorialGroupSchedule) {
                             this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;
                         }

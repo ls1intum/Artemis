@@ -111,7 +111,7 @@
                     <hr />
                 }
 
-                @if (!loadingFailed && resultIsPreliminary(result, participation)) {
+                @if (!loadingFailed && resultIsPreliminary(result)) {
                     <div>
                         <div class="d-flex justify-content-end m-1">
                             <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>

@@ -27,8 +27,6 @@ spring:
           - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
           - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
           - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
-          # We can exclude this autoconfiguration. Using standard SpringDocs https://springdoc.org/ is fine and when excluding this, we avoid coupling OpenAPI specs to a profile
-          - tech.jhipster.config.apidoc.JHipsterSpringDocAutoConfiguration
     cloud:
         loadbalancer:
             cache:

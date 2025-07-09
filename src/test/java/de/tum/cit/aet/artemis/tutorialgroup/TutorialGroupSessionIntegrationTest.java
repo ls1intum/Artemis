@@ -463,16 +463,15 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
     }
 
-    private TutorialGroupSessionResource.TutorialGroupSessionRequestDTO createSessionDTO(LocalDate date) {
-        return new TutorialGroupSessionResource.TutorialGroupSessionRequestDTO(date, LocalTime.of(defaultSessionStartHour, 0, 0), LocalTime.of(defaultSessionEndHour, 0, 0),
-                "LoremIpsum");
+    private TutorialGroupSessionResource.TutorialGroupSessionDTO createSessionDTO(LocalDate date) {
+        return new TutorialGroupSessionResource.TutorialGroupSessionDTO(date, LocalTime.of(defaultSessionStartHour, 0, 0), LocalTime.of(defaultSessionEndHour, 0, 0), "LoremIpsum");
     }
 
-    private TutorialGroupSessionResource.TutorialGroupSessionRequestDTO createSessionDTO(LocalDate date, LocalTime startTime, LocalTime endTime) {
-        return new TutorialGroupSessionResource.TutorialGroupSessionRequestDTO(date, startTime, endTime, "LoremIpsum");
+    private TutorialGroupSessionResource.TutorialGroupSessionDTO createSessionDTO(LocalDate date, LocalTime startTime, LocalTime endTime) {
+        return new TutorialGroupSessionResource.TutorialGroupSessionDTO(date, startTime, endTime, "LoremIpsum");
     }
 
-    private void assertSessionCreatedCorrectlyFromDTO(TutorialGroupSession session, TutorialGroupSessionResource.TutorialGroupSessionRequestDTO dto) {
+    private void assertSessionCreatedCorrectlyFromDTO(TutorialGroupSession session, TutorialGroupSessionResource.TutorialGroupSessionDTO dto) {
         assertThat(session.getStart()).isEqualTo(ZonedDateTime.of(dto.date(), dto.startTime(), ZoneId.of(this.exampleTimeZone)));
         assertThat(session.getEnd()).isEqualTo(ZonedDateTime.of(dto.date(), dto.endTime(), ZoneId.of(this.exampleTimeZone)));
         assertThat(session.getLocation()).isEqualTo(dto.location());

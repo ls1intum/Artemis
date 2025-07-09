@@ -214,7 +214,7 @@ export function getIconTooltip(exerciseType?: ExerciseType): string {
  * The course id is extracted from the course of the exercise if present, if not present (exam mode), it is extracted from the corresponding exam.
  * @param exercise the exercise for which the course id should be extracted
  */
-export function getCourseId(exercise: Exercise | undefined): number | undefined {
+export function getCourseId(exercise: Exercise): number | undefined {
     return getCourseFromExercise(exercise)?.id;
 }
 
@@ -223,8 +223,8 @@ export function getCourseId(exercise: Exercise | undefined): number | undefined 
  * The course is extracted from the course of the exercise if present, if not present (exam mode), it is extracted from the corresponding exam.
  * @param exercise the exercise for which the course should be extracted
  */
-export function getCourseFromExercise(exercise: Exercise | undefined): Course | undefined {
-    return exercise?.course || exercise?.exerciseGroup?.exam?.course;
+export function getCourseFromExercise(exercise: Exercise): Course | undefined {
+    return exercise.course || exercise.exerciseGroup?.exam?.course;
 }
 
 /**

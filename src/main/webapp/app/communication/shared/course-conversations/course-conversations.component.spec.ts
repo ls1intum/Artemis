@@ -10,7 +10,7 @@ import { ConversationHeaderComponent } from 'app/communication/course-conversati
 import { CourseWideSearchComponent } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { BehaviorSubject, EMPTY, of } from 'rxjs';
 import { NgbModal, NgbModalRef, NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
@@ -45,7 +45,6 @@ import {
     ChannelsOverviewDialogComponent,
 } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ConversationGlobalSearchComponent } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
-import { AlertService } from 'app/shared/service/alert.service';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -58,7 +57,7 @@ examples.forEach((activeConversation) => {
     describe('CourseConversationComponent with ' + (activeConversation?.type || 'no active conversation'), () => {
         let component: CourseConversationsComponent;
         let fixture: ComponentFixture<CourseConversationsComponent>;
-        const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as Course;
+        const course = { id: 1 } as Course;
         let queryParamsSubject: BehaviorSubject<Params>;
         const router = new MockRouter();
         let postsSubject: BehaviorSubject<Post[]>;
@@ -119,9 +118,6 @@ examples.forEach((activeConversation) => {
                         provide: ActivatedRoute,
                         useValue: {
                             parent: {
-                                snapshot: {
-                                    data: { course },
-                                },
                                 parent: {
                                     paramMap: new BehaviorSubject(
                                         convertToParamMap({
@@ -138,7 +134,6 @@ examples.forEach((activeConversation) => {
                     MockProvider(MetisConversationService),
                     MockProvider(SidebarEventService),
                     MockProvider(ProfileService),
-                    MockProvider(AlertService),
                     { provide: LayoutService, useValue: MockLayoutService },
                 ],
                 imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule],
@@ -241,7 +236,7 @@ examples.forEach((activeConversation) => {
 
             beforeEach(() => {
                 // Set a mock course with id 1
-                component.course.set({ id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as Course);
+                component.course = { id: 1 } as Course;
             });
 
             it('should open the group chat creation dialog', fakeAsync(() => {
@@ -394,10 +389,10 @@ examples.forEach((activeConversation) => {
             expect(openSidebarSpy).toHaveBeenCalled();
         });
 
-        it('should display sidebar when conversation is provided', async () => {
+        it('should display sidebar when conversation is provided', () => {
             fixture.detectChanges();
             // Wait for any async operations to complete here if necessary
-            await fixture.whenStable(); // Trigger change detection again if async operations might change the state
+            fixture.detectChanges(); // Trigger change detection again if async operations might change the state
             expect(fixture.nativeElement.querySelector('jhi-sidebar')).not.toBeNull();
         });
 

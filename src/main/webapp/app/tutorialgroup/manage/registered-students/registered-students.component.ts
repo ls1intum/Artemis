@@ -25,10 +25,9 @@ export class RegisteredStudentsComponent implements OnDestroy {
     private activeModal = inject(NgbActiveModal);
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
-    private courseManagementService = inject(CourseManagementService);
+    private courseService = inject(CourseManagementService);
     private cdr = inject(ChangeDetectorRef);
 
-    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
     @Input() course: Course;
     @Input() tutorialGroupId: number;
 
@@ -92,7 +91,7 @@ export class RegisteredStudentsComponent implements OnDestroy {
             }),
         );
 
-    userSearch = (loginOrName: string) => this.courseManagementService.searchStudents(this.course.id!, loginOrName);
+    userSearch = (loginOrName: string) => this.courseService.searchStudents(this.course.id!, loginOrName);
 
     get exportFilename(): string {
         if (this.course && this.tutorialGroup) {

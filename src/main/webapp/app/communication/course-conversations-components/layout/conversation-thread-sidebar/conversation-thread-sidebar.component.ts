@@ -70,12 +70,6 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
         return answerPost;
     }
 
-    /**
-     * Toggles the expanded state of the thread view.
-     * If expanded, resets the container width and collapses it;
-     * if collapsed, expands the thread view to allow resizing.
-     * Also ensures that the tooltip is closed to prevent UI clutter.
-     */
     toggleExpand(): void {
         if (this.threadContainer()) {
             this.threadContainer()!.nativeElement.style.width = '';

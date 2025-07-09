@@ -5,7 +5,7 @@ import { PlagiarismComparison } from './PlagiarismComparison';
  * Each `PlagiarismSubmission` refers to a submission that has been compared during plagiarism detection.
  * It contains fundamental information independent of the exercise type or algorithm used.
  */
-export class PlagiarismSubmission {
+export class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
     /**
      * ID of the submission.
      */
@@ -19,7 +19,7 @@ export class PlagiarismSubmission {
     /**
      * List of elements the related submission consists of.
      */
-    elements?: PlagiarismSubmissionElement[];
+    elements?: E[];
 
     /**
      * ID of the related submission.
@@ -41,5 +41,5 @@ export class PlagiarismSubmission {
     /**
      * Comparison of the submission.
      */
-    plagiarismComparison: PlagiarismComparison;
+    plagiarismComparison: PlagiarismComparison<E>;
 }

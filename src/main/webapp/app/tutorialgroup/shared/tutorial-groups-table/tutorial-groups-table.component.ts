@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, OnChanges, SimpleChanges, TemplateRef, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef, inject } from '@angular/core';
 import { faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -27,15 +27,20 @@ export class TutorialGroupsTableComponent implements OnChanges {
 
     @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 
-    readonly showIdColumn = input(false);
+    @Input()
+    showIdColumn = false;
 
-    readonly showChannelColumn = input(false);
+    @Input()
+    showChannelColumn = false;
 
-    readonly tutorialGroups = input<TutorialGroup[]>([]);
+    @Input()
+    tutorialGroups: TutorialGroup[] = [];
 
-    readonly course = input.required<Course>();
+    @Input()
+    course: Course;
 
-    readonly timeZone = input<string>();
+    @Input()
+    timeZone?: string = undefined;
 
     timeZoneUsedForDisplay = dayjs.tz.guess();
 
@@ -64,11 +69,11 @@ export class TutorialGroupsTableComponent implements OnChanges {
 
     sortRows() {
         if (this.sortingPredicate === 'dayAndTime') {
-            this.sortService.sortByMultipleProperties(this.tutorialGroups(), ['tutorialGroupSchedule.dayOfWeek', 'tutorialGroupSchedule.startTime'], this.ascending);
+            this.sortService.sortByMultipleProperties(this.tutorialGroups, ['tutorialGroupSchedule.dayOfWeek', 'tutorialGroupSchedule.startTime'], this.ascending);
         } else if (this.sortingPredicate === 'capacityAndRegistrations') {
-            this.sortService.sortByMultipleProperties(this.tutorialGroups(), ['capacity', 'numberOfRegisteredUsers'], this.ascending);
+            this.sortService.sortByMultipleProperties(this.tutorialGroups, ['capacity', 'numberOfRegisteredUsers'], this.ascending);
         } else {
-            this.sortService.sortByProperty(this.tutorialGroups(), this.sortingPredicate, this.ascending);
+            this.sortService.sortByProperty(this.tutorialGroups, this.sortingPredicate, this.ascending);
         }
     }
 
@@ -87,13 +92,11 @@ export class TutorialGroupsTableComponent implements OnChanges {
                     case 'tutorialGroups':
                         {
                             if (change.currentValue && change.currentValue.length > 0) {
-                                this.tutorialGroupsSplitAcrossMultipleCampuses = this.tutorialGroups().some(
-                                    (tutorialGroup) => tutorialGroup.campus !== this.tutorialGroups()[0].campus,
+                                this.tutorialGroupsSplitAcrossMultipleCampuses = this.tutorialGroups.some(
+                                    (tutorialGroup) => tutorialGroup.campus !== this.tutorialGroups[0].campus,
                                 );
-                                this.mixOfOfflineAndOfflineTutorialGroups = this.tutorialGroups().some(
-                                    (tutorialGroup) => tutorialGroup.isOnline !== this.tutorialGroups()[0].isOnline,
-                                );
-                                this.mifOfDifferentLanguages = this.tutorialGroups().some((tutorialGroup) => tutorialGroup.language !== this.tutorialGroups()[0].language);
+                                this.mixOfOfflineAndOfflineTutorialGroups = this.tutorialGroups.some((tutorialGroup) => tutorialGroup.isOnline !== this.tutorialGroups[0].isOnline);
+                                this.mifOfDifferentLanguages = this.tutorialGroups.some((tutorialGroup) => tutorialGroup.language !== this.tutorialGroups[0].language);
                                 this.cdr.detectChanges();
                             }
                         }

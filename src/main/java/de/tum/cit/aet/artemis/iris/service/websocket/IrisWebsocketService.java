@@ -6,7 +6,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +14,6 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 /**
  * A service to send a message over the websocket to a specific user
  */
-@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisWebsocketService {

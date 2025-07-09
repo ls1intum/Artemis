@@ -2,20 +2,18 @@ package de.tum.cit.aet.artemis.plagiarism.service.cache;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE;
 
+import jakarta.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.ISet;
 import com.hazelcast.core.HazelcastInstance;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 
 @Conditional(PlagiarismEnabled.class)
-@Lazy
 @Service
 public class PlagiarismCacheService {
 
@@ -28,7 +26,7 @@ public class PlagiarismCacheService {
         this.hazelcastInstance = hazelcastInstance;
     }
 
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void init() {
         this.activePlagiarismChecksPerCourse = hazelcastInstance.getSet(HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE);
     }

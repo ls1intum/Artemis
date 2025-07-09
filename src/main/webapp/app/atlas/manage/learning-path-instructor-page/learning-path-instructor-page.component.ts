@@ -11,25 +11,22 @@ import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-tab
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { LearningPathsAnalyticsComponent } from 'app/atlas/manage/learning-paths-analytics/learning-paths-analytics.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
-import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-learning-path-instructor-page',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LearningPathsStateComponent, LearningPathsTableComponent, LearningPathsAnalyticsComponent, TranslateDirective, FeatureActivationComponent],
+    imports: [LearningPathsStateComponent, LearningPathsTableComponent, LearningPathsAnalyticsComponent, TranslateDirective],
     templateUrl: './learning-path-instructor-page.component.html',
     styleUrl: './learning-path-instructor-page.component.scss',
 })
 export class LearningPathInstructorPageComponent {
-    protected readonly faNetworkWired = faNetworkWired;
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
     private readonly courseManagementService = inject(CourseManagementService);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
-    readonly course = signal<Course | undefined>(undefined);
+    private readonly course = signal<Course | undefined>(undefined);
     readonly learningPathsEnabled = computed(() => this.course()?.learningPathsEnabled ?? false);
 
     readonly isLoading = signal<boolean>(false);
@@ -53,7 +50,7 @@ export class LearningPathInstructorPageComponent {
         }
     }
 
-    async enableLearningPaths(): Promise<void> {
+    protected async enableLearningPaths(): Promise<void> {
         try {
             this.isLoading.set(true);
             await this.learningPathApiService.enableLearningPaths(this.courseId());

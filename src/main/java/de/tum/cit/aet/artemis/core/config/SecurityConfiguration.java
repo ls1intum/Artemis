@@ -5,14 +5,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
@@ -49,7 +48,6 @@ import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
 @Configuration
 @EnableWebSecurity
-@Lazy
 @EnableMethodSecurity(securedEnabled = true)
 @Profile(PROFILE_CORE)
 public class SecurityConfiguration {
@@ -58,7 +56,7 @@ public class SecurityConfiguration {
 
     private final Optional<CustomLti13Configurer> customLti13Configurer;
 
-    private final Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer;
+    private final ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer;
 
     private final JWTCookieService jwtCookieService;
 
@@ -82,8 +80,8 @@ public class SecurityConfiguration {
      *
      * @throws IllegalStateException if the server URL configuration is invalid
      */
-    @EventListener(ApplicationReadyEvent.class)
-    public void validatePasskeyAllowedOriginConfiguration() {
+    @PostConstruct
+    public void validatePasskeyJwtValidityConfiguration() {
         if (passkeyEnabled) {
             if (tokenValidityInSecondsForPasskey <= 0) {
                 throw new IllegalStateException("Token validity in seconds for passkey must be greater than 0 when passkey authentication is enabled.");
@@ -91,7 +89,7 @@ public class SecurityConfiguration {
         }
     }
 
-    public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
+    public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, ArtemisPasskeyWebAuthnConfigurer passkeyWebAuthnConfigurer,
             PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider, JWTCookieService jwtCookieService) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
@@ -242,10 +240,8 @@ public class SecurityConfiguration {
                     .requestMatchers("/.well-known/assetlinks.json").permitAll()
                     .requestMatchers("/.well-known/apple-app-site-association").permitAll()
                     // Prometheus endpoint protected by IP address.
-                    .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
-                    .requestMatchers(("/api-docs")).permitAll()
-                    .requestMatchers(("/api-docs.yaml")).permitAll()
-                    .requestMatchers("/swagger-ui/**").permitAll();
+                    .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())));
+
                     // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
                     if (profileService.isLocalVCActive()) {
                         requests.requestMatchers("/git/**").permitAll();
@@ -259,9 +255,7 @@ public class SecurityConfiguration {
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
 
         // Configure WebAuthn passkey if enabled
-        if(passkeyEnabled){
-        passkeyWebAuthnConfigurer.orElseThrow(()->new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
-        }
+        passkeyWebAuthnConfigurer.configure(http);
 
         // @formatter:on
 
@@ -284,5 +278,4 @@ public class SecurityConfiguration {
     private JWTConfigurer securityConfigurerAdapter() {
         return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey);
     }
-
 }

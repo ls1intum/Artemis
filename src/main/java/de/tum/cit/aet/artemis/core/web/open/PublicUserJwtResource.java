@@ -12,7 +12,6 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
@@ -48,7 +47,6 @@ import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
  * REST controller to authenticate users.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicUserJwtResource {

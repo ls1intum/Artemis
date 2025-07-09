@@ -44,20 +44,10 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
 })
 export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
-    protected readonly faCircle = faCircle;
-    protected readonly faChevronDown = faChevronDown;
-    protected readonly faAngleDoubleDown = faAngleDoubleDown;
-
-    private readonly dialog = inject(MatDialog);
-    private readonly overlay = inject(Overlay);
-    private readonly chatService = inject(IrisChatService);
-    private readonly route = inject(ActivatedRoute);
-
-    private readonly CHAT_BUBBLE_TIMEOUT = 10000;
-
-    protected readonly IrisLogoLookDirection = IrisLogoLookDirection;
-    protected readonly IrisLogoSize = IrisLogoSize;
-    protected readonly IrisTextMessageContent = IrisTextMessageContent;
+    dialog = inject(MatDialog);
+    protected overlay = inject(Overlay);
+    protected readonly chatService = inject(IrisChatService);
+    private route = inject(ActivatedRoute);
 
     @Input() mode: ChatServiceMode;
 
@@ -67,12 +57,22 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     hasNewMessages = false;
     newIrisMessage: string | undefined;
 
+    private readonly CHAT_BUBBLE_TIMEOUT = 10000;
+
     private numNewMessagesSubscription: Subscription;
     private paramsSubscription: Subscription;
     private latestIrisMessageSubscription: Subscription;
     private queryParamsSubscription: Subscription;
 
+    // Icons
+    faCircle = faCircle;
+    faChevronDown = faChevronDown;
+    faAngleDoubleDown = faAngleDoubleDown;
+
     @ViewChild('chatBubble') chatBubble: ElementRef;
+
+    protected readonly IrisLogoLookDirection = IrisLogoLookDirection;
+    protected readonly IrisLogoSize = IrisLogoSize;
 
     ngOnInit() {
         // Subscribes to route params and gets the exerciseId from the route
@@ -169,4 +169,6 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
         this.chatOpen = false;
         this.newIrisMessage = undefined;
     }
+
+    protected readonly IrisTextMessageContent = IrisTextMessageContent;
 }

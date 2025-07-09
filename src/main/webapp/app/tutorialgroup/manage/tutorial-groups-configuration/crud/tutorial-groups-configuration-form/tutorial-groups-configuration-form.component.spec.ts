@@ -41,7 +41,7 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupsConfigurationFormComponent);
                 component = fixture.componentInstance;
-                fixture.componentRef.setInput('course', { id: 1, postsEnabled: true } as Course);
+                component.course = { id: 1, postsEnabled: true } as Course;
                 clickSubmit = generateClickSubmitButton(component, fixture, {
                     period: validPeriod,
                     usePublicTutorialGroupChannels: true,
@@ -63,15 +63,15 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     });
 
     it('should correctly set form values in edit mode', () => {
-        fixture.componentRef.setInput('isEditMode', true);
+        component.isEditMode = true;
         runOnPushChangeDetection(fixture);
         const formData: TutorialGroupsConfigurationFormData = {
             period: validPeriod,
             usePublicTutorialGroupChannels: true,
             useTutorialGroupChannels: true,
         };
-        fixture.componentRef.setInput('formData', formData);
-        fixture.detectChanges();
+        component.formData = formData;
+        component.ngOnChanges();
 
         const formControlNames = ['period', 'usePublicTutorialGroupChannels', 'useTutorialGroupChannels'];
         formControlNames.forEach((control) => {
@@ -80,15 +80,15 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     });
 
     it('should show channel deletion warning when channel option is disabled in edit mode', () => {
-        fixture.componentRef.setInput('isEditMode', true);
+        component.isEditMode = true;
         runOnPushChangeDetection(fixture);
         const formData: TutorialGroupsConfigurationFormData = {
             period: validPeriod,
             usePublicTutorialGroupChannels: true,
             useTutorialGroupChannels: true,
         };
-        fixture.componentRef.setInput('formData', formData);
-        fixture.detectChanges();
+        component.formData = formData;
+        component.ngOnChanges();
 
         component.form.get('useTutorialGroupChannels')!.setValue(false);
         runOnPushChangeDetection(fixture);

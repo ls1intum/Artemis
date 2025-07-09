@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exam.service;
 import java.time.ZonedDateTime;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -23,7 +22,6 @@ import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
  * Service implementation to check student exam access.
  */
 @Conditional(ExamEnabled.class)
-@Lazy
 @Service
 public class StudentExamAccessService {
 

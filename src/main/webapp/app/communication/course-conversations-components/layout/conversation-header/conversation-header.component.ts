@@ -90,18 +90,12 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
         }
     }
 
-    /**
-     * Toggle the view of pinned messages in the conversation
-     */
     togglePinnedMessages(): void {
         this.togglePinnedMessage.emit();
         this.showPinnedMessages = !this.showPinnedMessages;
         this.cdr.detectChanges();
     }
 
-    /**
-     * Gets the other user in a one-to-one chat (not the current user)
-     */
     getOtherUser() {
         const conversation = getAsOneToOneChatDTO(this.activeConversation);
         if (conversation) {
@@ -146,11 +140,6 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
             });
     }
 
-    /**
-     * Opens a dialog showing detailed information about the active conversation,
-     * such as metadata or member list, depending on the selected tab.
-     * If the conversation is a one-to-one chat, it always defaults to the info tab.
-     */
     openConversationDetailDialog(event: MouseEvent, tab: ConversationDetailTabs) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationDetailDialogComponent, defaultFirstLayerDialogOptions);
@@ -162,7 +151,6 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
         }
         modalRef.componentInstance.initialize();
 
-        // If user clicks another username inside modal → open one-to-one chat
         const userNameClicked = modalRef.componentInstance.userNameClicked;
         if (userNameClicked) {
             const subscription = userNameClicked.subscribe((username: number) => {

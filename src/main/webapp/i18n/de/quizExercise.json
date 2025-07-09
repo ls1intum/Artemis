@@ -119,7 +119,6 @@
             "resultsAvailable": "Ergebnisse verfügbar",
             "waitingForStart": "Warte auf Start",
             "numberOfQuestions": "Anzahl an Fragen",
-            "noQuestions": "Es sind keine Fragen verfügbar",
             "quizInstructions": {
                 "live": "Beantworte alle Fragen in der verbleibenden Zeit und klick erst dann auf die Schaltfläche \"Absenden\", wenn du fertig bist.",
                 "autoSave": "Deine Antworten werden alle 30s gespeichert.",

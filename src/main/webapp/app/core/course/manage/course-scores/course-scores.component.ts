@@ -3,13 +3,16 @@ import { Subscription, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
+import { average, findLatestResult, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { captureException } from '@sentry/angular';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { catchError } from 'rxjs/operators';
@@ -39,7 +42,7 @@ import {
 } from 'app/shared/export/export-constants';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase';
+import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -52,10 +55,9 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseScoresStudentStatistics } from 'app/core/course/manage/course-scores/course-scores-student-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/core/course/manage/course-scores/exercise-type-statistics-map';
-import { CourseManagementService, GradeScoreDTO, StudentGradeDTO } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 export enum HighlightType {
     AVERAGE = 'average',
@@ -80,16 +82,16 @@ export enum HighlightType {
         SortByDirective,
         ArtemisTranslatePipe,
         CourseTitleBarActionsDirective,
-        HelpIconComponent,
     ],
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
-    private courseManagementService = inject(CourseManagementService);
+    private courseService = inject(CourseManagementService);
     private sortService = inject(SortService);
     private changeDetector = inject(ChangeDetectorRef);
     private languageHelper = inject(JhiLanguageHelper);
     private localeConversionService = inject(LocaleConversionService);
+    private participantScoresService = inject(ParticipantScoresService);
     private gradingSystemService = inject(GradingSystemService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private profileService = inject(ProfileService);
@@ -99,11 +101,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     plagiarismEnabled = false;
 
     course: Course;
-    gradeScores: GradeScoreDTO[] = [];
-    students: StudentGradeDTO[] = [];
-    // exercises that are included in score calculation
-    includedExercises: Exercise[] = [];
-    studentStatistics: CourseScoresStudentStatistics[] = [];
+    allParticipationsOfCourse: StudentParticipation[] = [];
+    exercisesOfCourseThatAreIncludedInScoreCalculation: Exercise[] = [];
+    students: CourseScoresStudentStatistics[] = [];
 
     private exerciseTypesWithExercises: ExerciseType[];
     private exerciseSuccessfulPerType = new ExerciseTypeStatisticsMap();
@@ -127,6 +127,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     averageNumberOfPointsPerExerciseTypes = new Map<ExerciseType, number>();
     averageNumberOfOverallPoints = 0;
     averageNumberOfPresentationPoints = 0;
+
+    // note: these represent the course scores using the participation score table. We might switch to this new
+    // calculation method completely if it is confirmed that it produces correct results
+    private studentIdToCourseScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
 
     gradingScaleExists = false;
     gradingScale?: GradingScale;
@@ -174,7 +178,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
             this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
-            this.courseManagementService.findWithExercises(params['courseId']).subscribe((findWithExercisesResult) => {
+            this.courseService.findWithExercises(params['courseId']).subscribe((findWithExercisesResult) => {
                 this.initializeWithCourse(findWithExercisesResult.body!);
             });
         });
@@ -194,7 +198,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.studentStatistics, this.predicate, this.reverse);
+        this.sortService.sortByProperty(this.students, this.predicate, this.reverse);
     }
 
     /**
@@ -204,7 +208,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     private initializeWithCourse(course: Course) {
         this.course = course;
         this.initializeExerciseTitles();
-        this.includedExercises = this.determineExercisesIncludedInScore(this.course);
+        this.exercisesOfCourseThatAreIncludedInScoreCalculation = this.determineExercisesIncludedInScore(this.course);
         this.numberOfReleasedExercises = this.determineReleasedExercises(this.course).length;
         this.calculateCourseStatistics(this.course.id!);
     }
@@ -265,18 +269,20 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @param courseId Id of the course
      */
     private async calculateCourseStatistics(courseId: number) {
-        const findGradeScoresObservable = this.courseManagementService.findGradeScores(courseId);
+        const findParticipationsObservable = this.courseService.findAllParticipationsWithResults(courseId);
         // alternative course scores calculation using participant scores table
         // find grading scale if it exists for course
         const gradingScaleObservable = this.gradingSystemService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScale>())));
 
-        const plagiarismCasesObservable = this.plagiarismEnabled
-            ? this.plagiarismCasesService.getCoursePlagiarismCasesForScores(courseId)
-            : of(new HttpResponse<PlagiarismCaseDTO[]>());
+        let plagiarismCasesObservable;
+        if (this.plagiarismEnabled) {
+            plagiarismCasesObservable = this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(courseId);
+        } else {
+            plagiarismCasesObservable = of(new HttpResponse<PlagiarismCase[]>());
+        }
 
-        forkJoin([findGradeScoresObservable, gradingScaleObservable, plagiarismCasesObservable]).subscribe(([courseGradeInformation, gradingScaleResponse, plagiarismCases]) => {
-            this.gradeScores = courseGradeInformation.gradeScores;
-            this.students = courseGradeInformation.students;
+        forkJoin([findParticipationsObservable, gradingScaleObservable, plagiarismCasesObservable]).subscribe(([participationsOfCourse, gradingScaleResponse, plagiarismCases]) => {
+            this.allParticipationsOfCourse = participationsOfCourse;
             if (gradingScaleResponse.body) {
                 this.setUpGradingScale(gradingScaleResponse.body);
             }
@@ -292,11 +298,77 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             }
 
             this.calculateAverageAndMedianScores();
-            this.scoresToDisplay = this.studentStatistics.map((student) =>
-                roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course),
-            );
+            this.scoresToDisplay = this.students.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course));
             this.highlightBar(HighlightType.AVERAGE);
+
+            // this is an optional step at the moment, so we do it separately to avoid issues
+            this.participantScoresService.findCourseScores(courseId).subscribe((courseScoresResult) => {
+                // comparing with calculation from course scores (using new participation score table)
+                const courseScoreDTOs = courseScoresResult.body!;
+                this.compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs);
+            });
         });
+    }
+
+    /**
+     * This method compares the course scores computed on the client side with the ones on the server side
+     * using the participations score table. In the future we might switch to the server side method, so we use
+     * this method to detect discrepancies.
+     * @param courseScoreDTOs the course scores sent from the server (new calculation method)
+     */
+    private compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs: ScoresDTO[]) {
+        if (!this.students || !courseScoreDTOs) {
+            return;
+        }
+        for (const courseScoreDTO of courseScoreDTOs) {
+            this.studentIdToCourseScoreDTOs.set(courseScoreDTO.studentId!, courseScoreDTO);
+        }
+        for (const student of this.students) {
+            this.checkStudentScoreCalculation(student);
+        }
+    }
+
+    /**
+     * Checks that the score calculated on the server for the student matches the score calculated in the client.
+     * @param student The student for which the score should be checked.
+     */
+    private checkStudentScoreCalculation(student: CourseScoresStudentStatistics) {
+        const overAllPoints = roundValueSpecifiedByCourseSettings(student.overallPoints, this.course);
+        const overallScore = roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course);
+        const regularCalculation = {
+            scoreAchieved: overallScore,
+            pointsAchieved: overAllPoints,
+            userId: student.user.id,
+            userLogin: student.user.login,
+            regularPointsAchievable: this.maxNumberOfOverallPoints,
+        };
+
+        // checking if the same as in the course scores map
+        const courseScoreDTO = this.studentIdToCourseScoreDTOs.get(student.user.id!);
+        if (!courseScoreDTO) {
+            const errorMessage = `User scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
+            this.logErrorOnSentry(errorMessage);
+        } else {
+            courseScoreDTO.scoreAchieved = roundValueSpecifiedByCourseSettings(courseScoreDTO.scoreAchieved, this.course);
+            courseScoreDTO.pointsAchieved = roundValueSpecifiedByCourseSettings(courseScoreDTO.pointsAchieved, this.course);
+
+            if (Math.abs(courseScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
+                const errorMessage = `Different course points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
+                    courseScoreDTO,
+                )}`;
+                this.logErrorOnSentry(errorMessage);
+            }
+            if (Math.abs(courseScoreDTO.scoreAchieved - regularCalculation.scoreAchieved) > 0.1) {
+                const errorMessage = `Different course score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
+                    courseScoreDTO,
+                )}`;
+                this.logErrorOnSentry(errorMessage);
+            }
+        }
+    }
+
+    logErrorOnSentry(errorMessage: string) {
+        captureException(new Error(errorMessage));
     }
 
     /**
@@ -304,7 +376,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     private calculateExerciseLevelStatistics() {
         for (const exerciseType of this.exerciseTypes) {
-            const exercisesOfType = this.includedExercises.filter((exercise) => exercise.type === exerciseType);
+            const exercisesOfType = this.exercisesOfCourseThatAreIncludedInScoreCalculation.filter((exercise) => exercise.type === exerciseType);
             this.exercisesPerType.set(exerciseType, exercisesOfType);
 
             const maxPointsOfAllExercisesOfType = new Map();
@@ -347,13 +419,13 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const studentsMap = this.mapStudentIdToStudentStatistics();
 
         // prepare exercises
-        for (const exercise of this.includedExercises) {
+        for (const exercise of this.exercisesOfCourseThatAreIncludedInScoreCalculation) {
             exercise.numberOfParticipationsWithRatedResult = 0;
             exercise.numberOfSuccessfulParticipations = 0;
         }
 
         studentsMap.forEach((student) => {
-            this.studentStatistics.push(student);
+            this.students.push(student);
             // We need the information of not included exercises as well in order to compute the total average and median
             for (const exercise of this.determineReleasedExercises(this.course)) {
                 this.updateStudentStatisticsWithExerciseResults(student, exercise);
@@ -373,17 +445,17 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
         for (const exerciseType of this.exerciseTypes) {
             // TODO: can we calculate this average only with students who participated in the exercise?
-            this.averageNumberOfPointsPerExerciseTypes.set(exerciseType, average(this.studentStatistics.map((student) => student.sumPointsPerExerciseType.get(exerciseType)!)));
+            this.averageNumberOfPointsPerExerciseTypes.set(exerciseType, average(this.students.map((student) => student.sumPointsPerExerciseType.get(exerciseType)!)));
         }
 
-        this.averageNumberOfOverallPoints = average(this.studentStatistics.map((student) => student.overallPoints));
-        this.averageNumberOfPresentationPoints = average(this.studentStatistics.map((student) => student.presentationPoints));
-        this.averageNumberOfSuccessfulExercises = average(this.studentStatistics.map((student) => student.numberOfSuccessfulExercises));
-        this.averageNumberOfParticipatedExercises = average(this.studentStatistics.map((student) => student.numberOfParticipatedExercises));
+        this.averageNumberOfOverallPoints = average(this.students.map((student) => student.overallPoints));
+        this.averageNumberOfPresentationPoints = average(this.students.map((student) => student.presentationPoints));
+        this.averageNumberOfSuccessfulExercises = average(this.students.map((student) => student.numberOfSuccessfulExercises));
+        this.averageNumberOfParticipatedExercises = average(this.students.map((student) => student.numberOfParticipatedExercises));
 
         for (const exerciseType of this.exerciseTypes) {
             for (const exercise of this.exercisesPerType.get(exerciseType)!) {
-                exercise.averagePoints = sum(this.studentStatistics.map((student) => student.pointsPerExercise.get(exercise.id!))) / this.studentStatistics.length;
+                exercise.averagePoints = sum(this.students.map((student) => student.pointsPerExercise.get(exercise.id!))) / this.students.length;
                 this.exerciseAveragePointsPerType.setValue(exerciseType, exercise, exercise.averagePoints);
                 this.exerciseParticipationsPerType.setValue(exerciseType, exercise, exercise.numberOfParticipationsWithRatedResult!);
                 this.exerciseSuccessfulPerType.setValue(exerciseType, exercise, exercise.numberOfSuccessfulParticipations!);
@@ -395,36 +467,42 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Updates the students statistics with the presentation points.
-     * @param studentStatistics
+     * @param student
      */
-    private addPresentationPointsForStudent(studentStatistics: CourseScoresStudentStatistics) {
+    private addPresentationPointsForStudent(student: CourseScoresStudentStatistics) {
         const presentationsNumber = this.gradingScale?.presentationsNumber ?? 0;
-        if (studentStatistics.presentationScore > 0 && presentationsNumber > 0 && this.maxNumberOfPresentationPoints > 0) {
-            const presentationPointAvg = studentStatistics.presentationScore / presentationsNumber!;
+        if (student.presentationScore > 0 && presentationsNumber > 0 && this.maxNumberOfPresentationPoints > 0) {
+            const presentationPointAvg = student.presentationScore / presentationsNumber!;
             const presentationPoints = (this.maxNumberOfPresentationPoints * presentationPointAvg) / 100.0;
 
-            studentStatistics.presentationPoints = roundValueSpecifiedByCourseSettings(presentationPoints, this.course);
-            studentStatistics.overallPoints += studentStatistics.presentationPoints;
+            student.presentationPoints = roundValueSpecifiedByCourseSettings(presentationPoints, this.course);
+            student.overallPoints += student.presentationPoints;
         }
     }
 
     /**
-     * Goes through all grade scores, collects the found students and adds all grade scores.
-     * @return A map of the student`s id to the student statistic.
+     * Goes through all participations and collects the found students.
+     * @return A map of the student`s id to the student.
      */
     private mapStudentIdToStudentStatistics(): Map<number, CourseScoresStudentStatistics> {
-        // student user id --> CourseScoresStudentStatistics
         const studentsMap = new Map<number, CourseScoresStudentStatistics>();
 
-        for (const gradeScore of this.gradeScores) {
-            let studentStatistic = studentsMap.get(gradeScore.userId);
-            if (!studentStatistic) {
-                studentStatistic = new CourseScoresStudentStatistics(this.students.find((student) => student.id === gradeScore.userId)!);
-                studentsMap.set(gradeScore.userId, studentStatistic);
+        for (const participation of this.allParticipationsOfCourse) {
+            // find all students by iterating through the participations
+            const participationStudents = participation.student ? [participation.student] : participation.team!.students;
+            if (!participationStudents) {
+                continue;
             }
-            studentStatistic.gradeScores.push(gradeScore);
-            if (gradeScore.presentationScore) {
-                studentStatistic.presentationScore += gradeScore.presentationScore;
+            for (const participationStudent of participationStudents) {
+                let student = studentsMap.get(participationStudent.id!);
+                if (!student) {
+                    student = new CourseScoresStudentStatistics(participationStudent);
+                    studentsMap.set(participationStudent.id!, student);
+                }
+                student.participations.push(participation);
+                if (participation.presentationScore) {
+                    student.presentationScore += participation.presentationScore;
+                }
             }
         }
         return studentsMap;
@@ -437,17 +515,25 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     private updateStudentStatisticsWithExerciseResults(student: CourseScoresStudentStatistics, exercise: Exercise) {
         const relevantMaxPoints = exercise.maxPoints!;
-        const gradeScore = student.gradeScores.find((gradeScore) => gradeScore.exerciseId === exercise.id);
-        if (gradeScore) {
+        const participation = student.participations.find((part) => part.exercise!.id === exercise.id);
+        const results = participation?.submissions?.flatMap((submission) => submission.results ?? []) ?? [];
+        const latestResult = findLatestResult(results);
+        if (participation && latestResult) {
+            // we found a result, there should only be one
+
+            if (results.length > 1) {
+                captureException('found more than one result for student ' + student.user.login + ' and exercise ' + exercise.title);
+            }
+
             // Note: It is important that we round on the individual exercise level first and then sum up.
             // This is necessary so that the student arrives at the same overall result when doing his own recalculation.
             // Let's assume that the student achieved 1.05 points in each of 5 exercises.
             // In the client, these are now displayed rounded as 1.1 points.
             // If the student adds up the displayed points, he gets a total of 5.5 points.
             // In order to get the same total result as the student, we have to round before summing.
-            const pointsAchievedByStudentInExercise = roundValueSpecifiedByCourseSettings((gradeScore.score * relevantMaxPoints) / 100, this.course);
+            const pointsAchievedByStudentInExercise = roundValueSpecifiedByCourseSettings((latestResult.score! * relevantMaxPoints) / 100, this.course);
             student.pointsPerExercise.set(exercise.id!, pointsAchievedByStudentInExercise);
-            const includedIDs = this.includedExercises.map((includedExercise) => includedExercise.id);
+            const includedIDs = this.exercisesOfCourseThatAreIncludedInScoreCalculation.map((includedExercise) => includedExercise.id);
             // We only include this exercise if it is included in the exercise score
             if (includedIDs.includes(exercise.id)) {
                 student.overallPoints += pointsAchievedByStudentInExercise;
@@ -455,7 +541,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 student.sumPointsPerExerciseType.set(exercise.type!, oldPointsSum + pointsAchievedByStudentInExercise);
                 student.numberOfParticipatedExercises += 1;
                 exercise.numberOfParticipationsWithRatedResult! += 1;
-                if (gradeScore.score >= 100) {
+                if (latestResult.score! >= 100) {
                     student.numberOfSuccessfulExercises += 1;
                     exercise.numberOfSuccessfulParticipations! += 1;
                 }
@@ -485,12 +571,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Sets grading scale related properties
      * @param plagiarismCases the list of plagiarism cases involving the students of the course
      */
-    calculateGradingScaleInformation(plagiarismCases?: PlagiarismCaseDTO[]) {
+    calculateGradingScaleInformation(plagiarismCases?: PlagiarismCase[]) {
         if (this.maxNumberOfOverallPoints >= 0 && this.gradingScale) {
             const plagiarismMap = this.createStudentPlagiarismMap(plagiarismCases);
             const overallPercentage = this.maxNumberOfOverallPoints > 0 ? (this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
             this.averageGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale.gradeSteps, overallPercentage)!.gradeName;
-            for (const student of this.studentStatistics) {
+            for (const student of this.students) {
                 student.gradeStep = this.findStudentGradeStep(student, this.gradingScale, plagiarismMap);
             }
         }
@@ -500,33 +586,32 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Finds the correct grade step for the student according to the given gradingScale, also handles special grades.
-     * @param studentStatistics The student for which the grade should be determined.
+     * @param student The student for which the grade should be determined.
      * @param gradingScale The grading scale of the course.
      * @param plagiarismMap An object which has value true for a student id if the student has at least one PlagiarismVerdict.PLAGIARISM verdict assigned in the course.
      */
-    findStudentGradeStep(studentStatistics: CourseScoresStudentStatistics, gradingScale: GradingScale, plagiarismMap: { [id: number]: boolean }): GradeStep | undefined {
-        if (!studentStatistics.gradeScores.length) {
+    findStudentGradeStep(student: CourseScoresStudentStatistics, gradingScale: GradingScale, plagiarismMap: { [id: number]: boolean }): GradeStep | undefined {
+        if (!student.participations?.length) {
             // Currently the server does not return CourseScoresStudentStatistics for users without participations,
             // but this should handle noParticipation grade if the server response changes.
             return {
                 gradeName: gradingScale.noParticipationGrade || GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
             } as GradeStep;
-        } else if (plagiarismMap[studentStatistics.student.id!]) {
+        } else if (plagiarismMap[student.user.id!]) {
             return {
                 gradeName: gradingScale.plagiarismGrade || GradingScale.DEFAULT_PLAGIARISM_GRADE,
             } as GradeStep;
         } else {
-            const overallPercentageForStudent =
-                studentStatistics.overallPoints && this.maxNumberOfOverallPoints ? (studentStatistics.overallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
+            const overallPercentageForStudent = student.overallPoints && this.maxNumberOfOverallPoints ? (student.overallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
             return this.gradingSystemService.findMatchingGradeStep(gradingScale.gradeSteps, overallPercentageForStudent);
         }
     }
 
-    private createStudentPlagiarismMap(plagiarismCases?: PlagiarismCaseDTO[]): { [id: number]: boolean } {
+    private createStudentPlagiarismMap(plagiarismCases?: PlagiarismCase[]): { [id: number]: boolean } {
         const plagiarismMap: { [id: number]: boolean } = {};
         plagiarismCases?.forEach((plagiarismCase) => {
-            if (plagiarismCase.verdict === PlagiarismVerdict.PLAGIARISM && plagiarismCase.studentId) {
-                plagiarismMap[plagiarismCase.studentId] = true;
+            if (plagiarismCase.verdict === PlagiarismVerdict.PLAGIARISM && plagiarismCase.student?.id) {
+                plagiarismMap[plagiarismCase.student.id] = true;
             }
         });
         return plagiarismMap;
@@ -543,7 +628,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Method for exporting the csv with the needed data
      */
     exportResults(customCsvOptions?: CsvExportOptions) {
-        if (!this.exportReady || this.studentStatistics.length === 0) {
+        if (!this.exportReady || this.students.length === 0) {
             return;
         }
 
@@ -551,7 +636,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
         const keys = this.generateExportColumnNames();
 
-        this.studentStatistics.forEach((student) => rows.push(this.generateStudentStatisticsExportRow(student, customCsvOptions)));
+        this.students.forEach((student) => rows.push(this.generateStudentStatisticsExportRow(student, customCsvOptions)));
 
         // empty row as separator
         rows.push(this.prepareEmptyExportRow('', customCsvOptions).build());
@@ -650,27 +735,27 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row used in the export file consisting of statistics for the given student.
-     * @param studentStatistics The student for which an export row should be created.
+     * @param student The student for which an export row should be created.
      * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      */
-    private generateStudentStatisticsExportRow(studentStatistics: CourseScoresStudentStatistics, csvExportOptions?: CsvExportOptions): ExportRow {
+    private generateStudentStatisticsExportRow(student: CourseScoresStudentStatistics, csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.newRowBuilder(csvExportOptions);
 
-        rowData.setUserInformation(studentStatistics.student.name, studentStatistics.student.login, studentStatistics.student.email, studentStatistics.student.registrationNumber);
+        rowData.setUserInformation(student.user.name, student.user.login, student.user.email, student.user.visibleRegistrationNumber);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
-            const exercisePointsPerType = studentStatistics.sumPointsPerExerciseType.get(exerciseType)!;
+            const exercisePointsPerType = student.sumPointsPerExerciseType.get(exerciseType)!;
 
             let exerciseScoresPerType = 0;
             if (this.maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0) {
                 exerciseScoresPerType = roundScorePercentSpecifiedByCourseSettings(
-                    studentStatistics.sumPointsPerExerciseType.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!,
+                    student.sumPointsPerExerciseType.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!,
                     this.course,
                 );
             }
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
             exercisesForType.forEach((exercise) => {
-                const points = roundValueSpecifiedByCourseSettings(studentStatistics.pointsPerExerciseType.getValue(exerciseType, exercise), this.course);
+                const points = roundValueSpecifiedByCourseSettings(student.pointsPerExerciseType.getValue(exerciseType, exercise), this.course);
                 rowData.setPoints(exercise.title!, points);
             });
 
@@ -679,20 +764,20 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         }
 
         if (this.maxNumberOfPresentationPoints > 0) {
-            const presentationScore = roundScorePercentSpecifiedByCourseSettings(studentStatistics.presentationPoints / this.maxNumberOfPresentationPoints, this.course);
-            rowData.setPoints(PRESENTATION_POINTS_KEY, studentStatistics.presentationPoints);
+            const presentationScore = roundScorePercentSpecifiedByCourseSettings(student.presentationPoints / this.maxNumberOfPresentationPoints, this.course);
+            rowData.setPoints(PRESENTATION_POINTS_KEY, student.presentationPoints);
             rowData.setScore(PRESENTATION_SCORE_KEY, presentationScore);
         }
 
-        const overallScore = roundScorePercentSpecifiedByCourseSettings(studentStatistics.overallPoints / this.maxNumberOfOverallPoints, this.course);
-        rowData.setPoints(COURSE_OVERALL_POINTS_KEY, studentStatistics.overallPoints);
+        const overallScore = roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course);
+        rowData.setPoints(COURSE_OVERALL_POINTS_KEY, student.overallPoints);
         rowData.setScore(COURSE_OVERALL_SCORE_KEY, overallScore);
 
         if (this.course.presentationScore) {
-            rowData.setPoints(PRESENTATION_SCORE_KEY, studentStatistics.presentationScore);
+            rowData.setPoints(PRESENTATION_SCORE_KEY, student.presentationScore);
         }
 
-        this.setExportRowGradeValue(rowData, studentStatistics.gradeStep?.gradeName);
+        this.setExportRowGradeValue(rowData, student.gradeStep?.gradeName);
 
         return rowData.build();
     }
@@ -933,13 +1018,13 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     private calculateAverageAndMedianScores(): void {
         const allCoursePoints = sum(this.course.exercises!.map((exercise) => exercise.maxPoints ?? 0)) + this.maxNumberOfPresentationPoints;
-        const includedPointsPerStudent = this.studentStatistics.map((student) => student.overallPoints);
+        const includedPointsPerStudent = this.students.map((student) => student.overallPoints);
         // average points and score included
         const scores = includedPointsPerStudent.map((point) => point / this.maxNumberOfOverallPoints);
         this.averageScoreIncluded = roundScorePercentSpecifiedByCourseSettings(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints, this.course);
 
         // average points and score total
-        const achievedPointsTotal = this.studentStatistics.map((student) => sum(Array.from(student.pointsPerExercise.values())) + student.presentationPoints);
+        const achievedPointsTotal = this.students.map((student) => sum(Array.from(student.pointsPerExercise.values())) + student.presentationPoints);
         const averageScores = achievedPointsTotal.map((totalPoints) => totalPoints / allCoursePoints);
 
         this.averagePointsTotal = this.calculateAveragePoints(achievedPointsTotal);

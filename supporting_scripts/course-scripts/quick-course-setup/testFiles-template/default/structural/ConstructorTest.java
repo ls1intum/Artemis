@@ -13,7 +13,7 @@ import de.tum.in.test.api.jupiter.Public;
 import de.tum.in.test.api.structural.ConstructorTestProvider;
 
 /**
- * @author Stephan Krusche
+ * @author Stephan Krusche (krusche@in.tum.de)
  * @version 5.1 (11.06.2021)
  * <br><br>
  * This test evaluates if the specified constructors in the structure oracle are correctly implemented with the expected parameter types and annotations,

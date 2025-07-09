@@ -7,7 +7,6 @@ import java.time.ZonedDateTime;
 import jakarta.ws.rs.BadRequestException;
 
 import org.hibernate.Hibernate;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +18,6 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 /**
  * Service for managing Iris messages.
  */
-@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisMessageService {

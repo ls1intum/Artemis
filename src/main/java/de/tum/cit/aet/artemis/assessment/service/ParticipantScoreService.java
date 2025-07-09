@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +40,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ParticipantScoreService {
 

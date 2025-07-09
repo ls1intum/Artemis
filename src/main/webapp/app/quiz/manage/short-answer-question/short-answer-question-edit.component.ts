@@ -9,9 +9,9 @@ import {
     OnInit,
     Output,
     SimpleChanges,
+    ViewChild,
     ViewEncapsulation,
     inject,
-    viewChild,
 } from '@angular/core';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -76,8 +76,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
 
-    private readonly questionEditor = viewChild.required<MarkdownEditorMonacoComponent>('questionEditor');
-    readonly questionElement = viewChild.required<ElementRef>('question');
+    @ViewChild('questionEditor', { static: false }) private questionEditor: MarkdownEditorMonacoComponent;
+    @ViewChild('question', { static: false }) questionElement: ElementRef;
 
     markdownActions: TextEditorAction[];
     insertShortAnswerOptionAction = new InsertShortAnswerOptionAction();
@@ -220,7 +220,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     setupQuestionEditor(): void {
         // Sets the counter to the highest spotNr and generates solution options with their mapping (each spotNr)
         this.numberOfSpot = this.shortAnswerQuestion.spots!.length + 1;
-        this.questionEditor().applyOptionPreset(SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS);
+        this.questionEditor.applyOptionPreset(SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS);
         // Generate markdown from question and show result in editor
         this.questionEditorText = this.generateMarkdown();
         this.changeDetector.detectChanges();
@@ -322,7 +322,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             // Assign existing ID if available
             if (this.shortAnswerQuestion.spots.length < existingSpotIDs.length) {
                 spot.id = existingSpotIDs[this.shortAnswerQuestion.spots.length];
-                delete spot.tempID;
             }
             spot.spotNr = +spotID.trim();
             this.shortAnswerQuestion.spots.push(spot);
@@ -337,7 +336,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             // Assign existing ID if available
             if (this.shortAnswerQuestion.solutions.length < existingSolutionIDs.length) {
                 solution.id = existingSolutionIDs[this.shortAnswerQuestion.solutions.length];
-                delete solution.tempID;
             }
             this.shortAnswerQuestion.solutions.push(solution);
 
@@ -404,7 +402,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     addSpotAtCursorVisualMode(): void {
         // check if selection is on the correct div
-        const wrapperDiv = this.questionElement().nativeElement;
+        const wrapperDiv = this.questionElement.nativeElement;
         const selection = window.getSelection()!;
         const child = selection.anchorNode;
 
@@ -443,8 +441,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const currentSpotNumber = this.numberOfSpot;
 
         // split text before first option tag
-        const questionText = this.questionEditor()
-            .monacoEditor.getText()
+        const questionText = this.questionEditor.monacoEditor
+            .getText()
             .split(/\[-option /g)[0]
             .trim();
         this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText);
@@ -457,7 +455,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
         this.setQuestionEditorValue(this.generateMarkdown());
         this.addOptionToSpot(currentSpotNumber, markedText);
-        this.parseMarkdown(this.questionEditor().monacoEditor.getText());
+        this.parseMarkdown(this.questionEditor.monacoEditor.getText());
 
         this.questionUpdated.emit();
     }
@@ -775,6 +773,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     setQuestionEditorValue(text: string): void {
-        this.questionEditor().markdown = text;
+        this.questionEditor.markdown = text;
     }
 }

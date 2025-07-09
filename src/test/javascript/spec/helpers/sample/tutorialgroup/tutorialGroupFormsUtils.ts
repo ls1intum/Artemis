@@ -15,7 +15,6 @@ import {
     TutorialGroupsConfigurationFormData,
 } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { runOnPushChangeDetection } from '../../on-push-change-detection.helper';
-import { By } from '@angular/platform-browser';
 
 type SupportedForms = TutorialGroupFreePeriodFormComponent | TutorialGroupSessionFormComponent | TutorialGroupsConfigurationFormComponent | TutorialGroupFormComponent;
 type SupportedFixtures = ComponentFixture<SupportedForms>;
@@ -67,10 +66,3 @@ export const generateTestFormIsInvalidOnMissingRequiredProperty = (
         clickSubmit(false);
     };
 };
-
-export function expectComponentRendered<T>(fixture: ComponentFixture<any>, selector: string): T {
-    expect(fixture.nativeElement.innerHTML).toContain(selector);
-    const debugElement = fixture.debugElement.query(By.css(selector));
-    expect(debugElement).not.toBeNull();
-    return debugElement.componentInstance as T;
-}

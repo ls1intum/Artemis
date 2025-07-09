@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -39,12 +40,10 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventProcessingException;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
-import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -77,9 +76,6 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private TeamUtilService teamUtilService;
-
-    @Autowired
-    private IrisChatSessionUtilService irisChatSessionUtilService;
 
     private ProgrammingExercise exercise;
 
@@ -182,22 +178,20 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldFireProgressStalledEvent() {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         // Create three submissions for the student.
         createSubmissionWithScore(studentParticipation, 40);
         createSubmissionWithScore(studentParticipation, 40);
-        Result result = createSubmissionWithScore(studentParticipation, 40);
+        var result = createSubmissionWithScore(studentParticipation, 40);
         irisRequestMockProvider.mockProgressStalledEventRunResponse((dto) -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
             pipelineDone.set(true);
         });
 
-        var event = new NewResultEvent(result);
-        pyrisEventService.trigger(event);
-
+        pyrisEventService.trigger(new NewResultEvent(result));
         // Wrap the following code into await() to ensure that the pipeline is executed before the test finishes.
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisExerciseChatSessionService, times(1)).handleNewResultEvent(eq(event)));
+
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisExerciseChatSessionService, times(1)).onNewResult(eq(result)));
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
@@ -208,19 +202,17 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldFireBuildFailedEvent() {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         // Create a failing submissions for the student.
-        Result result = createFailingSubmission(studentParticipation);
+        var result = createFailingSubmission(studentParticipation);
         irisRequestMockProvider.mockBuildFailedRunResponse((dto) -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
             pipelineDone.set(true);
         });
 
-        var event = new NewResultEvent(result);
-        pyrisEventService.trigger(event);
+        pyrisEventService.trigger(new NewResultEvent(result));
 
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisExerciseChatSessionService, times(1)).handleNewResultEvent(eq(event)));
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisExerciseChatSessionService, times(1)).onBuildFailure(eq(result)));
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
@@ -241,7 +233,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        verify(irisCourseChatSessionService, times(1)).handleCompetencyJolSetEvent(any(CompetencyJolSetEvent.class));
+        verify(irisCourseChatSessionService, times(1)).onJudgementOfLearningSet(any(CompetencyJol.class));
         verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), any(), eq(irisSession), any(CompetencyJol.class));
     }
 
@@ -262,13 +254,14 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldNotFireBuildFailedEventWhenEventSettingDisabled() {
+        // Find settings for the current exercise
         var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
         settings.getIrisProgrammingExerciseChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.name().toLowerCase())));
         irisSettingsRepository.save(settings);
 
-        irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        Result result = createFailingSubmission(studentParticipation);
-
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        // Create a failing submission for the student.
+        var result = createFailingSubmission(studentParticipation);
         // very that the event is not fired
         verify(pyrisEventService, never()).trigger(new NewResultEvent(result));
     }
@@ -276,13 +269,13 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldShouldNotFireProgressStalledEventWithExistingSuccessfulSubmission() {
-        irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         irisRequestMockProvider.mockProgressStalledEventRunResponse((dto) -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
             pipelineDone.set(true);
         });
         createSubmissionWithScore(studentParticipation, 100);
-        Result result = createSubmissionWithScore(studentParticipation, 50);
+        var result = createSubmissionWithScore(studentParticipation, 50);
 
         pyrisEventService.trigger(new NewResultEvent(result));
 
@@ -294,7 +287,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         await().atMost(2, TimeUnit.SECONDS);
 
         await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(irisExerciseChatSessionService, times(2)).handleNewResultEvent(any(NewResultEvent.class));
+            verify(irisExerciseChatSessionService, times(2)).onNewResult(any(Result.class));
             verify(pyrisPipelineService, never()).executeExerciseChatPipeline(any(), any(), any(), any(), any(), any());
         });
     }
@@ -302,61 +295,56 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldNotFireProgressStalledEventWithLessThanThreeSubmissions() {
-        irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         // Create two failing submissions for the student.
         createSubmissionWithScore(studentParticipation, 20);
         var result = createSubmissionWithScore(studentParticipation, 20);
 
         pyrisEventService.trigger(new NewResultEvent(result));
 
-        verify(irisExerciseChatSessionService, timeout(2000).times(1)).handleNewResultEvent(any(NewResultEvent.class));
+        verify(irisExerciseChatSessionService, timeout(2000).times(1)).onNewResult(any(Result.class));
         verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any(), any());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldNotFireProgressStalledEventWithIncreasingScores() {
-        irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         // Create three submissions with increasing scores for the student.
         createSubmissionWithScore(studentParticipation, 20);
         createSubmissionWithScore(studentParticipation, 30);
-        Result result = createSubmissionWithScore(studentParticipation, 40);
+        var result = createSubmissionWithScore(studentParticipation, 40);
 
-        var event = new NewResultEvent(result);
-        pyrisEventService.trigger(event);
+        pyrisEventService.trigger(new NewResultEvent(result));
 
-        verify(irisExerciseChatSessionService, timeout(2000).times(1)).handleNewResultEvent(event);
+        verify(irisExerciseChatSessionService, timeout(2000).times(1)).onNewResult(result);
         verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any(), any());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldNotFireBuildFailedEventForTeamSubmission() {
-        User owner = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        ProgrammingExerciseStudentParticipation teamParticipation = createTeamParticipation(owner);
-        irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise, owner);
-        Result result = createFailingSubmission(teamParticipation);
-        var event = new NewResultEvent(result);
+        var owner = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var teamParticipation = createTeamParticipation(owner);
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, owner);
+        var result = createFailingSubmission(teamParticipation);
 
-        pyrisEventService.trigger(event);
-
-        verify(irisExerciseChatSessionService, timeout(2000).times(1)).handleNewResultEvent(event);
-        verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any(), any());
+        assertThatExceptionOfType(PyrisEventProcessingException.class).isThrownBy(() -> irisExerciseChatSessionService.onBuildFailure(result))
+                .withMessageStartingWith("Build failure event is not supported for team participations");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldNotFireProgressStalledEventForTeamSubmission() {
-        User owner = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        ProgrammingExerciseStudentParticipation teamParticipation = createTeamParticipation(owner);
-        irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise, owner);
+        var owner = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var teamParticipation = createTeamParticipation(owner);
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, owner);
         createSubmissionWithScore(teamParticipation, 40);
         createSubmissionWithScore(teamParticipation, 40);
-        Result result = createSubmissionWithScore(teamParticipation, 40);
-        var event = new NewResultEvent(result);
+        var result = createSubmissionWithScore(teamParticipation, 40);
 
-        verify(irisExerciseChatSessionService, after(2000).never()).handleNewResultEvent(event);
-        verify(pyrisPipelineService, after(2000).never()).executeExerciseChatPipeline(any(), any(), any(), any(), any(), any());
+        assertThatExceptionOfType(PyrisEventProcessingException.class).isThrownBy(() -> irisExerciseChatSessionService.onNewResult(result))
+                .withMessageStartingWith("Progress stalled event is not supported for team participations");
     }
 
     @Test
@@ -367,9 +355,9 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         settings.getIrisProgrammingExerciseChatSettings().setCustomInstructions(testCustomInstructions);
         irisSettingsRepository.save(settings);
 
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        Result result = createFailingSubmission(studentParticipation);
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        var result = createFailingSubmission(studentParticipation);
 
         irisRequestMockProvider.mockBuildFailedRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -377,10 +365,9 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        var event = new NewResultEvent(result);
-        pyrisEventService.trigger(event);
+        pyrisEventService.trigger(new NewResultEvent(result));
 
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisExerciseChatSessionService, times(1)).handleNewResultEvent(eq(event)));
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisExerciseChatSessionService, times(1)).onBuildFailure(eq(result)));
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
@@ -408,7 +395,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        verify(irisCourseChatSessionService, times(1)).handleCompetencyJolSetEvent(any(CompetencyJolSetEvent.class));
+        verify(irisCourseChatSessionService, times(1)).onJudgementOfLearningSet(any(CompetencyJol.class));
         verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), eq(testCourseCustomInstructions), eq(irisSession), any(CompetencyJol.class));
     }
 }

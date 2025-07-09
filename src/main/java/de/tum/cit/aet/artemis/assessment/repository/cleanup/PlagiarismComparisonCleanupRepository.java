@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -21,9 +20,8 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
  * THE FOLLOWING METHODS ARE USED FOR CLEANUP PURPOSES AND SHOULD NOT BE USED IN OTHER CASES
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
-public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaRepository<PlagiarismComparison, Long> {
+public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaRepository<PlagiarismComparison<?>, Long> {
 
     @Modifying
     @Transactional // ok because of delete

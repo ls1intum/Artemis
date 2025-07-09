@@ -9,6 +9,8 @@ import '@angular/localize/init';
 describe('AffectedStudentsModalComponent', () => {
     let fixture: ComponentFixture<AffectedStudentsModalComponent>;
     let component: AffectedStudentsModalComponent;
+    let feedbackService: FeedbackAnalysisService;
+
     const feedbackDetailMock: FeedbackDetail = {
         feedbackIds: [1, 2, 3, 4, 5],
         count: 5,
@@ -42,6 +44,8 @@ describe('AffectedStudentsModalComponent', () => {
 
         fixture = TestBed.createComponent(AffectedStudentsModalComponent);
         component = fixture.componentInstance;
+        feedbackService = TestBed.inject(FeedbackAnalysisService);
+
         fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('exerciseId', 1);
         fixture.componentRef.setInput('feedbackDetail', feedbackDetailMock);
@@ -49,11 +53,11 @@ describe('AffectedStudentsModalComponent', () => {
     });
 
     it('should handle error when loadAffected fails', async () => {
-        jest.spyOn(component.feedbackService, 'getParticipationForFeedbackDetailText').mockReturnValue(Promise.reject(new Error('Error loading data')));
+        jest.spyOn(feedbackService, 'getParticipationForFeedbackDetailText').mockReturnValueOnce(Promise.reject(new Error('Error loading data')));
         const alertServiceSpy = jest.spyOn(component.alertService, 'error');
         jest.spyOn(console, 'error').mockImplementation(() => {});
 
-        // @ts-expect-error
+        // @ts-ignore
         await component.loadAffected();
 
         expect(component.participation()).toEqual([]);

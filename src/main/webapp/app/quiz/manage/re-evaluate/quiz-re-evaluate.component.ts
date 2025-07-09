@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation, inject, viewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChildren, ViewEncapsulation, inject } from '@angular/core';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -58,7 +58,8 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
 
     private subscription: Subscription;
 
-    readonly reEvaluateDragAndDropQuestionComponents = viewChildren(ReEvaluateDragAndDropQuestionComponent);
+    @ViewChildren(ReEvaluateDragAndDropQuestionComponent)
+    reEvaluateDragAndDropQuestionComponents: ReEvaluateDragAndDropQuestionComponent[];
 
     modalService: NgbModal;
     popupService: QuizExercisePopupService;
@@ -126,7 +127,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
      */
     save(): void {
         const files = new Map<string, File>();
-        for (const component of this.reEvaluateDragAndDropQuestionComponents()) {
+        for (const component of this.reEvaluateDragAndDropQuestionComponents) {
             component.fileMap.forEach((value, filename) => {
                 files.set(filename, value.file);
             });

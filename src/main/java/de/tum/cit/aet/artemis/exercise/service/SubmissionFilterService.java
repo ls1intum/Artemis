@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +26,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * A service that filters the submissions of a participation mainly for the course dashboard. Different logic is
  * required for the different types of exercises.
  */
-@Lazy
 @Service
 @Profile(PROFILE_CORE)
 public class SubmissionFilterService {

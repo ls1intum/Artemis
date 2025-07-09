@@ -84,24 +84,23 @@ public class ImageExtractor extends PDFStreamEngine {
     @Override
     protected void processOperator(Operator operator, List<COSBase> operands) throws IOException {
         String operation = operator.getName();
-        if (!INVOKE_OPERATOR.equals(operation)) {
-            super.processOperator(operator, operands);
-            return;
-        }
+        if (INVOKE_OPERATOR.equals(operation)) {
+            COSName objectName = (COSName) operands.getFirst();
+            PDXObject pdxObject = getResources().getXObject(objectName);
+            if (pdxObject instanceof PDImageXObject image) {
 
-        COSName objectName = (COSName) operands.getFirst();
-        PDXObject pdxObject = getResources().getXObject(objectName);
-        switch (pdxObject) {
-            case PDImageXObject image -> {
                 Matrix matrix = getGraphicsState().getCurrentTransformationMatrix();
                 // store the image coordinates, currentPage and the image in bytes
                 ImageDTO imageDTO = new ImageDTO(currentPage, matrix.getTranslateX(), matrix.getTranslateY(), image.getHeight(), image.getWidth(), Math.round(matrix.getScaleX()),
                         Math.round(matrix.getScaleY()), toByteArray(image.getImage(), "png"));
                 images.add(imageDTO);
             }
-            case PDFormXObject form -> showForm(form);
-            case null, default -> {
+            else if (pdxObject instanceof PDFormXObject form) {
+                showForm(form);
             }
+        }
+        else {
+            super.processOperator(operator, operands);
         }
     }
 

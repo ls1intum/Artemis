@@ -31,7 +31,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
@@ -55,6 +54,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.BonusService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
+import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -115,7 +115,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Service Implementation for managing exams.
  */
 @Conditional(ExamEnabled.class)
-@Lazy
 @Service
 public class ExamService {
 
@@ -157,6 +156,8 @@ public class ExamService {
 
     private final CourseExamExportService courseExamExportService;
 
+    private final GroupNotificationService groupNotificationService;
+
     private final GradingScaleRepository gradingScaleRepository;
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
@@ -184,10 +185,11 @@ public class ExamService {
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
             ExamLiveEventsService examLiveEventsService, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            CourseExamExportService courseExamExportService, GitService gitService, GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
-            AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
-            SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
-            CourseRepository courseRepository, QuizResultService quizResultService) {
+            CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService,
+            GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi, AuthorizationCheckService authorizationCheckService,
+            BonusService bonusService, ExerciseDeletionService exerciseDeletionService, SubmittedAnswerRepository submittedAnswerRepository,
+            AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository,
+            QuizResultService quizResultService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -201,6 +203,7 @@ public class ExamService {
         this.submissionRepository = submissionRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.courseExamExportService = courseExamExportService;
+        this.groupNotificationService = groupNotificationService;
         this.gitService = gitService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.plagiarismCaseApi = plagiarismCaseApi;
@@ -233,7 +236,7 @@ public class ExamService {
     }
 
     /**
-     * Helper method which attaches the result to its participation's latest submission.
+     * Helper method which attaches the result to its participation's latest submission..
      * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
      * We also attach the result if the results are already published for the exam.
      * If no suitable Result is found for StudentParticipation, an empty Result set is assigned to prevent LazyInitializationException on future reads.
@@ -304,7 +307,7 @@ public class ExamService {
     public ExamScoresDTO calculateExamScores(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithLatestSubmissionWithRelevantResultIgnoreTestRunParticipations(examId);
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
         log.info("Try to find quiz submitted answer counts");
         List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
         log.info("Found {} quiz submitted answer counts", submittedAnswerCounts.size());
@@ -378,7 +381,7 @@ public class ExamService {
      * Includes the corresponding grade and grade type as well if a GradingScale is set for the relevant exam.
      *
      * @param studentExam             a StudentExam instance that will have its points and grades calculated if it is assessed
-     * @param participationsOfStudent StudentParticipation list for the given studentExam with eagerly loaded latest submission and result
+     * @param participationsOfStudent StudentParticipation list for the given studentExam
      * @return Student Exam results with exam grade calculated if applicable
      */
     @NotNull
@@ -541,7 +544,7 @@ public class ExamService {
 
     /**
      * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
-     * See {@link StudentParticipationRepository#findByStudentExamWithEagerLatestSubmissionsResult}
+     * See {@link StudentParticipationRepository#findByStudentExamWithEagerSubmissionsResult}
      *
      * @param studentExam the studentExam for which to load exercises
      */
@@ -568,8 +571,8 @@ public class ExamService {
      */
     public void fetchParticipationsSubmissionsAndResultsForExam(StudentExam studentExam, User currentUser) {
 
-        // 1st: fetch participations, with latest submissions and results (a distinction for test runs, real exams and test exams is done within the following method)
-        var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, false);
+        // 1st: fetch participations, submissions and results (a distinction for test runs, real exams and test exams is done within the following method)
+        var participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
 
         // 2nd: fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
@@ -593,7 +596,7 @@ public class ExamService {
      *
      * @param studentExam         the given student exam
      * @param exercise            the exercise for which the user participation should be filtered
-     * @param participations      the set of participations with eagerly loaded latest submission and result, wherein to search for the relevant participation
+     * @param participations      the set of participations, wherein to search for the relevant participation
      * @param isAtLeastInstructor flag for instructor access privileges
      */
     public void filterParticipationForExercise(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
@@ -625,11 +628,12 @@ public class ExamService {
             // we might need this information for programming exercises with submission policy
             participation.setSubmissionCount(participation.getSubmissions().size());
 
-            // only loaded the latest submission
-            Optional<Submission> optionalLatestSubmission = participation.getSubmissions().stream().findFirst();
+            // only include the latest submission
+            Optional<Submission> optionalLatestSubmission = participation.findLatestLegalOrIllegalSubmission();
             if (optionalLatestSubmission.isPresent()) {
                 Submission latestSubmission = optionalLatestSubmission.get();
                 latestSubmission.setParticipation(null);
+                participation.setSubmissions(Set.of(latestSubmission));
                 setResultIfNecessary(studentExam, participation, isAtLeastInstructor);
 
                 if (exercise instanceof QuizExercise && latestSubmission instanceof QuizSubmission quizSubmission) {
@@ -652,7 +656,7 @@ public class ExamService {
      * Calculates the corresponding grade if a GradingScale is given.
      *
      * @param studentExam                    a StudentExam instance that will have its points and grades calculated if it is assessed
-     * @param participationsOfStudent        StudentParticipation list for the given studentExam with eagerly loaded latest submission and results
+     * @param participationsOfStudent        StudentParticipation list for the given studentExam
      * @param exam                           the relevant exam
      * @param gradingScale                   optional GradingScale that will be used to set the grade type and the achieved grade if present
      * @param calculateFirstCorrectionPoints flag to determine whether to calculate the first correction results or not
@@ -686,10 +690,8 @@ public class ExamService {
                 continue;
             }
             // Relevant Result is already calculated
-            Optional<Result> optionalRelevantResult = studentParticipation.getSubmissions().stream().findFirst()
-                    .flatMap(submission -> Optional.ofNullable(submission.getLatestResult()));
-            if (optionalRelevantResult.isPresent()) {
-                Result relevantResult = optionalRelevantResult.get();
+            if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
+                Result relevantResult = studentParticipation.findLatestResult();
                 PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(exercise.getId());
                 double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
                 double achievedPoints = calculateAchievedPoints(exercise, relevantResult, exam.getCourse(), plagiarismPointDeductionPercentage);
@@ -702,7 +704,7 @@ public class ExamService {
                 // Collect points of first correction, if a second correction exists
                 if (calculateFirstCorrectionPoints && exam.getNumberOfCorrectionRoundsInExam() == 2
                         && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                    Optional<Submission> latestSubmission = studentParticipation.getSubmissions().stream().findFirst();
+                    var latestSubmission = studentParticipation.findLatestSubmission();
                     if (latestSubmission.isPresent()) {
                         Submission submission = latestSubmission.get();
                         // Check if second correction already started
@@ -849,8 +851,8 @@ public class ExamService {
         return participationsOfStudent.stream().collect(Collectors.toMap(participation -> participation.getExercise().getId(), participation -> {
             PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(participation.getStudent().orElseThrow().getId(), participation.getExercise().getId());
             double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
-            Result result = participation.getSubmissions().stream().findFirst().flatMap(submission -> submission.getResults().stream().findFirst()).orElse(null);
-            return calculateAchievedPoints(participation.getExercise(), result, course, plagiarismPointDeductionPercentage);
+
+            return calculateAchievedPoints(participation.getExercise(), participation.getResults().stream().findFirst().orElse(null), course, plagiarismPointDeductionPercentage);
         }));
     }
 
@@ -887,6 +889,7 @@ public class ExamService {
             case QuizExercise ignored -> {
                 // NOTE: due to performance concerns, this is handled differently, search for quizSubmittedAnswerCounts to find out more
                 return true;
+                // NOTE: due to performance concerns, this is handled differently, search for quizSubmittedAnswerCounts to find out more
             }
             case null, default -> throw new IllegalArgumentException("The exercise type of the exercise with id " + exercise.getId() + " is not supported");
         }
@@ -1167,7 +1170,7 @@ public class ExamService {
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
 
         final long numberOfSubmissions = submissionRepository.countByExamIdSubmittedSubmissionsIgnoreTestRuns(examId)
-                + programmingExerciseRepository.countSubmissionsByExamIdSubmitted(examId);
+                + programmingExerciseRepository.countLegalSubmissionsByExamIdSubmitted(examId);
         stats.setNumberOfSubmissions(new DueDateStat(numberOfSubmissions, 0));
 
         DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamForCorrectionRounds(examId,

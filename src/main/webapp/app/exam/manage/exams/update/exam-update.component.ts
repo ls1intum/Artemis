@@ -137,7 +137,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Returns the exam working time in minutes, rounded to one decimal place.
+     * Returns the exma working time in minutes, rounded to one decimal place.
      * Used for display purposes.
      */
     get workingTimeInMinutesRounded(): number {
@@ -335,26 +335,14 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         const examMaxPointsValid = this.isValidMaxPoints;
         const examValidWorkingTime = this.validateWorkingTime;
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
-        const examValidNumberOfExercises = this.isValidNumberOfExercises;
         return (
             examConductionDatesValid &&
             examReviewDatesValid &&
             examNumberOfCorrectionsValid &&
             examMaxPointsValid &&
             examValidWorkingTime &&
-            examValidExampleSolutionPublicationDate &&
-            examValidNumberOfExercises
+            examValidExampleSolutionPublicationDate
         );
-    }
-
-    /**
-     * Returns a boolean indicating whether the exam's number of exercises is valid.
-     * The number of exercises is valid if it's not set, or if it's at least 1.
-     *
-     * @returns {boolean} `true` if the exam's number of exercises is valid, `false` otherwise.
-     */
-    get isValidNumberOfExercises(): boolean {
-        return this.exam.numberOfExercisesInExam === undefined || this.exam.numberOfExercisesInExam === null || this.exam.numberOfExercisesInExam! >= 1;
     }
 
     /**

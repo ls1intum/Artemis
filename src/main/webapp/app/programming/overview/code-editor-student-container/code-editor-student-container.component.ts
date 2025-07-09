@@ -13,7 +13,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
-import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionType, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
@@ -69,6 +69,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     showEditorInstructions = true;
     latestResult: Result | undefined;
     hasTutorAssessment = false;
+    isIllegalSubmission = false;
     numberOfSubmissionsForSubmissionPolicy?: number;
 
     // Icons
@@ -94,6 +95,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.repositoryIsLocked = false; // TODO: load this information dynamically from the server
                         const allResults = getAllResultsOfAllSubmissions(this.participation.submissions);
                         this.latestResult = allResults.length >= 1 ? allResults.first() : undefined;
+                        this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;
                         this.checkForTutorAssessment(dueDateHasPassed);
                         this.course = getCourseFromExercise(this.exercise);
                         this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exercise.id!).subscribe((submissionPolicy) => {

@@ -15,7 +15,6 @@ import org.apache.sshd.server.session.ServerSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +27,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
 
 @Profile(PROFILE_LOCALVC)
-@Lazy
 @Service
 public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator {
 

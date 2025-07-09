@@ -11,11 +11,6 @@
                 "createOrEditLabel": "FAQ erstellen oder bearbeiten",
                 "ingestLabel": "FAQs an IRIS schicken"
             },
-            "faqDisabled": {
-                "title": "Willkommen zur FAQ!",
-                "description": "Die FAQ-Funktion ist aktuell deaktiviert.\nDas Feature erlaubt es Tutor:innen, Editor:innen und Lehrenden häufig gestellte Fragen zu sammeln und beantworten. Die Studierenden können die häufig gestellten Fragen einsehen. Dies reduziert die Anzahl redundanter Fragen und mindert den Arbeitsaufwand für die Lehrenden.\nDas Feature kann jederzeit in den Einstellungen eingeschaltet oder ausgeschaltet werden.",
-                "buttonLabel": "FAQ aktivieren"
-            },
             "created": "Die FAQ {{ title }} wurde erfolgreich erstellt",
             "updated": "Die FAQ {{ title }} wurde erfolgreich aktualisiert",
             "proposed": "Die FAQ {{ title }} wurde erfolgreich vorgeschlagen",

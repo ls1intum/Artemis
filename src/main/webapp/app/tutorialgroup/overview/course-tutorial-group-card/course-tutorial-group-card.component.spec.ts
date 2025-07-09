@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
@@ -35,8 +36,8 @@ describe('CourseTutorialGroupCardComponent', () => {
         component = fixture.componentInstance;
         exampleTA = { id: 1, name: 'TA' } as User;
         exampleTutorialGroup = generateExampleTutorialGroup({ teachingAssistant: exampleTA });
-        fixture.componentRef.setInput('tutorialGroup', exampleTutorialGroup);
-        fixture.componentRef.setInput('course', { id: 1 });
+        component.tutorialGroup = exampleTutorialGroup;
+        component.course = { id: 1 } as Course;
         fixture.detectChanges();
     });
 

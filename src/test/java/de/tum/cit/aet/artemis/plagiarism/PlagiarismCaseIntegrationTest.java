@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismVerdictDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
@@ -96,11 +97,11 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         for (int i = 0; i < numberOfPlagiarismCases; i++) {
             PlagiarismCase plagiarismCase = new PlagiarismCase();
             User student = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
-            PlagiarismResult textPlagiarismResult = textExerciseUtilService.createPlagiarismResultForExercise(exercise);
-            var plagiarismComparison = new PlagiarismComparison();
+            PlagiarismResult<TextSubmissionElement> textPlagiarismResult = textExerciseUtilService.createTextPlagiarismResultForExercise(exercise);
+            PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
 
-            PlagiarismSubmission plagiarismSubmission1 = new PlagiarismSubmission();
-            PlagiarismSubmission plagiarismSubmission2 = new PlagiarismSubmission();
+            PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission1 = new PlagiarismSubmission<>();
+            PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission2 = new PlagiarismSubmission<>();
 
             plagiarismCase.setExercise(exercise);
             plagiarismCase.setStudent(student);
@@ -362,7 +363,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    void testPlagiarismCase_getStudents() {
+    void testPlagiarismCase_getStudents() throws Exception {
 
         var individualPlagiarismCase = new PlagiarismCase();
         assertThat(individualPlagiarismCase.getStudents()).as("should return empty set if neither student or team has been set").isEmpty();

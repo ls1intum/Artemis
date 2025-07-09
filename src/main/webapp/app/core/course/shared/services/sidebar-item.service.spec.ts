@@ -5,7 +5,6 @@ import {
     faChartColumn,
     faCog,
     faComments,
-    faDumbbell,
     faFlag,
     faGraduationCap,
     faList,
@@ -111,18 +110,6 @@ describe('CourseSidebarItemService', () => {
     });
 
     describe('Individual item methods', () => {
-        it('getPracticeItem should return correct item', () => {
-            const item = service.getPracticeItem();
-
-            expect(item).toEqual({
-                routerLink: 'practice',
-                icon: faDumbbell,
-                title: 'Practice',
-                translation: 'overview.practice',
-                hidden: false,
-            });
-        });
-
         it('getExamsItem should return correct item with courseId', () => {
             const item = service.getExamsItem(courseId);
 

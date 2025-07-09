@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
@@ -29,7 +28,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 
 @Conditional(PlagiarismEnabled.class)
-@Lazy
 @Service
 public class PlagiarismAnswerPostService extends PostingService {
 

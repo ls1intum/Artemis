@@ -8,7 +8,7 @@
             "subtext": "Iris is an intelligent virtual tutor powered by the EduTelligence suite. She enhances your learning journey by providing personalized assistance, answering questions, and supporting you through programming exercises and course content.",
             "subheading1": "About Iris & EduTelligence",
             "text1_1": "<b>EduTelligence Integration:</b> Iris is powered by Pyris, which is part of the EduTelligence suite - a comprehensive collection of AI-powered microservices designed to enhance educational technology platforms.",
-            "text1_2": "<b>Data Processing & Privacy:</b> Your interactions with Iris may be processed within external European data centers, such as the Microsoft Azure Cloud. Please check with your institution's privacy policy and ensure you agree to the data processing before using Iris.",
+            "text1_2": "<b>Data Processing & Privacy:</b> Your interactions with Iris may be processed by external AI providers (such as OpenAI or Azure OpenAI). Please check with your institution's privacy policy and ensure you're comfortable with data processing before using Iris.",
             "subheading2": "Key Features of Iris",
             "text2_1": "<b>Programming Assistance:</b> Iris can help with programming questions, including syntax, algorithms, data structures, debugging, and code improvement suggestions.",
             "text2_2": "<b>Contextual Understanding:</b> Unlike generic chatbots, Iris has access to your exercise context, including problem statements, your code submissions, build results, and course materials.",

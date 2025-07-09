@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -27,11 +26,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
 import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.web.TeamResource;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class TeamService {
 
@@ -39,12 +37,12 @@ public class TeamService {
 
     private final UserRepository userRepository;
 
-    private final ParticipationDeletionService participationDeletionService;
+    private final ParticipationService participationService;
 
-    public TeamService(TeamRepository teamRepository, UserRepository userRepository, ParticipationDeletionService participationDeletionService) {
+    public TeamService(TeamRepository teamRepository, UserRepository userRepository, ParticipationService participationService) {
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
-        this.participationDeletionService = participationDeletionService;
+        this.participationService = participationService;
     }
 
     /**
@@ -275,7 +273,7 @@ public class TeamService {
      */
     private TeamImportStrategy getTeamImportStrategy(TeamImportStrategyType importStrategyType) {
         return switch (importStrategyType) {
-            case PURGE_EXISTING -> new PurgeExistingStrategy(teamRepository, participationDeletionService);
+            case PURGE_EXISTING -> new PurgeExistingStrategy(teamRepository, participationService);
             case CREATE_ONLY -> new CreateOnlyStrategy(teamRepository);
         };
     }

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
@@ -32,7 +32,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private activatedRoute = inject(ActivatedRoute);
 
-    readonly postComponent = viewChild.required<PostComponent>('post');
+    @ViewChild('post') postComponent: PostComponent;
     readonly ButtonType = ButtonType;
 
     courseId: number;

@@ -7,20 +7,19 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
 /**
  * Spring Data JPA repository for the ProgrammingSubmission entity tests.
  */
-@Lazy
 @Repository
 @Primary
 public interface ProgrammingSubmissionTestRepository extends ProgrammingSubmissionRepository {
@@ -34,23 +33,24 @@ public interface ProgrammingSubmissionTestRepository extends ProgrammingSubmissi
     List<ProgrammingSubmission> findAllByParticipationIdWithResults(@Param("participationId") Long participationId);
 
     /**
-     * Get the latest submission for a participation.
+     * Get the latest legal submission for a participation (ignoring illegal submissions).
      * The type of the submission can also be null, so that the query also returns submissions without a type.
      *
      * @param participationId the id of the participation
      * @return the latest legal submission for the participation
      */
-    default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(Long participationId) {
-        return findFirstWithResultsByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(participationId);
+    default Optional<ProgrammingSubmission> findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(Long participationId) {
+        return findFirstWithResultsByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType.ILLEGAL, participationId);
     }
 
-    Optional<ProgrammingSubmission> findFirstByParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(long participationId);
+    Optional<ProgrammingSubmission> findFirstByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType type, Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findProgrammingSubmissionById(long programmingSubmissionId);
 
-    default Optional<ProgrammingSubmission> findFirstWithResultsByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(long participationId) {
-        var programmingSubmissionOptional = findFirstByParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(participationId);
+    default Optional<ProgrammingSubmission> findFirstWithResultsByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(SubmissionType type,
+            Long participationId) {
+        var programmingSubmissionOptional = findFirstByTypeNotAndTypeNotNullAndParticipationIdAndResultsNotNullOrderBySubmissionDateDesc(type, participationId);
         if (programmingSubmissionOptional.isEmpty()) {
             return Optional.empty();
         }
@@ -83,11 +83,13 @@ public interface ProgrammingSubmissionTestRepository extends ProgrammingSubmissi
             SELECT s
             FROM ProgrammingSubmission s
                 LEFT JOIN FETCH s.results
-            WHERE s.participation.id = :participationId
+            WHERE (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND s.participation.id = :participationId
                 AND s.id = (
                     SELECT MAX(s2.id)
                     FROM ProgrammingSubmission s2
-                    WHERE s2.participation.id = :participationId)
+                    WHERE s2.participation.id = :participationId
+                        AND (s2.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s2.type IS NULL))
             """)
-    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") Long participationId);
+    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") Long participationId);
 }

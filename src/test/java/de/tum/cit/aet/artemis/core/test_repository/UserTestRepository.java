@@ -8,7 +8,6 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
-@Lazy
 @Repository
 @Primary
 public interface UserTestRepository extends UserRepository {

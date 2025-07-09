@@ -25,7 +25,6 @@ import jakarta.ws.rs.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -73,7 +72,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupScheduleService
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
 @Conditional(TutorialGroupEnabled.class)
-@Lazy
 @RestController
 @RequestMapping("api/tutorialgroup/")
 public class TutorialGroupResource {

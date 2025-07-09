@@ -125,7 +125,6 @@ reviews:
     - '!**/*.min.js.css'
     - '!**/*.tfstate'
     - '!**/*.tfstate.backup'
-    - '!src/main/webapp/src/openapi/**/*.ts'
   path_instructions:
     - path: src/main/webapp/**/*.ts
       instructions: >-

@@ -53,7 +53,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
@@ -86,7 +85,6 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
-import de.tum.cit.aet.artemis.core.config.PublicResourcesConfiguration;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
@@ -235,7 +233,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoHazelcastUsageInConstructors() {
-        var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor())))
+        // CacheHandler and QuizCache are exceptions because these classes are not created during startup
+        var exceptions = or(declaredClassSimpleName("QuizCache"), declaredClassSimpleName("CacheHandler"));
+        var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
                 .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
         notUseHazelcastInConstructor.check(allClassesWithHazelcast);
     }
@@ -312,7 +312,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void shouldNotUserAutowiredAnnotation() {
         ArchRule rule = noFields().should().beAnnotatedWith(Autowired.class).because("fields should not rely on field injection via @Autowired");
-        final var exceptions = new Class[] { PublicResourcesConfiguration.class };
+        final var exceptions = new String[] { "PublicResourcesConfiguration", "QuizProcessCacheTask", "QuizStartTask" };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }
@@ -385,15 +385,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void ensureSpringComponentsAreLazyAnnotated() {
-        ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
-                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).should().beAnnotatedWith(Lazy.class)
-                .because("All Spring components should be lazy-loaded to improve startup time");
-
-        rule.check(allClasses);
-    }
-
-    @Test
     void testAsyncTestShouldWait() {
         ArchRule rule = methods().that(areInIntegrationTests()).and(callAnAsyncMethod()).should(callAWaitMethod()).because("tests should wait for async effects");
         rule.check(testClasses);
@@ -456,7 +447,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         // Classes that are not itself part of the scheduling profile
         // should use classes with scheduling profile annotation only in an optional context.
         // We check this using constructors (constructor injection) since otherwise usages of the optional itself would be detected
-        constructors().that().areDeclaredInClassesThat(and(annotatedWith(Profile.class), not(classWithSchedulingProfile()))).should(correctlyUseSchedulingParameters())
+        constructors().that().areDeclaredInClassesThat(and(annotatedWith(Profile.class), not(classWithSchedulingProfile()))).should(correclyUseSchedulingParameters())
                 .check(productionClasses);
     }
 
@@ -484,7 +475,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         return profile.value();
     }
 
-    private ArchCondition<JavaConstructor> correctlyUseSchedulingParameters() {
+    private ArchCondition<JavaConstructor> correclyUseSchedulingParameters() {
         return new ArchCondition<>("correctly wrap scheduling dependencies in optionals") {
 
             @Override

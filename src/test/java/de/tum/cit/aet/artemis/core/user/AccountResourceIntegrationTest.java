@@ -18,7 +18,6 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.AcceptExternalLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
@@ -493,31 +492,17 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void acceptExternalLLMUsageSuccessful() throws Exception {
+        // Create user in repo with null timestamp
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         user.setExternalLLMUsageAcceptedTimestamp(null);
         userTestRepository.save(user);
 
-        AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO = new AcceptExternalLLMUsageDTO(true);
-        request.put("/api/core/users/accept-external-llm-usage", acceptExternalLLMUsageDTO, HttpStatus.OK);
+        request.put("/api/core/users/accept-external-llm-usage", null, HttpStatus.OK);
 
+        // Verify timestamp was set
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getExternalLLMUsageAcceptedTimestamp()).isNotNull();
-    }
-
-    @Test
-    @WithMockUser(username = AUTHENTICATEDUSER)
-    void declineExternalLLMUsageSuccessful() throws Exception {
-        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setExternalLLMUsageAcceptedTimestamp(null);
-        userTestRepository.save(user);
-
-        AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO = new AcceptExternalLLMUsageDTO(false);
-        request.put("/api/core/users/accept-external-llm-usage", acceptExternalLLMUsageDTO, HttpStatus.OK);
-
-        Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
-        assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getExternalLLMUsageAcceptedTimestamp()).isNull();
     }
 
     @Test

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -43,9 +43,11 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
 
-    readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
+    @ViewChild('markdownEditor', { static: false })
+    private markdownEditor: MarkdownEditorMonacoComponent;
 
-    readonly visualChild = viewChild.required<MultipleChoiceVisualQuestionComponent>('visual');
+    @ViewChild('visual', { static: false })
+    visualChild: MultipleChoiceVisualQuestionComponent;
 
     @Input() question: MultipleChoiceQuestion;
     @Input() questionIndex: number;
@@ -58,7 +60,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
 
     /** Set default preview of the markdown editor as preview for the multiple choice question **/
     get showPreview(): boolean {
-        return this.markdownEditor()?.inPreviewMode;
+        return this.markdownEditor && this.markdownEditor.inPreviewMode;
     }
     showMultipleChoiceQuestionPreview = true;
     showMultipleChoiceQuestionVisual = true;
@@ -139,21 +141,20 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
      * to get the newest values in the editor to update the question attributes
      */
     prepareForSave(): void {
-        const markdownEditor = this.markdownEditor();
-        if (markdownEditor.inVisualMode) {
+        if (this.markdownEditor.inVisualMode) {
             /*
              * In the visual mode, the latest question values come from the visual tab, not the markdown editor.
              * We update the markdown editor, which triggers the parsing of the visual tab content.
              */
-            markdownEditor.markdown = this.visualChild().parseQuestion();
+            this.markdownEditor.markdown = this.visualChild.parseQuestion();
         } else {
             this.cleanupQuestion();
-            markdownEditor.parseMarkdown();
+            this.markdownEditor.parseMarkdown();
         }
     }
 
     onLeaveVisualTab(): void {
-        this.markdownEditor().markdown = this.visualChild().parseQuestion();
+        this.markdownEditor.markdown = this.visualChild.parseQuestion();
         this.prepareForSave();
     }
 

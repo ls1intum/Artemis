@@ -4,8 +4,6 @@ import { FormControl, NG_VALIDATORS, Validator } from '@angular/forms';
 /**
  * Custom min validator as angular offers no such validator for template driven forms
  * See: https://github.com/angular/angular/issues/16352
- *
- * @deprecated use the built-in `min` validator instead
  */
 @Directive({
     selector: '[customMin][formControlName],[customMin][formControl],[customMin][ngModel]',

@@ -82,7 +82,6 @@
             }
         },
         "idNull": "Invalid ID",
-        "noExerciseIdForQuestion": "No exercise ID found for current question.",
         "unexpectedError": "An unexpected error occurred: {{error}}",
         "exerciseNotDefined": "The exercise is not defined.",
         "exerciseIdMismatch": "The exercise IDs do not match.",
@@ -95,7 +94,6 @@
         "titleAlreadyExists": "A programming exercise with the same title already exists. Please choose a different title.",
         "shortnameAlreadyExists": "A programming exercise with the same short name already exists. Please choose a different short name.",
         "courseTitleTooLong": "The course title is too long (max. 255 characters). Please choose a shorter title.",
-        "courseIdUndefined": "The course ID is undefined. Please make sure the course exists.",
         "notAllowedInExam": "This operation is not allowed in an exam.",
         "profilePictureFilesizeTooBig": "The file size of your image is too big, please upload a smaller one.",
         "profilePictureFileFormatNotSupported": "The file format is not supported, please make sure to upload a .png or .jpg file.",

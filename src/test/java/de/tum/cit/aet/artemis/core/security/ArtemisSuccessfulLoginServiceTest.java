@@ -53,19 +53,6 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
-    void shouldSendEmailToUserWhenLogingInWithEmail() throws EntityNotFoundException {
-        String username = TEST_PREFIX + "student1";
-
-        User user = userTestRepository.findOneByLogin(username).get();
-
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
-        artemisSuccessfulLoginService.sendLoginEmail(user.getEmail(), AuthenticationMethod.PASSWORD, null);
-        await().atMost(5, SECONDS)
-                .untilAsserted(() -> verify(mailSendingService).buildAndSendAsync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
     void shouldHandleUserNotFoundGracefully() throws EntityNotFoundException {
         String username = "nonexistentuser";
         doNothing().when(javaMailSender).send(any(MimeMessage.class));

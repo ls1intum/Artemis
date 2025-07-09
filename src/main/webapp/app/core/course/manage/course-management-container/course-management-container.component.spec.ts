@@ -369,19 +369,6 @@ describe('CourseManagementContainerComponent', () => {
 
         expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
     });
-    it('should not include sidebar items for disabled features for non-instructors', async () => {
-        const courseWithDisabledFeatures = {
-            ...course1,
-            isAtLeastEditor: true,
-            isAtLeastInstructor: false,
-            faqEnabled: false,
-            courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED,
-        };
-        component.course.set(courseWithDisabledFeatures);
-        const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems.find((item) => item.title === 'Communication')).toBeUndefined();
-        expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeUndefined();
-    });
 
     it('should subscribe to course updates when handleCourseIdChange is called', () => {
         component.handleCourseIdChange(2);
@@ -532,8 +519,8 @@ describe('CourseManagementContainerComponent', () => {
             courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
         });
         jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
+
         component.onSubRouteActivate({});
-        fixture.detectChanges();
 
         expect(component.communicationRouteLoaded()).toBeTrue();
         expect(setUpConversationServiceSpy).toHaveBeenCalled();
@@ -678,6 +665,7 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should handle component activation with controls', () => {
         const getPageTitleSpy = jest.spyOn(component, 'getPageTitle');
+        const setUpConversationServiceSpy = jest.spyOn(component as any, 'setupConversationService');
         const tryRenderControlsSpy = jest.spyOn(component as any, 'tryRenderControls');
 
         const controlsComponent = {
@@ -690,6 +678,7 @@ describe('CourseManagementContainerComponent', () => {
         component.onSubRouteActivate(controlsComponent);
 
         expect(getPageTitleSpy).toHaveBeenCalled();
+        expect(setUpConversationServiceSpy).toHaveBeenCalled();
         expect(component.controlConfiguration()).toBe(controlsComponent.controlConfiguration);
 
         const template = {} as TemplateRef<any>;

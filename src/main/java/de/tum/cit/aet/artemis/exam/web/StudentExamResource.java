@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -80,7 +79,6 @@ import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
  * REST controller for managing ExerciseGroup.
  */
 @Conditional(ExamEnabled.class)
-@Lazy
 @RestController
 @RequestMapping("api/exam/")
 public class StudentExamResource {
@@ -178,9 +176,9 @@ public class StudentExamResource {
 
         examService.loadQuizExercisesForStudentExam(studentExam);
 
-        // fetch participations, latest submissions and results for these exercises, note: exams only contain individual exercises for now
+        // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, true);
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, true);
 
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);

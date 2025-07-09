@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -38,7 +37,6 @@ import de.tum.cit.aet.artemis.programming.web.localci.AeolusTemplateResource;
  * Handles the request to {@link AeolusTemplateResource} and Artemis internal
  * requests to fetch aeolus templates for programming exercises.
  */
-@Lazy
 @Service
 @Profile("aeolus | localci")
 public class AeolusTemplateService {
@@ -71,7 +69,7 @@ public class AeolusTemplateService {
      * <p>
      * Scripts are read, processed, and stored in the {@code templateCache}. Errors during loading are logged.
      */
-    @EventListener(FullStartupEvent.class)
+    @EventListener(ApplicationReadyEvent.class)
     public void cacheOnBoot() {
         // load all scripts into the cache
         var resources = this.resourceLoaderService.getFileResources(Path.of("templates", "aeolus"));

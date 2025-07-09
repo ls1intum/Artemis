@@ -8,7 +8,6 @@
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
             "accountInformation": "Account Informationen",
-            "externalLLMUsage": "Externe LLM-Nutzung",
             "learnerProfile": "Lernprofil",
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
@@ -19,10 +18,6 @@
                 "description": "Wähle die IDEs, die du für das Öffnen von Programmieraufgaben verwenden möchtest.",
                 "default": "Standard",
                 "jetbrainsHelp": "Um JetBrains IDEs zu verwenden, installiere bitte die JetBrains Toolbox."
-            },
-            "externalLLMUsageSettingsPage": {
-                "accepted": "Du hast die Nutzung von externen LLMs am {{acceptedDate}} akzeptiert.",
-                "declined": "Du hast die Nutzung von externen LLMs nicht akzeptiert."
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Hier kannst du einen öffentlichen SSH-Schlüssel festlegen, um Git-Repositories über SSH zu klonen. Weitere Einzelheiten findest du in der Dokumentation.",
@@ -137,14 +132,12 @@
                 "sshKey": "Öffentlicher SSH-Schlüssel"
             },
             "categories": {
-                "externalLLMUsage": "Externe LLM-Nutzungseinstellungen",
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
                 "SCIENCE_SETTINGS": "Forschungseinstellungen",
                 "SSH_SETTINGS": "SSH Einstellungen",
                 "VCS_TOKEN_SETTINGS": "VCS Tokeneinstellungen",
                 "PASSKEYS": "Passkey-Einstellungen",
-                "IDE_PREFERENCES": "IDE Präferenzen",
-                "GLOBAL_NOTIFICATIONS": "Benachrichtigungen"
+                "IDE_PREFERENCES": "IDE Präferenzen"
             },
             "settingGroupNames": {
                 "weeklySummary": "Wöchentliche Zusammenfassung",
@@ -212,20 +205,6 @@
                 "conversationNewReplyMessageDescription": "Erhalte eine Mitteilung, wenn du eine neue Antwort in einer Unterhaltung erhältst",
                 "assignUnassignTutorialGroupDescription": "Erhalte eine Mitteilung, wenn du als Tutor:in der Leitung einer Übungsgruppe zugewiesen oder entzogen wurdest",
                 "activityDescription": "Teile welche Features von Artemis du nutzt und wie du mit ihnen interagierst. Die Informationen sind für Administratoren zugänglich."
-            },
-            "globalNotificationSettings": {
-                "title": "Benachrichtigungen",
-                "description": "Du erhältst E-Mail-Benachrichtigungen für die folgenden sicherheitsbezogenen Aktivitäten. Verwalte deine Einstellungen unten.",
-                "options": {
-                    "NEW_LOGIN": "Neuer Login",
-                    "NEW_PASSKEY_ADDED": "Neuer Passkey hinzugefügt",
-                    "VCS_TOKEN_EXPIRED": "VCS-Token abgelaufen",
-                    "SSH_KEY_EXPIRED": "SSH-Schlüssel abgelaufen"
-                },
-                "viewPasskeySettings": "Passkey-Einstellungen anzeigen",
-                "viewVcsTokenSettings": "VCS-Token-Einstellungen anzeigen",
-                "viewSshKeySettings": "SSH-Schlüssel-Einstellungen anzeigen",
-                "updateSuccess": "Benachrichtigungseinstellung erfolgreich aktualisiert."
             }
         }
     }

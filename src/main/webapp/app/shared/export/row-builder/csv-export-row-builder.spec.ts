@@ -1,10 +1,10 @@
 import { CourseScoresStudentStatistics } from 'app/core/course/manage/course-scores/course-scores-student-statistics';
+import { User } from 'app/core/user/user.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExportRowBuilder } from 'app/shared/export/row-builder/export-row-builder';
 import { CsvExportRowBuilder } from 'app/shared/export/row-builder/csv-export-row-builder';
 import { CsvDecimalSeparator } from 'app/shared/export/modal/export-modal.component';
-import { StudentGradeDTO } from 'app/core/course/manage/services/course-management.service';
 
 describe('The CsvExportRowBuilder', () => {
     let csvRow: ExportRowBuilder;
@@ -98,14 +98,14 @@ describe('The CsvExportRowBuilder', () => {
     });
 
     it('should trim all user values when storing them', () => {
-        const user = new StudentGradeDTO();
+        const user = new User();
         user.name = 'Testuser ';
         user.login = ' login ';
         user.email = 'mail@example.com ';
-        user.registrationNumber = ' 123456789  ';
+        user.visibleRegistrationNumber = ' 123456789  ';
         const student = new CourseScoresStudentStatistics(user);
 
-        csvRow.setUserInformation(student.student.name, student.student.login, student.student.email, student.student.registrationNumber);
+        csvRow.setUserInformation(student.user.name, student.user.login, student.user.email, student.user.visibleRegistrationNumber);
 
         const row = csvRow.build();
         expect(row[NAME_KEY]).toBe('Testuser');
@@ -115,10 +115,10 @@ describe('The CsvExportRowBuilder', () => {
     });
 
     it('should allow for empty student information', () => {
-        const user = new StudentGradeDTO();
+        const user = new User();
         const student = new CourseScoresStudentStatistics(user);
 
-        csvRow.setUserInformation(student.student.name, student.student.login, student.student.email, student.student.registrationNumber);
+        csvRow.setUserInformation(student.user.name, student.user.login, student.user.email, student.user.visibleRegistrationNumber);
 
         const row = csvRow.build();
         expect(row[NAME_KEY]).toBe('');

@@ -63,8 +63,7 @@
                 },
                 "successMessage": "Export of submissions was successful. The exported zip file is currently being downloaded."
             },
-            "loadingStudents": "Loading the results of all students...",
-            "courseScoresTooltip": "Students who have not received a score for an exercise are not included in the statistics."
+            "loadingStudents": "Loading the results of all students..."
         }
     }
 }

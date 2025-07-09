@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { MockNgbModalService } from 'src/test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -12,14 +12,15 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ApollonDiagramDetailComponent } from 'app/quiz/manage/apollon-diagrams/detail/apollon-diagram-detail.component';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProfileService } from 'src/test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { MockLanguageHelper, MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
-import * as testClassDiagram from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram.json';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockLanguageHelper, MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { ElementRef } from '@angular/core';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { MockCourseManagementService } from 'src/test/javascript/spec/helpers/mocks/service/mock-course-management.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
@@ -35,7 +36,6 @@ describe('ApollonDiagramDetail Component', () => {
     const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
     let alertService: AlertService;
     let modalService: NgbModal;
-    let div: HTMLDivElement;
     // @ts-ignore
     const model = testClassDiagram as UMLModel;
 
@@ -62,14 +62,13 @@ describe('ApollonDiagramDetail Component', () => {
                 { provide: ProfileService, useClass: MockProfileService },
             ],
         })
-            .overrideTemplate(ApollonDiagramDetailComponent, '<div #editorContainer></div>')
+            .overrideTemplate(ApollonDiagramDetailComponent, '')
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramDetailComponent);
                 apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
                 alertService = fixture.debugElement.injector.get(AlertService);
                 modalService = fixture.debugElement.injector.get(NgbModal);
-                div = fixture.componentInstance.editorContainer().nativeElement;
             });
     });
 
@@ -78,6 +77,8 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('initializeApollonEditor', () => {
+        const div = document.createElement('div');
+        fixture.componentInstance.editorContainer = new ElementRef(div);
         fixture.componentInstance.apollonDiagram = diagram;
         fixture.componentInstance.initializeApollonEditor(model);
 
@@ -85,6 +86,8 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('save', async () => {
+        const div = document.createElement('div');
+        fixture.componentInstance.editorContainer = new ElementRef(div);
         fixture.componentInstance.apollonDiagram = diagram;
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
@@ -103,6 +106,8 @@ describe('ApollonDiagramDetail Component', () => {
 
     it('generateExercise', async () => {
         // setup
+        const div = document.createElement('div');
+        fixture.componentInstance.editorContainer = new ElementRef(div);
         fixture.componentInstance.apollonDiagram = diagram;
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         // TODO: we should mock this differently without require
@@ -131,6 +136,8 @@ describe('ApollonDiagramDetail Component', () => {
         const nonInteractiveModel = { ...model, interactive: { ...model.interactive, elements: {}, relationships: {} } };
 
         // setup
+        const div = document.createElement('div');
+        fixture.componentInstance.editorContainer = new ElementRef(div);
         fixture.componentInstance.apollonDiagram = diagram;
         fixture.componentInstance.initializeApollonEditor(nonInteractiveModel);
         const errorSpy = jest.spyOn(alertService, 'error');
@@ -145,6 +152,8 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('downloadSelection', async () => {
+        const div = document.createElement('div');
+        fixture.componentInstance.editorContainer = new ElementRef(div);
         // TODO: we should mock this differently without require
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const module = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
@@ -184,6 +193,8 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('ngOnInit', async () => {
+        const div = document.createElement('div');
+        fixture.componentInstance.editorContainer = new ElementRef(div);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         jest.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
 
@@ -195,6 +206,8 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('ngOnDestroy', async () => {
+        const div = document.createElement('div');
+        fixture.componentInstance.editorContainer = new ElementRef(div);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         jest.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
         fixture.componentInstance.ngOnInit();

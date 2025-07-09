@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, viewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragAndDropQuestionEditComponent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 
@@ -31,7 +31,8 @@ export class ReEvaluateDragAndDropQuestionComponent {
      onMoveDown: '&'
      */
 
-    readonly dragAndDropQuestionEditComponent = viewChild.required(DragAndDropQuestionEditComponent);
+    @ViewChild(DragAndDropQuestionEditComponent)
+    dragAndDropQuestionEditComponent: DragAndDropQuestionEditComponent;
 
     @Input()
     question: DragAndDropQuestion;

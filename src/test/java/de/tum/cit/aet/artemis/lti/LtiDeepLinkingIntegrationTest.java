@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.lti;
 
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -113,7 +113,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
                   "n": "base64-encoded-value"
                 }
                 """;
-        doReturn(JWK.parse(jwkJsonString)).when(oAuth2JWKSService).getJWK(any());
+        when(this.oAuth2JWKSService.getJWK(any())).thenReturn(JWK.parse(jwkJsonString));
         var params = getDeepLinkingRequestParamsForExercise();
 
         request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
@@ -128,7 +128,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
 
         RSAKey mockRsaKey = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic()).privateKey((RSAPrivateKey) keyPair.getPrivate()).build();
 
-        doReturn(mockRsaKey).when(oAuth2JWKSService).getJWK(any());
+        when(this.oAuth2JWKSService.getJWK(any())).thenReturn(mockRsaKey);
         var params = getDeepLinkingRequestParamsForExercise();
 
         request.postWithoutResponseBody("/api/lti/lti13/deep-linking/" + course.getId(), HttpStatus.OK, params);

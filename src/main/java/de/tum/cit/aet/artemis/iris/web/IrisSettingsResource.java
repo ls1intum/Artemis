@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +32,6 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
  * REST controller for managing {@link IrisSettings}.
  */
 @Profile(PROFILE_IRIS)
-@Lazy
 @RestController
 @RequestMapping("api/iris/")
 public class IrisSettingsResource {

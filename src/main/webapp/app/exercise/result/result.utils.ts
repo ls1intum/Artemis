@@ -12,7 +12,7 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercise/participation/participation.utils';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Participation, ParticipationType, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
@@ -257,13 +257,13 @@ export const evaluateTemplateStatus = (
  * Checks if only compilation was tested. This is the case, when a successful result is present with 0 of 0 passed tests
  * This could be because all test cases are only visible after the due date.
  */
-export const isOnlyCompilationTested = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus): boolean => {
+export const isOnlyCompilationTested = (result: Result | undefined, templateStatus: ResultTemplateStatus): boolean => {
     const zeroTests = !result?.testCaseCount;
-    const isProgrammingExercise: boolean = participation?.exercise?.type === ExerciseType.PROGRAMMING;
+    const isProgrammingExercise: boolean = result?.submission?.participation?.exercise?.type === ExerciseType.PROGRAMMING;
     return (
         templateStatus !== ResultTemplateStatus.NO_RESULT &&
         templateStatus !== ResultTemplateStatus.IS_BUILDING &&
-        !isBuildFailed(getLatestSubmission(participation)) &&
+        !isBuildFailed(result?.submission) &&
         zeroTests &&
         isProgrammingExercise
     );
@@ -274,7 +274,7 @@ export const isOnlyCompilationTested = (result: Result | undefined, participatio
  *
  * @return {string} the css class
  */
-export const getTextColorClass = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus) => {
+export const getTextColorClass = (result: Result | undefined, templateStatus: ResultTemplateStatus) => {
     if (!result) {
         return 'text-secondary';
     }
@@ -293,11 +293,11 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
         return 'result-late';
     }
 
-    if (isBuildFailedAndResultIsAutomatic(result, participation)) {
+    if (isBuildFailedAndResultIsAutomatic(result)) {
         return 'text-danger';
     }
 
-    if (resultIsPreliminary(result, participation)) {
+    if (resultIsPreliminary(result)) {
         return 'text-secondary';
     }
 
@@ -305,7 +305,7 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
         return result?.successful ? 'text-success' : 'text-danger';
     }
 
-    if (isOnlyCompilationTested(result, participation, templateStatus)) {
+    if (isOnlyCompilationTested(result, templateStatus)) {
         return 'text-success';
     }
 
@@ -324,7 +324,7 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
  * Get the icon type for the result icon as an array
  *
  */
-export const getResultIconClass = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus): IconProp => {
+export const getResultIconClass = (result: Result | undefined, templateStatus: ResultTemplateStatus): IconProp => {
     if (!result) {
         return faQuestionCircle;
     }
@@ -342,7 +342,7 @@ export const getResultIconClass = (result: Result | undefined, participation: Pa
         return faTimesCircle;
     }
 
-    if (isBuildFailedAndResultIsAutomatic(result, participation) || isAIResultAndFailed(result)) {
+    if (isBuildFailedAndResultIsAutomatic(result) || isAIResultAndFailed(result)) {
         return faTimesCircle;
     }
 
@@ -350,11 +350,11 @@ export const getResultIconClass = (result: Result | undefined, participation: Pa
         return faCircleNotch;
     }
 
-    if (resultIsPreliminary(result, participation) || isAIResultAndTimedOut(result)) {
+    if (resultIsPreliminary(result) || isAIResultAndTimedOut(result)) {
         return faQuestionCircle;
     }
 
-    if (isOnlyCompilationTested(result, participation, templateStatus)) {
+    if (isOnlyCompilationTested(result, templateStatus)) {
         return faCheckCircle;
     }
 
@@ -369,33 +369,39 @@ export const getResultIconClass = (result: Result | undefined, participation: Pa
 
 /**
  * Returns true if the specified result is preliminary.
- * @param result the result.
- * @param participation the participation
+ * @param result the result. It must include a participation and exercise.
  */
-export const resultIsPreliminary = (result: Result, participation: Participation) => {
-    const exerciseType = participation?.exercise?.type;
+export const resultIsPreliminary = (result: Result) => {
+    const exerciseType = result.submission?.participation?.exercise?.type;
     if (exerciseType === ExerciseType.TEXT || exerciseType === ExerciseType.MODELING) {
         return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
-    } else return isProgrammingExerciseStudentParticipation(participation) && isResultPreliminary(result, participation, participation?.exercise as ProgrammingExercise);
+    } else
+        return (
+            result.submission?.participation &&
+            isProgrammingExerciseStudentParticipation(result.submission.participation) &&
+            isResultPreliminary(result, result.submission?.participation?.exercise as ProgrammingExercise)
+        );
 };
 
 /**
  * Returns true if the specified result is a student Participation
- * @param participation the participation
+ * @param result the result.
  */
-export const isStudentParticipation = (participation: Participation) => {
-    return Boolean(participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION);
+export const isStudentParticipation = (result: Result) => {
+    return Boolean(
+        result.submission?.participation &&
+            result.submission.participation.type !== ParticipationType.TEMPLATE &&
+            result.submission.participation.type !== ParticipationType.SOLUTION,
+    );
 };
 
 /**
  * Returns true if the submission of the result is of type programming, is automatic, and
  * its build has failed.
  * @param result
- * @param participation
  */
-export const isBuildFailedAndResultIsAutomatic = (result: Result, participation: Participation) => {
-    const latestSubmission = result?.submission ?? getLatestSubmission(participation);
-    return isBuildFailed(latestSubmission) && !isManualResult(result);
+export const isBuildFailedAndResultIsAutomatic = (result: Result) => {
+    return isBuildFailed(result.submission) && !isManualResult(result);
 };
 
 /**

@@ -66,16 +66,20 @@ public class StudentParticipation extends Participation {
      * @param participant either a team or user
      */
     public void setParticipant(Participant participant) {
-        switch (participant) {
-            case User user -> this.student = user;
-            case Team team1 -> this.team = team1;
-            case null -> {
-                this.student = null;
-                if (this.team != null) {
-                    this.team.setStudents(null);
-                }
+        if (participant instanceof User) {
+            this.student = (User) participant;
+        }
+        else if (participant instanceof Team) {
+            this.team = (Team) participant;
+        }
+        else if (participant == null) {
+            this.student = null;
+            if (this.team != null) {
+                this.team.setStudents(null);
             }
-            default -> throw new Error("Unknown participant type");
+        }
+        else {
+            throw new Error("Unknown participant type");
         }
     }
 

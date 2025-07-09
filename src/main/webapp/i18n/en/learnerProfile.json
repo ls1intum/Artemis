@@ -1,6 +1,8 @@
 {
     "artemisApp": {
         "learnerProfile": {
+            "initialValueHint": "The initial value, which is used by the system to calculate the statistic.",
+            "currentValueHint": "The current value. Calculated using the initial value and your interactions with artemis.",
             "courseLearnerProfile": {
                 "title": "Course Learner Profile",
                 "selectCourse": "Select Course...",
@@ -28,40 +30,6 @@
                     "high": "High",
                     "veryHigh": "Very High"
                 }
-            },
-            "feedbackLearnerProfile": {
-                "title": "Feedback Learner Profile",
-                "description": "Here, you are able to view and update your preferences regarding your feedback learner profile. These settings are used to then personalize the automated feedback you get after submitting your exercise.",
-                "alternativeStandard": {
-                    "label": "Alternative vs. Standard",
-                    "description": "Choose whether you prefer feedback that explores creative, alternative solutions or feedback that focuses on the most common, standard approaches.",
-                    "level": {
-                        "alternative": "Alternative",
-                        "balanced": "Balanced",
-                        "standard": "Standard"
-                    }
-                },
-                "followupSummary": {
-                    "label": "Follow-up vs. Summary",
-                    "description": "Choose whether you prefer feedback that ends with a follow-up question (to encourage further thinking and reflection) or with a summary/conclusion (to clearly wrap up the feedback).",
-                    "level": {
-                        "followup": "Follow-up",
-                        "balanced": "Balanced",
-                        "summary": "Summary"
-                    }
-                },
-                "briefDetailed": {
-                    "label": "Brief vs. Detailed",
-                    "description": "Choose whether you like your feedback to be brief and straight to the point, or more detailed with explanations and examples.",
-                    "level": {
-                        "brief": "Brief",
-                        "balanced": "Balanced",
-                        "detailed": "Detailed"
-                    }
-                },
-                "profileSaved": "Feedback learner profile saved",
-                "invalidRange": "Values must be between 1 and 3",
-                "error": "Feedback learner profile could not be saved"
             }
         }
     }

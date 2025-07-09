@@ -15,12 +15,11 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Organization;
@@ -34,7 +33,6 @@ import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import tech.jhipster.security.RandomUtil;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class UserCreationService {
 
@@ -52,14 +50,18 @@ public class UserCreationService {
 
     private final CacheManager cacheManager;
 
+    private final Optional<LearnerProfileApi> learnerProfileApi;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
-            Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager, OrganizationRepository organizationRepository) {
+            Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager, OrganizationRepository organizationRepository,
+            Optional<LearnerProfileApi> learnerProfileApi) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.cacheManager = cacheManager;
         this.organizationRepository = organizationRepository;
+        this.learnerProfileApi = learnerProfileApi;
     }
 
     /**
@@ -77,8 +79,8 @@ public class UserCreationService {
      * @param isInternal         true if the actual password gets saved in the database
      * @return newly created user
      */
-    public User createUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email,
-            @Nullable String registrationNumber, String imageUrl, String langKey, boolean isInternal) {
+    public User createUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email, String registrationNumber,
+            String imageUrl, String langKey, boolean isInternal) {
         User newUser = new User();
 
         if (isInternal) {
@@ -97,10 +99,7 @@ public class UserCreationService {
         // needs to be mutable --> new HashSet<>(Set.of())
         newUser.setGroups(groups != null ? new HashSet<>(groups) : new HashSet<>());
         newUser.setEmail(email);
-        // an empty string is considered as null to satisfy the unique constraint on registration number
-        if (StringUtils.hasText(registrationNumber)) {
-            newUser.setRegistrationNumber(registrationNumber);
-        }
+        newUser.setRegistrationNumber(registrationNumber);
         newUser.setImageUrl(imageUrl);
         newUser.setLangKey(langKey);
         // new user is not active
@@ -122,6 +121,7 @@ public class UserCreationService {
         }
         newUser = saveUser(newUser);
         final User finalNewUser = newUser;
+        learnerProfileApi.ifPresent(api -> api.createProfile(finalNewUser));
         log.debug("Created user: {}", newUser);
         return newUser;
     }
@@ -164,15 +164,14 @@ public class UserCreationService {
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
         user.setInternal(true);
-        // an empty string is considered as null to satisfy the unique constraint on registration number
-        if (StringUtils.hasText(userDTO.getVisibleRegistrationNumber())) {
-            user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
-        }
+        user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         saveUser(user);
 
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
 
         addUserToGroupsInternal(user, userDTO.getGroups());
+
+        learnerProfileApi.ifPresent(api -> api.createProfile(user));
 
         log.debug("Created Information for User: {}", user);
         return user;
@@ -212,9 +211,7 @@ public class UserCreationService {
             user.setLastName(lastName);
             user.setEmail(email.toLowerCase());
             user.setLangKey(langKey);
-            if (imageUrl != null) {
-                user.setImageUrl(imageUrl);
-            }
+            user.setImageUrl(imageUrl);
             saveUser(user);
             log.info("Changed Information for User: {}", user);
             optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, null));
@@ -235,13 +232,8 @@ public class UserCreationService {
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
         user.setEmail(updatedUserDTO.getEmail().toLowerCase());
-        // an empty string is considered as null to satisfy the unique constraint on registration number
-        if (StringUtils.hasText(updatedUserDTO.getVisibleRegistrationNumber())) {
-            user.setRegistrationNumber(updatedUserDTO.getVisibleRegistrationNumber());
-        }
-        if (updatedUserDTO.getImageUrl() != null) {
-            user.setImageUrl(updatedUserDTO.getImageUrl());
-        }
+        user.setRegistrationNumber(updatedUserDTO.getVisibleRegistrationNumber());
+        user.setImageUrl(updatedUserDTO.getImageUrl());
         user.setActivated(updatedUserDTO.isActivated());
         user.setLangKey(updatedUserDTO.getLangKey());
         user.setGroups(updatedUserDTO.getGroups());

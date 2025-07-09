@@ -20,7 +20,6 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +42,6 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
  * The service handling ProgrammingExerciseGitDiffReport and their ProgrammingExerciseGitDiffEntries.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ProgrammingExerciseGitDiffReportService {
 

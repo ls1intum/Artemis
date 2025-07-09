@@ -284,7 +284,7 @@ public abstract class RepositoryResource {
             // For Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
             if (profileService.isLocalVCorCIActive()) {
-                localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog);
+                localVCServletService.orElseThrow().processNewPush(null, repository, Optional.empty(), Optional.empty(), vcsAccessLog);
             }
             return new ResponseEntity<>(HttpStatus.OK);
         });

@@ -193,7 +193,10 @@
                     "labelEnd": "Enddatum",
                     "labelStartTime": "Startuhrzeit",
                     "labelEndTime": "Enduhrzeit",
-                    "invalidEndDateError": "Das Enddatum muss nach dem Startdatum sein!"
+                    "requiredDateError": "Ein Datum muss angegeben werden!",
+                    "requiredEndDateError": "Ein Enddatum muss angegeben werden!",
+                    "invalidEndDateError": "Das Enddatum muss nach dem Startdatum sein!",
+                    "parseError": "Das Datum muss im Format 'YYYY-MM-DD' sein"
                 },
                 "reasonInput": {
                     "label": "Grund für keine Übungsgruppen an diesem Tag",
@@ -203,7 +206,9 @@
             },
             "sessionForm": {
                 "dateInput": {
-                    "label": "Datum"
+                    "label": "Datum",
+                    "requiredDateError": "Ein Datum muss angegeben werden!",
+                    "parseError": "Das Datum muss im Format 'YYYY-MM-DD' sein"
                 },
                 "timeInput": {
                     "from": "Sitzung beginnt um",

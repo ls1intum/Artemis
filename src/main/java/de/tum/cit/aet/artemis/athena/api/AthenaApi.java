@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Profile(PROFILE_ATHENA)
 @Controller
-@Lazy
 public class AthenaApi extends AbstractAthenaApi {
 
     private final AthenaModuleService athenaModuleService;

@@ -47,6 +47,7 @@ export class AssessmentHeaderComponent {
 
     @Input() exercise?: Exercise;
     @Input() result?: Result;
+    @Input() isIllegalSubmission: boolean;
     @Input() hasComplaint = false;
     @Input() hasMoreFeedbackRequest = false;
     @Input() complaintHandled = false;

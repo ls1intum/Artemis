@@ -24,8 +24,6 @@
 /src/main/java/de/tum/cit/aet/artemis/plagiarism     @ls1intum/plagiarism-maintainers
 /src/main/java/de/tum/cit/aet/artemis/programming    @ls1intum/programming-maintainers
 /src/main/java/de/tum/cit/aet/artemis/quiz           @ls1intum/quiz-maintainers
-/src/main/resources/config                           @ls1intum/operations-maintainers
-/src/main/resources/config/liquibase                 @ls1intum/database-maintainers
 
 # Client code & client tests
 /src/main/webapp/app/atlas          @ls1intum/atlas-maintainers

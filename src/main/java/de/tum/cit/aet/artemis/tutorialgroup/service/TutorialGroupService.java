@@ -25,7 +25,6 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -57,7 +56,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGr
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
 
 @Conditional(TutorialGroupEnabled.class)
-@Lazy
 @Service
 public class TutorialGroupService {
 

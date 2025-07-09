@@ -170,14 +170,7 @@
                     "editName": "Namen bearbeiten",
                     "moreInfo": "Mehr Info",
                     "createdBy": "Erstellt von",
-                    "createdOn": "Erstellt am",
-                    "notification": "Benachrichtigungen",
-                    "notificationsEnabledDescription": "Du erhältst Benachrichtigungen, sobald neue Nachrichten in dieser Kanäle eingehen",
-                    "notificationsMutedDescription": "Du erhältst keine Benachrichtigungen, wenn neue Nachrichten in dieser Kanäle eingehen",
-                    "muteChannel": "Kanal stummschalten",
-                    "notificationsDisabled": "Kursweite Benachrichtigungen sind deaktiviert.",
-                    "seeSettingsPrefix": " Siehe",
-                    "seeSettingsLink": "Benachrichtigungseinstellungen."
+                    "createdOn": "Erstellt am"
                 }
             },
             "addUsers": {

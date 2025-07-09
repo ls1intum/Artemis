@@ -1,22 +1,20 @@
 package de.tum.cit.aet.artemis.atlas.service.profile;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
-import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 @Conditional(AtlasEnabled.class)
-@Lazy
 @Service
 public class CourseLearnerProfileService {
 
@@ -42,7 +40,6 @@ public class CourseLearnerProfileService {
      */
     public CourseLearnerProfile createCourseLearnerProfile(Course course, User user) {
 
-        // Ensure that the user has a learner profile (lazy creation)
         if (user.getLearnerProfile() == null) {
             learnerProfileService.createProfile(user);
         }
@@ -66,22 +63,17 @@ public class CourseLearnerProfileService {
      *
      * @param course the course for which the profiles are created
      * @param users  the users for which the profiles are created with eagerly loaded learner profiles
+     * @return A List of saved CourseLearnerProfiles
      */
-    public void createCourseLearnerProfiles(Course course, Set<User> users) {
+    public List<CourseLearnerProfile> createCourseLearnerProfiles(Course course, Set<User> users) {
 
-        // Ensure that all users have a learner profile (lazy creation)
         users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
-
-        Set<LearnerProfile> learnerProfiles = learnerProfileRepository.findAllByUserIn(users);
 
         Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course).orElseGet(() -> {
 
-            CourseLearnerProfile courseProfile = new CourseLearnerProfile();
+            var courseProfile = new CourseLearnerProfile();
             courseProfile.setCourse(course);
-            LearnerProfile learnerProfile = learnerProfiles.stream().filter(profile -> profile.getUser().equals(user)).findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Learner profile for user " + user.getLogin() + " not found"));
-
-            courseProfile.setLearnerProfile(learnerProfile);
+            courseProfile.setLearnerProfile(learnerProfileRepository.findByUserElseThrow(user));
 
             // Initialize values in the middle of Likert scale
             courseProfile.setAimForGradeOrBonus(3);
@@ -91,7 +83,7 @@ public class CourseLearnerProfileService {
             return courseProfile;
         })).collect(Collectors.toSet());
 
-        courseLearnerProfileRepository.saveAll(courseProfiles);
+        return courseLearnerProfileRepository.saveAll(courseProfiles);
     }
 
     /**

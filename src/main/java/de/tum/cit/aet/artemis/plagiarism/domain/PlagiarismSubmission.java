@@ -16,23 +16,19 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.Submission;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 
 @Entity
 @Table(name = "plagiarism_submission")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PlagiarismSubmission extends DomainObject {
+public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends DomainObject {
 
     private static final Logger log = LoggerFactory.getLogger(PlagiarismSubmission.class);
 
@@ -60,9 +56,9 @@ public class PlagiarismSubmission extends DomainObject {
     /**
      * List of elements the related submission consists of.
      */
-    @JsonIgnoreProperties(value = "plagiarismSubmission", allowSetters = true)
-    @OneToMany(mappedBy = "plagiarismSubmission", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<PlagiarismSubmissionElement> elements;
+    @JsonIgnoreProperties("plagiarismSubmission")
+    @OneToMany(mappedBy = "plagiarismSubmission", cascade = CascadeType.ALL, targetEntity = PlagiarismSubmissionElement.class, fetch = FetchType.LAZY)
+    private List<E> elements;
 
     @ManyToOne
     private PlagiarismCase plagiarismCase;
@@ -71,9 +67,9 @@ public class PlagiarismSubmission extends DomainObject {
      * We maintain a bidirectional relationship manually with submissionA and submissionB
      */
     @JsonIgnoreProperties({ "submissionA", "submissionB" })
-    @OneToOne
+    @OneToOne(targetEntity = PlagiarismComparison.class)
     @JoinColumn(name = "plagiarism_comparison_id")
-    private PlagiarismComparison plagiarismComparison;
+    private PlagiarismComparison<E> plagiarismComparison;
 
     /**
      * Size of the related submission.
@@ -97,8 +93,8 @@ public class PlagiarismSubmission extends DomainObject {
      * @param submissionDirectory the directory to which all student submissions have been downloaded / stored
      * @return a new PlagiarismSubmission instance
      */
-    public static PlagiarismSubmission fromJPlagSubmission(Submission jplagSubmission, Exercise exercise, File submissionDirectory) {
-        PlagiarismSubmission submission = new PlagiarismSubmission();
+    public static PlagiarismSubmission<TextSubmissionElement> fromJPlagSubmission(Submission jplagSubmission, Exercise exercise, File submissionDirectory) {
+        PlagiarismSubmission<TextSubmissionElement> submission = new PlagiarismSubmission<>();
 
         String[] submissionIdAndStudentLogin = jplagSubmission.getName().split("[-.]");
 
@@ -118,7 +114,7 @@ public class PlagiarismSubmission extends DomainObject {
 
         submission.setStudentLogin(studentLogin);
         submission.setElements(jplagSubmission.getTokenList().stream().filter(Objects::nonNull)
-                .map(token -> PlagiarismSubmissionElement.fromJPlagToken(token, submission, exercise, submissionDirectory)).collect(Collectors.toCollection(ArrayList::new)));
+                .map(token -> TextSubmissionElement.fromJPlagToken(token, submission, exercise, submissionDirectory)).collect(Collectors.toCollection(ArrayList::new)));
         submission.setSubmissionId(submissionId);
         submission.setSize(jplagSubmission.getNumberOfTokens());
         submission.setScore(null); // TODO
@@ -134,11 +130,11 @@ public class PlagiarismSubmission extends DomainObject {
         this.studentLogin = studentLogin;
     }
 
-    public List<PlagiarismSubmissionElement> getElements() {
+    public List<E> getElements() {
         return elements;
     }
 
-    public void setElements(List<PlagiarismSubmissionElement> elements) {
+    public void setElements(List<E> elements) {
         this.elements = elements;
     }
 
@@ -174,11 +170,11 @@ public class PlagiarismSubmission extends DomainObject {
         this.plagiarismCase = plagiarismCase;
     }
 
-    public PlagiarismComparison getPlagiarismComparison() {
+    public PlagiarismComparison<E> getPlagiarismComparison() {
         return plagiarismComparison;
     }
 
-    public void setPlagiarismComparison(PlagiarismComparison plagiarismComparison) {
+    public void setPlagiarismComparison(PlagiarismComparison<E> plagiarismComparison) {
         this.plagiarismComparison = plagiarismComparison;
     }
 

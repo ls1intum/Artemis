@@ -25,7 +25,6 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -98,7 +97,7 @@ class MailServiceTest {
         templateEngine = mock(SpringTemplateEngine.class);
         when(templateEngine.process(any(String.class), any())).thenReturn("test");
 
-        mailSendingService = new MailSendingService(jHipsterProperties, javaMailSender, mock(ProfileService.class), messageSource, templateEngine);
+        mailSendingService = new MailSendingService(jHipsterProperties, javaMailSender, messageSource, templateEngine);
 
         MailService mailService = new MailService(messageSource, templateEngine, mailSendingService);
         ReflectionTestUtils.setField(mailService, "artemisServerUrl", new URI("http://localhost:8080").toURL());

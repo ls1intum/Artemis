@@ -2,21 +2,16 @@ package de.tum.cit.aet.artemis.iris.api;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
-import de.tum.cit.aet.artemis.iris.service.pyris.UnsupportedPyrisEventException;
-import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
-import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisEvent;
-import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.AbstractIrisChatSessionService;
 
 @Profile(PROFILE_IRIS)
 @Controller
-@Lazy
 public class PyrisEventApi extends AbstractIrisApi {
 
     private final PyrisEventService pyrisEventService;
@@ -25,21 +20,7 @@ public class PyrisEventApi extends AbstractIrisApi {
         this.pyrisEventService = pyrisEventService;
     }
 
-    /**
-     * Triggers a Pyris action based on the received {@link PyrisEvent}.
-     * This method processes the event and delegates the handling to the appropriate service.
-     * <p>
-     * Note: It's possible that no action is triggered if the event does not fulfill all requirements.
-     * See {@link IrisCourseChatSessionService#handleCompetencyJolSetEvent(CompetencyJolSetEvent)} and
-     * {@link IrisExerciseChatSessionService#handleNewResultEvent(NewResultEvent)} for more details on the specific
-     * actions taken for each event type.
-     *
-     * @param event The event object received to trigger the matching action
-     * @throws UnsupportedPyrisEventException if the event is not supported
-     *
-     * @see PyrisEvent
-     */
-    public void trigger(PyrisEvent<?> event) {
+    public void trigger(PyrisEvent<? extends AbstractIrisChatSessionService<? extends IrisChatSession>, ?> event) {
         pyrisEventService.trigger(event);
     }
 }

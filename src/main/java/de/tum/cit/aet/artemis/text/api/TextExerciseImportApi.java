@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.text.api;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
@@ -14,7 +13,6 @@ import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
 
 @Conditional(TextEnabled.class)
 @Controller
-@Lazy
 public class TextExerciseImportApi extends AbstractTextApi {
 
     private final TextExerciseRepository textExerciseRepository;

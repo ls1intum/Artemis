@@ -9,7 +9,6 @@ import java.util.Objects;
 
 import jakarta.ws.rs.BadRequestException;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,7 +35,6 @@ import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
  * REST controller for managing {@link IrisMessage}.
  */
 @Profile(PROFILE_IRIS)
-@Lazy
 @RestController
 @RequestMapping("api/iris/")
 public class IrisMessageResource {
