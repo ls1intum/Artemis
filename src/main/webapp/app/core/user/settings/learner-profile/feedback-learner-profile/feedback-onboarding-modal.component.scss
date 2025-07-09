@@ -1,0 +1,103 @@
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #dee2e6;
+}
+.modal-body {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+.onboarding-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+.progress-circle {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #1976d2;
+    background: #fff;
+    display: inline-block;
+    transition:
+        background 0.2s,
+        border 0.2s;
+}
+.progress-circle.active {
+    background: #1976d2;
+    border-color: #1976d2;
+}
+.progress-line {
+    width: 32px;
+    height: 2px;
+    background: #1976d2;
+    margin: 0 6px;
+}
+.onboarding-title {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+.onboarding-title h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.onboarding-subtitle {
+    color: #555;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+.feedback-choice-row {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+.feedback-choice-box {
+    flex: 1 1 0;
+    border: 2px solid #d3d3d3;
+    border-radius: 8px;
+    padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+    background: #fff;
+    cursor: pointer;
+    transition:
+        border 0.2s,
+        box-shadow 0.2s;
+    min-width: 260px;
+    max-width: 420px;
+    box-sizing: border-box;
+}
+.feedback-choice-box.selected {
+    border-color: #1976d2;
+    box-shadow: 0 0 0 2px #1976d233;
+    background: #f5faff;
+}
+.feedback-choice-box:hover {
+    border-color: #1976d2;
+}
+.feedback-choice-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.2rem;
+}
+.feedback-choice-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+.feedback-choice-subtitle {
+    color: #555;
+    font-size: 0.98rem;
+    margin-bottom: 1rem;
+}
+.feedback-choice-box input[type='radio'] {
+    accent-color: #1976d2;
+    margin-right: 0.5rem;
+}

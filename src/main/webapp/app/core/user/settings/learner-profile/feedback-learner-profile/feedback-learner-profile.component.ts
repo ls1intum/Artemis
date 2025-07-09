@@ -12,6 +12,8 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { LearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/learner-profile-dto.model';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
 import { ALTERNATIVE_STANDARD_OPTIONS, BRIEF_DETAILED_OPTIONS, FOLLOWUP_SUMMARY_OPTIONS } from 'app/core/user/settings/learner-profile/entities/learner-profile-options.model';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { FeedbackOnboardingModalComponent } from './feedback-onboarding-modal.component';
 
 @Component({
     selector: 'jhi-feedback-learner-profile',
@@ -29,6 +31,12 @@ export class FeedbackLearnerProfileComponent implements OnInit {
 
     /** Flag indicating whether the profile editing is disabled */
     disabled = true;
+
+    constructor(private modalService: NgbModal) {}
+
+    openOnboardingModal() {
+        this.modalService.open(FeedbackOnboardingModalComponent, { size: 'lg' });
+    }
 
     /**
      * Options mapped from shared options with translated labels.

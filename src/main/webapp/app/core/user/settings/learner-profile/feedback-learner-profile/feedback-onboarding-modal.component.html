@@ -1,0 +1,91 @@
+<div class="modal-header">
+    <button type="button" class="close" (click)="close()">&times;</button>
+</div>
+<div class="modal-body">
+    <div class="onboarding-progress">
+        <span class="progress-circle" [class.active]="step >= 0"></span>
+        <span class="progress-line"></span>
+        <span class="progress-circle" [class.active]="step >= 1"></span>
+        <span class="progress-line"></span>
+        <span class="progress-circle" [class.active]="step >= 2"></span>
+    </div>
+    <div class="onboarding-title">
+        <h2>Which feedback feels better?</h2>
+        <div class="onboarding-subtitle">Take a look at these two examples and pic the one you’d rather get</div>
+    </div>
+    @switch (step) {
+        @case (0) {
+            <div class="feedback-choice-row">
+                <div class="feedback-choice-box" [ngClass]="{ selected: selected[0] === 0 }" (click)="select(0, 0)">
+                    <div class="feedback-choice-header">
+                        <input type="radio" name="q1" [checked]="selected[0] === 0" (click)="$event.stopPropagation(); select(0, 0)" />
+                        <span class="feedback-choice-title">Alternative Feedback</span>
+                    </div>
+                    <div class="feedback-choice-subtitle">Explores creative & alternative solutions</div>
+                    <jhi-text-result [result]="feedbackExamples[0][0]" />
+                </div>
+                <div class="feedback-choice-box" [ngClass]="{ selected: selected[0] === 1 }" (click)="select(0, 1)">
+                    <div class="feedback-choice-header">
+                        <input type="radio" name="q1" [checked]="selected[0] === 1" (click)="$event.stopPropagation(); select(0, 1)" />
+                        <span class="feedback-choice-title">Standard Feedback</span>
+                    </div>
+                    <div class="feedback-choice-subtitle">Focuses on the most common approaches</div>
+                    <jhi-text-result [result]="feedbackExamples[0][1]" />
+                </div>
+            </div>
+        }
+        @case (1) {
+            <div class="feedback-choice-row">
+                <div class="feedback-choice-box" [ngClass]="{ selected: selected[1] === 0 }" (click)="select(1, 0)">
+                    <div class="feedback-choice-header">
+                        <input type="radio" name="q2" [checked]="selected[1] === 0" (click)="$event.stopPropagation(); select(1, 0)" />
+                        <span class="feedback-choice-title">Follow-up Summary A</span>
+                    </div>
+                    <div class="feedback-choice-subtitle">Subtitle for follow-up A</div>
+                    <jhi-text-result [result]="feedbackExamples[1][0]" />
+                </div>
+                <div class="feedback-choice-box" [ngClass]="{ selected: selected[1] === 1 }" (click)="select(1, 1)">
+                    <div class="feedback-choice-header">
+                        <input type="radio" name="q2" [checked]="selected[1] === 1" (click)="$event.stopPropagation(); select(1, 1)" />
+                        <span class="feedback-choice-title">Follow-up Summary B</span>
+                    </div>
+                    <div class="feedback-choice-subtitle">Subtitle for follow-up B</div>
+                    <jhi-text-result [result]="feedbackExamples[1][1]" />
+                </div>
+            </div>
+        }
+        @case (2) {
+            <div class="feedback-choice-row">
+                <div class="feedback-choice-box" [ngClass]="{ selected: selected[2] === 0 }" (click)="select(2, 0)">
+                    <div class="feedback-choice-header">
+                        <input type="radio" name="q3" [checked]="selected[2] === 0" (click)="$event.stopPropagation(); select(2, 0)" />
+                        <span class="feedback-choice-title">Brief Feedback</span>
+                    </div>
+                    <div class="feedback-choice-subtitle">Short and to the point</div>
+                    <jhi-text-result [result]="feedbackExamples[2][0]" />
+                </div>
+                <div class="feedback-choice-box" [ngClass]="{ selected: selected[2] === 1 }" (click)="select(2, 1)">
+                    <div class="feedback-choice-header">
+                        <input type="radio" name="q3" [checked]="selected[2] === 1" (click)="$event.stopPropagation(); select(2, 1)" />
+                        <span class="feedback-choice-title">Detailed Feedback</span>
+                    </div>
+                    <div class="feedback-choice-subtitle">Elaborate with explanations and examples</div>
+                    <jhi-text-result [result]="feedbackExamples[2][1]" />
+                </div>
+            </div>
+        }
+    }
+</div>
+<div class="modal-footer">
+    @if (step === 0) {
+        <button type="button" class="btn btn-secondary" (click)="back()" disabled>Back</button>
+    } @else {
+        <button type="button" class="btn btn-secondary" (click)="back()">Back</button>
+    }
+    @if (step < totalSteps - 1) {
+        <button type="button" class="btn btn-primary" (click)="next()">Next</button>
+    }
+    @if (step === totalSteps - 1) {
+        <button type="button" class="btn btn-success" (click)="finish()">Finish</button>
+    }
+</div>
