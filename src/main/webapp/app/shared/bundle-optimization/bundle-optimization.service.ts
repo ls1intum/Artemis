@@ -41,6 +41,19 @@ export class BundleOptimizationService {
                     this.preloadingInProgress = false;
                 }
             });
+        } else {
+            // Fallback for browsers without requestIdleCallback
+            setTimeout(async () => {
+                if (this.preloadingInProgress) {
+                    return;
+                }
+                this.preloadingInProgress = true;
+                try {
+                    await Promise.allSettled([this.loadMonaco(), this.loadApollon(), this.loadPdfJs(), this.loadNgxCharts()]);
+                } finally {
+                    this.preloadingInProgress = false;
+                }
+            }, 1000);
         }
     }
 
@@ -59,7 +72,7 @@ export class BundleOptimizationService {
             const monaco = await import('monaco-editor');
             if (!self.MonacoEnvironment) {
                 self.MonacoEnvironment = {
-                    getWorkerUrl: () => './vs/editor/editor.worker.js',
+                    getWorkerUrl: () => '/vs/editor/editor.worker.js',
                 };
             }
             return monaco;
@@ -125,7 +138,7 @@ export class BundleOptimizationService {
     private async performPdfLoad(): Promise<typeof import('pdfjs-dist')> {
         try {
             const pdfjs = await import('pdfjs-dist');
-            pdfjs.GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.mjs';
+            pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs';
             return pdfjs;
         } catch (error) {
             this.pdfLoadingPromise = null;
