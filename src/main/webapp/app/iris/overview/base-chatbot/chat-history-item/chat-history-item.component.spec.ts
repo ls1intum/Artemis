@@ -5,6 +5,7 @@ import { ChatHistoryItemComponent } from './chat-history-item.component';
 import { By } from '@angular/platform-browser';
 import { DatePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChalkboardUser, faKeyboard } from '@fortawesome/free-solid-svg-icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
