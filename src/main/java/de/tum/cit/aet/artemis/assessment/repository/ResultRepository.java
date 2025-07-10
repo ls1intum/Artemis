@@ -372,7 +372,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND p.student.id = :studentId
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
@@ -387,7 +386,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND p.team.id = :teamId
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
@@ -403,7 +401,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
                 AND r.rated = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
@@ -419,7 +416,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
                 AND r.rated = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
@@ -891,5 +887,31 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                )
             """)
     Set<Result> findLatestResultsWithAssessmentNoteBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
+
+    @Query("""
+              SELECT r
+              FROM Submission s
+                JOIN s.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase tc
+              WHERE s.id = :submissionId
+                AND r.id = (
+                  SELECT MAX(r2.id)
+                  FROM Submission s2
+                    JOIN s2.results r2
+                  WHERE s2.id = :submissionId
+                    AND (
+                      r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                      OR (
+                        r2.completionDate IS NOT NULL
+                        AND (
+                          s2.participation.exercise.assessmentDueDate IS NULL
+                          OR s2.participation.exercise.assessmentDueDate < :dateTime
+                        )
+                      )
+                    )
+                )
+            """)
+    Optional<Result> findLatestResultWithFeedbacksBySubmissionId(@Param("submissionId") long submissionId, @Param("dateTime") ZonedDateTime dateTime);
 
 }

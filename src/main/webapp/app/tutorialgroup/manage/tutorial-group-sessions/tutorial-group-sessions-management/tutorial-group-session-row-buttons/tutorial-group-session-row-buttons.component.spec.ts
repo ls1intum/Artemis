@@ -15,6 +15,7 @@ import { EditTutorialGroupSessionComponent } from 'app/tutorialgroup/manage/tuto
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
+import { signal } from '@angular/core';
 
 describe('TutorialGroupSessionRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupSessionRowButtonsComponent>;
@@ -59,8 +60,17 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
 
     it('should open the edit dialog when the respective button is clicked', fakeAsync(() => {
         const modalService = TestBed.inject(NgbModal);
+        const mockCourse = { id: 1, title: 'Advanced Testing' };
+        const mockTutorialGroup = { id: 1, name: 'Group A' };
+        const mockSession = { id: 5, date: '2025-06-30', timeSlot: '10:00-11:00' };
+
         const mockModalRef = {
-            componentInstance: { tutorialGroupSession: undefined, course: undefined, tutorialGroup: undefined, initialize: () => {} },
+            componentInstance: {
+                course: signal(mockCourse),
+                tutorialGroup: signal(mockTutorialGroup),
+                tutorialGroupSession: signal(mockSession),
+                initialize: () => {},
+            },
             result: of(),
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
@@ -73,16 +83,24 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledWith(EditTutorialGroupSessionComponent, { backdrop: 'static', scrollable: false, size: 'lg', animation: false });
-            expect(mockModalRef.componentInstance.tutorialGroupSession).toEqual(tutorialGroupSession);
-            expect(mockModalRef.componentInstance.course).toEqual(course);
-            expect(mockModalRef.componentInstance.tutorialGroup).toEqual(tutorialGroup);
+            expect(mockModalRef.componentInstance.tutorialGroupSession()).toEqual(tutorialGroupSession);
+            expect(mockModalRef.componentInstance.course()).toEqual(course);
+            expect(mockModalRef.componentInstance.tutorialGroup()).toEqual(tutorialGroup);
         });
     }));
 
     it('should open the cancellation / activation dialog when the respective button is clicked', fakeAsync(() => {
         const modalService = TestBed.inject(NgbModal);
+        const mockCourse = { id: 1, title: 'Advanced Testing' };
+        const mockTutorialGroup = { id: 1, name: 'Group A' };
+        const mockSession = { id: 5, date: '2025-06-30', timeSlot: '10:00-11:00' };
+
         const mockModalRef = {
-            componentInstance: { tutorialGroupSession: undefined, course: undefined, tutorialGroupId: undefined },
+            componentInstance: {
+                course: signal(mockCourse),
+                tutorialGroup: signal(mockTutorialGroup),
+                tutorialGroupSession: signal(mockSession),
+            },
             result: { then: () => Promise.resolve() },
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
@@ -97,7 +115,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
             expect(modalOpenSpy).toHaveBeenCalledWith(CancellationModalComponent, { animation: false, backdrop: 'static', scrollable: false, size: 'lg' });
             expect(mockModalRef.componentInstance.tutorialGroupSession).toEqual(tutorialGroupSession);
             expect(mockModalRef.componentInstance.course).toEqual(course);
-            expect(mockModalRef.componentInstance.tutorialGroupId).toEqual(tutorialGroup.id);
+            expect(mockModalRef.componentInstance.tutorialGroup().id).toEqual(tutorialGroup.id);
         });
     }));
 

@@ -149,9 +149,9 @@ describe('TutorialFreePeriodFormComponent', () => {
     ];
 
     test.each(testCases)('%s', ({ expectedTimeFrame, formData }) => {
-        component.isEditMode = true;
-        component.formData = formData;
-        component.ngOnChanges();
+        fixture.componentRef.setInput('isEditMode', true);
+        fixture.componentRef.setInput('formData', formData);
+        fixture.detectChanges();
         expect(component.timeFrameControl).toBe(expectedTimeFrame);
     });
 
@@ -408,9 +408,9 @@ describe('TutorialFreePeriodFormComponent', () => {
     };
 
     function timeFrameTestHelperMethod(expectedTimeFrame: TimeFrame, formData: TutorialGroupFreePeriodFormData): void {
-        component.isEditMode = true;
-        component.formData = formData;
-        component.ngOnChanges();
+        fixture.componentRef.setInput('isEditMode', true);
+        fixture.componentRef.setInput('formData', formData);
+        fixture.detectChanges();
         expect(component.timeFrameControl).toBe(expectedTimeFrame);
     }
 

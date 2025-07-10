@@ -380,7 +380,7 @@ public class ParticipationResource {
             }
         }
         else if (exercise instanceof ProgrammingExercise) {
-            if (participation.findLatestLegalResult() == null) {
+            if (participation.findLatestResult() == null) {
                 throw new BadRequestAlertException("You need to submit at least once and have the build results", "participation", "noSubmissionExists", true);
             }
         }

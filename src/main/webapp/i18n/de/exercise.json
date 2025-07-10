@@ -272,6 +272,20 @@
                 },
                 "maxPenalty": {
                     "pattern": "Der maximale prozentuale Punktabzug muss zwischen 0 und 100 liegen!"
+                },
+                "continuousPlagiarismControl": {
+                    "similarityThreshold": {
+                        "pattern": "Der Ähnlichkeitsschwellenwert muss zwischen 0 % und 100 % liegen."
+                    },
+                    "minimumScore": {
+                        "customMin": "Die Mindestpunktzahl muss zwischen 0 % und 100 % liegen."
+                    },
+                    "minimumSize": {
+                        "customMin": "Die Mindestgröße muss eine positive Zahl sein."
+                    },
+                    "continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod": {
+                        "pattern": "Der Antwortzeitraum muss zwischen 7 und 31 Tagen liegen."
+                    }
                 }
             },
             "exam": "Klausur",

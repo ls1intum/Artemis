@@ -24,12 +24,10 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
-import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProviderImpl;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.service.user.AuthorityService;
-import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
@@ -37,7 +35,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 @Profile(PROFILE_LDAP)
 @Lazy
 @Primary
-public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
+public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider {
 
     private static final Logger log = LoggerFactory.getLogger(LdapAuthenticationProvider.class);
 
@@ -45,14 +43,19 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     private final AuthorityService authorityService;
 
+    private final UserCreationService userCreationService;
+
     private final SpringSecurityLdapTemplate ldapTemplate;
 
-    public LdapAuthenticationProvider(UserRepository userRepository, LdapUserService ldapUserService, PasswordService passwordService, AuthorityService authorityService,
-            UserCreationService userCreationService, SpringSecurityLdapTemplate ldapTemplate) {
-        super(userRepository, passwordService, userCreationService);
+    private final UserRepository userRepository;
+
+    public LdapAuthenticationProvider(LdapUserService ldapUserService, AuthorityService authorityService, UserCreationService userCreationService,
+            SpringSecurityLdapTemplate ldapTemplate, UserRepository userRepository) {
         this.ldapUserService = ldapUserService;
         this.authorityService = authorityService;
+        this.userCreationService = userCreationService;
         this.ldapTemplate = ldapTemplate;
+        this.userRepository = userRepository;
     }
 
     @Override

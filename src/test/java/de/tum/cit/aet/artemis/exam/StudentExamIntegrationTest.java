@@ -1285,19 +1285,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     }
 
     private static Submission createSubmission(Exercise exercise) {
-        if (exercise instanceof ProgrammingExercise) {
-            return new ProgrammingSubmission();
-        }
-        else if (exercise instanceof TextExercise) {
-            return new TextSubmission();
-        }
-        else if (exercise instanceof ModelingExercise) {
-            return new ModelingSubmission();
-        }
-        else if (exercise instanceof QuizExercise) {
-            return new QuizSubmission();
-        }
-        return null;
+        return switch (exercise) {
+            case ProgrammingExercise ignored -> new ProgrammingSubmission();
+            case TextExercise ignored -> new TextSubmission();
+            case ModelingExercise ignored -> new ModelingSubmission();
+            case QuizExercise ignored -> new QuizSubmission();
+            case null, default -> null;
+        };
     }
 
     @Test
@@ -1343,75 +1337,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     HttpStatus.OK, StudentExam.class);
 
             for (var exercise : studentExamResponse.getExercises()) {
-                var participation = exercise.getStudentParticipations().iterator().next();
-                if (exercise instanceof ProgrammingExercise programmingExercise) {
-                    doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
-                    jenkinsRequestMockProvider.reset();
-                    jenkinsRequestMockProvider.mockTriggerBuild(programmingExercise.getProjectKey(), ((ProgrammingExerciseStudentParticipation) participation).getBuildPlanId(),
-                            false);
-                    request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
-                    Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
-                            .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId());
-                    assertThat(programmingSubmission).isPresent();
-                    assertSensitiveInformationWasFilteredProgrammingExercise(programmingExercise);
-                    participation.getSubmissions().add(programmingSubmission.get());
-                    continue;
-                }
-                var submission = participation.getSubmissions().iterator().next();
-                switch (exercise) {
-                    case ModelingExercise modelingExercise -> {
-                        // check that the submission was saved and that a submitted version was created
-                        String newModel = "This is a new model";
-                        String newExplanation = "This is an explanation";
-                        var modelingSubmission = (ModelingSubmission) submission;
-                        modelingSubmission.setModel(newModel);
-                        modelingSubmission.setExplanationText(newExplanation);
-                        request.put("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
-                        var savedModelingSubmission = request.get(
-                                "/api/modeling/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission", HttpStatus.OK,
-                                ModelingSubmission.class);
-                        // check that the submission was saved
-                        assertThat(newModel).isEqualTo(savedModelingSubmission.getModel());
-                        assertSensitiveInformationWasFilteredModelingExercise(modelingExercise);
-                        // check that a submitted version was created
-                        assertVersionedSubmission(modelingSubmission);
-                    }
-                    case TextExercise textExercise -> {
-                        var textSubmission = (TextSubmission) submission;
-                        final var newText = "New Text";
-                        textSubmission.setText(newText);
-                        request.put("/api/text/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
-                        var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
-                        // check that the submission was saved
-                        assertThat(newText).isEqualTo(savedTextSubmission.getText());
-                        // check that a submitted version was created
-                        assertVersionedSubmission(textSubmission);
-                        assertSensitiveInformationWasFilteredTextExercise(textExercise);
-                    }
-                    case QuizExercise quizExercise -> {
-                        // TODO: move into its own function
-                        assertThat(quizExercise.getQuizQuestions()).hasSize(3);
-                        quizExercise.getQuizQuestions().forEach(quizQuestion -> {
-                            assertThat(quizQuestion.getQuizQuestionStatistic()).isNull();
-                            assertThat(quizQuestion.getExplanation()).isNull();
-                            switch (quizQuestion) {
-                                case MultipleChoiceQuestion mcQuestion -> mcQuestion.getAnswerOptions().forEach(answerOption -> {
-                                    assertThat(answerOption.getExplanation()).isNull();
-                                    assertThat(answerOption.isIsCorrect()).isNull();
-                                });
-                                case DragAndDropQuestion dndQuestion -> assertThat(dndQuestion.getCorrectMappings()).isNullOrEmpty();
-                                case ShortAnswerQuestion saQuestion -> assertThat(saQuestion.getCorrectMappings()).isNullOrEmpty();
-                                default -> {
-                                }
-                            }
-                        });
-
-                        submitQuizInExam(quizExercise, (QuizSubmission) submission);
-                    }
-                    case FileUploadExercise fileUploadExercise -> assertSensitiveInformationWasFilteredFileUploadExercise(fileUploadExercise);
-                    default -> {
-                    }
-                }
+                saveSubmissionByExerciseType(exercise);
             }
 
             studentExamsAfterStart.add(studentExamResponse);
@@ -1505,6 +1431,75 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(studentExamsAfterFinish).hasSize(studentExamsAfterStart.size());
 
         deleteExamWithInstructor(exam1);
+    }
+
+    private void saveSubmissionByExerciseType(Exercise exercise) throws Exception {
+        var participation = exercise.getStudentParticipations().iterator().next();
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
+            jenkinsRequestMockProvider.reset();
+            jenkinsRequestMockProvider.mockTriggerBuild(programmingExercise.getProjectKey(), ((ProgrammingExerciseStudentParticipation) participation).getBuildPlanId(), false);
+            request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
+            Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
+            assertThat(programmingSubmission).isPresent();
+            assertSensitiveInformationWasFilteredProgrammingExercise(programmingExercise);
+            participation.getSubmissions().add(programmingSubmission.get());
+            return;
+        }
+        var submission = participation.getSubmissions().iterator().next();
+        switch (exercise) {
+            case ModelingExercise modelingExercise -> {
+                // check that the submission was saved and that a submitted version was created
+                String newModel = "This is a new model";
+                String newExplanation = "This is an explanation";
+                var modelingSubmission = (ModelingSubmission) submission;
+                modelingSubmission.setModel(newModel);
+                modelingSubmission.setExplanationText(newExplanation);
+                request.put("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
+                var savedModelingSubmission = request.get(
+                        "/api/modeling/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission", HttpStatus.OK,
+                        ModelingSubmission.class);
+                // check that the submission was saved
+                assertThat(newModel).isEqualTo(savedModelingSubmission.getModel());
+                assertSensitiveInformationWasFilteredModelingExercise(modelingExercise);
+                // check that a submitted version was created
+                assertVersionedSubmission(modelingSubmission);
+            }
+            case TextExercise textExercise -> {
+                var textSubmission = (TextSubmission) submission;
+                final var newText = "New Text";
+                textSubmission.setText(newText);
+                request.put("/api/text/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+                var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
+                // check that the submission was saved
+                assertThat(newText).isEqualTo(savedTextSubmission.getText());
+                // check that a submitted version was created
+                assertVersionedSubmission(textSubmission);
+                assertSensitiveInformationWasFilteredTextExercise(textExercise);
+            }
+            case QuizExercise quizExercise -> {
+                assertThat(quizExercise.getQuizQuestions()).hasSize(3);
+                quizExercise.getQuizQuestions().forEach(quizQuestion -> {
+                    assertThat(quizQuestion.getQuizQuestionStatistic()).isNull();
+                    assertThat(quizQuestion.getExplanation()).isNull();
+                    switch (quizQuestion) {
+                        case MultipleChoiceQuestion mcQuestion -> mcQuestion.getAnswerOptions().forEach(answerOption -> {
+                            assertThat(answerOption.getExplanation()).isNull();
+                            assertThat(answerOption.isIsCorrect()).isNull();
+                        });
+                        case DragAndDropQuestion dndQuestion -> assertThat(dndQuestion.getCorrectMappings()).isNullOrEmpty();
+                        case ShortAnswerQuestion saQuestion -> assertThat(saQuestion.getCorrectMappings()).isNullOrEmpty();
+                        default -> {
+                        }
+                    }
+                });
+
+                submitQuizInExam(quizExercise, (QuizSubmission) submission);
+            }
+            case FileUploadExercise fileUploadExercise -> assertSensitiveInformationWasFilteredFileUploadExercise(fileUploadExercise);
+            default -> {
+            }
+        }
     }
 
     private void submitQuizInExam(QuizExercise quizExercise, QuizSubmission quizSubmission) throws Exception {
@@ -1916,8 +1911,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 jenkinsRequestMockProvider.reset();
                 jenkinsRequestMockProvider.mockTriggerBuild(programmingExercise.getProjectKey(), ((ProgrammingExerciseStudentParticipation) participation).getBuildPlanId(), false);
                 request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
-                Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
-                        .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId());
+                Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
                 programmingSubmission.ifPresent(submission -> participation.getSubmissions().add(submission));
                 continue;
             }
@@ -2353,7 +2347,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(testRun.getExercises().getFirst().getId(), instructor.getId());
+        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(testRun.getExercises().getFirst().getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
         participationDeletionService.delete(participations.getFirst().getId(), true);
         request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
