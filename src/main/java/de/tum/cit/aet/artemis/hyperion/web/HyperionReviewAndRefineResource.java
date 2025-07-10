@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 
 /**
  * REST controller for reviewing and refining programming exercises using Hyperion.
- * Provides endpoints for consistency checks and problem statement rewriting.
  */
 @Profile(PROFILE_HYPERION)
 @RestController

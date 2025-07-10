@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.hyperion.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
+
 import java.time.Duration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Configuration properties for Hyperion integration.
@@ -27,6 +30,7 @@ import org.springframework.context.annotation.Lazy;
 @Configuration
 @ConfigurationProperties(prefix = "artemis.hyperion")
 @Lazy
+@Profile(PROFILE_HYPERION)
 public class HyperionConfigurationProperties {
 
     /**
