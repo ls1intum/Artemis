@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.exam.api.ExerciseGroupApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -165,7 +165,7 @@ public class CourseService {
      * @param courses the courses for which the course grades should be fetched
      * @param user    the user for which the course grades should be fetched
      */
-    public Set<GradeScoreDTO> fetchCoursesGradesForUser(Collection<Course> courses, User user) {
+    public Set<CourseGradeScoreDTO> fetchCoursesGradesForUser(Collection<Course> courses, User user) {
         var courseIds = courses.stream().map(DomainObject::getId).collect(Collectors.toSet());
         return studentParticipationRepository.findGradeScoresForAllExercisesForCoursesAndStudent(courseIds, user.getId());
     }

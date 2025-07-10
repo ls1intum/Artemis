@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -155,7 +155,7 @@ public class CourseScoreCalculationService {
         List<PlagiarismCase> plagiarismCases;
 
         // student id --> Grade Score
-        MultiValueMap<Long, GradeScoreDTO> studentIdToGradeScores = new LinkedMultiValueMap<>();
+        MultiValueMap<Long, CourseGradeScoreDTO> studentIdToGradeScores = new LinkedMultiValueMap<>();
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
             Long studentId = studentIds.iterator().next();
             var gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourseAndStudent(courseId, studentId);
@@ -183,7 +183,7 @@ public class CourseScoreCalculationService {
                 entry -> constructBonusSourceResultDTO(course, gradingScale, entry.getKey(), entry.getValue(), maxAndReachablePoints, plagiarismCases)));
     }
 
-    private BonusSourceResultDTO constructBonusSourceResultDTO(Course course, GradingScale gradingScale, Long studentId, List<GradeScoreDTO> gradeScores,
+    private BonusSourceResultDTO constructBonusSourceResultDTO(Course course, GradingScale gradingScale, Long studentId, List<CourseGradeScoreDTO> gradeScores,
             MaxAndReachablePointsDTO maxAndReachablePoints, List<PlagiarismCase> plagiarismCases) {
         StudentScoresDTO studentScores = calculateCourseScoreForStudent(course, gradingScale, studentId, gradeScores, maxAndReachablePoints, plagiarismCases);
 
@@ -219,7 +219,7 @@ public class CourseScoreCalculationService {
      * @param courseGrades         user scores (need to be filtered per exercise, potentially from other courses)
      * @return the CourseForDashboardDTO containing relevant information for the client to display.
      */
-    public CourseForDashboardDTO calculateCourseScore(Course course, Set<ExerciseCourseScoreDTO> courseExerciseScores, Collection<GradeScoreDTO> courseGrades, long userId) {
+    public CourseForDashboardDTO calculateCourseScore(Course course, Set<ExerciseCourseScoreDTO> courseExerciseScores, Collection<CourseGradeScoreDTO> courseGrades, long userId) {
         // Get the total scores for the course.
         MaxAndReachablePointsDTO maxAndReachablePoints = calculateMaxAndReachablePoints(null, courseExerciseScores);
         StudentScoresDTO totalStudentScores = calculateCourseScoreForStudent(course, null, userId, courseGrades, maxAndReachablePoints, Set.of());
@@ -312,7 +312,7 @@ public class CourseScoreCalculationService {
      * @return a map of the scores for the different exercise types (total, for programming exercises etc.). For each type, the map contains the max and reachable max points and
      *         the scores of the current user.
      */
-    private Map<ExerciseType, CourseScoresDTO> calculateCourseScores(Course course, Collection<GradeScoreDTO> courseGrades, long userId,
+    private Map<ExerciseType, CourseScoresDTO> calculateCourseScores(Course course, Collection<CourseGradeScoreDTO> courseGrades, long userId,
             Collection<PlagiarismCase> plagiarismCases) {
 
         Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = new HashMap<>();
@@ -345,7 +345,7 @@ public class CourseScoreCalculationService {
      * @param plagiarismCases       the plagiarism verdicts for the student.
      * @return a StudentScoresDTO instance with the presentation score, relative and absolute points achieved by the given student.
      */
-    public StudentScoresDTO calculateCourseScoreForStudent(Course course, GradingScale gradingScale, Long studentId, Collection<GradeScoreDTO> gradeScoresOfStudent,
+    public StudentScoresDTO calculateCourseScoreForStudent(Course course, GradingScale gradingScale, Long studentId, Collection<CourseGradeScoreDTO> gradeScoresOfStudent,
             MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases) {
 
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);

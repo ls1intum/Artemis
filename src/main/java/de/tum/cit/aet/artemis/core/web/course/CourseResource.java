@@ -493,6 +493,7 @@ public class CourseResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<CoursesForDashboardDTO> getCoursesForDashboard() {
+        log.info("Start courses/for-dashboard (multiple courses)");
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
@@ -516,9 +517,11 @@ public class CourseResource {
             var userCourseGrades = allUserCourseGrades.stream().filter(grade -> courseExerciseIds.contains(grade.exerciseId())).collect(Collectors.toSet());
             CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.calculateCourseScore(course, courseExercises, userCourseGrades, user.getId());
             coursesForDashboard.add(courseForDashboardDTO);
+            // TODO: find the next relevant exercise per course and add it to the courseForDashboardDTO
         }
         log.info("courses/for-dashboard (multiple courses) finished in {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(timeNanoStart), activeCoursesForUser.size(),
                 user.getLogin());
+
         final var dto = new CoursesForDashboardDTO(coursesForDashboard, activeExams);
         return ResponseEntity.ok(dto);
     }

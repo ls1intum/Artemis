@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeInformationDTO;
-import de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
@@ -320,12 +319,13 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         quizSubmission.setSubmissionDate(ZonedDateTime.now().minusHours(3));
         quizSubmission = participationUtilService.addSubmission(quizParticipation, quizSubmission);
         Result quizResult = participationUtilService.addResultToSubmission(quizParticipation, quizSubmission);
+        assertThat(quizExercise.getDueDate()).isNotNull();
         quizResult.setCompletionDate(quizExercise.getDueDate().minusMinutes(2));
         resultRepository.save(quizResult);
         CourseGradeInformationDTO courseGradeInformationDTO = request.get("/api/assessment/courses/" + course.getId() + "/grade-scores", HttpStatus.OK,
                 CourseGradeInformationDTO.class);
         assertThat(courseGradeInformationDTO).isNotNull();
-        List<GradeScoreDTO> gradeScoreDTOs = courseGradeInformationDTO.gradeScores();
+        var gradeScoreDTOs = courseGradeInformationDTO.gradeScores();
         // text,quiz and programming should be included. Modeling should be excluded because it has a due date in the future
         assertThat(gradeScoreDTOs).hasSize(3);
 

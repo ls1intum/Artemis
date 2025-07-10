@@ -175,11 +175,10 @@ public class StudentExamResource {
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndSessionsAndStudentParticipationsElseThrow(studentExamId);
-
         examService.loadQuizExercisesForStudentExam(studentExam);
-
         // fetch participations, latest submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
+        // TODO: reduce the amount of fetched data, participations without submissions and results might be enough
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, true);
 
         // fetch all submitted answers for quizzes
@@ -190,9 +189,11 @@ public class StudentExamResource {
             // add participation with submission and result to each exercise
             examService.filterParticipationForExercise(studentExam, exercise, participations, true);
         }
+
         studentExam.getUser().setVisibleRegistrationNumber();
 
-        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, participations);
+        var examGrades = studentParticipationRepository.findGradesByExamIdAndStudentId(examId, studentExam.getUser().getId());
+        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, examGrades);
 
         return ResponseEntity.ok(studentExamWithGradeDTO);
     }
