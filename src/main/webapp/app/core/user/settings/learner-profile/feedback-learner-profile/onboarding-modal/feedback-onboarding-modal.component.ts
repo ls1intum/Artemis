@@ -1,10 +1,10 @@
 import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
-import { FEEDBACK_EXAMPLES } from './feedback-examples';
+import { FEEDBACK_EXAMPLES } from 'app/core/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-examples';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { LearnerProfileApiService } from '../learner-profile-api.service';
-import { LearnerProfileDTO } from '../dto/learner-profile-dto.model';
+import { LearnerProfileApiService } from 'app/core/user/settings/learner-profile/learner-profile-api.service';
+import { LearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/learner-profile-dto.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 

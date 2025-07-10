@@ -13,7 +13,7 @@ import { LearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/le
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
 import { ALTERNATIVE_STANDARD_OPTIONS, BRIEF_DETAILED_OPTIONS, FOLLOWUP_SUMMARY_OPTIONS } from 'app/core/user/settings/learner-profile/entities/learner-profile-options.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { FeedbackOnboardingModalComponent } from './feedback-onboarding-modal.component';
+import { FeedbackOnboardingModalComponent } from 'app/core/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-onboarding-modal.component';
 
 @Component({
     selector: 'jhi-feedback-learner-profile',
