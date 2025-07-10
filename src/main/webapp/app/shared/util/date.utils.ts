@@ -79,17 +79,3 @@ export function isDateLessThanAWeekInTheFuture(date: dayjs.Dayjs, compareTime?: 
     const now = compareTime ?? dayjs();
     return date.isBetween(now.add(1, 'week'), now);
 }
-
-/**
- * Creates a new {@link Date} object with a specified offset in days and optionally sets the time to the end of the day.
- *
- * @param daysOffset The number of days to offset from the current date. Positive values move forward in time, negative values move backward.
- * @param endOfDay A boolean indicating whether to set the time to the end of the day (23:59:59.999). If false, the time is set to the start of the day (00:00:00.000).
- * @return A new {@link Date} object with the specified offset and time configuration.
- */
-export function createDateWithOffset(daysOffset: number, endOfDay: boolean): Date {
-    const date = new Date();
-    date.setDate(date.getDate() + daysOffset);
-    date.setHours(endOfDay ? 23 : 0, endOfDay ? 59 : 0, endOfDay ? 59 : 0, endOfDay ? 999 : 0);
-    return date;
-}

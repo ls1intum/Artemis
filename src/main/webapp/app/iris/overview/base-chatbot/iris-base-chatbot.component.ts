@@ -45,7 +45,6 @@ import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { User } from 'app/core/user/user.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
-import { createDateWithOffset } from 'app/shared/util/date.utils';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -510,11 +509,16 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             return [];
         }
 
-        const rangeEndDate = createDateWithOffset(-daysAgoNewer, true);
+        const today = new Date();
+        const rangeEndDate = new Date(today);
+        rangeEndDate.setDate(today.getDate() - daysAgoNewer);
+        rangeEndDate.setHours(23, 59, 59, 999); // Set to the end of the 'daysAgoNewer' day
 
         let rangeStartDate: Date | undefined = undefined;
         if (!ignoreOlderBoundary && daysAgoOlder !== undefined) {
-            rangeStartDate = createDateWithOffset(-daysAgoOlder, false);
+            rangeStartDate = new Date(today);
+            rangeStartDate.setDate(today.getDate() - daysAgoOlder);
+            rangeStartDate.setHours(0, 0, 0, 0); // Set to the start of the 'daysAgoOlder' day
         }
 
         return (
