@@ -294,6 +294,13 @@ export class IrisChatService implements OnDestroy {
         return false;
     }
 
+    private updateChatSessions(updatedSessions: IrisSessionDTO[], includeLatestSessions: boolean): void {
+        if (includeLatestSessions && this.latestStartedSession) {
+            updatedSessions.unshift(this.latestStartedSession);
+        }
+        this.chatSessions.next(updatedSessions);
+    }
+
     /**
      * @param latestSession the latest session that was started
      * @param currentSessions the currently displayed sessions in the history, expected to be sorted by creation date descending
@@ -319,8 +326,7 @@ export class IrisChatService implements OnDestroy {
                 creationDate: newIrisSession.creationDate,
                 chatMode: newIrisSession.chatMode ?? ChatServiceMode.COURSE,
             };
-            const updatedSessions = [this.latestStartedSession, ...currentSessions];
-            this.chatSessions.next(updatedSessions);
+            this.updateChatSessions(currentSessions, true);
         }
     }
 
@@ -428,11 +434,11 @@ export class IrisChatService implements OnDestroy {
             this.chatSessionSubscription?.unsubscribe();
             this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
                 const sessionsWithMessages = sessions ?? [];
-                let displayedSessions = [...sessionsWithMessages];
-                if (latestStartedSession && !this.isLatestSessionIncludedInHistory(latestStartedSession, displayedSessions)) {
-                    displayedSessions = [latestStartedSession, ...displayedSessions];
+                if (latestStartedSession && !this.isLatestSessionIncludedInHistory(latestStartedSession, sessionsWithMessages)) {
+                    this.updateChatSessions(sessionsWithMessages, true);
+                } else {
+                    this.updateChatSessions(sessionsWithMessages, false);
                 }
-                this.chatSessions.next(displayedSessions);
             });
         } else {
             captureException(new Error('Could not load chat sessions, courseId is not set.'), {
