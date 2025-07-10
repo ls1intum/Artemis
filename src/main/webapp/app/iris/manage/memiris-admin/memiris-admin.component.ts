@@ -9,7 +9,6 @@ import { MemirisGraphSettingsComponent } from 'app/iris/shared/memiris-graph-set
     selector: 'jhi-memiris-admin',
     imports: [TranslateDirective, MemirisGraphViewComponent, MemirisGraphSettingsComponent],
     templateUrl: './memiris-admin.component.html',
-    styleUrl: './memiris-admin.component.scss',
 })
 export class MemirisAdminComponent implements OnInit {
     graphData?: MemirisGraphData;
