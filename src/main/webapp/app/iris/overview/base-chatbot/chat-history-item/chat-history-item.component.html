@@ -7,20 +7,15 @@
     (keydown.space)="onItemClick()"
     (keydown.enter)="onItemClick()"
 >
-    @let displayedSession = session();
-    @if (displayedSession) {
-        <div class="chat-history-text">
-            {{ displayedSession.creationDate | date: 'dd.MM.yy HH:mm' }}
-        </div>
-    }
-    @let contextIconAndTooltipKey = iconAndTooltipKey;
-    @let relatedEntityName = session()?.entityName;
-    @if (contextIconAndTooltipKey && relatedEntityName) {
+    <div class="chat-history-text">
+        {{ session().creationDate | date: 'dd.MM.yy HH:mm' }}
+    </div>
+    @if (relatedEntityName() && icon() && tooltipKey()) {
         <div class="related-entity-info">
             <div class="related-entity-name">
-                {{ relatedEntityName }}
+                {{ relatedEntityName() }}
             </div>
-            <fa-icon [icon]="contextIconAndTooltipKey.icon" [ngbTooltip]="contextIconAndTooltipKey.tooltipKey | artemisTranslate" />
+            <fa-icon [icon]="icon()!" [ngbTooltip]="tooltipKey()! | artemisTranslate" />
         </div>
     }
 </div>

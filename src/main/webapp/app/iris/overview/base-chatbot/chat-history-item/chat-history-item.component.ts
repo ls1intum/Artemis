@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, Signal, computed, input, output } from '@angular/core';
 import { DatePipe, NgClass } from '@angular/common';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -16,20 +16,34 @@ import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
     imports: [DatePipe, NgClass, FaIconComponent, NgbTooltipModule, ArtemisTranslatePipe],
 })
 export class ChatHistoryItemComponent {
-    session = input<IrisSessionDTO>();
+    session = input.required<IrisSessionDTO>();
     active = input<boolean>(false);
+    icon: Signal<IconProp | undefined> = computed(() => this.computeIcon(this.session()));
+    tooltipKey: Signal<string | undefined> = computed(() => this.computeTooltipKey(this.session()));
+    relatedEntityName: Signal<string | undefined> = computed(() => this.session().entityName);
     sessionClicked = output<IrisSessionDTO>();
 
     onItemClick(): void {
-        this.sessionClicked.emit(this.session()!);
+        this.sessionClicked.emit(this.session());
     }
 
-    get iconAndTooltipKey(): { icon: IconProp; tooltipKey: string } | undefined {
-        switch (this.session()?.chatMode) {
+    private computeIcon(session: IrisSessionDTO): IconProp | undefined {
+        switch (session.chatMode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
-                return { icon: faKeyboard, tooltipKey: 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise' };
+                return faKeyboard;
             case ChatServiceMode.LECTURE:
-                return { icon: faChalkboardUser, tooltipKey: 'artemisApp.iris.chatHistory.relatedEntityTooltip.lecture' };
+                return faChalkboardUser;
+            default:
+                return undefined;
+        }
+    }
+
+    private computeTooltipKey(session: IrisSessionDTO): string | undefined {
+        switch (session.chatMode) {
+            case ChatServiceMode.PROGRAMMING_EXERCISE:
+                return 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise';
+            case ChatServiceMode.LECTURE:
+                return 'artemisApp.iris.chatHistory.relatedEntityTooltip.lecture';
             default:
                 return undefined;
         }
