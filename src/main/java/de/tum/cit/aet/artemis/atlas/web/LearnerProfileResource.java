@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -90,7 +91,41 @@ public class LearnerProfileResource {
         updateProfile.setFeedbackFollowupSummary(learnerProfileDTO.feedbackFollowupSummary());
         updateProfile.setFeedbackBriefDetailed(learnerProfileDTO.feedbackBriefDetailed());
 
+        // Set the flag to true when the user updates their preferences
+        updateProfile.setHasSetupFeedbackPreferences(true);
+
         LearnerProfile result = learnerProfileRepository.save(updateProfile);
+        return ResponseEntity.ok(LearnerProfileDTO.of(result));
+    }
+
+    /**
+     * POST learner-profiles/{learnerProfileId} : create a {@link LearnerProfile}.
+     *
+     * @param learnerProfileDTO {@link LearnerProfileDTO} object from the request body.
+     * @return A ResponseEntity with a status matching the validity of the request containing the created profile.
+     */
+    @PostMapping(value = "learner-profile")
+    @EnforceAtLeastStudent
+    public ResponseEntity<LearnerProfileDTO> createLearnerProfile(@RequestBody LearnerProfileDTO learnerProfileDTO) {
+        User user = userRepository.getUser();
+        log.debug("REST request to create LearnerProfile of user {}", user.getLogin());
+
+        if (learnerProfileRepository.findByUser(user).isPresent()) {
+            throw new BadRequestAlertException("LearnerProfile already exists", LearnerProfile.ENTITY_NAME, "learnerProfileAlreadyExists", true);
+        }
+
+        validateProfileField(learnerProfileDTO.feedbackAlternativeStandard(), "FeedbackAlternativeStandard");
+        validateProfileField(learnerProfileDTO.feedbackFollowupSummary(), "FeedbackFollowupSummary");
+        validateProfileField(learnerProfileDTO.feedbackBriefDetailed(), "FeedbackBriefDetailed");
+
+        LearnerProfile profile = new LearnerProfile();
+        profile.setUser(user);
+        profile.setFeedbackAlternativeStandard(learnerProfileDTO.feedbackAlternativeStandard());
+        profile.setFeedbackFollowupSummary(learnerProfileDTO.feedbackFollowupSummary());
+        profile.setFeedbackBriefDetailed(learnerProfileDTO.feedbackBriefDetailed());
+        profile.setHasSetupFeedbackPreferences(true);
+
+        LearnerProfile result = learnerProfileRepository.save(profile);
         return ResponseEntity.ok(LearnerProfileDTO.of(result));
     }
 }

@@ -3,6 +3,7 @@ export interface LearnerProfileData {
     feedbackAlternativeStandard?: number;
     feedbackFollowupSummary?: number;
     feedbackBriefDetailed?: number;
+    hasSetupFeedbackPreferences?: boolean;
 }
 
 export class LearnerProfileDTO {
@@ -26,6 +27,7 @@ export class LearnerProfileDTO {
     public feedbackAlternativeStandard: number;
     public feedbackFollowupSummary: number;
     public feedbackBriefDetailed: number;
+    public hasSetupFeedbackPreferences?: boolean;
 
     constructor(data: LearnerProfileData) {
         if (!data) {

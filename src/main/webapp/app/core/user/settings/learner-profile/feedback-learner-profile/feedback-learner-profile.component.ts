@@ -32,10 +32,18 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     /** Flag indicating whether the profile editing is disabled */
     disabled = true;
 
+    profileMissing = false;
+
     constructor(private modalService: NgbModal) {}
 
     openOnboardingModal() {
-        this.modalService.open(FeedbackOnboardingModalComponent, { size: 'lg' });
+        const modalRef = this.modalService.open(FeedbackOnboardingModalComponent, { size: 'lg' });
+        modalRef.componentInstance.profileMissing = this.profileMissing;
+    }
+
+    get isProfileSetup(): boolean {
+        const profile = this.learnerProfile();
+        return !this.profileMissing && !!profile && !!profile.hasSetupFeedbackPreferences;
     }
 
     /**
@@ -55,9 +63,9 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     }));
 
     /** Signals for learner profile settings */
-    feedbackAlternativeStandard = signal<number>(LearnerProfileDTO.DEFAULT_VALUE);
-    feedbackFollowupSummary = signal<number>(LearnerProfileDTO.DEFAULT_VALUE);
-    feedbackBriefDetailed = signal<number>(LearnerProfileDTO.DEFAULT_VALUE);
+    feedbackAlternativeStandard = signal<number | undefined>(undefined);
+    feedbackFollowupSummary = signal<number | undefined>(undefined);
+    feedbackBriefDetailed = signal<number | undefined>(undefined);
 
     /** Icon for save button */
     protected readonly faSave = faSave;
@@ -75,9 +83,16 @@ export class FeedbackLearnerProfileComponent implements OnInit {
             const profile = await this.learnerProfileAPIService.getLearnerProfileForCurrentUser();
             this.learnerProfile.set(profile);
             this.disabled = false;
+            this.profileMissing = false;
             this.updateProfileValues(profile);
         } catch (error) {
-            this.handleError(error);
+            if (error instanceof HttpErrorResponse && error.status === 404) {
+                this.profileMissing = true;
+                this.disabled = true;
+                this.learnerProfile.set(undefined);
+            } else {
+                this.handleError(error);
+            }
         }
     }
 
@@ -86,9 +101,21 @@ export class FeedbackLearnerProfileComponent implements OnInit {
      * @param learnerProfile - The learner profile containing the values to update
      */
     private updateProfileValues(learnerProfile: LearnerProfileDTO): void {
-        this.feedbackAlternativeStandard.set(learnerProfile.feedbackAlternativeStandard);
-        this.feedbackFollowupSummary.set(learnerProfile.feedbackFollowupSummary);
-        this.feedbackBriefDetailed.set(learnerProfile.feedbackBriefDetailed);
+        this.feedbackAlternativeStandard.set(
+            learnerProfile.feedbackAlternativeStandard !== undefined && learnerProfile.feedbackAlternativeStandard !== null && learnerProfile.feedbackAlternativeStandard !== 0
+                ? learnerProfile.feedbackAlternativeStandard
+                : undefined,
+        );
+        this.feedbackFollowupSummary.set(
+            learnerProfile.feedbackFollowupSummary !== undefined && learnerProfile.feedbackFollowupSummary !== null && learnerProfile.feedbackFollowupSummary !== 0
+                ? learnerProfile.feedbackFollowupSummary
+                : undefined,
+        );
+        this.feedbackBriefDetailed.set(
+            learnerProfile.feedbackBriefDetailed !== undefined && learnerProfile.feedbackBriefDetailed !== null && learnerProfile.feedbackBriefDetailed !== 0
+                ? learnerProfile.feedbackBriefDetailed
+                : undefined,
+        );
     }
 
     /**

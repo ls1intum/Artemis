@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { FEEDBACK_EXAMPLES } from './feedback-examples';
@@ -16,6 +16,7 @@ import { HttpErrorResponse } from '@angular/common/http';
     imports: [CommonModule, TextResultComponent],
 })
 export class FeedbackOnboardingModalComponent {
+    @Input() profileMissing = false;
     step = 0;
     readonly totalSteps = 3;
     selected: (number | null)[] = [null, null, null];
@@ -24,6 +25,7 @@ export class FeedbackOnboardingModalComponent {
     private activeModal = inject(NgbActiveModal);
     private learnerProfileApiService = inject(LearnerProfileApiService);
     private alertService = inject(AlertService);
+
     next() {
         if (this.step < this.totalSteps - 1) {
             this.step++;
@@ -46,15 +48,20 @@ export class FeedbackOnboardingModalComponent {
     }
     async finish() {
         try {
-            const profile = await this.learnerProfileApiService.getLearnerProfileForCurrentUser();
             const mapValue = (val: number | null) => (val === null ? 2 : val === 0 ? 1 : 3);
-            const updatedProfile = new LearnerProfileDTO({
-                id: profile.id,
+            const newProfile = new LearnerProfileDTO({
                 feedbackAlternativeStandard: mapValue(this.selected[0]),
                 feedbackFollowupSummary: mapValue(this.selected[1]),
                 feedbackBriefDetailed: mapValue(this.selected[2]),
+                hasSetupFeedbackPreferences: true,
             });
-            await this.learnerProfileApiService.putUpdatedLearnerProfile(updatedProfile);
+            if (this.profileMissing) {
+                await this.learnerProfileApiService.postLearnerProfile(newProfile);
+            } else {
+                const profile = await this.learnerProfileApiService.getLearnerProfileForCurrentUser();
+                newProfile.id = profile.id;
+                await this.learnerProfileApiService.putUpdatedLearnerProfile(newProfile);
+            }
             this.alertService.closeAll();
             this.alertService.addAlert({
                 type: AlertType.SUCCESS,

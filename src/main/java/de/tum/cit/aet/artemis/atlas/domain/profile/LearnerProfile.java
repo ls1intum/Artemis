@@ -64,6 +64,9 @@ public class LearnerProfile extends DomainObject {
     @Max(MAX_PROFILE_VALUE)
     private int feedbackBriefDetailed = 2;
 
+    @Column(name = "has_setup_feedback_preferences")
+    private boolean hasSetupFeedbackPreferences = false;
+
     public void setUser(User user) {
         this.user = user;
     }
@@ -114,5 +117,13 @@ public class LearnerProfile extends DomainObject {
 
     public void setFeedbackBriefDetailed(int feedbackBriefDetailed) {
         this.feedbackBriefDetailed = feedbackBriefDetailed;
+    }
+
+    public boolean hasSetupFeedbackPreferences() {
+        return hasSetupFeedbackPreferences;
+    }
+
+    public void setHasSetupFeedbackPreferences(boolean hasSetupFeedbackPreferences) {
+        this.hasSetupFeedbackPreferences = hasSetupFeedbackPreferences;
     }
 }
