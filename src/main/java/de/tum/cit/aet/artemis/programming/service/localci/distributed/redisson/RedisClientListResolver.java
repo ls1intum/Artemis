@@ -1,0 +1,47 @@
+package de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.types.RedisClientInfo;
+import org.springframework.stereotype.Component;
+
+@Component
+@Profile("redis")
+public class RedisClientListResolver {
+
+    private static final Logger log = LoggerFactory.getLogger(RedisClientListResolver.class);
+
+    private final ReactiveRedisConnectionFactory reactiveRedisConnectionFactory;
+
+    public RedisClientListResolver(RedisConnectionFactory redisConnectionFactory, ReactiveRedisConnectionFactory reactiveRedisConnectionFactory) {
+        this.reactiveRedisConnectionFactory = reactiveRedisConnectionFactory;
+    }
+
+    public Set<String> getUniqueClients() {
+        List<RedisClientInfo> clients = reactiveRedisConnectionFactory.getReactiveConnection().serverCommands().getClientList().collectList().block();
+
+        Set<String> uniqueClients = new HashSet<>();
+        if (clients == null) {
+            log.error("Redis client list is null");
+            return uniqueClients;
+        }
+        for (RedisClientInfo clientInfo : clients) {
+            String clientName = clientInfo.getName();
+            // TODO jfr: this requirement should be documented in the documentation of the local CI!?
+            // also make this configurable via application properties
+            if (clientName.toLowerCase().startsWith("artemis")) {
+                uniqueClients.add(clientName);
+            }
+        }
+        log.info("Redis client list based on names: {}", uniqueClients);
+
+        return uniqueClients;
+    }
+}

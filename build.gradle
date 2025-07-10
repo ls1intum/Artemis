@@ -295,6 +295,10 @@ dependencies {
     // Required for Hibernate multi node caching
     runtimeOnly "com.hazelcast:hazelcast-hibernate53:5.2.0"
 
+    // alternative for Hazelcast
+    implementation "org.redisson:redisson:3.44.0"
+    implementation "org.redisson:redisson-spring-boot-starter:3.44.0"
+
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
     implementation "org.hibernate.orm:hibernate-envers:${hibernate_version}"
 
