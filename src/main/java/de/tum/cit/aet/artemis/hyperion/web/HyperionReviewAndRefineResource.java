@@ -22,10 +22,10 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 /**
  * REST controller for reviewing and refining programming exercises using Hyperion.
  */
-@Profile(PROFILE_HYPERION)
 @RestController
-@RequestMapping("api/hyperion/review-and-refine/")
 @Lazy
+@Profile(PROFILE_HYPERION)
+@RequestMapping("api/hyperion/review-and-refine/")
 public class HyperionReviewAndRefineResource {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionReviewAndRefineResource.class);

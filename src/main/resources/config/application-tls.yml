@@ -17,15 +17,3 @@ server:
         enabled-protocols: TLSv1.2
     http2:
         enabled: true
-
-# Override gRPC configuration for TLS profile
-grpc:
-  client:
-    hyperion:
-      negotiationType: TLS
-      # For production with client certificates (mTLS), uncomment and configure:
-      # security:
-      #   clientAuthEnabled: true
-      #   certificateChain: file:certs/client.crt
-      #   privateKey: file:certs/client.key
-      #   trustCertCollection: file:certs/server-ca.crt

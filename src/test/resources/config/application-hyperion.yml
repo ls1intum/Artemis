@@ -1,8 +1,0 @@
-grpc:
-  server:
-    inProcessName: test   # Fixed name for consistent test runs
-    port: -1              # Disable external server (official pattern)
-  client:
-    hyperion:
-      address: in-process:test  # Connect to in-process server (official pattern)
-      negotiation-type: PLAINTEXT
