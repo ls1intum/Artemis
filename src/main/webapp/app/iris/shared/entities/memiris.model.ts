@@ -140,7 +140,7 @@ export class MemirisSimulationLinkMemoryMemory extends MemirisSimulationLink {
     }
 
     getId(): string {
-        return this.connection.id;
+        return `${this.connection.id}-${this.source.getId()}-${this.target.getId()}`;
     }
 
     getLabel(translatePipe: ArtemisTranslatePipe): string {
