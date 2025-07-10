@@ -144,8 +144,6 @@ export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
         if (!data) {
             return;
         }
-        // eslint-disable-next-line no-undef
-        console.log('Updating graph data:', data);
         // Create nodes from graph data
         this.allNodes = data.memories.map((memory) => new MemirisMemoryNode(memory));
         this.allNodes.push(...data.learnings.map((learning) => new MemirisLearningNode(learning)));
@@ -530,7 +528,7 @@ export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
      * @param {MemirisSimulationNode} node - The node to highlight; pass undefined to clear all highlights.
      */
     private highlightNode(node?: MemirisSimulationNode): void {
-        if (!this.nodeElements || !this.linkElements) return;
+        if (!this.nodeElements) return;
         // Remove highlight from all nodes
         this.nodeElements.classed('selected', false);
 
@@ -636,8 +634,6 @@ export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
         } else if (node instanceof MemirisLearningNode) {
             return 8;
         } else {
-            // eslint-disable-next-line no-undef
-            console.warn('Unknown node type:', node);
             return 4;
         }
     }
@@ -656,8 +652,6 @@ export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
         } else if (node instanceof MemirisLearningNode) {
             return -250;
         } else {
-            // eslint-disable-next-line no-undef
-            console.warn('Unknown node type:', node);
             return -1000;
         }
     }
@@ -676,8 +670,6 @@ export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
         } else if (link instanceof MemirisSimulationLinkMemoryLearning) {
             return 120;
         } else {
-            // eslint-disable-next-line no-undef
-            console.warn('Unknown link type:', link);
             return 100;
         }
     }
