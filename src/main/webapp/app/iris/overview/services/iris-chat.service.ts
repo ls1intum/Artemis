@@ -293,16 +293,10 @@ export class IrisChatService implements OnDestroy {
 
     private handleNewSession() {
         return {
-            next: (newIrisSession: IrisSession) => {
-                const currentSessions = this.chatSessions.getValue();
-                const isNewSessionIncludedInHistory = !currentSessions.some((session) => session.id === newIrisSession.id);
-                if (!isNewSessionIncludedInHistory) {
-                    this.chatSessions.next([newIrisSession, ...currentSessions]);
-                }
-
-                this.sessionId = newIrisSession.id;
-                this.messages.next(newIrisSession.messages || []);
-                this.parseLatestSuggestions(newIrisSession.latestSuggestions);
+            next: (r: IrisSession) => {
+                this.sessionId = r.id;
+                this.messages.next(r.messages || []);
+                this.parseLatestSuggestions(r.latestSuggestions);
                 this.ws.subscribeToSession(this.sessionId).subscribe((m) => this.handleWebsocketMessage(m));
             },
             error: (e: IrisErrorMessageKey) => {
