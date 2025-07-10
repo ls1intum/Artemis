@@ -150,17 +150,18 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
 
         assertThat(irisChatSessions).hasSize(4);
-        var lectureSession = irisChatSessions.stream().filter(session -> session.entityId().equals(lecture.getId())).findFirst()
-                .orElseThrow(() -> new AssertionError("Lecture session not found"));
 
-        var courseSession = irisChatSessions.stream().filter(session -> session.entityId().equals(course.getId())).findFirst()
-                .orElseThrow(() -> new AssertionError("Course session not found"));
+        IrisChatSessionDTO lectureSession = irisChatSessions.stream().filter(session -> session.entityId() == lecture.getId()).findFirst().orElse(null);
+        assertThat(lectureSession).isNotNull();
 
-        var textExerciseSession = irisChatSessions.stream().filter(session -> session.entityId().equals(textExercise.getId())).findFirst()
-                .orElseThrow(() -> new AssertionError("Text exercise session not found"));
+        IrisChatSessionDTO courseSession = irisChatSessions.stream().filter(session -> session.entityId() == course.getId()).findFirst().orElse(null);
+        assertThat(courseSession).isNotNull();
 
-        var programmingExerciseSession = irisChatSessions.stream().filter(session -> session.entityId().equals(programmingExercise.getId())).findFirst()
-                .orElseThrow(() -> new AssertionError("Programming exercise session not found"));
+        IrisChatSessionDTO textExerciseSession = irisChatSessions.stream().filter(session -> session.entityId() == textExercise.getId()).findFirst().orElse(null);
+        assertThat(textExerciseSession).isNotNull();
+
+        IrisChatSessionDTO programmingExerciseSession = irisChatSessions.stream().filter(session -> session.entityId() == programmingExercise.getId()).findFirst().orElse(null);
+        assertThat(programmingExerciseSession).isNotNull();
 
         assertThat(lectureSession.entityName()).isEqualTo(lecture.getTitle());
         assertThat(textExerciseSession.entityName()).isEqualTo(textExercise.getShortName());
