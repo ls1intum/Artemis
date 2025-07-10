@@ -355,7 +355,12 @@ public class BuildAgentDockerService {
 
     @Scheduled(fixedRateString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-minutes:60}", initialDelayString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-minutes:60}", timeUnit = TimeUnit.MINUTES)
     public void checkUsableDiskSpaceThenCleanUp() {
-        if (!imageCleanupEnabled || dockerClientNotAvailable()) {
+        if (!imageCleanupEnabled) {
+            return;
+        }
+
+        if (dockerClientNotAvailable()) {
+            log.debug("Docker client is not available. Cannot check disk space for Docker image cleanup");
             return;
         }
 
