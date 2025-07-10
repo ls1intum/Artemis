@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.text;
 
+import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_RESTRICTED_MODULE_TEXT_TEST;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRMED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.DENIED;
@@ -71,9 +72,8 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
@@ -485,8 +485,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise existingTextExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         // Create a new course with different id.
-        Long oldCourseId = course.getId();
-        Long newCourseId = oldCourseId + 1L;
         Course newCourse = courseUtilService.createCourse();
 
         // Assign new course to the text exercise.
@@ -601,6 +599,27 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
         assertThat(channel).isNotNull();
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(newTextExercise));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importTextExercise_restrictedAthenaModules_setToNull() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEmptyCourse();
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
+        textExercise.setPreliminaryFeedbackModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
+        textExerciseRepository.save(textExercise);
+
+        textExercise.setCourse(course2);
+        textExercise.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 5));
+
+        TextExercise importedExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class,
+                HttpStatus.CREATED);
+
+        assertThat(importedExercise.getFeedbackSuggestionModule()).isNull();
+        assertThat(importedExercise.getPreliminaryFeedbackModule()).isNull();
     }
 
     @Test
@@ -1080,9 +1099,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
         assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
         assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(textExercise.getId());
-        var plagiarismResult = (TextPlagiarismResult) result.plagiarismResult();
+        var plagiarismResult = result.plagiarismResult();
 
-        PlagiarismComparison<TextSubmissionElement> comparison = plagiarismResult.getComparisons().iterator().next();
+        PlagiarismComparison comparison = plagiarismResult.getComparisons().iterator().next();
         // Both submissions compared consist of 4 words (= 4 tokens). JPlag seems to be off by 1
         // when counting the length of a match. This is why it calculates a similarity of 3/4 = 75%
         // instead of 4/4 = 100% (5 words ==> 80%, 100 words ==> 99%, etc.). Therefore, we use a rather
@@ -1119,14 +1138,14 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"), shortText);
 
         var path = "/api/text/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, plagiarismUtilService.getPlagiarismOptions(50, 0, 5));
+        request.get(path, HttpStatus.BAD_REQUEST, PlagiarismResult.class, plagiarismUtilService.getPlagiarismOptions(50, 0, 5));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismNoSubmissions() throws Exception {
         var path = "/api/text/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, plagiarismUtilService.getDefaultPlagiarismOptions());
+        request.get(path, HttpStatus.BAD_REQUEST, PlagiarismResult.class, plagiarismUtilService.getDefaultPlagiarismOptions());
     }
 
     @Test
@@ -1134,14 +1153,14 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testCheckPlagiarism_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        request.get("/api/text/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.FORBIDDEN, TextPlagiarismResult.class,
+        request.get("/api/text/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.FORBIDDEN, PlagiarismResult.class,
                 plagiarismUtilService.getDefaultPlagiarismOptions());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismResult() throws Exception {
-        TextPlagiarismResult expectedResult = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise);
+        PlagiarismResult expectedResult = textExerciseUtilService.createPlagiarismResultForExercise(textExercise);
 
         var result = request.get("/api/text/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.OK, PlagiarismResultDTO.class);
         assertThat(result.plagiarismResult().getId()).isEqualTo(expectedResult.getId());
@@ -1157,7 +1176,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismResultWithoutExercise() throws Exception {
-        TextPlagiarismResult result = request.get("/api/text/text-exercises/" + 10000000 + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
+        PlagiarismResult result = request.get("/api/text/text-exercises/" + 10000000 + "/plagiarism-result", HttpStatus.NOT_FOUND, PlagiarismResult.class);
         assertThat(result).isNull();
     }
 

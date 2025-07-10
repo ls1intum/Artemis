@@ -43,8 +43,8 @@ export class StudentsUploadImagesButtonComponent {
     openUploadImagesDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(StudentsUploadImagesDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.courseId = this.courseId();
-        modalRef.componentInstance.exam = this.exam();
+        modalRef.componentInstance.courseId = this.courseId;
+        modalRef.componentInstance.exam = this.exam;
         modalRef.result.then(
             () => this.uploadDone.emit(),
             () => {},

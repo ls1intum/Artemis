@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.broker.BrokerAvailabilityEvent;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 
 @Profile(PROFILE_CORE)
 @Component
+@Lazy
 public class WebsocketBrokerHealthIndicator implements HealthIndicator, ApplicationListener<BrokerAvailabilityEvent> {
 
     private boolean isBrokerAvailable = false; // Will be updated to true by event listener once connection is established

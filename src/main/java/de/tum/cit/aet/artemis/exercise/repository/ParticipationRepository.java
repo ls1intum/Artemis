@@ -11,6 +11,7 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ParticipationRepository extends ArtemisJpaRepository<Participation, Long> {
 
@@ -48,13 +50,12 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
             FROM Participation p
                 LEFT JOIN FETCH p.submissions s
             WHERE p.id = :participationId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
-    Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") long participationId);
+    Optional<Participation> findWithEagerSubmissionsById(@Param("participationId") long participationId);
 
     @NotNull
-    default Participation findByIdWithLegalSubmissionsElseThrow(long participationId) {
-        return getValueElseThrow(findWithEagerLegalSubmissionsById(participationId), participationId);
+    default Participation findByIdWithSubmissionsElseThrow(long participationId) {
+        return getValueElseThrow(findWithEagerSubmissionsById(participationId), participationId);
     }
 
     @Query("""

@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
@@ -28,7 +29,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.service.cache.PlagiarismCacheService;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionExportApi;
 import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Conditional(PlagiarismEnabled.class)
+@Lazy
 @Service
 public class TextPlagiarismDetectionService {
 
@@ -85,7 +87,7 @@ public class TextPlagiarismDetectionService {
      * @param minimumSize         consider only submissions whose size is greater or equal to this value
      * @return a zip file that can be returned to the client
      */
-    public TextPlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) {
+    public PlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) {
         // Only one plagiarism check per course allowed
         var courseId = textExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
@@ -156,7 +158,7 @@ public class TextPlagiarismDetectionService {
                 FileSystemUtils.deleteRecursively(submissionFolderFile);
             }
 
-            TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+            PlagiarismResult textPlagiarismResult = new PlagiarismResult();
             textPlagiarismResult.convertJPlagResult(jPlagResult, textExercise);
 
             log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));

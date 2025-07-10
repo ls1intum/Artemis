@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.AcceptExternalLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -53,6 +56,7 @@ import tech.jhipster.web.util.PaginationUtil;
  * Another option would be to have a specific JPA entity graph to handle this case.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/core/")
 public class UserResource {
@@ -123,19 +127,20 @@ public class UserResource {
     }
 
     /**
-     * PUT users/accept-external-llm-usage : sets the externalLLMUsageAccepted flag for the user to ZonedDateTime.now()
+     * PUT users/accept-external-llm-usage : sets the externalLLMUsageAccepted flag for the user to ZonedDateTime.now() or null,
+     * depending on whether the user accepted or declined the usage of external LLMs.
      *
+     * @param acceptExternalLLMUsageDTO the DTO containing the user's choice regarding external LLM usage
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found),
      *         or with status 400 (Bad Request) if external LLM usage was already accepted
      */
     @PutMapping("users/accept-external-llm-usage")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> setExternalLLMUsageAcceptedToTimestamp() {
+    public ResponseEntity<Void> setExternalLLMUsageAcceptedToTimestamp(@RequestBody AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO) {
         User user = userRepository.getUser();
-        if (user.getExternalLLMUsageAcceptedTimestamp() != null) {
-            return ResponseEntity.badRequest().build();
-        }
-        userRepository.updateExternalLLMUsageAcceptedToDate(user.getId(), ZonedDateTime.now());
+
+        ZonedDateTime hasAcceptedTimestamp = acceptExternalLLMUsageDTO.accepted() ? ZonedDateTime.now() : null;
+        userRepository.updateExternalLLMUsageAcceptedToDate(user.getId(), hasAcceptedTimestamp);
         return ResponseEntity.ok().build();
     }
 }

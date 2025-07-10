@@ -14,6 +14,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
 
 @Component
 @Profile(PROFILE_ATHENA)
+@Lazy
 public class AthenaRequestMockProvider {
 
     private final RestTemplate restTemplate;
@@ -223,18 +225,13 @@ public class AthenaRequestMockProvider {
 
         ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("title", "Not so good")
                 .put("description", "This needs to be improved").put("credits", -1.0);
-        if (moduleType.equals("text")) {
-            suggestion = suggestion.put("indexStart", 3).put("indexEnd", 9);
-        }
-        else if (moduleType.equals("programming")) {
-            suggestion = suggestion.put("lineStart", 3).put("lineEnd", 4).put("description", "invoke infinite compression here").put("filePath", "client.cpp");
-        }
-        else if (moduleType.equals("modeling")) {
-            suggestion = suggestion.put("credits", 0);
-        }
-        else {
-            throw new IllegalArgumentException("Unknown module type: " + moduleType);
-        }
+
+        suggestion = switch (moduleType) {
+            case "text" -> suggestion.put("indexStart", 3).put("indexEnd", 9);
+            case "programming" -> suggestion.put("lineStart", 3).put("lineEnd", 4).put("description", "invoke infinite compression here").put("filePath", "client.cpp");
+            case "modeling" -> suggestion.put("credits", 0);
+            default -> throw new IllegalArgumentException("Unknown module type: " + moduleType);
+        };
 
         final ObjectNode node = mapper.createObjectNode().put("module_name", getTestModuleName(moduleType)).put("status", 200).set("data",
                 mapper.createArrayNode().add(suggestion));
@@ -289,12 +286,12 @@ public class AthenaRequestMockProvider {
         // [{"name":"module_example","url":"http://module-example-service:5001","type":"programming","supports_evaluation":true},{"name":"module_programming_llm","url":"http://module-programming-llm-service:5002","type":"programming","supports_evaluation":false},{"name":"module_text_llm","url":"http://module-text-llm-service:5003","type":"text","supports_evaluation":true},{"name":"module_text_cofee","url":"http://module-text-cofee-service:5004","type":"text","supports_evaluation":false},{"name":"module_programming_themisml","url":"http://module-programming-themisml-service:5005","type":"programming","supports_evaluation":false}]
         final ArrayNode array = mapper.createArrayNode();
 
-        array.add(createModule(ATHENA_MODULE_TEXT_TEST, "http://module-text-test-service:5001", "text", true));
-        array.add(createModule(ATHENA_MODULE_PROGRAMMING_TEST, "http://module-programming-test-service:5002", "programming", false));
-        array.add(createModule(ATHENA_MODULE_MODELING_TEST, "http://module-modeling-test-service:5005", "modeling", false));
-        array.add(createModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST, "http://module-restricted-text-service:5004", "text", false));
-        array.add(createModule(ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST, "http://module-restricted-programming-test-service:5003", "programming", true));
-        array.add(createModule(ATHENA_RESTRICTED_MODULE_MODELING_TEST, "http://module-restricted-modeling-test-service:5006", "modeling", false));
+        array.add(createModule(ATHENA_MODULE_TEXT_TEST, "http://module-text-test-service:5001", "text", true, true, true));
+        array.add(createModule(ATHENA_MODULE_PROGRAMMING_TEST, "http://module-programming-test-service:5002", "programming", false, true, true));
+        array.add(createModule(ATHENA_MODULE_MODELING_TEST, "http://module-modeling-test-service:5005", "modeling", false, true, true));
+        array.add(createModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST, "http://module-restricted-text-service:5004", "text", false, true, true));
+        array.add(createModule(ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST, "http://module-restricted-programming-test-service:5003", "programming", true, true, true));
+        array.add(createModule(ATHENA_RESTRICTED_MODULE_MODELING_TEST, "http://module-restricted-modeling-test-service:5006", "modeling", false, true, true));
 
         final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules")).andExpect(method(HttpMethod.GET));
         responseActions.andRespond(withSuccess().body(array.toString()).contentType(MediaType.APPLICATION_JSON));
@@ -309,13 +306,16 @@ public class AthenaRequestMockProvider {
      * @param supportsEvaluation Indicating if the module can support evaluation (not used in Artemis)
      * @return JSON representation of the feedback module
      */
-    private ObjectNode createModule(String name, String url, String type, boolean supportsEvaluation) {
+    private ObjectNode createModule(String name, String url, String type, boolean supportsEvaluation, boolean supportsGradedFeedbackRequests,
+            boolean supportsNonGradedFeedbackRequests) {
         // creates {"name":"module_example","url":"http://module-example-service:5001","type":"programming","supports_evaluation":true}
         ObjectNode moduleNode = mapper.createObjectNode();
         moduleNode.put("name", name);
         moduleNode.put("url", url);
         moduleNode.put("type", type);
         moduleNode.put("supports_evaluation", supportsEvaluation);
+        moduleNode.put("supports_graded_feedback_requests", supportsGradedFeedbackRequests);
+        moduleNode.put("supports_non_graded_feedback_requests", supportsNonGradedFeedbackRequests);
         return moduleNode;
     }
 

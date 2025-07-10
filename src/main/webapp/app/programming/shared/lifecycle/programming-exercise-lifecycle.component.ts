@@ -76,26 +76,26 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
      */
     ngOnInit(): void {
-        if (!this.exercise.id) {
+        this.updateIsImportBasedOnUrl();
+
+        if (!this.exercise.id && !this.isImport) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
-
-        this.updateIsImportBasedOnUrl();
     }
 
     private updateIsImportBasedOnUrl() {
         let isImportFromExistingExercise = false;
+        let isImportFromFile = false;
         this.urlSubscription = this.activatedRoute.url
             .pipe(
                 tap((segments) => {
                     isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
-                    // currently not supported for imports from files, issue https://github.com/ls1intum/Artemis/issues/8562 should be fixed first
-                    // isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
+                    isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
                 }),
             )
             .subscribe(() => {
-                this.isImport = isImportFromExistingExercise;
+                this.isImport = isImportFromExistingExercise || isImportFromFile;
             });
     }
 

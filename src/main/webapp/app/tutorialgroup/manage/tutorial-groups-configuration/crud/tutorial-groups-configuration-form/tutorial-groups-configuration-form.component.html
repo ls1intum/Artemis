@@ -38,7 +38,7 @@
                         </div>
                     }
                     <!-- Do not show options if the course has communication disabled -->
-                    <div [hidden]="!isMessagingEnabled(course)">
+                    <div [hidden]="!isMessagingEnabled(course())">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" formControlName="useTutorialGroupChannels" id="useTutorialGroupChannels" />
                             <label
@@ -80,7 +80,7 @@
                 <div class="row mt-2">
                     <div class="col-12">
                         <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                            <span jhiTranslate="{{ isEditMode ? 'global.generic.edit' : 'global.generic.create' }}"></span>
+                            <span jhiTranslate="{{ isEditMode() ? 'global.generic.edit' : 'global.generic.create' }}"></span>
                         </button>
                     </div>
                 </div>

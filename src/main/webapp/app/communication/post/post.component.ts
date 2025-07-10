@@ -139,6 +139,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     constructor() {
         super();
         this.course = this.metisService.getCourse() ?? throwError('Course not found');
+        // Reactive check: if forwarded post/answer is deleted, update flag
         effect(() => {
             const hasDeletedForwardedPost = this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined;
             const hasDeletedForwardedAnswerPost = this.forwardedAnswerPosts().length > 0 && this.forwardedAnswerPosts()[0] === undefined;
@@ -150,22 +151,32 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         return this.reactionsBarComponent();
     }
 
+    /**
+     * Returns true if the current post is pinned to the top.
+     */
     isPinned(): boolean {
         return this.posting.displayPriority === DisplayPriority.PINNED;
     }
 
+    /** Updates internal flag for edit permission */
     onMayEdit(value: boolean) {
         this.mayEdit = value;
     }
 
+    /** Updates internal flag for delete permission */
     onMayDelete(value: boolean) {
         this.mayDelete = value;
     }
 
+    /** Updates internal flag for pin permission */
     onCanPin(value: boolean) {
         this.canPin = value;
     }
 
+    /**
+     * Handles right-click context menu, sets the active dropdown post,
+     * and positions the dropdown near the cursor.
+     */
     onRightClick(event: MouseEvent) {
         const targetElement = event.target as HTMLElement;
         const isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
@@ -192,6 +203,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
+    /**
+     * Adjusts dropdown position if it overflows the screen on the right.
+     */
     adjustDropdownPosition() {
         const dropdownWidth = 200;
         const screenWidth = window.innerWidth;
@@ -201,6 +215,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
+    /**
+     * Disables vertical scroll on main container to avoid background scroll when dropdown is active.
+     */
     disableBodyScroll() {
         const mainContainer = this.document.querySelector('.posting-infinite-scroll-container');
         if (mainContainer) {
@@ -208,6 +225,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
+    /**
+     * Re-enables vertical scroll on the main container.
+     */
     enableBodyScroll() {
         const mainContainer = this.document.querySelector('.posting-infinite-scroll-container');
         if (mainContainer) {
@@ -215,6 +235,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
+    /**
+     * Closes any open dropdown menus when clicking outside.
+     */
     @HostListener('document:click', ['$event'])
     onClickOutside() {
         this.showDropdown = false;
@@ -261,6 +284,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             }) ?? false;
     }
 
+    /**
+     * Sets originalPostDetails if forwarded post or forwarded answer post exists.
+     */
     fetchForwardedMessages(): void {
         try {
             if (this.forwardedPosts().length > 0) {
@@ -369,6 +395,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
+    /**
+     * Emits an event to notify parent components to navigate to the given post.
+     */
     protected onTriggerNavigateToPost(post: Posting | undefined) {
         if (!post) {
             return;

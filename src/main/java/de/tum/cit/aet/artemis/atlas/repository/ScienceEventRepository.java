@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.repository;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Spring Data repository for the ScienceEvent entity.
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Repository
 public interface ScienceEventRepository extends ArtemisJpaRepository<ScienceEvent, Long> {
 

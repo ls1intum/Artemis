@@ -18,7 +18,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { UserService } from '../../../../user/shared/user.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { MockUserService } from 'test/helpers/mocks/service/mock-user.service';
 
 describe('RequestFeedbackButtonComponent', () => {
@@ -303,7 +303,7 @@ describe('RequestFeedbackButtonComponent', () => {
         fixture.componentRef.setInput('pendingChanges', false);
         component.hasUserAcceptedExternalLLMUsage = false;
 
-        const acceptSpy = jest.spyOn(userService, 'acceptExternalLLMUsage').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+        const acceptSpy = jest.spyOn(userService, 'updateExternalLLMUsageConsent').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
         const setAcceptedSpy = jest.spyOn(accountService, 'setUserAcceptedExternalLLMUsage');
         const requestFeedbackSpy = jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
         const mockModal = {
@@ -315,7 +315,7 @@ describe('RequestFeedbackButtonComponent', () => {
         component.acceptExternalLLMUsage(mockModal);
         tick();
 
-        expect(acceptSpy).toHaveBeenCalled();
+        expect(acceptSpy).toHaveBeenCalledWith(true);
         expect(component.hasUserAcceptedExternalLLMUsage).toBeTrue();
         expect(setAcceptedSpy).toHaveBeenCalled();
         expect(mockModal.close).toHaveBeenCalled();

@@ -9,16 +9,20 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
@@ -38,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
  * such as Athena.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingExerciseCodeReviewFeedbackService {
 
@@ -196,7 +201,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         participation.setParticipant(participation.getParticipant());
 
         if (invalidatePreviousResults) {
-            var participationResults = participation.getResults();
+            Set<Result> participationResults = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull))
+                    .collect(Collectors.toSet());
             participationResults.forEach(participationResult -> participationResult.setRated(false));
             this.resultRepository.saveAll(participationResults);
         }

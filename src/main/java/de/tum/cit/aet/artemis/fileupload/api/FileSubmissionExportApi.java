@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseWithSubmissio
  */
 @Profile(PROFILE_CORE)
 @Controller
+@Lazy
 public class FileSubmissionExportApi extends AbstractFileModuleApi {
 
     private final FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService;

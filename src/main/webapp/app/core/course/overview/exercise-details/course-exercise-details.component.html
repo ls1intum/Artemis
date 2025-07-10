@@ -1,6 +1,6 @@
 @if (exercise) {
-    <div id="course-exercise-details" class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
-        <div class="d-flex align-items-center my-2 justify-content-between">
+    <div id="course-exercise-details" class="px-3 pt-2 pb-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+        <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex">
                 @if (exerciseIcon) {
                     <h5 class="mb-0" id="exercise-header"><fa-icon class="me-2" [icon]="exerciseIcon" />{{ exercise.title }}</h5>
@@ -41,19 +41,18 @@
             </div>
         </div>
 
-        <hr class="my-0" />
-        <div class="my-3">
-            <jhi-exercise-headers-information
-                [exercise]="exercise"
-                [studentParticipation]="gradedStudentParticipation"
-                [submissionPolicy]="submissionPolicy"
-                [course]="exercise.course"
-            />
-        </div>
+        <hr class="mt-2 mb-3" />
 
-        <!-- <hr class="mt-0" /> -->
         <div class="row">
             <div class="col flex-grow-1">
+                <div class="mb-3">
+                    <jhi-exercise-headers-information
+                        [exercise]="exercise"
+                        [studentParticipation]="gradedStudentParticipation"
+                        [submissionPolicy]="submissionPolicy"
+                        [course]="exercise.course"
+                    />
+                </div>
                 <!-- RESULTS START -->
                 @if ((this.sortedHistoryResults?.length && this.sortedHistoryResults.length > 1) || this.numberOfPracticeResults) {
                     <div class="row">
@@ -157,7 +156,9 @@
                         </dl>
                     }
                 }
-                <jhi-exercise-info [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" />
+                <div class="mt-5">
+                    <jhi-exercise-info [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" />
+                </div>
                 @if (
                     exercise &&
                     exercise.type === PROGRAMMING &&
@@ -193,7 +194,7 @@
                     </a>
                 }
             </div>
-            <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
+            <div class="col" style="max-width: min-content">
                 @if (exercise.course && (isCommunicationEnabled(exercise.course) || isMessagingEnabled(exercise.course))) {
                     <jhi-discussion-section [exercise]="exercise" />
                 }

@@ -13,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Conditional(TextEnabled.class)
+@Lazy
 @Service
 public class TextExerciseFeedbackService {
 
@@ -119,7 +121,7 @@ public class TextExerciseFeedbackService {
             log.debug("Submission id: {}", textSubmission.getId());
 
             AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
-            var athenaResponse = api.getTextFeedbackSuggestions(textExercise, textSubmission, false);
+            var athenaResponse = api.getTextFeedbackSuggestions(textExercise, textSubmission, true);
 
             Set<TextBlock> textBlocks = new HashSet<>();
             List<Feedback> feedbacks = new ArrayList<>();

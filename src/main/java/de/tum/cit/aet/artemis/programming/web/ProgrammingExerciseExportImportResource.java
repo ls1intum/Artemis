@@ -23,6 +23,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -43,7 +44,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
-import de.tum.cit.aet.artemis.athena.domain.ModuleType;
+import de.tum.cit.aet.artemis.athena.domain.AthenaModuleMode;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -81,7 +82,7 @@ import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
@@ -91,6 +92,7 @@ import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
  */
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
+@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseExportImportResource {
@@ -134,7 +136,7 @@ public class ProgrammingExerciseExportImportResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
     private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
 
@@ -144,7 +146,9 @@ public class ProgrammingExerciseExportImportResource {
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, Optional<ExamAccessApi> examAccessApi, CourseRepository courseRepository,
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService, Optional<AthenaApi> athenaApi,
-            Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseService programmingExerciseService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<AthenaFeedbackApi> athenaFeedbackApi,
+            ProgrammingExerciseValidationService programmingExerciseValidationService) {
+
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -161,8 +165,9 @@ public class ProgrammingExerciseExportImportResource {
         this.consistencyCheckService = consistencyCheckService;
         this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
-        this.programmingExerciseService = programmingExerciseService;
         this.athenaFeedbackApi = athenaFeedbackApi;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
+
     }
 
     /**
@@ -177,21 +182,39 @@ public class ProgrammingExerciseExportImportResource {
     }
 
     /**
-     * POST /programming-exercises/import: Imports an existing programming exercise into an existing course
+     * POST /programming-exercises/import: Imports an existing programming exercise
+     * into an existing course
      * <p>
-     * This will import the whole exercise, including all base build plans (template, solution) and repositories
-     * (template, solution, test). Referenced entities, s.a. the test cases or the hints will get cloned and assigned
+     * This will import the whole exercise, including all base build plans
+     * (template, solution) and repositories
+     * (template, solution, test). Referenced entities, s.a. the test cases or the
+     * hints will get cloned and assigned
      * a new id. For a concrete list of what gets copied and what not have a look
-     * at {@link ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean, boolean)}
+     * at
+     * {@link ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean, boolean)}
      *
-     * @param sourceExerciseId                    The ID of the original exercise which should get imported
-     * @param newExercise                         The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
-     * @param recreateBuildPlans                  Option determining whether the build plans should be copied or re-created from scratch
-     * @param updateTemplate                      Option determining whether the template files should be updated with the most recent template version
-     * @param setTestCaseVisibilityToAfterDueDate Option determining whether the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
-     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
+     * @param sourceExerciseId                    The ID of the original exercise
+     *                                                which should get imported
+     * @param newExercise                         The new exercise containing values
+     *                                                that should get overwritten in the
+     *                                                imported exercise, s.a. the title
+     *                                                or difficulty
+     * @param recreateBuildPlans                  Option determining whether the
+     *                                                build plans should be copied or
+     *                                                re-created from scratch
+     * @param updateTemplate                      Option determining whether the
+     *                                                template files should be updated
+     *                                                with the most recent template
+     *                                                version
+     * @param setTestCaseVisibilityToAfterDueDate Option determining whether the
+     *                                                test case visibility should be set
+     *                                                to
+     *                                                {@link Visibility#AFTER_DUE_DATE}
+     * @return The imported exercise (200), a not found error (404) if the template
+     *         does not exist, or a forbidden error
      *         (403) if the user is not at least an instructor in the target course.
-     * @see ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean, boolean)
+     * @see ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise,
+     *      ProgrammingExercise, boolean, boolean, boolean)
      */
     @PostMapping("programming-exercises/import/{sourceExerciseId}")
     @EnforceAtLeastEditor
@@ -208,10 +231,12 @@ public class ProgrammingExerciseExportImportResource {
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
+
         if (!this.athenaFeedbackApi.isPresent()) {
             newExercise.validateSettingsForManualFeedbackRequest();
         }
-        programmingExerciseService.validateDockerFlags(newExercise);
+        programmingExerciseValidationService.validateDockerFlags(newExercise);
+
         validateStaticCodeAnalysisSettings(newExercise);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -222,7 +247,7 @@ public class ProgrammingExerciseExportImportResource {
         programmingExerciseRepository.validateCourseSettings(newExercise, course);
 
         final var originalProgrammingExercise = programmingExerciseRepository
-                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndAndBuildConfig(sourceExerciseId)
+                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(sourceExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", sourceExerciseId));
 
         var consistencyErrors = consistencyCheckService.checkConsistencyOfProgrammingExercise(originalProgrammingExercise);
@@ -230,11 +255,13 @@ public class ProgrammingExerciseExportImportResource {
             throw new ConflictException("The source exercise is inconsistent", ENTITY_NAME, "sourceExerciseInconsistent");
         }
 
-        // Fetching the tasks separately, as putting it in the query above leads to Hibernate duplicating the tasks.
+        // Fetching the tasks separately, as putting it in the query above leads to
+        // Hibernate duplicating the tasks.
         var templateTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(originalProgrammingExercise.getId());
         originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
 
-        // The static code analysis flag can only change, if the build plans are recreated and the template is upgraded
+        // The static code analysis flag can only change, if the build plans are
+        // recreated and the template is upgraded
         if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled() && !(recreateBuildPlans && updateTemplate)) {
             throw new BadRequestAlertException("Static code analysis can only change, if the recreation of build plans and update of template files is activated", ENTITY_NAME,
                     "staticCodeAnalysisCannotChange");
@@ -250,17 +277,20 @@ public class ProgrammingExerciseExportImportResource {
         Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, originalCourse, user);
 
-        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions or preliminary feedback for the imported exercise
-        // If Athena is disabled and the service is not present, we also disable corresponding functionality
+        // Athena: Check that only allowed athena modules are used, if not we catch the
+        // exception and disable feedback suggestions or preliminary feedback for the
+        // imported exercise
+        // If Athena is disabled and the service is not present, we also disable
+        // corresponding functionality
         try {
-            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(newExercise, course, ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
+            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(newExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
                     () -> newExercise.setFeedbackSuggestionModule(null));
         }
         catch (BadRequestAlertException e) {
             newExercise.setFeedbackSuggestionModule(null);
         }
         try {
-            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(newExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(newExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME),
                     () -> newExercise.setPreliminaryFeedbackModule(null));
         }
         catch (BadRequestAlertException e) {
@@ -271,7 +301,8 @@ public class ProgrammingExerciseExportImportResource {
             ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise, updateTemplate,
                     recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
 
-            // remove certain properties which are not relevant for the client to keep the response small
+            // remove certain properties which are not relevant for the client to keep the
+            // response small
             importedProgrammingExercise.setTestCases(null);
             importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
             importedProgrammingExercise.setTemplateParticipation(null);
@@ -297,14 +328,20 @@ public class ProgrammingExerciseExportImportResource {
     }
 
     /**
-     * POST /programming-exercises/import-from-file: Imports an existing programming exercise from an uploaded zip file into an existing course
+     * POST /programming-exercises/import-from-file: Imports an existing programming
+     * exercise from an uploaded zip file into an existing course
      * <p>
-     * This will create the whole exercise, including all base build plans (template, solution) and repositories (template, solution, test) and copy
-     * the content from the repositories of the zip file into the newly created repositories.
+     * This will create the whole exercise, including all base build plans
+     * (template, solution) and repositories (template, solution, test) and copy
+     * the content from the repositories of the zip file into the newly created
+     * repositories.
      *
      * @param programmingExercise The exercise that should be imported
-     * @param zipFile             The zip file containing the template, solution and test repositories plus a json file with the exercise configuration
-     * @param courseId            The id of the course the exercise should be imported into
+     * @param zipFile             The zip file containing the template, solution and
+     *                                test repositories plus a json file with the
+     *                                exercise configuration
+     * @param courseId            The id of the course the exercise should be
+     *                                imported into
      * @return The imported exercise (200)
      *         (403) if the user is not at least an editor in the target course.
      */
@@ -338,7 +375,7 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigAndBuildConfigElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         long start = System.nanoTime();
@@ -361,7 +398,9 @@ public class ProgrammingExerciseExportImportResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/export-instructor-repository/:repositoryType : sends a test, solution or template repository as a zip file
+     * GET
+     * /programming-exercises/:exerciseId/export-instructor-repository/:repositoryType
+     * : sends a test, solution or template repository as a zip file
      *
      * @param exerciseId     The id of the programming exercise
      * @param repositoryType The type of repository to zip and send
@@ -382,7 +421,9 @@ public class ProgrammingExerciseExportImportResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/export-instructor-auxiliary-repository/:repositoryType : sends an auxiliary repository as a zip file
+     * GET
+     * /programming-exercises/:exerciseId/export-instructor-auxiliary-repository/:repositoryType
+     * : sends an auxiliary repository as a zip file
      *
      * @param exerciseId   The id of the programming exercise
      * @param repositoryId The id of the auxiliary repository
@@ -427,10 +468,14 @@ public class ProgrammingExerciseExportImportResource {
     }
 
     /**
-     * POST /programming-exercises/:exerciseId/export-repos-by-participant-identifiers/:participantIdentifiers : sends all submissions from participantIdentifiers as zip
+     * POST
+     * /programming-exercises/:exerciseId/export-repos-by-participant-identifiers/:participantIdentifiers
+     * : sends all submissions from participantIdentifiers as zip
      *
      * @param exerciseId              the id of the exercise to get the repos from
-     * @param participantIdentifiers  the identifiers of the participants (student logins or team short names) for whom to zip the submissions, separated by commas
+     * @param participantIdentifiers  the identifiers of the participants (student
+     *                                    logins or team short names) for whom to zip
+     *                                    the submissions, separated by commas
      * @param repositoryExportOptions the options that should be used for the export
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
@@ -440,7 +485,7 @@ public class ProgrammingExerciseExportImportResource {
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
         if (repositoryExportOptions.exportAllParticipants()) {
@@ -477,11 +522,17 @@ public class ProgrammingExerciseExportImportResource {
     }
 
     /**
-     * POST /programming-exercises/:exerciseId/export-repos-by-participation-ids/:participationIds : sends all submissions from participation ids as zip
+     * POST
+     * /programming-exercises/:exerciseId/export-repos-by-participation-ids/:participationIds
+     * : sends all submissions from participation ids as zip
      *
      * @param exerciseId              the id of the exercise to get the repos from
-     * @param participationIds        the participationIds seperated via semicolon to get their submissions (used for double-blind assessment)
-     * @param repositoryExportOptions the options that should be used for the export. Export all students is not supported here!
+     * @param participationIds        the participationIds seperated via semicolon
+     *                                    to get their submissions (used for
+     *                                    double-blind assessment)
+     * @param repositoryExportOptions the options that should be used for the
+     *                                    export. Export all students is not supported
+     *                                    here!
      * @return ResponseEntity with status
      * @throws IOException if submissions can't be zippedRequestBody
      */
@@ -490,7 +541,7 @@ public class ProgrammingExerciseExportImportResource {
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
         // Only instructors or higher may override the anonymization setting
@@ -514,7 +565,9 @@ public class ProgrammingExerciseExportImportResource {
             ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         long start = System.nanoTime();
 
-        // TODO: in case we do not find participations for the given ids, we should inform the user in the client, that the student did not participate in the exercise.
+        // TODO: in case we do not find participations for the given ids, we should
+        // inform the user in the client, that the student did not participate in the
+        // exercise.
         if (exportedStudentParticipations.isEmpty()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
@@ -536,10 +589,12 @@ public class ProgrammingExerciseExportImportResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/export-student-requested-repository : sends a solution repository as a zip file without .git directory.
+     * GET /programming-exercises/:exerciseId/export-student-requested-repository :
+     * sends a solution repository as a zip file without .git directory.
      *
      * @param exerciseId   The id of the programming exercise
-     * @param includeTests flag that indicates whether the tests should also be exported
+     * @param includeTests flag that indicates whether the tests should also be
+     *                         exported
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
@@ -564,10 +619,13 @@ public class ProgrammingExerciseExportImportResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/export-student-repository/:participationId : Exports the repository belonging to a participation as a zip file.
+     * GET
+     * /programming-exercises/:exerciseId/export-student-repository/:participationId
+     * : Exports the repository belonging to a participation as a zip file.
      *
      * @param exerciseId      The id of the programming exercise
-     * @param participationId The id of the student participation for which to export the repository.
+     * @param participationId The id of the student participation for which to
+     *                            export the repository.
      * @return A ResponseEntity containing the zipped repository.
      * @throws IOException If the repository could not be zipped.
      */
@@ -575,7 +633,7 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportStudentRepository(@PathVariable long exerciseId, @PathVariable long participationId) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         var studentParticipation = programmingExercise.getStudentParticipations().stream().filter(p -> p.getId().equals(participationId))
                 .map(p -> (ProgrammingExerciseStudentParticipation) p).findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("No student participation with id " + participationId + " was found for programming exercise " + exerciseId));

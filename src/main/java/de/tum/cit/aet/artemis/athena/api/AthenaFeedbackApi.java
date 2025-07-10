@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Profile(PROFILE_ATHENA)
 @Controller
+@Lazy
 public class AthenaFeedbackApi extends AbstractAthenaApi {
 
     private final AthenaFeedbackSendingService athenaFeedbackSendingService;
@@ -37,8 +39,8 @@ public class AthenaFeedbackApi extends AbstractAthenaApi {
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
     }
 
-    public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded) throws NetworkingException {
-        return athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(exercise, submission, !isGraded);
+    public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isPreliminary) throws NetworkingException {
+        return athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(exercise, submission, isPreliminary);
     }
 
     public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isGraded)

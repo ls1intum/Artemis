@@ -65,7 +65,12 @@
     @if (isFeedbackView && showResultHistory) {
         <div class="mb-4">
             <div id="result-history" class="row mb-2">
-                <jhi-result-history [results]="sortedResultHistory" [exercise]="modelingExercise" [selectedResultId]="submission.latestResult?.id!" />
+                <jhi-result-history
+                    [results]="sortedResultHistory"
+                    [exercise]="modelingExercise"
+                    [participationInput]="participation"
+                    [selectedResultId]="submission.latestResult?.id!"
+                />
             </div>
         </div>
     }

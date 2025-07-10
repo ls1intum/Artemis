@@ -8,7 +8,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { AsyncPipe, NgStyle } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
-import { ModuleType } from 'app/assessment/shared/entities/athena.model';
+import { AthenaModuleMode } from 'app/assessment/shared/entities/athena.model';
 
 @Component({
     selector: 'jhi-exercise-preliminary-feedback-options',
@@ -40,7 +40,7 @@ export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnCh
 
     ngOnInit(): void {
         const courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
-        this.athenaService.getAvailableModules(courseId, this.exercise(), ModuleType.PRELIMINARY_FEEDBACK).subscribe((modules) => {
+        this.athenaService.getAvailableModules(courseId, this.exercise(), AthenaModuleMode.PRELIMINARY_FEEDBACK).subscribe((modules) => {
             this.availableAthenaModules = modules;
             this.modulesAvailable = modules.length > 0;
             this.cdr.detectChanges();

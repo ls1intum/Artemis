@@ -94,3 +94,13 @@ export const getExercise = (participation: Participation): Exercise | undefined 
         }
     }
 };
+
+export const getLatestSubmission = (participation: Participation): Submission | undefined => {
+    if (participation.submissions && participation.submissions.length === 1) {
+        return participation.submissions[0];
+    } else if (participation.submissions && participation.submissions.length > 1) {
+        participation.submissions.sort((a, b) => (b.id ?? 0) - (a.id ?? 0)); // sort by id descending
+        return participation.submissions[0];
+    }
+    return undefined;
+};

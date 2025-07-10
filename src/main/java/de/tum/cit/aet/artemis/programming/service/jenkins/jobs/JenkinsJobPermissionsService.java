@@ -5,11 +5,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import java.io.IOException;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 
+@Lazy
 @Service
 @Profile(PROFILE_JENKINS)
 public class JenkinsJobPermissionsService {

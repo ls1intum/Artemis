@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.test_repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 
+@Lazy
 @Repository
 @Primary
 public interface StudentParticipationTestRepository extends StudentParticipationRepository {
@@ -33,9 +35,8 @@ public interface StudentParticipationTestRepository extends StudentParticipation
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.assessor
             WHERE p.id = :participationId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
-    Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsAssessorsById(@Param("participationId") long participationId);
+    Optional<StudentParticipation> findWithEagerSubmissionsAndResultsAssessorsById(@Param("participationId") long participationId);
 
     @Query("""
             SELECT p
@@ -44,7 +45,6 @@ public interface StudentParticipationTestRepository extends StudentParticipation
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks
             WHERE p.id = :participationId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     Optional<StudentParticipation> findWithEagerResultsAndFeedbackById(@Param("participationId") long participationId);
 }
