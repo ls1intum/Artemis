@@ -421,6 +421,10 @@ public class BuildAgentDockerService {
      */
     private Set<String> getUnusedDockerImages() {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+        if (dockerClient == null) {
+            log.info("Docker client is not available. Cannot get unused Docker images. If the build agent is paused, this is expected.");
+            return Set.of();
+        }
 
         // Get list of all running containers
         List<Container> containers = dockerClient.listContainersCmd().exec();
