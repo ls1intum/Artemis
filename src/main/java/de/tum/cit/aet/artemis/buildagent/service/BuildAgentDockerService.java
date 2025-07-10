@@ -126,7 +126,13 @@ public class BuildAgentDockerService {
     public void cleanUpContainers() {
         List<Container> danglingBuildContainers;
         log.info("Start cleanup dangling build containers");
+
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+        if (dockerClient == null) {
+            log.info("Docker client is not available. Cannot clean up dangling build containers. If the build agent is paused, this is expected.");
+            return;
+        }
+
         if (isFirstCleanup) {
             // Cleanup all dangling build containers after the application has started
             try {
@@ -352,6 +358,10 @@ public class BuildAgentDockerService {
         }
 
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+        if (dockerClient == null) {
+            log.info("Docker client is not available. Cannot check disk space for Docker image cleanup. If the build agent is paused, this is expected.");
+            return;
+        }
 
         try {
             // Get the Docker root directory to check disk space.
