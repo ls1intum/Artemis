@@ -15,7 +15,7 @@ import {
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject, input, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, computed, inject, input, signal } from '@angular/core';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -163,6 +163,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     private currentRelatedEntityId = signal<number | undefined>(undefined);
     private currentChatMode = signal<ChatServiceMode | undefined>(undefined);
+    relatedEntityRoute = computed<string | undefined>(() => this.computeRelatedEntityRoute(this.currentChatMode(), this.currentRelatedEntityId()));
+    relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.currentChatMode()));
     currentSessionId: number | undefined;
     chatSessions: IrisSessionDTO[] = [];
     messages: IrisMessage[] = [];
@@ -553,9 +555,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.chatService.clearChat();
     }
 
-    getRelatedEntityRoute(): string | undefined {
-        const currentChatMode = this.currentChatMode();
-        const currentRelatedEntityId = this.currentRelatedEntityId();
+    private computeRelatedEntityRoute(currentChatMode: ChatServiceMode | undefined, currentRelatedEntityId: number | undefined): string | undefined {
         if (!currentChatMode || !currentRelatedEntityId) {
             return undefined;
         }
@@ -569,8 +569,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         }
     }
 
-    getRelatedEntityLinkButtonLabel(): string | undefined {
-        const currentChatMode = this.currentChatMode();
+    private computeRelatedEntityLinkButtonLabel(currentChatMode: ChatServiceMode | undefined): string | undefined {
         switch (currentChatMode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
                 return `artemisApp.exerciseChatbot.goToRelatedEntityButton.exerciseLabel`;

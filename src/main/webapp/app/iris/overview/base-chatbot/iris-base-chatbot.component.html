@@ -31,13 +31,11 @@
         }
     </div>
     <div class="d-flex gap-2">
-        @let relatedEntityRoute = getRelatedEntityRoute();
-        @let relatedEntityLinkButtonLabel = getRelatedEntityLinkButtonLabel();
-        @if (relatedEntityRoute && relatedEntityLinkButtonLabel && isChatHistoryAvailable()) {
+        @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {
             <div class="toolbox">
-                <button [routerLink]="relatedEntityRoute" [queryParamsHandling]="'preserve'" class="related-entity-button header-control">
+                <button [routerLink]="relatedEntityRoute()" [queryParamsHandling]="'preserve'" class="related-entity-button header-control">
                     <div>
-                        {{ relatedEntityLinkButtonLabel | artemisTranslate }}
+                        {{ relatedEntityLinkButtonLabel() | artemisTranslate }}
                     </div>
                     <fa-icon [icon]="faLink" />
                 </button>
