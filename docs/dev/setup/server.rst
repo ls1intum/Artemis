@@ -264,19 +264,23 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 Hyperion Service
 ^^^^^^^^^^^^^^^^
 
-Hyperion is an AI-powered Edutelligence microservice for programming exercise creation assistance.
+**Hyperion** is an AI-driven microservice for programming exercise creation assistance, part of the EduTelligence suite. It provides AI-powered tools to help instructors create high-quality programming exercises.
 
 Prerequisites
 """""""""""""
 
-1. **Deploy Hyperion Service** (external dependency)
+1. **Deploy Hyperion Service**
 
-   - Deploy Hyperion service separately (see `Hyperion documentation <https://github.com/ls1intum/edutelligence/tree/main/hyperion>`__)
-   - Ensure it's accessible from Artemis server
+   Deploy the Hyperion service separately using Docker Compose (see `Hyperion documentation <https://github.com/ls1intum/edutelligence/tree/main/hyperion>`__):
+
+   .. code-block:: bash
+
+      # For local development
+      docker compose -f compose.local.yaml up -d
 
 2. **Enable Profile**
 
-   Add ``hyperion`` to active profiles in your development environment:
+   Add ``hyperion`` to your development profiles:
 
    .. code-block:: bash
 
@@ -285,113 +289,7 @@ Prerequisites
 Configuration
 """""""""""""
 
-Basic Configuration
-'''''''''''''''''''
+The Hyperion service is already configured in the default configuration files. For local development,
+the default settings should work out of the box.
 
-Update ``application-local.yml`` for development:
-
-.. code-block:: yaml
-
-   # gRPC client configuration for Hyperion service
-   # See: https://grpc-ecosystem.github.io/grpc-spring/en/client/configuration.html
-   grpc:
-       client:
-           hyperion:
-               address: static://localhost:50051  # Hyperion service address
-               negotiationType: PLAINTEXT         # Use TLS in production
-               enableKeepAlive: true
-               keepAliveWithoutCalls: true
-               keepAliveTime: 30s
-               keepAliveTimeout: 5s
-               maxInboundMessageSize: 16MB
-
-   # Hyperion business logic configuration
-   artemis:
-       hyperion:
-           timeouts:
-               consistency-check: 5m              # Timeout for consistency checks
-               rewrite-problem-statement: 2m      # Timeout for problem statement rewriting
-
-Production Configuration
-''''''''''''''''''''''''
-
-For production deployments, enable TLS and configure proper security in ``application-prod.yml``:
-
-.. code-block:: yaml
-
-   # Production gRPC configuration with TLS
-   # See: https://grpc-ecosystem.github.io/grpc-spring/en/client/security.html
-   grpc:
-       client:
-           hyperion:
-               address: hyperion.domain.com:8080
-               negotiationType: TLS
-               security:                          # Mutual Certificate Authentication
-                   clientAuthEnabled: true
-                   certificateChain: file:certificates/client.crt
-                   privateKey: file:certificates/client.key
-                   trustCertCollection: file:certificates/server-ca.crt
-               enableKeepAlive: true
-               keepAliveWithoutCalls: true
-               keepAliveTime: 30s
-               keepAliveTimeout: 5s
-               maxInboundMessageSize: 16MB
-
-   # Production timeout configuration (optional, uses defaults if not specified)
-   artemis:
-       hyperion:
-           timeouts:
-               consistency-check: 10m             # Longer timeout for production
-               rewrite-problem-statement: 3m
-
-Configuration Reference
-'''''''''''''''''''''''
-
-**Timeout Configuration**
-
-All timeout values support standard Spring Boot duration formats:
-
-- Seconds: ``30s``, ``45s``
-- Minutes: ``2m``, ``5m``, ``10m``
-- Hours: ``1h``, ``2h``
-- ISO-8601: ``PT2M``, ``PT5M30S``
-
-.. list-table::
-   :header-rows: 1
-   :widths: 40 20 40
-
-   * - Property
-     - Default
-     - Description
-   * - ``artemis.hyperion.timeouts.consistency-check``
-     - ``5m``
-     - Timeout for exercise consistency check operations
-   * - ``artemis.hyperion.timeouts.rewrite-problem-statement``
-     - ``2m``
-     - Timeout for problem statement rewriting operations
-
-**gRPC Configuration**
-
-For detailed gRPC client configuration options, refer to the `Spring gRPC documentation <https://grpc-ecosystem.github.io/grpc-spring/en/client/configuration.html>`__.
-
-Common configuration properties:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 40 20 40
-
-   * - Property
-     - Example
-     - Description
-   * - ``grpc.client.hyperion.address``
-     - ``localhost:50051``
-     - Hyperion service address
-   * - ``grpc.client.hyperion.negotiationType``
-     - ``PLAINTEXT`` / ``TLS``
-     - Connection security type
-   * - ``grpc.client.hyperion.maxInboundMessageSize``
-     - ``16MB``
-     - Maximum message size
-   * - ``grpc.client.hyperion.keepAliveTime``
-     - ``30s``
-     - Keep-alive ping interval
+For production setup and advanced configuration options, see the :doc:`admin setup documentation <../../admin/setup/hyperion>`.

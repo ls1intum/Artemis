@@ -19,43 +19,22 @@ import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import io.grpc.StatusRuntimeException;
 
 /**
- * Base service for Hyperion gRPC operations providing common functionality.
- * This class provides shared utilities for all Hyperion service implementations.
- *
- * @see <a href="https://grpc.io/docs/guides/status-codes/">gRPC Status Codes</a>
- * @see <a href="https://tools.ietf.org/html/rfc7807">RFC 7807 Problem Details</a>
+ * Base service for Hyperion gRPC operations.
+ * Provides common exception handling and utility methods for gRPC services.
  */
-@Profile(PROFILE_HYPERION)
 @Service
 @Lazy
+@Profile(PROFILE_HYPERION)
 public abstract class AbstractHyperionGrpcService {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractHyperionGrpcService.class);
 
     /**
-     * Handles common gRPC exceptions and converts them to appropriate HTTP status exceptions.
-     * Maps gRPC status codes to corresponding HTTP status codes.
+     * Maps gRPC status codes to appropriate HTTP exceptions.
      *
-     * <p>
-     * Status Code Mapping (per gRPC ↔ HTTP standards):
-     * <ul>
-     * <li>INVALID_ARGUMENT, FAILED_PRECONDITION, OUT_OF_RANGE → 400 Bad Request</li>
-     * <li>NOT_FOUND → 404 Not Found</li>
-     * <li>ALREADY_EXISTS, ABORTED → 409 Conflict</li>
-     * <li>PERMISSION_DENIED → 403 Forbidden</li>
-     * <li>UNAUTHENTICATED → 401 Unauthorized</li>
-     * <li>RESOURCE_EXHAUSTED → 429 Too Many Requests</li>
-     * <li>UNIMPLEMENTED → 501 Not Implemented</li>
-     * <li>UNAVAILABLE → 503 Service Unavailable</li>
-     * <li>DEADLINE_EXCEEDED → 504 Gateway Timeout</li>
-     * <li>CANCELLED → 499 Client Closed Request (or 400 as fallback)</li>
-     * <li>INTERNAL, DATA_LOSS → 500 Internal Server Error</li>
-     * </ul>
-     *
-     * @param operation description of the operation that failed (for logging and error context)
-     * @param e         the gRPC exception to handle
-     * @throws HttpStatusException with appropriate HTTP status code and structured error details
-     * @see <a href="https://grpc.io/docs/guides/status-codes/">gRPC Status Codes Documentation</a>
+     * @param operation description of the operation that failed
+     * @param e         the gRPC status exception
+     * @throws HttpStatusException mapped HTTP exception
      */
     protected void handleGrpcException(String operation, Exception e) {
         if (e instanceof StatusRuntimeException grpcException) {

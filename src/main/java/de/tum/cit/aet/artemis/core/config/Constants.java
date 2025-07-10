@@ -498,10 +498,18 @@ public final class Constants {
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
-    /**
-     * The name of the gRPC channel used to connect to the Hyperion service.
-     */
-    public static final String GRPC_CHANNEL_HYPERION = "hyperion";
+    // gRPC channel configuration
+    public static final String GRPC_CHANNEL_HYPERION = "hyperionChannel";
+
+    public static final long GRPC_KEEP_ALIVE_TIME_SECONDS = 30;
+
+    public static final long GRPC_KEEP_ALIVE_TIMEOUT_SECONDS = 5;
+
+    public static final long GRPC_IDLE_TIMEOUT_MINUTES = 5;
+
+    public static final int GRPC_MAX_INBOUND_MESSAGE_SIZE = 16 * 1024 * 1024; // 16MB
+
+    public static final int GRPC_MAX_RETRY_ATTEMPTS = 3;
 
     private Constants() {
     }

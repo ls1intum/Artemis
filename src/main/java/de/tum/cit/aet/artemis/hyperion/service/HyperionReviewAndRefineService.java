@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.GRPC_CHANNEL_HYPERION;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 
 import java.io.IOException;
@@ -27,28 +26,27 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import net.devh.boot.grpc.client.inject.GrpcClient;
 
 /**
  * Service for reviewing and refining programming exercises using Hyperion.
  * Provides consistency checks and problem statement rewriting.
  */
-@Profile(PROFILE_HYPERION)
 @Service
 @Lazy
+@Profile(PROFILE_HYPERION)
 public class HyperionReviewAndRefineService extends AbstractHyperionGrpcService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionReviewAndRefineService.class);
 
-    @GrpcClient(GRPC_CHANNEL_HYPERION)
-    private ReviewAndRefineBlockingStub reviewAndRefineStub;
+    private final ReviewAndRefineBlockingStub reviewAndRefineStub;
 
     private final RepositoryService repositoryService;
 
     private final HyperionConfigurationProperties hyperionConfigurationProperties;
 
-    public HyperionReviewAndRefineService(RepositoryService repositoryService, HyperionConfigurationProperties hyperionConfigurationProperties) {
-        super();
+    public HyperionReviewAndRefineService(ReviewAndRefineBlockingStub reviewAndRefineStub, RepositoryService repositoryService,
+            HyperionConfigurationProperties hyperionConfigurationProperties) {
+        this.reviewAndRefineStub = reviewAndRefineStub;
         this.repositoryService = repositoryService;
         this.hyperionConfigurationProperties = hyperionConfigurationProperties;
     }

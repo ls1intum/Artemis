@@ -331,8 +331,10 @@ dependencies {
     implementation "io.grpc:grpc-protobuf"
     implementation "io.grpc:grpc-stub"
     implementation "com.google.protobuf:protobuf-java"
+    implementation "io.grpc:grpc-services"
     compileOnly "jakarta.annotation:jakarta.annotation-api:1.3.5" // Java 9+ compatibility - Do NOT update to 2.0.0
     testImplementation "io.grpc:grpc-testing"
+    testImplementation "io.grpc:grpc-inprocess"
 
     // Required for synchronization between nodes and build agents (LocalCI)
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"

@@ -129,6 +129,12 @@ artemis:
         min: "2.0.0"
         recommended: "2.1.0"
 
+    # TODO: !!!!! REMOVE THIS BEFORE MERGING START !!!!!
+    hyperion:
+        host: hyperion.aet.cit.tum.de
+        port: 8080
+    # TODO: !!!!! REMOVE THIS BEFORE MERGING END !!!!!
+
 
 
 management:
@@ -367,14 +373,3 @@ eureka:
             git-commit: ${git.commit.id.abbrev:}
             git-branch: ${git.branch:}
 
-# TODO: REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!
-grpc:
-  client:
-    hyperion:
-      address: hyperion.aet.cit.tum.de:8080  # Default for development
-      negotiationType: PLAINTEXT  # Override to TLS in production profiles
-      enableKeepAlive: true
-      keepAliveWithoutCalls: true
-      keepAliveTime: 30s
-      keepAliveTimeout: 5s
-      maxInboundMessageSize: 16MB
