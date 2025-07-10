@@ -773,11 +773,24 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('Related entity button', () => {
-        it('should display correct related entity button when lecture session selected', fakeAsync(() => {
+        const setupAndVerifyRelatedEntityButton = (session: IrisSessionDTO, expectedLinkFragment: string) => {
             jest.spyOn(chatService, 'switchToSession').mockImplementation(() => {
                 component['currentChatMode'].set(session.chatMode);
                 component['currentRelatedEntityId'].set(session.entityId);
             });
+
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+
+            chatService.switchToSession(session);
+            fixture.detectChanges();
+            tick();
+
+            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            expect(relatedEntityButton).not.toBeNull();
+            expect(relatedEntityButton.getAttribute('ng-reflect-router-link')).toContain(expectedLinkFragment);
+        };
+
+        it('should display correct related entity button when lecture session selected', fakeAsync(() => {
             const session: IrisSessionDTO = {
                 id: 10,
                 creationDate: new Date(),
@@ -785,15 +798,8 @@ describe('IrisBaseChatbotComponent', () => {
                 entityId: 55,
                 entityName: 'Lecture 1',
             };
-            fixture.componentRef.setInput('isChatHistoryAvailable', true);
 
-            chatService.switchToSession(session);
-            fixture.detectChanges();
-            tick();
-
-            const relatedButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
-            expect(relatedButton).not.toBeNull();
-            expect(relatedButton.getAttribute('ng-reflect-router-link')).toContain('../lectures/55');
+            setupAndVerifyRelatedEntityButton(session, '../lectures/55');
         }));
 
         it('should display correct related entity button when programming exercise session selected', fakeAsync(() => {
@@ -804,19 +810,8 @@ describe('IrisBaseChatbotComponent', () => {
                 entityId: 99,
                 entityName: 'Exercise 1',
             };
-            jest.spyOn(chatService, 'switchToSession').mockImplementation(() => {
-                component['currentChatMode'].set(session.chatMode);
-                component['currentRelatedEntityId'].set(session.entityId);
-            });
-            fixture.componentRef.setInput('isChatHistoryAvailable', true);
 
-            chatService.switchToSession(session);
-            fixture.detectChanges();
-            tick();
-
-            const relatedButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
-            expect(relatedButton).not.toBeNull();
-            expect(relatedButton.getAttribute('ng-reflect-router-link')).toContain('../exercises/99');
+            setupAndVerifyRelatedEntityButton(session, '../exercises/99');
         }));
     });
 });
