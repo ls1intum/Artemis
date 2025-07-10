@@ -14,7 +14,7 @@
             "SyntaxTree": "Syntax Tree",
             "Flowchart": "Flowchart",
             "BPMN": "BPMN",
-            "SequentialFunctionChart": "Sequential Function Chart"
+            "Sfc": "Sequential Function Chart"
         }
     }
 }
