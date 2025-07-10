@@ -17,6 +17,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { Router } from '@angular/router';
 import { captureException } from '@sentry/angular';
+import dayjs from 'dayjs/esm';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -296,12 +297,12 @@ export class IrisChatService implements OnDestroy {
     private handleNewSession() {
         return {
             next: (newIrisSession: IrisSession) => {
-                // eslint-disable-next-line no-undef
-                console.log('New Iris session started:', newIrisSession);
                 const currentSessions = this.chatSessions.getValue();
-                // eslint-disable-next-line no-undef
-                console.log('Current Session sessions started:', currentSessions);
-                const isNewSessionIncludedInHistory = currentSessions.some((session) => session.id === newIrisSession.id);
+                const latestDisplayedSession: IrisSessionDTO | undefined = currentSessions?.length > 0 ? currentSessions[0] : undefined;
+                const isNewSessionIncludedInHistory =
+                    latestDisplayedSession !== undefined &&
+                    (latestDisplayedSession.id === newIrisSession.id || dayjs(newIrisSession.creationDate).isBefore(dayjs(latestDisplayedSession.creationDate)));
+
                 if (!isNewSessionIncludedInHistory) {
                     this.latestStartedSession = {
                         id: newIrisSession.id,
@@ -411,15 +412,9 @@ export class IrisChatService implements OnDestroy {
             this.chatSessionSubscription?.unsubscribe();
             this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
                 const sessionsWithMessages = sessions ?? [];
-                const displayedSessions = [...sessionsWithMessages];
-                // eslint-disable-next-line no-undef
-                console.log('loadChatSessions displayedSessions', displayedSessions);
-                // eslint-disable-next-line no-undef
-                console.log('latestStartedSession', latestStartedSession);
+                let displayedSessions = [...sessionsWithMessages];
                 if (latestStartedSession && !displayedSessions.some((session) => session.id === latestStartedSession.id)) {
-                    // eslint-disable-next-line no-undef
-                    console.log('pushing latest session', latestStartedSession);
-                    displayedSessions.push(latestStartedSession);
+                    displayedSessions = [latestStartedSession, ...displayedSessions];
                 }
                 this.chatSessions.next(displayedSessions);
             });
