@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.li
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryListener;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryRemovedEvent;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryUpdatedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapListener;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
 
 /**
@@ -78,6 +79,7 @@ public class LocalCIEventListenerService {
         distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
         distributedDataAccessService.getDistributedProcessingJobs().addEntryListener(new ProcessingBuildJobItemListener());
         distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener());
+        distributedDataAccessService.getDistributedDockerImageCleanupInfo().addListener(new DockerImageCleanupInfoListener());
     }
 
     /**
@@ -195,6 +197,24 @@ public class LocalCIEventListenerService {
                     && newValue.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED) {
                 notifyAdminAboutAgentPausing(newValue);
             }
+        }
+    }
+
+    private static class DockerImageCleanupInfoListener implements MapListener {
+
+        @Override
+        public void entryAdded() {
+            log.debug("Docker image cleanup info added");
+        }
+
+        @Override
+        public void entryRemoved() {
+            log.debug("Docker image cleanup info removed");
+        }
+
+        @Override
+        public void entryUpdated() {
+            log.debug("Docker image cleanup info updated");
         }
     }
 
