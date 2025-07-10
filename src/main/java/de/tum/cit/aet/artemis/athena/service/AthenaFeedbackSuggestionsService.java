@@ -157,11 +157,14 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Calls the remote Athena service to get feedback suggestions for a given submission.
+     * Calls the remote Athena service to get feedback suggestions for a given
+     * submission.
      *
      * @param exercise      the {@link TextExercise} the suggestions are fetched for
-     * @param submission    the {@link TextSubmission} the suggestions are fetched for
-     * @param isPreliminary the {@link Boolean} should Athena generate grade suggestions or not
+     * @param submission    the {@link TextSubmission} the suggestions are fetched
+     *                          for
+     * @param isPreliminary the {@link Boolean} should Athena generate grade
+     *                          suggestions or not
      * @return a list of feedback suggestions
      */
     public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isPreliminary) throws NetworkingException {

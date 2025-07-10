@@ -20,12 +20,14 @@ import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/a
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, PRELIMINARY_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -55,6 +57,9 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
+
+    public ParticipationUtil = Participation;
+
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
@@ -87,6 +92,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     highlightDifferences: boolean;
     @Input()
     disableAutoSave = false;
+    @Input()
+    disableReopenFeedbackButton = true;
 
     @Output()
     onCommitStateChange = new EventEmitter<CommitState>();
@@ -102,6 +109,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     onDiscardSuggestion = new EventEmitter<Feedback>();
     @Input()
     course?: Course;
+    @Input()
+    latestResult?: Result;
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 
@@ -127,9 +136,12 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        // Update file badges when feedback suggestions change
+        // Update file badges when feedback or feedback suggestions change
         if (changes.feedbackSuggestions) {
-            this.updateFileBadges();
+            this.updateFileBadgesForFeedbackSuggestions();
+        }
+        if (changes.latestResult) {
+            this.updateFileBadgesForPreliminaryFeedback();
         }
     }
 
@@ -160,9 +172,9 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     }
 
     /**
-     * Update the file badges for the code editor (currently only feedback suggestions)
+     * Update the file badges for the code editor for feedback suggestions
      */
-    updateFileBadges() {
+    updateFileBadgesForFeedbackSuggestions() {
         this.fileBadges = {};
         // Create badges for feedback suggestions
         // Get file paths from feedback suggestions:
@@ -173,6 +185,27 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
             // Count the number of suggestions for this file
             const suggestionsCount = this.feedbackSuggestions.filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
             this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, suggestionsCount)];
+        }
+    }
+
+    /**
+     * Update the file badges for the code editor for preliminary feedback
+     */
+    updateFileBadgesForPreliminaryFeedback() {
+        this.fileBadges = {};
+        if (this.latestResult?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
+            return;
+        }
+        // Create badges for preliminary feedback
+        const feedbacks = this.latestResult?.feedbacks ?? [];
+        // Count only preliminary feedback
+        const filteredFeedbacks = feedbacks.filter((feedback) => feedback.text?.startsWith(PRELIMINARY_FEEDBACK_IDENTIFIER));
+        // Get file paths from feedback:
+        const filePaths = filteredFeedbacks.map((feedback) => Feedback.getReferenceFilePath(feedback)).filter((filePath) => filePath !== undefined) as string[];
+        for (const filePath of filePaths) {
+            // Count the number of feedback for this file
+            const feedbackCount = filteredFeedbacks.filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
+            this.fileBadges[filePath] = [new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, feedbackCount)];
         }
     }
 
@@ -331,4 +364,14 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         }
         return true;
     }
+
+    /**
+     * Forces the code editor to refresh the feedback it shows.
+     * @param fileName The name of the file
+     */
+    onReopenFeedback(fileName: string) {
+        this.monacoEditor.refreshFeedback(fileName);
+    }
+
+    protected readonly Participation = Participation;
 }

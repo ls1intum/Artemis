@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { faEdit, faFile, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faEye, faFile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorFileBrowserNodeComponent } from 'app/programming/manage/code-editor/file-browser/node/code-editor-file-browser-node.component';
 import { FileBadge } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -15,6 +15,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, NgClass, CodeEditorFileBrowserBadgeComponent, ArtemisTranslatePipe],
 })
 export class CodeEditorFileBrowserFileComponent extends CodeEditorFileBrowserNodeComponent {
+    @Input() disableReopenFeedbackButton: boolean = true;
     @Input() disableActions: boolean;
     @Input() hasChanges = false;
     @Input() badges: FileBadge[] = [];
@@ -23,4 +24,5 @@ export class CodeEditorFileBrowserFileComponent extends CodeEditorFileBrowserNod
     faTrash = faTrash;
     faEdit = faEdit;
     faFile = faFile;
+    faEye = faEye;
 }

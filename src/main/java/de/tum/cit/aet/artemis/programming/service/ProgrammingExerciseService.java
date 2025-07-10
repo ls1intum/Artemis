@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions.AuxiliaryRepositories;
 import static de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions.GradingCriteria;
-import static de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository.SolutionParticipationFetchOptions;
-import static de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository.TemplateParticipationFetchOptions;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -26,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -43,7 +42,9 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository.SolutionParticipationFetchOptions;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository.TemplateParticipationFetchOptions;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -68,7 +69,8 @@ public class ProgrammingExerciseService {
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ResultRepository resultRepository,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ExerciseSpecificationService exerciseSpecificationService) {
+            ExerciseSpecificationService exerciseSpecificationService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
+
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -93,15 +95,20 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Search for all programming exercises fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged,
-     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
-     * have to send hundreds/thousands of exercises if there are that many in Artemis.
+     * Search for all programming exercises fitting a
+     * {@link SearchTermPageableSearchDTO search query}. The result is paged,
+     * meaning that there is only a predefined portion of the result returned to the
+     * user, so that the server doesn't
+     * have to send hundreds/thousands of exercises if there are that many in
+     * Artemis.
      *
-     * @param search         The search query defining the search term and the size of the returned page
+     * @param search         The search query defining the search term and the size
+     *                           of the returned page
      * @param isCourseFilter Whether to search in the courses for exercises
      * @param isExamFilter   Whether to search in the groups for exercises
      * @param user           The user for whom to fetch all available exercises
-     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     * @return A wrapper object containing a list of all found exercises and the
+     *         total number of pages
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
             final User user) {
@@ -115,14 +122,18 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Search for all programming exercises with SCA enabled and with a specific programming language.
+     * Search for all programming exercises with SCA enabled and with a specific
+     * programming language.
      *
-     * @param search              The search query defining the search term and the size of the returned page
+     * @param search              The search query defining the search term and the
+     *                                size of the returned page
      * @param isCourseFilter      Whether to search in the courses for exercises
      * @param isExamFilter        Whether to search in the groups for exercises
      * @param user                The user for whom to fetch all available exercises
-     * @param programmingLanguage The result will only include exercises in this language
-     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     * @param programmingLanguage The result will only include exercises in this
+     *                                language
+     * @return A wrapper object containing a list of all found exercises and the
+     *         total number of pages
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllWithSCAOnPageWithSize(SearchTermPageableSearchDTO<String> search, boolean isCourseFilter, boolean isExamFilter,
             ProgrammingLanguage programmingLanguage, User user) {
@@ -144,13 +155,17 @@ public class ProgrammingExerciseService {
     /**
      * Load a programming exercise with eager
      * - auxiliary repositories
-     * - template participation with submissions (and results if withSubmissionResults is true)
-     * - solution participation with submissions (and results if withSubmissionResults is true)
+     * - template participation with submissions (and results if
+     * withSubmissionResults is true)
+     * - solution participation with submissions (and results if
+     * withSubmissionResults is true)
      * - grading criteria (only if withGradingCriteria is true)
      *
      * @param exerciseId            the ID of the programming exercise to load
-     * @param withSubmissionResults a flag indicating whether to include submission results
-     * @param withGradingCriteria   a flag indicating whether to include grading criteria
+     * @param withSubmissionResults a flag indicating whether to include submission
+     *                                  results
+     * @param withGradingCriteria   a flag indicating whether to include grading
+     *                                  criteria
      * @return the loaded programming exercise entity
      */
     public ProgrammingExercise loadProgrammingExercise(long exerciseId, boolean withSubmissionResults, boolean withGradingCriteria) {
@@ -159,7 +174,8 @@ public class ProgrammingExerciseService {
                 : Set.of(AuxiliaryRepositories);
         var programmingExercise = programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
 
-        // 2. Load template and solution participation, either with only submissions or with submissions and results
+        // 2. Load template and solution participation, either with only submissions or
+        // with submissions and results
         final var templateFetchOptions = withSubmissionResults ? Set.of(TemplateParticipationFetchOptions.SubmissionsAndResults)
                 : Set.of(TemplateParticipationFetchOptions.Submissions);
         final var templateParticipation = templateProgrammingExerciseParticipationRepository.findByExerciseIdWithDynamicFetchElseThrow(exerciseId, templateFetchOptions);
@@ -187,11 +203,15 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded template and solution participation,
-     * including their latest submission with the latest result with feedback and test cases.
+     * Find a programming exercise by its id, with eagerly loaded template and
+     * solution participation,
+     * including their latest submission with the latest result with feedback and
+     * test cases.
      * <p>
-     * NOTICE: this method is quite expensive because it loads all feedback and test cases,
-     * IMPORTANT: you should generally avoid using this query except you really need all information!!
+     * NOTICE: this method is quite expensive because it loads all feedback and test
+     * cases,
+     * IMPORTANT: you should generally avoid using this query except you really need
+     * all information!!
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
@@ -201,7 +221,8 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId)
             throws EntityNotFoundException {
         ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(programmingExerciseId);
-        // if there are no submissions we can neither access a submission nor does it make sense to load a result
+        // if there are no submissions we can neither access a submission nor does it
+        // make sense to load a result
         if (!programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().isEmpty()) {
             Optional<Result> latestResultForLatestSubmissionOfTemplate = resultRepository
                     .findLatestResultWithFeedbacksAndTestcasesForSubmission(programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().getId());
@@ -228,11 +249,15 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Retrieves all programming exercises for a given course, including their categories, template and solution participations with their latest submissions and results.
-     * This method avoids one big and expensive query by splitting the retrieval into multiple smaller queries.
+     * Retrieves all programming exercises for a given course, including their
+     * categories, template and solution participations with their latest
+     * submissions and results.
+     * This method avoids one big and expensive query by splitting the retrieval
+     * into multiple smaller queries.
      *
      * @param courseId the course the returned programming exercises belong to.
-     * @return all exercises for the given course with only the latest result and latest submission for solution and template each (if present).
+     * @return all exercises for the given course with only the latest result and
+     *         latest submission for solution and template each (if present).
      */
     public List<ProgrammingExercise> findByCourseIdWithCategoriesLatestSubmissionResultForTemplateAndSolutionParticipation(long courseId) {
         List<ProgrammingExercise> programmingExercisesWithCategories = programmingExerciseRepository.findAllWithCategoriesByCourseId(courseId);

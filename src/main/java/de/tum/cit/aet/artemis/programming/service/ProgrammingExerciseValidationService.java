@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -85,10 +86,12 @@ public class ProgrammingExerciseValidationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
+
     public ProgrammingExerciseValidationService(AuxiliaryRepositoryService auxiliaryRepositoryService, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService,
-            Optional<VersionControlService> versionControlService1) {
+            Optional<VersionControlService> versionControlService1, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionPolicyService = submissionPolicyService;
@@ -96,6 +99,7 @@ public class ProgrammingExerciseValidationService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
         this.versionControlService = versionControlService1;
+        this.athenaFeedbackApi = athenaFeedbackApi;
     }
 
     /**
@@ -111,7 +115,9 @@ public class ProgrammingExerciseValidationService {
 
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
-        programmingExercise.validateSettingsForFeedbackRequest();
+        if (!this.athenaFeedbackApi.isPresent()) {
+            programmingExercise.validateSettingsForManualFeedbackRequest();
+        }
         validateCustomCheckoutPaths(programmingExercise);
         validateDockerFlags(programmingExercise);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());

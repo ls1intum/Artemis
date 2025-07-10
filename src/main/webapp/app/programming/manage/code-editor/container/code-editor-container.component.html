@@ -38,18 +38,20 @@
         [highlightFileChanges]="highlightFileChanges"
         [fileBadges]="fileBadges"
         [allowHiddenFiles]="allowHiddenFiles"
+        [disableReopenFeedbackButton]="disableReopenFeedbackButton"
         [(selectedFile)]="selectedFile"
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"
         (onError)="onError($event)"
         (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
+        (onReopenFeedback)="onReopenFeedback($event)"
     />
     <ng-container editorCenter>
         <jhi-code-editor-monaco
             [commitState]="commitState"
             [editorState]="editorState"
             [course]="course"
-            [feedbacks]="feedbackForSubmission()"
+            [feedbacks]="showInlineFeedback ? (ParticipationUtil.getLatestSubmission(participation)?.latestResult?.feedbacks ?? []) : []"
             [feedbackSuggestions]="feedbackSuggestions"
             [readOnlyManualFeedback]="readOnlyManualFeedback"
             [disableActions]="!editable"

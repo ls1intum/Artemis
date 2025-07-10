@@ -5,7 +5,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { MetisService } from 'app/communication/service/metis.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
+import { MockExerciseService } from '.-test/helpers/mocks/service/mock-exercise.service';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
 import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-post.service';
 import { PostService } from 'app/communication/service/post.service';
