@@ -34,6 +34,10 @@
         color: var(--primary);
         background-color: var(--iris-client-chat-background);
 
+        .related-entity-name {
+            border: 1px solid var(--primary);
+        }
+
         .chat-history-text {
             text-decoration: underline;
         }
@@ -44,7 +48,7 @@
     background-color: var(--iris-client-chat-background);
     color: var(--primary);
 
-    &:hover .related-entity-name {
+    .related-entity-name {
         border: 1px solid var(--primary);
     }
 
