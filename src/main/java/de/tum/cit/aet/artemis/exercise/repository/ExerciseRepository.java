@@ -22,6 +22,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
@@ -44,14 +45,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.id = :courseId
             """)
     Set<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
-
-    @Query("""
-            SELECT e
-            FROM Exercise e
-                LEFT JOIN FETCH e.categories
-            WHERE e.course.id IN :courseIds
-            """)
-    Set<Exercise> findByCourseIdsWithCategories(@Param("courseIds") Set<Long> courseIds);
 
     @Query("""
             SELECT e
@@ -663,4 +656,12 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     default Set<Exercise> findByCourseIdWithFutureDueDatesAndCategories(Long courseId) {
         return findByCourseIdWithFutureDueDatesAndCategories(courseId, ZonedDateTime.now());
     }
+
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO(e.id, TYPE(e), e.includedInOverallScore, e.assessmentType, e.dueDate, e.assessmentDueDate, p.buildAndTestStudentSubmissionsAfterDueDate, e.maxPoints, e.bonusPoints, e.course.id)
+            FROM Exercise e
+                JOIN ProgrammingExercise p ON e.id = p.id
+            WHERE e.course.id IN :courseIds
+            """)
+    Set<ExerciseCourseScoreDTO> findCourseExerciseScoreInformationByCourseIds(Set<Long> courseIds);
 }

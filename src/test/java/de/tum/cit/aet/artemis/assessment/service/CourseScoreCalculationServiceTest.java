@@ -166,7 +166,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(result.getScore()).isZero();
         result.score(null);
 
-        StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
+        var courseScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourseAndStudent(course.getId(), student.getId());
+
+        StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), courseScores,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
         if (withDueDate) {
             assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.6);

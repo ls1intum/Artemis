@@ -70,18 +70,67 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     Set<StudentParticipation> findByExerciseId(long exerciseId);
 
+    // NOTE: we have an edge case for quizzes where we need to take the first submission and not the last one
     @Query("""
-            SELECT DISTINCT p
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore)
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH p.team t
-                LEFT JOIN FETCH t.students
-            WHERE p.exercise.course.id = :courseId
-                AND (r.rated IS NULL
-                    OR r.rated = TRUE)
+                JOIN p.student u
+                JOIN p.exercise ex
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE ex.course.id IN :courseIds
+                AND u.id = :studentId
+                AND TYPE(ex) = QuizExercise
+                AND p.testRun = FALSE
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.score IS NOT NULL
+                AND s.submissionDate = (SELECT MIN(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
-    List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") long courseId);
+    Set<GradeScoreDTO> findIndividualQuizGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
+
+    // NOTE: we add a minimal grace period of 1 second because processing a commit can take a bit of time
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore)
+            FROM StudentParticipation p
+                JOIN p.student u
+                JOIN p.exercise ex
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE ex.course.id IN :courseIds
+                AND TYPE(ex) <> QuizExercise
+                AND p.testRun = FALSE
+                AND u.id = :studentId
+                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.score IS NOT NULL
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+            """)
+    Set<GradeScoreDTO> findIndividualGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
+
+    // Quizzes do not support team exercises, so we can safely ignore them here
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore)
+            FROM StudentParticipation p
+                JOIN p.team t
+                JOIN t.students u
+                JOIN p.exercise ex
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE ex.course.id IN :courseIds
+                AND p.testRun = FALSE
+                AND u.id = :studentId
+                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.score IS NOT NULL
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+            """)
+    Set<GradeScoreDTO> findTeamGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
     // NOTE: we have an edge case for quizzes where we need to take the first submission and not the last one
     @Query("""
@@ -100,7 +149,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND s.submissionDate = (SELECT MIN(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
                 AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
-    List<GradeScoreDTO> findIndividualQuizGradesByCourseId(@Param("courseId") long courseId);
+    Set<GradeScoreDTO> findIndividualQuizGradesByCourseId(@Param("courseId") long courseId);
 
     // NOTE: we add a minimal grace period of 1 second because processing a commit can take a bit of time
     @Query("""
@@ -121,7 +170,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
                 AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
-    List<GradeScoreDTO> findIndividualGradesByCourseId(@Param("courseId") long courseId);
+    Set<GradeScoreDTO> findIndividualGradesByCourseId(@Param("courseId") long courseId);
 
     // Quizzes do not support team exercises, so we can safely ignore them here
     @Query("""
@@ -142,8 +191,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
                 AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
-    List<GradeScoreDTO> findTeamGradesByCourseId(@Param("courseId") long courseId);
+    Set<GradeScoreDTO> findTeamGradesByCourseId(@Param("courseId") long courseId);
 
+    // TODO: remove or move into a test repository because it's only used by tests
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
@@ -156,7 +206,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND (r.rated IS NULL
                     OR r.rated = TRUE)
             """)
-    List<StudentParticipation> findByCourseIdAndStudentIdWithEagerRatedResults(@Param("courseId") long courseId, @Param("studentId") long studentId);
+    Set<StudentParticipation> findByCourseIdAndStudentIdWithEagerRatedResults(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT COUNT(p.id) > 0
@@ -184,7 +234,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
                 AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
-    List<StudentParticipation> findByExamIdWithEagerLatestSubmissionsRatedResultAndIgnoreTestRunParticipation(@Param("examId") long examId);
+    Set<StudentParticipation> findByExamIdWithEagerLatestSubmissionsRatedResultAndIgnoreTestRunParticipation(@Param("examId") long examId);
 
     @Query("""
             SELECT DISTINCT p
@@ -748,10 +798,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH s.results r
             WHERE p.student.id = :studentId
                 AND p.exercise IN :exercises
-                AND (p.testRun = FALSE
-                    OR :includeTestRuns = TRUE)
+                AND (p.testRun = FALSE OR :includeTestRuns = TRUE)
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
-    Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") long studentId,
+    Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithLatestSubmissionsLatestResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises, @Param("includeTestRuns") boolean includeTestRuns);
 
     @Query("""
@@ -854,8 +905,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH t.students teamStudent
             WHERE teamStudent.id = :studentId
                 AND p.exercise IN :exercises
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
-    Set<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(@Param("studentId") long studentId, @Param("exercises") Collection<Exercise> exercises);
+    Set<StudentParticipation> findByStudentIdAndTeamExercisesWithLatestSubmissionsLatestResult(@Param("studentId") long studentId,
+            @Param("exercises") Collection<Exercise> exercises);
 
     @Query("""
             SELECT DISTINCT p
@@ -946,31 +1000,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param examId the id of the exam
      * @return an unmodifiable list of participations belonging to course
      */
-    default List<StudentParticipation> findByExamIdWithLatestSubmissionWithRelevantResultIgnoreTestRunParticipations(long examId) {
+    default Set<StudentParticipation> findByExamIdWithLatestSubmissionWithRelevantResultIgnoreTestRunParticipations(long examId) {
         var participations = findByExamIdWithEagerLatestSubmissionsRatedResultAndIgnoreTestRunParticipation(examId); // without test run participations
-        return filterParticipationsWithoutStudent(participations);
-    }
-
-    /**
-     * Get all participations belonging to a student in a course with relevant results.
-     *
-     * @param courseId  the id of the course
-     * @param studentId the id of the student
-     * @return an unmodifiable list of participations belonging to the given student in the given course
-     */
-    default List<StudentParticipation> findByCourseIdAndStudentIdWithRelevantResult(long courseId, long studentId) {
-        List<StudentParticipation> participations = findByCourseIdAndStudentIdWithEagerRatedResults(courseId, studentId);
-        return filterParticipationsWithoutStudent(participations);
-    }
-
-    /**
-     * Get all participations belonging to course with relevant results.
-     *
-     * @param courseId the id of the course
-     * @return an unmodifiable list of participations belonging to course
-     */
-    default List<StudentParticipation> findByCourseIdWithRelevantResult(long courseId) {
-        List<StudentParticipation> participations = findByCourseIdWithEagerRatedResults(courseId);
         return filterParticipationsWithoutStudent(participations);
     }
 
@@ -980,11 +1011,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param participations the participations to get filtered
      * @return an unmodifiable list of filtered participations
      */
-    private List<StudentParticipation> filterParticipationsWithoutStudent(List<StudentParticipation> participations) {
+    private Set<StudentParticipation> filterParticipationsWithoutStudent(Collection<StudentParticipation> participations) {
         return participations.stream()
                 // Filter out participations without Students
                 // These participations are used e.g. to store template and solution build plans in programming exercises
-                .filter(participation -> participation.getParticipant() != null).toList();
+                .filter(participation -> participation.getParticipant() != null).collect(Collectors.toSet());
     }
 
     /**
@@ -1113,10 +1144,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
         // 1st: fetch participations, submissions and results for individual exercises
         Set<StudentParticipation> individualParticipations = individualExercises.isEmpty() ? Set.of()
-                : findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), individualExercises, includeTestRuns);
+                : findByStudentIdAndIndividualExercisesWithLatestSubmissionsLatestResult(user.getId(), individualExercises, includeTestRuns);
 
         // 2nd: fetch participations, submissions and results for team exercises
-        Set<StudentParticipation> teamParticipations = teamExercises.isEmpty() ? Set.of() : findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), teamExercises);
+        Set<StudentParticipation> teamParticipations = teamExercises.isEmpty() ? Set.of()
+                : findByStudentIdAndTeamExercisesWithLatestSubmissionsLatestResult(user.getId(), teamExercises);
 
         // 3rd: merge both into one set for further processing
         return Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toSet());
@@ -1420,13 +1452,45 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * Need special handling for quiz exercises, as the submission date is stored in reverse order compared to all other exercise types.
      *
      * @param courseId the id of the course for which to find all grade scores
-     * @return a list of {@link GradeScoreDTO}
+     * @return a set of {@link GradeScoreDTO}
      */
-    default List<GradeScoreDTO> findGradeScoresForAllExercisesForCourse(long courseId) {
+    default Set<GradeScoreDTO> findGradeScoresForAllExercisesForCourse(long courseId) {
         // Distinguish between individual and team participations for performance reasons
-        List<GradeScoreDTO> individualGradeScores = findIndividualGradesByCourseId(courseId);
-        List<GradeScoreDTO> individualQuizGradeScores = findIndividualQuizGradesByCourseId(courseId);
-        List<GradeScoreDTO> teamGradeScores = findTeamGradesByCourseId(courseId);
-        return Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).toList();
+        Set<GradeScoreDTO> individualGradeScores = findIndividualGradesByCourseId(courseId);
+        Set<GradeScoreDTO> individualQuizGradeScores = findIndividualQuizGradesByCourseId(courseId);
+        Set<GradeScoreDTO> teamGradeScores = findTeamGradesByCourseId(courseId);
+        return Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).collect(Collectors.toSet());
+    }
+
+    /**
+     * Finds all grade scores for all exercises in one course, including individual and team exercises, for one specific user
+     * Need special handling for quiz exercises, as the submission date is stored in reverse order compared to all other exercise types.
+     *
+     * @param courseId  the id of the course for which to find all grade scores
+     * @param studentId the id of the student for which to find all grade scores
+     * @return a set of {@link GradeScoreDTO}
+     */
+    default Set<GradeScoreDTO> findGradeScoresForAllExercisesForCourseAndStudent(Long courseId, long studentId) {
+        // Distinguish between individual and team participations for performance reasons
+        Set<GradeScoreDTO> individualGradeScores = findIndividualGradesByCourseIdAndStudentId(Set.of(courseId), studentId);
+        Set<GradeScoreDTO> individualQuizGradeScores = findIndividualQuizGradesByCourseIdAndStudentId(Set.of(courseId), studentId);
+        Set<GradeScoreDTO> teamGradeScores = findTeamGradesByCourseIdAndStudentId(Set.of(courseId), studentId);
+        return Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).collect(Collectors.toSet());
+    }
+
+    /**
+     * Finds all grade scores for all exercises in multiple courses, including individual and team exercises.
+     * Need special handling for quiz exercises, as the submission date is stored in reverse order compared to all other exercise types.
+     *
+     * @param courseIds the ids of multiple course for which to find all grade scores
+     * @param studentId the id of the student for which to find all grade scores
+     * @return a set of {@link GradeScoreDTO}
+     */
+    default Set<GradeScoreDTO> findGradeScoresForAllExercisesForCoursesAndStudent(Collection<Long> courseIds, long studentId) {
+        // Distinguish between individual and team participations for performance reasons
+        Set<GradeScoreDTO> individualGradeScores = findIndividualGradesByCourseIdAndStudentId(courseIds, studentId);
+        Set<GradeScoreDTO> individualQuizGradeScores = findIndividualQuizGradesByCourseIdAndStudentId(courseIds, studentId);
+        Set<GradeScoreDTO> teamGradeScores = findTeamGradesByCourseIdAndStudentId(courseIds, studentId);
+        return Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).collect(Collectors.toSet());
     }
 }

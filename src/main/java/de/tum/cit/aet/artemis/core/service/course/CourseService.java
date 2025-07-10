@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,19 +26,18 @@ import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
-import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.api.ExerciseGroupApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -162,6 +160,17 @@ public class CourseService {
     }
 
     /**
+     * Fetches the course grades for all exercises of the given courses for a specific user.
+     *
+     * @param courses the courses for which the course grades should be fetched
+     * @param user    the user for which the course grades should be fetched
+     */
+    public Set<GradeScoreDTO> fetchCoursesGradesForUser(Collection<Course> courses, User user) {
+        var courseIds = courses.stream().map(DomainObject::getId).collect(Collectors.toSet());
+        return studentParticipationRepository.findGradeScoresForAllExercisesForCoursesAndStudent(courseIds, user.getId());
+    }
+
+    /**
      * Add plagiarism cases to each exercise.
      *
      * @param exercises the course exercises for which the plagiarism cases should be fetched.
@@ -228,56 +237,6 @@ public class CourseService {
      */
     public Set<Course> findAllActiveForUser(User user) {
         return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course)).collect(Collectors.toSet());
-    }
-
-    /**
-     * Get all courses with exercises (filtered for given user)
-     *
-     * @param user the user entity
-     * @return an unmodifiable list of all courses including exercises for the user
-     */
-    public Set<Course> findAllActiveWithExercisesForUser(User user) {
-        long start = System.nanoTime();
-
-        var userVisibleCourses = courseRepository.findAllActive().stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course)).filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-
-        if (log.isDebugEnabled()) {
-            log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
-        }
-        long startFindAllExercises = System.nanoTime();
-        var courseIds = userVisibleCourses.stream().map(DomainObject::getId).collect(Collectors.toSet());
-        // TODO Performance: we only need the total score, the number of exercises and exams and - in case there is one - the currently active exercise(s)/exam(s)
-        // we do NOT need to retrieve this information and send it to the client
-        Set<Exercise> allExercises = exerciseRepository.findByCourseIdsWithCategories(courseIds);
-
-        if (log.isDebugEnabled()) {
-            log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises after {}", allExercises.size(), TimeLogUtil.formatDurationFrom(startFindAllExercises));
-        }
-        var examCounts = examMetricsApi.map(api -> api.countVisibleExams(courseIds, ZonedDateTime.now())).orElse(Set.of());
-
-        var lectureCounts = lectureRepositoryApi.map(api -> api.countVisibleLectures(courseIds, ZonedDateTime.now())).orElse(Set.of());
-
-        long startFilterAll = System.nanoTime();
-        var courses = userVisibleCourses.stream().peek(course -> {
-            // connect the exercises with the course
-            course.setExercises(allExercises.stream().filter(ex -> ex.getCourseViaExerciseGroupOrCourseMember().getId().equals(course.getId())).collect(Collectors.toSet()));
-            course.setExercises(exerciseService.filterExercisesForCourse(course, user));
-            exerciseService.loadExerciseDetailsIfNecessary(course, user);
-            long numberOfLectures = lectureCounts.stream().filter(count -> count.courseId() == course.getId()).map(CourseContentCountDTO::count).findFirst().orElse(0L);
-            course.setNumberOfLectures(numberOfLectures);
-            long numberOfExams = examCounts.stream().filter(count -> count.courseId() == course.getId()).map(CourseContentCountDTO::count).findFirst().orElse(0L);
-            course.setNumberOfExams(numberOfExams);
-            // we do not send actual lectures or exams to the client, not needed
-            course.setLectures(Set.of());
-            course.setExams(Set.of());
-        }).collect(Collectors.toSet());
-
-        if (log.isDebugEnabled()) {
-            log.debug("all {} filterExercisesForCourse individually finished together after {}", courses.size(), TimeLogUtil.formatDurationFrom(startFilterAll));
-            log.debug("Filter exercises, lectures, and exams finished after {}", TimeLogUtil.formatDurationFrom(start));
-        }
-        return courses;
     }
 
     /**

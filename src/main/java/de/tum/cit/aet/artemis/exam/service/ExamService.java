@@ -87,6 +87,7 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
@@ -177,6 +178,8 @@ public class ExamService {
 
     private final ObjectMapper defaultObjectMapper;
 
+    private final ExerciseRepository exerciseRepository;
+
     @Value("${artemis.course-archives-path}")
     private Path examArchivesDirPath;
 
@@ -187,7 +190,7 @@ public class ExamService {
             CourseExamExportService courseExamExportService, GitService gitService, GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
             AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
             SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
-            CourseRepository courseRepository, QuizResultService quizResultService) {
+            CourseRepository courseRepository, QuizResultService quizResultService, ExerciseRepository exerciseRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -213,6 +216,7 @@ public class ExamService {
         this.courseRepository = courseRepository;
         this.defaultObjectMapper = new ObjectMapper();
         this.quizResultService = quizResultService;
+        this.exerciseRepository = exerciseRepository;
     }
 
     private static boolean isSecondCorrectionEnabled(Exam exam) {
@@ -303,8 +307,9 @@ public class ExamService {
      */
     public ExamScoresDTO calculateExamScores(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-
+        long start = System.nanoTime();
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithLatestSubmissionWithRelevantResultIgnoreTestRunParticipations(examId);
+        log.info("Found {} student participations for exam {} in {}", studentParticipations.size(), examId, TimeLogUtil.formatDurationFrom(start));
         log.info("Try to find quiz submitted answer counts");
         List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
         log.info("Found {} quiz submitted answer counts", submittedAnswerCounts.size());
@@ -400,6 +405,7 @@ public class ExamService {
     }
 
     @Nullable
+    // TODO: GradingScale must include the course
     private ExamBonusCalculator createExamBonusCalculator(Optional<GradingScale> gradingScale, Collection<Long> studentIds) {
         if (gradingScale.isEmpty() || gradingScale.get().getBonusFrom().isEmpty()) {
             return null;
@@ -415,9 +421,10 @@ public class ExamService {
 
         double tempSourceReachablePoints = sourceGradingScale.getMaxPoints();
         if (sourceGradingScale.getExam() == null && sourceGradingScale.getCourse() != null) {
+            var courseId = sourceGradingScale.getCourse().getId();
             // fetch course with exercises to calculate reachable points
-            Course course = courseRepository.findWithEagerExercisesById(sourceGradingScale.getCourse().getId());
-            tempSourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, course.getExercises());
+            var exercises = exerciseRepository.findCourseExerciseScoreInformationByCourseIds(Set.of(courseId));
+            tempSourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, exercises);
         }
         final double sourceReachablePoints = tempSourceReachablePoints;
 

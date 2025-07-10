@@ -37,6 +37,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentDashboardService;
@@ -495,36 +496,29 @@ public class CourseResource {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
-        Set<Course> courses = courseService.findAllActiveWithExercisesForUser(user);
+        var activeCoursesForUser = courseService.findAllActiveForUser(user);
         log.debug("courseService.findAllActiveWithExercisesForUser done");
-        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
+        var allUserCourseGrades = courseService.fetchCoursesGradesForUser(activeCoursesForUser, user);
+        log.debug("courseService.fetchCourseGradesForUser done");
 
-        log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");
-        // TODO: we should avoid fetching plagiarism in the future, it's unnecessary for 99.9% of the cases
-        courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
+        var courseIds = activeCoursesForUser.stream().map(Course::getId).collect(Collectors.toSet());
+        // we explicitly add 1 hour to the end date to compensate for potential write extensions. Calculating it exactly is not feasible here
+        Set<Exam> activeExams = examRepositoryApi.isPresent()
+                ? examRepositoryApi.get().findActiveExams(courseIds, user.getId(), ZonedDateTime.now(), ZonedDateTime.now().plusHours(1))
+                : Set.of();
 
-        log.debug("courseService.fetchPlagiarismCasesForCourseExercises done");
-        // TODO: loading the grading scale here is only done to handle edge cases, we should avoid it, it's unnecessary for 90% of the cases and can be done when navigating into
-        // the course
-        var gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
-        // we explicitly add 1 hour here to compensate for potential write extensions. Calculating it exactly is not feasible here
-        Set<Exam> activeExams;
-        if (examRepositoryApi.isPresent()) {
-            activeExams = examRepositoryApi.get().findActiveExams(courses.stream().map(Course::getId).collect(Collectors.toSet()), user.getId(), ZonedDateTime.now(),
-                    ZonedDateTime.now().plusHours(1));
-        }
-        else {
-            activeExams = Set.of();
-        }
+        var allExercises = exerciseRepository.findCourseExerciseScoreInformationByCourseIds(courseIds);
 
-        log.debug("gradingScaleRepository.findAllByCourseIds done");
         Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
-        for (Course course : courses) {
-            GradingScale gradingScale = gradingScales.stream().filter(scale -> scale.getCourse().getId().equals(course.getId())).findFirst().orElse(null);
-            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId(), false);
+        for (Course course : activeCoursesForUser) {
+            var courseExercises = allExercises.stream().filter(exercise -> exercise.courseId().equals(course.getId())).collect(Collectors.toSet());
+            var courseExerciseIds = courseExercises.stream().map(ExerciseCourseScoreDTO::id).collect(Collectors.toSet());
+            var userCourseGrades = allUserCourseGrades.stream().filter(grade -> courseExerciseIds.contains(grade.exerciseId())).collect(Collectors.toSet());
+            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.calculateCourseScore(course, courseExercises, userCourseGrades, user.getId());
             coursesForDashboard.add(courseForDashboardDTO);
         }
-        logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
+        log.info("courses/for-dashboard (multiple courses) finished in {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(timeNanoStart), activeCoursesForUser.size(),
+                user.getLogin());
         final var dto = new CoursesForDashboardDTO(coursesForDashboard, activeExams);
         return ResponseEntity.ok(dto);
     }
