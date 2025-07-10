@@ -98,8 +98,6 @@ export class IrisChatService implements OnDestroy {
      */
     private courseId?: number;
 
-    private latestStartedSession?: IrisSessionDTO;
-
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
         this.updateCourseId();
@@ -296,20 +294,10 @@ export class IrisChatService implements OnDestroy {
     private handleNewSession() {
         return {
             next: (newIrisSession: IrisSession) => {
-                // eslint-disable-next-line no-undef
-                console.log('New Iris session started:', newIrisSession);
                 const currentSessions = this.chatSessions.getValue();
-                // eslint-disable-next-line no-undef
-                console.log('Current Session sessions started:', currentSessions);
-                const isNewSessionIncludedInHistory = currentSessions.some((session) => session.id === newIrisSession.id);
+                const isNewSessionIncludedInHistory = !currentSessions.some((session) => session.id === newIrisSession.id);
                 if (!isNewSessionIncludedInHistory) {
-                    this.latestStartedSession = {
-                        id: newIrisSession.id,
-                        creationDate: newIrisSession.creationDate,
-                        chatMode: newIrisSession.chatMode ?? ChatServiceMode.COURSE,
-                    };
-                    const updatedSessions = [this.latestStartedSession, ...currentSessions];
-                    this.chatSessions.next(updatedSessions);
+                    this.chatSessions.next([newIrisSession, ...currentSessions]);
                 }
 
                 this.sessionId = newIrisSession.id;
@@ -406,22 +394,10 @@ export class IrisChatService implements OnDestroy {
 
     private loadChatSessions() {
         const courseId = this.getCourseId();
-        const latestStartedSession = this.latestStartedSession;
         if (courseId) {
             this.chatSessionSubscription?.unsubscribe();
             this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
-                const sessionsWithMessages = sessions ?? [];
-                const displayedSessions = [...sessionsWithMessages];
-                // eslint-disable-next-line no-undef
-                console.log('loadChatSessions displayedSessions', displayedSessions);
-                // eslint-disable-next-line no-undef
-                console.log('latestStartedSession', latestStartedSession);
-                if (latestStartedSession && !displayedSessions.some((session) => session.id === latestStartedSession.id)) {
-                    // eslint-disable-next-line no-undef
-                    console.log('pushing latest session', latestStartedSession);
-                    displayedSessions.push(latestStartedSession);
-                }
-                this.chatSessions.next(displayedSessions);
+                this.chatSessions.next(sessions ?? []);
             });
         } else {
             captureException(new Error('Could not load chat sessions, courseId is not set.'), {
