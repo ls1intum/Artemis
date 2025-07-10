@@ -96,10 +96,45 @@ public class HyperionReviewAndRefineResource {
     }
 
     /**
+     * POST /api/hyperion/review-and-refine/courses/{courseId}/suggest-improvements :
+     * Start generating improvement suggestions for a problem statement using Hyperion.
+     * Results are streamed via WebSocket to the topic "/topic/hyperion/suggestions/{courseId}".
+     *
+     * @param request  the request containing the problem statement to analyze
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) indicating the process has started
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/suggest-improvements")
+    public ResponseEntity<Void> suggestImprovements(@RequestBody SuggestImprovementsRequestDTO request, @PathVariable Long courseId) {
+        log.debug("REST request to start improvement suggestions streaming via Hyperion: {}", request.problemStatement());
+
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        try {
+            reviewAndRefineService.suggestImprovements(user, courseId, request.problemStatement());
+            log.info("Started improvement suggestions streaming for user {} on course {}", user.getLogin(), courseId);
+            return ResponseEntity.ok().build();
+        }
+        catch (Exception e) {
+            log.error("Failed to start improvement suggestions for user {}: {}", user.getLogin(), e.getMessage(), e);
+            throw e; // Re-throw to return proper HTTP error status
+        }
+    }
+
+    /**
      * DTO for rewrite problem statement requests.
      *
-     * @param text the problem statement text to be rewritten
+     * @param text the problem statement text to rewrite
      */
     public record RewriteProblemStatementRequestDTO(String text) {
+    }
+
+    /**
+     * DTO for suggest improvements requests.
+     *
+     * @param problemStatement the problem statement text to analyze
+     */
+    public record SuggestImprovementsRequestDTO(String problemStatement) {
     }
 }

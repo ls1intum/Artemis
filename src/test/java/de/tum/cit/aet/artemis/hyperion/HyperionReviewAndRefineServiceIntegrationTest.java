@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionTestConfiguration;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionTestReviewAndRefineService;
 import de.tum.cit.aet.artemis.hyperion.web.HyperionReviewAndRefineResource.RewriteProblemStatementRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.web.HyperionReviewAndRefineResource.SuggestImprovementsRequestDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import io.grpc.Status;
@@ -173,5 +174,74 @@ class HyperionReviewAndRefineServiceIntegrationTest extends AbstractHyperionTest
 
         // When & Then - Service unavailable results in 503 status
         request.post("/api/hyperion/review-and-refine/courses/" + course.getId() + "/rewrite-problem-statement", requestDTO, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    // ========== Suggest Improvements Endpoint Tests ==========
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSuggestImprovements_asInstructor_success() throws Exception {
+        // Given
+        String problemStatement = "Create a Java program that sorts an array of integers using bubble sort algorithm.";
+        var requestDTO = new SuggestImprovementsRequestDTO(problemStatement);
+
+        // When - Start the suggestion process (WebSocket streaming)
+        request.postWithoutLocation("/api/hyperion/review-and-refine/courses/" + course.getId() + "/suggest-improvements", requestDTO, HttpStatus.OK, null);
+
+        // Then - Verify the endpoint succeeds
+        // Note: WebSocket functionality is tested in HyperionSuggestionsWebsocketTest
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testSuggestImprovements_asEditor_success() throws Exception {
+        // Given
+        String problemStatement = "Implement a calculator in Java.";
+        var requestDTO = new SuggestImprovementsRequestDTO(problemStatement);
+
+        // When - Start the suggestion process
+        request.postWithoutLocation("/api/hyperion/review-and-refine/courses/" + course.getId() + "/suggest-improvements", requestDTO, HttpStatus.OK, null);
+
+        // Then - Verify the endpoint succeeds
+        // Note: WebSocket functionality is tested in HyperionSuggestionsWebsocketTest
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSuggestImprovements_serviceUnavailable() throws Exception {
+        // Given
+        String problemStatement = "Test problem statement";
+        var requestDTO = new SuggestImprovementsRequestDTO(problemStatement);
+
+        // Configure service to be unavailable during streaming
+        testReviewAndRefineService.setSuggestBehavior((request, responseObserver) -> {
+            responseObserver.onError(Status.UNAVAILABLE.withDescription("Hyperion service is temporarily unavailable").asRuntimeException());
+            return null;
+        });
+
+        // When & Then - Service unavailable results in 503 status
+        request.post("/api/hyperion/review-and-refine/courses/" + course.getId() + "/suggest-improvements", requestDTO, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSuggestImprovements_courseNotFound() throws Exception {
+        // Given
+        String problemStatement = "Test problem statement";
+        var requestDTO = new SuggestImprovementsRequestDTO(problemStatement);
+
+        // When & Then - Access forbidden because the course doesn't exist or user has no access
+        request.post("/api/hyperion/review-and-refine/courses/999999/suggest-improvements", requestDTO, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSuggestImprovements_asStudent_forbidden() throws Exception {
+        // Given
+        String problemStatement = "Test problem statement";
+        var requestDTO = new SuggestImprovementsRequestDTO(problemStatement);
+
+        // When & Then - Access forbidden for students
+        request.post("/api/hyperion/review-and-refine/courses/" + course.getId() + "/suggest-improvements", requestDTO, HttpStatus.FORBIDDEN);
     }
 }

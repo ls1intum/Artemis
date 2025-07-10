@@ -16,11 +16,17 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionConfigurationProperties;
+import de.tum.cit.aet.artemis.hyperion.dto.HyperionSuggestionItemDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.HyperionSuggestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.hyperion.proto.InconsistencyCheckRequest;
 import de.tum.cit.aet.artemis.hyperion.proto.Repository;
 import de.tum.cit.aet.artemis.hyperion.proto.RepositoryFile;
 import de.tum.cit.aet.artemis.hyperion.proto.ReviewAndRefineGrpc.ReviewAndRefineBlockingStub;
+import de.tum.cit.aet.artemis.hyperion.proto.ReviewAndRefineGrpc.ReviewAndRefineStub;
 import de.tum.cit.aet.artemis.hyperion.proto.RewriteProblemStatementRequest;
+import de.tum.cit.aet.artemis.hyperion.proto.SuggestImprovementsRequest;
+import de.tum.cit.aet.artemis.hyperion.proto.SuggestionItem;
+import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -40,15 +46,21 @@ public class HyperionReviewAndRefineService extends AbstractHyperionGrpcService 
 
     private final ReviewAndRefineBlockingStub reviewAndRefineStub;
 
+    private final ReviewAndRefineStub reviewAndRefineAsyncStub;
+
     private final RepositoryService repositoryService;
 
     private final HyperionConfigurationProperties hyperionConfigurationProperties;
 
-    public HyperionReviewAndRefineService(ReviewAndRefineBlockingStub reviewAndRefineStub, RepositoryService repositoryService,
-            HyperionConfigurationProperties hyperionConfigurationProperties) {
+    private final HyperionWebsocketService websocketService;
+
+    public HyperionReviewAndRefineService(ReviewAndRefineBlockingStub reviewAndRefineStub, ReviewAndRefineStub reviewAndRefineAsyncStub, RepositoryService repositoryService,
+            HyperionConfigurationProperties hyperionConfigurationProperties, HyperionWebsocketService websocketService) {
         this.reviewAndRefineStub = reviewAndRefineStub;
+        this.reviewAndRefineAsyncStub = reviewAndRefineAsyncStub;
         this.repositoryService = repositoryService;
         this.hyperionConfigurationProperties = hyperionConfigurationProperties;
+        this.websocketService = websocketService;
     }
 
     /**
@@ -105,6 +117,59 @@ public class HyperionReviewAndRefineService extends AbstractHyperionGrpcService 
             handleGrpcException("problem statement rewriting for user " + user.getLogin(), e);
             return null; // unreachable due to exception
         }
+    }
+
+    /**
+     * Suggests improvements for a problem statement using Hyperion.
+     * Sends suggestions via WebSocket as they are generated.
+     *
+     * @param user             the user requesting the suggestions
+     * @param courseId         the course ID for the WebSocket topic
+     * @param problemStatement the problem statement text to analyze
+     * @throws HttpStatusException if the service call fails
+     */
+    public void suggestImprovements(User user, Long courseId, String problemStatement) {
+        log.info("Requesting improvement suggestions for problem statement by user {}", user.getLogin());
+
+        try {
+            var request = SuggestImprovementsRequest.newBuilder().setProblemStatement(problemStatement).build();
+
+            var streamObserver = new io.grpc.stub.StreamObserver<SuggestionItem>() {
+
+                @Override
+                public void onNext(SuggestionItem suggestion) {
+                    log.debug("Received suggestion: {} (priority: {})", suggestion.getDescription(), suggestion.getPriority());
+                    var suggestionDTO = HyperionSuggestionItemDTO.fromProto(suggestion);
+                    var statusUpdate = HyperionSuggestionStatusUpdateDTO.ofSuggestion(suggestionDTO);
+                    websocketService.send(user.getLogin(), websocketTopic(courseId), statusUpdate);
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    log.error("Error during suggestion streaming for user {}", user.getLogin(), t);
+                    var statusUpdate = HyperionSuggestionStatusUpdateDTO.ofError(t.getMessage());
+                    websocketService.send(user.getLogin(), websocketTopic(courseId), statusUpdate);
+                }
+
+                @Override
+                public void onCompleted() {
+                    log.info("Suggestion streaming completed for user {}", user.getLogin());
+                    var statusUpdate = HyperionSuggestionStatusUpdateDTO.ofCompletion();
+                    websocketService.send(user.getLogin(), websocketTopic(courseId), statusUpdate);
+                }
+            };
+
+            reviewAndRefineAsyncStub.withDeadlineAfter(hyperionConfigurationProperties.getTimeouts().getRewriteProblemStatement().toSeconds(), TimeUnit.SECONDS)
+                    .suggestImprovements(request, streamObserver);
+
+        }
+        catch (Exception e) {
+            handleGrpcException("suggestion streaming for user " + user.getLogin(), e);
+        }
+    }
+
+    private static String websocketTopic(Long courseId) {
+        return "suggestions/" + courseId;
     }
 
     /**

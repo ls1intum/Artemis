@@ -108,6 +108,12 @@ public class HyperionTestConfiguration {
         return ReviewAndRefineGrpc.newBlockingStub(channel);
     }
 
+    @Bean
+    @Primary
+    public ReviewAndRefineGrpc.ReviewAndRefineStub reviewAndRefineAsyncStub() {
+        return ReviewAndRefineGrpc.newStub(channel);
+    }
+
     @Bean("hyperionHealthStub")
     @Primary
     public HealthGrpc.HealthBlockingStub healthStub() {

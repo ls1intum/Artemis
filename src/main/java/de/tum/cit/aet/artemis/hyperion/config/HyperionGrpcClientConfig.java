@@ -85,4 +85,9 @@ public class HyperionGrpcClientConfig {
     ReviewAndRefineGrpc.ReviewAndRefineBlockingStub reviewAndRefineStub(@Qualifier(GRPC_CHANNEL_HYPERION) ManagedChannel channel) {
         return ReviewAndRefineGrpc.newBlockingStub(channel);
     }
+
+    @Bean
+    ReviewAndRefineGrpc.ReviewAndRefineStub reviewAndRefineAsyncStub(@Qualifier(GRPC_CHANNEL_HYPERION) ManagedChannel channel) {
+        return ReviewAndRefineGrpc.newStub(channel);
+    }
 }

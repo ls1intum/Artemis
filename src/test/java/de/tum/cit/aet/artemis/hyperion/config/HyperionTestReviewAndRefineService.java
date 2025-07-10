@@ -5,9 +5,12 @@ import java.util.function.Function;
 
 import de.tum.cit.aet.artemis.hyperion.proto.InconsistencyCheckRequest;
 import de.tum.cit.aet.artemis.hyperion.proto.InconsistencyCheckResponse;
+import de.tum.cit.aet.artemis.hyperion.proto.Priority;
 import de.tum.cit.aet.artemis.hyperion.proto.ReviewAndRefineGrpc;
 import de.tum.cit.aet.artemis.hyperion.proto.RewriteProblemStatementRequest;
 import de.tum.cit.aet.artemis.hyperion.proto.RewriteProblemStatementResponse;
+import de.tum.cit.aet.artemis.hyperion.proto.SuggestImprovementsRequest;
+import de.tum.cit.aet.artemis.hyperion.proto.SuggestionItem;
 import io.grpc.stub.StreamObserver;
 
 /**
@@ -19,6 +22,8 @@ public class HyperionTestReviewAndRefineService extends ReviewAndRefineGrpc.Revi
     private Function<RewriteProblemStatementRequest, RewriteProblemStatementResponse> rewriteFn = this::defaultRewriteBehavior;
 
     private BiFunction<InconsistencyCheckRequest, StreamObserver<InconsistencyCheckResponse>, Void> checkFn = this::defaultCheckBehavior;
+
+    private BiFunction<SuggestImprovementsRequest, StreamObserver<SuggestionItem>, Void> suggestFn = this::defaultSuggestBehavior;
 
     @Override
     public void rewriteProblemStatement(RewriteProblemStatementRequest request, StreamObserver<RewriteProblemStatementResponse> responseObserver) {
@@ -42,6 +47,16 @@ public class HyperionTestReviewAndRefineService extends ReviewAndRefineGrpc.Revi
         }
     }
 
+    @Override
+    public void suggestImprovements(SuggestImprovementsRequest request, StreamObserver<SuggestionItem> responseObserver) {
+        try {
+            suggestFn.apply(request, responseObserver);
+        }
+        catch (RuntimeException e) {
+            responseObserver.onError(e);
+        }
+    }
+
     /**
      * Configure custom behavior for rewrite operations.
      */
@@ -57,11 +72,19 @@ public class HyperionTestReviewAndRefineService extends ReviewAndRefineGrpc.Revi
     }
 
     /**
+     * Configure custom behavior for suggest improvements operations.
+     */
+    public void setSuggestBehavior(BiFunction<SuggestImprovementsRequest, StreamObserver<SuggestionItem>, Void> suggestFn) {
+        this.suggestFn = suggestFn;
+    }
+
+    /**
      * Reset to default behavior.
      */
     public void reset() {
         this.rewriteFn = this::defaultRewriteBehavior;
         this.checkFn = this::defaultCheckBehavior;
+        this.suggestFn = this::defaultSuggestBehavior;
     }
 
     private RewriteProblemStatementResponse defaultRewriteBehavior(RewriteProblemStatementRequest request) {
@@ -70,6 +93,21 @@ public class HyperionTestReviewAndRefineService extends ReviewAndRefineGrpc.Revi
 
     private Void defaultCheckBehavior(InconsistencyCheckRequest request, StreamObserver<InconsistencyCheckResponse> responseObserver) {
         responseObserver.onNext(InconsistencyCheckResponse.newBuilder().setInconsistencies("No inconsistencies found").build());
+        responseObserver.onCompleted();
+        return null;
+    }
+
+    private Void defaultSuggestBehavior(SuggestImprovementsRequest request, StreamObserver<SuggestionItem> responseObserver) {
+        // Simulate streaming suggestions
+        responseObserver.onNext(SuggestionItem.newBuilder()
+                .setDescription("Test suggestion for: " + request.getProblemStatement().substring(0, Math.min(50, request.getProblemStatement().length())) + "...").setIndexStart(0)
+                .setIndexEnd(10).setPriority(Priority.LOW).build());
+
+        responseObserver
+                .onNext(SuggestionItem.newBuilder().setDescription("Medium priority test suggestion").setIndexStart(11).setIndexEnd(20).setPriority(Priority.MEDIUM).build());
+
+        responseObserver.onNext(SuggestionItem.newBuilder().setDescription("High priority test suggestion").setIndexStart(21).setIndexEnd(30).setPriority(Priority.HIGH).build());
+
         responseObserver.onCompleted();
         return null;
     }

@@ -116,6 +116,9 @@ service ConfigureGrading {}
 service ReviewAndRefine {
   rpc CheckInconsistencies(InconsistencyCheckRequest) returns (InconsistencyCheckResponse) {}
   rpc RewriteProblemStatement(RewriteProblemStatementRequest) returns (RewriteProblemStatementResponse) {}
+     // Stream back targeted improvement suggestions for the provided problem statement.
+  // Each SuggestionItem pinpoints a character range within the problem statement text.
+  rpc SuggestImprovements(SuggestImprovementsRequest) returns (stream SuggestionItem) {} 
 }
 
 message InconsistencyCheckRequest {
@@ -135,4 +138,23 @@ message RewriteProblemStatementRequest {
 
 message RewriteProblemStatementResponse {
   string rewritten_text = 1;
+}
+
+// Request for streaming improvement suggestions.
+message SuggestImprovementsRequest {
+  string problem_statement = 1; // Full text of the problem statement to review
+}
+
+// A single suggestion item pinpointing a character span within the problem statement.
+message SuggestionItem {
+  string description = 1; // Human‑readable suggestion text
+  int32 index_start = 2;   // Zero‑based inclusive character index
+  int32 index_end   = 3;   // Exclusive character index
+  Priority priority = 4;  // Importance level of the suggestion
+}
+
+enum Priority {
+  LOW = 0;
+  MEDIUM = 1;
+  HIGH = 2;
 }
