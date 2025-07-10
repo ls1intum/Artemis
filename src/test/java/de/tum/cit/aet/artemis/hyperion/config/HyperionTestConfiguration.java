@@ -1,11 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 
@@ -22,8 +23,8 @@ import io.grpc.inprocess.InProcessServerBuilder;
  * Creates an embedded gRPC server and client for testing without external dependencies.
  * Uses @Primary beans to override the production gRPC configuration during tests.
  */
-@TestConfiguration
-@Profile(SPRING_PROFILE_TEST)
+@Configuration
+@Profile(PROFILE_HYPERION + " & " + SPRING_PROFILE_TEST)
 public class HyperionTestConfiguration {
 
     private static HyperionTestReviewAndRefineService testReviewAndRefineService;
