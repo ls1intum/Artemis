@@ -532,23 +532,18 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             rangeStartDate.setHours(0, 0, 0, 0); // Set to the start of the 'daysAgoOlder' day
         }
 
-        const result = this.chatSessions
-            .filter((session) => {
-                const sessionCreationDate = new Date(session.creationDate);
+        return this.chatSessions.filter((session) => {
+            const sessionCreationDate = new Date(session.creationDate);
 
-                const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && sessionCreationDate.getTime() >= rangeStartDate.getTime());
-                const isBeforeOrOnEndDate = sessionCreationDate.getTime() <= rangeEndDate.getTime();
+            const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && sessionCreationDate.getTime() >= rangeStartDate.getTime());
+            const isBeforeOrOnEndDate = sessionCreationDate.getTime() <= rangeEndDate.getTime();
 
-                if (ignoreOlderBoundary) {
-                    return isBeforeOrOnEndDate;
-                } else {
-                    return isAfterOrOnStartDate && isBeforeOrOnEndDate;
-                }
-            })
-            .toSorted((a, b) => {
-                return new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime();
-            });
-        return result;
+            if (ignoreOlderBoundary) {
+                return isBeforeOrOnEndDate;
+            } else {
+                return isAfterOrOnStartDate && isBeforeOrOnEndDate;
+            }
+        });
     }
 
     openNewSession() {
