@@ -34,25 +34,21 @@
         color: var(--primary);
         background-color: var(--iris-client-chat-background);
 
-        .related-entity-name {
-            border: 1px solid var(--primary);
-        }
-
         .chat-history-text {
             text-decoration: underline;
         }
-    }
-}
 
-.chat-history-item-selected {
-    background-color: var(--iris-client-chat-background);
-    color: var(--primary);
-
-    .related-entity-name {
-        border: 1px solid var(--primary);
+        .related-entity-info .related-entity-name {
+            border: 1px solid var(--primary);
+        }
     }
 
-    &:hover .chat-history-text {
-        text-decoration: underline;
+    &.chat-history-item-selected {
+        background-color: var(--iris-client-chat-background);
+        color: var(--primary);
+
+        .related-entity-info .related-entity-name {
+            border: 1px solid var(--primary);
+        }
     }
 }
