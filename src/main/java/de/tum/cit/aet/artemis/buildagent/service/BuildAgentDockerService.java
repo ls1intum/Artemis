@@ -134,7 +134,6 @@ public class BuildAgentDockerService {
         }
 
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-
         if (isFirstCleanup) {
             // Cleanup all dangling build containers after the application has started
             try {
