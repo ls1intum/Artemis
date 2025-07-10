@@ -1,7 +1,6 @@
 import {
     convertDateFromClient,
     convertDateFromServer,
-    createDateWithOffset,
     dayOfWeekZeroSundayToZeroMonday,
     isDateLessThanAWeekInTheFuture,
     toISO8601DateString,
@@ -92,44 +91,6 @@ describe('DateUtils', () => {
         it('should return false if date is more than a week ago', () => {
             const date = dayjs().subtract(8, 'days');
             expect(isDateLessThanAWeekInTheFuture(date)).toBeFalse();
-        });
-    });
-
-    describe('createDateWithOffset', () => {
-        it('should create a date with the specified offset and set time to the start of the day', () => {
-            const daysOffset = 5;
-            const result = createDateWithOffset(daysOffset, false);
-            const expectedDate = new Date();
-            expectedDate.setDate(expectedDate.getDate() + daysOffset);
-            expectedDate.setHours(0, 0, 0, 0);
-
-            expect(result.toISOString()).toBe(expectedDate.toISOString());
-        });
-
-        it('should create a date with the specified offset and set time to the end of the day', () => {
-            const daysOffset = -3;
-            const result = createDateWithOffset(daysOffset, true);
-            const expectedDate = new Date();
-            expectedDate.setDate(expectedDate.getDate() + daysOffset);
-            expectedDate.setHours(23, 59, 59, 999);
-
-            expect(result.toISOString()).toBe(expectedDate.toISOString());
-        });
-
-        it('should handle zero offset and set time to the start of the day', () => {
-            const result = createDateWithOffset(0, false);
-            const expectedDate = new Date();
-            expectedDate.setHours(0, 0, 0, 0);
-
-            expect(result.toISOString()).toBe(expectedDate.toISOString());
-        });
-
-        it('should handle zero offset and set time to the end of the day', () => {
-            const result = createDateWithOffset(0, true);
-            const expectedDate = new Date();
-            expectedDate.setHours(23, 59, 59, 999);
-
-            expect(result.toISOString()).toBe(expectedDate.toISOString());
         });
     });
 });
