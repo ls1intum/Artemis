@@ -3,7 +3,7 @@
 Hyperion Service
 ----------------
 
-The **Hyperion** service is an AI-driven microservice for programming exercise creation assistance, designed to help instructors improve exercise quality. It's part of the EduTelligence suite and integrates with Artemis via gRPC.
+The **Hyperion** service is an AI-driven microservice for programming exercise creation assistance, designed to help instructors create programming exercises more easily and improve exercise quality. It's part of the EduTelligence suite and integrates with Artemis via gRPC.
 
 Hyperion provides key AI-powered features:
 
@@ -99,30 +99,6 @@ Artemis automatically monitors Hyperion service health through the standard gRPC
    grpc_health_probe -addr=hyperion.yourdomain.com:50051 -tls \
      -tls-ca-cert ca.crt -tls-client-cert client.crt -tls-client-key client.key
 
-Troubleshooting:
-^^^^^^^^^^^^^^^^
-
-Common issues and solutions:
-
-**Connection Refused**
-   - Verify Hyperion service is running on the configured host and port
-   - Check network connectivity between Artemis and Hyperion
-   - Ensure firewall rules allow gRPC traffic on the configured port
-
-**TLS/Certificate Issues**
-   - Verify certificate file paths and permissions in ``artemis.hyperion`` configuration
-   - Check certificate validity and expiration dates
-   - Ensure CA certificates match between client and server
-
-**Timeout Issues**
-   - Adjust timeout values in ``artemis.hyperion.timeouts`` based on your environment
-   - Monitor AI model response times in Hyperion service logs
-   - Check network latency between Artemis and Hyperion
-
-**Service Health Issues**
-   - Check Hyperion service logs for startup errors
-   - Verify AI model configuration (OpenAI API keys, Azure endpoints, etc.) in Hyperion
-   - Ensure Hyperion has sufficient resources (CPU, memory) allocated
 
 .. important::
    Hyperion is part of the EduTelligence suite. Please check the `compatibility matrix <https://github.com/ls1intum/edutelligence#-artemis-compatibility>`_
