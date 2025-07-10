@@ -196,8 +196,9 @@
                     </form>
                 } @else {
                     <a
-                        [routerLink]="['/course-management', lecture().course?.id, `lectures`, lecture().id, 'unit-management', 'attachment-units', 'create']"
+                        [routerLink]="['/course-management', lecture().course?.id, `lectures`, lecture().id, 'unit-management', 'attachment-video-units', 'create']"
                         class="btn btn-primary me-2"
+                        id="add-attachment"
                     >
                         <span jhiTranslate="entity.action.addAttachment"></span>
                     </a>
