@@ -44,6 +44,10 @@
     background-color: var(--iris-client-chat-background);
     color: var(--primary);
 
+    &:hover .related-entity-name {
+        border: 1px solid var(--primary);
+    }
+
     &:hover .chat-history-text {
         text-decoration: underline;
     }
