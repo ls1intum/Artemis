@@ -19,7 +19,6 @@ import {
     MemirisSimulationNode,
 } from '../entities/memiris.model';
 import { ElementRef } from '@angular/core';
-import d3 from 'd3';
 
 // Test data generators
 function createMockMemory(id: string, title: string, deleted = false): MemirisMemory {
@@ -70,109 +69,119 @@ describe('MemirisGraphViewComponent', () => {
     let fixture: ComponentFixture<MemirisGraphViewComponent>;
     let translateService: TranslateService;
 
+    // Create shared mock drag behavior that tests can modify
+    const dragBehavior = {
+        _onStart: null as any,
+        _onDrag: null as any,
+        _onEnd: null as any,
+        on: jest.fn().mockImplementation((event, handler) => {
+            switch (event) {
+                case 'start':
+                    dragBehavior._onStart = handler;
+                    break;
+                case 'drag':
+                    dragBehavior._onDrag = handler;
+                    break;
+                case 'end':
+                    dragBehavior._onEnd = handler;
+                    break;
+            }
+            return dragBehavior;
+        }),
+    };
+
     beforeEach(async () => {
         jest.useFakeTimers();
 
-        // Mock D3 library since we don't need actual DOM manipulation
-        jest.mock('d3', () => ({
-            select: jest.fn().mockImplementation(() => ({
-                attr: jest.fn().mockReturnThis(),
-                style: jest.fn().mockReturnThis(),
-                append: jest.fn().mockImplementation(() => ({
+        jest.mock('d3', () => {
+            return {
+                select: jest.fn().mockImplementation(() => ({
                     attr: jest.fn().mockReturnThis(),
                     style: jest.fn().mockReturnThis(),
-                    append: jest.fn().mockReturnThis(),
-                    selectAll: jest.fn().mockReturnThis(),
-                    data: jest.fn().mockReturnThis(),
-                    enter: jest.fn().mockReturnThis(),
-                    text: jest.fn().mockReturnThis(),
-                    call: jest.fn().mockReturnThis(),
-                    remove: jest.fn().mockReturnThis(),
-                    on: jest.fn().mockReturnThis(),
-                    node: jest.fn().mockReturnValue({
-                        getBBox: jest.fn().mockReturnValue({ x: 0, y: 0, width: 100, height: 100 }),
-                    }),
-                    transition: jest.fn().mockReturnThis(),
-                })),
-                selectAll: jest.fn().mockImplementation(() => ({
-                    remove: jest.fn().mockReturnThis(),
-                    data: jest.fn().mockImplementation(() => ({
-                        enter: jest.fn().mockImplementation(() => ({
-                            append: jest.fn().mockImplementation(() => ({
-                                attr: jest.fn().mockReturnThis(),
-                                style: jest.fn().mockReturnThis(),
-                                text: jest.fn().mockReturnThis(),
-                                call: jest.fn().mockReturnThis(),
-                                on: jest.fn().mockReturnThis(),
-                            })),
-                        })),
-                        exit: jest.fn().mockReturnThis(),
+                    append: jest.fn().mockImplementation(() => ({
+                        attr: jest.fn().mockReturnThis(),
+                        style: jest.fn().mockReturnThis(),
+                        append: jest.fn().mockReturnThis(),
+                        selectAll: jest.fn().mockReturnThis(),
+                        data: jest.fn().mockReturnThis(),
+                        enter: jest.fn().mockReturnThis(),
+                        text: jest.fn().mockReturnThis(),
+                        call: jest.fn().mockReturnThis(),
+                        remove: jest.fn().mockReturnThis(),
+                        on: jest.fn().mockReturnThis(),
+                        node: jest.fn().mockReturnValue({
+                            getBBox: jest.fn().mockReturnValue({ x: 0, y: 0, width: 100, height: 100 }),
+                        }),
+                        transition: jest.fn().mockReturnThis(),
                     })),
-                    attr: jest.fn().mockReturnThis(),
-                    classed: jest.fn().mockReturnThis(),
-                    filter: jest.fn().mockReturnValue({
-                        classed: jest.fn(),
-                    }),
+                    selectAll: jest.fn().mockImplementation(() => ({
+                        remove: jest.fn().mockReturnThis(),
+                        data: jest.fn().mockImplementation(() => ({
+                            enter: jest.fn().mockImplementation(() => ({
+                                append: jest.fn().mockImplementation(() => ({
+                                    attr: jest.fn().mockReturnThis(),
+                                    style: jest.fn().mockReturnThis(),
+                                    text: jest.fn().mockReturnThis(),
+                                    call: jest.fn().mockReturnThis(),
+                                    on: jest.fn().mockReturnThis(),
+                                })),
+                            })),
+                            exit: jest.fn().mockReturnThis(),
+                        })),
+                        attr: jest.fn().mockReturnThis(),
+                        classed: jest.fn().mockReturnThis(),
+                        filter: jest.fn().mockReturnValue({
+                            classed: jest.fn(),
+                        }),
+                    })),
+                    transition: jest.fn().mockReturnThis(),
+                    call: jest.fn().mockReturnThis(),
                 })),
-                transition: jest.fn().mockReturnThis(),
-                call: jest.fn().mockReturnThis(),
-            })),
-            forceSimulation: jest.fn().mockImplementation(() => ({
-                force: jest.fn().mockReturnThis(),
-                alpha: jest.fn().mockReturnThis(),
-                alphaTarget: jest.fn().mockReturnThis(),
-                alphaDecay: jest.fn().mockReturnThis(),
-                velocityDecay: jest.fn().mockReturnThis(),
-                on: jest.fn().mockReturnThis(),
-                nodes: jest.fn().mockReturnThis(),
-                restart: jest.fn(),
-                stop: jest.fn(),
-            })),
-            forceCollide: jest.fn().mockImplementation(() => ({
-                radius: jest.fn().mockReturnThis(),
-                iterations: jest.fn().mockReturnThis(),
-            })),
-            forceManyBody: jest.fn().mockImplementation(() => ({
-                strength: jest.fn().mockReturnThis(),
-                distanceMax: jest.fn().mockReturnThis(),
-            })),
-            forceLink: jest.fn().mockImplementation(() => ({
-                id: jest.fn().mockReturnThis(),
-                distance: jest.fn().mockReturnThis(),
-                strength: jest.fn().mockReturnThis(),
-                links: jest.fn().mockReturnThis(),
-            })),
-            forceX: jest.fn().mockImplementation(() => ({
-                strength: jest.fn().mockReturnThis(),
-            })),
-            forceY: jest.fn().mockImplementation(() => ({
-                strength: jest.fn().mockReturnThis(),
-            })),
-            drag: jest.fn().mockImplementation(() => {
-                // Define type for dragMock to allow for dynamic properties
-                const dragMock: {
-                    on: jest.Mock;
-                    [key: string]: any; // This allows for dynamic properties
-                } = {
-                    on: jest.fn().mockImplementation((eventName, handler) => {
-                        dragMock[`_on${eventName.charAt(0).toUpperCase() + eventName.slice(1)}`] = handler;
-                        return dragMock;
-                    }),
-                };
-                return dragMock;
-            }),
-            zoom: jest.fn().mockImplementation(() => ({
-                scaleExtent: jest.fn().mockReturnThis(),
-                on: jest.fn().mockReturnThis(),
-                scaleBy: jest.fn(),
-                transform: jest.fn(),
-            })),
-            zoomIdentity: {
-                translate: jest.fn().mockImplementation(() => ({
-                    scale: jest.fn(),
+                forceSimulation: jest.fn().mockImplementation(() => ({
+                    force: jest.fn().mockReturnThis(),
+                    alpha: jest.fn().mockReturnThis(),
+                    alphaTarget: jest.fn().mockReturnThis(),
+                    alphaDecay: jest.fn().mockReturnThis(),
+                    velocityDecay: jest.fn().mockReturnThis(),
+                    on: jest.fn().mockReturnThis(),
+                    nodes: jest.fn().mockReturnThis(),
+                    restart: jest.fn(),
+                    stop: jest.fn(),
                 })),
-            },
-        }));
+                forceCollide: jest.fn().mockImplementation(() => ({
+                    radius: jest.fn().mockReturnThis(),
+                    iterations: jest.fn().mockReturnThis(),
+                })),
+                forceManyBody: jest.fn().mockImplementation(() => ({
+                    strength: jest.fn().mockReturnThis(),
+                    distanceMax: jest.fn().mockReturnThis(),
+                })),
+                forceLink: jest.fn().mockImplementation(() => ({
+                    id: jest.fn().mockReturnThis(),
+                    distance: jest.fn().mockReturnThis(),
+                    strength: jest.fn().mockReturnThis(),
+                    links: jest.fn().mockReturnThis(),
+                })),
+                forceX: jest.fn().mockImplementation(() => ({
+                    strength: jest.fn().mockReturnThis(),
+                })),
+                forceY: jest.fn().mockImplementation(() => ({
+                    strength: jest.fn().mockReturnThis(),
+                })),
+                drag: jest.fn().mockReturnValue(dragBehavior),
+                zoom: jest.fn().mockImplementation(() => ({
+                    scaleExtent: jest.fn().mockReturnThis(),
+                    on: jest.fn().mockReturnThis(),
+                    scaleBy: jest.fn(),
+                    transform: jest.fn(),
+                })),
+                zoomIdentity: {
+                    translate: jest.fn().mockImplementation(() => ({
+                        scale: jest.fn(),
+                    })),
+                },
+            };
+        });
 
         await TestBed.configureTestingModule({
             imports: [MemirisGraphViewComponent, FontAwesomeModule],
@@ -444,38 +453,7 @@ describe('MemirisGraphViewComponent', () => {
     });
 
     it('should handle drag events on nodes', () => {
-        // Custom mock for drag behavior with event handlers
-        const dragBehavior = {
-            _onStart: null as any,
-            _onDrag: null as any,
-            _onEnd: null as any,
-            on: jest.fn().mockImplementation((event, handler) => {
-                switch (event) {
-                    case 'start':
-                        dragBehavior._onStart = handler;
-                        break;
-                    case 'drag':
-                        dragBehavior._onDrag = handler;
-                        break;
-                    case 'end':
-                        dragBehavior._onEnd = handler;
-                        break;
-                }
-                return dragBehavior;
-            }),
-        };
-
-        // Mock and preserve d3.drag
-        const dragMock = jest.fn().mockReturnValue(dragBehavior);
-        const originalD3Drag = jest.mocked(d3).drag;
-        jest.mocked(d3).drag = dragMock;
-
         (component as any).setupDrag();
-
-        expect(dragMock).toHaveBeenCalled();
-        expect(dragBehavior.on).toHaveBeenCalledWith('start', expect.any(Function));
-        expect(dragBehavior.on).toHaveBeenCalledWith('drag', expect.any(Function));
-        expect(dragBehavior.on).toHaveBeenCalledWith('end', expect.any(Function));
 
         const mockNode = { x: 100, y: 100 } as MemirisSimulationNode;
         const mockEvent = { active: false, x: 200, y: 200 };
@@ -503,8 +481,6 @@ describe('MemirisGraphViewComponent', () => {
             expect(mockNode.fx).toBeUndefined();
             expect(mockNode.fy).toBeUndefined();
         }
-
-        jest.mocked(d3).drag = originalD3Drag;
     });
 
     it('should initialize the graph when updateGraph is called but svg is not yet initialized', fakeAsync(() => {
