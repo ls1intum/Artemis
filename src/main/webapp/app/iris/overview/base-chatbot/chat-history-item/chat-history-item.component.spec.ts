@@ -74,6 +74,17 @@ describe('ChatHistoryItemComponent', () => {
         expect(itemDiv.classList).not.toContain('chat-history-item-selected');
     });
 
+    function testSessionRendering(session: IrisSessionDTO, expectedIcon: IconProp, expectedTooltipKey: string, expectedEntityName: string) {
+        fixture.componentRef.setInput('session', session);
+        fixture.detectChanges();
+        const iconDebugEl = fixture.debugElement.query(By.directive(FaIconComponent));
+        const iconInstance = iconDebugEl.componentInstance as FaIconComponent;
+        const entityNameEl = fixture.debugElement.query(By.css('.related-entity-name')).nativeElement;
+        expect(iconInstance.icon).toBe(expectedIcon);
+        expect(component.iconAndTooltipKey?.tooltipKey).toBe(expectedTooltipKey);
+        expect(entityNameEl.textContent).toContain(expectedEntityName);
+    }
+
     it('should render correct icon with correct tooltip and entity name for lecture session', () => {
         const session: IrisSessionDTO = {
             id: 1,
@@ -82,17 +93,7 @@ describe('ChatHistoryItemComponent', () => {
             entityId: 42,
             entityName: 'Lecture 1',
         };
-
-        fixture.componentRef.setInput('session', session);
-        fixture.detectChanges();
-
-        const iconDebugEl = fixture.debugElement.query(By.directive(FaIconComponent));
-        const iconInstance = iconDebugEl.componentInstance as FaIconComponent;
-        const entityNameEl = fixture.debugElement.query(By.css('.related-entity-name')).nativeElement;
-
-        expect(iconInstance.icon).toBe(faChalkboardUser);
-        expect(component.iconAndTooltipKey?.tooltipKey).toBe('artemisApp.iris.chatHistory.relatedEntityTooltip.lecture');
-        expect(entityNameEl.textContent).toContain('Lecture 1');
+        testSessionRendering(session, faChalkboardUser, 'artemisApp.iris.chatHistory.relatedEntityTooltip.lecture', 'Lecture 1');
     });
 
     it('should render correct icon with correct tooltip and entity name for programming exercise session', () => {
@@ -103,17 +104,7 @@ describe('ChatHistoryItemComponent', () => {
             entityId: 77,
             entityName: 'Exercise 1',
         };
-
-        fixture.componentRef.setInput('session', session);
-        fixture.detectChanges();
-
-        const iconDebugEl = fixture.debugElement.query(By.directive(FaIconComponent));
-        const iconInstance = iconDebugEl.componentInstance as FaIconComponent;
-        const entityNameEl = fixture.debugElement.query(By.css('.related-entity-name')).nativeElement;
-
-        expect(iconInstance.icon).toBe(faKeyboard);
-        expect(component.iconAndTooltipKey?.tooltipKey).toBe('artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise');
-        expect(entityNameEl.textContent).toContain('Exercise 1');
+        testSessionRendering(session, faKeyboard, 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise', 'Exercise 1');
     });
 
     it('should not render an icon and entity name for course session', () => {
