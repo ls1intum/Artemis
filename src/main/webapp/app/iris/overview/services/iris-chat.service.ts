@@ -295,18 +295,25 @@ export class IrisChatService implements OnDestroy {
     }
 
     /**
+     * @param latestSession the latest session that was started
+     * @param currentSessions the currently displayed sessions in the history, expected to be sorted by creation date descending
+     */
+    private isLatestSessionIncludedInHistory(latestSession: IrisSessionDTO, currentSessions: IrisSessionDTO[] | undefined): boolean {
+        const latestDisplayedSession: IrisSessionDTO | undefined = currentSessions && currentSessions?.length > 0 ? currentSessions[0] : undefined;
+        return (
+            latestDisplayedSession !== undefined &&
+            (latestDisplayedSession.id === latestSession.id || dayjs(latestSession.creationDate).isBefore(dayjs(latestDisplayedSession.creationDate)))
+        );
+    }
+
+    /**
      * {@link IrisChatHttpService#getChatSessions} returns only sessions that have messages.
      *
      * As we open a new empty session without messages (e.g. when the dashboard is opened) we want to display this session in the history as well.
      */
     private addLatestEmptySessionToChatSessions(newIrisSession: IrisSession) {
         const currentSessions = this.chatSessions.getValue();
-        const latestDisplayedSession: IrisSessionDTO | undefined = currentSessions?.length > 0 ? currentSessions[0] : undefined;
-        const isNewSessionIncludedInHistory =
-            latestDisplayedSession !== undefined &&
-            (latestDisplayedSession.id === newIrisSession.id || dayjs(newIrisSession.creationDate).isBefore(dayjs(latestDisplayedSession.creationDate)));
-
-        if (!isNewSessionIncludedInHistory) {
+        if (!this.isLatestSessionIncludedInHistory(newIrisSession, currentSessions)) {
             this.latestStartedSession = {
                 id: newIrisSession.id,
                 creationDate: newIrisSession.creationDate,
@@ -422,7 +429,7 @@ export class IrisChatService implements OnDestroy {
             this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
                 const sessionsWithMessages = sessions ?? [];
                 let displayedSessions = [...sessionsWithMessages];
-                if (latestStartedSession && !displayedSessions.some((session) => session.id === latestStartedSession.id)) {
+                if (latestStartedSession && !this.isLatestSessionIncludedInHistory(latestStartedSession, displayedSessions)) {
                     displayedSessions = [latestStartedSession, ...displayedSessions];
                 }
                 this.chatSessions.next(displayedSessions);
