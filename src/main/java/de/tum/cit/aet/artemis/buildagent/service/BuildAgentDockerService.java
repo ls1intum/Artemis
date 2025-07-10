@@ -128,8 +128,7 @@ public class BuildAgentDockerService {
         List<Container> danglingBuildContainers;
         log.info("Start cleanup dangling build containers");
 
-        if (dockerClientNotAvailable()) {
-            log.debug("Docker client is not available. Cannot clean up dangling build containers.");
+        if (dockerClientNotAvailable("Cannot clean up dangling build containers.")) {
             return;
         }
 
@@ -354,12 +353,7 @@ public class BuildAgentDockerService {
 
     @Scheduled(fixedRateString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-minutes:60}", initialDelayString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-minutes:60}", timeUnit = TimeUnit.MINUTES)
     public void checkUsableDiskSpaceThenCleanUp() {
-        if (!imageCleanupEnabled) {
-            return;
-        }
-
-        if (dockerClientNotAvailable()) {
-            log.debug("Docker client is not available. Cannot check disk space for Docker image cleanup");
+        if (!imageCleanupEnabled || dockerClientNotAvailable("Cannot check disk space for Docker image cleanup.")) {
             return;
         }
 
@@ -422,8 +416,7 @@ public class BuildAgentDockerService {
      */
     private Set<String> getUnusedDockerImages() {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        if (dockerClientNotAvailable()) {
-            log.debug("Docker client is not available. Cannot get unused Docker images");
+        if (dockerClientNotAvailable("Cannot get unused Docker images")) {
             return Set.of();
         }
 
@@ -454,14 +447,15 @@ public class BuildAgentDockerService {
         return mb * byteConversionRate * byteConversionRate;
     }
 
-    private boolean dockerClientNotAvailable() {
+    private boolean dockerClientNotAvailable(String additionalLogInfo) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         if (dockerClient == null) {
             BuildAgentInformation.BuildAgentStatus status = distributedDataAccessService.getLocalBuildAgentStatus();
             if ((status == BuildAgentInformation.BuildAgentStatus.PAUSED || status == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED)) {
-                log.debug("Docker client is not available because the build agent is paused. This is expected behavior.");
+                log.info("Docker client is not available because the build agent is paused. {} This is expected behavior.", additionalLogInfo);
+                return true;
             }
-            log.error("Docker client is not available.");
+            log.error("Docker client is not available. {}", additionalLogInfo);
             return true;
         }
         return false;
