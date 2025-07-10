@@ -13,7 +13,7 @@ import { MemirisGraphSettingsComponent } from 'app/iris/shared/memiris-graph-set
 })
 export class MemirisAdminComponent implements OnInit {
     graphData?: MemirisGraphData;
-    readonly settings = signal(new MemirisGraphSettings());
+    settings = signal(new MemirisGraphSettings());
 
     ngOnInit(): void {
         setTimeout(() => {
