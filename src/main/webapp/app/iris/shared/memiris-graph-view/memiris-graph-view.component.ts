@@ -148,17 +148,21 @@ export class MemirisGraphViewComponent implements OnInit, OnDestroy, OnChanges {
         this.allNodes = data.memories.map((memory) => new MemirisMemoryNode(memory));
         this.allNodes.push(...data.learnings.map((learning) => new MemirisLearningNode(learning)));
 
+        // Precompute Maps for fast lookups
+        const learningMap = new Map(data.learnings.map((learning) => [learning.id, learning]));
+        const nodeMap = new Map(this.allNodes.map((node) => [node.getId(), node]));
+
         // Create links from graph data
         this.allLinks = [];
 
         // Create memory-learning links
         data.memories.forEach((memory) => {
-            const memoryNode = this.allNodes.find((node) => node.getId() === memory.id);
+            const memoryNode = nodeMap.get(memory.id);
             if (!memoryNode) return;
 
             memory.learnings?.forEach((learningId) => {
-                const learning = data.learnings.find((l) => l.id === learningId);
-                const learningNode = this.allNodes.find((node) => node.getId() === learningId);
+                const learning = learningMap.get(learningId);
+                const learningNode = nodeMap.get(learningId);
                 if (learning && learningNode) {
                     this.allLinks.push(new MemirisSimulationLinkMemoryLearning(memoryNode as MemirisMemoryNode, learningNode as MemirisLearningNode));
                 }
