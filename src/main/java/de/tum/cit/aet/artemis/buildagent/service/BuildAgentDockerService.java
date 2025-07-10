@@ -38,6 +38,7 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.PullResponseItem;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
@@ -127,11 +128,12 @@ public class BuildAgentDockerService {
         List<Container> danglingBuildContainers;
         log.info("Start cleanup dangling build containers");
 
-        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        if (dockerClient == null) {
-            log.info("Docker client is not available. Cannot clean up dangling build containers. If the build agent is paused, this is expected.");
+        if (dockerClientNotAvailable()) {
+            log.debug("Docker client is not available. Cannot clean up dangling build containers.");
             return;
         }
+
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
 
         if (isFirstCleanup) {
             // Cleanup all dangling build containers after the application has started
@@ -353,16 +355,11 @@ public class BuildAgentDockerService {
 
     @Scheduled(fixedRateString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-minutes:60}", initialDelayString = "${artemis.continuous-integration.image-cleanup.disk-space-check-interval-minutes:60}", timeUnit = TimeUnit.MINUTES)
     public void checkUsableDiskSpaceThenCleanUp() {
-        if (!imageCleanupEnabled) {
+        if (!imageCleanupEnabled || dockerClientNotAvailable()) {
             return;
         }
 
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        if (dockerClient == null) {
-            log.info("Docker client is not available. Cannot check disk space for Docker image cleanup. If the build agent is paused, this is expected.");
-            return;
-        }
-
         try {
             // Get the Docker root directory to check disk space.
             Path dockerRootDirectory = Path.of(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
@@ -421,8 +418,8 @@ public class BuildAgentDockerService {
      */
     private Set<String> getUnusedDockerImages() {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        if (dockerClient == null) {
-            log.info("Docker client is not available. Cannot get unused Docker images. If the build agent is paused, this is expected.");
+        if (dockerClientNotAvailable()) {
+            log.debug("Docker client is not available. Cannot get unused Docker images");
             return Set.of();
         }
 
@@ -451,5 +448,18 @@ public class BuildAgentDockerService {
     private long convertMegabytesToBytes(int mb) {
         long byteConversionRate = 1024L;
         return mb * byteConversionRate * byteConversionRate;
+    }
+
+    private boolean dockerClientNotAvailable() {
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+        if (dockerClient == null) {
+            BuildAgentInformation.BuildAgentStatus status = distributedDataAccessService.getLocalBuildAgentStatus();
+            if ((status == BuildAgentInformation.BuildAgentStatus.PAUSED || status == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED)) {
+                log.debug("Docker client is not available because the build agent is paused. This is expected behavior.");
+            }
+            log.error("Docker client is not available.");
+            return true;
+        }
+        return false;
     }
 }
