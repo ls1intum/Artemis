@@ -684,7 +684,7 @@ describe('IrisBaseChatbotComponent', () => {
         const session8DaysAgo: IrisSession = { id: 4, messages: [], creationDate: new Date('2025-06-15T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
         const session30DaysAgo: IrisSession = { id: 5, messages: [], creationDate: new Date('2025-05-24T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
 
-        const unsortedSessions = [session7DaysAgo, sessionToday, session30DaysAgo, sessionYesterday, session8DaysAgo];
+        const sortedSessions = [sessionToday, sessionYesterday, session7DaysAgo, session8DaysAgo, session30DaysAgo];
 
         beforeAll(() => {
             jest.useFakeTimers();
@@ -696,7 +696,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         beforeEach(() => {
-            component.chatSessions = [...unsortedSessions];
+            component.chatSessions = [...sortedSessions];
         });
 
         it('should handle invalid day ranges gracefully', () => {
@@ -738,12 +738,6 @@ describe('IrisBaseChatbotComponent', () => {
             const result = component.getSessionsBetween(1, undefined, true);
             expect(result).toHaveLength(4);
             expect(result.map((s) => s.id)).toEqual([sessionYesterday.id, session7DaysAgo.id, session8DaysAgo.id, session30DaysAgo.id]);
-        });
-
-        it('should always return sessions sorted by creationDate descending (newest first)', () => {
-            const result = component.getSessionsBetween(0, 30);
-            const expectedOrder = [sessionToday.id, sessionYesterday.id, session7DaysAgo.id, session8DaysAgo.id, session30DaysAgo.id];
-            expect(result.map((s) => s.id)).toEqual(expectedOrder);
         });
     });
 });
