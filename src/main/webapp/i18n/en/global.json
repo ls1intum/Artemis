@@ -374,7 +374,8 @@
         "archive": "Course archive",
         "faq": "FAQ",
         "plagiarismCases": "Plagiarism Cases",
-        "settings": "Settings"
+        "settings": "Settings",
+        "calendar": "Calendar"
     },
     "connectionStatus": {
         "connected": "Connected",

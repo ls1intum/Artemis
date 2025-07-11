@@ -30,6 +30,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -57,6 +58,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private calendarEventService = inject(CalendarEventService);
     private modalService = inject(NgbModal);
     private router = inject(Router);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -289,6 +291,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     private async onSaveSuccess(exam: Exam) {
         this.isSaving = false;
+        this.calendarEventService.refresh();
         await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);
     }

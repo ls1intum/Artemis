@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
@@ -23,6 +23,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.pipe';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 describe('TutorialGroupSessionsManagement', () => {
     let fixture: ComponentFixture<TutorialGroupSessionsManagementComponent>;
@@ -64,6 +65,7 @@ describe('TutorialGroupSessionsManagement', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                MockProvider(CalendarEventService),
             ],
         })
             .compileComponents()
@@ -122,5 +124,22 @@ describe('TutorialGroupSessionsManagement', () => {
             expect(openSpy).toHaveBeenCalledOnce();
             expect(openSpy).toHaveBeenCalledWith(CreateTutorialGroupSessionComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });
         });
+    }));
+
+    it('should call calendarEventService.refresh in loadAll', fakeAsync(() => {
+        const calendarEventService = TestBed.inject(CalendarEventService);
+        const refreshSpy = jest.spyOn(calendarEventService, 'refresh').mockImplementation(() => {});
+
+        component.course = course;
+        component.tutorialGroupId = tutorialGroupId;
+
+        const getOneOfCourseSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
+
+        component.loadAll();
+        tick();
+        fixture.detectChanges();
+
+        expect(getOneOfCourseSpy).toHaveBeenCalledWith(course.id!, tutorialGroupId);
+        expect(refreshSpy).toHaveBeenCalledOnce();
     }));
 });

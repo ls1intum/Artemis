@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
@@ -41,5 +42,9 @@ public class TutorialGroupApi extends AbstractTutorialGroupApi {
 
     public void deleteById(Long id) {
         tutorialGroupRepository.deleteById(id);
+    }
+
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromTutorialsGroups(long userId, Long courseId) {
+        return tutorialGroupService.getCalendarEventDTOsFromTutorialsGroups(userId, courseId);
     }
 }

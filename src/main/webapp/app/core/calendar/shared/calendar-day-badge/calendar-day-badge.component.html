@@ -1,0 +1,9 @@
+<div
+    class="day-badge"
+    [ngClass]="{
+        today: isToday(),
+        other: !isToday(),
+    }"
+>
+    {{ dayNumber }}
+</div>

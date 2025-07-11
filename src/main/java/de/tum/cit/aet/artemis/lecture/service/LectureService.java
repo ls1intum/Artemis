@@ -26,9 +26,13 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.dao.LectureCalendarEventDAO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventRelatedEntity;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventSemantics;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -316,5 +320,46 @@ public class LectureService {
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
         return lecture;
+    }
+
+    /**
+     * Retrieves a {@link LectureCalendarEventDAO} for each {@link Lecture} associated to the given courseId.
+     * Each dao encapsulates the visibleDate, startDate and endDate of the respective lecture.
+     * <p>
+     * The method then derives a set of {@link CalendarEventDTO}s from the daos. Whether events are included in the result
+     * depends on the visibleDate and whether the logged-in user is a student of the {@link Course})
+     *
+     * @param courseId      the ID of the course
+     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @return the set of results
+     */
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent) {
+        Set<LectureCalendarEventDAO> daos = lectureRepository.getLectureCalendarEventDAOsForCourseId(courseId);
+        return daos.stream().map(dao -> deriveCalendarEventDTO(dao, userIsStudent)).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
+    }
+
+    /**
+     * Derives an event for a given {@link LectureCalendarEventDAO} that represents either startDate if exclusively available, or endDate
+     * if exclusively available or both startDate and endDate if both are available.
+     * <p>
+     * The event is only derived given that either the lecture represented by a dao is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     *
+     * @param dao           the dao from which to derive the event
+     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @return the derived event
+     */
+    private Optional<CalendarEventDTO> deriveCalendarEventDTO(LectureCalendarEventDAO dao, boolean userIsStudent) {
+        if (userIsStudent && dao.visibleDate() != null && ZonedDateTime.now().isBefore(dao.visibleDate())) {
+            return Optional.empty();
+        }
+        if (dao.startDate() == null && dao.endDate() != null) {
+            return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.END_DATE, dao.title(), dao.endDate(), null, null, null));
+        }
+        if (dao.startDate() != null && dao.endDate() == null) {
+            return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.START_DATE, dao.title(), dao.startDate(), null, null, null));
+        }
+        return Optional
+                .of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.START_AND_END_DATE, dao.title(), dao.startDate(), dao.endDate(), null, null));
     }
 }

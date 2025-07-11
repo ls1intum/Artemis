@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.dao.LectureCalendarEventDAO;
 import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -36,6 +37,18 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             WHERE lecture.course.id = :courseId
             """)
     Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dao.LectureCalendarEventDAO(
+                lecture.title,
+                lecture.visibleDate,
+                lecture.startDate,
+                lecture.endDate
+            )
+            FROM Lecture lecture
+            WHERE lecture.course.id = :courseId AND (lecture.startDate IS NOT NULL OR lecture.endDate IS NOT NULL)
+            """)
+    Set<LectureCalendarEventDAO> getLectureCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT lecture

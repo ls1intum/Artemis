@@ -40,6 +40,7 @@ import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/diffic
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -79,6 +80,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     private readonly alertService = inject(AlertService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly exerciseGroupService = inject(ExerciseGroupService);
+    private readonly calendarEventService = inject(CalendarEventService);
 
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -298,6 +300,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     private onSaveSuccess(exercise: Exercise) {
         this.isSaving = false;
 
+        this.calendarEventService.refresh();
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
