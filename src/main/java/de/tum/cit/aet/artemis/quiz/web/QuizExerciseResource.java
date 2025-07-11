@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.exception.QuizJoinException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -107,6 +108,8 @@ public class QuizExerciseResource {
     private static final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
 
     private static final String ENTITY_NAME = "quizExercise";
+
+    private final CourseRepository courseRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -166,7 +169,7 @@ public class QuizExerciseResource {
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
             QuizBatchRepository quizBatchRepository, ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService,
             QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            QuizQuestionProgressService quizQuestionsProgressService) {
+            QuizQuestionProgressService quizQuestionsProgressService, CourseRepository courseRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -191,6 +194,7 @@ public class QuizExerciseResource {
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
         this.quizQuestionsProgressService = quizQuestionsProgressService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -825,7 +829,12 @@ public class QuizExerciseResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<QuizQuestion>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
-        List<QuizQuestion> quizQuestions = quizQuestionsProgressService.getQuestionsForSession(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findById(courseId).orElse(null);
+        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException();
+        }
+        List<QuizQuestion> quizQuestions = quizQuestionsProgressService.getQuestionsForSession(courseId, user.getId());
         return ResponseEntity.ok(quizQuestions);
     }
 

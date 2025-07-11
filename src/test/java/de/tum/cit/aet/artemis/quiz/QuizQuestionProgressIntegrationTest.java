@@ -124,7 +124,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizSubmission.setSubmissionDate(time);
         quizSubmission.setSubmittedAnswers(Set.of(submittedAnswer));
 
-        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
+        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizSubmission, participation);
 
         // Progress exists in database
         Optional<QuizQuestionProgress> progress = quizQuestionProgressTestRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
@@ -147,7 +147,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         // Progress does not exist in database
         quizQuestionProgressTestRepository.deleteAll();
-        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
+        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizSubmission, participation);
         Optional<QuizQuestionProgress> progressEmpty = quizQuestionProgressTestRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
         assertThat(progressEmpty.get().getUserId()).isEqualTo(userId);
         assertThat(progressEmpty.get().getQuizQuestionId()).isEqualTo(quizQuestionId);
@@ -165,8 +165,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(dataEmpty.getAttempts().get(0).getAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
         assertThat(dataEmpty.getAttempts().get(0).getScore()).isEqualTo(1.0);
 
-        quizSubmission.setSubmittedAnswers(Set.of());
-        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
+        submittedAnswer.setQuizQuestion(null);
+        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizSubmission, participation);
     }
 
     @Test
@@ -210,7 +210,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizExercise.setQuizQuestions(questions);
         quizExerciseTestRepository.save(quizExercise);
 
-        List<QuizQuestion> result = quizQuestionProgressService.getQuestionsForSession(1L);
+        List<QuizQuestion> result = quizQuestionProgressService.getQuestionsForSession(1L, userId);
         assertThat(result.size()).isEqualTo(10);
 
         List<Long> expectedOrder = new ArrayList<>(questionIdsWithPriority);

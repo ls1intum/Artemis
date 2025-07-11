@@ -10,15 +10,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
@@ -32,18 +28,12 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 @Service
 public class QuizQuestionProgressService {
 
-    private static final Logger log = LoggerFactory.getLogger(QuizQuestionProgressService.class);
-
     private final QuizQuestionProgressRepository quizQuestionProgressRepository;
-
-    private final UserRepository userRepository;
 
     private final QuizQuestionRepository quizQuestionRepository;
 
-    public QuizQuestionProgressService(QuizQuestionProgressRepository quizQuestionProgressRepository, UserRepository userRepository,
-            QuizQuestionRepository quizQuestionRepository) {
+    public QuizQuestionProgressService(QuizQuestionProgressRepository quizQuestionProgressRepository, QuizQuestionRepository quizQuestionRepository) {
         this.quizQuestionProgressRepository = quizQuestionProgressRepository;
-        this.userRepository = userRepository;
         this.quizQuestionRepository = quizQuestionRepository;
     }
 
@@ -51,17 +41,17 @@ public class QuizQuestionProgressService {
      * Fetch the necessary data for the quiz question progress from the quiz exercise and submission
      * Set the progress data for each answered question
      *
-     * @param quizExercise   The quiz exercise for which the progress is to be retrieved
      * @param quizSubmission The quiz submission containing the user's answers
      * @param participation  The student participation for the submission
      */
-    public void retrieveProgressFromResultAndSubmission(QuizExercise quizExercise, QuizSubmission quizSubmission, StudentParticipation participation) {
+    public void retrieveProgressFromResultAndSubmission(QuizSubmission quizSubmission, StudentParticipation participation) {
         ZonedDateTime lastAnsweredAt = quizSubmission.getSubmissionDate();
         Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions = new HashMap<>();
         Long userId = participation.getParticipant().getId();
-        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-            SubmittedAnswer answer = quizSubmission.getSubmittedAnswerForQuestion(question);
-            if (answer == null) {
+        Set<SubmittedAnswer> answers = quizSubmission.getSubmittedAnswers();
+        for (SubmittedAnswer answer : answers) {
+            QuizQuestion question = answer.getQuizQuestion();
+            if (question == null) {
                 continue;
             }
             QuizQuestionProgressData data = processQuestionProgress(question, answer, quizSubmission, userId);
@@ -148,8 +138,12 @@ public class QuizQuestionProgressService {
      * @param userId            The ID of the user for the participation
      */
     public void updateProgress(Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions, ZonedDateTime lastAnsweredAt, Long userId) {
+        Set<Long> questionIds = answeredQuestions.keySet().stream().map(QuizQuestion::getId).collect(Collectors.toSet());
+        List<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIds);
+        Map<Long, QuizQuestionProgress> progressMap = progressList.stream().collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> progress));
+
         answeredQuestions.forEach((question, data) -> {
-            QuizQuestionProgress progress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
+            QuizQuestionProgress progress = progressMap.getOrDefault(question.getId(), new QuizQuestionProgress());
             progress.setUserId(userId);
             progress.setQuizQuestionId(question.getId());
             progress.setProgressJson(data);
@@ -174,9 +168,8 @@ public class QuizQuestionProgressService {
      * @param courseId ID of the course for which the quiz questions are to be fetched
      * @return A list of 10 quiz questions sorted by priority
      */
-    public List<QuizQuestion> getQuestionsForSession(Long courseId) {
-        Set<QuizQuestion> allQuestions = getQuizQuestions(courseId);
-        long userId = getUserId();
+    public List<QuizQuestion> getQuestionsForSession(Long courseId, Long userId) {
+        Set<QuizQuestion> allQuestions = quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
         Set<Long> questionIds = allQuestions.stream().map(QuizQuestion::getId).collect(Collectors.toSet());
         List<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIds);
         Map<Long, Integer> priorityMap = progressList.stream()
@@ -289,15 +282,6 @@ public class QuizQuestionProgressService {
         else {
             return 6;
         }
-    }
-
-    // Getter
-    public Set<QuizQuestion> getQuizQuestions(Long courseId) {
-        return quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
-    }
-
-    public long getUserId() {
-        return userRepository.getUser().getId();
     }
 
 }

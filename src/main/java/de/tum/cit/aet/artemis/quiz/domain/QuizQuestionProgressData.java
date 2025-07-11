@@ -4,6 +4,11 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The class ist used to track the progress of a quiz question for a user.
+ * The attributes are based on the SM-2 algorithm and the Leitner system.
+ * <a href="https://supermemo.guru/wiki/SuperMemo_1.0_for_DOS_(1987)#Algorithm_SM-2">Resource for a quick lookup</a>
+ */
 public class QuizQuestionProgressData {
 
     public QuizQuestionProgressData() {
@@ -11,16 +16,23 @@ public class QuizQuestionProgressData {
 
     private double lastScore;
 
+    // The number of times the question has been answered correctly in a row starting from the last answer
     private int repetition;
 
+    // The easiness factor is a value that determines how easy a question is perceived by the user based on the SM-2 algorithm
     private double easinessFactor;
 
+    // The interval is the number of sessions until the question should be shown again
     private int interval;
 
+    // The number of sessions the question has been answered
     private int sessionCount;
 
+    // The priority is used to determine the order in which questions are shown
     private int priority;
 
+    // The box is used to track the progress of the question based on the Leitner system - correct answers move the question to a higher box, incorrect answers move it to a lower
+    // box
     private int box;
 
     private List<Attempt> attempts;
