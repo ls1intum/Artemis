@@ -113,8 +113,9 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      */
     private static int getGitPartStartIndexElseThrow(String uriString, Path uriPath) throws LocalVCInternalException {
         var startIndex = -1;
+        String gitString = "git";
         for (int i = 0; i < uriPath.getNameCount(); i++) {
-            if ("git".equals(uriPath.getName(i).toString())) {
+            if (gitString.equals(uriPath.getName(i).toString())) {
                 startIndex = i;
                 break;
             }
@@ -123,7 +124,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
         if (startIndex == -1) {
             throw new LocalVCInternalException("Invalid Local VC Repository URI: 'git' directory not found in the URI: " + uriString);
         }
-        if (uriPath.getNameCount() < startIndex + 3) {
+        if (uriPath.getNameCount() < startIndex + gitString.length()) {
             throw new LocalVCInternalException(
                     "Invalid Local VC Repository URI: the URI does not contain enough segments after 'git' to form a valid repository path: " + uriString);
         }

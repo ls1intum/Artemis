@@ -188,7 +188,7 @@ public abstract class AbstractGitService {
     }
 
     /**
-     * Opens an existing bare repository from the filesystem. Avoids write operations for git settings necessry for new repositories
+     * Opens an existing bare repository from the filesystem. Avoids write operations for git settings necessary for new repositories
      * and ensures that the repository is set up correctly with the specified default branch.
      *
      * @param localPath         The path to the local repository directory, not null.
