@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { FEEDBACK_EXAMPLES } from 'app/core/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-examples';
@@ -17,6 +17,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class FeedbackOnboardingModalComponent {
     @Input() profileMissing = false;
+    @Output() onboardingCompleted = new EventEmitter<void>();
     step = 0;
     readonly totalSteps = 3;
     selected: (number | null)[] = [null, null, null];
@@ -67,6 +68,7 @@ export class FeedbackOnboardingModalComponent {
                 type: AlertType.SUCCESS,
                 message: 'artemisApp.learnerProfile.feedbackLearnerProfile.profileSaved',
             });
+            this.onboardingCompleted.emit();
             this.activeModal.close();
         } catch (error) {
             this.handleError(error);

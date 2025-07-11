@@ -92,6 +92,7 @@ describe('FeedbackOnboardingModalComponent', () => {
             component.profileMissing = true;
             component.selected = [0, 1, null];
             const postSpy = jest.spyOn(learnerProfileApiService, 'postLearnerProfile').mockResolvedValue(new LearnerProfileDTO({}));
+            const emitSpy = jest.spyOn(component.onboardingCompleted, 'emit');
             await component.finish();
             expect(postSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -106,6 +107,7 @@ describe('FeedbackOnboardingModalComponent', () => {
                 type: AlertType.SUCCESS,
                 message: 'artemisApp.learnerProfile.feedbackLearnerProfile.profileSaved',
             });
+            expect(emitSpy).toHaveBeenCalled();
             expect(activeModal.close).toHaveBeenCalled();
         });
 
@@ -114,6 +116,7 @@ describe('FeedbackOnboardingModalComponent', () => {
             component.selected = [1, null, 0];
             const getSpy = jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(new LearnerProfileDTO({ id: 42 }));
             const putSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(new LearnerProfileDTO({}));
+            const emitSpy = jest.spyOn(component.onboardingCompleted, 'emit');
             await component.finish();
             expect(getSpy).toHaveBeenCalled();
             expect(putSpy).toHaveBeenCalledWith(
@@ -130,6 +133,7 @@ describe('FeedbackOnboardingModalComponent', () => {
                 type: AlertType.SUCCESS,
                 message: 'artemisApp.learnerProfile.feedbackLearnerProfile.profileSaved',
             });
+            expect(emitSpy).toHaveBeenCalled();
             expect(activeModal.close).toHaveBeenCalled();
         });
 
@@ -138,11 +142,13 @@ describe('FeedbackOnboardingModalComponent', () => {
             component.selected = [null, null, null];
             const error = new HttpErrorResponse({ error: 'fail', status: 500 });
             jest.spyOn(learnerProfileApiService, 'postLearnerProfile').mockRejectedValue(error);
+            const emitSpy = jest.spyOn(component.onboardingCompleted, 'emit');
             await component.finish();
             expect(alertService.addAlert).toHaveBeenCalledWith({
                 type: AlertType.DANGER,
                 message: error.message,
             });
+            expect(emitSpy).not.toHaveBeenCalled();
             expect(activeModal.close).toHaveBeenCalled();
         });
 
@@ -150,11 +156,13 @@ describe('FeedbackOnboardingModalComponent', () => {
             component.profileMissing = true;
             component.selected = [null, null, null];
             jest.spyOn(learnerProfileApiService, 'postLearnerProfile').mockRejectedValue(new Error('fail'));
+            const emitSpy = jest.spyOn(component.onboardingCompleted, 'emit');
             await component.finish();
             expect(alertService.addAlert).toHaveBeenCalledWith({
                 type: AlertType.DANGER,
                 message: 'artemisApp.learnerProfile.feedbackLearnerProfile.error',
             });
+            expect(emitSpy).not.toHaveBeenCalled();
             expect(activeModal.close).toHaveBeenCalled();
         });
     });

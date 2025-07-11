@@ -13,6 +13,7 @@
     <button class="btn btn-primary mt-3" (click)="openOnboardingModal()">Set your feedback preferences</button>
 } @else {
     <!-- Profile settings section -->
+    <button class="btn btn-outline-secondary mt-3" (click)="openOnboardingModal()">Replay onboarding</button>
     <div [ngClass]="{ 'd-none': disabled }">
         <div class="row row-cols-1 row-cols-xl-2 gx-5 align-items-end">
             <!-- Alternative vs. Standard setting -->
@@ -37,5 +38,4 @@
             </div>
         </div>
     </div>
-    <button class="btn btn-outline-secondary mt-3" (click)="openOnboardingModal()">Replay onboarding</button>
 }
