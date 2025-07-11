@@ -99,7 +99,7 @@ export class IrisChatService implements OnDestroy {
      */
     private courseId?: number;
 
-    private latestStartedSession?: IrisSessionDTO;
+    latestStartedSession?: IrisSessionDTO;
 
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
@@ -307,10 +307,18 @@ export class IrisChatService implements OnDestroy {
      */
     private isLatestSessionIncludedInHistory(latestSession: IrisSessionDTO, currentSessions: IrisSessionDTO[] | undefined): boolean {
         const latestDisplayedSession: IrisSessionDTO | undefined = currentSessions && currentSessions?.length > 0 ? currentSessions[0] : undefined;
-        return (
-            latestDisplayedSession !== undefined &&
-            (latestDisplayedSession.id === latestSession.id || dayjs(latestSession.creationDate).isBefore(dayjs(latestDisplayedSession.creationDate)))
-        );
+        if (latestDisplayedSession === undefined) {
+            return false;
+        }
+
+        const isSessionAlreadyDisplayed = latestDisplayedSession.id === latestSession.id;
+        if (isSessionAlreadyDisplayed) {
+            return true;
+        }
+
+        // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+        const isSessionAlreadyIncludedIfItContainsMessages = dayjs(latestSession.creationDate).isBefore(dayjs(latestDisplayedSession.creationDate));
+        return isSessionAlreadyIncludedIfItContainsMessages;
     }
 
     /**
@@ -320,12 +328,19 @@ export class IrisChatService implements OnDestroy {
      */
     private addLatestEmptySessionToChatSessions(newIrisSession: IrisSession) {
         const currentSessions = this.chatSessions.getValue();
+
         if (!this.isLatestSessionIncludedInHistory(newIrisSession, currentSessions)) {
-            this.latestStartedSession = {
-                id: newIrisSession.id,
-                creationDate: newIrisSession.creationDate,
-                chatMode: newIrisSession.chatMode ?? ChatServiceMode.COURSE,
-            };
+            /** When a chat from a programming exercise is started {@link newIrisSession} does not have the property `chatMode` but `mode` instead */
+            const chatMode = newIrisSession.chatMode ?? (newIrisSession as any).mode ?? ChatServiceMode.COURSE;
+
+            const shouldLatestSessionBeUpdated = this.sessionId === undefined || this.sessionId === newIrisSession.id;
+            if (shouldLatestSessionBeUpdated) {
+                this.latestStartedSession = {
+                    id: newIrisSession.id,
+                    creationDate: newIrisSession.creationDate,
+                    chatMode: chatMode,
+                };
+            }
             this.updateChatSessions(currentSessions, true);
         }
     }
