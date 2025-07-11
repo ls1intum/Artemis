@@ -310,7 +310,7 @@ export class IrisChatService implements OnDestroy {
      * @param currentSessions the currently displayed sessions in the history, expected to be sorted by creation date descending
      */
     private isLatestSessionIncludedInHistory(latestSession: IrisSessionDTO, currentSessions: IrisSessionDTO[] | undefined): boolean {
-        const latestDisplayedSession: IrisSessionDTO | undefined = currentSessions?.[0]
+        const latestDisplayedSession: IrisSessionDTO | undefined = currentSessions?.[0];
         if (latestDisplayedSession === undefined) {
             return false;
         }
@@ -333,17 +333,20 @@ export class IrisChatService implements OnDestroy {
     private addLatestEmptySessionToChatSessions(newIrisSession: IrisSession) {
         const currentSessions = this.chatSessions.getValue();
 
-        if (!this.isLatestSessionIncludedInHistory(newIrisSession, currentSessions)) {
-            /** When a chat from a programming exercise is started {@link newIrisSession} does not have the property `chatMode` but `mode` instead */
-            const chatMode = newIrisSession.chatMode ?? (newIrisSession as any).mode ?? ChatServiceMode.COURSE;
+        /** When a chat from a programming exercise is started {@link newIrisSession} does not have the property `chatMode` but `mode` instead */
+        const chatMode = newIrisSession.chatMode ?? (newIrisSession as any).mode ?? ChatServiceMode.COURSE;
+        const newIrisSessionDTO: IrisSessionDTO = {
+            id: newIrisSession.id,
+            creationDate: newIrisSession.creationDate,
+            chatMode: chatMode,
+            entityId: newIrisSession.entityId,
+            entityName: '',
+        };
 
+        if (!this.isLatestSessionIncludedInHistory(newIrisSessionDTO, currentSessions)) {
             const shouldLatestSessionBeUpdated = this.sessionId === undefined || this.sessionId === newIrisSession.id;
             if (shouldLatestSessionBeUpdated) {
-                this.latestStartedSession = {
-                    id: newIrisSession.id,
-                    creationDate: newIrisSession.creationDate,
-                    chatMode: chatMode,
-                };
+                this.latestStartedSession = newIrisSessionDTO;
             }
             this.updateChatSessions(currentSessions, true);
         }
