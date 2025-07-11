@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.assessment.service.BonusService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dao.ExamCalendarEventDAO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
@@ -63,8 +64,8 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventSubtype;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventType;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventRelatedEntity;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventSemantics;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -1368,22 +1369,25 @@ public class ExamService {
     }
 
     /**
-     * Derives a set of {@link CalendarEventDTO}s from the {@link Exam}s associated to the given courseId.
+     * Retrieves an {@link ExamCalendarEventDAO} for each {@link Exam} associated to the given courseId.
+     * Each dao encapsulates the title, visibleDate, startDate, endDate, publishResultsDate, studentReviewStart, studentReviewEnd
+     * and examiner of the respective Exam.
      * <p>
-     * Whether events are included in the result depends on the visibleDate of the given exam and whether the
-     * logged-in user is a student of the {@link Course})
+     * The method then derives a set of {@link CalendarEventDTO}s from the DAOs. Whether events are included in the result depends
+     * on the visibleDate of the exam represented by the given DAO and whether the logged-in user is a student of the {@link Course})
+     *
      *
      * @param courseId      the ID of the course
      * @param userIsStudent indicates whether the logged-in user is a student of the course
      * @return the set of results
      */
     public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(long courseId, boolean userIsStudent) {
-        List<Exam> exams = examRepository.findByCourseId(courseId);
-        return exams.stream().flatMap(exam -> deriveEvents(exam, !userIsStudent).stream()).collect(Collectors.toSet());
+        Set<ExamCalendarEventDAO> daos = examRepository.getExamCalendarEventDAOsForCourseId(courseId);
+        return daos.stream().flatMap(dao -> deriveCalendarEventDTOs(dao, userIsStudent).stream()).collect(Collectors.toSet());
     }
 
     /**
-     * Derives the following events for a given {@link Exam}:
+     * Derives the following events for an {@link Exam} represented by the given DAO:
      * <ul>
      * <li>One event representing the actual working time (starts on start date and ends on end date of the exam, both are always not null)</li>
      * <li>One event representing the point in them when results are published if not null</li>
@@ -1393,22 +1397,23 @@ public class ExamService {
      * The events are only derived given that either the exam is visible to students or the logged-in user is a course
      * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
      *
-     * @param exam              the exam for which to derive the events
-     * @param userIsCourseStaff indicates whether the logged-in user is a course staff member
+     * @param dao           the DAO for which to derive the events
+     * @param userIsStudent indicates whether the logged-in user is student of the course associated to the exam
      * @return the derived events
      */
-    private Set<CalendarEventDTO> deriveEvents(Exam exam, boolean userIsCourseStaff) {
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(ExamCalendarEventDAO dao, boolean userIsStudent) {
         Set<CalendarEventDTO> events = new HashSet<>();
-        if (userIsCourseStaff || (exam.getVisibleDate() != null && exam.getVisibleDate().isBefore(now()))) {
-            events.add(new CalendarEventDTO(CalendarEventType.EXAM, CalendarEventSubtype.START_AND_END_DATE, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
-                    exam.getExaminer()));
-            if (exam.getPublishResultsDate() != null) {
-                events.add(
-                        new CalendarEventDTO(CalendarEventType.EXAM, CalendarEventSubtype.PUBLISH_RESULTS_DATE, exam.getTitle(), exam.getPublishResultsDate(), null, null, null));
-                if (exam.getExamStudentReviewStart() != null) {
-                    events.add(new CalendarEventDTO(CalendarEventType.EXAM, CalendarEventSubtype.STUDENT_REVIEW_START_DATE, exam.getTitle(), exam.getExamStudentReviewStart(), null,
+        boolean userIsCourseStaff = !userIsStudent;
+        if (userIsCourseStaff || dao.visibleDate().isBefore(now())) {
+            events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.START_AND_END_DATE, dao.title(), dao.startDate(), dao.endDate(), null,
+                    dao.examiner()));
+            if (dao.publishResultsDate() != null) {
+                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.PUBLISH_RESULTS_DATE, dao.title(), dao.publishResultsDate(), null, null,
+                        null));
+                if (dao.studentReviewStart() != null) {
+                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_START_DATE, dao.title(), dao.studentReviewStart(), null,
                             null, null));
-                    events.add(new CalendarEventDTO(CalendarEventType.EXAM, CalendarEventSubtype.STUDENT_REVIEW_END_DATE, exam.getTitle(), exam.getExamStudentReviewEnd(), null,
+                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_END_DATE, dao.title(), dao.studentReviewEnd(), null,
                             null, null));
                 }
             }

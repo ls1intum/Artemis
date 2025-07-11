@@ -1,5 +1,0 @@
-package de.tum.cit.aet.artemis.core.dto.calendar;
-
-public enum CalendarEventSubtype {
-    START_DATE, END_DATE, START_AND_END_DATE, RELEASE_DATE, DUE_DATE, PUBLISH_RESULTS_DATE, STUDENT_REVIEW_START_DATE, STUDENT_REVIEW_END_DATE, ASSESSMENT_DUE_DATE
-}

@@ -4,8 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,11 +52,11 @@ public class CalendarResource {
 
     private final UserRepository userRepository;
 
-    private final TutorialGroupApi tutorialGroupApi;
+    private final Optional<TutorialGroupApi> tutorialGroupApi;
+
+    private final Optional<ExamApi> examApi;
 
     private final LectureApi lectureApi;
-
-    private final ExamApi examApi;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -64,12 +66,12 @@ public class CalendarResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public CalendarResource(UserRepository userRepository, TutorialGroupApi tutorialGroupApi, LectureApi lectureApi, ExamApi examApi, ExerciseService exerciseService,
-            QuizExerciseService quizExerciseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService) {
+    public CalendarResource(UserRepository userRepository, Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamApi> examApi, LectureApi lectureApi,
+            ExerciseService exerciseService, QuizExerciseService quizExerciseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.tutorialGroupApi = tutorialGroupApi;
-        this.lectureApi = lectureApi;
         this.examApi = examApi;
+        this.lectureApi = lectureApi;
         this.quizExerciseService = quizExerciseService;
         this.exerciseService = exerciseService;
         this.courseRepository = courseRepository;
@@ -102,9 +104,9 @@ public class CalendarResource {
         ZoneId clientTimeZone = CalendarUtil.deserializeZoneIdOrElseThrow(timeZone);
         Long userId = user.getId();
 
-        Set<CalendarEventDTO> tutorialEventDTOs = tutorialGroupApi.getCalendarEventDTOsFromTutorialsGroups(userId, courseId);
+        Set<CalendarEventDTO> tutorialEventDTOs = tutorialGroupApi.map(api -> api.getCalendarEventDTOsFromTutorialsGroups(userId, courseId)).orElse(Collections.emptySet());
+        Set<CalendarEventDTO> examEventDTOs = examApi.map(api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent)).orElse(Collections.emptySet());
         Set<CalendarEventDTO> lectureEventDTOs = lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent);
-        Set<CalendarEventDTO> examEventDTOs = examApi.getCalendarEventDTOsFromExams(courseId, userIsStudent);
         Set<CalendarEventDTO> quizExerciseEventDTOs = quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent);
         Set<CalendarEventDTO> otherExerciseEventDTOs = exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent);
 

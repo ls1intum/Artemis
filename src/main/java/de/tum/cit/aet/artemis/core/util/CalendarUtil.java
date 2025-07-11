@@ -17,7 +17,10 @@ import jakarta.ws.rs.BadRequestException;
 
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 
-public class CalendarUtil {
+public final class CalendarUtil {
+
+    private CalendarUtil() {
+    }
 
     /**
      * Deserializes a list of month keys into a set of {@link YearMonth} objects.

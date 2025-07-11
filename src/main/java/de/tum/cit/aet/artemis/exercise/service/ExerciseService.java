@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dao.NonQuizExerciseCalendarEventDAO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
@@ -58,8 +59,7 @@ import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventSubtype;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventType;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventSemantics;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -805,58 +805,53 @@ public class ExerciseService {
     }
 
     /**
-     * Derives a set of {@link CalendarEventDTO}s from {@link FileUploadExercise}s, {@link TextExercise}s,
-     * {@link ModelingExercise}s and {@link ProgrammingExercise}s associated to the given courseId.
+     * Retrieves a {@link NonQuizExerciseCalendarEventDAO} for each {@link FileUploadExercise}, {@link TextExercise}, {@link ModelingExercise}
+     * and {@link ProgrammingExercise} associated to the given courseId. Each dao encapsulates the releaseDate, startDate, dueDate and assessmentDueDate
+     * of the respective exercise.
      * <p>
-     * Whether events are included in the result depends on the releaseDate of the given exercise and whether the
-     * logged-in user is course staff member (either tutor, editor ot student of the {@link Course})
+     * The method then derives a set of {@link CalendarEventDTO}s from the daos. Whether events are included in the result depends on the
+     * releaseDate of a given exercise and whether the logged-in user is course staff member (either tutor, editor ot student of the {@link Course})
      *
      * @param courseId      the ID of the course
      * @param userIsStudent indicates whether the logged-in user is a student
      * @return the set of results
      */
     public Set<CalendarEventDTO> getCalendarEventDTOsFromNonQuizExercises(long courseId, boolean userIsStudent) {
-        List<Exercise> exercises = exerciseRepository.findNonQuizExercisesByCourseId(courseId);
-        return exercises.stream().flatMap(exercise -> deriveEvents(exercise, !userIsStudent).stream()).collect(Collectors.toSet());
+        Set<NonQuizExerciseCalendarEventDAO> daos = exerciseRepository.getNonQuizExerciseCalendarEventsDAOsForCourseId(courseId);
+        return daos.stream().flatMap(dao -> deriveCalendarEventDTOs(dao, userIsStudent).stream()).collect(Collectors.toSet());
     }
 
     /**
-     * Derives the following events for a given {@link Exercise}:
+     * Derives the following events for a given {@link NonQuizExerciseCalendarEventDAO}:
      * <ul>
-     * <li>One event representing the release date if available</li>
-     * <li>One event representing the start date if available</li>
-     * <li>One event representing the due date if available</li>
-     * <li>One event representing the assessment due date if available</li>
+     * <li>One event representing the release date if not null</li>
+     * <li>One event representing the start date if not null</li>
+     * <li>One event representing the due date if not null</li>
+     * <li>One event representing the assessment due date if not null</li>
      * </ul>
      *
-     * The events are only derived given that either the exercise is visible to students or the logged-in user is a course
+     * The events are only derived given that either the exercise represented by a dao is visible to students or the logged-in user is a course
      * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
      *
-     * @param exercise          the exam for which to derive the events
-     * @param userIsCourseStaff indicates whether the logged-in user is a course staff member
+     * @param dao           the exam for which to derive the events
+     * @param userIsStudent indicates whether the logged-in user is a student of the course associated to the exercise represented by the dao
      * @return the derived events
      */
-    private Set<CalendarEventDTO> deriveEvents(Exercise exercise, boolean userIsCourseStaff) {
-        if (!(exercise instanceof FileUploadExercise || exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof ProgrammingExercise)) {
-            return new HashSet<>();
-        }
-
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(NonQuizExerciseCalendarEventDAO dao, boolean userIsStudent) {
         Set<CalendarEventDTO> events = new HashSet<>();
-        if (userIsCourseStaff || exercise.getReleaseDate() == null || (exercise.getReleaseDate() != null && exercise.getReleaseDate().isBefore(now()))) {
-            CalendarEventType eventType = exercise instanceof FileUploadExercise ? CalendarEventType.FILE_UPLOAD_EXERCISE
-                    : exercise instanceof TextExercise ? CalendarEventType.TEXT_EXERCISE
-                            : exercise instanceof ModelingExercise ? CalendarEventType.MODELING_EXERCISE : CalendarEventType.PROGRAMMING_EXERCISE;
-            if (exercise.getReleaseDate() != null) {
-                events.add(new CalendarEventDTO(eventType, CalendarEventSubtype.RELEASE_DATE, exercise.getTitle(), exercise.getReleaseDate(), null, null, null));
+        boolean userIsCourseStaff = !userIsStudent;
+        if (userIsCourseStaff || dao.releaseDate() == null || dao.releaseDate().isBefore(now())) {
+            if (dao.releaseDate() != null) {
+                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.RELEASE_DATE, dao.title(), dao.releaseDate(), null, null, null));
             }
-            if (exercise.getStartDate() != null) {
-                events.add(new CalendarEventDTO(eventType, CalendarEventSubtype.START_DATE, exercise.getTitle(), exercise.getStartDate(), null, null, null));
+            if (dao.startDate() != null) {
+                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.START_DATE, dao.title(), dao.startDate(), null, null, null));
             }
-            if (exercise.getDueDate() != null) {
-                events.add(new CalendarEventDTO(eventType, CalendarEventSubtype.DUE_DATE, exercise.getTitle(), exercise.getDueDate(), null, null, null));
+            if (dao.dueDate() != null) {
+                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.DUE_DATE, dao.title(), dao.dueDate(), null, null, null));
             }
-            if (exercise.getAssessmentDueDate() != null) {
-                events.add(new CalendarEventDTO(eventType, CalendarEventSubtype.ASSESSMENT_DUE_DATE, exercise.getTitle(), exercise.getAssessmentDueDate(), null, null, null));
+            if (dao.assessmentDueDate() != null) {
+                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.ASSESSMENT_DUE_DATE, dao.title(), dao.assessmentDueDate(), null, null, null));
             }
         }
         return events;

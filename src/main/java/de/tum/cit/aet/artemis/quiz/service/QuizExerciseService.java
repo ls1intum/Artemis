@@ -38,12 +38,13 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dao.QuizExerciseCalendarEventDAO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventSubtype;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventType;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventRelatedEntity;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventSemantics;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
@@ -537,31 +538,32 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Derives a set of {@link CalendarEventDTO}s from the {@link QuizExercise}s associated to the given courseId.
+     * Retrieves a {@link QuizExerciseCalendarEventDAO} for each {@link QuizExercise} associated to the given courseId.
+     * Each dao encapsulates the quizMode, title, releaseDate, dueDate, quizBatches and duration of the respective QuizExercise.
      * <p>
-     * Whether events are included in the result depends on the quizMode of the given exercise and whether the
-     * logged-in user is a student of the {@link Course})
+     * The method then derives a set of {@link CalendarEventDTO}s from the DAOs. Whether events are included in the result
+     * depends on the quizMode of the given exercise and whether the logged-in user is a student of the {@link Course}.
      *
      * @param courseId      the ID of the course
      * @param userIsStudent indicates whether the logged-in user is a student of the course
      * @return the set of results
      */
     public Set<CalendarEventDTO> getCalendarEventDTOsFromQuizExercises(long courseId, boolean userIsStudent) {
-        Set<QuizExercise> quizExercises = quizExerciseRepository.findWithBatchesByCourseId(courseId);
-        return quizExercises.stream().flatMap(quizExercise -> deriveEvents(quizExercise, userIsStudent).stream()).collect(Collectors.toSet());
+        Set<QuizExerciseCalendarEventDAO> daos = quizExerciseRepository.getQuizExerciseCalendarEventDAOsForCourseId(courseId);
+        return daos.stream().flatMap(dao -> deriveCalendarEventDTOs(dao, userIsStudent).stream()).collect(Collectors.toSet());
     }
 
-    private Set<CalendarEventDTO> deriveEvents(QuizExercise quizExercise, boolean userIsStudent) {
-        if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
-            return deriveEventForSynchronizedQuizExercise(quizExercise, userIsStudent).map(Set::of).orElseGet(Collections::emptySet);
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(QuizExerciseCalendarEventDAO dao, boolean userIsStudent) {
+        if (dao.quizMode() == QuizMode.SYNCHRONIZED) {
+            return deriveCalendarEventDTOForSynchronizedQuizExercise(dao, userIsStudent).map(Set::of).orElseGet(Collections::emptySet);
         }
         else {
-            return deriveEventsForIndividualAndBatchedQuizExercises(quizExercise, !userIsStudent);
+            return deriveCalendarEventDTOsForIndividualAndBatchedQuizExercises(dao, userIsStudent);
         }
     }
 
     /**
-     * Derives one event represents the working time period of the given {@link QuizExercise}.
+     * Derives one event represents the working time period of the {@link QuizExercise} represented by the given DAO.
      * <p>
      * The events are only derived given that either the exercise is visible to students or the logged-in user is a course
      * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
@@ -570,27 +572,26 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * The startDate and dueDate properties of {@link QuizExercise}s in {@code QuizMode.SYNCHRONIZED} are always null. Instead, such quizzes have exactly one {@link QuizBatch}
      * for which the startTime property is set. The end of the quiz can be calculated by adding the duration property of the exercise to the startTime of the batch.
      *
-     * @param quizExercise  the exercise from which to derive the event
+     * @param dao           the DAO from which to derive the event
      * @param userIsStudent indicates whether the logged-in user is a student of the course related to the exercise
      * @return one event representing the working time period of the exercise
      */
-    private Optional<CalendarEventDTO> deriveEventForSynchronizedQuizExercise(QuizExercise quizExercise, boolean userIsStudent) {
-        if (userIsStudent && quizExercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(quizExercise.getReleaseDate())) {
+    private Optional<CalendarEventDTO> deriveCalendarEventDTOForSynchronizedQuizExercise(QuizExerciseCalendarEventDAO dao, boolean userIsStudent) {
+        if (userIsStudent && dao.releaseDate() != null && ZonedDateTime.now().isBefore(dao.releaseDate())) {
             return Optional.empty();
         }
 
-        Optional<QuizBatch> synchronizedBatchOptional = quizExercise.getQuizBatches().stream().findFirst();
-        if (synchronizedBatchOptional.isEmpty() || synchronizedBatchOptional.get().getStartTime() == null) {
+        QuizBatch synchronizedBatch = dao.quizBatch();
+        if (synchronizedBatch == null || synchronizedBatch.getStartTime() == null || dao.duration() == null) {
             return Optional.empty();
         }
-        QuizBatch synchronizedBatch = synchronizedBatchOptional.get();
 
-        return Optional.of(new CalendarEventDTO(CalendarEventType.QUIZ_EXERCISE, CalendarEventSubtype.START_AND_END_DATE, quizExercise.getTitle(), synchronizedBatch.getStartTime(),
-                synchronizedBatch.getStartTime().plusSeconds(quizExercise.getDuration()), null, null));
+        return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.START_AND_END_DATE, dao.title(), synchronizedBatch.getStartTime(),
+                synchronizedBatch.getStartTime().plusSeconds(dao.duration()), null, null));
     }
 
     /**
-     * Derives one event for start/end of the duration during which the user can choose to participate in the given {@link QuizExercise}.
+     * Derives one event for start/end of the duration during which the user can choose to participate in the {@link QuizExercise} represented by the given DAO.
      * <p>
      * The events are only derived given that either the exercise is visible to students or the logged-in user is a course
      * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
@@ -601,20 +602,19 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * For both modes, the period in which the quiz can be held may be constrained by releaseDate (defining a start of the period) or dueDate (defining an end of the period).
      * The dueDate and startDate can be set independent of each other.
      *
-     * @param quizExercise      the quiz from which to derive the events
-     * @param userIsCourseStaff indicates whether the logged-in user is a course staff member
+     * @param dao           the DAO from which to derive the events
+     * @param userIsStudent indicates whether the logged-in user is a student of the course associated to the quizExercise
      * @return the derived events
      */
-    private Set<CalendarEventDTO> deriveEventsForIndividualAndBatchedQuizExercises(QuizExercise quizExercise, boolean userIsCourseStaff) {
+    private Set<CalendarEventDTO> deriveCalendarEventDTOsForIndividualAndBatchedQuizExercises(QuizExerciseCalendarEventDAO dao, boolean userIsStudent) {
         Set<CalendarEventDTO> events = new HashSet<>();
-        if (userIsCourseStaff || quizExercise.getReleaseDate() == null || (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isBefore(now()))) {
-            if (quizExercise.getReleaseDate() != null) {
-                events.add(new CalendarEventDTO(CalendarEventType.QUIZ_EXERCISE, CalendarEventSubtype.RELEASE_DATE, quizExercise.getTitle(), quizExercise.getReleaseDate(), null,
-                        null, null));
+        boolean userIsCourseStaff = !userIsStudent;
+        if (userIsCourseStaff || dao.releaseDate() == null || dao.releaseDate().isBefore(now())) {
+            if (dao.releaseDate() != null) {
+                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE, dao.title(), dao.releaseDate(), null, null, null));
             }
-            if (quizExercise.getDueDate() != null) {
-                events.add(
-                        new CalendarEventDTO(CalendarEventType.QUIZ_EXERCISE, CalendarEventSubtype.DUE_DATE, quizExercise.getTitle(), quizExercise.getDueDate(), null, null, null));
+            if (dao.dueDate() != null) {
+                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE, dao.title(), dao.dueDate(), null, null, null));
             }
         }
         return events;
