@@ -106,7 +106,7 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
         expect(getForTreeViewSpy).toHaveBeenCalled();
         expect(getSourcesSpy).toHaveBeenCalled();
         expect(component['knowledgeAreaMap'].size).toBe(5);
-        expect(component['knowledgeAreasForSelect()']).toHaveLength(5);
+        expect(component['knowledgeAreasForSelect']).toHaveLength(5);
         expect(component['sources']).toHaveLength(2);
     });
 

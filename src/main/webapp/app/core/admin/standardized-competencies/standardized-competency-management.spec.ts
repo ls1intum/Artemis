@@ -90,7 +90,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
         expect(getForTreeViewSpy).toHaveBeenCalled();
         expect(component['knowledgeAreaMap'].size).toBe(7);
-        expect(component['knowledgeAreasForSelect()']).toHaveLength(7);
+        expect(component['knowledgeAreasForSelect']).toHaveLength(7);
         expect(component['dataSource'].data).toHaveLength(3);
         expect(component['sourcesForSelect']).toHaveLength(4);
     });
@@ -407,7 +407,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     });
 
     it('should hide created knowledgeArea if it is not in the filter', () => {
-        component['knowledgeAreaFilter()'] = { id: 2 };
+        component['knowledgeAreaFilter'] = { id: 2 };
         const tree: KnowledgeAreaDTO[] = [
             {
                 id: 1,

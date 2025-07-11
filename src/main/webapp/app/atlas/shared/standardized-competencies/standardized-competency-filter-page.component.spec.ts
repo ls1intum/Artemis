@@ -145,7 +145,7 @@ describe('StandardizedCompetencyFilterPageComponent', () => {
         filterTree.forEach((knowledgeArea) => component['addSelfAndDescendantsToSelectArray'](knowledgeArea));
 
         expect(component['knowledgeAreaMap'].size).toBe(6);
-        expect(component['knowledgeAreasForSelect()']).toHaveLength(6);
+        expect(component['knowledgeAreasForSelect']).toHaveLength(6);
     });
 
     function createCompetencyDTO(id?: number, title?: string, description?: string, taxonomy?: CompetencyTaxonomy, knowledgeAreaId?: number) {
