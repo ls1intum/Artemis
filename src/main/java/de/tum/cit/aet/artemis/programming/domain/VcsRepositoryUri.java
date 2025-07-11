@@ -43,7 +43,7 @@ public class VcsRepositoryUri {
      * @param repositoryName containing the project key at the beginning
      */
     public VcsRepositoryUri(String vcBaseUrl, String repositoryName) throws URISyntaxException {
-        if (!repositoryName.matches("[a-zA-Z0-9]+-[a-zA-Z0-9-]+")) {
+        if (!repositoryName.matches("[a-zA-Z0-9]+-.+")) {
             throw new IllegalArgumentException("Repository name must be in the format <project_key>-<repo-type>");
         }
 
