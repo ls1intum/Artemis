@@ -166,6 +166,7 @@ public class QuizQuestionProgressService {
      * Get the sorted List of 10 quiz questions based on their priority
      *
      * @param courseId ID of the course for which the quiz questions are to be fetched
+     * @param userId   ID of the user for whom the quiz questions are to be fetched
      * @return A list of 10 quiz questions sorted by priority
      */
     public List<QuizQuestion> getQuestionsForSession(Long courseId, Long userId) {
