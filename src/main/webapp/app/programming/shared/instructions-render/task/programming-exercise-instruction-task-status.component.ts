@@ -23,6 +23,8 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     TestCaseState = TestCaseState;
     translationBasePath = 'artemisApp.editor.testStatusLabels.';
 
+    // TODO revert this change
+
     @Input() taskName: string;
 
     /**
