@@ -18,6 +18,9 @@ class DummyImportComponent extends ImportCourseCompetenciesComponent {
     entityType = 'dummy';
 
     onSubmit(): void {}
+    override getTreeComponent(): KnowledgeAreaTreeComponent | undefined {
+        return undefined; // or this.tree if available
+    }
 }
 
 describe('ImportCourseCompetenciesComponent', () => {
