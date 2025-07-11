@@ -161,6 +161,8 @@ repositories {
     maven {
         url = "https://build.shibboleth.net/maven/releases"
     }
+    maven { url = uri("https://repository.hazelcast.com/release/") }
+
 }
 
 configurations.configureEach {
