@@ -19,7 +19,7 @@ class DummyImportComponent extends ImportCourseCompetenciesComponent {
 
     onSubmit(): void {}
     override getTreeComponent(): KnowledgeAreaTreeComponent | undefined {
-        return undefined; // or this.tree if available
+        return undefined;
     }
 }
 
