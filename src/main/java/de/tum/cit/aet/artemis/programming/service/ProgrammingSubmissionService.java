@@ -185,7 +185,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         // Instructors are allowed to submit to a programming exercise after the due date, if this happens we set the Submission to INSTRUCTOR
         // TODO: double check if the user contains the authoities and groups, if not, we need to load the user from the database again
-        if (authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user)) {
+        if (user != null && authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user)) {
             programmingSubmission.setType(SubmissionType.INSTRUCTOR);
         }
 
