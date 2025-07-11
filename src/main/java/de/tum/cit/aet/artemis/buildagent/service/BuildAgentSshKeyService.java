@@ -49,7 +49,7 @@ public class BuildAgentSshKeyService {
      * Generates the SSH key pair and writes the private key when the application is started and the build agents should use SSH for their git operations.
      */
     @EventListener(FullStartupEvent.class)
-    public void applicationReady() {
+    public void applicationReady() throws IOException {
         if (!useSshForBuildAgent) {
             return;
         }
@@ -60,8 +60,8 @@ public class BuildAgentSshKeyService {
             throw new RuntimeException("No SSH private key folder was set but should use SSH for build agent authentication.");
         }
 
-        if (!gitSshPrivateKeyPath.get().toFile().exists()) {
-            gitSshPrivateKeyPath.get().toFile().mkdirs();
+        if (!Files.exists(gitSshPrivateKeyPath.get())) {
+            Files.createDirectories(gitSshPrivateKeyPath.get());
         }
 
         try {

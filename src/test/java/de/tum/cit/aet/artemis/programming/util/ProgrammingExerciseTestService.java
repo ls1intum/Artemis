@@ -362,15 +362,36 @@ public class ProgrammingExerciseTestService {
     }
 
     public void tearDown() throws Exception {
-        exerciseRepo.resetLocalRepo();
-        testRepo.resetLocalRepo();
-        solutionRepo.resetLocalRepo();
-        sourceExerciseRepo.resetLocalRepo();
-        sourceTestRepo.resetLocalRepo();
-        sourceSolutionRepo.resetLocalRepo();
-        sourceAuxRepo.resetLocalRepo();
-        studentRepo.resetLocalRepo();
-        studentTeamRepo.resetLocalRepo();
+        if (exerciseRepo != null) {
+            exerciseRepo.resetLocalRepo();
+        }
+        if (testRepo != null) {
+            testRepo.resetLocalRepo();
+        }
+        if (solutionRepo != null) {
+            solutionRepo.resetLocalRepo();
+        }
+        if (auxRepo != null) {
+            auxRepo.resetLocalRepo();
+        }
+        if (sourceExerciseRepo != null) {
+            sourceExerciseRepo.resetLocalRepo();
+        }
+        if (sourceTestRepo != null) {
+            sourceTestRepo.resetLocalRepo();
+        }
+        if (sourceSolutionRepo != null) {
+            sourceSolutionRepo.resetLocalRepo();
+        }
+        if (sourceAuxRepo != null) {
+            sourceAuxRepo.resetLocalRepo();
+        }
+        if (studentRepo != null) {
+            studentRepo.resetLocalRepo();
+        }
+        if (studentTeamRepo != null) {
+            studentTeamRepo.resetLocalRepo();
+        }
     }
 
     // TODO: we should not mock repositories any more now that everything works with LocalVC
