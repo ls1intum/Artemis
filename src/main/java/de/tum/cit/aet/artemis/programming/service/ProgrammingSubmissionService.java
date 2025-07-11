@@ -184,7 +184,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingSubmission.setType(SubmissionType.MANUAL);
 
         // Instructors are allowed to submit to a programming exercise after the due date, if this happens we set the Submission to INSTRUCTOR
-        // TODO: double check if the user contains the authoities and groups, if not, we need to load the user from the database again
+        // TODO: double check if the user contains the authorities and groups, if not, we need to load the user from the database again
+        // TODO: the user can be null if the commit was made via git client so it can not be determined here if the user is a instructor for the exercise in that case
         if (user != null && authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user)) {
             programmingSubmission.setType(SubmissionType.INSTRUCTOR);
         }
