@@ -310,7 +310,7 @@ export class IrisChatService implements OnDestroy {
      * @param currentSessions the currently displayed sessions in the history, expected to be sorted by creation date descending
      */
     private isLatestSessionIncludedInHistory(latestSession: IrisSessionDTO, currentSessions: IrisSessionDTO[] | undefined): boolean {
-        const latestDisplayedSession: IrisSessionDTO | undefined = currentSessions && currentSessions?.length > 0 ? currentSessions[0] : undefined;
+        const latestDisplayedSession: IrisSessionDTO | undefined = currentSessions?.[0]
         if (latestDisplayedSession === undefined) {
             return false;
         }
