@@ -69,6 +69,10 @@ graalvmNative {
             // Optional: trace offending classes
             buildArgs.add('--trace-class-initialization=org.slf4j.LoggerFactory,ch.qos.logback,com.ibm.icu')
 
+            buildArgs.addAll([
+                '--initialize-at-run-time=com.hazelcast.shaded.org.jctools.queues,com.hazelcast.shaded.org.jctools.util'
+            ])
+
 //            // Hazelcast
 //            buildArgs.add("--initialize-at-build-time=com.hazelcast")
 //            buildArgs.add("-H:IncludeResources=hazelcast-build-info.properties")
@@ -88,7 +92,7 @@ graalvmNative {
 }
 
 tasks.named("processAot") {
-    systemProperty "spring.profiles.active", "prod,localci,localvc,artemis,scheduling,iris,buildagent,core,local"
+    systemProperty "spring.profiles.active", "buildagent,local"
 }
 
 group = "de.tum.cit.aet.artemis"
