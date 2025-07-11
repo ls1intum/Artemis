@@ -101,7 +101,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         quizQuestionProgress.setProgressJson(progressData);
         quizQuestionProgress.setLastAnsweredAt(ZonedDateTime.now());
-        quizQuestionProgressService.save(quizQuestionProgress);
+        quizQuestionProgressTestRepository.save(quizQuestionProgress);
     }
 
     @WithMockUser(username = "testuser")
@@ -171,7 +171,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     void testSaveAndRetrieveProgress() {
-        quizQuestionProgressService.save(quizQuestionProgress);
+        quizQuestionProgressTestRepository.save(quizQuestionProgress);
         Optional<QuizQuestionProgress> loaded = quizQuestionProgressTestRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
         assertThat(loaded).isPresent();
     }
