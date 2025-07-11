@@ -73,6 +73,8 @@ export const PROFILE_APOLLON = 'apollon';
 
 export const PROFILE_ATHENA = 'athena';
 
+export const PROFILE_HYPERION = 'hyperion';
+
 export const PROFILE_THEIA = 'theia';
 
 export const PROFILE_LDAP = 'ldap';
@@ -81,6 +83,7 @@ export type ProfileFeature =
     | typeof PROFILE_LOCALCI
     | typeof PROFILE_AEOLUS
     | typeof PROFILE_IRIS
+    | typeof PROFILE_HYPERION
     | typeof PROFILE_LTI
     | typeof PROFILE_PROD
     | typeof PROFILE_DEV
