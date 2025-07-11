@@ -1,0 +1,27 @@
+{
+    "artemisApp": {
+        "sharing": {
+            "title": "Import aus Austauschplattform",
+            "expiresAt": "Verbindung zur Austauschplattform läuft um <strong>{{expirationDate}}</strong> ab",
+            "importedExercise": "Importierte Aufgaben",
+            "courseToImport": "Kurs in den die Aufgabe importiert werden soll",
+            "noExercisesFound": "Keine importierten Aufgaben gefunden?",
+            "exerciseToImport": "Bitte die zu importierende Aufgabe auswählen",
+            "loginAsInstructor": "Bitte melden dich als Instruktor an!",
+            "error": {
+                "loadingStatus": "Sharing Profile ist nicht aktiv!",
+                "statusError": "Status der Sharing Platform kann nicht identifiziert werden",
+                "navigation": "Navigation zur Importseite fehlgeschlagen",
+                "importError": "Das importieren der Aufgabe ist fehlgeschlagen",
+                "missingToken": "Token aus der Sharing-Plattform fehlt",
+                "noImportedExercises": "Keine importierten Aufgaben gefunden",
+                "loadingCourses": "Fehler beim Laden der Kurse"
+            }
+        }
+    },
+    "health": {
+        "indicator": {
+            "SharingConnectorService": "Sharing Connector"
+        }
+    }
+}

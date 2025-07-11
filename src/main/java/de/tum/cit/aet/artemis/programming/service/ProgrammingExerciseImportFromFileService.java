@@ -42,6 +42,9 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
+/**
+ * Service to read programming exercises from a zip file.
+ */
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
@@ -94,10 +97,11 @@ public class ProgrammingExerciseImportFromFileService {
      * @param zipFile                     the zip file that contains the exercise
      * @param course                      the course to which the exercise should be added
      * @param user                        the user initiating the import
+     * @param isImportFromSharing         flag whether file import (false) of sharing import
      * @return the imported programming exercise
      **/
-    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, MultipartFile zipFile, Course course, User user)
-            throws IOException, GitAPIException, URISyntaxException {
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, MultipartFile zipFile, Course course, User user,
+            boolean isImportFromSharing) throws IOException, GitAPIException, URISyntaxException {
         if (!"zip".equals(FilenameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
@@ -107,10 +111,22 @@ public class ProgrammingExerciseImportFromFileService {
             importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
             Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
 
+            if (isImportFromSharing) {
+                // Exercises from Sharing are currently exported in a different zip structure containing an additional dir
+                try (Stream<Path> walk = Files.walk(importExerciseDir)) {
+                    List<Path> directories = walk.filter(Files::isDirectory).toList();
+                    if (directories.isEmpty()) {
+                        throw new BadRequestAlertException("No directories found for Sharing import", "programmingExercise", "noSharingDirFound");
+                    }
+                    importExerciseDir = directories.getFirst();
+                }
+            }
+
             zipFile.transferTo(exerciseFilePath);
             zipFileService.extractZipFileRecursively(exerciseFilePath);
             checkDetailsJsonExists(importExerciseDir);
             checkRepositoriesExist(importExerciseDir);
+
             programmingExerciseValidationService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
             newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise);
@@ -159,6 +175,21 @@ public class ProgrammingExerciseImportFromFileService {
                 log.warn("Could not read build plan file. Continue importing the exercise but skipping the build plan.", e);
             }
         }
+    }
+
+    /**
+     * Overloaded method setting the isImportFromSharing flag to false as default
+     *
+     * @param programmingExerciseForImport the programming exercise that should be imported
+     * @param zipFile                      the zip file that contains the exercise
+     * @param course                       the course to which the exercise should be added
+     * @param user                         the user initiating the import
+     * @return the imported programming exercise
+     * @throws IOException if there is an error reading the file
+     */
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course, User user)
+            throws IOException, GitAPIException, URISyntaxException {
+        return this.importProgrammingExerciseFromFile(programmingExerciseForImport, zipFile, course, user, false);
     }
 
     /**

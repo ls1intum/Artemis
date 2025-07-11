@@ -742,6 +742,13 @@
                 "consistencyCheckAlert": {
                     "title": "Resultat der Konsistenzprüfung"
                 }
+            },
+            "sharing": {
+                "import": "Programmieraufgabe aus der Austauschplattform importieren",
+                "export": "Exportieren in die Austauschplattform",
+                "error": {
+                    "export": "Kann Aufgabe nicht exportieren: {{ message }}"
+                }
             }
         },
         "error": {
