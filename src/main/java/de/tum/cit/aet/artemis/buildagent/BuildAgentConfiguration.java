@@ -183,21 +183,17 @@ public class BuildAgentConfiguration {
     }
 
     /**
-     * Creates an thread pool executor that manages the queue of build jobs.
+     * Creates a thread pool executor that manages the queue of build jobs.
      *
      * @return The executor service.
      */
     private ThreadPoolExecutor createBuildExecutor() {
-        int threadPoolSize;
-
-        if (specifyConcurrentBuilds) {
-            threadPoolSize = concurrentBuildSize;
+        // Use preserved size if available, otherwise calculate
+        int poolSize = threadPoolSize.get();
+        if (poolSize == 0) {
+            poolSize = specifyConcurrentBuilds ? concurrentBuildSize : Math.max(1, (Runtime.getRuntime().availableProcessors() - 2) / 2);
+            threadPoolSize.set(poolSize);
         }
-        else {
-            int availableProcessors = Runtime.getRuntime().availableProcessors();
-            threadPoolSize = Math.max(1, (availableProcessors - 2) / 2);
-        }
-        this.threadPoolSize.set(threadPoolSize);
 
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
                 .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).build();
@@ -206,8 +202,7 @@ public class BuildAgentConfiguration {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
         };
 
-        log.debug("Using ExecutorService with thread pool size {}.", threadPoolSize);
-        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), customThreadFactory, customRejectedExecutionHandler);
+        return new ThreadPoolExecutor(poolSize, poolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), customThreadFactory, customRejectedExecutionHandler);
     }
 
     /**
