@@ -82,6 +82,7 @@
             }
         },
         "idNull": "Invalid ID",
+        "noExerciseIdForQuestion": "No exercise ID found for current question.",
         "unexpectedError": "An unexpected error occurred: {{error}}",
         "exerciseNotDefined": "The exercise is not defined.",
         "exerciseIdMismatch": "The exercise IDs do not match.",
