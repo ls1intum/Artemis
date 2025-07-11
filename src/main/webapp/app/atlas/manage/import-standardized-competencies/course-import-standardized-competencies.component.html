@@ -4,9 +4,9 @@
         <jhi-documentation-button [type]="documentationType" />
     </div>
     <jhi-standardized-competency-filter
-        [knowledgeAreasForSelect]="$any(knowledgeAreasForSelect)"
-        [knowledgeAreaFilter]="knowledgeAreaFilter"
-        [competencyTitleFilter]="competencyTitleFilter"
+        [knowledgeAreasForSelect]="knowledgeAreasForSelect()"
+        [knowledgeAreaFilter]="knowledgeAreaFilter()"
+        [competencyTitleFilter]="competencyTitleFilter()"
         (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
         (competencyTitleFilterChange)="filterByCompetencyTitle($event!)"
     />

@@ -82,12 +82,12 @@ export abstract class StandardizedCompetencyFilterPageComponent {
      * @param forceRefresh if the filter should be applied even if it did not change
      */
     protected filterByKnowledgeArea(knowledgeAreaFilter: KnowledgeAreaDTO | undefined, forceRefresh = true) {
-        if (knowledgeAreaFilter?.id === this.knowledgeAreaFilter?.id && !forceRefresh) {
+        if (knowledgeAreaFilter?.id === this.knowledgeAreaFilter()?.id && !forceRefresh) {
             return;
         }
 
-        this.knowledgeAreaFilter = knowledgeAreaFilter;
-        const filteredKnowledgeArea = this.getKnowledgeAreaByIdIfExists(this.knowledgeAreaFilter?.id);
+        this.knowledgeAreaFilter.set(knowledgeAreaFilter);
+        const filteredKnowledgeArea = this.getKnowledgeAreaByIdIfExists(this.knowledgeAreaFilter()?.id);
         if (!filteredKnowledgeArea) {
             this.setVisibilityOfAllKnowledgeAreas(true);
         } else {
@@ -105,11 +105,11 @@ export abstract class StandardizedCompetencyFilterPageComponent {
      * @param competencyTitleFilter the new title filter
      */
     protected filterByCompetencyTitle(competencyTitleFilter: string) {
-        if (competencyTitleFilter === this.competencyTitleFilter) {
+        if (competencyTitleFilter === this.competencyTitleFilter()) {
             return;
         }
-        this.competencyTitleFilter = competencyTitleFilter;
-        const trimmedFilter = this.competencyTitleFilter?.trim();
+        this.competencyTitleFilter.set(competencyTitleFilter);
+        const trimmedFilter = this.competencyTitleFilter()?.trim();
 
         if (!trimmedFilter) {
             this.setVisibilityOfAllCompetencies(true);
@@ -238,7 +238,7 @@ export abstract class StandardizedCompetencyFilterPageComponent {
      * @private
      */
     protected addSelfAndDescendantsToSelectArray(knowledgeArea: KnowledgeAreaForTree) {
-        this.knowledgeAreasForSelect.push({
+        this.knowledgeAreasForSelect().push({
             id: knowledgeArea.id,
             title: '\xa0'.repeat(knowledgeArea.level * 2) + knowledgeArea.title,
         });

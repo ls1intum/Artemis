@@ -303,7 +303,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         }
         const descendantIds = this.getIdsOfSelfAndAllDescendants(knowledgeArea);
         descendantIds.forEach((id) => this.knowledgeAreaMap.delete(id));
-        this.knowledgeAreasForSelect = this.knowledgeAreasForSelect.filter((ka) => ka.id === undefined || !descendantIds.includes(ka.id));
+        this.knowledgeAreasForSelect.set(this.knowledgeAreasForSelect().filter((ka) => ka.id === undefined || !descendantIds.includes(ka.id)));
     }
 
     private updateAfterCreateKnowledgeArea(knowledgeArea: KnowledgeAreaDTO) {
@@ -312,7 +312,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             this.alertService.error('artemisApp.standardizedCompetency.manage.updateTreeError');
         }
 
-        const isVisible = !this.knowledgeAreaFilter || this.isAncestorOf(this.knowledgeAreaFilter, knowledgeArea);
+        const isVisible = !this.knowledgeAreaFilter() || this.isAncestorOf(this.knowledgeAreaFilter()!, knowledgeArea);
         const level = parent ? parent.level + 1 : 0;
         const knowledgeAreaForTree: KnowledgeAreaForTree = convertToKnowledgeAreaForTree(knowledgeArea, isVisible, level);
 
@@ -324,7 +324,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         }
 
         this.knowledgeAreaMap.set(knowledgeArea.id!, knowledgeAreaForTree);
-        this.knowledgeAreasForSelect = [];
+        this.knowledgeAreasForSelect.set([]);
         this.dataSource.data.forEach((knowledgeArea) => this.addSelfAndDescendantsToSelectArray(knowledgeArea));
     }
 
@@ -365,7 +365,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         }
 
         this.knowledgeAreaMap.set(knowledgeArea.id!, knowledgeAreaForTree);
-        this.knowledgeAreasForSelect = [];
+        this.knowledgeAreasForSelect.set([]);
         this.dataSource.data.forEach((knowledgeArea) => this.addSelfAndDescendantsToSelectArray(knowledgeArea));
 
         // refresh tree if dataSource.data was not modified directly
@@ -373,8 +373,8 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             this.refreshTree();
         }
         // filter again if the knowledge area was moved.
-        if (previousParent?.id !== parent?.id && this.knowledgeAreaFilter) {
-            this.filterByKnowledgeArea(this.knowledgeAreaFilter);
+        if (previousParent?.id !== parent?.id && this.knowledgeAreaFilter()) {
+            this.filterByKnowledgeArea(this.knowledgeAreaFilter());
         }
     }
 
@@ -534,7 +534,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
      * @private
      */
     private shouldBeVisible(competency: StandardizedCompetencyDTO) {
-        const trimmedFilter = this.competencyTitleFilter?.trim();
+        const trimmedFilter = this.competencyTitleFilter()?.trim();
         if (!trimmedFilter) {
             return true;
         }

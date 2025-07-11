@@ -16,9 +16,9 @@
         </div>
     </div>
     <jhi-standardized-competency-filter
-        [knowledgeAreasForSelect]="knowledgeAreasForSelect"
-        [knowledgeAreaFilter]="knowledgeAreaFilter"
-        [competencyTitleFilter]="competencyTitleFilter"
+        [knowledgeAreasForSelect]="knowledgeAreasForSelect()"
+        [knowledgeAreaFilter]="knowledgeAreaFilter()"
+        [competencyTitleFilter]="competencyTitleFilter()"
         (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
         (competencyTitleFilterChange)="filterByCompetencyTitle($event!)"
     />
@@ -71,7 +71,7 @@
                 <div class="card light-background d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
                     <jhi-standardized-competency-edit
                         [competency]="selectedCompetency()!"
-                        [knowledgeAreas]="knowledgeAreasForSelect"
+                        [knowledgeAreas]="knowledgeAreasForSelect()"
                         [sources]="sourcesForSelect()"
                         [(isEditing)]="isEditing"
                         (onSave)="saveCompetency($event)"
@@ -84,7 +84,7 @@
                 <div class="card light-background d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
                     <jhi-knowledge-area-edit
                         [knowledgeArea]="selectedKnowledgeArea()!"
-                        [knowledgeAreas]="knowledgeAreasForSelect"
+                        [knowledgeAreas]="knowledgeAreasForSelect()"
                         [(isEditing)]="isEditing"
                         (onSave)="saveKnowledgeArea($event)"
                         (onDelete)="deleteKnowledgeArea($event)"
