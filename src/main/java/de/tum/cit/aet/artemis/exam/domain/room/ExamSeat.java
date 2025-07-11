@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 public class ExamSeat extends DomainObject {
 
     /**
-     * The name of the seat.
+     * The name of the seat. This is usually a combination of the row and column name.
      */
     @Column(name = "label", nullable = false)
     private String label; // For example, "A1", "4", or "{row},{column}"
@@ -50,6 +50,7 @@ public class ExamSeat extends DomainObject {
     @Column(name = "y_position", nullable = false)
     private float y;
 
+    /* Getters & Setters */
     public String getLabel() {
         return label;
     }
@@ -82,6 +83,10 @@ public class ExamSeat extends DomainObject {
         this.x = x;
     }
 
+    public void setX(double x) {
+        this.x = (float) x;
+    }
+
     public float getY() {
         return y;
     }
@@ -89,4 +94,9 @@ public class ExamSeat extends DomainObject {
     public void setY(float y) {
         this.y = y;
     }
+
+    public void setY(double y) {
+        this.y = (float) y;
+    }
+    /* Getters & Setters End */
 }

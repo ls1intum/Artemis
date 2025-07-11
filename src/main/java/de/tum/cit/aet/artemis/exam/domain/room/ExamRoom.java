@@ -54,6 +54,12 @@ public class ExamRoom extends DomainObject {
     private String alternativeName;
 
     /**
+     * The building where the exam room resides inside.
+     */
+    @Column(name = "building", nullable = false)
+    private String building;
+
+    /**
      * Maximum capacity of the room. Doesn't need to exist, i.e., be pre-calculated.
      */
     @Column(name = "capacity", nullable = true)
@@ -83,6 +89,7 @@ public class ExamRoom extends DomainObject {
     @JsonIgnoreProperties(value = "examRoom")
     private Set<ExamUser> examRoomUsers = new HashSet<>();
 
+    /* Getters & Setters */
     public String getName() {
         return name;
     }
@@ -97,6 +104,30 @@ public class ExamRoom extends DomainObject {
 
     public void setAlternativeName(String alternativeName) {
         this.alternativeName = alternativeName;
+    }
+
+    public String getLongRoomNumber() {
+        return longRoomNumber;
+    }
+
+    public void setLongRoomNumber(String longRoomNumber) {
+        this.longRoomNumber = longRoomNumber;
+    }
+
+    public String getShortRoomNumber() {
+        return shortRoomNumber;
+    }
+
+    public void setShortRoomNumber(String shortRoomNumber) {
+        this.shortRoomNumber = shortRoomNumber;
+    }
+
+    public String getBuilding() {
+        return building;
+    }
+
+    public void setBuilding(String building) {
+        this.building = building;
     }
 
     public Integer getCapacity() {
@@ -122,5 +153,14 @@ public class ExamRoom extends DomainObject {
     public void setLayoutStrategies(List<LayoutStrategy> layoutStrategies) {
         this.layoutStrategies = layoutStrategies;
     }
+
+    public Set<ExamUser> getExamRoomUsers() {
+        return examRoomUsers;
+    }
+
+    public void setExamRoomUsers(Set<ExamUser> examRoomUsers) {
+        this.examRoomUsers = examRoomUsers;
+    }
+    /* Getters & Setters End */
 
 }

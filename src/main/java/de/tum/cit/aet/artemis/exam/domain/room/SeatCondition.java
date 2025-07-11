@@ -9,5 +9,16 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
  */
 @Conditional(ExamEnabled.class)
 public enum SeatCondition {
-    USABLE, NO_TABLE, DEFECT, WHEELCHAIR
+
+    USABLE, NO_TABLE, DEFECT, WHEELCHAIR;
+
+    public static SeatCondition SeatConditionFromFlag(String flag) {
+        return switch (flag.toUpperCase()) {
+            case "", "USABLE" -> USABLE;
+            case "T", "NO_TABLE" -> NO_TABLE;
+            case "D", "DEFECT" -> DEFECT;
+            case "W", "WHEELCHAIR" -> WHEELCHAIR;
+            case null, default -> throw new IllegalArgumentException("Couldn't convert '" + flag + "' to a seat condition");
+        };
+    }
 }
