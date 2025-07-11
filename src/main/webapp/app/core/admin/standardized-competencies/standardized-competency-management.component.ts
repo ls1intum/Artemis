@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, WritableSignal, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, ViewChild, WritableSignal, inject, signal } from '@angular/core';
 import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -88,6 +88,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'StandardizedCompetencies';
 
+    @ViewChild('tree', { static: false, read: KnowledgeAreaTreeComponent }) tree!: KnowledgeAreaTreeComponent;
     ngOnInit() {
         this.isLoading = true;
         const getKnowledgeAreasObservable = this.standardizedCompetencyService.getAllForTreeView();
@@ -99,7 +100,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                 const knowledgeAreas = knowledgeAreasResponse.body!;
                 const knowledgeAreasForTree = knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
                 this.dataSource.data = knowledgeAreasForTree;
-                this.treeControl.dataNodes = knowledgeAreasForTree;
                 knowledgeAreasForTree.forEach((knowledgeArea) => {
                     this.addSelfAndDescendantsToMap(knowledgeArea);
                     this.addSelfAndDescendantsToSelectArray(knowledgeArea);
@@ -138,6 +138,9 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
 
     closeKnowledgeArea() {
         this.setSelectedKnowledgeAreaAndEditing(undefined, false);
+    }
+    protected getTreeComponent(): { expandedNodes: Set<number>; collapseAll(): void; expandAll(): void } | undefined {
+        return this.tree;
     }
 
     deleteKnowledgeArea(id: number) {
@@ -297,7 +300,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             this.refreshTree();
         } else {
             this.dataSource.data = this.dataSource.data.filter((ka) => ka.id !== knowledgeArea.id);
-            this.treeControl.dataNodes = this.dataSource.data;
         }
         const descendantIds = this.getIdsOfSelfAndAllDescendants(knowledgeArea);
         descendantIds.forEach((id) => this.knowledgeAreaMap.delete(id));
@@ -319,7 +321,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             this.refreshTree();
         } else {
             this.dataSource.data = this.insertBasedOnTitle(knowledgeAreaForTree, this.dataSource.data);
-            this.treeControl.dataNodes = this.dataSource.data;
         }
 
         this.knowledgeAreaMap.set(knowledgeArea.id!, knowledgeAreaForTree);
@@ -366,7 +367,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         this.knowledgeAreaMap.set(knowledgeArea.id!, knowledgeAreaForTree);
         this.knowledgeAreasForSelect = [];
         this.dataSource.data.forEach((knowledgeArea) => this.addSelfAndDescendantsToSelectArray(knowledgeArea));
-        this.treeControl.dataNodes = this.dataSource.data;
 
         // refresh tree if dataSource.data was not modified directly
         if (previousParent || parent) {

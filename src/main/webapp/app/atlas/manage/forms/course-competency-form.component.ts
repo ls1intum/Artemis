@@ -7,7 +7,7 @@ import { CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-
+import { NgIf } from '@angular/common';
 /**
  * Async Validator to make sure that a competency title is unique within a course
  */
@@ -49,6 +49,7 @@ export interface CourseCompetencyFormData {
 
 @Component({
     template: '',
+    imports: [NgIf],
 })
 export abstract class CourseCompetencyFormComponent {
     abstract formData: InputSignal<CourseCompetencyFormData>;

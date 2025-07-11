@@ -1,6 +1,6 @@
 <div>
     <button
-        [id]="'competency-accordion-' + competency().id"
+        [id]="'competency-accordion-' + (competency()?.id ?? 'unknown')"
         class="competency-accordion-header d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-between gap-2 px-4"
         [class.closed]="!open"
         (click)="toggle()"

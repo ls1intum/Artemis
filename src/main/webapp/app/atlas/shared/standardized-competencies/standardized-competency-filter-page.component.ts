@@ -1,5 +1,4 @@
-import { NestedTreeControl } from '@angular/cdk/tree';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 
@@ -12,10 +11,10 @@ import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO } fro
     template: '',
 })
 export abstract class StandardizedCompetencyFilterPageComponent {
-    protected knowledgeAreaFilter?: KnowledgeAreaDTO;
-    protected competencyTitleFilter = '';
+    protected knowledgeAreaFilter = signal<KnowledgeAreaDTO | undefined>(undefined);
+    protected competencyTitleFilter = signal<string>('');
+    protected knowledgeAreasForSelect = signal<KnowledgeAreaDTO[]>([]);
 
-    protected knowledgeAreasForSelect: KnowledgeAreaDTO[] = [];
     /**
      * A map of id -> KnowledgeAreaForTree. Contains all knowledge areas of the tree structure.
      * <p>
@@ -25,7 +24,55 @@ export abstract class StandardizedCompetencyFilterPageComponent {
 
     // data and control for the tree structure
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
-    protected treeControl = new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children);
+
+    // Replace treeControl with expandedNodes management
+    protected expandedNodes = new Set<number>();
+
+    /**
+     * Abstract method to get the tree component instance
+     * This should be implemented by concrete components using ViewChild
+     */
+    protected abstract getTreeComponent(): { expandedNodes: Set<number>; collapseAll(): void; expandAll(): void } | undefined;
+
+    /**
+     * Expands a node in the tree
+     */
+    protected expandNode(node: KnowledgeAreaForTree): void {
+        if (node.id !== undefined) {
+            const tree = this.getTreeComponent();
+            if (tree) {
+                tree.expandedNodes.add(node.id);
+            } else {
+                // Fallback to local tracking if tree component not available
+                this.expandedNodes.add(node.id);
+            }
+        }
+    }
+
+    /**
+     * Collapses all nodes in the tree
+     */
+    protected collapseAll(): void {
+        const tree = this.getTreeComponent();
+        if (tree) {
+            tree.collapseAll();
+        } else {
+            // Fallback to local tracking
+            this.expandedNodes.clear();
+        }
+    }
+
+    /**
+     * Checks if a node is expanded
+     */
+    protected isExpanded(node: KnowledgeAreaForTree): boolean {
+        const tree = this.getTreeComponent();
+        if (tree) {
+            return node.id !== undefined && tree.expandedNodes.has(node.id);
+        }
+        // Fallback to local tracking
+        return node.id !== undefined && this.expandedNodes.has(node.id);
+    }
 
     /**
      * Filters out all knowledge areas except for the one specified in the {@link knowledgeAreaFilter} and its direct ancestors.
@@ -67,7 +114,7 @@ export abstract class StandardizedCompetencyFilterPageComponent {
         if (!trimmedFilter) {
             this.setVisibilityOfAllCompetencies(true);
         } else {
-            this.treeControl.collapseAll();
+            this.collapseAll();
             this.dataSource.data.forEach((knowledgeArea) => this.filterCompetenciesForSelfAndChildren(knowledgeArea, trimmedFilter));
         }
     }
@@ -96,7 +143,7 @@ export abstract class StandardizedCompetencyFilterPageComponent {
             }
         }
         if (hasMatch) {
-            this.treeControl.expand(knowledgeArea);
+            this.expandNode(knowledgeArea);
         }
         return hasMatch;
     }
@@ -130,7 +177,7 @@ export abstract class StandardizedCompetencyFilterPageComponent {
      */
     private setVisibleAndExpandSelfAndAncestors(knowledgeArea: KnowledgeAreaForTree) {
         knowledgeArea.isVisible = true;
-        this.treeControl.expand(knowledgeArea);
+        this.expandNode(knowledgeArea);
         const parent = this.getKnowledgeAreaByIdIfExists(knowledgeArea.parentId);
         if (parent) {
             this.setVisibleAndExpandSelfAndAncestors(parent);
@@ -145,7 +192,7 @@ export abstract class StandardizedCompetencyFilterPageComponent {
      * @private
      */
     private setVisibilityOfSelfAndDescendants(knowledgeArea: KnowledgeAreaForTree, isVisible: boolean) {
-        knowledgeArea.isVisible = true;
+        knowledgeArea.isVisible = isVisible;
         knowledgeArea.children?.forEach((knowledgeArea) => this.setVisibilityOfSelfAndDescendants(knowledgeArea, isVisible));
     }
 

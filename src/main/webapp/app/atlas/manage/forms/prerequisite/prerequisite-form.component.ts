@@ -25,7 +25,7 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
         optional: false,
     });
     prerequisite = input.required<Prerequisite>();
-
+    hasCancelButton = input<boolean>(false);
     formSubmitted = output<CourseCompetencyFormData>();
 
     readonly CourseCompetencyType = CourseCompetencyType;

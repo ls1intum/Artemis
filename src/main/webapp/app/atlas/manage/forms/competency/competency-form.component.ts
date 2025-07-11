@@ -6,12 +6,13 @@ import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgIf } from '@angular/common';
 
 @Component({
     selector: 'jhi-competency-form',
     templateUrl: './competency-form.component.html',
     styleUrls: ['./competency-form.component.scss'],
-    imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule, TranslateDirective],
+    imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule, TranslateDirective, NgIf],
 })
 export class CompetencyFormComponent extends CourseCompetencyFormComponent implements OnChanges {
     formData = input<CourseCompetencyFormData>({
@@ -24,7 +25,7 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
         optional: false,
     });
     competency = input.required<Competency>();
-
+    hasCancelButton = input<boolean>(false);
     formSubmitted = output<CourseCompetencyFormData>();
 
     constructor() {

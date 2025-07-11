@@ -39,12 +39,4 @@
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
         (competencyDeleted)="onRemoveCompetency($event)"
     />
-    <jhi-competency-management-table
-        [courseId]="courseId()"
-        [(allCompetencies)]="courseCompetencies"
-        [courseCompetencies]="prerequisites()"
-        [competencyType]="CourseCompetencyType.PREREQUISITE"
-        [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
-        (competencyDeleted)="onRemoveCompetency($event)"
-    />
 </div>

@@ -20,6 +20,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-competency-management-table',
+    standalone: true,
     templateUrl: './competency-management-table.component.html',
     imports: [
         NgbProgressbar,
@@ -36,15 +37,14 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     ],
 })
 export class CompetencyManagementTableComponent {
-    courseId = input.required<number>();
+    courseId = input<number>();
     courseCompetencies = input<CourseCompetency[]>([]);
-    competencyType = input.required<CourseCompetencyType>();
-    standardizedCompetenciesEnabled = input.required<boolean>();
+    competencyType = input<CourseCompetencyType>(CourseCompetencyType.COMPETENCY);
+    standardizedCompetenciesEnabled = input<boolean>();
 
-    allCompetencies = model.required<CourseCompetency[]>();
+    allCompetencies = model<CourseCompetency[]>([]);
 
     competencyDeleted = output<number>();
-
     service: CompetencyService | PrerequisiteService;
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -85,13 +85,13 @@ export class CompetencyManagementTableComponent {
     openImportAllModal() {
         const modalRef = this.modalService.open(ImportAllCompetenciesComponent, { size: 'lg', backdrop: 'static' });
         //unary operator is necessary as otherwise courseId is seen as a string and will not match.
-        modalRef.componentInstance.disabledIds = [+this.courseId()];
+        modalRef.componentInstance.disabledIds = [this.courseId()];
         modalRef.componentInstance.competencyType = this.competencyType;
         modalRef.result.then((result: ImportAllFromCourseResult) => {
             const courseTitle = result.courseForImportDTO.title ?? '';
 
             this.service
-                .importAll(this.courseId(), result.courseForImportDTO.id!, result.importRelations)
+                .importAll(this.courseId()!, result.courseForImportDTO.id!, result.importRelations)
                 .pipe(
                     filter((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.ok),
                     map((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.body),
@@ -116,8 +116,12 @@ export class CompetencyManagementTableComponent {
      * @private
      */
     updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
+        //const competenciesImported = output<CourseCompetency[]>();
+
         const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is CourseCompetency => !!element);
-        const newCourseCompetencies = importedCompetencies.filter((competency) => !this.courseCompetencies().some((existingCompetency) => existingCompetency.id === competency.id));
+        const newCourseCompetencies = importedCompetencies.filter(
+            (competency) => !this.courseCompetencies().some((existingCompetency: { id: number | undefined }) => existingCompetency.id === competency.id),
+        );
         this.courseCompetencies().push(...newCourseCompetencies);
         this.allCompetencies.update((allCourseCompetencies) => allCourseCompetencies.concat(importedCompetencies));
     }
@@ -128,7 +132,7 @@ export class CompetencyManagementTableComponent {
      * @param competencyId the id of the competency
      */
     deleteCompetency(competencyId: number) {
-        this.service.delete(competencyId, this.courseId()).subscribe({
+        this.service.delete(competencyId, this.courseId()!).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.competencyDeleted.emit(competencyId);

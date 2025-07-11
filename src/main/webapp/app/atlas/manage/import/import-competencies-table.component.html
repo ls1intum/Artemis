@@ -39,7 +39,7 @@
                 <td class="col-2">{{ competency.course?.title }}</td>
                 <td class="col-0.5">{{ competency.course?.semester }}</td>
                 <td class="col-1">
-                    <ng-container *ngTemplateOutlet="buttonsTemplate; context: { competency: competency }" />
+                    <ng-container *ngTemplateOutlet="buttonsTemplate() ?? null; context: { competency: competency }" />
                 </td>
             </tr>
         }

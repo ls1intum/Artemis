@@ -20,7 +20,7 @@
         [knowledgeAreaFilter]="knowledgeAreaFilter"
         [competencyTitleFilter]="competencyTitleFilter"
         (knowledgeAreaFilterChange)="filterByKnowledgeArea($event)"
-        (competencyTitleFilterChange)="filterByCompetencyTitle($event)"
+        (competencyTitleFilterChange)="filterByCompetencyTitle($event!)"
     />
     <div class="d-flex flex-wrap align-items-center mt-3 mb-2">
         <h3 class="me-3 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
@@ -35,14 +35,14 @@
             class="me-1"
             [btnSize]="ButtonSize.SMALL"
             [icon]="faMinimize"
-            (onClick)="treeControl.collapseAll()"
+            (onClick)="tree.collapseAll()"
             tooltip="artemisApp.standardizedCompetency.manage.collapseButtonTooltip"
         />
-        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="treeControl.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
+        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="tree.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
     </div>
     @if (dataSource.data?.length) {
         <div class="d-flex">
-            <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100 w-50" [dataSource]="dataSource" [treeControl]="treeControl">
+            <jhi-knowledge-area-tree #tree="knowledgeAreaTree" class="d-flex flex-grow-1 h-100 w-50" [dataSource]="dataSource">
                 <ng-template let-knowledgeArea="knowledgeArea" #knowledgeAreaTemplate>
                     <div class="d-flex align-items-center">
                         <fa-icon
@@ -67,12 +67,12 @@
                     </div>
                 </ng-template>
             </jhi-knowledge-area-tree>
-            @if (selectedCompetency) {
+            @if (selectedCompetency()) {
                 <div class="card light-background d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
                     <jhi-standardized-competency-edit
-                        [competency]="selectedCompetency"
+                        [competency]="selectedCompetency()!"
                         [knowledgeAreas]="knowledgeAreasForSelect"
-                        [sources]="sourcesForSelect"
+                        [sources]="sourcesForSelect()"
                         [(isEditing)]="isEditing"
                         (onSave)="saveCompetency($event)"
                         (onDelete)="deleteCompetency($event)"
@@ -80,10 +80,10 @@
                         [dialogError]="dialogError"
                     />
                 </div>
-            } @else if (selectedKnowledgeArea) {
+            } @else if (selectedKnowledgeArea()) {
                 <div class="card light-background d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
                     <jhi-knowledge-area-edit
-                        [knowledgeArea]="selectedKnowledgeArea"
+                        [knowledgeArea]="selectedKnowledgeArea()!"
                         [knowledgeAreas]="knowledgeAreasForSelect"
                         [(isEditing)]="isEditing"
                         (onSave)="saveKnowledgeArea($event)"

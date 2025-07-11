@@ -12,18 +12,20 @@ import { CommonModule } from '@angular/common';
     standalone: true,
     templateUrl: './knowledge-area-tree.component.html',
     styleUrls: ['./knowledge-area-tree.component.scss'],
+    exportAs: 'knowledgeAreaTree',
     imports: [MatTreeModule, FaIconComponent, NgbCollapse, TranslateDirective, CommonModule],
 })
 export class KnowledgeAreaTreeComponent {
     @Input() dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
-
     @ContentChild('knowledgeAreaTemplate', { static: true })
     knowledgeAreaTemplate!: TemplateRef<any>;
 
     @ContentChild('competencyTemplate', { static: true })
     competencyTemplate!: TemplateRef<any>;
 
-    childrenAccessor = (node: KnowledgeAreaForTree) => node.children;
+    childrenAccessor = (node: KnowledgeAreaForTree): KnowledgeAreaForTree[] => {
+        return node.children || [];
+    };
 
     protected readonly faChevronRight = faChevronRight;
 
@@ -42,5 +44,28 @@ export class KnowledgeAreaTreeComponent {
         } else {
             this.expandedNodes.add(node.id);
         }
+    }
+
+    expandAll(): void {
+        const addAll = (nodes: KnowledgeAreaForTree[] | undefined) => {
+            if (!nodes) return;
+            for (const node of nodes) {
+                if (node.id !== undefined) {
+                    this.expandedNodes.add(node.id);
+                }
+                addAll(node.children);
+            }
+        };
+        this.expandedNodes.clear();
+        addAll(this.dataSource.data);
+    }
+
+    collapseAll(): void {
+        this.expandedNodes.clear();
+    }
+
+    // Helper method to check if node has children
+    hasChildren(node: KnowledgeAreaForTree): boolean {
+        return !!(node.children && node.children.length > 0);
     }
 }

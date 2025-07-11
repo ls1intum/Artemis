@@ -15,7 +15,7 @@
                     <fa-icon [icon]="faFileImport" />
                     <span [jhiTranslate]="'artemisApp.' + competencyType + '.manage.importFromCoursesButton'"></span>
                 </a>
-                @if (standardizedCompetenciesEnabled) {
+                @if (standardizedCompetenciesEnabled()) {
                     <a class="btn" [routerLink]="['/course-management', courseId, competencyType + '-management', 'import-standardized']" ngbDropdownItem>
                         <fa-icon [icon]="faFileImport" />
                         <span [jhiTranslate]="'artemisApp.' + competencyType + '.manage.importStandardizedButton'"></span>
@@ -56,7 +56,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (competency of courseCompetencies; track competency.id; let i = $index) {
+                @for (competency of courseCompetencies(); track competency.id; let i = $index) {
                     <tr>
                         <td class="col">
                             <a [routerLink]="['/courses', courseId, 'competencies', competency.id]">{{ competency.title }}</a>
