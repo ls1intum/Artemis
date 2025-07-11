@@ -4,6 +4,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 
+import org.springframework.web.util.UriComponentsBuilder;
+
 /**
  * Represents a Version Control System (VCS) repository URI with capabilities to manipulate and extract information from it.
  * This class supports handling both local file references and remote repository URIs.
@@ -46,8 +48,7 @@ public class VcsRepositoryUri {
         }
 
         var projectKey = repositoryName.split("-")[0];
-        URI uri = new URI(vcBaseUrl).resolve("/git/").resolve(projectKey.toUpperCase() + "/").resolve(repositoryName + ".git");
-        this.uri = uri;
+        this.uri = UriComponentsBuilder.fromUriString(vcBaseUrl).pathSegment("git", projectKey.toUpperCase(), repositoryName + ".git").build().toUri();
     }
 
     /**
