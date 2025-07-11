@@ -91,6 +91,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
     >(undefined);
     isTestServer = this.profileService.isTestServer();
+    isDevelopment = this.profileService.isDevelopment();
 
     // Icons
     faTimes = faTimes;
@@ -329,7 +330,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             sidebarItems.push(faqItem);
         }
 
-        if (this.isTestServer) {
+        if (this.isTestServer || this.isDevelopment) {
             sidebarItems.push(this.sidebarItemService.getPracticeItem());
         }
 

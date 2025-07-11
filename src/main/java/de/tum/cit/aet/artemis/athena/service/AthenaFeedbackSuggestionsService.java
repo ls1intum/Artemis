@@ -4,6 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +29,9 @@ import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
 import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
+import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
+import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -67,6 +74,8 @@ public class AthenaFeedbackSuggestionsService {
 
     private final ResultRepository resultRepository;
 
+    private final Optional<LearnerProfileApi> learnerProfileApi;
+
     @Value("${artemis.athena.allowed-feedback-requests:10}")
     private int allowedFeedbackRequests;
 
@@ -77,20 +86,24 @@ public class AthenaFeedbackSuggestionsService {
      * @param athenaModuleService       Athena module serviced used to determine the urls for different modules
      * @param athenaDTOConverterService Service to convert exrcises and submissions to DTOs
      * @param llmTokenUsageService      Service to store the usage of LLM tokens
+     * @param learnerProfileApi         API for learner profile operations
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
-            AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, ResultRepository resultRepository) {
+            AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, ResultRepository resultRepository,
+            Optional<LearnerProfileApi> learnerProfileApi) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
         modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
         this.athenaDTOConverterService = athenaDTOConverterService;
         this.athenaModuleService = athenaModuleService;
         this.llmTokenUsageService = llmTokenUsageService;
+        this.learnerProfileApi = learnerProfileApi;
         this.resultRepository = resultRepository;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record RequestDTO(ExerciseBaseDTO exercise, SubmissionBaseDTO submission, boolean isGraded, SubmissionBaseDTO latestSubmission) {
+    private record RequestDTO(@NotNull ExerciseBaseDTO exercise, @NotNull SubmissionBaseDTO submission, @Nullable LearnerProfileDTO learnerProfile, @NotNull boolean isGraded,
+            @Nullable SubmissionBaseDTO latestSubmission) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -116,6 +129,43 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
+     * Extract the learner profile from a submission if it's a student participation.
+     * This method handles the extraction of learner profile information from a submission,
+     * with proper error handling and logging.
+     *
+     * @param submission the submission to extract the profile from
+     * @return the learner profile or null if not available
+     */
+    private LearnerProfile extractLearnerProfile(Submission submission) {
+        if (submission == null) {
+            log.debug("Cannot extract learner profile: submission is null");
+            return null;
+        }
+
+        if (!(submission.getParticipation() instanceof StudentParticipation studentParticipation)) {
+            log.debug("Cannot extract learner profile: submission is not from a student participation");
+            return null;
+        }
+
+        // Get the student from the participation
+        var studentOpt = studentParticipation.getStudent();
+        if (studentOpt.isEmpty()) {
+            log.debug("Cannot extract learner profile: no student found in participation");
+            return null;
+        }
+
+        var student = studentOpt.get();
+
+        try {
+            return learnerProfileApi.map(api -> api.getOrCreateLearnerProfile(student)).orElse(null);
+        }
+        catch (Exception e) {
+            log.error("Error retrieving learner profile for student {}: {}", student.getId(), e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Calls the remote Athena service to get feedback suggestions for a given submission.
      *
      * @param exercise   the {@link TextExercise} the suggestions are fetched for
@@ -132,7 +182,8 @@ public class AthenaFeedbackSuggestionsService {
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), isGraded,
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
+                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded,
                 athenaDTOConverterService.ofSubmission(exercise.getId(), getLatestSubmission((StudentParticipation) submission.getParticipation())));
         ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
@@ -151,8 +202,8 @@ public class AthenaFeedbackSuggestionsService {
     public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isGraded)
             throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), isGraded,
-                null);
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
+                isGraded, null);
         ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
@@ -175,8 +226,8 @@ public class AthenaFeedbackSuggestionsService {
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), isGraded,
-                null);
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
+                isGraded, null);
         ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);

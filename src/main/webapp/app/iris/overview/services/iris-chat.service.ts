@@ -15,6 +15,8 @@ import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { Router } from '@angular/router';
+import { captureException } from '@sentry/angular';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -49,6 +51,7 @@ export class IrisChatService implements OnDestroy {
     private readonly status = inject(IrisStatusService);
     private readonly userService = inject(UserService);
     private readonly accountService = inject(AccountService);
+    private readonly router = inject(Router);
 
     private modeRequiresLLMAcceptance = new Map<ChatServiceMode, boolean>([
         [ChatServiceMode.TEXT_EXERCISE, true],
@@ -58,16 +61,21 @@ export class IrisChatService implements OnDestroy {
         [ChatServiceMode.TUTOR_SUGGESTION, false],
     ]);
 
-    private sessionIdSubject = new BehaviorSubject<number | undefined>(undefined);
-    public sessionId$ = this.sessionIdSubject.asObservable();
+    private currentSessionIdSubject = new BehaviorSubject<number | undefined>(undefined);
+    private currentSessionId$ = this.currentSessionIdSubject.asObservable();
+    private currentRelatedEntityIdSubject = new BehaviorSubject<number | undefined>(undefined);
+    private currentRelatedEntityId$ = this.currentRelatedEntityIdSubject.asObservable();
+    private currentChatModeSubject = new BehaviorSubject<ChatServiceMode | undefined>(undefined);
+    private currentChatMode$ = this.currentChatModeSubject.asObservable();
 
     public get sessionId(): number | undefined {
-        return this.sessionIdSubject.value;
+        return this.currentSessionIdSubject.value;
     }
 
     public set sessionId(id: number | undefined) {
-        this.sessionIdSubject.next(id);
+        this.currentSessionIdSubject.next(id);
     }
+
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
     newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject(undefined);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
@@ -77,22 +85,76 @@ export class IrisChatService implements OnDestroy {
     chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
 
     rateLimitInfo?: IrisRateLimitInformation;
-    rateLimitSubscription: Subscription;
+
+    private rateLimitSubscription: Subscription;
     private acceptSubscription?: Subscription;
+    private chatSessionSubscription?: Subscription;
+    private chatSessionByIdSubscription?: Subscription;
 
     private sessionCreationIdentifier?: string;
 
     hasJustAcceptedExternalLLMUsage = false;
 
-    private courseId = 0;
+    /**
+     * This property should only be used internally in {@link getCourseId()} and {@link setCourseId()}.
+     *
+     * @deprecated do not use this property directly, use {@link getCourseId()} instead.
+     */
+    private courseId?: number;
 
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
+        this.updateCourseId();
+    }
+
+    /**
+     * <b>Extracts the course ID from the current route URL.</b>
+     *
+     * <p>We assume the route follows the structure:</p>
+     * <pre>
+     * /courses/{courseId}/lectures/{lectureId}
+     * </pre>
+     *
+     * <p>For example:</p>
+     * <ul>
+     *   <li><code>/courses/19/lectures/27</code> - Extracts <code>19</code> as the course ID.</li>
+     * </ul>
+     *
+     *
+     * @return courseId retrieved from current route or <code>undefined</code> if the route does not match the expected structure
+     *
+     * @Note We cannot use ActivatedRoute here, because this service is injectable in the root
+     *       and therefore might be instantiated before the route is fully initialized.
+     */
+    private getCourseIdFromCurrentUrl(): number | undefined {
+        const currentUrl = this.router.url;
+
+        /**
+         * Regex to match '/courses/{number}'
+         */
+        const COURSE_ID_REGEX = /\/courses\/(\d+)/;
+        const match = currentUrl.match(COURSE_ID_REGEX);
+
+        /**
+         * 0 would contain the fully matched string, e.g. '/courses/19'
+         *
+         * 1 is the first capturing group, which contains the course ID, e.g. '19'
+         */
+        const CAPTURING_GROUP_INDEX = 1;
+        return match ? Number(match[CAPTURING_GROUP_INDEX]) : undefined;
+    }
+
+    private updateCourseId(): number | undefined {
+        const updatedCourseId = this.getCourseIdFromCurrentUrl();
+        this.setCourseId(updatedCourseId);
+        return updatedCourseId;
     }
 
     ngOnDestroy(): void {
         this.rateLimitSubscription.unsubscribe();
         this.acceptSubscription?.unsubscribe();
+        this.chatSessionSubscription?.unsubscribe();
+        this.chatSessionByIdSubscription?.unsubscribe();
     }
 
     protected start() {
@@ -249,16 +311,16 @@ export class IrisChatService implements OnDestroy {
 
     /**
      * Parses the latest suggestions string and updates the suggestions subject.
-     * @param s: The latest suggestions string
-     * @private
+     *
+     * @param str The latest suggestions string
      */
-    private parseLatestSuggestions(s?: string) {
-        if (!s) {
+    private parseLatestSuggestions(str?: string) {
+        if (!str) {
             this.suggestions.next([]);
             return;
         }
 
-        const suggestions = JSON.parse(s);
+        const suggestions = JSON.parse(str);
         this.suggestions.next(suggestions);
     }
 
@@ -299,6 +361,8 @@ export class IrisChatService implements OnDestroy {
         if (this.sessionId) {
             this.ws.unsubscribeFromSession(this.sessionId);
             this.sessionId = undefined;
+            this.currentRelatedEntityIdSubject.next(undefined);
+            this.currentChatModeSubject.next(undefined);
             this.messages.next([]);
             this.stages.next([]);
             this.suggestions.next([]);
@@ -329,9 +393,25 @@ export class IrisChatService implements OnDestroy {
     }
 
     private loadChatSessions() {
-        this.http.getChatSessions(this.courseId).subscribe((sessions: IrisSessionDTO[]) => {
-            this.chatSessions.next(sessions ?? []);
-        });
+        const courseId = this.getCourseId();
+        if (courseId) {
+            this.chatSessionSubscription?.unsubscribe();
+            this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
+                this.chatSessions.next(sessions ?? []);
+            });
+        } else {
+            captureException(new Error('Could not load chat sessions, courseId is not set.'), {
+                extra: {
+                    currentUrl: this.router.url,
+                    userId: this.accountService.userIdentity?.id,
+                    sessionCreationIdentifier: this.sessionCreationIdentifier,
+                },
+                tags: {
+                    category: 'Iris',
+                },
+            });
+            this.chatSessions.next([]);
+        }
     }
 
     /**
@@ -370,7 +450,29 @@ export class IrisChatService implements OnDestroy {
 
         this.close();
 
-        this.http.getChatSessionById(this.courseId, session.id).subscribe((session) => this.handleNewSession().next(session));
+        const courseId = this.getCourseId();
+        const entityId = session.entityId;
+        const chatMode = session.chatMode;
+        if (courseId) {
+            this.chatSessionByIdSubscription?.unsubscribe();
+            this.chatSessionByIdSubscription = this.http.getChatSessionById(courseId, session.id).subscribe((session) => {
+                this.currentChatModeSubject.next(chatMode);
+                this.currentRelatedEntityIdSubject.next(entityId);
+                this.handleNewSession().next(session);
+            });
+        } else {
+            captureException(new Error('Could not switch session, courseId is not set.'), {
+                extra: {
+                    currentUrl: this.router.url,
+                    userId: this.accountService.userIdentity?.id,
+                    sessionId: this.sessionId,
+                    sessionCreationIdentifier: this.sessionCreationIdentifier,
+                },
+                tags: {
+                    category: 'Iris',
+                },
+            });
+        }
     }
 
     private closeAndStart() {
@@ -381,7 +483,15 @@ export class IrisChatService implements OnDestroy {
     }
 
     public currentSessionId(): Observable<number | undefined> {
-        return this.sessionId$;
+        return this.currentSessionId$;
+    }
+
+    public currentRelatedEntityId(): Observable<number | undefined> {
+        return this.currentRelatedEntityId$;
+    }
+
+    public currentChatMode(): Observable<ChatServiceMode | undefined> {
+        return this.currentChatMode$;
     }
 
     public currentMessages(): Observable<IrisMessage[]> {
@@ -396,7 +506,25 @@ export class IrisChatService implements OnDestroy {
         return this.error.asObservable();
     }
 
-    public setCourseId(courseId: number): void {
+    /**
+     * <b>Ensures that the {@link courseId} is always available when accessed.</b>
+     *
+     * <p>Since this service is injectable in the root, it might be instantiated before the route is fully initialized,
+     * and therefore the {@link courseId} might not yet be set. To address this, this getter wraps the {@link courseId}
+     * and triggers an update via {@link updateCourseId} if it is not already set.</p>
+     *
+     * <p>Required in edge cases where a route requiring the {@link courseId} (e.g., a lecture from the student view)
+     * is loaded directly by accessing the link or by reloading the page.</p>
+     */
+    public getCourseId(): number | undefined {
+        if (this.courseId) {
+            return this.courseId;
+        }
+
+        return this.updateCourseId();
+    }
+
+    public setCourseId(courseId: number | undefined): void {
         this.courseId = courseId;
     }
 
