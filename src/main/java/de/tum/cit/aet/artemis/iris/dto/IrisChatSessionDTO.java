@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.iris.dto;
 import java.time.ZonedDateTime;
 
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
