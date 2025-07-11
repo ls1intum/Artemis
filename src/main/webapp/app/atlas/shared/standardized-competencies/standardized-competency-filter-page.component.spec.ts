@@ -11,6 +11,9 @@ class DummyImportComponent extends StandardizedCompetencyFilterPageComponent {
     constructor() {
         super();
     }
+    getTreeComponent(): KnowledgeAreaTreeComponent | undefined {
+        return undefined;
+    }
 }
 
 describe('StandardizedCompetencyFilterPageComponent', () => {

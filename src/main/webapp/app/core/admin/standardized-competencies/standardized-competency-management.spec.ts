@@ -407,7 +407,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     });
 
     it('should hide created knowledgeArea if it is not in the filter', () => {
-        component['knowledgeAreaFilter'] = { id: 2 };
+        component['knowledgeAreaFilter'].set({ id: 2 } as KnowledgeAreaDTO);
         const tree: KnowledgeAreaDTO[] = [
             {
                 id: 1,
