@@ -142,24 +142,18 @@ public class QuizQuestionProgressService {
         List<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIds);
         Map<Long, QuizQuestionProgress> progressMap = progressList.stream().collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> progress));
 
-        answeredQuestions.forEach((question, data) -> {
+        List<QuizQuestionProgress> progressToSave = answeredQuestions.entrySet().stream().map(entry -> {
+            QuizQuestion question = entry.getKey();
+            QuizQuestionProgressData data = entry.getValue();
             QuizQuestionProgress progress = progressMap.getOrDefault(question.getId(), new QuizQuestionProgress());
             progress.setUserId(userId);
             progress.setQuizQuestionId(question.getId());
             progress.setProgressJson(data);
             progress.setLastAnsweredAt(lastAnsweredAt);
-            save(progress);
-        });
-    }
+            return progress;
+        }).toList();
 
-    /**
-     * Save the progress of a quiz question to the database
-     *
-     * @param quizQuestionProgress The progress object containing the user's progress for a quiz question
-     * @return The saved QuizQuestionProgress object
-     */
-    public QuizQuestionProgress save(QuizQuestionProgress quizQuestionProgress) {
-        return quizQuestionProgressRepository.save(quizQuestionProgress);
+        quizQuestionProgressRepository.saveAll(progressToSave);
     }
 
     /**
