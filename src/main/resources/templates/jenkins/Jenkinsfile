@@ -53,7 +53,7 @@ node('docker') {
         }
         stage('Load') {
             timestamps {
-                sh "curl -o pipeline.groovy #buildPlanUrl"
+                sh "curl #buildPlanUrl > pipeline.groovy"
                 ownStages = load 'pipeline.groovy'
                 timeout(time: #jenkinsTimeout, unit: 'MINUTES') {
                     ownStages.testRunner()

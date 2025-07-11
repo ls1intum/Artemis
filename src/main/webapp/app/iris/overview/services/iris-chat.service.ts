@@ -61,15 +61,19 @@ export class IrisChatService implements OnDestroy {
         [ChatServiceMode.TUTOR_SUGGESTION, false],
     ]);
 
-    private sessionIdSubject = new BehaviorSubject<number | undefined>(undefined);
-    public sessionId$ = this.sessionIdSubject.asObservable();
+    private currentSessionIdSubject = new BehaviorSubject<number | undefined>(undefined);
+    private currentSessionId$ = this.currentSessionIdSubject.asObservable();
+    private currentRelatedEntityIdSubject = new BehaviorSubject<number | undefined>(undefined);
+    private currentRelatedEntityId$ = this.currentRelatedEntityIdSubject.asObservable();
+    private currentChatModeSubject = new BehaviorSubject<ChatServiceMode | undefined>(undefined);
+    private currentChatMode$ = this.currentChatModeSubject.asObservable();
 
     public get sessionId(): number | undefined {
-        return this.sessionIdSubject.value;
+        return this.currentSessionIdSubject.value;
     }
 
     public set sessionId(id: number | undefined) {
-        this.sessionIdSubject.next(id);
+        this.currentSessionIdSubject.next(id);
     }
 
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
@@ -357,6 +361,8 @@ export class IrisChatService implements OnDestroy {
         if (this.sessionId) {
             this.ws.unsubscribeFromSession(this.sessionId);
             this.sessionId = undefined;
+            this.currentRelatedEntityIdSubject.next(undefined);
+            this.currentChatModeSubject.next(undefined);
             this.messages.next([]);
             this.stages.next([]);
             this.suggestions.next([]);
@@ -445,9 +451,15 @@ export class IrisChatService implements OnDestroy {
         this.close();
 
         const courseId = this.getCourseId();
+        const entityId = session.entityId;
+        const chatMode = session.chatMode;
         if (courseId) {
             this.chatSessionByIdSubscription?.unsubscribe();
-            this.chatSessionByIdSubscription = this.http.getChatSessionById(courseId, session.id).subscribe((session) => this.handleNewSession().next(session));
+            this.chatSessionByIdSubscription = this.http.getChatSessionById(courseId, session.id).subscribe((session) => {
+                this.currentChatModeSubject.next(chatMode);
+                this.currentRelatedEntityIdSubject.next(entityId);
+                this.handleNewSession().next(session);
+            });
         } else {
             captureException(new Error('Could not switch session, courseId is not set.'), {
                 extra: {
@@ -471,7 +483,15 @@ export class IrisChatService implements OnDestroy {
     }
 
     public currentSessionId(): Observable<number | undefined> {
-        return this.sessionId$;
+        return this.currentSessionId$;
+    }
+
+    public currentRelatedEntityId(): Observable<number | undefined> {
+        return this.currentRelatedEntityId$;
+    }
+
+    public currentChatMode(): Observable<ChatServiceMode | undefined> {
+        return this.currentChatMode$;
     }
 
     public currentMessages(): Observable<IrisMessage[]> {
