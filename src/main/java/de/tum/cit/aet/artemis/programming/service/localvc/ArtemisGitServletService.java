@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 
 /**
  * This class configures the JGit Servlet, which is used to receive Git push and fetch requests for local VC.
@@ -61,7 +62,18 @@ public class ArtemisGitServletService extends GitServlet {
             ReceivePack receivePack = new ReceivePack(repository);
             // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
             // the user inside the request is always null here
-            var user = (User) request.getAttribute("user");
+            User user = (User) request.getAttribute("user");
+
+            if (user == null) {
+                try {
+                    String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+                    user = localVCServletService.getUserByAuthHeader(authorizationHeader);
+
+                }
+                catch (LocalVCAuthException ignored) {
+                }
+            }
+
             receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
             receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, user));
