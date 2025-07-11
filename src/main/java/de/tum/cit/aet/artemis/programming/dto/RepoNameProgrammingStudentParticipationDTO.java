@@ -15,6 +15,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
+/**
+ * DTO for the endpoint
+ * {@link de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseParticipationResource#getStudentParticipationByRepoName(String)}
+ * constructing a participation DTO including exercise and course information
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record RepoNameProgrammingStudentParticipationDTO(long id, ZonedDateTime individualDueDate, String participantName, String participantIdentifier, String repositoryUri,
         String buildPlanId, String branch, RepoNameProgrammingExerciseDTO exercise) {

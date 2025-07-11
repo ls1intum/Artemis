@@ -35,14 +35,19 @@ public class VcsRepositoryUri {
 
     /**
      * Initializes a new instance of the {@link VcsRepositoryUri} class from a repository name
-     * and builds an url to format <server.url>/git/<project_key>/<repo-name>.git
+     * and builds an url to format <code>{server.url}/git/{project_key}/{repo-name}.git</code> with <code>repo-name</code> consisting of <code>{project_key}-{repo-type}</code>
      *
      * @param vcBaseUrl      The base URL of the version control system
      * @param repositoryName containing the project key at the beginning
      */
     public VcsRepositoryUri(String vcBaseUrl, String repositoryName) throws URISyntaxException {
+        if (!repositoryName.matches("[a-zA-Z0-9]+-[a-zA-Z0-9-]+")) {
+            throw new IllegalArgumentException("Repository name must be in the format <project_key>-<repo-type>");
+        }
+
         var projectKey = repositoryName.split("-")[0];
-        this.uri = new URI(vcBaseUrl + "/git/" + projectKey.toUpperCase() + "/" + repositoryName + ".git");
+        URI uri = new URI(vcBaseUrl).resolve("/git/").resolve(projectKey.toUpperCase() + "/").resolve(repositoryName + ".git");
+        this.uri = uri;
     }
 
     /**

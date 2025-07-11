@@ -192,7 +192,8 @@ public class ProgrammingExerciseParticipationResource {
     /**
      * Get the student participation by its repository identifier.
      * The repository name is the last part of the repository URL.
-     * The repository URL is built as follows: {server.url}/git/{project_key}/{repo-name}.git
+     * The repository URL is built as follows: <code>{server.url}/git/{project_key}/{repo-name}.git</code> with <code>{repo-name}</code> consisting of
+     * <code>{project-key}-{repo-type}</code>
      *
      * @param repoNameParam the URL repository identifier
      * @return the ResponseEntity with status 200 (OK) and the participation DTO {@link de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO} in body,
@@ -205,16 +206,18 @@ public class ProgrammingExerciseParticipationResource {
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationByRepoName(@RequestParam(required = true, name = "repoName") String repoNameParam) {
         String repoUri;
-        if (StringUtils.hasText(repoNameParam)) {
-            try {
-                repoUri = new VcsRepositoryUri(localVCBaseUrl, repoNameParam).toString();
-            }
-            catch (URISyntaxException e) {
-                throw new BadRequestAlertException("Invalid repository URL", ENTITY_NAME, "invalidRepositoryUrl");
-            }
-        }
-        else {
+        if (!StringUtils.hasText(repoNameParam)) {
             throw new BadRequestAlertException("Repository name must be provided", ENTITY_NAME, "repoNameRequired");
+        }
+
+        try {
+            repoUri = new VcsRepositoryUri(localVCBaseUrl, repoNameParam).toString();
+        }
+        catch (URISyntaxException e) {
+            throw new BadRequestAlertException("Invalid repository URL", ENTITY_NAME, "invalidRepositoryUrl");
+        }
+        catch (IllegalArgumentException e) {
+            throw new BadRequestAlertException("Invalid repository name", ENTITY_NAME, "invalidRepositoryName");
         }
 
         // find participation by url
