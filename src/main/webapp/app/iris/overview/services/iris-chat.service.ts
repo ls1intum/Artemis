@@ -294,8 +294,8 @@ export class IrisChatService implements OnDestroy {
         return false;
     }
 
-    private updateChatSessions(updatedSessions: IrisSessionDTO[], includeLatestSessions: boolean): void {
-        if (includeLatestSessions && this.latestStartedSession) {
+    private updateChatSessions(updatedSessions: IrisSessionDTO[], includeLatestSession: boolean): void {
+        if (includeLatestSession && this.latestStartedSession) {
             updatedSessions.unshift(this.latestStartedSession);
         }
         this.chatSessions.next(updatedSessions);
