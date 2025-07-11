@@ -142,8 +142,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(data.getBox()).isEqualTo(1);
         assertThat(data.getLastScore()).isEqualTo(1.0);
         assertThat(data.getAttempts().size()).isEqualTo(1);
-        assertThat(data.getAttempts().get(0).getAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
-        assertThat(data.getAttempts().get(0).getScore()).isEqualTo(1.0);
+        assertThat(data.getAttempts().getFirst().getAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
+        assertThat(data.getAttempts().getFirst().getScore()).isEqualTo(1.0);
 
         // Progress does not exist in database
         quizQuestionProgressTestRepository.deleteAll();
@@ -162,8 +162,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(dataEmpty.getBox()).isEqualTo(1);
         assertThat(dataEmpty.getLastScore()).isEqualTo(1.0);
         assertThat(dataEmpty.getAttempts().size()).isEqualTo(1);
-        assertThat(dataEmpty.getAttempts().get(0).getAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
-        assertThat(dataEmpty.getAttempts().get(0).getScore()).isEqualTo(1.0);
+        assertThat(dataEmpty.getAttempts().getFirst().getAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
+        assertThat(dataEmpty.getAttempts().getFirst().getScore()).isEqualTo(1.0);
 
         submittedAnswer.setQuizQuestion(null);
         quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizSubmission, participation);
