@@ -33,12 +33,13 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedProgrammingExerciseChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventProcessingException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -107,19 +108,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     }
 
     /**
-     * Creates a new Iris session for the given exercise and user.
-     *
-     * @param exercise The exercise the session belongs to
-     * @param user     The user the session belongs to
-     * @return The created session
-     */
-    // TODO: This function is only used in tests. Replace with createSession once the tests are refactored.
-    public IrisProgrammingExerciseChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
-        checkIfExamExercise(exercise);
-        return irisSessionRepository.save(new IrisProgrammingExerciseChatSession(exercise, user));
-    }
-
-    /**
      * Checks if the user has access to the Iris session.
      * A user has access if they have access to the exercise and the session belongs to them.
      *
@@ -164,76 +152,98 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     @Override
     public void requestAndHandleResponse(IrisProgrammingExerciseChatSession session) {
-        requestAndHandleResponse(session, Optional.empty());
+        requestAndHandleResponse(session, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
     }
 
     /**
      * Sends all messages of the session to an LLM and handles the response by saving the message
      * and sending it to the student via the Websocket.
      *
-     * @param session The chat session to send to the LLM
-     * @param event   The event to trigger on Pyris side
+     * @param session          The chat session to send to the LLM
+     * @param event            The event to trigger on Pyris side
+     * @param settings         Optional settings to use if already loaded elsewhere. If not provided, the settings will be fetched
+     * @param user             Optional user to use if already loaded elsewhere. If not provided, the user will be fetched
+     * @param latestSubmission Optional latest submission to use if already loaded elsewhere. If not provided, the latest submission will be fetched
      */
-    public void requestAndHandleResponse(IrisProgrammingExerciseChatSession session, Optional<String> event) {
+    public void requestAndHandleResponse(IrisProgrammingExerciseChatSession session, Optional<String> event, Optional<IrisCombinedProgrammingExerciseChatSubSettingsDTO> settings,
+            Optional<User> user, Optional<ProgrammingSubmission> latestSubmission) {
         var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getExerciseId());
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
 
-        var user = userRepository.findByIdElseThrow(session.getUserId());
-        var latestSubmission = getLatestSubmissionIfExists(exercise, user);
-
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisProgrammingExerciseChatSettings();
-        if (!settings.enabled()) {
+        var actualSettings = settings.orElseGet(() -> irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisProgrammingExerciseChatSettings());
+        if (!actualSettings.enabled()) {
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }
+
+        var actualUser = latestSubmission.flatMap(s -> ((ProgrammingExerciseStudentParticipation) s.getParticipation()).getStudent())
+                .orElseGet(() -> userRepository.findByIdElseThrow(session.getUserId()));
+        var actualLatestSubmission = latestSubmission.or(() -> getLatestSubmissionIfExists(exercise, actualUser));
+
         var chatSession = (IrisProgrammingExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        pyrisPipelineService.executeExerciseChatPipeline(settings.selectedVariant(), settings.customInstructions(), latestSubmission, exercise, chatSession, event);
+        pyrisPipelineService.executeExerciseChatPipeline(actualSettings.selectedVariant(), actualSettings.customInstructions(), actualLatestSubmission, exercise, chatSession,
+                event);
+    }
+
+    /**
+     * Handles the new result event by checking if the user has accepted external LLM usage and
+     * if the participation is a student participation. If so, it checks if the build failed or if
+     * the student needs intervention based on their recent score trajectory.
+     *
+     * @param resultEvent The result event of the submission
+     */
+    public void handleNewResultEvent(NewResultEvent resultEvent) {
+        var result = resultEvent.getEventObject();
+        var participation = result.getSubmission().getParticipation();
+
+        // Only support programming exercises that are not exam exercises
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) || participation.getExercise().isExamExercise()) {
+            return;
+        }
+
+        // If the user has not accepted external LLM usage, or participation is of a team, we do not proceed
+        if (!studentParticipation.getStudent().map(User::hasAcceptedExternalLLMUsage).orElse(true)) {
+            return;
+        }
+
+        var programmingSubmission = (ProgrammingSubmission) result.getSubmission();
+        if (programmingSubmission.isBuildFailed()) {
+            onBuildFailure(studentParticipation, programmingSubmission);
+        }
+        else {
+            onNewResult(studentParticipation, programmingSubmission);
+        }
     }
 
     /**
      * Handles the build failure event by sending a message to the student via Iris.
-     *
-     * @param result The result of the submission
      */
-    public void onBuildFailure(Result result) {
-        var submission = result.getSubmission();
-        if (submission instanceof ProgrammingSubmission programmingSubmission) {
-            var participation = programmingSubmission.getParticipation();
-            if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
-                return;
-            }
-            var exercise = validateExercise(participation.getExercise());
-
-            irisSettingsService.isActivatedForElseThrow(IrisEventType.BUILD_FAILED, exercise);
-
-            var participant = studentParticipation.getParticipant();
-            if (participant instanceof User user) {
-                var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
-                log.info("Build failed for user {}", user.getName());
-                CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase())));
-            }
-            else {
-                throw new PyrisEventProcessingException("Build failure event is not supported for team participations");
-            }
+    private void onBuildFailure(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission submission) {
+        var combinedSettings = irisSettingsService.getCombinedIrisSettingsFor(studentParticipation.getProgrammingExercise(), false);
+        var settings = combinedSettings.irisProgrammingExerciseChatSettings();
+        if (!settings.enabled() || !IrisSettingsService.isEventEnabledInSettings(combinedSettings, IrisEventType.BUILD_FAILED)) {
+            return;
         }
+
+        var user = studentParticipation.getStudent().orElseThrow();
+        var session = getCurrentSessionOrCreateIfNotExistsInternal(studentParticipation.getProgrammingExercise(), user, false);
+        log.info("Build failed for user {}", user.getName());
+        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase()), Optional.of(settings), Optional.of(user),
+                Optional.of(submission)));
     }
 
     /**
      * Informs Iris about a progress stall event, if the student has not improved their in the last 3 submissions.
-     *
-     * @param result The result of the submission
      */
-    public void onNewResult(Result result) {
-        var participation = result.getSubmission().getParticipation();
-        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
+    private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
+        var combinedSettings = irisSettingsService.getCombinedIrisSettingsFor(studentParticipation.getProgrammingExercise(), false);
+        var settings = combinedSettings.irisProgrammingExerciseChatSettings();
+        if (!settings.enabled() || !IrisSettingsService.isEventEnabledInSettings(combinedSettings, IrisEventType.PROGRESS_STALLED)) {
             return;
         }
 
-        var exercise = validateExercise(participation.getExercise());
-
-        irisSettingsService.isActivatedForElseThrow(IrisEventType.PROGRESS_STALLED, exercise);
-
+        // TODO: Reduce this call to the last 5 submissions or sth
         var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
 
         double successThreshold = 100.0; // TODO: Retrieve configuration from Iris settings
@@ -248,13 +258,14 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             var needsIntervention = needsIntervention(listOfScores);
             if (needsIntervention) {
                 log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
-                var participant = studentParticipation.getParticipant();
-                if (participant instanceof User user) {
-                    var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
-                    CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));
+                var user = studentParticipation.getStudent().orElseThrow();
+                var session = getCurrentSessionOrCreateIfNotExistsInternal(studentParticipation.getProgrammingExercise(), user, false);
+                try {
+                    CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()), Optional.of(settings),
+                            Optional.of(user), Optional.of(latestSubmission)));
                 }
-                else {
-                    throw new PyrisEventProcessingException("Progress stalled event is not supported for team participations");
+                catch (Exception e) {
+                    log.error("Error while sending progress stalled message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
                 }
             }
         }
@@ -379,21 +390,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisProgrammingExerciseChatSession session) {
         var exercise = exerciseRepository.findByIdElseThrow(session.getExerciseId());
         builder.withCourse(exercise.getCourseViaExerciseGroupOrCourseMember().getId()).withExercise(exercise.getId());
-    }
-
-    /**
-     * Validates the exercise and throws an exception if it is not a programming exercise or an exam exercise.
-     *
-     * @param exercise The exercise to check
-     * @throws IrisUnsupportedExerciseTypeException if the exercise is not a programming exercise or an exam exercise
-     */
-    private ProgrammingExercise validateExercise(Exercise exercise) {
-        if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
-            throw new IrisUnsupportedExerciseTypeException("Iris events are only supported for programming exercises");
-        }
-        checkIfExamExercise(exercise);
-
-        return programmingExercise;
     }
 
     /**

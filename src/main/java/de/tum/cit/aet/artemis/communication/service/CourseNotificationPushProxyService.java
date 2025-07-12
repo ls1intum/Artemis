@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
+@Deprecated(since = "8.2.0", forRemoval = true)
 public class CourseNotificationPushProxyService {
 
     /**

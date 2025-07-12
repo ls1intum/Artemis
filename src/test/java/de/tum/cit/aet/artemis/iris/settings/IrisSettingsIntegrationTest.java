@@ -33,10 +33,12 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisFaqIngestionSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisGlobalSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisProgrammingExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTutorSuggestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
@@ -100,7 +102,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var projectKey1 = programmingExercise.getProjectKey();
-        programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
+        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
         programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)));
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExerciseRepository.save(programmingExercise);
@@ -108,11 +110,11 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
         var templateRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "exercise");
         var templateParticipation = programmingExercise.getTemplateParticipation();
-        templateParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + templateRepositorySlug + ".git");
+        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         var solutionRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "solution");
         var solutionParticipation = programmingExercise.getSolutionParticipation();
-        solutionParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git");
+        solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git");
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
         // Text Exercise
@@ -708,5 +710,30 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
         // The exercise-specific setting should override the course-wide setting
         assertThat(combinedSettings.irisProgrammingExerciseChatSettings().customInstructions()).isEqualTo(programmingExerciseChatInstructions);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGlobalSettingsDatabaseRetrieval() {
+        activateIrisGlobally();
+        var globalSettings = irisSettingsRepository.findGlobalSettingsElseThrow();
+        assertThat(globalSettings).isNotNull();
+
+        var fields = IrisGlobalSettings.class.getDeclaredFields();
+        for (var field : fields) {
+            field.setAccessible(true);
+            // Only check fields that are a subclass of IrisSubSettings
+            if (!IrisSubSettings.class.isAssignableFrom(field.getType())) {
+                continue;
+            }
+            // Subsettings should not be null
+            try {
+                var value = field.get(globalSettings);
+                assertThat(value).as("Subsettings field '%s' should not be null", field.getName()).isNotNull();
+            }
+            catch (IllegalAccessException e) {
+                throw new RuntimeException("Failed to access subsettings field: " + field.getName(), e);
+            }
+        }
     }
 }

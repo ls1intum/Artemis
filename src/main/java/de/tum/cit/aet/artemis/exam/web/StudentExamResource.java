@@ -178,9 +178,9 @@ public class StudentExamResource {
 
         examService.loadQuizExercisesForStudentExam(studentExam);
 
-        // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
+        // fetch participations, latest submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, true);
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, true);
 
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
@@ -682,8 +682,6 @@ public class StudentExamResource {
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
         }
-
-        examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
 
         User instructor = userRepository.getUser();
         log.info("REST request to start exercises for student exams of exam {}", examId);

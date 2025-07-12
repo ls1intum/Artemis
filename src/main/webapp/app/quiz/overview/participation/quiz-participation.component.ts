@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, viewChildren } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import isMobile from 'ismobilejs-es5';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -90,14 +90,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
-    @ViewChildren(MultipleChoiceQuestionComponent)
-    mcQuestionComponents: QueryList<MultipleChoiceQuestionComponent>;
+    readonly mcQuestionComponents = viewChildren(MultipleChoiceQuestionComponent);
 
-    @ViewChildren(DragAndDropQuestionComponent)
-    dndQuestionComponents: QueryList<DragAndDropQuestionComponent>;
+    readonly dndQuestionComponents = viewChildren(DragAndDropQuestionComponent);
 
-    @ViewChildren(ShortAnswerQuestionComponent)
-    shortAnswerQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
+    readonly shortAnswerQuestionComponents = viewChildren(ShortAnswerQuestionComponent);
 
     private routeAndDataSubscription: Subscription;
 
@@ -752,13 +749,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }, this);
 
         // make sure that a possible explanation is updated correctly in all sub components
-        this.mcQuestionComponents.forEach((mcQuestionComponent) => {
+        this.mcQuestionComponents().forEach((mcQuestionComponent) => {
             mcQuestionComponent.watchCollection();
         });
-        this.dndQuestionComponents.forEach((dndQuestionComponent) => {
+        this.dndQuestionComponents().forEach((dndQuestionComponent) => {
             dndQuestionComponent.watchCollection();
         });
-        this.shortAnswerQuestionComponents.forEach((shortAnswerQuestionComponent) => {
+        this.shortAnswerQuestionComponents().forEach((shortAnswerQuestionComponent) => {
             shortAnswerQuestionComponent.watchCollection();
         });
     }

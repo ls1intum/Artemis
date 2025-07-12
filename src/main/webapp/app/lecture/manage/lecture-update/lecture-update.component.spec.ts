@@ -363,14 +363,11 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponent.isEditMode.set(true);
             lectureUpdateComponent.titleSection = signal({
                 titleChannelNameComponent: () => ({
-                    isFormValidSignal: () => true,
+                    isValid: () => true,
                 }),
             } as any);
             lectureUpdateComponent.lecturePeriodSection = signal({
                 isPeriodSectionValid: () => true,
-            } as any);
-            lectureUpdateComponent.attachmentsSection = signal({
-                isFormValid: () => true,
             } as any);
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => true,
@@ -381,7 +378,6 @@ describe('LectureUpdateComponent', () => {
             expect(lectureUpdateComponent.formStatusSections).toEqual([
                 { title: 'artemisApp.lecture.sections.title', valid: true },
                 { title: 'artemisApp.lecture.sections.period', valid: true },
-                { title: 'artemisApp.lecture.sections.attachments', valid: true },
                 { title: 'artemisApp.lecture.sections.units', valid: true },
             ]);
         });
@@ -390,7 +386,7 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponent.isEditMode.set(false);
             lectureUpdateComponent.titleSection = signal({
                 titleChannelNameComponent: () => ({
-                    isFormValidSignal: () => false,
+                    isValid: () => false,
                 }),
             } as any);
             lectureUpdateComponent.lecturePeriodSection = signal({
@@ -409,14 +405,11 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponent.isEditMode.set(true);
             lectureUpdateComponent.titleSection = signal({
                 titleChannelNameComponent: () => ({
-                    isFormValidSignal: () => false,
+                    isValid: () => false,
                 }),
             } as any);
             lectureUpdateComponent.lecturePeriodSection = signal({
                 isPeriodSectionValid: () => false,
-            } as any);
-            lectureUpdateComponent.attachmentsSection = signal({
-                isFormValid: () => false,
             } as any);
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => false,
@@ -427,7 +420,6 @@ describe('LectureUpdateComponent', () => {
             expect(lectureUpdateComponent.formStatusSections).toEqual([
                 { title: 'artemisApp.lecture.sections.title', valid: false },
                 { title: 'artemisApp.lecture.sections.period', valid: false },
-                { title: 'artemisApp.lecture.sections.attachments', valid: false },
                 { title: 'artemisApp.lecture.sections.units', valid: false },
             ]);
         });

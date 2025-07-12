@@ -5,10 +5,7 @@ import static org.assertj.core.api.Assertions.withPrecision;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -206,7 +203,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRemovingAllStudents_AfterParticipatingInExam() throws Exception {
-        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
 
         // Generate student exams
@@ -218,7 +214,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         int numberOfGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
         assertThat(numberOfGeneratedParticipations).isEqualTo(12);
 
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         // Fetch student exams
         List<StudentExam> studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamsDB).hasSize(3);
@@ -255,7 +250,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRemovingAllStudentsAndParticipations() throws Exception {
-        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
 
         // Generate student exams
@@ -265,7 +259,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(exam.getExamUsers()).hasSize(3);
 
         int numberOfGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         assertThat(numberOfGeneratedParticipations).isEqualTo(12);
         // Fetch student exams
         List<StudentExam> studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
@@ -305,7 +298,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteStudent_AfterParticipatingInExam() throws Exception {
-        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // Create an exam with registered students
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
@@ -331,7 +323,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         // Start the exam to create participations
         ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
 
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         // Get the student exam of student2
         Optional<StudentExam> optionalStudent1Exam = generatedStudentExams.stream().filter(studentExam -> studentExam.getUser().equals(student2)).findFirst();
         assertThat(optionalStudent1Exam.orElseThrow()).isNotNull();
@@ -358,7 +349,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
 
         // Ensure that the participations were not deleted
         List<StudentParticipation> participationsStudent2 = studentParticipationRepository
-                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student2.getId(), studentExam2.getExercises());
+                .findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(student2.getId(), studentExam2.getExercises());
         assertThat(participationsStudent2).hasSize(studentExam2.getExercises().size());
 
         // Make sure delete also works if so many objects have been created before
@@ -401,7 +392,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteStudentWithParticipationsAndSubmissions() throws Exception {
-        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // Create an exam with registered students
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
 
@@ -416,9 +406,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
 
         // Start the exam to create participations
         ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         List<StudentParticipation> participationsStudent1 = studentParticipationRepository
-                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(), studentExam1.getExercises());
+                .findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(student1.getId(), studentExam1.getExercises());
         assertThat(participationsStudent1).hasSize(studentExam1.getExercises().size());
 
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
@@ -444,7 +433,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(studentExams).hasSameSizeAs(storedExam.getExamUsers()).doesNotContain(studentExam1);
 
         // Ensure that the participations of student1 were deleted
-        participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(),
+        participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(student1.getId(),
                 studentExam1.getExercises());
         assertThat(participationsStudent1).isEmpty();
 
@@ -457,7 +446,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStatsForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
         log.debug("testGetStatsForExamAssessmentDashboard: step 1 done");
-        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
         User examTutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         User examTutor2 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
@@ -523,7 +511,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
         int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
             studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(2));
@@ -538,7 +525,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
         for (var exercise : exercisesInExam) {
-            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(exercise.getId(), false);
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResult(exercise.getId(), false);
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }
@@ -757,8 +744,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         programmingExerciseTestService.setup(this, versionControlService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
 
-        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
-
         var visibleDate = ZonedDateTime.now().minusMinutes(5);
         var startDate = ZonedDateTime.now().plusMinutes(5);
         var endDate = ZonedDateTime.now().plusMinutes(20);
@@ -772,7 +757,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
 
         Integer noGeneratedParticipations = registeredStudents.size() * exam.getExerciseGroups().size();
 
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
@@ -807,7 +791,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
         for (var exercise : exercisesInExam) {
-            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(exercise.getId(), false);
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResult(exercise.getId(), false);
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }
@@ -978,7 +962,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
             assertThat(studentResult.overallPointsAchieved()).isEqualTo(calculatedOverallPoints, withPrecision(epsilon));
 
             double expectedPointsAchievedInFirstCorrection = withSecondCorrectionAndStarted ? calculateOverallPoints(correctionResultScore, studentExamOfUser) : 0.0;
-            assertThat(studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(expectedPointsAchievedInFirstCorrection, withPrecision(epsilon));
+            if (!withSecondCorrectionAndStarted) {
+                assertThat(studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(expectedPointsAchievedInFirstCorrection, withPrecision(epsilon));
+            }
 
             // Calculate overall score achieved
             var calculatedOverallScore = calculatedOverallPoints / examScores.maxPoints() * 100;

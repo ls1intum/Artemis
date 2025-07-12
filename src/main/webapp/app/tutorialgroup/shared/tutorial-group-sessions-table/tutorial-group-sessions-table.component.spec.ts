@@ -1,4 +1,4 @@
-import { Component, Input, QueryList, SimpleChange, SimpleChanges, ViewChild, ViewChildren } from '@angular/core';
+import { Component, Input, SimpleChange, SimpleChanges, input, viewChild, viewChildren } from '@angular/core';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupSessionRowStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-group-sessions-table-stub.component';
@@ -25,29 +25,22 @@ class MockExtraColumnComponent {
 @Component({
     selector: 'jhi-mock-wrapper',
     template: `
-        <jhi-tutorial-group-sessions-table [sessions]="sessions" [timeZone]="timeZone" [showIdColumn]="true" [tutorialGroup]="tutorialGroup">
+        <jhi-tutorial-group-sessions-table [sessions]="sessions()" [timeZone]="timeZone()" [showIdColumn]="true" [tutorialGroup]="tutorialGroup()">
             <ng-template let-session>
-                <jhi-mock-extra-column [tutorialGroupSession]="session" />
+                <jhi-mock-extra-column [tutorialGroupSession]="session()" />
             </ng-template>
         </jhi-tutorial-group-sessions-table>
     `,
     imports: [TutorialGroupSessionsTableComponent, MockExtraColumnComponent],
 })
 class MockWrapperComponent {
-    @Input()
-    tutorialGroup: TutorialGroup;
+    readonly tutorialGroup = input.required<TutorialGroup>();
+    readonly sessions = input.required<TutorialGroupSession[]>();
+    readonly timeZone = input.required<string>();
 
-    @Input()
-    sessions: TutorialGroupSession[];
+    sessionTableInstance = viewChild.required(TutorialGroupSessionsTableComponent);
 
-    @Input()
-    timeZone: string;
-
-    @ViewChild(TutorialGroupSessionsTableComponent)
-    sessionTableInstance: TutorialGroupSessionsTableComponent;
-
-    @ViewChildren(MockExtraColumnComponent)
-    mockExtraColumns: QueryList<MockExtraColumnComponent>;
+    mockExtraColumns = viewChildren(MockExtraColumnComponent);
 }
 
 describe('TutorialGroupSessionsTableWrapperTest', () => {
@@ -79,12 +72,12 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
                 tutorialGroup = generateExampleTutorialGroup({});
                 sessionOne = generateExampleTutorialGroupSession({ id: 1 });
                 sessionTwo = generateExampleTutorialGroupSession({ id: 2 });
-                component.sessions = [sessionOne, sessionTwo];
-                component.timeZone = 'Europe/Berlin';
-                component.tutorialGroup = tutorialGroup;
+                fixture.componentRef.setInput('timeZone', 'Europe/Berlin');
+                fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+                fixture.componentRef.setInput('sessions', [sessionOne, sessionTwo]);
                 fixture.detectChanges();
-                tableInstance = component.sessionTableInstance;
-                mockExtraColumns = component.mockExtraColumns.toArray();
+                tableInstance = component.sessionTableInstance();
+                mockExtraColumns = [...component.mockExtraColumns()]; // spread to make mutable
             });
     });
 
@@ -93,8 +86,8 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
     });
 
     it('should pass the session to the headers', () => {
-        expect(tableInstance.sessions).toEqual([sessionOne, sessionTwo]);
-        expect(tableInstance.timeZone).toBe('Europe/Berlin');
+        expect(tableInstance.sessions()).toEqual([sessionOne, sessionTwo]);
+        expect(tableInstance.timeZone()).toBe('Europe/Berlin');
         expect(mockExtraColumns).toHaveLength(2);
         mockExtraColumns.sort((a, b) => a.tutorialGroupSession!.id! - b.tutorialGroupSession!.id!);
         expect(mockExtraColumns[0].tutorialGroupSession).toEqual(sessionOne);
@@ -147,9 +140,9 @@ describe('TutorialGroupSessionTableComponent', () => {
                 tutorialGroup = generateExampleTutorialGroup({});
                 tutorialGroup.nextSession = upcomingSession;
 
-                component.sessions = [upcomingSession, pastSession];
-                component.tutorialGroup = tutorialGroup;
-                component.timeZone = timeZone;
+                fixture.componentRef.setInput('sessions', [upcomingSession, pastSession]);
+                fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+                fixture.componentRef.setInput('timeZone', timeZone);
                 jest.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
                 fixture.detectChanges();
             });
@@ -165,8 +158,8 @@ describe('TutorialGroupSessionTableComponent', () => {
 
     it('should sync next session and upcoming sessions when attendance changed', () => {
         const changes = {} as SimpleChanges;
-        changes.sessions = new SimpleChange([], component.sessions, true);
-        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup, true);
+        changes.sessions = new SimpleChange([], component.sessions(), true);
+        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup(), true);
         component.ngOnChanges(changes);
 
         const sessionWithAttendanceData = { ...upcomingSession, attendanceCount: 1 } as TutorialGroupSession;
@@ -179,9 +172,9 @@ describe('TutorialGroupSessionTableComponent', () => {
 
     it('should sync next session and past sessions when attendance changed', () => {
         const changes = {} as SimpleChanges;
-        changes.sessions = new SimpleChange([], component.sessions, true);
+        changes.sessions = new SimpleChange([], component.sessions(), true);
         tutorialGroup.nextSession = pastSession;
-        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup, true);
+        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup(), true);
         component.ngOnChanges(changes);
 
         const sessionWithAttendanceData = { ...pastSession, attendanceCount: 1 } as TutorialGroupSession;
@@ -194,8 +187,8 @@ describe('TutorialGroupSessionTableComponent', () => {
 
     it('should split sessions into upcoming and past', () => {
         const changes = {} as SimpleChanges;
-        changes.sessions = new SimpleChange([], component.sessions, true);
-        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup, true);
+        changes.sessions = new SimpleChange([], component.sessions(), true);
+        changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup(), true);
         component.ngOnChanges(changes);
         expect(component.upcomingSessions).toHaveLength(1);
         expect(component.upcomingSessions).toEqual([upcomingSession]);

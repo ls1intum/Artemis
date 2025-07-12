@@ -14,9 +14,8 @@ import { DocumentationButtonComponent } from 'app/shared/components/buttons/docu
 import { MockComponent } from 'ng-mocks';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
-import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ArtemisDatePipe } from '../../../shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { Component, ElementRef, signal } from '@angular/core';
@@ -54,7 +53,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     const plagiarismSubmission1 = {
         id: 1,
         studentLogin: studentLoginA,
-    } as PlagiarismSubmission<TextSubmissionElement>;
+    } as PlagiarismSubmission;
 
     const plagiarismCase1 = {
         id: 1,

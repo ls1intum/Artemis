@@ -1,65 +1,53 @@
-<div class="panel-wrapper col-12 col-xxl-8">
+<div class="panel-wrapper">
     <div class="panel-header" jhiTranslate="artemisApp.exercise.details"></div>
     <div class="vertLine"></div>
     <div class="panel-body">
-        @if (exercise.releaseDate) {
-            <ng-template
-                [ngTemplateOutlet]="exerciseInfoItem"
-                [ngTemplateOutletContext]="{ key: 'artemisApp.courseOverview.exerciseDetails.releaseDate', value: exercise.releaseDate, isDate: true }"
-            />
-        }
-        @if (exercise.startDate) {
-            <ng-template
-                [ngTemplateOutlet]="exerciseInfoItem"
-                [ngTemplateOutletContext]="{ key: 'artemisApp.courseOverview.exerciseDetails.startDate', value: exercise.startDate, isDate: true }"
-            />
-        }
-        <ng-template
-            [ngTemplateOutlet]="exerciseInfoItem"
-            [ngTemplateOutletContext]="{
-                key: 'artemisApp.courseOverview.exerciseDetails.submissionDue',
-                value: dueDate ? dueDate : 'artemisApp.courseOverview.exerciseList.noDueDate',
-                isDate: !!dueDate,
-            }"
-        />
-        @if (exercise.exampleSolutionPublicationDate) {
-            <ng-template
-                [ngTemplateOutlet]="exerciseInfoItem"
-                [ngTemplateOutletContext]="{
-                    key: 'artemisApp.courseOverview.exerciseDetails.exampleSolutionPublicationDate',
-                    value: exercise.exampleSolutionPublicationDate,
-                    isDate: true,
-                }"
-            />
-        }
-        @if (exercise.assessmentDueDate) {
-            <ng-template
-                [ngTemplateOutlet]="exerciseInfoItem"
-                [ngTemplateOutletContext]="{ key: 'artemisApp.courseOverview.exerciseDetails.assessmentDue', value: exercise.assessmentDueDate, isDate: true }"
-            />
-        }
-        @if (individualComplaintDueDate) {
-            <ng-template
-                [ngTemplateOutlet]="exerciseInfoItem"
-                [ngTemplateOutletContext]="{ key: 'artemisApp.courseOverview.exerciseDetails.complaintDue', value: individualComplaintDueDate, isDate: true }"
-            />
-        }
-        @if (dueDate && !individualComplaintDueDate) {
-            <ng-template
-                [ngTemplateOutlet]="exerciseInfoItem"
-                [ngTemplateOutletContext]="{
-                    key: 'artemisApp.courseOverview.exerciseDetails.complaintPossible',
-                    value: canComplainLaterOn ? 'global.generic.yes' : 'global.generic.no',
-                    isDate: false,
-                }"
-            />
-        }
+        <div class="label-column">
+            @if (exercise.releaseDate) {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.releaseDate"></div>
+            }
+            @if (exercise.startDate) {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.startDate"></div>
+            }
+            <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.submissionDue"></div>
+            @if (exercise.exampleSolutionPublicationDate) {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.exampleSolutionPublicationDate"></div>
+            }
+            @if (exercise.assessmentDueDate) {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.assessmentDue"></div>
+            }
+            @if (individualComplaintDueDate) {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.complaintDue"></div>
+            }
+            @if (dueDate && !individualComplaintDueDate) {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.complaintPossible"></div>
+            }
+        </div>
+
+        <div class="value-column">
+            @if (exercise.releaseDate) {
+                <div>{{ exercise.releaseDate | artemisDate }}</div>
+            }
+            @if (exercise.startDate) {
+                <div>{{ exercise.startDate | artemisDate }}</div>
+            }
+            @if (dueDate) {
+                <div>{{ dueDate | artemisDate }}</div>
+            } @else {
+                <div jhiTranslate="artemisApp.courseOverview.exerciseList.noDueDate"></div>
+            }
+            @if (exercise.exampleSolutionPublicationDate) {
+                <div>{{ exercise.exampleSolutionPublicationDate | artemisDate }}</div>
+            }
+            @if (exercise.assessmentDueDate) {
+                <div>{{ exercise.assessmentDueDate | artemisDate }}</div>
+            }
+            @if (individualComplaintDueDate) {
+                <div>{{ individualComplaintDueDate | artemisDate }}</div>
+            }
+            @if (dueDate && !individualComplaintDueDate) {
+                <div>{{ (canComplainLaterOn ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</div>
+            }
+        </div>
     </div>
 </div>
-
-<ng-template #exerciseInfoItem let-key="key" let-value="value" let-isDate="isDate">
-    <div class="row mb-1">
-        <div class="col-6">{{ key | artemisTranslate }}</div>
-        <div class="col-6">{{ isDate ? (value | artemisDate) : (value | artemisTranslate) }}</div>
-    </div>
-</ng-template>

@@ -94,6 +94,11 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
             await lectureManagement.addExerciseUnit(exercise.id!);
             await expect(page.locator('.exercise-title', { hasText: new RegExp(`^${exercise.title!}$`) })).toBeVisible();
         });
+
+        test('Can open page to add attachment unit to the lecture', async ({ lectureManagement, page }) => {
+            await lectureManagement.openAttachmentUnitCreationPage(lecture.id!);
+            await expect(page.getByText('Create Attachment Unit')).toBeVisible();
+        });
     });
 
     test.afterEach(async ({ courseManagementAPIRequests }) => {

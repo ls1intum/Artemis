@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -23,6 +24,8 @@ public interface LearnerProfileRepository extends ArtemisJpaRepository<LearnerPr
     default LearnerProfile findByUserElseThrow(User user) {
         return getValueElseThrow(findByUser(user));
     }
+
+    Set<LearnerProfile> findAllByUserIn(Set<User> users);
 
     @Transactional // ok because of delete
     @Modifying

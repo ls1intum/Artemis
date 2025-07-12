@@ -8,7 +8,7 @@
             "subtext": "Iris ist eine intelligente virtuelle Tutorin, die von der EduTelligence-Suite angetrieben wird. Sie unterstützt dich bei deinem Lernprozess durch personalisierte Hilfe, beantwortet Fragen und hilft dir bei Programmierübungen und Kursinhalten.",
             "subheading1": "Über Iris & EduTelligence",
             "text1_1": "<b>EduTelligence-Integration:</b> Iris wird von Pyris angetrieben, das Teil der EduTelligence-Suite ist - einer umfassenden Sammlung von KI-gestützten Microservices zur Verbesserung von Bildungstechnologie-Plattformen.",
-            "text1_2": "<b>Datenverarbeitung & Datenschutz:</b> Deine Interaktionen mit Iris können von externen KI-Anbietern (wie OpenAI oder Azure OpenAI) verarbeitet werden. Bitte prüfe die Datenschutzrichtlinien deiner Institution und stelle sicher, dass du mit der Datenverarbeitung einverstanden bist, bevor du Iris verwendest.",
+            "text1_2": "<b>Datenverarbeitung & Datenschutz:</b> Deine Interaktionen mit Iris können in externen europäischen Rechenzentren, wie der Microsoft Azure Cloud, verarbeitet werden. Bitte prüfe die Datenschutzrichtlinien deiner Institution und stelle sicher, dass du mit der Datenverarbeitung einverstanden bist, bevor du Iris verwendest.",
             "subheading2": "Die wichtigsten Funktionen von Iris",
             "text2_1": "<b>Programmierhilfe:</b> Iris kann bei Programmierfragen helfen, einschließlich Syntax, Algorithmen, Datenstrukturen, Debugging und Verbesserungsvorschlägen für Code.",
             "text2_2": "<b>Kontextverständnis:</b> Im Gegensatz zu generischen Chatbots hat Iris Zugang zu deinem Übungskontext, einschließlich Aufgabenstellungen, deinen Code-Einreichungen, Build-Ergebnissen und Kursmaterialien.",
@@ -55,7 +55,11 @@
             "disclaimerGPT": "ChatGPT kann Fehler machen. Überprüfe wichtige Informationen.",
             "tutorFirstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
             "codeEditorFirstMessage": "Hallo, ich bin Iris! Ich kann dir bei der Bearbeitung von Programmieraufgaben helfen. Ich kann zum Beispiel: <ul><li>eine neue Aufgabe erstellen</li><li><a href='/' target='_blank'>eine Variante von einer bestehenden Aufgabe erstellen</a></li><li>eine bestehende Aufgabe neuen Anforderungen anpassen</li></ul> Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
-            "rateLimitTooltip": "Dies ist die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst."
+            "rateLimitTooltip": "Dies ist die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst.",
+            "goToRelatedEntityButton": {
+                "exerciseLabel": "Zugehörige Aufgabe",
+                "lectureLabel": "Zugehörige Vorlesung"
+            }
         }
     }
 }

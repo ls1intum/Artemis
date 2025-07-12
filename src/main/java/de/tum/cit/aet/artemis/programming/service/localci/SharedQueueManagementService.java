@@ -74,7 +74,7 @@ public class SharedQueueManagementService {
      */
     @EventListener(FullStartupEvent.class)
     public void init() {
-        this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), false);
+        this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), true);
         this.updateBuildAgentCapacity();
     }
 
@@ -91,7 +91,7 @@ public class SharedQueueManagementService {
             for (DockerImageBuild dockerImageBuild : lastBuildDatesForDockerImages) {
                 distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(dockerImageBuild.dockerImage(), dockerImageBuild.lastBuildCompletionDate());
             }
-            log.info("pushDockerImageCleanupInfo took {}ms", System.currentTimeMillis() - startDate);
+            log.debug("pushDockerImageCleanupInfo took {}ms", System.currentTimeMillis() - startDate);
         }
     }
 

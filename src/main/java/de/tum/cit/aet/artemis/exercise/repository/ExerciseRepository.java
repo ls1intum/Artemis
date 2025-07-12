@@ -81,7 +81,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Exercise e
             WHERE e.course.id = :courseId
                 AND (e.releaseDate <=:now  OR e.releaseDate IS NULL)
-             """)
+            """)
     Set<Exercise> findAllReleasedExercisesByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     @Query("""
@@ -444,27 +444,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 )
             """)
     List<Exercise> getPastExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
-
-    /**
-     * Finds all exercises that should be part of the summary email (e.g. weekly summary)
-     * Exercises should have been released, not yet ended, and the release should be in the time frame [daysAgo,now]
-     *
-     * @param now     the current date time
-     * @param daysAgo the current date time minus the wanted number of days (the used interval) (e.g. for weeklySummaries -> daysAgo = 7)
-     * @return all exercises that should be part of the summary (email)
-     */
-    @Query("""
-            SELECT e
-            FROM Exercise e
-            WHERE e.releaseDate IS NOT NULL
-                AND e.releaseDate < :now
-                AND e.releaseDate > :daysAgo
-                AND (
-                    (e.dueDate IS NOT NULL AND e.dueDate > :now)
-                    OR e.dueDate IS NULL
-                )
-            """)
-    Set<Exercise> findAllExercisesForSummary(@Param("now") ZonedDateTime now, @Param("daysAgo") ZonedDateTime daysAgo);
 
     /**
      * Fetches the number of student participations in the given exercise

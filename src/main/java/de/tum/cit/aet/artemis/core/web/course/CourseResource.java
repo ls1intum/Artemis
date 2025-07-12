@@ -74,6 +74,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.course.CourseForUserGroupService;
+import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
 import de.tum.cit.aet.artemis.core.service.course.CourseOverviewService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -110,6 +111,8 @@ public class CourseResource {
     private static final Logger log = LoggerFactory.getLogger(CourseResource.class);
 
     private static final int MAX_TITLE_LENGTH = 255;
+
+    private final CourseLoadService courseLoadService;
 
     private final UserRepository userRepository;
 
@@ -163,7 +166,8 @@ public class CourseResource {
             FileService fileService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
             Optional<AthenaApi> athenaApi, Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
-            Optional<LearnerProfileApi> learnerProfileApi, CourseForUserGroupService courseForUserGroupService, CourseOverviewService courseOverviewService) {
+            Optional<LearnerProfileApi> learnerProfileApi, CourseForUserGroupService courseForUserGroupService, CourseOverviewService courseOverviewService,
+            CourseLoadService courseLoadService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.ltiApi = ltiApi;
@@ -187,6 +191,7 @@ public class CourseResource {
         this.learnerProfileApi = learnerProfileApi;
         this.courseForUserGroupService = courseForUserGroupService;
         this.courseOverviewService = courseOverviewService;
+        this.courseLoadService = courseLoadService;
     }
 
     /**
@@ -626,8 +631,7 @@ public class CourseResource {
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<Course> getCourseWithExercisesAndLecturesAndCompetencies(@PathVariable Long courseId) {
         log.debug("REST request to get course {} for tutors", courseId);
-        return courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId).map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.ok(courseLoadService.loadCourseWithExercisesLecturesLectureUnitsCompetenciesAndPrerequisites(courseId));
     }
 
     /**

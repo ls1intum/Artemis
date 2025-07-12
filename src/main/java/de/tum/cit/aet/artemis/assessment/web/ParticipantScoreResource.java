@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +22,19 @@ import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exercise.dto.CourseGradeInformationDTO;
+import de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -35,20 +44,26 @@ public class ParticipantScoreResource {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipantScoreResource.class);
 
-    private final CourseRepository courseRepository;
-
-    private final Optional<ExamRepositoryApi> examRepositoryApi;
-
     private final ParticipantScoreService participantScoreService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
+
+    private final CourseRepository courseRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final UserRepository userRepository;
+
     public ParticipantScoreResource(AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, Optional<ExamRepositoryApi> examRepositoryApi,
-            ParticipantScoreService participantScoreService) {
+            ParticipantScoreService participantScoreService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository) {
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
         this.examRepositoryApi = examRepositoryApi;
         this.participantScoreService = participantScoreService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -103,5 +118,24 @@ public class ParticipantScoreResource {
         List<ScoreDTO> scoreDTOS = participantScoreService.calculateExamScores(exam);
         log.info("getScoresOfExam took {}ms", System.currentTimeMillis() - start);
         return scoreDTOS.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok().body(scoreDTOS);
+    }
+
+    /**
+     * GET /courses/:courseId/grade-scores : get all grade information (scores) for a course
+     *
+     * @param courseId The id of the course
+     * @return a {@link CourseGradeInformationDTO}
+     */
+    @GetMapping("courses/{courseId}/grade-scores")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<CourseGradeInformationDTO> getGradeScoresForCourse(@PathVariable long courseId) {
+        log.info("REST request to get grade scores for Course {}", courseId);
+        long start = System.nanoTime();
+        List<GradeScoreDTO> gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
+        Set<Long> userIds = gradeScores.stream().map(GradeScoreDTO::userId).collect(Collectors.toSet());
+        List<StudentDTO> students = userIds.isEmpty() ? List.of() : userRepository.findAllStudentsByIdIn(userIds);
+        log.info("Found {} grade scores, {} students, in {}", gradeScores.size(), students.size(), TimeLogUtil.formatDurationFrom(start));
+
+        return ResponseEntity.ok().body(new CourseGradeInformationDTO(gradeScores, students));
     }
 }

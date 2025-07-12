@@ -4,10 +4,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -18,11 +21,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
@@ -77,11 +83,13 @@ public class ParticipationService {
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
+    private final ResultRepository resultRepository;
+
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService) {
+            SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
+            ResultRepository resultRepository) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
@@ -92,6 +100,7 @@ public class ParticipationService {
         this.teamRepository = teamRepository;
         this.uriService = uriService;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -162,10 +171,6 @@ public class ParticipationService {
                 // Only for quiz exercises, the participation status FINISHED should not be overwritten since the user must not change his submission once submitted
                 participation.setInitializationState(InitializationState.INITIALIZED);
             }
-
-            if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
-                participation.setInitializationDate(ZonedDateTime.now());
-            }
             // TODO: load submission with exercise for exam edge case:
             // clients creates missing participation for exercise, call on server succeeds, but response to client is lost
             // -> client tries to create participation again. In this case the submission is not loaded from db -> client errors
@@ -175,6 +180,9 @@ public class ParticipationService {
                     submissionRepository.initializeSubmission(participation, exercise, null);
                 }
             }
+        }
+        if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
+            participation.setInitializationDate(ZonedDateTime.now());
         }
         return studentParticipationRepository.saveAndFlush(participation);
     }
@@ -358,7 +366,7 @@ public class ParticipationService {
         participation = studentParticipationRepository.saveAndFlush(participation);
 
         // Take the latest submission or initialize a new empty submission
-        var studentParticipation = studentParticipationRepository.findByIdWithLegalSubmissionsElseThrow(participation.getId());
+        var studentParticipation = studentParticipationRepository.findByIdWithSubmissionsElseThrow(participation.getId());
         var submission = studentParticipation.findLatestSubmission().orElseGet(() -> submissionRepository.initializeSubmission(studentParticipation, exercise, submissionType));
 
         // If the submission has not yet been submitted, submit it now
@@ -540,10 +548,10 @@ public class ParticipationService {
      */
     public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyState(Exercise exercise, Participant participant) {
         if (participant instanceof User user) {
-            return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
         }
         else if (participant instanceof Team team) {
-            return studentParticipationRepository.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId());
+            return studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId());
         }
         else {
             throw new Error("Unknown Participant type");
@@ -560,10 +568,10 @@ public class ParticipationService {
      */
     public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyStateAndTestRun(Exercise exercise, Participant participant, boolean testRun) {
         if (participant instanceof User user) {
-            return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), testRun);
+            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), testRun);
         }
         else if (participant instanceof Team team) {
-            return studentParticipationRepository.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId());
+            return studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId());
         }
         else {
             throw new Error("Unknown Participant type");
@@ -600,13 +608,13 @@ public class ParticipationService {
     public Optional<StudentParticipation> findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(Exercise exercise, String username) {
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
-            return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
+            return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
         // If exercise is a test exam exercise we load the last participation, since there are multiple participations
         if (exercise.isTestExamExercise()) {
-            return studentParticipationRepository.findLatestWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+            return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
         }
-        return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**
@@ -633,9 +641,9 @@ public class ParticipationService {
     public List<StudentParticipation> findByExerciseAndStudentIdWithEagerSubmissions(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
-            return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerLegalSubmissions(exercise.getId(), team.getId())).orElse(List.of());
+            return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerSubmissions(exercise.getId(), team.getId())).orElse(List.of());
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(exercise.getId(), studentId);
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(exercise.getId(), studentId);
     }
 
     /**
@@ -690,6 +698,39 @@ public class ParticipationService {
         }
 
         return changedParticipations;
+    }
+
+    /**
+     * Finds all student participations for a given exercise with the latest submission and result, including the assessment note.
+     *
+     * @param exerciseId   the id of the exercise
+     * @param teamExercise true if the exercise is a team exercise, false otherwise
+     * @return a set of student participations with the latest submission and result, including the assessment note
+     */
+    public Set<StudentParticipation> findByExerciseIdWithLatestSubmissionResultAndAssessmentNote(long exerciseId, boolean teamExercise) {
+        Set<StudentParticipation> participations = teamExercise ? studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithTeamInformation(exerciseId)
+                : studentParticipationRepository.findByExerciseIdWithLatestSubmission(exerciseId);
+        Set<Long> submissionIds = participations.stream().flatMap(p -> p.getSubmissions().stream()).map(Submission::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+
+        if (submissionIds.isEmpty()) {
+            return participations;
+        }
+        Set<Result> results = resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(submissionIds);
+        Map<Long, Result> resultBySubmissionId = results.stream().collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity()));
+        for (StudentParticipation participation : participations) {
+            if (!participation.getSubmissions().isEmpty()) {
+                Submission latestSubmission = participation.getSubmissions().iterator().next();
+                Result latest = resultBySubmissionId.get(latestSubmission.getId());
+                if (latest != null) {
+                    latestSubmission.setResults(List.of(latest));
+                }
+                else {
+                    latestSubmission.setResults(Collections.emptyList());
+                }
+            }
+        }
+
+        return participations;
     }
 
 }

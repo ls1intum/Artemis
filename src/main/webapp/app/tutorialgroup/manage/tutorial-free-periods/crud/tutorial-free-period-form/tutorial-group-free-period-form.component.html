@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col-12 mb-2">
-        <div class="alert alert-info" jhiTranslate="artemisApp.generic.timeZone" [translateValues]="{ timeZone }"></div>
+        <div class="alert alert-info" jhiTranslate="artemisApp.generic.timeZone" [translateValues]="{ timeZone: timeZone() }"></div>
     </div>
     <div class="col-12">
         <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
@@ -84,7 +84,7 @@
                     form.controls.endTime?.value &&
                     form.controls.startTime?.value &&
                     form.controls.startTime &&
-                    (form.controls.endTime?.value | artemisDate: 'time' : false : timeZone) <= (form.controls.startTime?.value | artemisDate: 'time' : false : timeZone)
+                    (form.controls.endTime?.value | artemisDate: 'time' : false : timeZone()) <= (form.controls.startTime?.value | artemisDate: 'time' : false : timeZone())
                 ) {
                     <span class="text-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></span>
                 }
@@ -110,7 +110,7 @@
             <div class="row mt-2">
                 <div class="col-12">
                     <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                        <span jhiTranslate="{{ isEditMode ? 'entity.action.save' : 'global.generic.create' }}"></span>
+                        <span jhiTranslate="{{ isEditMode() ? 'entity.action.save' : 'global.generic.create' }}"></span>
                     </button>
                 </div>
             </div>
