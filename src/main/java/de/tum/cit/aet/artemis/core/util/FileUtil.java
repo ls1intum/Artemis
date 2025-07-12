@@ -141,10 +141,9 @@ public class FileUtil {
 
         validateExtension(sanitizedOriginalFilename, true);
 
-        final String filenamePrefix = "Markdown_";
         final Path path = FilePathConverter.getMarkdownFilePathForConversation(courseId, conversationId);
 
-        String fileName = generateFilename(filenamePrefix, sanitizedOriginalFilename, false);
+        String fileName = generateFilename("", sanitizedOriginalFilename, true);
         Path filePath = path.resolve(fileName);
 
         copyFile(file, filePath);
