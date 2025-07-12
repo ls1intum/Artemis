@@ -29,6 +29,7 @@ export interface FormProperties {
     videoSource?: string;
     urlHelper?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
+    generateTranscript?: boolean;
 }
 
 // file input is a special case and is not included in the reactive form structure
@@ -127,10 +128,16 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
         updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
+        generateTranscript: [false],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 
     readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
+
+    readonly shouldShowTranscriptCheckbox = computed(() => {
+        const url = this.videoSourceSignal();
+        return typeof url === 'string' && url.includes('.m3u8');
+    });
 
     isFormValid = computed(() => {
         return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
@@ -194,7 +201,8 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
             file: this.file,
             fileName: this.fileName(),
         };
-
+        // eslint-disable-next-line no-undef
+        console.log('Generate transcript checked:', formValue.generateTranscript);
         this.formSubmitted.emit({
             formProperties,
             fileProperties,
