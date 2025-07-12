@@ -9,6 +9,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
  * Spring Data repository for the Lecture entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
 

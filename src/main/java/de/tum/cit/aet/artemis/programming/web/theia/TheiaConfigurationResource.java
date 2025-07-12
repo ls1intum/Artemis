@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 
 import java.util.Map;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 @Profile(PROFILE_THEIA)
+@Lazy
 @RestController
 @RequestMapping("api/programming/theia/")
 public class TheiaConfigurationResource {

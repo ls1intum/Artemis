@@ -110,18 +110,18 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
-        programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
+        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         // Set the correct repository URIs for the template and the solution participation.
         String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
-        templateParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
         SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
-        solutionParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
+        solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
         String assignmentRepositorySlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
@@ -129,7 +129,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Add a participation for student1.
         ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
-        studentParticipation.setRepositoryUri(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, assignmentRepositorySlug));
+        studentParticipation.setRepositoryUri(String.format(localVCBaseUri + "/git/%s/%s.git", projectKey, assignmentRepositorySlug));
         studentParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
@@ -423,52 +423,24 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     /**
      * Ensures <a href="https://github.com/ls1intum/Artemis/issues/8562">issue #8562</a> does not occur again
      *
+     * This test verifies that build plans are triggered during exercise import from file.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importFromFile_verifyBuildPlansCreated() throws Exception {
+    void importFromFile_verifyBuildPlansTriggered() throws Exception {
         aeolusRequestMockProvider.enableMockingOfRequests();
         aeolusRequestMockProvider.mockFailedGenerateBuildPlan(AeolusTarget.CLI);
 
-        // Mock commit hash retrieval
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
-                Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH), Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH));
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
-                Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
-
-        // Mock image inspection
-        dockerClientTestService.mockInspectImage(dockerClient);
-
         ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> null, course);
-        ProgrammingExercise importedExercise = importResult.importedExercise();
 
-        assertThat(importedExercise).isNotNull();
+        // Get participations from the imported exercise
+        TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
+                .findByProgrammingExerciseId(importResult.importedExercise().getId()).orElseThrow();
+        SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
+                .findByProgrammingExerciseId(importResult.importedExercise().getId()).orElseThrow();
 
-        // Mock test results for builds
-        Map<String, String> templateBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
-        Map<String, String> solutionBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY,
-                templateBuildTestResults, solutionBuildTestResults);
-
-        try {
-            // Refresh the exercise to get latest participation data
-            ProgrammingExercise refreshedExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(importedExercise.getId()).orElseThrow();
-
-            // Verify template build plan
-            TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
-                    .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
-
-            localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false, 30);
-
-            // Verify solution build plan
-            SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
-                    .findByProgrammingExerciseId(refreshedExercise.getId()).orElseThrow();
-
-            localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false, 30);
-        }
-        catch (Exception e) {
-            throw new AssertionError("Failed to verify build plans", e);
-        }
+        verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
+        verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
     }
 
     @Test

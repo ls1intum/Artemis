@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.jplag.JPlag;
@@ -49,7 +50,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.service.cache.PlagiarismCacheService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -62,6 +63,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGitDiffRepo
 import de.tum.cit.aet.artemis.programming.service.UriService;
 
 @Conditional(PlagiarismEnabled.class)
+@Lazy
 @Service
 public class ProgrammingPlagiarismDetectionService {
 
@@ -118,7 +120,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @return the text plagiarism result container with up to 500 comparisons with the highest similarity values
      * @throws IOException is thrown for file handling errors
      */
-    public TextPlagiarismResult checkPlagiarism(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) throws IOException {
+    public PlagiarismResult checkPlagiarism(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) throws IOException {
         long start = System.nanoTime();
         String topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
 
@@ -136,7 +138,7 @@ public class ProgrammingPlagiarismDetectionService {
             JPlagResult jPlagResult = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore, minimumSize);
             if (jPlagResult == null) {
                 log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
-                TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+                PlagiarismResult textPlagiarismResult = new PlagiarismResult();
                 textPlagiarismResult.setExercise(programmingExercise);
                 textPlagiarismResult.setSimilarityDistribution(new int[0]);
 
@@ -147,7 +149,7 @@ public class ProgrammingPlagiarismDetectionService {
             }
 
             log.info("JPlag programming comparison finished with {} comparisons for programming exercise {}", jPlagResult.getAllComparisons().size(), programmingExerciseId);
-            TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+            PlagiarismResult textPlagiarismResult = new PlagiarismResult();
             textPlagiarismResult.convertJPlagResult(jPlagResult, programmingExercise);
 
             log.info("JPlag programming comparison done in {}", TimeLogUtil.formatDurationFrom(start));
@@ -197,7 +199,7 @@ public class ProgrammingPlagiarismDetectionService {
             throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
         }
 
-        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath.toString(), minimumSize);
+        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath, minimumSize);
         log.info("Downloading repositories done for programming exercise {}", programmingExerciseId);
 
         final var projectKey = programmingExercise.getProjectKey();
@@ -349,7 +351,7 @@ public class ProgrammingPlagiarismDetectionService {
                 .filter(filterParticipationMinimumScore(minimumScore)).toList();
     }
 
-    private Optional<Repository> cloneTemplateRepository(ProgrammingExercise programmingExercise, String targetPath) {
+    private Optional<Repository> cloneTemplateRepository(ProgrammingExercise programmingExercise, Path targetPath) {
         try {
             var templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
             gitService.resetToOriginHead(templateRepo); // start with clean state
@@ -372,7 +374,7 @@ public class ProgrammingPlagiarismDetectionService {
         return diffToTemplate >= minimumSize;
     }
 
-    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, String targetPath,
+    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, Path targetPath,
             int minimumSize) {
         // Used for sending progress notifications
         var topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExercise.getId());

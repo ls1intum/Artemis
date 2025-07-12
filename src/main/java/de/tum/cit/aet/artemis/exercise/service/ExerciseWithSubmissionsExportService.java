@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
  */
 // We cannot remove the abstract as this breaks the Spring Dependency Injection because then Spring doesn't know which bean to inject
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public abstract class ExerciseWithSubmissionsExportService {
 

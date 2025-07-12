@@ -6,6 +6,7 @@ import java.util.List;
 
 import jakarta.annotation.Nullable;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
  * Spring Data repository for the AuxiliaryRepository entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface AuxiliaryRepositoryRepository extends ArtemisJpaRepository<AuxiliaryRepository, Long> {
 

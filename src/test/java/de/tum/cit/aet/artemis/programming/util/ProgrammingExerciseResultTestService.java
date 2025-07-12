@@ -9,7 +9,6 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.argThat;
@@ -21,6 +20,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +29,7 @@ import java.util.Set;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -79,6 +80,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
  * 1) Jenkins + LocalVC
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseResultTestService {
@@ -168,7 +170,7 @@ public class ProgrammingExerciseResultTestService {
                 .addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, userPrefix + "student2");
         var localRepoFile = Files.createTempDirectory("repo").toFile();
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
-        doReturn(repository).when(gitService).getOrCheckoutRepository(any(), anyString(), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean());
     }
 
     public void setupProgrammingExerciseForExam(boolean isExamOver) {

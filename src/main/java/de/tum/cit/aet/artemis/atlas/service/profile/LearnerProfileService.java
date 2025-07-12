@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service.profile;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -10,36 +11,40 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class LearnerProfileService {
 
-    private final LearnerProfileRepository learnerProfileRepository;
-
     private final UserRepository userRepository;
 
-    public LearnerProfileService(LearnerProfileRepository learnerProfileRepository, UserRepository userRepository) {
-        this.learnerProfileRepository = learnerProfileRepository;
+    private final LearnerProfileRepository learnerProfileRepository;
+
+    public LearnerProfileService(UserRepository userRepository, LearnerProfileRepository learnerProfileRepository) {
         this.userRepository = userRepository;
+        this.learnerProfileRepository = learnerProfileRepository;
     }
 
     /**
      * Create a learner profile for a user and saves it in the database
      *
      * @param user the user for which the profile is created
+     * @return Saved LearnerProfile
      */
-    public void createProfile(User user) {
+    public LearnerProfile createProfile(User user) {
         var profile = new LearnerProfile();
         profile.setUser(user);
         user.setLearnerProfile(profile);
         userRepository.save(user);
+        return profile;
     }
 
     /**
-     * Delete the learner profile of a user
+     * Get or create a learner profile for a user
      *
-     * @param user the user for which the profile is deleted
+     * @param user the user for which the profile is retrieved or created
+     * @return Saved LearnerProfile
      */
-    public void deleteProfile(User user) {
-        learnerProfileRepository.deleteByUser(user);
+    public LearnerProfile getOrCreateLearnerProfile(User user) {
+        return learnerProfileRepository.findByUser(user).orElseGet(() -> createProfile(user));
     }
 }

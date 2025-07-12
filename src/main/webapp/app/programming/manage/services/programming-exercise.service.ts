@@ -10,7 +10,6 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
-import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
@@ -77,9 +76,9 @@ export class ProgrammingExerciseService {
      * 2. Deleting all student participations associated with the exercise.
      * 3. Deleting student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
      *
-     * @param { number } exerciseId - Id of the programming exercise that should be reset.
-     * @param { ProgrammingExerciseResetOptions } options - Configuration options specifying which operations to perform during the exercise reset.
-     * @returns { Observable<string> } - An Observable that returns a string response.
+     * @param exerciseId - Id of the programming exercise that should be reset.
+     * @param options - Configuration options specifying which operations to perform during the exercise reset.
+     * @returns An Observable that returns a string response.
      */
     reset(exerciseId: number, options: ProgrammingExerciseResetOptions): Observable<string> {
         return this.http.put(`${this.resourceUrl}/${exerciseId}/reset`, options, { responseType: 'text' });
@@ -91,15 +90,15 @@ export class ProgrammingExerciseService {
      * @param exerciseId
      * @param options
      */
-    checkPlagiarism(exerciseId: number, options?: PlagiarismOptions): Observable<PlagiarismResultDTO<TextPlagiarismResult>> {
+    checkPlagiarism(exerciseId: number, options?: PlagiarismOptions): Observable<PlagiarismResultDTO> {
         return this.http
-            .get<PlagiarismResultDTO<TextPlagiarismResult>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
+            .get<PlagiarismResultDTO>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
                 observe: 'response',
                 params: {
                     ...options?.toParams(),
                 },
             })
-            .pipe(map((response: HttpResponse<PlagiarismResultDTO<TextPlagiarismResult>>) => response.body!));
+            .pipe(map((response: HttpResponse<PlagiarismResultDTO>) => response.body!));
     }
 
     /**
@@ -122,20 +121,12 @@ export class ProgrammingExerciseService {
      *
      * @param exerciseId
      */
-    getLatestPlagiarismResult(exerciseId: number): Observable<PlagiarismResultDTO<TextPlagiarismResult>> {
+    getLatestPlagiarismResult(exerciseId: number): Observable<PlagiarismResultDTO> {
         return this.http
-            .get<PlagiarismResultDTO<TextPlagiarismResult>>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
+            .get<PlagiarismResultDTO>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
                 observe: 'response',
             })
-            .pipe(map((response: HttpResponse<PlagiarismResultDTO<TextPlagiarismResult>>) => response.body!));
-    }
-
-    /**
-     * Combines all commits of the template repository to one
-     * @param exerciseId of the particular programming exercise
-     */
-    combineTemplateRepositoryCommits(exerciseId: number) {
-        return this.http.put(`${this.resourceUrl}/${exerciseId}/combine-template-commits`, { responseType: 'text' });
+            .pipe(map((response: HttpResponse<PlagiarismResultDTO>) => response.body!));
     }
 
     /**

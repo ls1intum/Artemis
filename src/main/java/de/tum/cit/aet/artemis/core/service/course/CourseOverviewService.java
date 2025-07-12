@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
  */
 @Service
 @Profile(PROFILE_CORE)
+@Lazy
 public class CourseOverviewService {
 
     private final CourseRepository courseRepository;

@@ -16,6 +16,7 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,13 +26,14 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
+@Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class AutomaticProgrammingExerciseCleanupService {
@@ -42,7 +44,7 @@ public class AutomaticProgrammingExerciseCleanupService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final ParticipationService participationService;
+    private final ParticipationDeletionService participationDeletionService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -57,11 +59,11 @@ public class AutomaticProgrammingExerciseCleanupService {
     private int externalSystemRequestBatchWaitingTime;
 
     public AutomaticProgrammingExerciseCleanupService(ProfileService profileService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ParticipationService participationService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService) {
         this.profileService = profileService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.participationService = participationService;
+        this.participationDeletionService = participationDeletionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
     }
@@ -277,7 +279,7 @@ public class AutomaticProgrammingExerciseCleanupService {
             }
 
             try {
-                participationService.cleanupBuildPlan(participation);
+                participationDeletionService.cleanupBuildPlan(participation);
             }
             catch (Exception ex) {
                 log.error("Could not cleanup build plan in participation {}", participation.getId(), ex);

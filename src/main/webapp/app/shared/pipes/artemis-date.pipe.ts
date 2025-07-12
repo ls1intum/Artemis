@@ -33,7 +33,7 @@ export type DateFormat = 'short' | 'long' | 'short-date' | 'long-date' | 'time';
     pure: false,
 })
 export class ArtemisDatePipe implements PipeTransform, OnDestroy {
-    private translateService = inject(TranslateService);
+    private readonly translateService = inject(TranslateService);
 
     private dateTime: dayjs.Dayjs;
     private locale: string;

@@ -144,7 +144,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 
         // Test with null result set.
-        Set<Result> results = studentParticipations.get(1).getResults();
+        Set<Result> results = participationUtilService.getResultsForParticipation(studentParticipations.get(1));
 
         // Clear participant scores before deleting results
         for (Long id : studentParticipations.stream().map(StudentParticipation::getExercise).map(Exercise::getId).collect(Collectors.toSet())) {
@@ -154,7 +154,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         resultRepository.deleteAll(results);
 
         // Test with empty result set.
-        resultRepository.saveAll(studentParticipations.get(2).getResults());
+        resultRepository.saveAll(participationUtilService.getResultsForParticipation(studentParticipations.get(2)));
 
         // Test with null score in result.
 
@@ -162,7 +162,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         // Besides that, exercise type is irrelevant for this test.
         StudentParticipation studentParticipationWithZeroScore = studentParticipations.stream().filter(participation -> participation.getExercise() instanceof QuizExercise)
                 .findFirst().orElseThrow();
-        Result result = studentParticipationWithZeroScore.getResults().iterator().next();
+        Result result = participationUtilService.getResultsForParticipation(studentParticipationWithZeroScore).iterator().next();
         assertThat(result.getScore()).isZero();
         result.score(null);
 

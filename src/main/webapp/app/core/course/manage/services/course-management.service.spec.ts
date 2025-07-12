@@ -289,10 +289,10 @@ describe('Course Management Service', () => {
     it('should find participations for the course', fakeAsync(() => {
         returnedFromService = [...participations];
         courseManagementService
-            .findAllParticipationsWithResults(course.id!)
+            .findGradeScores(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(participations));
-        const req = httpMock.expectOne({ method: 'GET', url: `api/exercise/courses/${course.id}/participations` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/assessment/courses/${course.id}/grade-scores` });
         req.flush(returnedFromService);
         tick();
     }));

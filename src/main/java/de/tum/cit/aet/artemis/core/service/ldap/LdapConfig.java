@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.ldap.repository.config.EnableLdapRepositories;
 import org.springframework.ldap.core.support.LdapContextSource;
@@ -13,6 +14,7 @@ import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 @Configuration
 @Profile(PROFILE_LDAP)
 @EnableLdapRepositories(basePackages = "de.tum.cit.aet.artemis.core.repository.ldap")
+@Lazy
 public class LdapConfig {
 
     @Value("${artemis.user-management.ldap.url}")

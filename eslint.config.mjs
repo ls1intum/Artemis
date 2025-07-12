@@ -8,6 +8,7 @@ import angularTemplateParser from '@angular-eslint/template-parser';
 import angular from 'angular-eslint';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
+import localRulesPlugin from './rules/index.mjs';
 
 export default tseslint.config(
     {
@@ -39,6 +40,7 @@ export default tseslint.config(
             'prebuild.mjs',
             'rules/**/*.js',
             'src/main/webapp/content/scripts/pdf.worker.min.mjs',
+            'src/main/webapp/app/openapi/**',
         ],
     },
     eslint.configs.recommended,
@@ -81,6 +83,7 @@ export default tseslint.config(
             '@typescript-eslint': tsPlugin,
             '@angular-eslint': angularPlugin,
             prettier: prettierPlugin,
+            localRules: localRulesPlugin
         },
         // TODO: adapt the rules of the newest jhipster version, e.g. no-inferrable-types, restrict-plus-operands, etc.
         rules: {
@@ -132,7 +135,8 @@ export default tseslint.config(
                         }
                     ]
                 }
-            ]
+            ],
+            'localRules/require-signal-reference-ngb-modal-input': 'error',
         },
     },
     {

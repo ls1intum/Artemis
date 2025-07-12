@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.tutorialgroup.api;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupsConfigurationS
 
 @Conditional(TutorialGroupEnabled.class)
 @Controller
+@Lazy
 public class TutorialGroupChannelManagementApi extends AbstractTutorialGroupApi {
 
     private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;

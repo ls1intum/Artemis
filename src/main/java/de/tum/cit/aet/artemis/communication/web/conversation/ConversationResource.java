@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,6 +37,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService.ConversationMemberSearchFilters;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -42,10 +45,12 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/communication/courses/")
 public class ConversationResource extends ConversationManagementResource {
@@ -297,5 +302,26 @@ public class ConversationResource extends ConversationManagementResource {
                         "conversationIdMismatch");
             }
         });
+    }
+
+    /**
+     * Enables the conversation feature for a course. If withMessaging is true, the course will also allow direct messages.
+     *
+     * @param courseId      the id of the course
+     * @param withMessaging if true, the course will allow direct messages, otherwise only communication in channels
+     * @return ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("{courseId}/enable")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> enableCommunication(@PathVariable long courseId, @RequestParam(required = false) boolean withMessaging) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (withMessaging) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        }
+        else {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
+        }
+        courseRepository.save(course);
+        return ResponseEntity.ok().build();
     }
 }

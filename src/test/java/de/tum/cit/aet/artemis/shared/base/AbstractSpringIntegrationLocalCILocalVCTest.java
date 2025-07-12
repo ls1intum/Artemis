@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.shared.base;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
@@ -13,7 +14,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -43,7 +44,6 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
-import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
@@ -51,7 +51,6 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionServic
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.icl.TestBuildAgentConfiguration;
@@ -60,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildSta
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIService;
+import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -74,16 +74,15 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 // NOTE: in a "single node" environment, PROFILE_BUILDAGENT must be before PROFILE_CORE to avoid issues
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_LDAP, PROFILE_LTI,
-        PROFILE_AEOLUS, PROFILE_THEIA, PROFILE_IRIS, "local" })
+        PROFILE_AEOLUS, PROFILE_THEIA, PROFILE_IRIS, PROFILE_ATHENA, "local" })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.user-management.use-external=false",
-        "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}", "artemis.build-logs-path=${java.io.tmpdir}/build-logs",
         "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
         "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
         "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
-        "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500", "artemis.version-control.ssh-private-key-folder-path=${java.io.tmpdir}", "info.contact=test@localhost",
-        "artemis.version-control.ssh-port=1236", "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1236/",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc", "artemis.version-control.build-agent-use-ssh=true" })
+        "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500", "info.contact=test@localhost", "artemis.version-control.ssh-port=1236",
+        "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1236/", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc",
+        "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test/ssh-keys" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
@@ -123,11 +122,15 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @MockitoSpyBean
     protected SpringSecurityLdapTemplate ldapTemplate;
 
+    // TODO: we should remove @MockitoSpyBean here and use @Autowired instead
     @MockitoSpyBean
     protected LocalVCService versionControlService;
 
     @MockitoSpyBean
     protected LocalCIService continuousIntegrationService;
+
+    @MockitoSpyBean
+    protected LocalCITriggerService localCITriggerService;
 
     @MockitoSpyBean
     protected BuildAgentConfiguration buildAgentConfiguration;
@@ -163,10 +166,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected CompetencyProgressApi competencyProgressApi;
 
     @Value("${artemis.version-control.url}")
-    protected URL localVCBaseUrl;
+    protected URI localVCBaseUri;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    protected String localVCBasePath;
+    protected Path localVCBasePath;
 
     protected static final String DUMMY_COMMIT_HASH = "1234567890abcdef";
 
@@ -206,7 +209,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(versionControlService, continuousIntegrationService, resourceLoaderService, programmingMessagingService, competencyProgressService, competencyProgressApi);
+        Mockito.reset(versionControlService, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService, competencyProgressService,
+                competencyProgressApi);
         super.resetSpyBeans();
     }
 
@@ -259,31 +263,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @Override
     public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockFetchCommitInfo(String projectKey1, String repositorySlug, String hash) {
         // Not implemented for local VC and local CI
     }
 
@@ -369,16 +348,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey1, String repositoryName, boolean shouldFail) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockDeleteProjectInVcs(String projectKey1, boolean shouldFail) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockDeleteBuildPlan(String projectKey1, String planName, boolean shouldFail) throws Exception {
         // Not implemented for local VC and local CI
     }
@@ -404,11 +373,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) {
         // Not implemented for local VC and local CI
     }
@@ -419,22 +383,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey1, boolean b) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
         // Not implemented for local VC and local CI
     }
 
     @Override
     public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockDefaultBranch(ProgrammingExercise programmingExercise) {
         // Not implemented for local VC and local CI
     }
 

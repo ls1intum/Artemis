@@ -5,7 +5,9 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -15,6 +17,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 
+@Lazy
 @Repository
 @Profile(PROFILE_IRIS)
 public interface IrisLectureChatSessionRepository extends ArtemisJpaRepository<IrisLectureChatSession, Long> {
@@ -22,6 +25,9 @@ public interface IrisLectureChatSessionRepository extends ArtemisJpaRepository<I
     List<IrisLectureChatSession> findByLectureIdAndUserIdOrderByCreationDateDesc(Long lectureId, Long userId);
 
     List<IrisLectureChatSession> findByLectureIdAndUserIdOrderByCreationDateDesc(Long lectureId, Long userId, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = "messages")
+    Optional<IrisLectureChatSession> findSessionWithMessagesByIdAndUserId(Long id, Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
     List<IrisLectureChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);

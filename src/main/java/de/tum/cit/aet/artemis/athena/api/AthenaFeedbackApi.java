@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Profile(PROFILE_ATHENA)
 @Controller
+@Lazy
 public class AthenaFeedbackApi extends AbstractAthenaApi {
 
     private final AthenaFeedbackSendingService athenaFeedbackSendingService;
