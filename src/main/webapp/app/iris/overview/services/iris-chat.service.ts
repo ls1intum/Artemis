@@ -17,6 +17,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { Router } from '@angular/router';
 import { captureException } from '@sentry/angular';
+import dayjs from 'dayjs/esm';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -101,6 +102,8 @@ export class IrisChatService implements OnDestroy {
      * @deprecated do not use this property directly, use {@link getCourseId()} instead.
      */
     private courseId?: number;
+
+    latestStartedSession?: IrisSessionDTO;
 
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
@@ -295,12 +298,68 @@ export class IrisChatService implements OnDestroy {
         return false;
     }
 
+    private updateChatSessions(updatedSessions: IrisSessionDTO[], includeLatestSession: boolean): void {
+        if (includeLatestSession && this.latestStartedSession) {
+            updatedSessions.unshift(this.latestStartedSession);
+        }
+        this.chatSessions.next(updatedSessions);
+    }
+
+    /**
+     * @param latestSession the latest session that was started
+     * @param currentSessions the currently displayed sessions in the history, expected to be sorted by creation date descending
+     */
+    private isLatestSessionIncludedInHistory(latestSession: IrisSessionDTO, currentSessions: IrisSessionDTO[] | undefined): boolean {
+        const latestDisplayedSession: IrisSessionDTO | undefined = currentSessions?.[0];
+        if (latestDisplayedSession === undefined) {
+            return false;
+        }
+
+        const isSessionAlreadyDisplayed = latestDisplayedSession.id === latestSession.id;
+        if (isSessionAlreadyDisplayed) {
+            return true;
+        }
+
+        // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+        const isSessionAlreadyIncludedIfItContainsMessages = dayjs(latestSession.creationDate).isBefore(dayjs(latestDisplayedSession.creationDate));
+        return isSessionAlreadyIncludedIfItContainsMessages;
+    }
+
+    /**
+     * {@link IrisChatHttpService#getChatSessions} returns only sessions that have messages.
+     *
+     * As we open a new empty session without messages (e.g. when the dashboard is opened) we want to display this session in the history as well.
+     */
+    private addLatestEmptySessionToChatSessions(newIrisSession: IrisSession) {
+        const currentSessions = this.chatSessions.getValue();
+
+        /** When a chat from a programming exercise is started {@link newIrisSession} does not have the property `chatMode` but `mode` instead */
+        const chatMode = newIrisSession.chatMode ?? (newIrisSession as any).mode ?? ChatServiceMode.COURSE;
+        const newIrisSessionDTO: IrisSessionDTO = {
+            id: newIrisSession.id,
+            creationDate: newIrisSession.creationDate,
+            chatMode: chatMode,
+            entityId: newIrisSession.entityId,
+            entityName: '',
+        };
+
+        if (!this.isLatestSessionIncludedInHistory(newIrisSessionDTO, currentSessions)) {
+            const shouldLatestSessionBeUpdated = this.sessionId === undefined || this.sessionId === newIrisSession.id;
+            if (shouldLatestSessionBeUpdated) {
+                this.latestStartedSession = newIrisSessionDTO;
+            }
+            this.updateChatSessions(currentSessions, true);
+        }
+    }
+
     private handleNewSession() {
         return {
-            next: (r: IrisSession) => {
-                this.sessionId = r.id;
-                this.messages.next(r.messages || []);
-                this.parseLatestSuggestions(r.latestSuggestions);
+            next: (newIrisSession: IrisSession) => {
+                this.addLatestEmptySessionToChatSessions(newIrisSession);
+
+                this.sessionId = newIrisSession.id;
+                this.messages.next(newIrisSession.messages || []);
+                this.parseLatestSuggestions(newIrisSession.latestSuggestions);
                 this.ws.subscribeToSession(this.sessionId).subscribe((m) => this.handleWebsocketMessage(m));
             },
             error: (e: IrisErrorMessageKey) => {
@@ -394,10 +453,16 @@ export class IrisChatService implements OnDestroy {
 
     private loadChatSessions() {
         const courseId = this.getCourseId();
+        const latestStartedSession = this.latestStartedSession;
         if (courseId) {
             this.chatSessionSubscription?.unsubscribe();
             this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
-                this.chatSessions.next(sessions ?? []);
+                const sessionsWithMessages = sessions ?? [];
+                if (latestStartedSession && !this.isLatestSessionIncludedInHistory(latestStartedSession, sessionsWithMessages)) {
+                    this.updateChatSessions(sessionsWithMessages, true);
+                } else {
+                    this.updateChatSessions(sessionsWithMessages, false);
+                }
             });
         } else {
             captureException(new Error('Could not load chat sessions, courseId is not set.'), {
