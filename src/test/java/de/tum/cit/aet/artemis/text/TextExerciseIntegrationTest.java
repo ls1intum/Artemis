@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.text;
 
+import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_RESTRICTED_MODULE_TEXT_TEST;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRMED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.DENIED;
@@ -598,6 +599,27 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
         assertThat(channel).isNotNull();
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(newTextExercise));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importTextExercise_restrictedAthenaModules_setToNull() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEmptyCourse();
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
+        textExercise.setPreliminaryFeedbackModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
+        textExerciseRepository.save(textExercise);
+
+        textExercise.setCourse(course2);
+        textExercise.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 5));
+
+        TextExercise importedExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class,
+                HttpStatus.CREATED);
+
+        assertThat(importedExercise.getFeedbackSuggestionModule()).isNull();
+        assertThat(importedExercise.getPreliminaryFeedbackModule()).isNull();
     }
 
     @Test

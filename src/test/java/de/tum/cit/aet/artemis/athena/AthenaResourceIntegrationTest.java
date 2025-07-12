@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.athena;
 
+import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_MODELING_SUGGESTIONS_TEST;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_MODELING_TEST;
+import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_SUGGESTIONS_TEST;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
+import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_SUGGESTIONS_TEST;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_RESTRICTED_MODULE_MODELING_TEST;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST;
@@ -27,6 +30,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.athena.domain.AthenaModuleMode;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -210,7 +214,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         courseRepository.save(course);
 
         athenaRequestMockProvider.mockGetAvailableModulesSuccess();
-        List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/programming-exercises/available-modules", HttpStatus.OK, String.class);
+        List<String> response = request.getList(
+                "/api/athena/courses/" + course.getId() + "/programming-exercises/available-modules?athenaModuleMode=" + AthenaModuleMode.FEEDBACK_SUGGESTIONS, HttpStatus.OK,
+                String.class);
         assertThat(response).containsExactlyInAnyOrder(ATHENA_MODULE_PROGRAMMING_TEST, ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST);
     }
 
@@ -223,7 +229,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         courseRepository.save(course);
 
         athenaRequestMockProvider.mockGetAvailableModulesSuccess();
-        List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/modeling-exercises/available-modules", HttpStatus.OK, String.class);
+        List<String> response = request.getList(
+                "/api/athena/courses/" + course.getId() + "/modeling-exercises/available-modules?athenaModuleMode=" + AthenaModuleMode.PRELIMINARY_FEEDBACK, HttpStatus.OK,
+                String.class);
         assertThat(response).containsExactlyInAnyOrder(ATHENA_MODULE_MODELING_TEST, ATHENA_RESTRICTED_MODULE_MODELING_TEST);
     }
 
@@ -258,10 +266,10 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbackSuggestionsSuccessText() throws Exception {
         // Enable Athena for the exercise
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
+        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_SUGGESTIONS_TEST);
         textExerciseRepository.save(textExercise);
 
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", false, null);
         List<Feedback> response = request.getList("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions",
                 HttpStatus.OK, Feedback.class);
         assertThat(response).as("response is not empty").isNotEmpty();
@@ -271,10 +279,10 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbackSuggestionsSuccessProgramming() throws Exception {
         // Enable Athena for the exercise
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_SUGGESTIONS_TEST);
         programmingExerciseRepository.save(programmingExercise);
 
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", false, null);
         List<Feedback> response = request.getList(
                 "/api/athena/programming-exercises/" + programmingExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/feedback-suggestions", HttpStatus.OK,
                 Feedback.class);
@@ -285,10 +293,10 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbackSuggestionsSuccessModeling() throws Exception {
         // Enable Athena for the exercise
-        modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
+        modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_SUGGESTIONS_TEST);
         modelingExerciseRepository.save(modelingExercise);
 
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", false, null);
         List<Feedback> response = request.getList(
                 "/api/athena/modeling-exercises/" + modelingExercise.getId() + "/submissions/" + modelingSubmission.getId() + "/feedback-suggestions", HttpStatus.OK,
                 Feedback.class);
@@ -304,7 +312,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetProgrammingFeedbackSuggestionsNotFound() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", false, null);
         request.get("/api/athena/programming-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
     }
 
@@ -317,14 +325,14 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetTextFeedbackSuggestionsAccessForbidden() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", false, null);
         request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetProgrammingFeedbackSuggestionsAccessForbidden() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", false, null);
         request.get("/api/athena/programming-exercises/" + textExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN,
                 List.class);
     }
@@ -332,7 +340,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetModelingFeedbackSuggestionsAccessForbidden() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", false, null);
         request.get("/api/athena/modeling-exercises/" + textExercise.getId() + "/submissions/" + modelingSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN,
                 List.class);
     }
