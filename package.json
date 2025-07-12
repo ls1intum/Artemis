@@ -1,13 +1,13 @@
 {
     "name": "artemis",
-    "version": "8.2.1",
+    "version": "8.2.3",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
     "author": {
         "name": "Stephan Krusche",
         "email": "krusche@tum.de",
-        "url": "https://ase.cit.tum.de/krusche"
+        "url": "https://aet.cit.tum.de/krusche"
     },
     "cacheDirectories": [
         "node_modules"

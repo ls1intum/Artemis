@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAdminService;
 import de.tum.cit.aet.artemis.core.service.course.CourseDeletionService;
-import de.tum.cit.aet.artemis.core.service.course.CourseService;
+import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -71,9 +71,9 @@ public class AdminCourseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final UserRepository userRepository;
+    private final CourseLoadService courseLoadService;
 
-    private final CourseService courseService;
+    private final UserRepository userRepository;
 
     private final CourseAdminService courseAdminService;
 
@@ -89,10 +89,9 @@ public class AdminCourseResource {
 
     private final CourseDeletionService courseDeletionService;
 
-    public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseAdminService courseAdminService, CourseRepository courseRepository,
-            AuditEventRepository auditEventRepository, FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService,
-            CourseAccessService courseAccessService) {
-        this.courseService = courseService;
+    public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
+            FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseAccessService courseAccessService,
+            CourseLoadService courseLoadService) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -102,6 +101,7 @@ public class AdminCourseResource {
         this.channelService = channelService;
         this.courseDeletionService = courseDeletionService;
         this.courseAccessService = courseAccessService;
+        this.courseLoadService = courseLoadService;
     }
 
     /**
@@ -188,7 +188,7 @@ public class AdminCourseResource {
     @DeleteMapping("courses/{courseId}")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
-        Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(courseId);
+        Course course = courseLoadService.loadCourseWithExercisesLecturesLectureUnitsCompetenciesAndPrerequisites(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);

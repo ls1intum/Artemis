@@ -82,6 +82,7 @@
             }
         },
         "idNull": "Ungültige ID",
+        "noExerciseIdForQuestion": "Keine Aufgaben-ID für die aktuelle Frage gefunden.",
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}",
         "exerciseNotDefined": "Die Aufgabe ist nicht definiert.",
         "exerciseIdMismatch": "Die Aufgaben-IDs stimmen nicht überein.",

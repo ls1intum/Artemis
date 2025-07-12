@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
@@ -27,10 +28,13 @@ class BuildAgentSshAuthenticationIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     private SharedQueueProcessingService sharedQueueProcessingService;
 
+    @Value("${artemis.version-control.ssh-private-key-folder-path}")
+    private Path sshPrivateKeyPath;
+
     @Test
     void testWriteSSHKey() {
-        boolean sshPrivateKeyExists = Files.exists(Path.of(System.getProperty("java.io.tmpdir"), "id_rsa"));
-        assertThat(sshPrivateKeyExists).as("SSH private key written to tmp dir.").isTrue();
+        boolean sshPrivateKeyExists = Files.exists(sshPrivateKeyPath.resolve("id_rsa"));
+        assertThat(sshPrivateKeyExists).as("SSH private key written correct path.").isTrue();
     }
 
     @Test

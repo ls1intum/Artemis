@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-import static de.tum.cit.aet.artemis.iris.utils.IrisLLMMock.getMockLLMCosts;
+import static de.tum.cit.aet.artemis.iris.util.IrisLLMMock.getMockLLMCosts;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
