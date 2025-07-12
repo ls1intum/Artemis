@@ -179,5 +179,13 @@
         "allDeclaredFields": true,
         "allDeclaredConstructors": true,
         "allPublicMethods": true
+    },
+    {
+        "name": "com.hazelcast.instance.BuildInfoProvider",
+        "allDeclaredFields": true,
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allowUnsafeAccess": true
+
     }
 ]
