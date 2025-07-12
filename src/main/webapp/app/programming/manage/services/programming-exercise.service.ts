@@ -129,14 +129,6 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Combines all commits of the template repository to one
-     * @param exerciseId of the particular programming exercise
-     */
-    combineTemplateRepositoryCommits(exerciseId: number) {
-        return this.http.put(`${this.resourceUrl}/${exerciseId}/combine-template-commits`, { responseType: 'text' });
-    }
-
-    /**
      * Imports a programming exercise by cloning the entity itself plus all basic build plans and repositories
      * (template, solution, test).
      *

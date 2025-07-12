@@ -331,24 +331,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         expect(comp.isBuildPlanEditable).toBe(editable);
     });
 
-    it('should combine template commit', () => {
-        const combineCommitsSpy = jest.spyOn(exerciseService, 'combineTemplateRepositoryCommits').mockReturnValue(of(new HttpResponse({ body: null })));
-        const successSpy = jest.spyOn(alertService, 'success');
-        comp.programmingExercise = mockProgrammingExercise;
-        comp.combineTemplateCommits();
-        expect(combineCommitsSpy).toHaveBeenCalledOnce();
-        expect(successSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should alert on combine template commit error', () => {
-        const combineCommitsSpy = jest.spyOn(exerciseService, 'combineTemplateRepositoryCommits').mockReturnValue(throwError(() => new HttpResponse({ body: null })));
-        const errorSpy = jest.spyOn(alertService, 'error');
-        comp.programmingExercise = mockProgrammingExercise;
-        comp.combineTemplateCommits();
-        expect(combineCommitsSpy).toHaveBeenCalledOnce();
-        expect(errorSpy).toHaveBeenCalledOnce();
-    });
-
     it('should delete programming exercise', () => {
         const routerNavigateSpy = jest.spyOn(router, 'navigateByUrl');
         jest.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));

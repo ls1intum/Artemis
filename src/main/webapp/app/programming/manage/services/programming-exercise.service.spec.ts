@@ -321,14 +321,6 @@ describe('ProgrammingExercise Service', () => {
         tick();
     }));
 
-    it('should combine Template Repository Commits', () => {
-        const exerciseId = 1;
-        service.combineTemplateRepositoryCommits(exerciseId).subscribe();
-        const url = `${resourceUrl}/${exerciseId}/combine-template-commits`;
-        const req = httpMock.expectOne({ method: 'PUT', url });
-        req.flush({ body: 'something' });
-    });
-
     it('export instructor repository', fakeAsync(() => {
         const exerciseId = 1;
         service.exportInstructorRepository(exerciseId, RepositoryType.AUXILIARY, undefined).subscribe();

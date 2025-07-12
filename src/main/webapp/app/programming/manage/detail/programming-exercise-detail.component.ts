@@ -645,17 +645,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             });
     }
 
-    combineTemplateCommits() {
-        this.programmingExerciseService.combineTemplateRepositoryCommits(this.programmingExercise.id!).subscribe({
-            next: () => {
-                this.alertService.success('artemisApp.programmingExercise.combineTemplateCommitsSuccess');
-            },
-            error: () => {
-                this.alertService.error('artemisApp.programmingExercise.combineTemplateCommitsError');
-            },
-        });
-    }
-
     generateStructureOracle() {
         this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id!).subscribe({
             next: (res) => {

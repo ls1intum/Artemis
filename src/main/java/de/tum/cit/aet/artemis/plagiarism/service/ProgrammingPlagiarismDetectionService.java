@@ -199,7 +199,7 @@ public class ProgrammingPlagiarismDetectionService {
                     "notEnoughSubmissions");
         }
 
-        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath.toString(), minimumSize);
+        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath, minimumSize);
         log.info("Downloading repositories done for programming exercise {}", programmingExerciseId);
 
         // Check if we have enough repositories after filtering
@@ -358,7 +358,7 @@ public class ProgrammingPlagiarismDetectionService {
                 .filter(filterParticipationMinimumScore(minimumScore)).toList();
     }
 
-    private Optional<Repository> cloneTemplateRepository(ProgrammingExercise programmingExercise, String targetPath) {
+    private Optional<Repository> cloneTemplateRepository(ProgrammingExercise programmingExercise, Path targetPath) {
         try {
             var templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
             gitService.resetToOriginHead(templateRepo); // start with clean state
@@ -371,7 +371,7 @@ public class ProgrammingPlagiarismDetectionService {
         }
     }
 
-    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, String targetPath,
+    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, Path targetPath,
             int minimumTokenSize) {
         // Used for sending progress notifications
         var topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExercise.getId());
