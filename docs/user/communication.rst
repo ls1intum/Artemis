@@ -533,8 +533,7 @@ corner of the answer thread. Clicking the same button again returns the thread t
 Profile Pictures
 ^^^^^^^^^^^^^^^^
 
-Users can set profile pictures in the user settings to improve recognizability. These profile pictures show next to the
-messages they write. The following video demonstrates how to set a profile picture:
+Users can upload a profile picture in their account settings to enhance personal recognition. Once set, the profile picture will appear alongside any messages they post. The following video provides a step-by-step guide on how to upload a profile picture:
 
 .. raw:: html
 

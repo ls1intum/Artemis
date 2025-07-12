@@ -23,7 +23,7 @@ All notifications you receive (whether through web, push, or email) are accessib
 
 |notification-general|
 
-This video shows the general interaction with notifications in the webclient:
+This video provides an overview of how to interact with notifications in the web client.
 
 .. raw:: html
 
@@ -62,7 +62,7 @@ For convenience, Artemis provides preset configurations that you can apply with 
 
 |notification-settings|
 
-This video shows how to change the notification settings in the webclient:
+This video demonstrates how to update notification settings within the web client.
 
 .. raw:: html
 
