@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService;
@@ -114,12 +115,15 @@ public class FileUploadExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi) {
+            ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
+            ExerciseVersionService exerciseVersionService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -137,6 +141,7 @@ public class FileUploadExerciseResource {
         this.channelRepository = channelRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -163,7 +168,8 @@ public class FileUploadExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         FileUploadExercise result = exerciseService.saveWithCompetencyLinks(fileUploadExercise, fileUploadExerciseRepository::save);
-
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        exerciseVersionService.createExerciseVersion(result, user);
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
@@ -289,6 +295,7 @@ public class FileUploadExerciseResource {
 
         var updatedExercise = exerciseService.saveWithCompetencyLinks(fileUploadExercise, fileUploadExerciseRepository::save);
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseVersionService.createExerciseVersion(updatedExercise, user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
         slideApi.ifPresent(api -> api.handleDueDateChange(fileUploadExerciseBeforeUpdate, updatedExercise));
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());

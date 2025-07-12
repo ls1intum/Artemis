@@ -79,6 +79,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismDetectionApi;
@@ -166,6 +167,8 @@ public class TextExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, Optional<PlagiarismResultApi> plagiarismResultApi, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
@@ -174,7 +177,7 @@ public class TextExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, Optional<PlagiarismDetectionApi> plagiarismDetectionApi, CourseRepository courseRepository,
             ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<IrisSettingsApi> irisSettingsApi, Optional<ExamAccessApi> examAccessApi, Optional<SlideApi> slideApi) {
+            Optional<IrisSettingsApi> irisSettingsApi, Optional<ExamAccessApi> examAccessApi, Optional<SlideApi> slideApi, ExerciseVersionService exerciseVersionService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultApi = plagiarismResultApi;
@@ -203,6 +206,7 @@ public class TextExerciseResource {
         this.competencyProgressApi = competencyProgressApi;
         this.irisSettingsApi = irisSettingsApi;
         this.slideApi = slideApi;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -238,6 +242,8 @@ public class TextExerciseResource {
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
         TextExercise result = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        exerciseVersionService.createExerciseVersion(textExercise, user);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
@@ -298,6 +304,7 @@ public class TextExerciseResource {
         TextExercise updatedTextExercise = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
 
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseVersionService.createExerciseVersion(updatedTextExercise, user);
         exerciseService.updatePointsInRelatedParticipantScores(textExerciseBeforeUpdate, updatedTextExercise);
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedTextExercise, textExerciseBeforeUpdate.getDueDate());
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
@@ -544,6 +551,7 @@ public class TextExerciseResource {
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
         textExerciseRepository.save(newTextExercise);
+        exerciseVersionService.createExerciseVersion(newTextExercise, user);
 
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + newTextExercise.getId())).body(newTextExercise);
     }
@@ -653,7 +661,8 @@ public class TextExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         exerciseService.reEvaluateExercise(textExercise, deleteFeedbackAfterGradingInstructionUpdate);
-
-        return updateTextExercise(textExercise, null);
+        var result = updateTextExercise(textExercise, null);
+        exerciseVersionService.createExerciseVersion(textExercise, user);
+        return result;
     }
 }

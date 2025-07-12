@@ -75,6 +75,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
@@ -159,14 +160,16 @@ public class QuizExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
             QuizBatchRepository quizBatchRepository, ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService,
-            QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            QuizQuestionRepository quizQuestionRepository) {
+            QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, QuizQuestionRepository quizQuestionRepository,
+            ExerciseVersionService exerciseVersionService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -191,6 +194,7 @@ public class QuizExerciseResource {
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
         this.quizQuestionRepository = quizQuestionRepository;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -249,6 +253,8 @@ public class QuizExerciseResource {
         quizExerciseService.handleDndQuizFileCreation(quizExercise, files);
 
         QuizExercise result = quizExerciseService.save(quizExercise);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        exerciseVersionService.createExerciseVersion(result, user);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
 
@@ -315,6 +321,7 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseVersionService.createExerciseVersion(quizExercise, user);
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, quizExercise, notificationText);
         if (updatedChannel != null) {
             quizExercise.setChannelName(updatedChannel.getName());
@@ -745,6 +752,7 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise, nullsafeFiles);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseVersionService.createExerciseVersion(quizExercise, user);
 
         quizExercise.validateScoreSettings();
         return ResponseEntity.ok().body(quizExercise);
