@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyNameDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyProgressForLearningPathDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathAverageProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
@@ -155,6 +156,21 @@ public class LearningPathResource {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
         courseService.checkLearningPathsEnabledElseThrow(courseId);
         return ResponseEntity.ok(learningPathService.getAllOfCourseOnPageWithSize(search, courseId));
+    }
+
+    /**
+     * GET courses/:courseId/learning-path/average-progress : Gets the average learning path progress for all students in the course
+     *
+     * @param courseId the id of the course for which the average progress should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the average progress information
+     */
+    @GetMapping("courses/{courseId}/learning-path/average-progress")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<LearningPathAverageProgressDTO> getAverageProgressForCourse(@PathVariable long courseId) {
+        log.debug("REST request to get average learning path progress for course: {}", courseId);
+
+        LearningPathAverageProgressDTO averageProgressDto = learningPathService.getAverageProgressForCourse(courseId);
+        return ResponseEntity.ok(averageProgressDto);
     }
 
     /**

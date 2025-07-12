@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyNameDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathAverageProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
@@ -134,6 +135,17 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private void enableLearningPathsRESTCall(Course course) throws Exception {
         request.put("/api/atlas/courses/" + course.getId() + "/learning-paths/enable", null, HttpStatus.OK);
+    }
+
+    private void assertAverageProgress(long courseId, HttpStatus status, Double expectedAverage) throws Exception {
+        var response = request.get("/api/atlas/courses/" + courseId + "/learning-path/average-progress", status, LearningPathAverageProgressDTO.class);
+        if (expectedAverage == null) {
+            assertThat(response).isNull();
+        }
+        else {
+            assertThat(response).isNotNull();
+            assertThat(response.averageProgress()).isEqualTo(expectedAverage);
+        }
     }
 
     private Competency createCompetencyRESTCall() throws Exception {
@@ -319,6 +331,32 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         var learningPath = learningPathRepositoryService.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         assertThat(learningPath.getProgress()).as("contains no completed competency").isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testGetAverageProgressForCourse_successfulCalculation() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+
+        var students = userTestRepository.getStudents(course);
+        int[] progresses = { 20, 40, 60, 80, 100 };
+        int i = 0;
+        for (User student : students) {
+            var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+            learningPath.setProgress(progresses[i++]);
+            learningPathRepository.save(learningPath);
+        }
+
+        double expectedAverage = Arrays.stream(progresses).average().orElse(0);
+        assertAverageProgress(course.getId(), HttpStatus.OK, expectedAverage);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testGetAverageProgressForCourse_emptyCalculation() throws Exception {
+        course = courseUtilService.createCourse();
+        assertAverageProgress(course.getId(), HttpStatus.OK, 0.0);
+        assertAverageProgress(99999L, HttpStatus.FORBIDDEN, null);
     }
 
     /**

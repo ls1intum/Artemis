@@ -94,6 +94,7 @@ describe('LearningPathsTableComponent', () => {
 
     it('should change page', async () => {
         const onPageChangeSpy = jest.spyOn(component, 'setPage');
+        const getAverageProgressSpy = jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue({ averageProgress: 42, courseId: 1, totalStudents: 5 });
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -102,6 +103,7 @@ describe('LearningPathsTableComponent', () => {
 
         expect(onPageChangeSpy).toHaveBeenLastCalledWith(2);
         expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, { ...pageable, page: 2 });
+        expect(getAverageProgressSpy).toHaveBeenCalledWith(courseId);
     });
 
     it('should search for learning paths when the search term changes', async () => {
@@ -128,6 +130,30 @@ describe('LearningPathsTableComponent', () => {
         await fixture.whenStable();
 
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should load and set average progress for the course', async () => {
+        const mockAverageProgress = { averageProgress: 42, courseId: 1, totalStudents: 5 };
+        jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(learningPathApiService.getAverageProgressForCourse).toHaveBeenCalledOnce();
+        expect(learningPathApiService.getAverageProgressForCourse).toHaveBeenCalledWith(courseId);
+        expect(component.averageProgress()).toBe(42);
+    });
+
+    it('should handle error when loading average progress fails', async () => {
+        const error = new Error('Error loading average progress');
+        const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
+
+        jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockRejectedValue(error);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+        expect(component.averageProgress()).toBeUndefined();
     });
 
     it('should set isLoading correctly', async () => {

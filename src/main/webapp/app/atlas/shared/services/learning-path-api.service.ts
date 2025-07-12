@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import {
     CompetencyGraphDTO,
     LearningObjectType,
+    LearningPathAverageProgressDTO,
     LearningPathCompetencyDTO,
     LearningPathDTO,
     LearningPathInformationDTO,
@@ -91,5 +92,9 @@ export class LearningPathApiService extends BaseApiHttpService {
     async getLearningPathInformation(courseId: number, pageable: SearchTermPageableSearch): Promise<SearchResult<LearningPathInformationDTO>> {
         const params = this.createHttpSearchParams(pageable);
         return await this.get<SearchResult<LearningPathInformationDTO>>(`atlas/courses/${courseId}/learning-paths`, { params });
+    }
+
+    async getAverageProgressForCourse(courseId: number): Promise<LearningPathAverageProgressDTO> {
+        return this.get<LearningPathAverageProgressDTO>(`atlas/courses/${courseId}/learning-path/average-progress`);
     }
 }
