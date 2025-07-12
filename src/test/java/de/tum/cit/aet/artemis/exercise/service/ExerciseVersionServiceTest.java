@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
@@ -25,11 +26,11 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class ExerciseVersionServiceTest extends AbstractSpringIntegrationIndependentTest {
+class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "exerciseversiontest";
 
@@ -56,8 +57,8 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationIndependentTes
     @BeforeEach
     void init() {
         // Create a user with instructor permissions
-        userUtilService.addInstructor("testgroup", TEST_PREFIX + "user");
-        user = userUtilService.getUserByLogin(TEST_PREFIX + "user");
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
     }
 
     @AfterEach
@@ -73,8 +74,10 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationIndependentTes
 
     private ProgrammingExercise createProgrammingExercise() {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
+        programmingExercise = programmingExerciseRepository.findOneWithEagerEverything(programmingExercise.getId());
         // Create a programming exercise
-        return (ProgrammingExercise) course.getExercises().iterator().next();
+        return programmingExercise;
     }
 
     private ModelingExercise createModelingExercise() {
@@ -108,13 +111,21 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationIndependentTes
         assertThat(content.shortName()).isEqualTo(exercise.getShortName());
         assertThat(content.problemStatement()).isEqualTo(exercise.getProblemStatement());
 
-        assertThat(content.startDate()).isCloseTo(exercise.getStartDate(), within(1, ChronoUnit.SECONDS));
-        assertThat(content.releaseDate()).isCloseTo(exercise.getReleaseDate(), within(1, ChronoUnit.SECONDS));
-        assertThat(content.dueDate()).isCloseTo(exercise.getDueDate(), within(1, ChronoUnit.SECONDS));
+        verifyDate(content.startDate(), exercise.getStartDate());
+        verifyDate(content.releaseDate(), exercise.getReleaseDate());
+        verifyDate(content.dueDate(), exercise.getDueDate());
 
         assertThat(content.maxPoints()).isCloseTo(exercise.getMaxPoints(), within(0.1));
         assertThat(content.bonusPoints()).isCloseTo(exercise.getBonusPoints(), within(0.1));
         assertThat(content.difficulty()).isEqualTo(exercise.getDifficulty());
+    }
+
+    private void verifyDate(ZonedDateTime actual, ZonedDateTime expected) {
+        if (expected == null) {
+            assertThat(actual).isNull();
+            return;
+        }
+        assertThat(actual).isCloseTo(expected, within(1, ChronoUnit.SECONDS));
     }
 
     private void verifyLastCommit(VcsRepositoryUri uri, String savedCommitId) {

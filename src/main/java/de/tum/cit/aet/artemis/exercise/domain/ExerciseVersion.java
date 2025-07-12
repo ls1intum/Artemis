@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -19,7 +18,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class ExerciseVersion extends AbstractAuditingEntity {
 
-    @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @ManyToOne
     @JoinColumn(name = "exercise_id")
     private Exercise exercise;
 

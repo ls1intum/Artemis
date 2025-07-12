@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -44,7 +46,78 @@ public record ExerciseVersionContent(
 
         @JsonProperty("allowed_number_of_attempts") Integer allowedNumberOfAttempts,
 
-        @JsonProperty("duration") Integer duration) {
+        @JsonProperty("duration") Integer duration) implements Serializable {
+
+    /**
+     * Custom equals method to handle ZonedDateTime comparison properly.
+     * ZonedDateTime instances might be differently formatted but represent the same instant.
+     *
+     * @param o the object to compare with
+     * @return true if the objects are equal, false otherwise
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        ExerciseVersionContent that = (ExerciseVersionContent) o;
+
+        // Compare non-date fields using Objects.equals
+        if (!Objects.equals(shortName, that.shortName))
+            return false;
+        if (!Objects.equals(title, that.title))
+            return false;
+        if (!Objects.equals(problemStatement, that.problemStatement))
+            return false;
+        if (!Objects.equals(maxPoints, that.maxPoints))
+            return false;
+        if (!Objects.equals(bonusPoints, that.bonusPoints))
+            return false;
+        if (!Objects.equals(difficulty, that.difficulty))
+            return false;
+        if (!Objects.equals(templateCommitId, that.templateCommitId))
+            return false;
+        if (!Objects.equals(solutionCommitId, that.solutionCommitId))
+            return false;
+        if (!Objects.equals(testsCommitId, that.testsCommitId))
+            return false;
+        if (!Objects.equals(isOpenForPractice, that.isOpenForPractice))
+            return false;
+        if (!Objects.equals(randomizeQuestionOrder, that.randomizeQuestionOrder))
+            return false;
+        if (!Objects.equals(allowedNumberOfAttempts, that.allowedNumberOfAttempts))
+            return false;
+        if (!Objects.equals(duration, that.duration))
+            return false;
+
+        // Compare ZonedDateTime fields using helper method
+        if (!areZonedDateTimesEqual(startDate, that.startDate))
+            return false;
+        if (!areZonedDateTimesEqual(releaseDate, that.releaseDate))
+            return false;
+        if (!areZonedDateTimesEqual(dueDate, that.dueDate))
+            return false;
+
+        return true;
+    }
+
+    /**
+     * Helper method to compare two ZonedDateTime objects by their instant.
+     * This ignores formatting differences and time zone representation differences.
+     *
+     * @param date1 first ZonedDateTime
+     * @param date2 second ZonedDateTime
+     * @return true if both dates represent the same instant or are both null
+     */
+    private boolean areZonedDateTimesEqual(ZonedDateTime date1, ZonedDateTime date2) {
+        if (date1 == date2)
+            return true; // Both null or same instance
+        if (date1 == null || date2 == null)
+            return false; // One is null, the other isn't
+        return date1.toInstant().equals(date2.toInstant()); // Compare instants
+    }
 
     /**
      * Creates a builder for ExerciseVersionContent.
