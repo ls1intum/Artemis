@@ -31,7 +31,8 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     @Query("""
             SELECT new de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO(
                       s,
-                      COALESCE(ccs.courseId, e1.id, e2.id, l.id, -1)
+                      COALESCE(ccs.courseId, e1.id, e2.id, l.id, -1),
+                      COALESCE(e1.shortName, e2.shortName, l.title)
                   )
                 FROM IrisChatSession s
                     LEFT JOIN IrisCourseChatSession ccs ON s.id = ccs.id
