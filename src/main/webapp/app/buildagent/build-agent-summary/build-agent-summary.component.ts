@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subscription } from 'rxjs';
-import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
 import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/buildagent/shared/entities/build-agent.model';
@@ -15,12 +15,14 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { FormsModule } from '@angular/forms';
+import { TwoStageStepperComponent } from 'app/buildagent/shared/twostagestepper/two-stage-stepper.component';
 
 @Component({
     selector: 'jhi-build-agents',
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
-    imports: [TranslateDirective, NgxDatatableModule, DataTableComponent, FontAwesomeModule, RouterModule],
+    imports: [TranslateDirective, NgxDatatableModule, DataTableComponent, FontAwesomeModule, RouterModule, FormsModule, TwoStageStepperComponent],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
@@ -37,12 +39,15 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     websocketSubscription: Subscription;
     restSubscription: Subscription;
     routerLink: string;
+    newConcurrencyForAll: number = 1;
+    maxConcurrentJobs: number = navigator.hardwareConcurrency || 16;
 
     //icons
     protected readonly faTimes = faTimes;
     protected readonly faPause = faPause;
     protected readonly faPlay = faPlay;
     protected readonly faTrash = faTrash;
+    protected readonly faCog = faCog;
 
     ngOnInit() {
         this.routerLink = this.router.url;
@@ -167,6 +172,33 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
                 this.alertService.addAlert({
                     type: AlertType.DANGER,
                     message: 'artemisApp.buildAgents.alerts.distributedDataClearFailed',
+                });
+            },
+        });
+    }
+
+    onConcurrencyChange(newValue: number) {
+        this.newConcurrencyForAll = newValue;
+        this.adjustAllBuildAgentsCapacity();
+    }
+
+    adjustAllBuildAgentsCapacity() {
+        if (!this.newConcurrencyForAll || this.newConcurrencyForAll < 1 || this.newConcurrencyForAll > this.maxConcurrentJobs) {
+            return;
+        }
+
+        this.buildAgentsService.adjustAllBuildAgentsCapacity(this.newConcurrencyForAll).subscribe({
+            next: () => {
+                this.load();
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.buildAgents.alerts.buildAgentsCapacityAdjusted',
+                });
+            },
+            error: () => {
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: 'artemisApp.buildAgents.alerts.buildAgentsCapacityAdjustFailed',
                 });
             },
         });

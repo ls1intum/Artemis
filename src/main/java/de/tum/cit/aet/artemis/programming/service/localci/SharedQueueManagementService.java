@@ -30,6 +30,7 @@ import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentCapacityAdjustmentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
@@ -107,6 +108,18 @@ public class SharedQueueManagementService {
 
     public void resumeAllBuildAgents() {
         distributedDataAccessService.getBuildAgentInformation().forEach(agent -> resumeBuildAgent(agent.buildAgent().name()));
+    }
+
+    public void adjustBuildAgentCapacity(String agentName, int newCapacity) {
+        if (newCapacity <= 0)
+            throw new IllegalArgumentException("New capacity must be greater than 0");
+        distributedDataAccessService.getAdjustBuildAgentCapacityTopic().publish(new BuildAgentCapacityAdjustmentDTO(agentName, newCapacity));
+    }
+
+    public void adjustAllBuildAgentsCapacity(int newCapacity) {
+        if (newCapacity <= 0)
+            throw new IllegalArgumentException("New capacity must be greater than 0");
+        distributedDataAccessService.getAdjustBuildAgentCapacityTopic().publish(new BuildAgentCapacityAdjustmentDTO(null, newCapacity));
     }
 
     /**

@@ -32,12 +32,18 @@
                 "buildAgentsPaused": "Anfrage zum Anhalten aller Build-Agenten erfolgreich gesendet. Die Agenten akzeptieren keine neuen Build-Jobs und werden die aktuellen Build-Jobs entweder ordnungsgemäß beenden oder nach einer konfigurierbaren Anzahl von Sekunden abbrechen.",
                 "buildAgentsResumed": "Anfrage zum Fortsetzen aller Build-Agenten erfolgreich gesendet. Die Agenten werden wieder neue Build-Jobs annehmen.",
                 "distributedDataCleared": "Verteilte Daten erfolgreich gelöscht.",
-                "distributedDataClearFailed": "Löschen der verteilten Daten fehlgeschlagen."
+                "distributedDataClearFailed": "Löschen der verteilten Daten fehlgeschlagen.",
+                "buildAgentCapacityAdjusted": "Build-Agent-Kapazität erfolgreich angepasst.",
+                "buildAgentCapacityAdjustFailed": "Anpassung der Build-Agent-Kapazität fehlgeschlagen.",
+                "buildAgentsCapacityAdjusted": "Kapazität aller Build-Agenten erfolgreich angepasst.",
+                "buildAgentsCapacityAdjustFailed": "Anpassung der Kapazität aller Build-Agenten fehlgeschlagen."
             },
             "pause": "Anhalten",
             "resume": "Fortsetzen",
             "pauseAll": "Alle Agenten Anhalten",
             "resumeAll": "Alle Agenten fortsetzen",
+            "concurrency": "Parallelität",
+            "concurrencyLabel": "Parallele Jobs:",
             "pauseAllWarning": "Du bist dabei, alle Build-Agenten anzuhalten. Dies wird verhindern, dass sie neue Build-Jobs verarbeiten.\nBist du sicher, dass du fortfahren möchtest?",
             "clearDistributedData": {
                 "title": "Verteilte Daten löschen",
