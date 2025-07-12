@@ -63,12 +63,12 @@ public class IrisRewritingService {
     public void executeRewritingPipeline(User user, Course course, RewritingVariant variant, String toBeRewritten) {
         // @formatter:off
         pyrisPipelineService.executePipeline(
-                "rewriting",
-                variant.toString(),
-                Optional.empty(),
-                pyrisJobService.createTokenForJob(token -> new RewritingJob(token, course.getId(), user.getId())),
-                executionDto -> new PyrisRewritingPipelineExecutionDTO(executionDto, toBeRewritten),
-                stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId()), new PyrisRewritingStatusUpdateDTO(stages, null, null))
+            "rewriting",
+            variant.name().toLowerCase(),
+            Optional.empty(),
+            pyrisJobService.createTokenForJob(token -> new RewritingJob(token, course.getId(), user.getId())),
+            executionDto -> new PyrisRewritingPipelineExecutionDTO(executionDto, toBeRewritten, course.getId()),
+            stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId()), new PyrisRewritingStatusUpdateDTO(stages, null, null, null, null, ""))
         );
         // @formatter:on
     }
