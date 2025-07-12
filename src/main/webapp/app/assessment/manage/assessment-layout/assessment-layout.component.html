@@ -1,21 +1,22 @@
+@let complaint = this.complaint();
 <jhi-assessment-header
     (navigateBack)="navigateBack.emit()"
-    [isLoading]="isLoading"
-    [saveBusy]="saveBusy"
-    [submitBusy]="submitBusy"
-    [cancelBusy]="cancelBusy"
-    [nextSubmissionBusy]="nextSubmissionBusy"
-    [isTeamMode]="isTeamMode"
-    [isAssessor]="isAssessor"
-    [isTestRun]="isTestRun"
-    [exerciseDashboardLink]="exerciseDashboardLink"
-    [canOverride]="canOverride"
-    [assessmentsAreValid]="assessmentsAreValid"
-    [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed"
-    [exercise]="exercise"
-    [result]="result"
-    [correctionRound]="correctionRound"
-    [isProgrammingExercise]="isProgrammingExercise"
+    [isLoading]="isLoading()"
+    [saveBusy]="saveBusy()"
+    [submitBusy]="submitBusy()"
+    [cancelBusy]="cancelBusy()"
+    [nextSubmissionBusy]="nextSubmissionBusy()"
+    [isTeamMode]="isTeamMode()"
+    [isAssessor]="isAssessor()"
+    [isTestRun]="isTestRun()"
+    [exerciseDashboardLink]="exerciseDashboardLink()"
+    [canOverride]="canOverride()"
+    [assessmentsAreValid]="assessmentsAreValid()"
+    [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed()"
+    [exercise]="exercise()"
+    [result]="result()"
+    [correctionRound]="correctionRound()"
+    [isProgrammingExercise]="isProgrammingExercise()"
     (save)="save.emit()"
     (onSubmit)="onSubmit.emit()"
     (onCancel)="onCancel.emit()"
@@ -29,16 +30,16 @@
 />
 <jhi-assessment-complaint-alert [complaint]="complaint" />
 <ng-content />
-<jhi-assessment-note [assessmentNote]="result?.assessmentNote" (onAssessmentNoteChange)="setAssessmentNoteForResult($event)" />
+<jhi-assessment-note [assessmentNote]="result()?.assessmentNote" (onAssessmentNoteChange)="setAssessmentNoteForResult($event)" />
 @if (complaint) {
     <jhi-complaints-for-tutor-form
         class="row mt-4"
         [zeroIndent]="false"
-        [complaint]="complaint!"
-        [exercise]="exercise"
-        [isAssessor]="isAssessor"
-        [submission]="submission"
-        [isTestRun]="isTestRun"
+        [complaint]="complaint"
+        [exercise]="exercise()"
+        [isAssessor]="isAssessor()"
+        [submission]="submission()"
+        [isTestRun]="isTestRun()"
         (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint.emit($event)"
     />
 }

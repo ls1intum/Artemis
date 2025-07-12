@@ -1,18 +1,18 @@
-@if (hasTranslation === false && headerKey !== null && isSubHeader === false) {
+@if (hasTranslation() === false && headerKey() !== null && isSubHeader() === false) {
     <h5 class="expandable-header" (click)="toggleCollapsed()">
-        {{ headerKey }}
+        {{ headerKey() }}
         <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown" />
     </h5>
 }
-@if (hasTranslation === true && headerKey !== null && isSubHeader === false) {
+@if (hasTranslation() === true && headerKey() !== null && isSubHeader() === false) {
     <h5 class="expandable-header" (click)="toggleCollapsed()">
-        {{ headerKey | artemisTranslate }}
+        {{ headerKey() | artemisTranslate }}
         <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown" />
     </h5>
 }
-@if (hasTranslation === false && headerKey !== null && isSubHeader === true) {
+@if (hasTranslation() === false && headerKey() !== null && isSubHeader() === true) {
     <h6 class="expandable-header" (click)="toggleCollapsed()">
-        {{ headerKey }}
+        {{ headerKey() }}
         <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown" />
     </h6>
 }
