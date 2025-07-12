@@ -13,7 +13,8 @@
             "PetriNet": "Petri-Netz",
             "SyntaxTree": "Syntaxbaum",
             "Flowchart": "Flussdiagramm",
-            "BPMN": "BPMN"
+            "BPMN": "BPMN",
+            "Sfc": "Ablaufsprache"
         }
     }
 }
