@@ -20,7 +20,6 @@ export class MockProgrammingExerciseService {
     createStructuralSolutionEntries = (exerciseId: number) => of({});
     createBehavioralSolutionEntries = (exerciseId: number) => of({});
     getLatestResult = (participation: Participation) => of({});
-    combineTemplateRepositoryCommits = (exerciseId: number) => of({});
     delete = (programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean) => of({});
     generateStructureOracle = (exerciseId: number) => of({});
     getDiffReportForCommits = (exerciseId: number, participationId: number, olderCommitHash: string, newerCommitHash: string, repositoryType: string) => of({});
