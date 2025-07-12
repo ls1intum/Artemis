@@ -530,6 +530,18 @@ corner of the answer thread. Clicking the same button again returns the thread t
 
 |expanded-thread|
 
+Profile Pictures
+^^^^^^^^^^^^^^^^
+
+Users can set profile pictures in the user settings to improve recognizability. These profile pictures show next to the
+messages they write. The following video demonstrates how to set a profile picture:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/61336?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Features for Moderators
 -----------------------
 
