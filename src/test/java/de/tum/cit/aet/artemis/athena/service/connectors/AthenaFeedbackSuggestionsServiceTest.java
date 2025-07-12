@@ -200,6 +200,36 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         assertThat(result).isNull();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testFeedbackSuggestionsTextWithNullLatestSubmission() throws NetworkingException {
+        // Test that the service handles null latest submission gracefully
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
+                jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
+                jsonPath("$.submission.text").value(textSubmission.getText()));
+
+        // The service should handle null latest submission without throwing an exception
+        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true);
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        assertThat(suggestions.getFirst().indexStart()).isEqualTo(3);
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    void testOfSubmissionWithNullSubmission() throws Exception {
+        // Test that AthenaDTOConverterService.ofSubmission handles null submissions gracefully
+        Method ofSubmissionMethod = AthenaFeedbackSuggestionsService.class.getDeclaredField("athenaDTOConverterService").getType().getDeclaredMethod("ofSubmission", long.class,
+                Submission.class);
+        ofSubmissionMethod.setAccessible(true);
+
+        // Get the athenaDTOConverterService instance
+        Object athenaDTOConverterService = ReflectionTestUtils.getField(athenaFeedbackSuggestionsService, "athenaDTOConverterService");
+
+        // Test with null submission
+        Object result = ofSubmissionMethod.invoke(athenaDTOConverterService, 1L, null);
+        assertThat(result).isNull();
+    }
+
     /**
      * Helper method to invoke the private extractLearnerProfile method via reflection
      */
