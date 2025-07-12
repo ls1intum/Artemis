@@ -34,7 +34,7 @@
                     }
                 </small>
             </div>
-            <hr class="my-1 mx-0" />
+            <hr class="my-1 mx-0 sidebar-divider" />
             @if (sidebarItem.isAttempt) {
                 <div class="d-flex flex-column align-items-baseline">
                     <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.usedWorkingTime"></small>
@@ -57,7 +57,7 @@
                         }
                     </small>
                 </div>
-                <hr class="my-1 mx-0" />
+                <hr class="my-1 mx-0 sidebar-divider" />
                 @if (sidebarItem.testExam) {
                     <div class="d-flex flex-column align-items-baseline">
                         <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attempts"></small>
@@ -83,7 +83,7 @@
                     class="small text-truncate me-2"
                     [title]="sidebarItem.title"
                     [class.muted]="sidebarItem.conversation?.isMuted"
-                    [ngClass]="unreadCount() > 0 && !sidebarItem.conversation?.isMuted ? 'fw-bold' : 'fw-normal'"
+                    [ngClass]="sidebarType === 'conversation' ? (unreadCount() > 0 && !sidebarItem.conversation?.isMuted ? 'fw-bold' : 'fw-normal') : 'fw-semibold'"
                 >
                     @if (otherUser) {
                         <jhi-profile-picture

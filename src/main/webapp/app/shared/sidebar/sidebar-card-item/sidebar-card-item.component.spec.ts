@@ -82,6 +82,7 @@ describe('SidebarCardItemComponent', () => {
                 ...sidebarItemMock,
                 conversation: { unreadMessagesCount: 5, isMuted: false },
             };
+            component.sidebarType = 'conversation';
             component.unreadCount = input<number>(5);
             component.ngOnInit();
             fixture.detectChanges();
@@ -100,6 +101,7 @@ describe('SidebarCardItemComponent', () => {
                 ...sidebarItemMock,
                 conversation: { unreadMessagesCount: 5, isMuted: true },
             };
+            component.sidebarType = 'conversation';
             component.unreadCount = input<number>(5);
             component.ngOnInit();
             fixture.detectChanges();
