@@ -647,6 +647,22 @@ $iris-chat-header-button-background: var(--neutral-dark-l-15);
 //Iris Communication
 $tutor-suggestion-background: $gray-700;
 
+// Memiris Graph View
+$memiris-graph-view-background: $gray-800;
+$memiris-graph-view-controls-background: $gray-900;
+$memiris-memory-node-color: $blue;
+$memiris-learning-node-color: $yellow;
+$memiris-deleted-node-color: $red;
+$memiris-selected-node-color: $gray-200;
+$memiris-memory-memory-link-color: rgb(23, 153, 218);
+$memiris-memory-learning-link-color: rgb(253, 189, 67);
+$memiris-node-border-color: $black;
+$memiris-node-label-color: var(--bs-body-color);
+$memiris-empty-state-icon-color: $gray-600;
+$memiris-empty-state-title-color: $gray-400;
+$memiris-empty-state-description-color: $gray-500;
+$memiris-graph-shadow: transparentize($black, 0.1);
+
 // Image Cropper
 $cropper-overlay-color: transparent;
 
