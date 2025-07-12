@@ -31,6 +31,6 @@
         [title]="!hasBeenSubmitted ? 'entity.action.generate' : 'artemisApp.competency.generate.courseDescription.regenerate'"
         [tooltip]="!hasBeenSubmitted ? '' : 'artemisApp.competency.generate.courseDescription.regenerateTooltip'"
         [disabled]="!isSubmitPossible"
-        [isLoading]="isLoading"
+        [isLoading]="isLoading()"
     />
 </form>

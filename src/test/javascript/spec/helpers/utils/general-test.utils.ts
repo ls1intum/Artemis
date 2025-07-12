@@ -1,5 +1,6 @@
-import { DebugElement, OnChanges, SimpleChange, SimpleChanges } from '@angular/core';
+import { DebugElement, OnChanges, SimpleChange, SimpleChanges, Type } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { ComponentFixture } from '@angular/core/testing';
 
 export const getFocusedElement = (debugElement: DebugElement) => {
     const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
@@ -36,4 +37,36 @@ export const triggerChanges = (comp: OnChanges, ...changes: Array<{ property: st
         return { ...acc, [property]: new SimpleChange(previousValue, currentValue, firstChange) };
     }, {});
     comp.ngOnChanges(simpleChanges);
+};
+
+/**
+ * Retrieves the component instance from a fixture using the component's selector.
+ *
+ * @param fixture The Angular component fixture.
+ * @param component The component class or instance.
+ * @returns The component instance.
+ * @throws Error if the element is not found.
+ */
+export function getComponentInstanceFromFixture<T>(fixture: ComponentFixture<any>, component: Type<T>): T {
+    const debugElement = fixture.debugElement.query(By.directive(component));
+    if (!debugElement) {
+        throw new Error(`Component of type ${component.name} not found in fixture`);
+    }
+    return debugElement.componentInstance as T;
+}
+
+/**
+ * Extracts the selector of an Angular component from its metadata.
+ *
+ * @param component The component class from which to extract the selector.
+ * @returns The selector string if found, otherwise undefined.
+ */
+export const getSelectorOfComponent = (component: any): string | undefined => {
+    const metadata = (component as any).ɵcmp;
+
+    if (metadata && metadata.selectors && metadata.selectors.length && metadata.selectors[0] && metadata.selectors[0].length && typeof metadata.selectors[0][0] === 'string') {
+        return metadata.selectors[0][0];
+    }
+
+    return undefined;
 };

@@ -12,12 +12,16 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 
 @Component({ template: '' })
 class DummyImportComponent extends ImportCourseCompetenciesComponent {
     entityType = 'dummy';
 
     onSubmit(): void {}
+    getTreeComponent(): KnowledgeAreaTreeComponent | undefined {
+        return undefined;
+    }
 }
 
 describe('ImportCourseCompetenciesComponent', () => {

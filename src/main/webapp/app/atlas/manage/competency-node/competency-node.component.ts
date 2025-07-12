@@ -22,7 +22,7 @@ export class CompetencyNodeComponent implements AfterViewInit {
     // height of node element in pixels
     private readonly nodeHeight = 45.59;
 
-    readonly competencyNode = input.required<CompetencyGraphNodeDTO>();
+    competencyNode = input.required<CompetencyGraphNodeDTO>();
     readonly valueType = computed(() => this.competencyNode().valueType);
 
     readonly value = computed(() => this.competencyNode().value);

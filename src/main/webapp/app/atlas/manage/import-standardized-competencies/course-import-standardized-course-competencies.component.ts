@@ -75,7 +75,6 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
                 const knowledgeAreas = knowledgeAreasResponse.body!;
                 const knowledgeAreasForImport = knowledgeAreas.map((knowledgeArea) => this.convertToKnowledgeAreaForImport(knowledgeArea));
                 this.dataSource.data = knowledgeAreasForImport;
-                this.treeControl.dataNodes = knowledgeAreasForImport;
                 knowledgeAreasForImport.forEach((knowledgeArea) => {
                     this.addSelfAndDescendantsToMap(knowledgeArea);
                     this.addSelfAndDescendantsToSelectArray(knowledgeArea);
