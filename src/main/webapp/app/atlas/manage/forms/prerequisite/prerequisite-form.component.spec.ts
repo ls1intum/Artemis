@@ -24,9 +24,30 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
+import { Component } from '@angular/core';
+import { getComponentInstanceFromFixture } from 'test/helpers/utils/general-test.utils';
+
+@Component({
+    template: `<jhi-prerequisite-form
+        [isEditMode]="isEditMode"
+        (formSubmitted)="formSubmitted($event)"
+        [courseId]="courseId"
+        [lecturesOfCourseWithLectureUnits]="lecturesOfCourseWithLectureUnits"
+        [prerequisite]="prerequisite"
+    />`,
+    imports: [PrerequisiteFormComponent],
+})
+class WrapperComponent {
+    isEditMode: boolean;
+    courseId: number;
+    lecturesOfCourseWithLectureUnits: Lecture[];
+    prerequisite: Prerequisite;
+    formSubmitted(formData: CourseCompetencyFormData) {}
+}
 
 describe('PrerequisiteFormComponent', () => {
-    let prerequisiteFormComponentFixture: ComponentFixture<PrerequisiteFormComponent>;
+    let component: WrapperComponent;
+    let fixture: ComponentFixture<WrapperComponent>;
     let prerequisiteFormComponent: PrerequisiteFormComponent;
 
     let translateService: TranslateService;
@@ -35,7 +56,7 @@ describe('PrerequisiteFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CompetencyFormComponent, ReactiveFormsModule, NgbDropdownModule, OwlNativeDateTimeModule],
+            imports: [WrapperComponent, CompetencyFormComponent, ReactiveFormsModule, NgbDropdownModule, OwlNativeDateTimeModule],
             providers: [
                 { provide: PrerequisiteService, useValue: prerequisiteServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -47,12 +68,18 @@ describe('PrerequisiteFormComponent', () => {
             ],
         }).compileComponents();
 
-        prerequisiteFormComponentFixture = TestBed.createComponent(PrerequisiteFormComponent);
-        prerequisiteFormComponent = prerequisiteFormComponentFixture.componentInstance;
+        fixture = TestBed.createComponent(WrapperComponent);
+        component = fixture.componentInstance;
+        prerequisiteFormComponent = getComponentInstanceFromFixture(fixture, PrerequisiteFormComponent);
         translateService = TestBed.inject(TranslateService);
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
+
+        component.isEditMode = false;
+        component.courseId = 1;
+        component.lecturesOfCourseWithLectureUnits = [];
+        component.prerequisite = { id: 1, title: 'test', description: 'lorem ipsum', softDueDate: dayjs(), taxonomy: CompetencyTaxonomy.ANALYZE, optional: true };
     });
 
     afterEach(() => {
@@ -60,8 +87,8 @@ describe('PrerequisiteFormComponent', () => {
     });
 
     it('should initialize', () => {
-        prerequisiteFormComponentFixture.detectChanges();
-        expect(prerequisiteFormComponent).toBeDefined();
+        fixture.detectChanges();
+        expect(component).toBeDefined();
     });
 
     it('should submit valid form', fakeAsync(() => {
@@ -79,7 +106,7 @@ describe('PrerequisiteFormComponent', () => {
 
         jest.spyOn(prerequisiteServiceMock, 'getAllForCourse').mockReturnValue(of(response));
 
-        prerequisiteFormComponentFixture.detectChanges();
+        fixture.detectChanges();
 
         const exampleTitle = 'uniqueName';
         prerequisiteFormComponent.titleControl!.setValue(exampleTitle);
@@ -92,16 +119,16 @@ describe('PrerequisiteFormComponent', () => {
         exampleLecture.id = 1;
         exampleLecture.lectureUnits = [exampleLectureUnit];
 
-        prerequisiteFormComponentFixture.detectChanges();
+        fixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
         expect(prerequisiteFormComponent.form.valid).toBeTrue();
         expect(getCourseCompetencyTitlesSpy).toHaveBeenCalledOnce();
-        const submitFormSpy = jest.spyOn(prerequisiteFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(prerequisiteFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = jest.spyOn(component, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(component.formSubmitted, 'emit');
 
-        const submitButton = prerequisiteFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
-        prerequisiteFormComponentFixture.detectChanges();
+        fixture.detectChanges();
 
         flush();
         expect(submitFormSpy).toHaveBeenCalledOnce();
@@ -110,7 +137,7 @@ describe('PrerequisiteFormComponent', () => {
     }));
 
     it('should correctly set form values in edit mode', () => {
-        prerequisiteFormComponent.isEditMode = true;
+        component.isEditMode = true;
         const textUnit = new TextUnit();
         textUnit.id = 1;
         const formData: CourseCompetencyFormData = {
@@ -121,9 +148,9 @@ describe('PrerequisiteFormComponent', () => {
             taxonomy: CompetencyTaxonomy.ANALYZE,
             optional: true,
         };
-        prerequisiteFormComponentFixture.detectChanges();
-        prerequisiteFormComponent.formData = formData;
-        prerequisiteFormComponent.ngOnChanges();
+        fixture.detectChanges();
+        component.formData = formData;
+        component.ngOnChanges();
 
         expect(prerequisiteFormComponent.titleControl?.value).toEqual(formData.title);
         expect(prerequisiteFormComponent.descriptionControl?.value).toEqual(formData.description);
@@ -132,13 +159,13 @@ describe('PrerequisiteFormComponent', () => {
     });
 
     it('should suggest taxonomy when title changes', () => {
-        prerequisiteFormComponentFixture.detectChanges();
+        fixture.detectChanges();
 
-        const commonCourseCompetencyFormComponent = prerequisiteFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
+        const commonCourseCompetencyFormComponent = fixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
         const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
-        const titleInput = prerequisiteFormComponentFixture.nativeElement.querySelector('#title');
+        const titleInput = fixture.nativeElement.querySelector('#title');
         titleInput.value = 'Building a tool: create a plan and implement something!';
         titleInput.dispatchEvent(new Event('input'));
 
@@ -151,13 +178,13 @@ describe('PrerequisiteFormComponent', () => {
     });
 
     it('should suggest taxonomy when description changes', () => {
-        prerequisiteFormComponentFixture.detectChanges();
+        fixture.detectChanges();
 
-        const commonCourseCompetencyFormComponent = prerequisiteFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
+        const commonCourseCompetencyFormComponent = fixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
         const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
-        prerequisiteFormComponent.updateDescriptionControl('Building a tool: create a plan and implement something!');
+        component.updateDescriptionControl('Building a tool: create a plan and implement something!');
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
@@ -177,12 +204,12 @@ describe('PrerequisiteFormComponent', () => {
                 }),
             ),
         );
-        prerequisiteFormComponent.isEditMode = true;
-        prerequisiteFormComponent.formData.title = 'initialName';
+        component.isEditMode = true;
+        component.formData.title = 'initialName';
 
-        prerequisiteFormComponentFixture.detectChanges();
+        fixture.detectChanges();
 
-        const titleControl = prerequisiteFormComponent.titleControl!;
+        const titleControl = component.titleControl!;
         tick(250);
         expect(titleControl.errors?.titleUnique).toBeUndefined();
 

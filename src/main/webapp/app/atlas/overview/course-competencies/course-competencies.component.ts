@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, effect, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -23,7 +23,7 @@ import { ScienceService } from 'app/shared/science/science.service';
     styleUrls: ['../../../core/course/overview/course-overview/course-overview.scss'],
     imports: [CompetencyCardComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
-export class CourseCompetenciesComponent implements OnInit, OnDestroy {
+export class CourseCompetenciesComponent {
     private featureToggleService = inject(FeatureToggleService);
     private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
@@ -31,9 +31,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     private courseCompetencyService = inject(CourseCompetencyService);
     private readonly scienceService = inject(ScienceService);
 
-    @Input()
     courseId: number;
-
     isLoading = false;
     course?: Course;
     competencies: Competency[] = [];
@@ -49,7 +47,15 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     private dashboardFeatureToggleActiveSubscription: Subscription;
     dashboardFeatureActive = false;
 
-    ngOnInit(): void {
+    constructor() {
+        effect(() => this.initialize());
+        inject(DestroyRef).onDestroy(() => {
+            this.dashboardFeatureToggleActiveSubscription?.unsubscribe();
+            this.parentParamSubscription?.unsubscribe();
+        });
+    }
+
+    private initialize(): void {
         const courseIdParams$ = this.activatedRoute.parent?.parent?.params;
         if (courseIdParams$) {
             this.parentParamSubscription = courseIdParams$.subscribe((params) => {
@@ -65,11 +71,6 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
             this.dashboardFeatureActive = active;
             this.loadData();
         });
-    }
-
-    ngOnDestroy(): void {
-        this.dashboardFeatureToggleActiveSubscription?.unsubscribe();
-        this.parentParamSubscription?.unsubscribe();
     }
 
     get countCompetencies() {

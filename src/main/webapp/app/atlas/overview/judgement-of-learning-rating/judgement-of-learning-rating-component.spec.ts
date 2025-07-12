@@ -57,53 +57,53 @@ describe('JudgementOfLearningRatingComponent', () => {
     });
 
     it('should not emit value when rating and courseId is undefined', () => {
-        component.courseId = undefined;
-        component.rating = undefined;
+        fixture.componentRef.setInput('courseId', undefined);
+        fixture.componentRef.setInput('rating', undefined);
 
-        const emitSpy = jest.spyOn(component.ratingChange, 'emit');
+        const emitSpy = jest.spyOn(component.rating, 'set');
 
         component.onRate({} as any);
         expect(emitSpy).not.toHaveBeenCalled();
     });
 
     it('should not emit value when rating is undefined', () => {
-        component.courseId = 1;
-        component.rating = undefined;
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('rating', undefined);
 
-        const emitSpy = jest.spyOn(component.ratingChange, 'emit');
+        const emitSpy = jest.spyOn(component.rating, 'set');
 
         component.onRate({} as any);
         expect(emitSpy).not.toHaveBeenCalled();
     });
 
     it('should not emit value when courseId is undefined', () => {
-        component.courseId = undefined;
-        component.rating = 3;
+        fixture.componentRef.setInput('courseId', undefined);
+        fixture.componentRef.setInput('rating', 3);
 
-        const emitSpy = jest.spyOn(component.ratingChange, 'emit');
+        const emitSpy = jest.spyOn(component.rating, 'set');
 
         component.onRate({} as any);
         expect(emitSpy).not.toHaveBeenCalled();
     });
 
     it('should emit new rating when onRate is called with valid data', fakeAsync(() => {
-        component.rating = undefined;
-        component.courseId = 1;
+        fixture.componentRef.setInput('courseId', undefined);
+        fixture.componentRef.setInput('rating', 1);
 
         const newRating = 4;
         const event = { oldValue: 3, newValue: newRating, starRating: {} as StarRatingComponent };
         jest.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
-        const emitSpy = jest.spyOn(component.ratingChange, 'emit');
+        const emitSpy = jest.spyOn(component.rating, 'set');
 
         component.onRate(event);
 
-        expect(component.rating).toBe(newRating);
+        expect(component.rating()).toBe(newRating);
         expect(emitSpy).toHaveBeenCalledWith(newRating);
     }));
 
     it('should show error message when setting judgement of learning fails', fakeAsync(() => {
-        component.rating = undefined;
-        component.courseId = 1;
+        fixture.componentRef.setInput('courseId', undefined);
+        fixture.componentRef.setInput('rating', 1);
 
         const newRating = 4;
         const event = { oldValue: 3, newValue: newRating, starRating: {} as StarRatingComponent };
@@ -112,7 +112,7 @@ describe('JudgementOfLearningRatingComponent', () => {
 
         component.onRate(event);
 
-        expect(component.rating).toBeUndefined();
+        expect(component.rating()).toBeUndefined();
         expect(errorSpy).toHaveBeenCalled();
     }));
 });

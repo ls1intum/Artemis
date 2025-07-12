@@ -1,4 +1,4 @@
-<div class="card form-group" [formGroup]="form">
+<div class="card form-group" [formGroup]="form()">
     <div class="card-header">
         <div class="d-flex align-items-center mw-100 clickable" (click)="toggle()">
             <div class="me-3">
@@ -8,13 +8,13 @@
         </div>
         <div class="d-flex align-items-center flex-grow-1 justify-content-end">
             <div class="d-flex me-3">
-                <input class="me-1" type="checkbox" id="viewed-{{ index }}" formControlName="viewed" />
-                <label for="viewed-{{ index }}" jhiTranslate="artemisApp.competency.generate.viewedLabel"></label>
+                <input class="me-1" type="checkbox" id="viewed-{{ index() }}" formControlName="viewed" />
+                <label for="viewed-{{ index() }}" jhiTranslate="artemisApp.competency.generate.viewedLabel"></label>
             </div>
             @if (!isInEditMode) {
                 <jhi-button
                     class="me-1"
-                    id="editButton-{{ index }}"
+                    id="editButton-{{ index() }}"
                     [btnType]="ButtonType.WARNING"
                     [btnSize]="ButtonSize.SMALL"
                     [title]="'entity.action.edit'"
@@ -25,7 +25,7 @@
             } @else {
                 <jhi-button
                     class="me-1"
-                    id="saveButton-{{ index }}"
+                    id="saveButton-{{ index() }}"
                     [btnType]="ButtonType.SUCCESS"
                     [btnSize]="ButtonSize.SMALL"
                     [title]="'entity.action.save'"
@@ -36,7 +36,7 @@
                 />
             }
             <jhi-button
-                id="deleteButton-{{ index }}"
+                id="deleteButton-{{ index() }}"
                 [btnType]="ButtonType.ERROR"
                 [btnSize]="ButtonSize.SMALL"
                 [title]="'entity.action.delete'"
@@ -48,8 +48,8 @@
     </div>
     <div class="card-body border-0" [ngbCollapse]="isCollapsed" formGroupName="competency">
         <div class="form-group">
-            <label for="title-{{ index }}" jhiTranslate="artemisApp.competency.title"></label>
-            <input type="text" class="form-control" id="title-{{ index }}" formControlName="title" />
+            <label for="title-{{ index() }}" jhiTranslate="artemisApp.competency.title"></label>
+            <input type="text" class="form-control" id="title-{{ index() }}" formControlName="title" />
             @if (titleControl.invalid && (titleControl.dirty || titleControl.touched)) {
                 <div class="alert alert-danger">
                     @if (titleControl.errors?.required) {
@@ -62,18 +62,18 @@
             }
         </div>
         <div class="form-group">
-            <label for="description-{{ index }}" jhiTranslate="artemisApp.competency.description"></label>
+            <label for="description-{{ index() }}" jhiTranslate="artemisApp.competency.description"></label>
             @if (isInEditMode) {
                 <jhi-markdown-editor-monaco
                     [markdown]="descriptionControl.value"
                     (markdownChange)="updateDescriptionControl($event)"
-                    id="description-{{ index }}"
+                    id="description-{{ index() }}"
                     class="markdown-preview"
                     [enableFileUpload]="false"
                 />
             } @else {
                 <div
-                    id="description-{{ index }}"
+                    id="description-{{ index() }}"
                     disabled="true"
                     class="markdown-preview border rounded p-1"
                     [innerHTML]="descriptionControl.value || '&nbsp;' | htmlForMarkdown"
@@ -91,8 +91,8 @@
             }
         </div>
         <div class="form-group">
-            <label for="taxonomy-{{ index }}" jhiTranslate="artemisApp.competency.taxonomy"></label>
-            <jhi-taxonomy-select selectId="taxonomy-{{ index }}" [form]="taxonomyControl" />
+            <label for="taxonomy-{{ index() }}" jhiTranslate="artemisApp.competency.taxonomy"></label>
+            <jhi-taxonomy-select selectId="taxonomy-{{ index() }}" [form]="taxonomyControl" />
         </div>
     </div>
 </div>
