@@ -45,6 +45,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExerciseWithStudentSubmissionsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -237,16 +240,18 @@ public class PyrisPipelineService {
      * - The messages of the session
      * - The user that created the session
      *
-     * @param variant      the variant of the pipeline
-     * @param session      the chat session
-     * @param eventVariant the event variant if this function triggers a pipeline execution due to a specific event
-     * @param post         the post the session is about
+     * @param variant                 the variant of the pipeline
+     * @param session                 the chat session
+     * @param eventVariant            the event variant if this function triggers a pipeline execution due to a specific event
+     * @param lectureIdOptional       the optional lecture ID if this is due to a specific event
+     * @param textExerciseDTOOptional the optional text exercise DTO if this is due to a specific event
+     * @param submissionDTO           the optional submission DTO if this is due to a specific event
+     * @param exerciseDTO             the optional programming exercise DTO if this is due to a specific event
+     * @param post                    the post the session is about
      */
-    public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant, Post post) {
+    public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureIdOptional,
+            Optional<PyrisTextExerciseDTO> textExerciseDTOOptional, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> exerciseDTO, Post post) {
         var course = post.getCoursePostingBelongsTo();
-        if (course == null) {
-            throw new IllegalStateException("Course is null for post " + post.getId());
-        }
         // @formatter:off
         executePipeline(
             "tutor-suggestion",
@@ -257,12 +262,15 @@ public class PyrisPipelineService {
                 var user = userRepository.findByIdElseThrow(session.getUserId());
                 return new PyrisTutorSuggestionPipelineExecutionDTO(
                     new PyrisCourseDTO(course),
-                    Optional.empty(),
-                    new PyrisPostDTO(post),
-                    pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
+                new PyrisPostDTO(post),
+                pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                     new PyrisUserDTO(user),
-                    executionDto.settings(),
-                    executionDto.initialStages()
+                executionDto.settings(),
+                executionDto.initialStages(),
+                textExerciseDTOOptional,
+                submissionDTO,
+                exerciseDTO,
+                lectureIdOptional
                 );
             },
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
