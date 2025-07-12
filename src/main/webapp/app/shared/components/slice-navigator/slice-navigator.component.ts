@@ -27,7 +27,7 @@ export class SliceNavigatorComponent {
 
     config = input.required<PaginationConfig>();
     hasMoreItems = input<boolean>(true);
-    loading = input<boolean>(false);
+    isLoading = input<boolean>(false);
 
     pageChange = output<PageChangeEvent>();
 
@@ -35,9 +35,9 @@ export class SliceNavigatorComponent {
     itemsPerPage = signal(ITEMS_PER_PAGE);
 
     canGoPrevious = computed(() => this.currentPage() > 1);
-    canGoNext = computed(() => this.hasMoreItems() && !this.loading());
-    previousDisabled = computed(() => !this.canGoPrevious() || this.loading());
-    nextDisabled = computed(() => !this.canGoNext() || this.loading());
+    canGoNext = computed(() => this.hasMoreItems() && !this.isLoading());
+    previousDisabled = computed(() => !this.canGoPrevious() || this.isLoading());
+    nextDisabled = computed(() => !this.canGoNext() || this.isLoading());
 
     constructor() {
         effect(() => {

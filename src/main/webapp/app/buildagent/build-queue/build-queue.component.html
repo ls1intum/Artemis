@@ -659,7 +659,7 @@
             <!--                <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />-->
             <!--            </div>-->
             <div class="row justify-content-center">
-                <jhi-slice-navigator [config]="paginationConfig" [hasMoreItems]="hasMore()" [loading]="isLoading" (pageChange)="onPageChange($event)" />
+                <jhi-slice-navigator [config]="paginationConfig" [hasMoreItems]="hasMore()" [isLoading]="isLoading" (pageChange)="onPageChange($event)" />
             </div>
         </div>
     }
