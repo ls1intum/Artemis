@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.core.util;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpHeaders;
@@ -16,7 +18,7 @@ public final class SliceUtil {
     }
 
     /**
-     * Generate pagination headers for a Spring Data {@link org.springframework.data.domain.Page} object.
+     * Generate pagination headers for a Spring Data {@link org.springframework.data.domain.Slice} object.
      *
      * @param uriBuilder The URI builder.
      * @param slice      The slice.
@@ -33,14 +35,14 @@ public final class SliceUtil {
     private static <T> String prepareLinkHeaders(UriComponentsBuilder uriBuilder, Slice<T> slice) {
         int pageNumber = slice.getNumber();
         int pageSize = slice.getSize();
-        StringBuilder link = new StringBuilder();
+        List<String> links = new ArrayList<>();
         if (slice.hasNext()) {
-            link.append(prepareLink(uriBuilder, pageNumber + 1, pageSize, "next")).append(",");
+            links.add(prepareLink(uriBuilder, pageNumber + 1, pageSize, "next"));
         }
         if (pageNumber > 0) {
-            link.append(prepareLink(uriBuilder, pageNumber - 1, pageSize, "prev")).append(",");
+            links.add(prepareLink(uriBuilder, pageNumber - 1, pageSize, "prev"));
         }
-        return link.toString();
+        return String.join(",", links);
     }
 
     private static String prepareLink(UriComponentsBuilder uriBuilder, int pageNumber, int pageSize, String relType) {
