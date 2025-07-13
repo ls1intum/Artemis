@@ -57,19 +57,19 @@ public class TranscriptionPollingScheduler {
                 if ("done".equals(status)) {
                     LectureTranscriptionDTO dto = objectMapper.convertValue(response, LectureTranscriptionDTO.class);
                     transcriptionService.saveFinalTranscriptionResult(t.getJobId(), dto);
-                    log.info("✅ Transcription completed and saved for jobId={}", jobId);
+                    log.info("Transcription completed and saved for jobId={}", jobId);
                 }
                 else if ("error".equals(status)) {
                     t.setTranscriptionStatus(TranscriptionStatus.FAILED);
                     transcriptionRepository.save(t);
-                    log.warn("❌ Nebula reported error for job {}: {}", jobId, response.get("error"));
+                    log.warn("Nebula reported error for job {}: {}", jobId, response.get("error"));
                 }
                 else {
-                    log.info("⏳ Transcription still processing for job {}", jobId);
+                    log.info("Transcription still processing for job {}", jobId);
                 }
             }
             catch (Exception e) {
-                log.error("❌ Error polling transcription job {}: {}", t.getJobId(), e.getMessage(), e);
+                log.error("Error polling transcription job {}: {}", t.getJobId(), e.getMessage(), e);
             }
         }
     }
