@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="20250712125105-cascade-delete-iris-session-on-lecture-delete" author="florian-glombik">
+    <changeSet id="20250713192142-cascade-delete-iris-session-on-lecture-delete" author="florian-glombik">
         <dropForeignKeyConstraint baseTableName="iris_session" constraintName="FK_IRIS_SESSION_ON_LECTURE"/>
         <addForeignKeyConstraint
                 constraintName="FK_IRIS_SESSION_ON_LECTURE"
@@ -25,7 +25,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20250712125105-cascade-delete-iris-session-on-course-delete" author="florian-glombik">
+    <changeSet id="20250713192142-cascade-delete-iris-session-on-course-delete" author="florian-glombik">
         <dropForeignKeyConstraint baseTableName="iris_session" constraintName="fk_iris_session_course_id"/>
         <addForeignKeyConstraint
                 constraintName="fk_iris_session_course_id"
@@ -56,7 +56,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20250712125105-cascade-delete-iris-session-on-user-delete" author="florian-glombik">
+    <changeSet id="20250713192142-cascade-delete-iris-session-on-user-delete" author="florian-glombik">
         <dropForeignKeyConstraint baseTableName="iris_session" constraintName="fk_iris_session_user_id"/>
         <addForeignKeyConstraint
                 constraintName="fk_iris_session_user_id"
