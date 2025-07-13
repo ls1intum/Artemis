@@ -29,9 +29,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventRelatedEntity;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventSemantics;
+import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
+import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
 import de.tum.cit.aet.artemis.core.util.DateUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;

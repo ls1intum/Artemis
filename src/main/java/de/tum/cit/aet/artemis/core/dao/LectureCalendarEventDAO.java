@@ -4,7 +4,5 @@ import java.time.ZonedDateTime;
 
 import jakarta.validation.constraints.NotNull;
 
-import javax.annotation.Nullable;
-
-public record LectureCalendarEventDAO(@NotNull String title, @Nullable ZonedDateTime visibleDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate) {
+public record LectureCalendarEventDAO(@NotNull String title, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
 }

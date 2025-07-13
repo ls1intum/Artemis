@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.dto.calendar;
+package de.tum.cit.aet.artemis.core.dto;
 
 import java.time.ZonedDateTime;
 
@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
+import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
+import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
 
 /**
  * A DTO used to display calendar events in the calendar feature.
