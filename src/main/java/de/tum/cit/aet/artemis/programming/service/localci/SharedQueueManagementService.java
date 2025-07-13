@@ -265,21 +265,21 @@ public class SharedQueueManagementService {
         var sortOptions = Sort.by(search.pageable().getSortedColumn());
         sortOptions = search.pageable().getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         var pageRequest = PageRequest.of(search.pageable().getPage() - 1, search.pageable().getPageSize(), sortOptions);
-        // NOTE: in the default REST call, all filter criteria are null, and we can optimze the query by not passing them.
-        Slice<Long> buildJobIdsPage;
+        // NOTE: in the default REST call, all filter criteria are null, and we can optimize the query by not passing them.
+        Slice<Long> buildJobIdsSlice;
         long start = System.nanoTime();
         if (search.buildStatus() == null && search.buildAgentAddress() == null && search.startDate() == null && search.endDate() == null
                 && StringUtils.isEmpty(search.pageable().getSearchTerm()) && courseId == null && buildDurationLower == null && buildDurationUpper == null) {
-            buildJobIdsPage = buildJobRepository.findFinishedIds(pageRequest);
+            buildJobIdsSlice = buildJobRepository.findFinishedIds(pageRequest);
         }
         else {
-            buildJobIdsPage = buildJobRepository.findFinishedIdsByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
+            buildJobIdsSlice = buildJobRepository.findFinishedIdsByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
                     search.pageable().getSearchTerm(), courseId, buildDurationLower, buildDurationUpper, pageRequest);
         }
 
         log.info("findFinidhedIds took {} for search: {}", TimeLogUtil.formatDurationFrom(start), search);
 
-        List<Long> buildJobIds = buildJobIdsPage.toList();
+        List<Long> buildJobIds = buildJobIdsSlice.toList();
         // Fetch the build jobs with results. Since this query used "IN" clause, the order of the results is not guaranteed. We need to order them by the order of the ids.
         List<BuildJob> unorderedBuildJobs = buildJobRepository.findWithDataByIdIn(buildJobIds);
 
@@ -287,7 +287,7 @@ public class SharedQueueManagementService {
 
         List<BuildJob> orderedBuildJobs = buildJobIds.stream().map(buildJobMap::get).toList();
 
-        return new SliceImpl<>(orderedBuildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.hasNext());
+        return new SliceImpl<>(orderedBuildJobs, buildJobIdsSlice.getPageable(), buildJobIdsSlice.hasNext());
     }
 
     /**
