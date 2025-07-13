@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -26,11 +27,13 @@ import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
  * Service for sending emails asynchronously.
  */
+@Lazy
 @Service
 @Profile(PROFILE_CORE)
 public class MailSendingService {
@@ -41,6 +44,8 @@ public class MailSendingService {
 
     private final JavaMailSender javaMailSender;
 
+    private final ProfileService profileService;
+
     @Value("${server.url}")
     private URL artemisServerUrl;
 
@@ -48,9 +53,11 @@ public class MailSendingService {
 
     private final SpringTemplateEngine templateEngine;
 
-    public MailSendingService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine) {
+    public MailSendingService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, ProfileService profileService, MessageSource messageSource,
+            SpringTemplateEngine templateEngine) {
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
+        this.profileService = profileService;
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
     }
@@ -89,11 +96,9 @@ public class MailSendingService {
      * @param subjectKey                 The locale key of the subject
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
-     *
-     * @return true if mail was sent, false if not
      */
-    public boolean buildAndSendSync(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
-        return buildAndSend(recipient, subjectKey, contentTemplate, additionalContextVariables);
+    public void buildAndSendSync(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
+        buildAndSend(recipient, subjectKey, contentTemplate, additionalContextVariables);
     }
 
     /**
@@ -116,10 +121,8 @@ public class MailSendingService {
      * @param subjectKey                 The locale key of the subject
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
-     *
-     * @return true if mail was sent, false if not
      */
-    private boolean buildAndSend(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
+    private void buildAndSend(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
         String localeKey = recipient.getLangKey();
         if (localeKey == null) {
             localeKey = "en";
@@ -138,12 +141,11 @@ public class MailSendingService {
             content = templateEngine.process(contentTemplate, context);
         }
         catch (NoSuchMessageException | TemplateProcessingException ex) {
-            return false;
+            return;
         }
 
         executeSend(recipient, subject, content, false, true);
 
-        return true;
     }
 
     /**
@@ -156,6 +158,11 @@ public class MailSendingService {
      * @param isHtml      Whether the mail should support HTML tags
      */
     private void executeSend(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
+        // NOTE: comment this out if you want to send / test emails in development mode
+        if (profileService.isDevActive()) {
+            log.debug("Skipping sending email in development mode");
+            return;
+        }
         log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
 
         // Prepare message using a Spring helper

@@ -34,8 +34,10 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
+import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -57,14 +59,14 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
     @Autowired
     private LectureUtilService lectureUtilService;
 
-    private AttachmentUnit testAttachmentUnit;
+    private AttachmentVideoUnit testAttachmentVideoUnit;
 
     private PDDocument testDocument;
 
     @BeforeEach
     void initTestCase() {
-        // Create a test attachment unit with a PDF file
-        testAttachmentUnit = lectureUtilService.createAttachmentUnitWithSlidesAndFile(3, true);
+        // Create a test attachment video unit with a PDF file
+        testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(3, true);
 
         // Create a real PDF document for tests
         testDocument = new PDDocument();
@@ -76,42 +78,45 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testSplitAttachmentUnitIntoSingleSlides_BasicFunction() {
-        // Clear existing slides for this attachment unit
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+    void testSplitAttachmentVideoUnitIntoSingleSlides_BasicFunction() {
+        // Clear existing slides for this attachment video unit
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
         // Act
-        slideSplitterService.splitAttachmentUnitIntoSingleSlides(testDocument, testAttachmentUnit, "test.pdf");
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf");
 
         // Assert
-        List<Slide> slides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(slides).isNotNull();
         assertThat(slides.size()).isEqualTo(3);
 
         for (int i = 0; i < slides.size(); i++) {
             Slide slide = slides.get(i);
             assertThat(slide.getSlideNumber()).isEqualTo(i + 1);
-            assertThat(slide.getAttachmentUnit()).isEqualTo(testAttachmentUnit);
+            assertThat(slide.getAttachmentVideoUnit()).isEqualTo(testAttachmentVideoUnit);
             assertThat(slide.getSlideImagePath()).isNotNull();
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testSplitAttachmentUnitIntoSingleSlides_WithHiddenPagesAndPageOrder() throws IOException {
+    void testSplitAttachmentVideoUnitIntoSingleSlides_WithHiddenPagesAndPageOrder() throws IOException {
         // Create and save an Exercise
         Exercise testExercise = new TextExercise();
         testExercise.setTitle("Test Exercise");
         exerciseRepository.save(testExercise);
 
         // Arrange
-        String hiddenPages = "[{\"slideId\":\"1\",\"date\":\"" + ZonedDateTime.now().plusDays(1) + "\",\"exerciseId" + "\":" + testExercise.getId() + "}]";
+        ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
 
-        String pageOrder = "[{\"slideId\":\"1\",\"order\":1},{\"slideId\":\"2\",\"order\":2},{\"slideId\":\"3\"," + "\"order\":3}]";
+        // Create proper DTO objects
+        List<HiddenPageInfoDTO> hiddenPagesList = List.of(new HiddenPageInfoDTO("1", hiddenDate, testExercise.getId()));
+
+        List<SlideOrderDTO> pageOrderList = List.of(new SlideOrderDTO("1", 1), new SlideOrderDTO("2", 2), new SlideOrderDTO("3", 3));
 
         // Clear existing slides
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
         // Get a proper temp path for slides
@@ -130,7 +135,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             Slide slide = new Slide();
             slide.setId((long) i);
             slide.setSlideNumber(i);
-            slide.setAttachmentUnit(testAttachmentUnit);
+            slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
 
             // Valid path that can be resolved
             slide.setSlideImagePath("temp/slide" + i + ".png");
@@ -138,10 +143,10 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         }
 
         // Act
-        slideSplitterService.splitAttachmentUnitIntoSingleSlides(testDocument, testAttachmentUnit, "test.pdf", hiddenPages, pageOrder);
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", hiddenPagesList, pageOrderList);
 
         // Assert
-        List<Slide> slides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(slides).isNotNull();
         assertThat(slides.size()).isEqualTo(3);
 
@@ -155,15 +160,15 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testSplitAttachmentUnitIntoSingleSlides_WithNewSlideInPageOrder() throws IOException {
+    void testSplitAttachmentVideoUnitIntoSingleSlides_WithNewSlideInPageOrder() throws IOException {
         // Arrange
-        String hiddenPages = "[]";
+        List<HiddenPageInfoDTO> hiddenPagesList = List.of();
 
         // Include a new temporary slide ID
-        String pageOrder = "[{\"slideId\":\"1\",\"order\":1},{\"slideId\":\"temp_new\",\"order\":2}," + "{\"slideId\":\"3\",\"order\":3}]";
+        List<SlideOrderDTO> pageOrderList = List.of(new SlideOrderDTO("1", 1), new SlideOrderDTO("temp_new", 2), new SlideOrderDTO("3", 3));
 
         // Clear existing slides
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
         // Get a proper temp path for slides
@@ -179,7 +184,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         Slide slide1 = new Slide();
         slide1.setId(1L);
         slide1.setSlideNumber(1);
-        slide1.setAttachmentUnit(testAttachmentUnit);
+        slide1.setAttachmentVideoUnit(testAttachmentVideoUnit);
         slide1.setSlideImagePath("temp/slide1.png");
         slideRepository.save(slide1);
 
@@ -191,15 +196,15 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         Slide slide3 = new Slide();
         slide3.setId(3L);
         slide3.setSlideNumber(3);
-        slide3.setAttachmentUnit(testAttachmentUnit);
+        slide3.setAttachmentVideoUnit(testAttachmentVideoUnit);
         slide3.setSlideImagePath("temp/slide3.png");
         slideRepository.save(slide3);
 
         // Act
-        slideSplitterService.splitAttachmentUnitIntoSingleSlides(testDocument, testAttachmentUnit, "test.pdf", hiddenPages, pageOrder);
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", hiddenPagesList, pageOrderList);
 
         // Assert
-        List<Slide> slides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(slides).isNotNull();
         assertThat(slides.size()).isEqualTo(3); // Should now have 3 slides
 
@@ -210,15 +215,15 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testSplitAttachmentUnitIntoSingleSlides_CleanupRemovedSlides() throws IOException {
+    void testSplitAttachmentVideoUnitIntoSingleSlides_CleanupRemovedSlides() throws IOException {
         // Arrange
-        String hiddenPages = "[]";
+        List<HiddenPageInfoDTO> hiddenPagesList = List.of();
 
         // Only include 2 of the 3 slides in page order
-        String pageOrder = "[{\"slideId\":\"1\",\"order\":1},{\"slideId\":\"2\",\"order\":2}]";
+        List<SlideOrderDTO> pageOrderList = List.of(new SlideOrderDTO("1", 1), new SlideOrderDTO("2", 2));
 
         // Clear any existing slides first
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
         // Get a proper temp path for slides
@@ -237,19 +242,18 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             Slide slide = new Slide();
             slide.setId((long) i);
             slide.setSlideNumber(i);
-            slide.setAttachmentUnit(testAttachmentUnit);
+            slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
 
-            // This stores a valid path that fileService.resolvePathToFileData() can resolve
             // The path is relative to the base path and should match what's expected
             slide.setSlideImagePath("temp/slide" + i + ".png");
             slideRepository.save(slide);
         }
 
         // Act
-        slideSplitterService.splitAttachmentUnitIntoSingleSlides(testDocument, testAttachmentUnit, "test.pdf", hiddenPages, pageOrder);
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", hiddenPagesList, pageOrderList);
 
         // Assert
-        List<Slide> slides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(slides).isNotNull();
         assertThat(slides.size()).isEqualTo(2); // Should only have 2 slides attached to unit
 
@@ -263,13 +267,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         }
         else {
             // Test that it was detached
-            assertThat(slide3.getAttachmentUnit()).isNull();
+            assertThat(slide3.getAttachmentVideoUnit()).isNull();
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testSplitAttachmentUnitIntoSingleSlides_UpdateHiddenStatus() throws IOException {
+    void testSplitAttachmentVideoUnitIntoSingleSlides_UpdateHiddenStatus() throws IOException {
         // Create and save an Exercise1
         Exercise testExercise = new TextExercise();
         testExercise.setTitle("Test Exercise");
@@ -277,12 +281,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
-        String hiddenPages = "[{\"slideId\":\"1\",\"date\":\"" + ZonedDateTime.now().plusDays(1) + "\",\"exerciseId" + "\":" + testExercise.getId() + "}]";
 
-        String pageOrder = "[{\"slideId\":\"1\",\"order\":1}]";
+        List<HiddenPageInfoDTO> hiddenPagesList = List.of(new HiddenPageInfoDTO("1", hiddenDate, testExercise.getId()));
+
+        List<SlideOrderDTO> pageOrderList = List.of(new SlideOrderDTO("1", 1));
 
         // Clear existing slides
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
         // Get a proper temp path for slides
@@ -300,16 +305,16 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         Slide slide = new Slide();
         slide.setId(1L);
         slide.setSlideNumber(1);
-        slide.setAttachmentUnit(testAttachmentUnit);
+        slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
         slide.setSlideImagePath("temp/slide1.png");
         slide.setHidden(ZonedDateTime.now().plusDays(2)); // Different date
         slideRepository.save(slide);
 
         // Act
-        slideSplitterService.splitAttachmentUnitIntoSingleSlides(testDocument, testAttachmentUnit, "test.pdf", hiddenPages, pageOrder);
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", hiddenPagesList, pageOrderList);
 
         // Assert
-        Slide updatedSlide = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId()).stream().filter(s -> s.getSlideNumber() == 1).findFirst().orElse(null);
+        Slide updatedSlide = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().filter(s -> s.getSlideNumber() == 1).findFirst().orElse(null);
         assertThat(updatedSlide).isNotNull();
         assertThat(updatedSlide.getHidden()).isNotNull();
         assertThat(updatedSlide.getHidden().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(hiddenDate.truncatedTo(ChronoUnit.MILLIS));
@@ -324,13 +329,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
     void testUpdateExistingSlideImage() throws IOException {
         // Arrange
         // Clear existing slides
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
         // Create a slide with original image and save it to ensure it has a valid ID
         Slide slide = new Slide();
         slide.setSlideNumber(1); // Start with slide number 1
-        slide.setAttachmentUnit(testAttachmentUnit);
+        slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
         // Set a dummy path for the slide image as it cannot be null. Correct value is set after saving the slide
         slide.setSlideImagePath("dummy");
 
@@ -341,7 +346,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         // Verify the slide was saved properly
         assertThat(slideId).isNotNull();
 
-        Path directoryFilePath = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(Path.of(testAttachmentUnit.getId().toString(), "slide", slideId.toString()));
+        Path directoryFilePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(testAttachmentVideoUnit.getId().toString(), "slide", slideId.toString()));
         Files.createDirectories(directoryFilePath);
         Path originalSlidePath = directoryFilePath.resolve("original_slide.png");
         slide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(originalSlidePath, FilePathType.SLIDE, slide.getId()).toString());
@@ -363,15 +368,15 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         // Create a page order that changes the slide number from 1 to 2
         // Use the actual ID from the saved slide
-        String hiddenPages = "[]";
-        String pageOrder = "[{\"slideId\":\"" + slideId + "\",\"order\":2}]"; // Change order to 2
+        List<HiddenPageInfoDTO> hiddenPages = new ArrayList<>();
+        List<SlideOrderDTO> pageOrder = List.of(new SlideOrderDTO(slideId.toString(), 2)); // Change order to 2
 
         // Act
-        slideSplitterService.splitAttachmentUnitIntoSingleSlides(testDocument, testAttachmentUnit, "test.pdf", hiddenPages, pageOrder);
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", hiddenPages, pageOrder);
 
         // Assert
-        // Get all slides by attachment unit ID instead of by slide ID
-        List<Slide> updatedSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        // Get all slides by attachment video unit ID instead of by slide ID
+        List<Slide> updatedSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(updatedSlides).isNotEmpty();
 
         // Find the slide with the matching ID
@@ -418,13 +423,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         // Arrange
         // Clear existing slides
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
         // Create a slide with EMPTY image path (not NULL because of DB constraint)
         Slide slide = new Slide();
         slide.setSlideNumber(1);
-        slide.setAttachmentUnit(testAttachmentUnit);
+        slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
         slide.setSlideImagePath(""); // Empty path instead of NULL
 
         // Save the slide and get the ID
@@ -432,15 +437,15 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         Long slideId = savedSlide.getId();
 
         // Create a page order that changes the slide number
-        String hiddenPages = "[]";
-        String pageOrder = "[{\"slideId\":\"" + slideId + "\",\"order\":2}]";
+        List<HiddenPageInfoDTO> hiddenPages = new ArrayList<>();
+        List<SlideOrderDTO> pageOrder = List.of(new SlideOrderDTO(slideId.toString(), 2));
 
         // Act - This should not throw an exception
-        slideSplitterService.splitAttachmentUnitIntoSingleSlides(testDocument, testAttachmentUnit, "test.pdf", hiddenPages, pageOrder);
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", hiddenPages, pageOrder);
 
         // Assert
-        // Find all slides by attachment unit ID
-        List<Slide> updatedSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        // Find all slides by attachment video unit ID
+        List<Slide> updatedSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(updatedSlides).isNotEmpty();
 
         // Find the specific slide we created
@@ -459,28 +464,29 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         // Arrange
         // Clear existing slides
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
         // Create a slide with a path to a non-existent file and save it to get a valid ID
         Slide slide = new Slide();
         slide.setSlideNumber(1);
-        slide.setAttachmentUnit(testAttachmentUnit);
+        slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
         // We have to set a dummy path here as null is not allowed by the database and the desired value is set later
         slide.setSlideImagePath("dummy");
 
         // Save the slide and get the ID
         Slide savedSlide = slideRepository.save(slide);
         Long slideId = savedSlide.getId();
-        savedSlide.setSlideImagePath("attachments/attachmentUnit/" + testAttachmentUnit.getId() + "/slide/" + slideId + "/not-existent.png");
+        savedSlide.setSlideImagePath("attachments/attachmentUnit/" + testAttachmentVideoUnit.getId() + "/slide/" + slideId + "/not-existent.png");
         slideRepository.save(savedSlide);
+
         // Create a page order that changes the slide number
-        String hiddenPages = "[]";
-        String pageOrder = "[{\"slideId\":\"" + slideId + "\",\"order\":2}]";
+        List<HiddenPageInfoDTO> hiddenPages = new ArrayList<>();
+        List<SlideOrderDTO> pageOrder = List.of(new SlideOrderDTO(slideId.toString(), 2));
 
         try {
             // Act
-            slideSplitterService.splitAttachmentUnitIntoSingleSlides(testDocument, testAttachmentUnit, "test.pdf", hiddenPages, pageOrder);
+            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", hiddenPages, pageOrder);
             // If we reach here, the test failed - we expected an exception
             fail("Expected an InternalServerErrorException to be thrown");
         }
@@ -509,7 +515,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testSplitAttachmentUnitIntoSingleSlides_WithExistingAndNewSlides() throws IOException {
+    void testSplitAttachmentVideoUnitIntoSingleSlides_WithExistingAndNewSlides() throws IOException {
         // Create and save an Exercise
         Exercise testExercise = new TextExercise();
         testExercise.setTitle("Test Exercise for Mixed Slides");
@@ -519,13 +525,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
 
         // We'll set hiddenPages and pageOrder after creating the slides
-        String hiddenPages;
-        String pageOrder;
+        List<HiddenPageInfoDTO> hiddenPages;
+        List<SlideOrderDTO> pageOrder;
 
         // Clear existing slides
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
-        Path attachmentDirectory = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(testAttachmentUnit.getId().toString());
+        Path attachmentDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString());
         Files.createDirectories(attachmentDirectory);
         // Create mock PDF file with 3 pages
         Path pdfPath = attachmentDirectory.resolve("test-slides.pdf");
@@ -537,8 +543,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         }
 
         // Set up attachment link - make sure the link is updated properly
-        testAttachmentUnit.getAttachment().setLink(FilePathConverter.externalUriForFileSystemPath(pdfPath, FilePathType.ATTACHMENT_UNIT, testAttachmentUnit.getId()).toString());
-        testAttachmentUnit.getAttachment().setName("test-slides.pdf");
+        testAttachmentVideoUnit.getAttachment()
+                .setLink(FilePathConverter.externalUriForFileSystemPath(pdfPath, FilePathType.ATTACHMENT_UNIT, testAttachmentVideoUnit.getId()).toString());
+        testAttachmentVideoUnit.getAttachment().setName("test-slides.pdf");
 
         // Create temp directory for mock slide images
         Path slideImagesDir = attachmentDirectory.resolve("slide");
@@ -549,11 +556,10 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         List<Slide> createdSlides = new ArrayList<>();
 
         for (int i = 1; i <= 2; i++) {
-
             Slide slide = new Slide();
             // DO NOT set the ID - let the repository assign it
             slide.setSlideNumber(i);
-            slide.setAttachmentUnit(testAttachmentUnit);
+            slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
             // Set a dummy path for the slide image as it cannot be null. Correct value is set after saving the slide
             slide.setSlideImagePath("dummy");
 
@@ -570,27 +576,27 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         }
 
         // Now that we have the slides with their assigned IDs, set up hiddenPages and pageOrder
-        hiddenPages = "[{\"slideId\":\"" + createdSlides.get(0).getId() + "\",\"date\":\"" + hiddenDate + "\"," + "\"exerciseId\":" + testExercise.getId() + "}]";
+        hiddenPages = List.of(new HiddenPageInfoDTO(createdSlides.get(0).getId().toString(), hiddenDate, testExercise.getId()));
 
-        pageOrder = "[{\"slideId\":\"" + createdSlides.get(0).getId() + "\",\"order\":1}," + "{\"slideId\":\"temp_new" + "\",\"order\":2}," + "{\"slideId\":\""
-                + createdSlides.get(1).getId() + "\",\"order\":3}]";
+        pageOrder = List.of(new SlideOrderDTO(createdSlides.get(0).getId().toString(), 1), new SlideOrderDTO("temp_new", 2),
+                new SlideOrderDTO(createdSlides.get(1).getId().toString(), 3));
 
         // Verify we have 2 slides before starting the test
-        assertThat(slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId()).size()).isEqualTo(2);
+        assertThat(slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).size()).isEqualTo(2);
 
         // Instead of using the async method, use the direct method with the loaded document
         // This avoids issues with file loading in the asynchronous context
         try (PDDocument loadedDoc = Loader.loadPDF(pdfPath.toFile())) {
-            slideSplitterService.splitAttachmentUnitIntoSingleSlides(loadedDoc, testAttachmentUnit, "test-slides.pdf", hiddenPages, pageOrder);
+            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(loadedDoc, testAttachmentVideoUnit, "test-slides.pdf", hiddenPages, pageOrder);
         }
 
         // Use Awaitility for more deterministic async testing
         await().atMost(10, TimeUnit.SECONDS).pollInterval(300, TimeUnit.MILLISECONDS).until(() -> {
-            List<Slide> currentSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+            List<Slide> currentSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
             return currentSlides.size() == 3;
         });
 
-        List<Slide> slides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
 
         // Assert
         assertThat(slides).isNotNull();
@@ -617,9 +623,10 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(newSlide).isNotNull();
     }
 
+    // For tests that use String parameters instead of DTOs
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testSplitAttachmentUnitIntoSingleSlides_WithStrings() throws IOException, InterruptedException {
+    void testSplitAttachmentVideoUnitIntoSingleSlides_WithStrings() throws IOException, InterruptedException {
         // Create and save an Exercise for testing
         Exercise testExercise = new TextExercise();
         testExercise.setTitle("Test Exercise");
@@ -627,11 +634,14 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
-        String hiddenPages = "[{\"slideId\":\"temp_1\",\"date\":\"" + hiddenDate + "\",\"exerciseId\":" + testExercise.getId() + "}]";
-        String pageOrder = "[{\"slideId\":\"temp_1\",\"order\":1},{\"slideId\":\"temp_2\",\"order\":2}," + "{\"slideId\":\"temp_3\",\"order\":3}]";
+
+        // Create JSON strings for the methods that expect strings
+        List<HiddenPageInfoDTO> hiddenPages = List.of(new HiddenPageInfoDTO("temp_1", hiddenDate, testExercise.getId()));
+
+        List<SlideOrderDTO> pageOrder = List.of(new SlideOrderDTO("temp_1", 1), new SlideOrderDTO("temp_2", 2), new SlideOrderDTO("temp_3", 3));
 
         // Clear any existing slides for this test
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
         // Create a mock PDF file with 3 pages
@@ -645,13 +655,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             doc.save(tempPdfPath.toFile());
         }
 
-        // Set up the attachment unit to use our test PDF file
-        testAttachmentUnit.getAttachment().setLink(tempPdfPath.toUri().toString());
-        testAttachmentUnit.getAttachment().setName("test-slides.pdf");
+        // Set up the attachment video unit to use our test PDF file
+        testAttachmentVideoUnit.getAttachment().setLink(tempPdfPath.toUri().toString());
+        testAttachmentVideoUnit.getAttachment().setName("test-slides.pdf");
 
         // Instead of calling the async method, use the direct method with the loaded document
         try (PDDocument loadedDoc = Loader.loadPDF(tempPdfPath.toFile())) {
-            slideSplitterService.splitAttachmentUnitIntoSingleSlides(loadedDoc, testAttachmentUnit, "test-slides.pdf", hiddenPages, pageOrder);
+            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(loadedDoc, testAttachmentVideoUnit, "test-slides.pdf", hiddenPages, pageOrder);
         }
 
         // Since the method is no longer asynchronous, we can check immediately, but add a small wait time for any DB
@@ -659,7 +669,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         Thread.sleep(500);
 
         // Get the slides
-        List<Slide> slides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
 
         // If we still don't have slides after waiting, test should fail with useful message
         if (slides == null || slides.isEmpty() || slides.size() < 3) {
@@ -725,19 +735,19 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testSplitAttachmentUnitIntoSingleSlides_WithInvalidFilePath() {
+    void testSplitAttachmentVideoUnitIntoSingleSlides_WithInvalidFilePath() {
         // Arrange
-        String hiddenPages = "[]";
-        String pageOrder = "[{\"slideId\":\"1\",\"order\":1}]";
+        List<HiddenPageInfoDTO> hiddenPagesList = List.of();
+        List<SlideOrderDTO> pageOrderList = List.of(new SlideOrderDTO("1", 1));
 
         // Clear existing slides
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
         // Set an invalid link that doesn't point to an actual file
-        testAttachmentUnit.getAttachment().setLink("file:///nonexistent/path/file.pdf");
+        testAttachmentVideoUnit.getAttachment().setLink("file:///nonexistent/path/file.pdf");
 
-        slideSplitterService.splitAttachmentUnitIntoSingleSlides(testAttachmentUnit, hiddenPages, pageOrder);
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testAttachmentVideoUnit, hiddenPagesList, pageOrderList);
 
         // Use Awaitility for deterministic waiting
         await().atMost(2, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
@@ -746,19 +756,19 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         });
 
         // Verify no slides were created due to the error
-        List<Slide> slides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(slides).isEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testSplitAttachmentUnitIntoSingleSlides_WithEmptyPageOrder() throws IOException {
+    void testSplitAttachmentVideoUnitIntoSingleSlides_WithEmptyPageOrder() throws IOException {
         // Arrange
-        String hiddenPages = "[]";
-        String pageOrder = "[]"; // Empty page order
+        List<HiddenPageInfoDTO> hiddenPagesList = List.of();
+        List<SlideOrderDTO> pageOrderList = List.of();
 
         // Clear existing slides
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
         // Create a mock PDF file
@@ -770,19 +780,19 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         }
 
         // Set a valid attachment link
-        testAttachmentUnit.getAttachment().setLink(tempPdfPath.toUri().toString());
+        testAttachmentVideoUnit.getAttachment().setLink(tempPdfPath.toUri().toString());
 
         // Act - call the async method
-        slideSplitterService.splitAttachmentUnitIntoSingleSlides(testAttachmentUnit, hiddenPages, pageOrder);
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testAttachmentVideoUnit, hiddenPagesList, pageOrderList);
 
         // Use Awaitility for deterministic waiting
         await().atMost(2, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            List<Slide> currentSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+            List<Slide> currentSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
             return currentSlides != null; // We're expecting an empty list in this case
         });
 
         // Assert - should not create any slides since page order is empty
-        List<Slide> slides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         assertThat(slides).isEmpty();
 
         // Clean up
@@ -792,46 +802,91 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testSplitAttachmentUnitIntoSingleSlides_WithInvalidJsonFormat() throws IOException {
-        // Arrange
-        String hiddenPages = "not valid json";
-        String pageOrder = "also not valid json";
+    void testSplitAttachmentVideoUnitIntoSingleSlides_WithStringsJson() throws IOException, InterruptedException {
+        // Create and save an Exercise for testing
+        Exercise testExercise = new TextExercise();
+        testExercise.setTitle("Test Exercise");
+        exerciseRepository.save(testExercise);
 
-        // Clear existing slides
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        // Arrange
+        ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
+
+        // Create proper DTO objects
+        List<HiddenPageInfoDTO> hiddenPagesList = List.of(new HiddenPageInfoDTO("temp_1", hiddenDate, testExercise.getId()));
+
+        List<SlideOrderDTO> pageOrderList = List.of(new SlideOrderDTO("temp_1", 1), new SlideOrderDTO("temp_2", 2), new SlideOrderDTO("temp_3", 3));
+
+        // Clear any existing slides for this test
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         slideRepository.deleteAll(existingSlides);
 
-        // Create a mock PDF file
+        // Create a mock PDF file with 3 pages
         Path tempDir = Files.createTempDirectory("test-slides");
         Path tempPdfPath = tempDir.resolve("test-slides.pdf");
         try (PDDocument doc = new PDDocument()) {
-            doc.addPage(new PDPage());
+            // Add 3 pages to the document
+            for (int i = 0; i < 3; i++) {
+                doc.addPage(new PDPage());
+            }
             doc.save(tempPdfPath.toFile());
         }
 
-        // Set a valid attachment link
-        testAttachmentUnit.getAttachment().setLink(tempPdfPath.toUri().toString());
+        // Set up the attachment unit to use our test PDF file
+        testAttachmentVideoUnit.getAttachment().setLink(tempPdfPath.toUri().toString());
+        testAttachmentVideoUnit.getAttachment().setName("test-slides.pdf");
 
-        // As with the invalid file path test, we need to adapt for the async nature
-        try {
-            slideSplitterService.splitAttachmentUnitIntoSingleSlides(testAttachmentUnit, hiddenPages, pageOrder);
-            // Method call itself shouldn't throw, since exceptions happen in the async thread
-        }
-        catch (Exception e) {
-            fail("The async method should not throw directly: " + e.getMessage());
+        // Instead of calling the async method, use the direct method with the loaded document
+        try (PDDocument loadedDoc = Loader.loadPDF(tempPdfPath.toFile())) {
+            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(loadedDoc, testAttachmentVideoUnit, "test-slides.pdf", hiddenPagesList, pageOrderList);
         }
 
-        // Use Awaitility for deterministic waiting
-        await().atMost(2, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            return true; // We just need to wait for async processing
-        });
+        // Since the method is no longer asynchronous, we can check immediately, but add a small wait time for any DB
+        // operations
+        Thread.sleep(500);
 
-        // Verify no slides were created due to the JSON parsing error
-        List<Slide> slides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
-        assertThat(slides).isEmpty();
+        // Get the slides
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+
+        // If we still don't have slides after waiting, test should fail with useful message
+        if (slides == null || slides.isEmpty() || slides.size() < 3) {
+            // For debugging, let's check what happened
+            fail("Expected 3 slides but found " + (slides == null ? 0 : slides.size()) + " after waiting 500ms. " + "PDF file exists: " + tempPdfPath.toFile().exists() + ", "
+                    + "PDF file size: " + tempPdfPath.toFile().length() + " bytes, ");
+        }
+
+        // Assert
+        assertThat(slides).isNotNull();
+        assertThat(slides.size()).isEqualTo(3);
+
+        // Verify slide numbers match the order in pageOrder
+        assertThat(slides.stream().filter(s -> s.getSlideNumber() == 1).count()).isEqualTo(1);
+        assertThat(slides.stream().filter(s -> s.getSlideNumber() == 2).count()).isEqualTo(1);
+        assertThat(slides.stream().filter(s -> s.getSlideNumber() == 3).count()).isEqualTo(1);
+
+        // Verify first slide is hidden with exercise
+        Slide firstSlide = slides.stream().filter(s -> s.getSlideNumber() == 1).findFirst().orElse(null);
+        assertThat(firstSlide).isNotNull();
+        assertThat(firstSlide.getHidden()).isNotNull();
+        // Compare dates truncated to millis to avoid timing precision issues
+        assertThat(firstSlide.getHidden().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(hiddenDate.truncatedTo(ChronoUnit.MILLIS));
+        assertThat(firstSlide.getExercise()).isNotNull();
+        assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
 
         // Clean up
         Files.deleteIfExists(tempPdfPath);
-        Files.deleteIfExists(tempDir);
+        Files.walkFileTree(tempDir, new SimpleFileVisitor<>() {
+
+            @Override
+            public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public @NotNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 }

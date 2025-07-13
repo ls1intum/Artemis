@@ -6,9 +6,9 @@
                 <div class="draggable-left">
                     <fa-icon [icon]="faGripLinesVertical" />
                 </div>
-                <div class="card mb-3">
+                <div class="card">
                     <!-- header -->
-                    <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.communication.hide' | artemisTranslate" (click)="collapsed = true">
+                    <div class="card-header" [ngbTooltip]="'artemisApp.metis.communication.hide' | artemisTranslate" (click)="collapsed = true">
                         <div class="row flex-grow-1">
                             <div class="col">
                                 <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.communication.label"></h5>
@@ -180,9 +180,10 @@
                 </div>
             </div>
         } @else {
-            <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.communication.show' | artemisTranslate">
+            <div class="postings-container collapsed-discussion" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.communication.show' | artemisTranslate">
                 <fa-icon class="expand-postings-icon" [icon]="faChevronLeft" />
                 <span class="h5" jhiTranslate="artemisApp.metis.communication.label"></span>
+                <div class="spacer"></div>
                 <fa-icon class="expand-postings-icon" [icon]="faChevronLeft" />
             </div>
         }

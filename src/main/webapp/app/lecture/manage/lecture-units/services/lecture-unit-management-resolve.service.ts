@@ -4,22 +4,22 @@ import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
-import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/services/attachmentUnit.service';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 
 @Injectable({ providedIn: 'root' })
-export class AttachmentUnitResolve implements Resolve<AttachmentUnit> {
-    private attachmentUnitService = inject(AttachmentUnitService);
+export class AttachmentVideoUnitResolve implements Resolve<AttachmentVideoUnit> {
+    private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
 
-    resolve(route: ActivatedRouteSnapshot): Observable<AttachmentUnit> {
+    resolve(route: ActivatedRouteSnapshot): Observable<AttachmentVideoUnit> {
         const lectureId = route.params['lectureId'];
-        const attachmentUnitId = route.params['attachmentUnitId'];
-        if (attachmentUnitId) {
-            return this.attachmentUnitService.findById(attachmentUnitId, lectureId).pipe(
-                filter((response: HttpResponse<AttachmentUnit>) => response.ok),
-                map((attachmentUnit: HttpResponse<AttachmentUnit>) => attachmentUnit.body!),
+        const attachmentVideoUnitId = route.params['attachmentVideoUnitId'];
+        if (attachmentVideoUnitId) {
+            return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, lectureId).pipe(
+                filter((response: HttpResponse<AttachmentVideoUnit>) => response.ok),
+                map((attachmentVideoUnit: HttpResponse<AttachmentVideoUnit>) => attachmentVideoUnit.body!),
             );
         }
-        return of(new AttachmentUnit());
+        return of(new AttachmentVideoUnit());
     }
 }

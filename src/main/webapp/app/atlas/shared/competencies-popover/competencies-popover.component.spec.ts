@@ -38,7 +38,6 @@ describe('CompetencyPopoverComponent', () => {
             ],
             declarations: [CompetenciesPopoverComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), DummyStatisticsComponent, DummyManagementComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

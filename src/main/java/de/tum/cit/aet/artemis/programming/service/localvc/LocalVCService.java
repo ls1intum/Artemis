@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -18,6 +18,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlServ
 /**
  * Implementation of VersionControlService for the local VC server.
  */
+@Lazy
 @Service
 @Profile(PROFILE_LOCALVC)
 public class LocalVCService extends AbstractVersionControlService {
@@ -45,10 +47,10 @@ public class LocalVCService extends AbstractVersionControlService {
     protected String defaultBranch;
 
     @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    private URI localVCBaseUri;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath;
+    private Path localVCBasePath;
 
     public LocalVCService(UriService uriService, GitService gitService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -66,7 +68,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void deleteProject(String projectKey) {
         try {
-            Path projectPath = Path.of(localVCBasePath, projectKey);
+            Path projectPath = localVCBasePath.resolve(projectKey);
             FileUtils.deleteDirectory(projectPath.toFile());
         }
         catch (IOException e) {
@@ -104,7 +106,7 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public VcsRepositoryUri getCloneRepositoryUri(String projectKey, String repositorySlug) {
-        return new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
+        return new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUri);
     }
 
     /**
@@ -117,7 +119,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
         // Try to find the folder in the file system. If it is not found, return false.
-        Path projectPath = Path.of(localVCBasePath, projectKey);
+        Path projectPath = localVCBasePath.resolve(projectKey);
         return Files.exists(projectPath);
     }
 
@@ -133,7 +135,7 @@ public class LocalVCService extends AbstractVersionControlService {
         String projectKey = programmingExercise.getProjectKey();
         try {
             // Create a directory that will contain all repositories.
-            Path projectPath = Path.of(localVCBasePath, projectKey);
+            Path projectPath = localVCBasePath.resolve(projectKey);
             Files.createDirectories(projectPath);
             log.debug("Created folder for local git project at {}", projectPath);
         }
@@ -151,7 +153,7 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public void createRepository(String projectKey, String repositorySlug) {
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUri);
 
         Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
 

@@ -137,7 +137,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
             return;
         }
 
-        const waitForSessionAndMessages$ = this.chatService.sessionId$.pipe(
+        const waitForSessionAndMessages$ = this.chatService.currentSessionId().pipe(
             filter((id): id is number => !!id),
             take(1),
             switchMap(() =>
@@ -215,7 +215,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
                     if (!active) {
                         return of(undefined);
                     }
-                    return this.chatService.sessionId$.pipe(
+                    return this.chatService.currentSessionId().pipe(
                         filter((id): id is number => !!id),
                         take(1),
                     );

@@ -43,7 +43,7 @@ describe('StandaloneFeedbackComponent', () => {
                 // mock exerciseService
                 exerciseService = TestBed.inject(ExerciseService);
                 getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
-                participation.results = [result];
+                participation.submissions = [{ results: [result] }];
                 exercise.studentParticipations = [participation];
                 course.exercises = [exercise];
                 getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));

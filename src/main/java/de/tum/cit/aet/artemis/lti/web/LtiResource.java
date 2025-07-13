@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -49,6 +50,7 @@ import tech.jhipster.web.util.PaginationUtil;
  * REST controller to handle LTI13 launches.
  */
 @Profile(PROFILE_LTI)
+@Lazy
 @RestController
 @RequestMapping("api/lti/")
 public class LtiResource {
@@ -165,7 +167,6 @@ public class LtiResource {
                 yield ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, contentIds, resourceType);
             }
             case COMPETENCY, LEARNING_PATH, IRIS -> ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, resourceType);
-            default -> throw new BadRequestAlertException("Unsupported resource type provided: " + resourceType, "LTI", "invalidResourceType");
         };
 
         ObjectNode json = new ObjectMapper().createObjectNode();

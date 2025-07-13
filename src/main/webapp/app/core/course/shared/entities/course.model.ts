@@ -134,6 +134,7 @@ export class Course implements BaseEntity {
     public relativeScore?: number;
     public absoluteScore?: number;
     public maxScore?: number;
+    public irisCourseChatEnabled?: boolean;
 
     public courseArchivePath?: string;
 

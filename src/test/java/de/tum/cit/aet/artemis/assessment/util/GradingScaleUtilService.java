@@ -17,6 +17,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 /**
  * Service responsible for initializing the database with specific testdata related to grading for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class GradingScaleUtilService {

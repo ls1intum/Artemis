@@ -24,6 +24,7 @@ import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,15 +32,17 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class LectureUnitProcessingService {
 
@@ -51,7 +54,7 @@ public class LectureUnitProcessingService {
 
     private final LectureRepository lectureRepository;
 
-    private final AttachmentUnitService attachmentUnitService;
+    private final AttachmentVideoUnitService attachmentVideoUnitService;
 
     private final PDFTextStripper pdfTextStripper = new PDFTextStripper();
 
@@ -59,11 +62,11 @@ public class LectureUnitProcessingService {
     private final Splitter pdfSinglePageSplitter = new Splitter();
 
     public LectureUnitProcessingService(SlideSplitterService slideSplitterService, FileService fileService, LectureRepository lectureRepository,
-            AttachmentUnitService attachmentUnitService) {
+            AttachmentVideoUnitService attachmentVideoUnitService) {
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
         this.lectureRepository = lectureRepository;
-        this.attachmentUnitService = attachmentUnitService;
+        this.attachmentVideoUnitService = attachmentVideoUnitService;
     }
 
     /**
@@ -71,19 +74,19 @@ public class LectureUnitProcessingService {
      *
      * @param lectureUnitSplitInformationDTO The split information
      * @param fileBytes                      The byte content of the file (lecture slides) to be split
-     * @param lecture                        The lecture that the attachment unit belongs to
+     * @param lecture                        The lecture that the attachment video unit belongs to
      * @return The prepared units to be saved
      */
-    public List<AttachmentUnit> splitAndSaveUnits(LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, byte[] fileBytes, Lecture lecture) throws IOException {
+    public List<AttachmentVideoUnit> splitAndSaveUnits(LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, byte[] fileBytes, Lecture lecture) throws IOException {
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = Loader.loadPDF(fileBytes)) {
-            List<AttachmentUnit> units = new ArrayList<>();
+            List<AttachmentVideoUnit> units = new ArrayList<>();
 
             for (LectureUnitSplitDTO lectureUnit : lectureUnitSplitInformationDTO.units()) {
                 // make sure output stream doesn't contain old data
                 outputStream.reset();
 
-                AttachmentUnit attachmentUnit = new AttachmentUnit();
+                AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
                 Attachment attachment = new Attachment();
                 PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
                 Splitter pdfSplitter = new Splitter();
@@ -100,18 +103,20 @@ public class LectureUnitProcessingService {
                 documentUnits.getFirst().setDocumentInformation(pdDocumentInformation);
                 documentUnits.getFirst().save(outputStream);
 
-                // setup attachmentUnit and attachment
-                attachmentUnit.setDescription("");
+                // setup attachmentVideoUnit and attachment
+                attachmentVideoUnit.setDescription("");
+                attachmentVideoUnit.setName(lectureUnit.unitName());
+                attachmentVideoUnit.setReleaseDate(lectureUnit.releaseDate());
                 attachment.setName(lectureUnit.unitName());
                 attachment.setAttachmentType(AttachmentType.FILE);
                 attachment.setReleaseDate(lectureUnit.releaseDate());
                 attachment.setUploadDate(ZonedDateTime.now());
 
-                MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
-                AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, multipartFile, true);
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentUnit, multipartFile.getOriginalFilename());
+                MultipartFile multipartFile = FileUtil.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
+                AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.createAttachmentVideoUnit(attachmentVideoUnit, attachment, lecture, multipartFile, true);
+                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentVideoUnit, multipartFile.getOriginalFilename());
                 documentUnits.getFirst().close(); // make sure to close the document
-                units.add(savedAttachmentUnit);
+                units.add(savedAttachmentVideoUnit);
             }
             lectureRepository.save(lecture);
             document.close();
@@ -222,8 +227,8 @@ public class LectureUnitProcessingService {
      */
     public String saveTempFileForProcessing(long lectureId, MultipartFile file, int minutesUntilDeletion) throws IOException {
         String prefix = "Temp_" + lectureId + "_";
-        String sanitisedFilename = fileService.checkAndSanitizeFilename(file.getOriginalFilename());
-        Path filePath = FilePathConverter.getTempFilePath().resolve(fileService.generateFilename(prefix, sanitisedFilename, false));
+        String sanitisedFilename = FileUtil.checkAndSanitizeFilename(file.getOriginalFilename());
+        Path filePath = FilePathConverter.getTempFilePath().resolve(FileUtil.generateFilename(prefix, sanitisedFilename, false));
         FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
         fileService.schedulePathForDeletion(filePath, minutesUntilDeletion);
         return filePath.getFileName().toString().substring(prefix.length());
@@ -237,7 +242,7 @@ public class LectureUnitProcessingService {
      * @return Path of the file
      */
     public Path getPathForTempFilename(long lectureId, String filename) {
-        String fullFilename = "Temp_" + lectureId + "_" + FileService.sanitizeFilename(filename);
+        String fullFilename = "Temp_" + lectureId + "_" + FileUtil.sanitizeFilename(filename);
         return FilePathConverter.getTempFilePath().resolve(fullFilename);
     }
 

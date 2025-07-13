@@ -32,9 +32,9 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
+import { MockSyncStorage } from 'src/test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
@@ -1015,8 +1015,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.pendingChangesCache = true;
                 if (comp.courseId) {
                     const childFixture = TestBed.createComponent(QuizQuestionListEditComponent);
-                    comp.quizQuestionListEditComponent = childFixture.componentInstance;
-                    jest.spyOn(comp.quizQuestionListEditComponent, 'parseAllQuestions').mockImplementation();
+                    (comp as any).quizQuestionListEditComponent = () => childFixture.componentInstance;
+                    jest.spyOn(comp, 'quizQuestionListEditComponent').mockReturnValue(childFixture.componentInstance);
+                    jest.spyOn(comp.quizQuestionListEditComponent(), 'parseAllQuestions').mockImplementation();
                 }
                 comp.save();
             };

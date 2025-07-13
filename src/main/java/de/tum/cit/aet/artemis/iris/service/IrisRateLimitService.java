@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 /**
  * Service for the rate limit of the iris chatbot.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisRateLimitService {
@@ -38,12 +40,12 @@ public class IrisRateLimitService {
      */
     public IrisRateLimitInformation getRateLimitInformation(User user) {
         var globalSettings = irisSettingsService.getGlobalSettings();
-        var irisChatSettings = globalSettings.getIrisChatSettings();
-        int rateLimitTimeframeHours = Objects.requireNonNullElse(irisChatSettings.getRateLimitTimeframeHours(), 0);
+        var irisProgrammingExerciseChatSettings = globalSettings.getIrisProgrammingExerciseChatSettings();
+        int rateLimitTimeframeHours = Objects.requireNonNullElse(irisProgrammingExerciseChatSettings.getRateLimitTimeframeHours(), 0);
         var start = ZonedDateTime.now().minusHours(rateLimitTimeframeHours);
         var end = ZonedDateTime.now();
         var currentMessageCount = irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(user.getId(), start, end);
-        var rateLimit = Objects.requireNonNullElse(irisChatSettings.getRateLimit(), -1);
+        var rateLimit = Objects.requireNonNullElse(irisProgrammingExerciseChatSettings.getRateLimit(), -1);
 
         return new IrisRateLimitInformation(currentMessageCount, rateLimit, rateLimitTimeframeHours);
     }

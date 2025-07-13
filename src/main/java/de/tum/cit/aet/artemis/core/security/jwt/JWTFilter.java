@@ -175,6 +175,10 @@ public class JWTFilter extends GenericFilterBean {
      */
     @Nullable
     public static JwtWithSource extractValidJwt(HttpServletRequest httpServletRequest, TokenProvider tokenProvider) {
+        if (isIgnoredUri(httpServletRequest.getRequestURI())) {
+            return null;
+        }
+
         var cookie = WebUtils.getCookie(httpServletRequest, JWT_COOKIE_NAME);
         var authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
 
@@ -201,7 +205,7 @@ public class JWTFilter extends GenericFilterBean {
                      "request_uri": "{}",
                      "headers": {}
                     }
-                    """, source, httpServletRequest.getRemoteAddr(), httpServletRequest.getHeader("User-Agent"), httpServletRequest.getRequestURI(),
+                    """, source, httpServletRequest.getRemoteAddr(), httpServletRequest.getHeader(HttpHeaders.USER_AGENT), httpServletRequest.getRequestURI(),
                     collectHeaders(httpServletRequest));
             return null;
         }
@@ -261,5 +265,22 @@ public class JWTFilter extends GenericFilterBean {
      */
     private static boolean isJwtValid(TokenProvider tokenProvider, @Nullable String jwtToken, @Nullable String source) {
         return StringUtils.hasText(jwtToken) && tokenProvider.validateTokenForAuthority(jwtToken, source);
+    }
+
+    /**
+     * Not all URIs need JWT authentication.
+     *
+     * <p>
+     * For example, Git clones/pushes use an HTTP token mechanism.
+     *
+     * @param uri A URI relative to the Artemis base URL, i.e. without the {@code https://artemis.domain.com} part at the start.
+     * @return True, if the URI does not use JWT authentication.
+     */
+    private static boolean isIgnoredUri(final String uri) {
+        // /git/**: used by Git clients with a token mechanism
+        // /api/iris/public/pyris/** used by Pyris status callbacks with a token mechanism
+        // /api/programming/public/programming-exercises/new-result: used by Jenkins to send test results back to Artemis,
+        // uses a separate secret token.
+        return uri.startsWith("/git/") || uri.startsWith("/api/iris/public/pyris/") || "/api/programming/public/programming-exercises/new-result".equals(uri);
     }
 }

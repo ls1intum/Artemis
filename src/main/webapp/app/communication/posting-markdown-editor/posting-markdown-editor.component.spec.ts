@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
+import { NgStyle } from '@angular/common';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
+import { AlertService } from 'app/shared/service/alert.service';
+import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 import { By } from '@angular/platform-browser';
@@ -40,6 +43,8 @@ import { ListAction } from 'app/shared/monaco-editor/model/actions/list.action';
 import monaco from 'monaco-editor';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/shared/service/file.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -122,17 +127,22 @@ describe('PostingsMarkdownEditor', () => {
         mockOverlayRef.attach.mockReturnValue(mockComponentRef);
 
         return TestBed.configureTestingModule({
+            imports: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent), NgStyle],
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: FileService, useClass: MockFileService },
                 MockProvider(LectureService),
                 MockProvider(CourseManagementService),
                 MockProvider(ChannelService),
+                MockProvider(AlertService),
+                MockProvider(TranslateService),
                 { provide: Overlay, useValue: mockOverlay },
                 { provide: OverlayPositionBuilder, useValue: overlayPositionBuilderMock },
                 { provide: MarkdownEditorMonacoComponent, useValue: mockMarkdownEditorComponent },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
-            declarations: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent)],
+            declarations: [],
         })
             .compileComponents()
             .then(() => {
@@ -159,7 +169,6 @@ describe('PostingsMarkdownEditor', () => {
         component.ngOnInit();
         containDefaultActions(component.defaultActions);
         expect(component.defaultActions).toEqual(expect.arrayContaining([expect.any(UserMentionAction), expect.any(ChannelReferenceAction)]));
-
         expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService, fileService));
     });
 
@@ -350,7 +359,7 @@ describe('PostingsMarkdownEditor', () => {
         expect(emojiAction['overlayRef']).toBeUndefined();
     });
 
-    const simulateKeydownEvent = (editor: TextEditor, key: string, modifiers: { shiftKey?: boolean; metaKey?: boolean } = {}) => {
+    const simulateKeydownEvent = (key: string, modifiers: { shiftKey?: boolean; metaKey?: boolean } = {}) => {
         const event = new KeyboardEvent('keydown', { key, ...modifiers });
         const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
         const stopPropagationSpy = jest.spyOn(event, 'stopPropagation');
@@ -373,7 +382,7 @@ describe('PostingsMarkdownEditor', () => {
 
         bulletedListAction.run(mockEditor);
 
-        const { preventDefaultSpy } = simulateKeydownEvent(mockEditor, 'Enter', { shiftKey: true });
+        const { preventDefaultSpy } = simulateKeydownEvent('Enter', { shiftKey: true });
 
         expect(preventDefaultSpy).toHaveBeenCalled();
         expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '\n- ');
@@ -391,7 +400,7 @@ describe('PostingsMarkdownEditor', () => {
 
         bulletedListAction.run(mockEditor);
 
-        const { preventDefaultSpy, stopPropagationSpy } = simulateKeydownEvent(mockEditor, 'Enter', { metaKey: true });
+        const { preventDefaultSpy, stopPropagationSpy } = simulateKeydownEvent('Enter', { metaKey: true });
 
         expect(preventDefaultSpy).toHaveBeenCalled();
         expect(stopPropagationSpy).toHaveBeenCalled();

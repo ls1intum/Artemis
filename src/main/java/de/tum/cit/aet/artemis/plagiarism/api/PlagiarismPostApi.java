@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.plagiarism.api;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
 
 @Conditional(PlagiarismEnabled.class)
 @Controller
+@Lazy
 public class PlagiarismPostApi extends AbstractPlagiarismApi {
 
     private final PlagiarismPostService plagiarismPostService;
@@ -44,8 +46,8 @@ public class PlagiarismPostApi extends AbstractPlagiarismApi {
         plagiarismAnswerPostService.preparePostAndBroadcast(updatedAnswerPost, course);
     }
 
-    public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients, Set<User> mentionedUsers) {
-        plagiarismPostService.broadcastForPost(postDTO, courseId, recipients, mentionedUsers);
+    public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
+        plagiarismPostService.broadcastForPost(postDTO, courseId, recipients);
     }
 
     public void preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {

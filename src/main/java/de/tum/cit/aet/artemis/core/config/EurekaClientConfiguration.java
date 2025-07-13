@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import org.springframework.cloud.netflix.eureka.http.RestClientDiscoveryClientOp
 import org.springframework.cloud.netflix.eureka.http.RestClientTransportClientFactories;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.client.RestClient;
 
@@ -28,6 +30,7 @@ import org.springframework.web.client.RestClient;
  */
 @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Configuration
+@Lazy
 public class EurekaClientConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(EurekaClientConfiguration.class);
@@ -56,7 +59,7 @@ public class EurekaClientConfiguration {
         log.debug("Using RestClient for the Eureka client.");
         // The Eureka DiscoveryClientOptionalArgsConfiguration invokes a private method setupTLS.
         // This code is taken from that method.
-        var supplier = new DefaultEurekaClientHttpRequestFactorySupplier(new RestClientTimeoutProperties());
+        var supplier = new DefaultEurekaClientHttpRequestFactorySupplier(new RestClientTimeoutProperties(), Set.of());
         var args = new RestClientDiscoveryClientOptionalArgs(supplier, () -> restClientBuilderProvider.getIfAvailable(RestClient::builder));
         if (tlsProperties.isEnabled()) {
             SSLContextFactory factory = new SSLContextFactory(tlsProperties);

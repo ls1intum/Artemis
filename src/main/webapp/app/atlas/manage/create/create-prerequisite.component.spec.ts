@@ -55,7 +55,6 @@ describe('CreatePrerequisite', () => {
                     },
                 },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

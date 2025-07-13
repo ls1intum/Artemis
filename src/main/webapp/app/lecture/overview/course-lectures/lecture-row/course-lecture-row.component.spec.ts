@@ -45,7 +45,6 @@ describe('CourseLectureRow', () => {
                 MockPipe(ArtemisTimeAgoPipe),
             ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

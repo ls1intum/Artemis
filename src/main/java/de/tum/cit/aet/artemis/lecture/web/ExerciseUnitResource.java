@@ -10,6 +10,7 @@ import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/lecture/")
 public class ExerciseUnitResource {
@@ -52,7 +54,7 @@ public class ExerciseUnitResource {
     /**
      * POST /lectures/:lectureId/exercise-units : creates a new exercise unit.
      *
-     * @param lectureId    the id of the lecture to which the attachment unit should be added
+     * @param lectureId    the id of the lecture to which the attachment video unit should be added
      * @param exerciseUnit the exercise unit that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new exercise unit
      * @throws URISyntaxException if the Location URI syntax is incorrect

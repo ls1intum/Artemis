@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
@@ -118,6 +119,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Autowired
     private CompetencyUtilService competencyUtilService;
 
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
     private ModelingExercise classExercise;
 
     private Set<GradingCriterion> gradingCriteria;
@@ -146,7 +150,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetModelingExercise_asTA() throws Exception {
-        exerciseUtilService.addChannelToExercise(classExercise);
+        conversationUtilService.addChannelToExercise(classExercise);
 
         ModelingExercise receivedModelingExercise = request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
         assertThat(receivedModelingExercise.getId()).isNotNull();
@@ -167,7 +171,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         feedback.setGradingInstruction(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> true).orElseThrow());
         feedbackRepository.save(feedback);
 
-        exerciseUtilService.addChannelToExercise(classExercise);
+        conversationUtilService.addChannelToExercise(classExercise);
 
         ModelingExercise receivedModelingExercise = request.get("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
 
@@ -417,7 +421,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testDeleteModelingExerciseWithChannel() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(modelingExercise);
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(modelingExercise);
 
         request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
 
@@ -782,7 +786,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private void testCourseAndExamFilters(String title) throws Exception {
         modelingExerciseUtilService.addCourseWithOneModelingExercise(title);
-        modelingExerciseUtilService.addCourseExamExerciseGroupWithOneModelingExercise(title + "-Morpork");
+        examUtilService.addCourseExamExerciseGroupWithOneModelingExercise(title + "-Morpork");
         exerciseIntegrationTestService.testCourseAndExamFilters("/api/modeling/modeling-exercises", title);
     }
 

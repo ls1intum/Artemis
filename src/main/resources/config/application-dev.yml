@@ -61,7 +61,6 @@ spring:
 server:
     port: 8080
     url: http://localhost
-
 # ===================================================================
 # JHipster specific properties
 #
@@ -135,3 +134,7 @@ artemis:
         enabled: false # Disable sending any telemetry information to the telemetry service by setting this to false
         sendAdminDetails: false # Include the admins email and name in the telemetry data. Set to false to disable
         destination: https://telemetry.artemis.cit.tum.de
+
+helios:
+  status:
+    enabled: false

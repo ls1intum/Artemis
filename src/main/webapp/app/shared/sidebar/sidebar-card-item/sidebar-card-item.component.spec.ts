@@ -75,4 +75,40 @@ describe('SidebarCardItemComponent', () => {
         component.extractMessageUser();
         expect(component.otherUser).toEqual(sidebarItemMock.conversation.members[1]);
     });
+
+    it('should display unread count and bold for non-muted conversations', () => {
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.sidebarItem = {
+                ...sidebarItemMock,
+                conversation: { unreadMessagesCount: 5, isMuted: false },
+            };
+            component.unreadCount = input<number>(5);
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            const unreadCountElem = fixture.nativeElement.querySelector('.unread-count');
+            expect(unreadCountElem?.textContent).toContain('5');
+
+            const titleElem = fixture.nativeElement.querySelector('#test-sidebar-card-title');
+            expect(titleElem?.classList).toContain('fw-bold');
+        });
+    });
+
+    it('should not display unread count or bold for muted conversations', () => {
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.sidebarItem = {
+                ...sidebarItemMock,
+                conversation: { unreadMessagesCount: 5, isMuted: true },
+            };
+            component.unreadCount = input<number>(5);
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            const unreadCountElem = fixture.nativeElement.querySelector('.unread-count');
+            expect(unreadCountElem).toBeNull();
+
+            const titleElem = fixture.nativeElement.querySelector('#test-sidebar-card-title');
+            expect(titleElem?.classList).not.toContain('fw-bold');
+        });
+    });
 });

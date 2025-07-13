@@ -1,5 +1,5 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
@@ -77,37 +77,37 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
     ],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
-    private programmingExerciseService = inject(ProgrammingExerciseService);
-    private modalService = inject(NgbModal);
-    private popupService = inject(ExerciseUpdateWarningService);
-    private courseService = inject(CourseManagementService);
-    private alertService = inject(AlertService);
-    private exerciseService = inject(ExerciseService);
-    private fileService = inject(FileService);
-    private activatedRoute = inject(ActivatedRoute);
-    private translateService = inject(TranslateService);
-    private profileService = inject(ProfileService);
-    private exerciseGroupService = inject(ExerciseGroupService);
-    private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private aeolusService = inject(AeolusService);
+    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
+    private readonly modalService = inject(NgbModal);
+    private readonly popupService = inject(ExerciseUpdateWarningService);
+    private readonly courseService = inject(CourseManagementService);
+    private readonly alertService = inject(AlertService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly fileService = inject(FileService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly translateService = inject(TranslateService);
+    private readonly profileService = inject(ProfileService);
+    private readonly exerciseGroupService = inject(ExerciseGroupService);
+    private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly aeolusService = inject(AeolusService);
 
-    protected readonly documentationType: DocumentationType = 'Programming';
-    protected readonly maxPenaltyPattern = MAX_PENALTY_PATTERN;
-    protected readonly invalidRepositoryNamePattern = INVALID_REPOSITORY_NAME_PATTERN;
-    protected readonly invalidDirectoryNamePattern = INVALID_DIRECTORY_NAME_PATTERN;
-    protected readonly shortNamePattern = PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN;
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
     private readonly appNameRegexForSwift = RegExp(APP_NAME_PATTERN_FOR_SWIFT);
     private readonly packageNameRegexForGo = RegExp(PACKAGE_NAME_PATTERN_FOR_GO);
     private readonly packageNameRegexForDart = RegExp(PACKAGE_NAME_PATTERN_FOR_DART);
+    protected readonly documentationType: DocumentationType = 'Programming';
+    protected readonly maxPenaltyPattern = MAX_PENALTY_PATTERN;
+    protected readonly invalidRepositoryNamePattern = INVALID_REPOSITORY_NAME_PATTERN;
+    protected readonly invalidDirectoryNamePattern = INVALID_DIRECTORY_NAME_PATTERN;
+    protected readonly shortNamePattern = PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN;
 
     @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
     @ViewChild(ProgrammingExerciseModeComponent) exerciseDifficultyComponent?: ProgrammingExerciseModeComponent;
     @ViewChild(ProgrammingExerciseLanguageComponent) exerciseLanguageComponent?: ProgrammingExerciseLanguageComponent;
     @ViewChild(ProgrammingExerciseGradingComponent) exerciseGradingComponent?: ProgrammingExerciseGradingComponent;
-    @ViewChild(ExerciseUpdatePlagiarismComponent) exercisePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
+    exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
 
     packageNamePattern = '';
     isSimpleMode = signal<boolean>(true);
@@ -208,6 +208,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 }
             }.bind(this),
         );
+        effect(() => this.updateFormSectionOnIsValidPlagiarismChange());
 
         effect(
             function initializeEditMode() {
@@ -527,7 +528,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.inputFieldSubscriptions.push(this.exerciseDifficultyComponent?.teamConfigComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
         this.inputFieldSubscriptions.push(this.exerciseLanguageComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
         this.inputFieldSubscriptions.push(this.exerciseGradingComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
-        this.inputFieldSubscriptions.push(this.exercisePlagiarismComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
     }
 
     ngOnDestroy() {
@@ -559,7 +559,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
                 valid: Boolean(
                     this.exerciseGradingComponent?.formValid &&
-                        (this.isExamMode || !this.isEditFieldDisplayedRecord().plagiarismControl || this.exercisePlagiarismComponent?.formValid),
+                        (this.isExamMode || !this.isEditFieldDisplayedRecord().plagiarismControl || this.exercisePlagiarismComponent()?.isFormValid()),
                 ),
                 empty: this.exerciseGradingComponent?.formEmpty,
             },
@@ -973,8 +973,34 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateExerciseSubmissionLimit(validationErrorReasons);
         this.validateTimeout(validationErrorReasons);
         this.validateCheckoutPaths(validationErrorReasons);
+        this.validateExercisePlagiarism(validationErrorReasons);
 
         return validationErrorReasons;
+    }
+
+    private validateExercisePlagiarism(validationErrorReasons: ValidationReason[]) {
+        if (!this.exercisePlagiarismComponent()?.isFormValid()) {
+            const controlMessageMap: Record<string, string> = {
+                similarityThreshold: 'artemisApp.exercise.form.continuousPlagiarismControl.similarityThreshold.pattern',
+                minimumScore: 'artemisApp.exercise.form.continuousPlagiarismControl.minimumScore.customMin',
+                minimumSize: 'artemisApp.exercise.form.continuousPlagiarismControl.minimumSize.customMin',
+                continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod:
+                    'artemisApp.exercise.form.continuousPlagiarismControl.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod.pattern',
+            };
+
+            Object.entries(controlMessageMap).forEach(([key, messageKey]) => {
+                const plagiarismComponentFormControls = this.exercisePlagiarismComponent()?.form.controls;
+                if (plagiarismComponentFormControls) {
+                    const controls = plagiarismComponentFormControls[key as keyof typeof plagiarismComponentFormControls];
+                    if (controls?.invalid) {
+                        validationErrorReasons.push({
+                            translateKey: messageKey,
+                            translateValues: {},
+                        });
+                    }
+                }
+            });
+        }
     }
 
     private validateExerciseTitle(validationErrorReasons: ValidationReason[]): void {
@@ -988,7 +1014,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateKey: 'artemisApp.exercise.form.title.pattern',
                 translateValues: {},
             });
-        } else if (this.exerciseInfoComponent?.titleComponent?.titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue) {
+        } else if (this.exerciseInfoComponent?.exerciseTitleChannelComponent().titleChannelNameComponent().field_title?.control?.errors?.disallowedValue) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.disallowedValue',
                 translateValues: {},
@@ -1288,5 +1314,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             buildPlanLoaded: this.buildPlanLoaded,
         };
+    }
+
+    private updateFormSectionOnIsValidPlagiarismChange() {
+        this.exercisePlagiarismComponent()?.isFormValid(); // registers signal and triggers effect
+        this.calculateFormStatusSections();
     }
 }

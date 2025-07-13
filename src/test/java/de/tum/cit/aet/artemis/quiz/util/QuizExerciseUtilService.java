@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
@@ -21,20 +22,18 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
-import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
-import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
-import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -52,13 +51,13 @@ import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
-import de.tum.cit.aet.artemis.quiz.service.QuizScheduleService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class QuizExerciseUtilService {
@@ -82,9 +81,6 @@ public class QuizExerciseUtilService {
     private QuizExerciseTestRepository quizExerciseRepository;
 
     @Autowired
-    private TeamRepository teamRepo;
-
-    @Autowired
     private ExamTestRepository examTestRepository;
 
     @Autowired
@@ -92,9 +88,6 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @Autowired
     private SubmittedAnswerRepository submittedAnswerRepository;
@@ -110,9 +103,6 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private QuizScheduleService quizScheduleService;
 
     /**
      * Creates and saves a course with one quiz exercise with the title "Title".
@@ -197,7 +187,7 @@ public class QuizExerciseUtilService {
      * @return The created quiz exercise.
      */
     public QuizExercise createQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
-        Course course = courseUtilService.createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
+        Course course = createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
 
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
         QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
@@ -206,25 +196,18 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * Creates and saves a team quiz exercise.
+     * Creates and saves a new course.
      *
-     * @param releaseDate The release date of the quiz.
-     * @param dueDate     The due date of the quiz.
-     * @param quizMode    The mode of the quiz. SYNCHRONIZED, BATCHED or INDIVIDUAL
-     * @param minTeamSize The minimum number of members the team is allowed to have.
-     * @param maxTeamSize The maximum number of members the team is allowed to have.
-     * @return The created quiz exercise.
+     * @param id        The id of the course.
+     * @param startDate The start date of the course.
+     * @param endDate   The end date of the course.
+     * @param exercises Exercises to be added to the course.
+     * @return Created and saved course.
      */
-    public QuizExercise createAndSaveTeamQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, int minTeamSize, int maxTeamSize) {
-        QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
-        setupTeamQuizExercise(quizExercise, minTeamSize, maxTeamSize);
-        quizExerciseRepository.save(quizExercise);
-
-        Team team = new Team();
-        team.setShortName("team");
-        teamRepo.save(quizExercise, team);
-
-        return quizExercise;
+    public Course createAndSaveCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
+        Course course = CourseFactory.generateCourse(id, startDate, endDate, exercises, "tumuser", "tutor", "editor", "instructor");
+        courseRepo.save(course);
+        return course;
     }
 
     /**
@@ -252,7 +235,7 @@ public class QuizExerciseUtilService {
      */
     @NotNull
     public QuizExercise createAndSaveExamQuiz(ZonedDateTime startDate, ZonedDateTime endDate) {
-        Course course = courseUtilService.createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
+        Course course = createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
 
         Exam exam = ExamFactory.generateExam(course, startDate.minusMinutes(5), startDate, endDate, false);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam);

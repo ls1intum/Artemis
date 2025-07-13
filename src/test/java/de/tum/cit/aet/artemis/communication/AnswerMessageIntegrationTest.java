@@ -88,7 +88,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
-        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX);
+        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithAnswerPostsWithinCourse(courseUtilService.createCourse(), TEST_PREFIX);
 
         List<Post> existingPostsAndConversationPostsWithAnswers = existingPostsAndConversationPosts.stream()
                 .filter(coursePost -> coursePost.getAnswers() != null && !coursePost.getAnswers().isEmpty()).toList();
@@ -164,7 +164,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     void testCreateAnswerInExerciseChannel() throws Exception {
         Course course = courseRepository.findWithEagerExercisesById(courseId);
         Exercise exercise = course.getExercises().iterator().next();
-        Channel channel = exerciseUtilService.addChannelToExercise(exercise);
+        Channel channel = conversationUtilService.addChannelToExercise(exercise);
         testCreateChannelAnswer(channel, 1);
     }
 

@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -67,7 +67,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     private TutorialGroupUtilService tutorialGroupUtilService;
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -900,7 +900,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         courseUtilService.enableMessagingForCourse(course);
         TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
                 ZonedDateTime.now().plusDays(1));
-        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(exercise);
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(exercise);
 
         Channel returnedExerciseChannel = request.get("/api/communication/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
 

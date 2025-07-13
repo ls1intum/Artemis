@@ -6,7 +6,7 @@ import { CommitInfo } from 'app/programming/shared/entities/programming-submissi
 import { VcsAccessLogDTO } from 'app/programming/shared/entities/vcs-access-log-entry.model';
 
 export class MockProgrammingExerciseParticipationService implements IProgrammingExerciseParticipationService {
-    getLatestResultWithFeedback = (participationId: number, withSubmission: boolean) => of({} as Result);
+    getLatestResultWithFeedback = (participationId: number) => of({} as Result);
     getStudentParticipationWithLatestResult = (participationId: number) => of({} as ProgrammingExerciseStudentParticipation);
     getStudentParticipationWithAllResults = (participationId: number) => of({} as ProgrammingExerciseStudentParticipation);
     retrieveCommitHistoryForParticipation = (participationId: number) => of([] as CommitInfo[]);

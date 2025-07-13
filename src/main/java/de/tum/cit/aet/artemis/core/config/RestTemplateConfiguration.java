@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationIn
  */
 @Profile(PROFILE_CORE)
 @Configuration
+@Lazy
 public class RestTemplateConfiguration {
 
     private static final int SHORT_CONNECTION_TIMEOUT = 10 * 1000;

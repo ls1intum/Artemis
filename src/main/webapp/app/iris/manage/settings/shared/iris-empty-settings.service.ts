@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import {
-    IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
     IrisCourseChatSubSettings,
     IrisFaqIngestionSubSettings,
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
+    IrisProgrammingExerciseChatSubSettings,
     IrisTextExerciseChatSubSettings,
     IrisTutorSuggestionSubSettings,
 } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
@@ -19,8 +19,8 @@ export class IrisEmptySettingsService {
         if (!irisSettings) {
             return;
         }
-        if (!irisSettings.irisChatSettings) {
-            irisSettings.irisChatSettings = new IrisChatSubSettings();
+        if (!irisSettings.irisProgrammingExerciseChatSettings) {
+            irisSettings.irisProgrammingExerciseChatSettings = new IrisProgrammingExerciseChatSubSettings();
         }
         if (!irisSettings.irisTextExerciseChatSettings) {
             irisSettings.irisTextExerciseChatSettings = new IrisTextExerciseChatSubSettings();

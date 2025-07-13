@@ -65,7 +65,7 @@ export class CourseOverviewGuard implements CanActivate {
                 hasAccess = !!course?.numberOfTutorialGroups;
                 break;
             case CourseOverviewRoutePath.DASHBOARD:
-                hasAccess = course?.studentCourseAnalyticsDashboardEnabled ?? false;
+                hasAccess = !!(course?.studentCourseAnalyticsDashboardEnabled || course?.irisCourseChatEnabled);
                 break;
             case CourseOverviewRoutePath.FAQ:
                 hasAccess = course?.faqEnabled ?? false;

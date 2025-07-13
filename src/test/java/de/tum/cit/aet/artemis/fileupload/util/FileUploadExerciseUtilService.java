@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
 /**
  * Service responsible for initializing the database with specific testdata related to file upload exercises for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class FileUploadExerciseUtilService {
@@ -84,6 +86,7 @@ public class FileUploadExerciseUtilService {
      * @return The created FileUploadExercise
      */
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise(boolean startDateBeforeCurrentTime) {
+        // TODO: try to refactor this call to avoid using examUtilService here
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true, startDateBeforeCurrentTime);
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
         return exerciseRepository.save(fileUploadExercise);
@@ -214,7 +217,6 @@ public class FileUploadExerciseUtilService {
         Result result = new Result();
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setScore(100D);
-        result.setParticipation(participation);
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }
@@ -222,15 +224,14 @@ public class FileUploadExerciseUtilService {
             result.setCompletionDate(ZonedDateTime.now());
         }
         result.setFeedbacks(feedbacks);
+        result.setSubmission(fileUploadSubmission);
         result = resultRepo.save(result);
         for (Feedback feedback : feedbacks) {
             feedback.setResult(result);
         }
         result = resultRepo.save(result);
-        result.setSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission.addResult(result);
-        fileUploadSubmission.getParticipation().addResult(result);
         fileUploadSubmission = fileUploadSubmissionRepo.save(fileUploadSubmission);
         studentParticipationRepo.save(participation);
         return fileUploadSubmission;

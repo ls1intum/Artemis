@@ -75,7 +75,7 @@ export class IrisEnabledComponent implements OnInit {
             return;
         }
         this.irisSettings = this.irisEmptySettingsService.fillEmptyIrisSubSettings(this.irisSettings);
-        this.irisSettings!.irisChatSettings!.enabled = enabled;
+        this.irisSettings!.irisProgrammingExerciseChatSettings!.enabled = enabled;
         this.irisSettings!.irisTextExerciseChatSettings!.enabled = enabled;
         this.irisSettings!.irisCourseChatSettings!.enabled = enabled;
         this.irisSettings!.irisCompetencyGenerationSettings!.enabled = enabled;
@@ -92,8 +92,8 @@ export class IrisEnabledComponent implements OnInit {
 
     private setSubSettings() {
         switch (this.irisSubSettingsType()) {
-            case IrisSubSettingsType.CHAT:
-                this.irisSubSettings.set(this.irisSettings?.irisChatSettings);
+            case IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT:
+                this.irisSubSettings.set(this.irisSettings?.irisProgrammingExerciseChatSettings);
                 break;
             case IrisSubSettingsType.ALL:
                 this.handleSubSettingsTypeAll();
@@ -110,12 +110,21 @@ export class IrisEnabledComponent implements OnInit {
             case IrisSubSettingsType.LECTURE_INGESTION:
                 this.irisSubSettings.set(this.irisSettings?.irisLectureIngestionSettings);
                 break;
+            case IrisSubSettingsType.FAQ_INGESTION:
+                this.irisSubSettings.set(this.irisSettings?.irisFaqIngestionSettings);
+                break;
+            case IrisSubSettingsType.LECTURE:
+                this.irisSubSettings.set(this.irisSettings?.irisLectureChatSettings);
+                break;
+            case IrisSubSettingsType.TUTOR_SUGGESTION:
+                this.irisSubSettings.set(this.irisSettings?.irisTutorSuggestionSettings);
+                break;
         }
     }
 
     private handleSubSettingsTypeAll() {
         const subSettings = [
-            this.irisSettings?.irisChatSettings,
+            this.irisSettings?.irisProgrammingExerciseChatSettings,
             this.irisSettings?.irisTextExerciseChatSettings,
             this.irisSettings?.irisCourseChatSettings,
             this.irisSettings?.irisCompetencyGenerationSettings,

@@ -7,6 +7,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
@@ -38,6 +40,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamUserService;
  * REST controller for managing ExamUser.
  */
 @Conditional(ExamEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/exam/")
 public class ExamUserResource {
@@ -88,7 +91,7 @@ public class ExamUserResource {
         if (signatureFile != null) {
             String oldPathString = examUser.getSigningImagePath();
             Path basePath = FilePathConverter.getExamUserSignatureFilePath();
-            Path savePath = fileService.saveFile(signatureFile, basePath, FilePathType.EXAM_USER_SIGNATURE, false);
+            Path savePath = FileUtil.saveFile(signatureFile, basePath, FilePathType.EXAM_USER_SIGNATURE, false);
             examUser.setSigningImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.EXAM_USER_SIGNATURE, examUser.getId()).toString());
 
             if (oldPathString != null) {

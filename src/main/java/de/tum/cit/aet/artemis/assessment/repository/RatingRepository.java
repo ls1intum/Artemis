@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Spring Data JPA repository for the Rating entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
 
@@ -34,7 +36,7 @@ public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
     @Modifying
     void deleteByResult_Id(long resultId);
 
-    List<Rating> findAllByResult_Participation_Exercise_Course_Id(Long courseId);
+    List<Rating> findAllByResult_Submission_Participation_Exercise_Course_Id(Long courseId);
 
     // Valid JPQL syntax, only SCA is not able to parse it
     @Query("""
@@ -42,7 +44,8 @@ public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
                     CAST(CAST(SUM(ra.rating) AS double) / SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
                     SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END))
                 FROM Result r
-                    JOIN r.participation p
+                    JOIN r.submission s
+                    JOIN s.participation p
                     JOIN p.exercise e
                     LEFT JOIN FETCH Rating ra ON ra.result = r
                 WHERE r.completionDate IS NOT NULL
@@ -56,7 +59,7 @@ public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
      * @param courseId the id of the course for which the ratings are counted
      * @return number of total ratings given for the course
      */
-    long countByResult_Participation_Exercise_Course_Id(long courseId);
+    long countByResult_Submission_Participation_Exercise_Course_Id(long courseId);
 
     /**
      * Count all ratings given to assessments for the given exercise.
@@ -64,5 +67,5 @@ public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
      * @param exerciseId the id of the exercise for which the ratings are counted
      * @return number of total ratings given for the exercise
      */
-    long countByResult_Participation_Exercise_Id(long exerciseId);
+    long countByResult_Submission_Participation_Exercise_Id(long exerciseId);
 }

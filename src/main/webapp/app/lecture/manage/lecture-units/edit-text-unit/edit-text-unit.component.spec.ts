@@ -62,7 +62,6 @@ describe('EditTextUnitComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-            schemas: [],
         }).compileComponents();
         fixture = TestBed.createComponent(EditTextUnitComponent);
         editTextUnitComponent = fixture.componentInstance;

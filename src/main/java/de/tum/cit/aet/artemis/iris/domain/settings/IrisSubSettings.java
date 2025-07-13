@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 /**
  * IrisSubSettings is an abstract super class for the specific sub settings types.
  * Sub Settings are settings for a specific feature of Iris.
- * {@link IrisChatSubSettings} are used to specify settings for the chat feature.
+ * {@link IrisProgrammingExerciseChatSubSettings} are used to specify settings for the chat feature.
  * {@link IrisCompetencyGenerationSubSettings} are used to specify settings for the competency generation feature.
  * <p>
  * Also see {@link de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService} for more information.
@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = IrisChatSubSettings.class, name = "chat"),
+    @JsonSubTypes.Type(value = IrisProgrammingExerciseChatSubSettings.class, name = "programming-exercise-chat"),
     @JsonSubTypes.Type(value = IrisTextExerciseChatSubSettings.class, name = "text-exercise-chat"),
     @JsonSubTypes.Type(value = IrisCourseChatSubSettings.class, name = "course-chat"),
     @JsonSubTypes.Type(value = IrisLectureIngestionSubSettings.class, name = "lecture-ingestion"),
@@ -52,13 +52,13 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 public abstract class IrisSubSettings extends DomainObject {
 
     @Column(name = "enabled")
-    private boolean enabled = false;
+    private boolean enabled = true;
 
     @Column(name = "allowed_variants", nullable = false)
     @Convert(converter = IrisListConverter.class)
     private SortedSet<String> allowedVariants = new TreeSet<>();
 
-    @Column(name = "selected_variant", nullable = false)
+    @Column(name = "selected_variant")
     private String selectedVariant;
 
     public boolean isEnabled() {

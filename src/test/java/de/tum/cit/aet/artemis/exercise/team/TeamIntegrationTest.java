@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -294,7 +296,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetTeam_BadRequest() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        Exercise wrongExercise = exerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        Exercise wrongExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
 
         // Try getting a team with an exercise specified that does not match the exercise id param in the route
         Team team = teamUtilService.addTeamForExercise(wrongExercise, tutor);
@@ -497,9 +499,9 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
         Course course = courses.getFirst();
 
-        ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        TextExercise textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
-        ModelingExercise modelingExercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
+        ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        ModelingExercise modelingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
 
         // make exercises team-based
         Stream.of(programmingExercise, textExercise, modelingExercise).forEach(exercise -> {
@@ -548,8 +550,9 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         StudentParticipation participation = course3.getExercises().stream().filter(exercise -> exercise.equals(textExercise)).findAny().orElseThrow().getStudentParticipations()
                 .iterator().next();
         assertThat(participation.getSubmissions()).as("Latest submission is present").hasSize(1);
-        assertThat(((TextSubmission) participation.getSubmissions().iterator().next()).getText()).as("Latest submission is present").isEqualTo(submissionText);
-        assertThat(participation.getResults()).as("Latest result is present").hasSize(1);
+        Submission returnedSubmission = participation.getSubmissions().iterator().next();
+        assertThat(((TextSubmission) returnedSubmission).getText()).as("Latest submission is present").isEqualTo(submissionText);
+        assertThat(returnedSubmission.getResults()).as("Latest result is present").hasSize(1);
 
         // Submission and Result should not be present for a Team of which the user is not (!) the Team Owner
         submission = ParticipationFactory.generateTextSubmission(submissionText, Language.ENGLISH, true);
@@ -558,7 +561,6 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Course course4 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, Course.class);
         participation = course4.getExercises().stream().filter(exercise -> exercise.equals(textExercise)).findAny().orElseThrow().getStudentParticipations().iterator().next();
         assertThat(participation.getSubmissions()).as("Latest submission is not present").isEmpty();
-        assertThat(participation.getResults()).as("Latest result is not present").isEmpty();
     }
 
     @Test

@@ -53,6 +53,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -95,6 +96,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
     localCIEnabled = true;
     onlineIdeEnabled = false;
+    numberOfResultsOfSolutionParticipation = 0;
+    numberOfResultsOfTemplateParticipation = 0;
 
     private buildPlanLinkTemplate?: string; // only available on non LocalCI systems
     protected readonly RepositoryType = RepositoryType;
@@ -134,6 +137,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
                     this.accountService.setAccessRightsForExercise(exercise);
+                    this.numberOfResultsOfSolutionParticipation = getAllResultsOfAllSubmissions(exercise.solutionParticipation?.submissions).length;
+                    this.numberOfResultsOfTemplateParticipation = getAllResultsOfAllSubmissions(exercise.templateParticipation?.submissions).length;
                     if (exercise.projectKey) {
                         if (exercise.solutionParticipation?.buildPlanId && !this.localCIEnabled) {
                             exercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(

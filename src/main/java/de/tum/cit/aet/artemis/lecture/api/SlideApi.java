@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.api;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.lecture.service.SlideService;
  */
 @Profile(PROFILE_CORE)
 @Controller
+@Lazy
 public class SlideApi extends AbstractLectureApi {
 
     private final SlideService slideService;
@@ -30,8 +32,8 @@ public class SlideApi extends AbstractLectureApi {
         return slideRepository.findByIdElseThrow(id);
     }
 
-    public Slide findSlideByAttachmentUnitIdAndSlideNumber(long attachmentUnitId, int slideNumber) {
-        return slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, slideNumber);
+    public Slide findSlideByAttachmentVideoUnitIdAndSlideNumber(long attachmentVideoUnitId, int slideNumber) {
+        return slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumber(attachmentVideoUnitId, slideNumber);
     }
 
     public void handleDueDateChange(Exercise originalExercise, Exercise updatedExercise) {

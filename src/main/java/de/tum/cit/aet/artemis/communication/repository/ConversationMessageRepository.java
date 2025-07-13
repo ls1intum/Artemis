@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
  * Spring Data repository for the Message (Post) entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ConversationMessageRepository extends ArtemisJpaRepository<Post, Long>, CustomPostRepository {
 
@@ -70,7 +72,7 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
      * @return returns a Page of Messages
      */
     default Page<Post> findMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
-        var specification = Specification.where(getConversationsSpecification(postContextFilter.conversationIds()));
+        var specification = getConversationsSpecification(postContextFilter.conversationIds());
         specification = configureSearchSpecification(specification, postContextFilter, userId);
         // Fetch all necessary attributes to avoid lazy loading (even though relations are defined as EAGER in the domain class, specification queries do not respect this)
         return findPostsWithSpecification(pageable, specification);

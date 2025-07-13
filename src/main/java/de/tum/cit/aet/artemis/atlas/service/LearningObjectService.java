@@ -3,11 +3,13 @@ package de.tum.cit.aet.artemis.atlas.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
  * @see Exercise
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class LearningObjectService {
 
@@ -93,9 +96,8 @@ public class LearningObjectService {
 
         Set<LectureUnitCompletion> lectureUnitCompletions = lectureUnitRepositoryApi.get().findByLectureUnitsAndUserId(lectureUnits, user.getId());
         lectureUnits.forEach(lectureUnit -> {
-            Optional<LectureUnitCompletion> completion = lectureUnitCompletions.stream().filter(lectureUnitCompletion -> lectureUnitCompletion.getLectureUnit().equals(lectureUnit))
-                    .findFirst();
-            lectureUnit.setCompletedUsers(completion.map(Set::of).orElse(Set.of()));
+            var optionalCompletion = lectureUnitCompletions.stream().filter(completion -> Objects.equals(completion.getLectureUnit().getId(), lectureUnit.getId())).findFirst();
+            lectureUnit.setCompletedUsers(optionalCompletion.map(Set::of).orElse(Set.of()));
         });
     }
 }

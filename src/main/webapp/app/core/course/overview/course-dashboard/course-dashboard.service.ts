@@ -121,14 +121,12 @@ export class CourseDashboardService {
 
     private mapToLectureUnitType(type: string): LectureUnitType {
         switch (type) {
-            case 'de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit':
-                return LectureUnitType.ATTACHMENT;
+            case 'de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit':
+                return LectureUnitType.ATTACHMENT_VIDEO;
             case 'de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit':
                 return LectureUnitType.EXERCISE;
             case 'de.tum.cit.aet.artemis.lecture.domain.TextUnit':
                 return LectureUnitType.TEXT;
-            case 'de.tum.cit.aet.artemis.lecture.domain.VideoUnit':
-                return LectureUnitType.VIDEO;
             case 'de.tum.cit.aet.artemis.lecture.domain.OnlineUnit':
                 return LectureUnitType.ONLINE;
             default:

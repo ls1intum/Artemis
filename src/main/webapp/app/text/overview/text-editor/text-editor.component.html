@@ -20,7 +20,7 @@
                             <jhi-button
                                 id="Continue"
                                 [title]="'entity.action.continueSubmission'"
-                                [routerLink]="['/courses', course?.id, 'exercises', 'text-exercises', textExercise?.id!, 'participate', result.participation?.id]"
+                                [routerLink]="['/courses', course?.id, 'exercises', 'text-exercises', textExercise?.id!, 'participate', result.submission?.participation?.id]"
                             />
                         }
                     } @else {
@@ -54,7 +54,12 @@
         @if (isReadOnlyWithShowResult) {
             @if (showHistory) {
                 <div id="result-history" class="row mb-2">
-                    <jhi-result-history [results]="sortedHistoryResults" [exercise]="textExercise" [selectedResultId]="submission.latestResult?.id!" />
+                    <jhi-result-history
+                        [results]="sortedHistoryResults"
+                        [exercise]="textExercise"
+                        [participationInput]="participation"
+                        [selectedResultId]="submission.latestResult?.id!"
+                    />
                 </div>
             }
         }

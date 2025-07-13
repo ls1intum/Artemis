@@ -15,11 +15,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -37,8 +40,11 @@ import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
+import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
+import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
+import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 
 /**
  * This class describes a service for SAML2 authentication.
@@ -52,6 +58,7 @@ import de.tum.cit.aet.artemis.core.service.user.UserService;
  * The service creates a {@link UsernamePasswordAuthenticationToken} which can then be used by the client to authenticate.
  * This is needed, since the client "does not know" that he is already authenticated via SAML2.
  */
+@Lazy
 @Service
 @Profile(PROFILE_SAML2)
 public class SAML2Service {
@@ -78,6 +85,8 @@ public class SAML2Service {
 
     private final Map<String, Pattern> extractionPatterns;
 
+    private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
+
     /**
      * Constructs a new instance.
      *
@@ -87,13 +96,14 @@ public class SAML2Service {
      * @param userCreationService  The user creation service
      */
     public SAML2Service(final AuditEventRepository auditEventRepository, final UserRepository userRepository, final SAML2Properties properties,
-            final UserCreationService userCreationService, MailService mailService, UserService userService) {
+            final UserCreationService userCreationService, MailService mailService, UserService userService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService) {
         this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
         this.properties = properties;
         this.userCreationService = userCreationService;
         this.mailService = mailService;
         this.userService = userService;
+        this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
 
         this.extractionPatterns = generateExtractionPatterns(properties);
     }
@@ -110,9 +120,10 @@ public class SAML2Service {
      *
      * @param originalAuth the original authentication with details
      * @param principal    the principal, containing the user information
+     * @param request      the HTTP request, used to extract the client environment
      * @return a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user
      */
-    public Authentication handleAuthentication(final Authentication originalAuth, final Saml2AuthenticatedPrincipal principal) {
+    public Authentication handleAuthentication(final Authentication originalAuth, final Saml2AuthenticatedPrincipal principal, final HttpServletRequest request) {
         Map<String, Object> details = originalAuth.getDetails() == null ? Map.of() : Map.of("details", originalAuth.getDetails());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -148,8 +159,10 @@ public class SAML2Service {
             throw new UserNotActivatedException("User was disabled.");
         }
 
-        auth = new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
-        auditEventRepository.add(new AuditEvent(Instant.now(), user.get().getLogin(), "SAML2_AUTHENTICATION_SUCCESS", details));
+        String login = user.get().getLogin();
+        auth = new UsernamePasswordAuthenticationToken(login, user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
+        auditEventRepository.add(new AuditEvent(Instant.now(), login, "SAML2_AUTHENTICATION_SUCCESS", details));
+        artemisSuccessfulLoginService.sendLoginEmail(login, AuthenticationMethod.SAML2, HttpRequestUtils.getClientEnvironment(request));
         return auth;
     }
 

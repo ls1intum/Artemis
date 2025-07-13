@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -119,11 +120,11 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
         course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
-        classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
-        activityExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
-        objectExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
-        useCaseExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "UseCaseDiagram");
-        finishedExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "finished");
+        classExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        activityExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
+        objectExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
+        useCaseExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "UseCaseDiagram");
+        finishedExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "finished");
         afterDueDateParticipation = participationUtilService.createAndSaveParticipationForExercise(finishedExercise, TEST_PREFIX + "student3");
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student3");
 
@@ -312,7 +313,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         returnedSubmission = request.putWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", returnedSubmission, ModelingSubmission.class,
                 HttpStatus.OK);
         StudentParticipation studentParticipation = (StudentParticipation) returnedSubmission.getParticipation();
-        assertThat(studentParticipation.getResults()).as("do not send old results to the client").isEmpty();
         assertThat(studentParticipation.getSubmissions()).as("do not send old submissions to the client").isEmpty();
         assertThat(studentParticipation.getExercise().getGradingInstructions()).as("sensitive information (grading instructions) is hidden").isNull();
         assertThat(returnedSubmission.getLatestResult()).as("sensitive information (exercise result) is hidden").isNull();
@@ -969,7 +969,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {
         assertThat(submission.getParticipation().getSubmissions()).isNullOrEmpty();
-        assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
         if (isStudent) {
             var modelingExercise = ((ModelingExercise) submission.getParticipation().getExercise());
             assertThat(modelingExercise.getExampleSolutionModel()).isNullOrEmpty();
@@ -1025,7 +1024,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         Result result = new Result();
         result.setAssessmentType(assessmentType);
         result.setCompletionDate(ZonedDateTime.now());
-        result.setParticipation(participation);
+        submission.setParticipation(participation);
         result.setSubmission(submission);
         if (assessor != null) {
             result.setAssessor(assessor);

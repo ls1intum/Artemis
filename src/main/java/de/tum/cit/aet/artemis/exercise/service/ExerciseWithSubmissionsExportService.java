@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 
@@ -35,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
  */
 // We cannot remove the abstract as this breaks the Spring Dependency Injection because then Spring doesn't know which bean to inject
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public abstract class ExerciseWithSubmissionsExportService {
 
@@ -56,15 +59,12 @@ public abstract class ExerciseWithSubmissionsExportService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseWithSubmissionsExportService.class);
 
-    private final FileService fileService;
-
     private final ObjectMapper objectMapper;
 
     private final SubmissionExportService submissionExportService;
 
     protected ExerciseWithSubmissionsExportService(FileService fileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
             SubmissionExportService submissionExportService) {
-        this.fileService = fileService;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.submissionExportService = submissionExportService;
     }
@@ -86,7 +86,7 @@ public abstract class ExerciseWithSubmissionsExportService {
     private void exportProblemStatementWithEmbeddedFiles(Exercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped) throws IOException {
         var problemStatementFileExtension = ".md";
         String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getSanitizedExerciseTitle() + problemStatementFileExtension;
-        String cleanProblemStatementFileName = FileService.sanitizeFilename(problemStatementFileName);
+        String cleanProblemStatementFileName = FileUtil.sanitizeFilename(problemStatementFileName);
         var problemStatementExportPath = exportDir.resolve(cleanProblemStatementFileName);
         if (exercise.getProblemStatement() != null) {
             FileUtils.writeStringToFile(problemStatementExportPath.toFile(), exercise.getProblemStatement(), StandardCharsets.UTF_8);
@@ -232,7 +232,7 @@ public abstract class ExerciseWithSubmissionsExportService {
     private void exportExerciseDetails(Exercise exercise, Path exportDir, List<Path> pathsToBeZipped) throws IOException {
         var exerciseDetailsFileExtension = ".json";
         String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
-        String cleanExerciseDetailsFileName = FileService.sanitizeFilename(exerciseDetailsFileName);
+        String cleanExerciseDetailsFileName = FileUtil.sanitizeFilename(exerciseDetailsFileName);
         var exerciseDetailsExportPath = exportDir.resolve(cleanExerciseDetailsFileName);
         // do not include duplicate information
         exercise.getCourseViaExerciseGroupOrCourseMember().setExercises(null);
@@ -240,7 +240,7 @@ public abstract class ExerciseWithSubmissionsExportService {
         // do not include related entities ids
         Optional.ofNullable(exercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
         Optional.ofNullable(exercise.getTeamAssignmentConfig()).ifPresent(it -> it.setId(null));
-        pathsToBeZipped.add(fileService.writeObjectToJsonFile(exercise, this.objectMapper, exerciseDetailsExportPath));
+        pathsToBeZipped.add(FileUtil.writeObjectToJsonFile(exercise, this.objectMapper, exerciseDetailsExportPath));
     }
 
     protected Path exportExerciseWithSubmissions(Exercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,

@@ -23,7 +23,6 @@ describe('UnitCreationCardComponent', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [MockProvider(TranslateService)],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

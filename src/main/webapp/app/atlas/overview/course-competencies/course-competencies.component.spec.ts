@@ -71,7 +71,6 @@ describe('CourseCompetencies', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ScienceService),
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

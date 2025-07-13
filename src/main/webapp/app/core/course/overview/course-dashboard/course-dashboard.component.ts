@@ -12,10 +12,9 @@ import { CompetencyInformation, ExerciseMetrics, StudentMetrics } from 'app/atla
 import { ExerciseLateness } from 'app/core/course/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { ExercisePerformance } from 'app/core/course/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { round } from 'app/shared/util/utils';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS, PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -47,7 +46,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private courseDashboardService = inject(CourseDashboardService);
-    private irisSettingsService = inject(IrisSettingsService);
     private profileService = inject(ProfileService);
 
     courseId: number;
@@ -60,7 +58,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     hasCompetencies = false;
     exerciseLateness?: ExerciseLateness[];
     exercisePerformance?: ExercisePerformance[];
-    irisEnabled = false;
     atlasEnabled = false;
     studentMetrics?: StudentMetrics;
 
@@ -81,12 +78,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.paramSubscription = this.route?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
-
-            if (this.profileService.isProfileActive(PROFILE_IRIS)) {
-                this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                    this.irisEnabled = !!settings?.irisCourseChatSettings?.enabled;
-                });
-            }
         });
         this.setCourse(this.courseStorageService.getCourse(this.courseId));
 
@@ -234,7 +225,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     }
 
     private setCourse(course?: Course) {
-        const shouldLoadMetrics = this.course?.id !== course?.id;
+        const shouldLoadMetrics = this.course?.id !== course?.id && course?.studentCourseAnalyticsDashboardEnabled;
         this.course = course;
         if (this.course && shouldLoadMetrics) {
             this.loadMetrics();

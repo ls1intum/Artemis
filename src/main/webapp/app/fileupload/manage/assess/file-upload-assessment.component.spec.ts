@@ -135,7 +135,6 @@ describe('FileUploadAssessmentComponent', () => {
             comp.result = createResult(comp.submission);
             setLatestSubmissionResult(comp.submission, comp.result);
             comp.submission.participation!.submissions = [comp.submission];
-            comp.submission.participation!.results = [comp.submission.latestResult!];
             comp.isAssessor = true;
             comp.assessmentsAreValid = true;
             comp.isLoading = false;
@@ -156,7 +155,6 @@ describe('FileUploadAssessmentComponent', () => {
             comp.result = createResult(comp.submission);
             setLatestSubmissionResult(comp.submission, comp.result);
             comp.submission.participation!.submissions = [comp.submission];
-            comp.submission.participation!.results = [comp.submission.latestResult!];
             comp.isAssessor = true;
             comp.assessmentsAreValid = true;
             comp.isLoading = false;
@@ -406,7 +404,7 @@ describe('FileUploadAssessmentComponent', () => {
 
         expect(comp.isLoading).toBeFalse();
         expect(comp.result).toEqual(changedResult);
-        expect(comp.participation.results![0]).toEqual(changedResult);
+        expect(comp.submission.results![0]).toEqual(changedResult);
     });
 
     describe('onUpdateAssessmentAfterComplaint', () => {
@@ -440,7 +438,7 @@ describe('FileUploadAssessmentComponent', () => {
             comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
             expect(comp.isLoading).toBeFalse();
             expect(comp.result).toEqual(changedResult);
-            expect(comp.participation.results![0]).toEqual(changedResult);
+            expect(comp.submission.results![0]).toEqual(changedResult);
             expect(onSuccessCalled).toBeTrue();
             expect(onErrorCalled).toBeFalse();
         });
@@ -730,7 +728,6 @@ const createResult = (submission: FileUploadSubmission) => {
     result.score = 1;
     result.rated = true;
     result.submission = submission;
-    result.participation = undefined;
     result.assessmentType = AssessmentType.MANUAL;
     result.exampleResult = false;
     result.hasComplaint = false;

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
@@ -20,11 +22,13 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyE
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyRecommendationDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 
 /**
  * Service to handle the Competency generation subsystem of Iris.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisCompetencyGenerationService {
@@ -41,14 +45,17 @@ public class IrisCompetencyGenerationService {
 
     private final UserRepository userRepository;
 
+    private final IrisSettingsService irisSettingsService;
+
     public IrisCompetencyGenerationService(PyrisPipelineService pyrisPipelineService, LLMTokenUsageService llmTokenUsageService, CourseRepository courseRepository,
-            IrisWebsocketService websocketService, PyrisJobService pyrisJobService, UserRepository userRepository) {
+            IrisWebsocketService websocketService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisSettingsService irisSettingsService) {
         this.pyrisPipelineService = pyrisPipelineService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.courseRepository = courseRepository;
         this.websocketService = websocketService;
         this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -60,10 +67,15 @@ public class IrisCompetencyGenerationService {
      * @param currentCompetencies the current competencies of the course (to avoid re-extraction)
      */
     public void executeCompetencyExtractionPipeline(User user, Course course, String courseDescription, PyrisCompetencyRecommendationDTO[] currentCompetencies) {
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCompetencyGenerationSettings();
+        if (!settings.enabled()) {
+            throw new ConflictException("Competency extraction is disabled for this course", "Iris", "irisDisabled");
+        }
+
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "competency-extraction",
-                "default",
+                settings.selectedVariant(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getId())),
                 executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, CompetencyTaxonomy.values(), 5),

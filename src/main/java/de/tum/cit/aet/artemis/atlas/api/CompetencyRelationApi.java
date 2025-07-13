@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.api;
 import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 
 @Controller
 @Conditional(AtlasEnabled.class)
+@Lazy
 public class CompetencyRelationApi extends AbstractAtlasApi {
 
     private final CompetencyRelationRepository competencyRelationRepository;

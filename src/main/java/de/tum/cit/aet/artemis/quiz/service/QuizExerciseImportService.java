@@ -18,6 +18,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,8 +29,8 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
@@ -47,6 +48,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class QuizExerciseImportService extends ExerciseImportService {
 
@@ -54,18 +56,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     private final QuizExerciseService quizExerciseService;
 
-    private final FileService fileService;
-
     private final ChannelService channelService;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    public QuizExerciseImportService(QuizExerciseService quizExerciseService, FileService fileService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
-            Optional<CompetencyProgressApi> competencyProgressApi) {
+    public QuizExerciseImportService(QuizExerciseService quizExerciseService, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
+            ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService, Optional<CompetencyProgressApi> competencyProgressApi) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.quizExerciseService = quizExerciseService;
-        this.fileService = fileService;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
     }
@@ -137,14 +135,12 @@ public class QuizExerciseImportService extends ExerciseImportService {
         for (QuizQuestion quizQuestion : sourceExercise.getQuizQuestions()) {
             quizQuestion.setId(null);
             quizQuestion.setQuizQuestionStatistic(null);
-            if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
-                setUpMultipleChoiceQuestionForImport(mcQuestion);
-            }
-            else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
-                setUpDragAndDropQuestionForImport(dndQuestion);
-            }
-            else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
-                setUpShortAnswerQuestionForImport(saQuestion);
+            switch (quizQuestion) {
+                case MultipleChoiceQuestion mcQuestion -> setUpMultipleChoiceQuestionForImport(mcQuestion);
+                case DragAndDropQuestion dndQuestion -> setUpDragAndDropQuestionForImport(dndQuestion);
+                case ShortAnswerQuestion saQuestion -> setUpShortAnswerQuestionForImport(saQuestion);
+                default -> {
+                }
             }
             quizQuestion.setExercise(newExercise);
 
@@ -167,16 +163,16 @@ public class QuizExerciseImportService extends ExerciseImportService {
     private void setUpDragAndDropQuestionForImport(DragAndDropQuestion dndQuestion) {
         if (dndQuestion.getBackgroundFilePath() != null) {
             URI backgroundFilePublicPath = URI.create(dndQuestion.getBackgroundFilePath());
-            URI backgroundFileIntendedPath = URI.create(FileService.BACKGROUND_FILE_SUBPATH);
-            FileService.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(dndQuestion.getBackgroundFilePath());
+            URI backgroundFileIntendedPath = URI.create(FileUtil.BACKGROUND_FILE_SUBPATH);
+            FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(dndQuestion.getBackgroundFilePath());
             // If it doesn't exist yet, it is a new image and will be added later.
             if (Files.exists(FilePathConverter.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND))) {
                 // Check whether pictureFilePublicPath is actually a picture file path
                 // (which is the case when its path starts with the path backgroundFileIntendedPath)
-                FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
+                FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
                 // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
                 Path oldPath = FilePathConverter.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND);
-                Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathConverter.getDragAndDropBackgroundFilePath(), FilePathType.DRAG_AND_DROP_BACKGROUND);
+                Path newPath = FileUtil.copyExistingFileToTarget(oldPath, FilePathConverter.getDragAndDropBackgroundFilePath(), FilePathType.DRAG_AND_DROP_BACKGROUND);
                 dndQuestion.setBackgroundFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, FilePathType.DRAG_AND_DROP_BACKGROUND, null).toString());
             }
         }
@@ -212,15 +208,15 @@ public class QuizExerciseImportService extends ExerciseImportService {
             }
 
             URI pictureFilePublicPath = URI.create(dragItem.getPictureFilePath());
-            URI pictureFileIntendedPath = URI.create(FileService.PICTURE_FILE_SUBPATH);
-            FileService.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(dragItem.getPictureFilePath());
+            URI pictureFileIntendedPath = URI.create(FileUtil.PICTURE_FILE_SUBPATH);
+            FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(dragItem.getPictureFilePath());
             if (Files.exists(FilePathConverter.fileSystemPathForExternalUri(pictureFilePublicPath, FilePathType.DRAG_ITEM))) {
                 // Check whether pictureFilePublicPath is actually a picture file path
                 // (which is the case when its path starts with the path pictureFileIntendedPath)
-                FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
+                FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
                 // Need to copy the file and get a new path, same as above
                 Path oldDragItemPath = FilePathConverter.fileSystemPathForExternalUri(pictureFilePublicPath, FilePathType.DRAG_ITEM);
-                Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathConverter.getDragItemFilePath(), FilePathType.DRAG_ITEM);
+                Path newDragItemPath = FileUtil.copyExistingFileToTarget(oldDragItemPath, FilePathConverter.getDragItemFilePath(), FilePathType.DRAG_ITEM);
                 dragItem.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newDragItemPath, FilePathType.DRAG_ITEM, null).toString());
             }
         }

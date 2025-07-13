@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -76,6 +77,7 @@ import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ResultService {
 
@@ -177,11 +179,11 @@ public class ResultService {
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
 
-            if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation && ltiApi.isPresent()) {
-                ltiApi.get().onNewResult((StudentParticipation) savedResult.getParticipation());
+            if (savedResult.getSubmission().getParticipation() instanceof ProgrammingExerciseStudentParticipation && ltiApi.isPresent()) {
+                ltiApi.get().onNewResult((StudentParticipation) savedResult.getSubmission().getParticipation());
             }
 
-            resultWebsocketService.broadcastNewResult(savedResult.getParticipation(), savedResult);
+            resultWebsocketService.broadcastNewResult(savedResult.getSubmission().getParticipation(), savedResult);
         }
         return savedResult;
     }
@@ -269,7 +271,7 @@ public class ResultService {
      * @return the list of filtered feedbacks
      */
     public List<Feedback> filterFeedbackForClient(Result result) {
-        this.filterSensitiveInformationIfNecessary(result.getParticipation(), result);
+        this.filterSensitiveInformationIfNecessary(result.getSubmission().getParticipation(), result);
 
         return result.getFeedbacks().stream() //
                 .map(feedback -> feedback.result(null)) // remove unnecessary data to keep the json payload smaller
@@ -392,13 +394,6 @@ public class ResultService {
             results.removeIf(result -> result.getSubmission() == null || !result.getSubmission().isSubmitted());
         }
 
-        // remove unnecessary elements in the json response
-        results.forEach(result -> {
-            result.getParticipation().setResults(null);
-            result.getParticipation().setSubmissions(null);
-            result.getParticipation().setExercise(null);
-        });
-
         return results;
     }
 
@@ -412,7 +407,7 @@ public class ResultService {
      */
     public Result getResultForParticipationAndCheckAccess(Long participationId, Long resultId, Role role) {
         Result result = resultRepository.findByIdElseThrow(resultId);
-        Participation participation = result.getParticipation();
+        Participation participation = result.getSubmission().getParticipation();
         if (!participation.getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + "!",
                     "Participation", "400");

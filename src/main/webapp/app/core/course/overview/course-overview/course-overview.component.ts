@@ -31,6 +31,13 @@ import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-t
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseUnenrollmentModalComponent } from 'app/core/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
+import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
+import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
+import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
+import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
+import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -49,6 +56,7 @@ import { CourseUnenrollmentModalComponent } from 'app/core/course/overview/cours
         CourseNotificationOverviewComponent,
         CourseTitleBarComponent,
         CourseSidebarComponent,
+        CourseNotificationPresetPickerComponent,
     ],
     providers: [MetisConversationService],
 })
@@ -61,12 +69,20 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private modalService = inject(NgbModal);
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
+    protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
+    protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
 
     private toggleSidebarEventSubscription: Subscription;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
     private examStartedSubscription: Subscription;
     manageViewLink = signal<string[]>(['']);
+    profileService = inject(ProfileService);
+
+    protected selectableSettingPresets: CourseNotificationSettingPreset[];
+    protected selectedSettingPreset?: CourseNotificationSettingPreset;
+    private info?: CourseNotificationInfo;
+    private settingInfo?: CourseNotificationSettingInfo;
 
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
@@ -74,6 +90,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     activatedComponentReference = signal<
         CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
     >(undefined);
+    isTestServer = this.profileService.isTestServer();
+    isDevelopment = this.profileService.isDevelopment();
 
     // Icons
     faTimes = faTimes;
@@ -95,6 +113,26 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.subscription = this.route?.params.subscribe(async (params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.courseId.set(id);
+
+            this.courseNotificationSettingService.getSettingInfo(this.courseId(), false).subscribe((settingInfo) => {
+                if (settingInfo) {
+                    this.settingInfo = settingInfo;
+
+                    if (this.info) {
+                        this.initializeCourseNotificationValues();
+                    }
+                }
+            });
+
+            this.courseNotificationService.getInfo().subscribe((info) => {
+                if (info.body) {
+                    this.info = info.body;
+
+                    if (this.settingInfo) {
+                        this.initializeCourseNotificationValues();
+                    }
+                }
+            });
         });
         await super.ngOnInit();
 
@@ -102,10 +140,32 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             this.isExamStarted.set(isStarted);
         });
 
-        await this.initAfterCourseLoad();
         this.courseActionItems.set(this.getCourseActionItems());
         this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed ?? false);
         this.sidebarItems.set(this.getSidebarItems());
+        await this.initAfterCourseLoad();
+    }
+
+    /**
+     * Initializes component values once both settingInfo and info are available.
+     * Sets up selectable presets, and the currently selected preset.
+     */
+    private initializeCourseNotificationValues() {
+        this.selectableSettingPresets = this.info!.presets;
+
+        this.selectedSettingPreset =
+            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!;
+    }
+
+    /**
+     * Handles selection of a notification preset.
+     *
+     * @param presetTypeId - The ID of the selected preset (0 for custom settings)
+     */
+    presetSelected(presetTypeId: number) {
+        this.courseNotificationSettingService.setSettingPreset(this.courseId(), presetTypeId, this.selectedSettingPreset);
+
+        this.selectedSettingPreset = presetTypeId === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === presetTypeId)!;
     }
 
     protected handleNavigationEndActions() {
@@ -162,8 +222,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                 if (res.body) {
                     this.course.set(res.body);
                 }
-
-                this.setupConversationService();
 
                 setTimeout(() => this.refreshingCourse.set(false), 500); // ensure min animation duration
             }),
@@ -234,7 +292,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         const currentCourse = this.course();
 
         // Use the service to get sidebar items
-        const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.studentCourseAnalyticsDashboardEnabled);
+        const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled);
         sidebarItems.push(...defaultItems);
 
         if (currentCourse?.lectures) {
@@ -271,6 +329,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             const faqItem = this.sidebarItemService.getFaqItem();
             sidebarItems.push(faqItem);
         }
+
+        if (this.isTestServer || this.isDevelopment) {
+            sidebarItems.push(this.sidebarItemService.getPracticeItem());
+        }
+
         sidebarItems.push(this.sidebarItemService.getNotificationSettingsItem());
 
         return sidebarItems;
@@ -410,7 +473,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
     /** Navigate to a new Course */
     switchCourse(course: Course) {
-        const url = ['courses', course.id, 'exercises'];
+        const url = ['courses', course.id, 'dashboard'];
         this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
             this.router.navigate(url);
         });

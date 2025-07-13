@@ -27,11 +27,13 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
@@ -88,6 +90,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Autowired
     private FeedbackRepository feedbackRepository;
 
+    @Autowired
+    private LearnerProfileUtilService learnerProfileUtilService;
+
     private TextExercise textExercise;
 
     private TextSubmission textSubmission;
@@ -106,8 +111,11 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         super.initTestCase();
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 0);
 
+        // Create learner profiles for test users
+        learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
+
         var textCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        textExercise = exerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
+        textExercise = ExerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
         textSubmission = ParticipationFactory.generateTextSubmission("This is a test sentence. This is a second test sentence. This is a third test sentence.", Language.ENGLISH,
                 true);
         var studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise,
@@ -117,7 +125,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         textSubmissionRepository.save(textSubmission);
 
         var programmingCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(programmingCourse.getExercises(), "Programming");
+        programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(programmingCourse.getExercises(), "Programming");
         // Allow manual results
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
@@ -131,7 +139,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingSubmissionRepository.save(programmingSubmission);
 
         var modelingCourse = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        modelingExercise = exerciseUtilService.findModelingExerciseWithTitle(modelingCourse.getExercises(), "ClassDiagram");
+        modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(modelingCourse.getExercises(), "ClassDiagram");
         modelingSubmission = ParticipationFactory.generateModelingSubmission("", true);
         var modelingParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
@@ -343,7 +351,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         var result = new Result();
         result.setScore(1.0);
         result.setSubmission(programmingSubmission);
-        result.setParticipation(participation);
         result.setAssessmentType(AssessmentType.MANUAL);
         // Create example feedback so that Athena can process it
         var feedback = new Feedback();

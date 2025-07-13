@@ -27,7 +27,6 @@ describe('CompetencyCardComponent', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [MockProvider(TranslateService)],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

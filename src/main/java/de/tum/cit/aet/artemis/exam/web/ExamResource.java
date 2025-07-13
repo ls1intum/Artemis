@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -118,6 +119,7 @@ import tech.jhipster.web.util.PaginationUtil;
  * REST controller for managing Exam.
  */
 @Conditional(ExamEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/exam/")
 public class ExamResource {
@@ -793,7 +795,7 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         // Forbid cleaning the course if no archive has been created
         if (!exam.hasExamArchive()) {
-            throw new BadRequestAlertException("Failed to clean up exam " + examId + " because it needs to be archived first.", ENTITY_NAME, "archivenonexistant");
+            throw new BadRequestAlertException("Failed to clean up exam " + examId + " because it needs to be archived first.", ENTITY_NAME, "archivenonexistent");
         }
         examService.cleanupExam(examId, principal);
         return ResponseEntity.ok().build();
@@ -1051,7 +1053,7 @@ public class ExamResource {
 
         Optional<User> optionalStudent = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (optionalStudent.isEmpty()) {
-            throw new EntityNotFoundException("user", studentLogin);
+            throw new EntityNotFoundException("User with login " + studentLogin + " does not exist");
         }
 
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));

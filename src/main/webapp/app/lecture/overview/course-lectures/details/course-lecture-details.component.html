@@ -7,39 +7,36 @@
 }
 @if (lecture) {
     <div>
-        <div class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+        <div class="px-3 pb-3 pt-2 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
             <!-- HEADER INFORMATION START -->
-            <div class="mt-2 me-1 course-info-bar">
-                <div class="row">
-                    <div class="col general-info">
-                        <h3>
-                            <span>{{ lecture!.title }}</span>
-                        </h3>
-                        <h4>
-                            @if (lecture?.startDate && lecture?.endDate) {
-                                <span class="me-2">
-                                    {{ 'artemisApp.courseOverview.lectureDetails.date' | artemisTranslate }} {{ lecture!.startDate | artemisDate }} -
-                                    {{ lecture!.endDate | artemisDate: (endsSameDay ? 'time' : 'long') }}
-                                </span>
-                            }
-                        </h4>
+            <div class="d-flex align-items-center justify-content-between">
+                <h5 class="my-2">
+                    <fa-icon class="me-2" [icon]="faChalkboardTeacher" />
+                    {{ lecture.title }}
+                </h5>
+                @if (lecture?.course?.isAtLeastEditor) {
+                    <div class="col-auto d-flex align-items-center">
+                        <button id="manageLectureButton" class="btn btn-secondary" (click)="redirectToLectureManagement()" jhiTranslate="artemisApp.courseOverview.manage"></button>
                     </div>
-                    @if (lecture?.course?.isAtLeastEditor) {
-                        <div class="col-auto d-flex align-items-center">
-                            <button
-                                id="manageLectureButton"
-                                class="btn btn-secondary"
-                                (click)="redirectToLectureManagement()"
-                                jhiTranslate="artemisApp.courseOverview.manage"
-                            ></button>
-                        </div>
-                    }
-                </div>
+                }
             </div>
+
+            <hr class="mt-2 mb-3" />
             <!-- HEADER INFORMATION END -->
             <!-- LECTURE START -->
-            <div class="row mt-2">
+            <div class="row">
                 <div class="col pe-0 pb-3 flex-grow-1">
+                    <div class="d-flex flex-row gap-2 mb-3">
+                        @for (informationBoxData of informationBoxData; track informationBoxData) {
+                            <jhi-information-box [informationBoxData]="informationBoxData">
+                                <ng-container contentComponent>
+                                    @if (informationBoxData.content.type === 'dateTime') {
+                                        <span contentComponent>{{ informationBoxData.content.value | artemisDate }}</span>
+                                    }
+                                </ng-container>
+                            </jhi-information-box>
+                        }
+                    </div>
                     @if (lecture.description) {
                         <div class="row mb-2 mt-2 align-items-baseline">
                             <div class="col-auto">
@@ -73,11 +70,8 @@
                                     @case (LectureUnitType.EXERCISE) {
                                         <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="lecture!.course!" />
                                     }
-                                    @case (LectureUnitType.ATTACHMENT) {
-                                        <jhi-attachment-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
-                                    }
-                                    @case (LectureUnitType.VIDEO) {
-                                        <jhi-video-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    @case (LectureUnitType.ATTACHMENT_VIDEO) {
+                                        <jhi-attachment-video-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.TEXT) {
                                         <jhi-text-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />

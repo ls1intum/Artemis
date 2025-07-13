@@ -1,15 +1,16 @@
 package de.tum.cit.aet.artemis.atlas.domain.competency;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -37,18 +38,16 @@ public class LearningPath extends DomainObject {
     @Column(name = "started_by_student")
     private boolean startedByStudent = false;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id")
     @JsonIgnoreProperties({ "competencies", "prerequisites", "exercises" })
     private Course course;
 
-    @ManyToMany
-    @JoinTable(name = "competency_learning_path", joinColumns = @JoinColumn(name = "learning_path_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties({ "exercises", "course", "learningPaths" })
+    @Transient
     private Set<CourseCompetency> competencies = new HashSet<>();
 
     public int getProgress() {
@@ -87,7 +86,7 @@ public class LearningPath extends DomainObject {
         this.competencies.add(competency);
     }
 
-    public void addCompetencies(Set<CourseCompetency> competencies) {
+    public void addCompetencies(Collection<? extends CourseCompetency> competencies) {
         this.competencies.addAll(competencies);
     }
 
@@ -105,6 +104,6 @@ public class LearningPath extends DomainObject {
 
     @Override
     public String toString() {
-        return "LearningPath{" + "id=" + getId() + ", user=" + user + ", course=" + course + ", competencies=" + competencies + ", startedByStudent=" + startedByStudent + "}";
+        return "LearningPath{" + "id=" + getId() + ", user=" + user + ", course=" + course + ", startedByStudent=" + startedByStudent + "}";
     }
 }

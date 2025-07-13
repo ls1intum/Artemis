@@ -54,6 +54,14 @@ public record ExerciseInformationDTO(long id, String shortName, String title, Zo
                 exercise.getIncludedInOverallScore(), exercise.getDifficulty(), exercise.getMode(), exercise.getClass(), allowOnlineEditor, allowOfflineIde);
     }
 
+    public boolean isIndividual() {
+        return exerciseMode == ExerciseMode.INDIVIDUAL;
+    }
+
+    public boolean isTeam() {
+        return exerciseMode == ExerciseMode.TEAM;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (other == null) {

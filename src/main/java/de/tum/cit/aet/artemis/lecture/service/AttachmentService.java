@@ -14,6 +14,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -21,12 +22,14 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
+@Lazy
 @Service
 @Profile(PROFILE_CORE)
 public class AttachmentService {
@@ -50,12 +53,12 @@ public class AttachmentService {
      * @param attachment The attachment whose student version needs to be regenerated
      */
     public void regenerateStudentVersion(Attachment attachment) {
-        AttachmentUnit attachmentUnit = attachment.getAttachmentUnit();
-        if (attachmentUnit == null) {
+        AttachmentVideoUnit attachmentVideoUnit = attachment.getAttachmentVideoUnit();
+        if (attachmentVideoUnit == null) {
             return;
         }
 
-        List<Slide> hiddenSlides = slideRepository.findByAttachmentUnitIdAndHiddenNotNull(attachmentUnit.getId());
+        List<Slide> hiddenSlides = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNull(attachmentVideoUnit.getId());
 
         // If no slides are marked as hidden, remove student version if it exists
         if (hiddenSlides.isEmpty()) {
@@ -73,7 +76,7 @@ public class AttachmentService {
 
             byte[] studentVersionPdf = generateStudentVersionPdf(pdfPath.toFile(), hiddenSlides);
 
-            handleStudentVersionFile(studentVersionPdf, attachment, attachmentUnit.getId());
+            handleStudentVersionFile(studentVersionPdf, attachment, attachmentVideoUnit.getId());
             attachmentRepository.save(attachment);
         }
         catch (Exception e) {
@@ -121,27 +124,27 @@ public class AttachmentService {
      * Handles the student version file of an attachment, updates its reference in the database,
      * and deletes the old version if it exists.
      *
-     * @param pdfData          The PDF data as byte array
-     * @param attachment       The existing attachment
-     * @param attachmentUnitId The id of the attachment unit
+     * @param pdfData               The PDF data as byte array
+     * @param attachment            The existing attachment
+     * @param attachmentVideoUnitId The id of the attachment video unit
      * @throws IOException If there's an error handling the file
      */
-    private void handleStudentVersionFile(byte[] pdfData, Attachment attachment, Long attachmentUnitId) throws IOException {
+    private void handleStudentVersionFile(byte[] pdfData, Attachment attachment, Long attachmentVideoUnitId) throws IOException {
         // Delete the old student version if it exists
         if (attachment.getStudentVersion() != null) {
             deleteStudentVersionFile(attachment);
         }
 
         // Create the student version directory if it doesn't exist
-        Path basePath = FilePathConverter.getAttachmentUnitFileSystemPath().resolve(attachmentUnitId.toString()).resolve("student");
+        Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString()).resolve("student");
         Files.createDirectories(basePath);
 
-        String sanitizedName = fileService.checkAndSanitizeFilename(attachment.getName());
+        String sanitizedName = FileUtil.checkAndSanitizeFilename(attachment.getName());
         String filename = sanitizedName + ".pdf";
         Path savePath = basePath.resolve(filename);
 
         FileUtils.writeByteArrayToFile(savePath.toFile(), pdfData);
 
-        attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentUnitId).toString());
+        attachment.setStudentVersion(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentVideoUnitId).toString());
     }
 }

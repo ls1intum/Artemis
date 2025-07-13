@@ -17,7 +17,6 @@ import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -65,7 +64,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
     lecturePeriodSection = viewChild.required(LectureUpdatePeriodComponent);
-    attachmentsSection = viewChild(LectureAttachmentsComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
 
@@ -93,10 +91,9 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
     areSectionsValid = computed(() => {
         return (
-            this.titleSection().titleChannelNameComponent().isFormValidSignal() &&
+            this.titleSection().titleChannelNameComponent().isValid() &&
             this.lecturePeriodSection().isPeriodSectionValid() &&
-            (this.unitSection()?.isUnitConfigurationValid() ?? true) &&
-            (this.attachmentsSection()?.isFormValid() ?? true)
+            (this.unitSection()?.isUnitConfigurationValid() ?? true)
         );
     });
 
@@ -104,16 +101,16 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
     constructor() {
         effect(() => {
-            if (this.titleSection()?.titleChannelNameComponent() && this.lecturePeriodSection()) {
+            if (this.titleSection().titleChannelNameComponent() && this.lecturePeriodSection()) {
                 this.subscriptions.add(
-                    this.titleSection()!
+                    this.titleSection()
                         .titleChannelNameComponent()
                         .titleChange.subscribe(() => {
                             this.updateIsChangesMadeToTitleOrPeriodSection();
                         }),
                 );
                 this.subscriptions.add(
-                    this.titleSection()!
+                    this.titleSection()
                         .titleChannelNameComponent()
                         .channelNameChange.subscribe(() => {
                             this.updateIsChangesMadeToTitleOrPeriodSection();
@@ -174,7 +171,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         updatedFormStatusSections.push(
             {
                 title: 'artemisApp.lecture.sections.title',
-                valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
+                valid: this.titleSection().titleChannelNameComponent().isValid(),
             },
             {
                 title: 'artemisApp.lecture.sections.period',
@@ -183,16 +180,10 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         );
 
         if (this.isEditMode()) {
-            updatedFormStatusSections.push(
-                {
-                    title: 'artemisApp.lecture.sections.attachments',
-                    valid: Boolean(this.attachmentsSection()?.isFormValid()),
-                },
-                {
-                    title: 'artemisApp.lecture.sections.units',
-                    valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
-                },
-            );
+            updatedFormStatusSections.push({
+                title: 'artemisApp.lecture.sections.units',
+                valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
+            });
         }
 
         this.formStatusSections = updatedFormStatusSections;
@@ -301,7 +292,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         if (this.processUnitMode) {
             this.isProcessing = false;
             this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
-            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
+            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 'process'], {
                 state: { file: this.file, fileName: this.fileName },
             });
         } else if (this.isEditMode()) {

@@ -9,7 +9,6 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.argThat;
@@ -21,6 +20,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +29,7 @@ import java.util.Set;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -79,6 +80,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
  * 1) Jenkins + LocalVC
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseResultTestService {
@@ -157,7 +159,7 @@ public class ProgrammingExerciseResultTestService {
 
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) throws GitAPIException, IOException {
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, programmingLanguage);
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
@@ -168,7 +170,7 @@ public class ProgrammingExerciseResultTestService {
                 .addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, userPrefix + "student2");
         var localRepoFile = Files.createTempDirectory("repo").toFile();
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
-        doReturn(repository).when(gitService).getOrCheckoutRepository(any(), anyString(), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean());
     }
 
     public void setupProgrammingExerciseForExam(boolean isExamOver) {
@@ -209,12 +211,14 @@ public class ProgrammingExerciseResultTestService {
         feedback.setText("feedback1");
         feedback.setCredits(10.0);
 
-        var resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
+        var resultsWithFeedback = resultRepository
+                .findAllWithEagerFeedbackByAssessorIsNotNullAndSubmission_Participation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
         var semiAutoResult = resultsWithFeedback.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny().orElseThrow();
         participationUtilService.addFeedbackToResult(feedback, semiAutoResult);
 
         // Assert that the results have been created successfully.
-        resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
+        resultsWithFeedback = resultRepository
+                .findAllWithEagerFeedbackByAssessorIsNotNullAndSubmission_Participation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
         assertThat(resultsWithFeedback).hasSize(3);
         assertThat(resultsWithFeedback).filteredOn(result -> result.getAssessmentType() == AssessmentType.MANUAL).hasSize(2);
         assertThat(resultsWithFeedback).filteredOn(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).hasSize(1);
@@ -224,7 +228,8 @@ public class ProgrammingExerciseResultTestService {
         postResult(buildResultNotification);
 
         // Retrieve updated results
-        var updatedResults = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
+        var updatedResults = resultRepository
+                .findAllWithEagerFeedbackByAssessorIsNotNullAndSubmission_Participation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
         assertThat(updatedResults).containsExactlyInAnyOrderElementsOf(resultsWithFeedback);
 
         var semiAutoResultId = semiAutoResult.getId();

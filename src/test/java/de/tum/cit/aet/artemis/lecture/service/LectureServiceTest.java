@@ -22,9 +22,8 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
-import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -35,13 +34,10 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
     private LectureService lectureService;
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureRepository;
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private LectureUtilService lectureUtilService;
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
@@ -62,7 +58,7 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
 
-        List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false, 0);
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false, 0);
         // always use the lecture and course with the smallest/largest ID, otherwise tests below related to search might fail (in a flaky way)
         course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).orElseThrow().getId());
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
@@ -114,7 +110,7 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testPageableResults() {
-        // the database should contain 2 lectures (see createCoursesWithExercisesAndLecturesAndLectureUnits) both with the same title
+        // the database should contain 2 lectures (see courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits) both with the same title
         // to enable a proper search after title, we change it
 
         // Use custom lecture name that is unique to test

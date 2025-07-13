@@ -1,7 +1,6 @@
-import { EventEmitter, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SplitPaneHeaderComponent } from 'app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component';
-import { TextPlagiarismFileElement } from 'app/plagiarism/shared/entities/text/TextPlagiarismFileElement';
+import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
 import { Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -19,65 +18,47 @@ describe('SplitPaneHeaderComponent', () => {
         { file: 'src/Other.java', hasMatch: true },
     ];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                const fileSelectedSubject = new Subject<TextPlagiarismFileElement>();
-                const showFilesSubject = new Subject<boolean>();
-                const dropdownHoverSubject = new Subject<TextPlagiarismFileElement>();
-                fixture1 = TestBed.createComponent(SplitPaneHeaderComponent);
-                comp1 = fixture1.componentInstance;
-                fixture2 = TestBed.createComponent(SplitPaneHeaderComponent);
-                comp2 = fixture2.componentInstance;
+        }).compileComponents();
+        const fileSelectedSubject = new Subject();
+        const showFilesSubject = new Subject<boolean>();
+        const dropdownHoverSubject = new Subject();
+        fixture1 = TestBed.createComponent(SplitPaneHeaderComponent);
+        comp1 = fixture1.componentInstance;
+        fixture2 = TestBed.createComponent(SplitPaneHeaderComponent);
+        comp2 = fixture2.componentInstance;
 
-                comp1.files = [];
-                comp1.studentLogin = 'ts10abc';
-                comp1.selectFile = new EventEmitter<string>();
-                fixture1.componentRef.setInput('fileSelectedSubject', fileSelectedSubject);
-                fixture1.componentRef.setInput('showFilesSubject', showFilesSubject);
-                fixture1.componentRef.setInput('dropdownHoverSubject', dropdownHoverSubject);
+        fixture1.componentRef.setInput('studentLogin', 'ts10abc');
+        fixture1.componentRef.setInput('fileSelectedSubject', fileSelectedSubject);
+        fixture1.componentRef.setInput('showFilesSubject', showFilesSubject);
+        fixture1.componentRef.setInput('dropdownHoverSubject', dropdownHoverSubject);
+        fixture1.componentRef.setInput('files', files);
 
-                comp2.files = [];
-                comp2.studentLogin = 'ts20abc';
-                comp2.selectFile = new EventEmitter<string>();
-                fixture2.componentRef.setInput('fileSelectedSubject', fileSelectedSubject);
-                fixture2.componentRef.setInput('showFilesSubject', showFilesSubject);
-                fixture2.componentRef.setInput('dropdownHoverSubject', dropdownHoverSubject);
-            });
-    });
-    it('resets the active file index on change', () => {
-        comp1.activeFileIndex = 1;
-
-        comp1.ngOnChanges({
-            files: { currentValue: files } as SimpleChange,
-        });
-
-        expect(comp1.activeFileIndex).toBe(0);
+        fixture2.componentRef.setInput('studentLogin', 'ts10abc');
+        fixture2.componentRef.setInput('fileSelectedSubject', fileSelectedSubject);
+        fixture2.componentRef.setInput('showFilesSubject', showFilesSubject);
+        fixture2.componentRef.setInput('dropdownHoverSubject', dropdownHoverSubject);
+        fixture2.componentRef.setInput('files', files);
     });
 
     it('selects the first file on change', () => {
-        comp1.files = files;
-        jest.spyOn(comp1.selectFile, 'emit');
-
-        comp1.ngOnChanges({
-            files: { currentValue: files } as SimpleChange,
-        });
-
-        expect(comp1.selectFile.emit).toHaveBeenCalledOnce();
-        expect(comp1.selectFile.emit).toHaveBeenCalledWith(files[0].file);
+        const emitSpy = jest.spyOn(comp1.selectFile, 'emit');
+        fixture1.detectChanges();
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(emitSpy).toHaveBeenCalledWith(files[0].file);
     });
 
     it('does not find an active file', () => {
-        const activeFile = comp1.hasActiveFile();
+        fixture2.componentRef.setInput('files', []);
+        fixture2.detectChanges();
+        const activeFile = comp2.hasActiveFile();
 
         expect(activeFile).toBeFalse();
     });
 
     it('returns the active file', () => {
-        comp1.files = files;
         const activeFile = comp1.getActiveFile();
 
         expect(activeFile).toBe(files[0].file);
@@ -97,18 +78,16 @@ describe('SplitPaneHeaderComponent', () => {
     });
 
     it('has no files', () => {
-        expect(comp1.hasFiles()).toBeFalse();
+        fixture2.componentRef.setInput('files', []);
+        expect(comp2.hasFiles()).toBeFalse();
     });
 
     it('has files', () => {
-        comp1.files = files;
-
         expect(comp1.hasFiles()).toBeTrue();
     });
 
     it('toggles "show files"', () => {
         comp1.showFiles = false;
-        comp1.files = files;
 
         comp1.toggleShowFiles(false);
 
@@ -116,16 +95,16 @@ describe('SplitPaneHeaderComponent', () => {
     });
 
     it('does not toggle "show files"', () => {
-        comp1.showFiles = false;
+        comp2.showFiles = false;
 
-        comp1.toggleShowFiles(false);
+        comp2.toggleShowFiles(false);
 
         expect(comp1.showFiles).toBeFalse();
     });
 
     it('should emit selected file through fileSelectedSubject', () => {
         const selectedFile = { idx: 0, file: files[0] };
-        let emittedFile: TextPlagiarismFileElement | undefined;
+        let emittedFile: PlagiarismFileElement | undefined;
         comp1.fileSelectedSubject()!.subscribe((file) => {
             emittedFile = file;
         });
@@ -140,18 +119,15 @@ describe('SplitPaneHeaderComponent', () => {
         const idx = 0;
         const selectedFile = { idx: idx, file: files[idx] };
         const lockFilesEnabled = true;
-
-        comp1.files = files;
-        comp2.files = files;
         comp1.showFiles = true;
         comp2.showFiles = true;
         fixture1.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
         fixture2.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
 
-        const handleFileSelectWithoutPropagationSpy = jest.spyOn(comp2, 'handleFileSelect');
-
         fixture1.detectChanges();
         fixture2.detectChanges();
+
+        const handleFileSelectWithoutPropagationSpy = jest.spyOn(comp2, 'handleFileSelect');
 
         comp1.handleFileSelect(selectedFile.file, selectedFile.idx, true);
 
@@ -171,9 +147,6 @@ describe('SplitPaneHeaderComponent', () => {
 
         const handleFileSelect = jest.spyOn(comp1, 'handleFileSelect');
         const handleFileSelectWithoutPropagationSpy = jest.spyOn(comp2, 'handleFileSelect');
-
-        fixture1.detectChanges();
-        fixture2.detectChanges();
         comp1.handleFileSelect(selectedFile.file, selectedFile.idx, true);
         fixture1.detectChanges();
         fixture2.detectChanges();
@@ -183,9 +156,7 @@ describe('SplitPaneHeaderComponent', () => {
     });
 
     it('should trigger dropdown hover subject on mouseenter on the first file element', () => {
-        comp1.files = files;
         comp1.showFiles = true;
-
         fixture1.detectChanges();
 
         const fileList = fixture1.debugElement.query(By.css('.split-pane-header-files'));
@@ -198,7 +169,7 @@ describe('SplitPaneHeaderComponent', () => {
         const triggerMouseEnterSpy = jest.spyOn(comp1 as any, 'triggerMouseEnter');
 
         firstFileItem.triggerEventHandler('mouseenter', null);
-        expect(triggerMouseEnterSpy).toHaveBeenCalledWith(comp1.files[0], 0);
+        expect(triggerMouseEnterSpy).toHaveBeenCalledWith(comp1.files()[0], 0);
     });
 
     it('should create dropdownHoverSubject on ngOnInit', () => {
@@ -206,7 +177,6 @@ describe('SplitPaneHeaderComponent', () => {
         const mockFile = files[0];
         const mockIdx = 0;
 
-        comp1.files = files;
         fixture1.componentRef.setInput('isLockFilesEnabled', true);
         jest.spyOn(comp1 as any, 'handleDropdownHover');
 
@@ -239,7 +209,6 @@ describe('SplitPaneHeaderComponent', () => {
         const mockFile = { file: 'testFile', hasMatch: true };
         const mockIdx = files.length;
 
-        comp1.files = files;
         jest.spyOn(comp1 as any, 'getIndexOf').mockReturnValue(-1);
 
         (comp1 as any).handleDropdownHover(mockFile, mockIdx);

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresAggregatedInformation;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ParticipantScoreRepository extends ArtemisJpaRepository<ParticipantScore, Long> {
 

@@ -28,7 +28,7 @@
                     }
                 },
                 "subSettings": {
-                    "chatSettings": "Chat Einstellungen",
+                    "exerciseChatSettings": "Programmieraufgaben Chat Einstellungen",
                     "textExerciseChatSettings": "Textaufgaben Chat Einstellungen",
                     "lectureChatSettings": "Vorlesungschat Einstellungen",
                     "courseChatSettings": "Kurs Chat Einstellungen",
@@ -85,6 +85,11 @@
                     "disabled": {
                         "course": "IRIS ist in den Kurs-IRIS-Einstellungen deaktiviert",
                         "global": "IRIS ist in den globalen IRIS-Einstellungen deaktiviert"
+                    },
+                    "customInstructions": {
+                        "title": "Benutzerdefinierte Anweisungen",
+                        "description": "Benutzerdefinierte Anweisungen, die der KI beim Generieren von Antworten zur Verfügung gestellt werden.",
+                        "placeholder": "Gib benutzerdefinierte Anweisungen für die KI ein (maximal 2048 Zeichen)"
                     }
                 },
                 "title": {
@@ -136,6 +141,18 @@
             },
             "controlCenter": {
                 "tooltip": "Durch das Umschalten aktivierst oder deaktivierst du ALLE Iris Features für diesen Kurs. Für eine gezieltere Kontrolle nutze bitte die Iris Einstellungen, indem du auf Benutzerdefinierst klickst."
+            },
+            "chatHistory": {
+                "title": "Chats",
+                "today": "Heute",
+                "yesterday": "Gestern",
+                "last7Days": "Letzten 7 Tage",
+                "last30Days": "Letzten 30 Tage",
+                "older": "Älter",
+                "relatedEntityTooltip": {
+                    "programmingExercise": "Diese Konversation bezieht sich auf eine Programmieraufgabe.",
+                    "lecture": "Diese Konversation bezieht sich auf eine Vorlesung."
+                }
             }
         }
     }

@@ -41,9 +41,9 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisSettings extends DomainObject {
 
-    public abstract IrisChatSubSettings getIrisChatSettings();
+    public abstract IrisProgrammingExerciseChatSubSettings getIrisProgrammingExerciseChatSettings();
 
-    public abstract void setIrisChatSettings(IrisChatSubSettings irisChatSettings);
+    public abstract void setIrisProgrammingExerciseChatSettings(IrisProgrammingExerciseChatSubSettings irisProgrammingExerciseChatSettings);
 
     public abstract IrisTextExerciseChatSubSettings getIrisTextExerciseChatSettings();
 
