@@ -184,7 +184,7 @@ describe('CalendarEventService', () => {
         service.loadEventsForCurrentMonth(courseId, dayjs('2025-10-01')).subscribe(() => {
             expect(service.eventMap().get('2025-10-01')).toBeUndefined();
 
-            service.toggleEventFilterOption('lectureEvents');
+            service.toggleEventFilterOption(CalendarEventFilterOption.LectureEvents);
 
             const filteredEvents = service.eventMap().get('2025-10-01');
             expect(filteredEvents).toBeDefined();
