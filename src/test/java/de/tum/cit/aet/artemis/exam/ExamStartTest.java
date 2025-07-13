@@ -1,10 +1,6 @@
 package de.tum.cit.aet.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -50,7 +46,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -86,9 +81,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     private ExamUtilService examUtilService;
 
     @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
     private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
@@ -112,8 +104,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         exam = examUtilService.addExamWithExerciseGroup(course1, true);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
-
-        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
         // registering users
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -269,7 +259,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     private List<Participation> invokePrepareExerciseStart() throws Exception {
         // invoke start exercises
         int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         assertThat(noGeneratedParticipations).isEqualTo(exam.getStudentExams().size());
         return participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
     }

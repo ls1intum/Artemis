@@ -124,6 +124,8 @@ public class VcsRepositoryUri {
             path = path.replaceAll("/$", "");
             path = path.replaceAll("^/.*scm", "");
             path = path.replaceAll("^.*?/git/", "/");
+            path = path.replaceFirst("^/", "");
+
             return path;
         }
     }
