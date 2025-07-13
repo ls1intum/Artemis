@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
@@ -88,6 +89,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    @Value("${artemis.temp-path")
+    private Path tempPath;
 
     // NOTE: we prefer MockitoSpyBean over MockitoBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
     @MockitoSpyBean
@@ -202,8 +206,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     @BeforeEach
-    void mockMailService() {
+    void mockMailService() throws IOException {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
+        Files.createDirectories(tempPath);
     }
 
     @BeforeEach
