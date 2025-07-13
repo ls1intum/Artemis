@@ -80,14 +80,15 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
     @Query("""
-             SELECT new de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob(
-                 b.result.id,
-                 b.buildJobId
-             )
-             FROM BuildJob b
-             WHERE b.result.id IN :resultIds
+            SELECT new de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob(
+                b.result.id,
+                b.exerciseId,
+                b.buildJobId
+            )
+            FROM BuildJob b
+            WHERE b.participationId = :participationId
             """)
-    Set<ResultBuildJob> findBuildJobIdsForResultIds(@Param("resultIds") List<Long> resultIds);
+    Set<ResultBuildJob> findBuildJobIdsForParticipationId(@Param("participationId") long participationId);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO(
