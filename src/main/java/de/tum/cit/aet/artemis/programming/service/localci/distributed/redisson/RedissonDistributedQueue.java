@@ -38,7 +38,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
     public boolean add(T item) {
         boolean added = queue.add(item);
         if (added) {
-            notificationTopic.publish(new QueueItemEvent<T>(QueueItemEvent.EventType.ADD, item));
+            notificationTopic.publish(QueueItemEvent.added(item));
         }
         return added;
     }
@@ -47,7 +47,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
     public T poll() {
         var item = queue.poll();
         if (item != null) {
-            notificationTopic.publish(new QueueItemEvent<T>(QueueItemEvent.EventType.REMOVE, item));
+            notificationTopic.publish(QueueItemEvent.removed(item));
         }
         return item;
     }
@@ -63,7 +63,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
         queue.clear();
         // use the copy instead so we can notify after clearing the queue
         for (T item : queueCopy) {
-            notificationTopic.publish(new QueueItemEvent<T>(QueueItemEvent.EventType.REMOVE, item));
+            notificationTopic.publish(QueueItemEvent.removed(item));
         }
     }
 
@@ -72,7 +72,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
         boolean changed = queue.addAll(items);
         if (changed) {
             for (T item : items) {
-                notificationTopic.publish(new QueueItemEvent<T>(QueueItemEvent.EventType.ADD, item));
+                notificationTopic.publish(QueueItemEvent.added(item));
             }
         }
         return changed;
@@ -82,7 +82,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
     public void removeAll(Collection<T> items) {
         queue.removeAll(items);
         for (T item : items) {
-            notificationTopic.publish(new QueueItemEvent<T>(QueueItemEvent.EventType.REMOVE, item));
+            notificationTopic.publish(QueueItemEvent.removed(item));
         }
     }
 

@@ -10,9 +10,17 @@ public class QueueItemEvent<T> {
 
     private final EventType eventType;
 
-    public QueueItemEvent(EventType eventType, T item) {
+    private QueueItemEvent(EventType eventType, T item) {
         this.eventType = eventType;
         this.item = item;
+    }
+
+    public static <T> QueueItemEvent<T> added(T item) {
+        return new QueueItemEvent<>(EventType.ADD, item);
+    }
+
+    public static <T> QueueItemEvent<T> removed(T item) {
+        return new QueueItemEvent<>(EventType.REMOVE, item);
     }
 
     public EventType getType() {

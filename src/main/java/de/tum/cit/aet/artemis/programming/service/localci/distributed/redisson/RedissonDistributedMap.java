@@ -9,8 +9,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.redisson.api.RMap;
 import org.redisson.api.RTopic;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryAddedEvent;
@@ -20,8 +18,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.li
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapListener;
 
 public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
-
-    private static final Logger log = LoggerFactory.getLogger(RedissonDistributedMap.class);
 
     private final RMap<K, V> map;
 
@@ -48,12 +44,10 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     public void put(K key, V value) {
         V oldValue = map.put(key, value);
         if (oldValue != null) {
-            log.debug("Updated key {} from value {} to {}", key, oldValue, value);
-            notificationTopic.publish(new MapItemEvent<>(MapItemEvent.EventType.UPDATE, key, value, oldValue));
+            notificationTopic.publish(MapItemEvent.updated(key, value, oldValue));
         }
         else {
-            log.debug("Added key {} with value {}", key, value);
-            notificationTopic.publish(new MapItemEvent<>(MapItemEvent.EventType.ADD, key, value));
+            notificationTopic.publish(MapItemEvent.added(key, value));
         }
     }
 
@@ -61,8 +55,7 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     public V remove(K key) {
         V oldValue = map.remove(key);
         if (oldValue != null) {
-            log.debug("Removed key {} with value {}", key, oldValue);
-            notificationTopic.publish(new MapItemEvent<>(MapItemEvent.EventType.REMOVE, key, oldValue));
+            notificationTopic.publish(MapItemEvent.removed(key, oldValue));
         }
         return oldValue;
     }
