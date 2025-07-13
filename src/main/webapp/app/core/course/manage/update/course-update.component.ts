@@ -74,32 +74,50 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
     ],
 })
 export class CourseUpdateComponent implements OnInit {
-    private eventManager = inject(EventManager);
-    private courseManagementService = inject(CourseManagementService);
-    private courseAdminService = inject(CourseAdminService);
-    private activatedRoute = inject(ActivatedRoute);
-    private fileService = inject(FileService);
-    private alertService = inject(AlertService);
-    private profileService = inject(ProfileService);
-    private organizationService = inject(OrganizationManagementService);
-    private modalService = inject(NgbModal);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private router = inject(Router);
-    private accountService = inject(AccountService);
+    private readonly eventManager = inject(EventManager);
+    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly courseAdminService = inject(CourseAdminService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly fileService = inject(FileService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
+    private readonly organizationService = inject(OrganizationManagementService);
+    private readonly modalService = inject(NgbModal);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly router = inject(Router);
+    private readonly accountService = inject(AccountService);
+    private courseStorageService = inject(CourseStorageService);
 
-    CachingStrategy = CachingStrategy;
-    ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+    protected readonly CachingStrategy = CachingStrategy;
+    protected readonly ProgrammingLanguage = ProgrammingLanguage;
+
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
+    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faPen = faPen;
+
+    // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
+    // This is the maximum value allowed in our database. These values must be the same as in Constants.java
+    // Currently set to 65535 as this is the limit of TEXT
+    protected readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
+    protected readonly COMPLAINT_TEXT_LIMIT = 65535;
+    protected readonly COURSE_TITLE_LIMIT = 255;
+
+    protected readonly semesters = getSemesters();
 
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
-    @ViewChild('timeZoneInput') tzTypeAhead: NgbTypeahead;
 
+    @ViewChild('timeZoneInput') tzTypeAhead: NgbTypeahead;
     tzFocus$ = new Subject<string>();
     tzClick$ = new Subject<string>();
     timeZones: string[] = [];
-    originalTimeZone?: string;
 
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+    originalTimeZone?: string;
 
     courseForm: FormGroup;
     course: Course;
@@ -111,14 +129,6 @@ export class CourseUpdateComponent implements OnInit {
     customizeGroupNames = false;
     courseOrganizations: Organization[];
     isAdmin = false;
-    // Icons
-    faSave = faSave;
-    faBan = faBan;
-    faTimes = faTimes;
-    faTrash = faTrash;
-    faQuestionCircle = faQuestionCircle;
-    faExclamationTriangle = faExclamationTriangle;
-    faPen = faPen;
 
     faqEnabled = true;
     communicationEnabled = true;
@@ -126,17 +136,6 @@ export class CourseUpdateComponent implements OnInit {
     atlasEnabled = false;
     ltiEnabled = false;
     isAthenaEnabled = false;
-
-    private courseStorageService = inject(CourseStorageService);
-
-    readonly semesters = getSemesters();
-
-    // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
-    // This is the maximum value allowed in our database. These values must be the same as in Constants.java
-    // Currently set to 65535 as this is the limit of TEXT
-    readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
-    readonly COMPLAINT_TEXT_LIMIT = 65535;
-    readonly COURSE_TITLE_LIMIT = 255;
 
     ngOnInit() {
         this.timeZones = (Intl as any).supportedValuesOf('timeZone');
