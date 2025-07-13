@@ -44,7 +44,7 @@ public record PyrisTextExerciseDTO(long id, String title, PyrisCourseDTO course,
             exercise.getTitle(),
             new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember()),
             exercise.getProblemStatement(),
-            Optional.of(exercise.getExampleSolution()),
+            Optional.ofNullable(exercise.getExampleSolution()),
             Optional.ofNullable(exercise.getStartDate()).map(ChronoZonedDateTime::toInstant).orElse(null),
             Optional.ofNullable(exercise.getDueDate()).map(ChronoZonedDateTime::toInstant).orElse(null)
         );
