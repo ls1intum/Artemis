@@ -147,6 +147,9 @@ public class ProgrammingExerciseIntegrationTestService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCRepoPath;
 
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
+
     @Autowired
     // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private FileService fileService;
@@ -281,17 +284,17 @@ public class ProgrammingExerciseIntegrationTestService {
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student2");
 
-        localRepoPath = Files.createTempDirectory("repo");
+        localRepoPath = Files.createTempDirectory(tempPath, "repo");
         localGit = LocalRepository.initialize(localRepoPath, defaultBranch, false);
-        remoteRepoPath = Files.createTempDirectory("repoOrigin");
+        remoteRepoPath = Files.createTempDirectory(tempPath, "repoOrigin");
         remoteGit = LocalRepository.initialize(remoteRepoPath, defaultBranch, true);
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", remoteRepoPath.toFile().getAbsolutePath());
         config.save();
 
-        localRepoPath2 = Files.createTempDirectory("repo2");
+        localRepoPath2 = Files.createTempDirectory(tempPath, "repo2");
         localGit2 = LocalRepository.initialize(localRepoPath2, defaultBranch, false);
-        remoteRepoPath2 = Files.createTempDirectory("repoOrigin");
+        remoteRepoPath2 = Files.createTempDirectory(tempPath, "repoOrigin");
         remoteGit2 = LocalRepository.initialize(remoteRepoPath2, defaultBranch, true);
         StoredConfig config2 = localGit2.getRepository().getConfig();
         config2.setString("remote", "origin", "url", remoteRepoPath2.toFile().getAbsolutePath());
@@ -307,7 +310,7 @@ public class ProgrammingExerciseIntegrationTestService {
         GitService.commit(localGit).setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
         localGit.push().call();
 
-        this.plagiarismChecksTestReposDir = Files.createTempDirectory("jplag-repos").toFile();
+        this.plagiarismChecksTestReposDir = Files.createTempDirectory(tempPath, "jplag-repos").toFile();
     }
 
     void tearDown() throws IOException {
@@ -1752,7 +1755,7 @@ public class ProgrammingExerciseIntegrationTestService {
                 """;
 
         // Create temporary directories for the mock repositories with proper JPlag structure
-        Path tempDir = Files.createTempDirectory("plagiarism-test-repos");
+        Path tempDir = Files.createTempDirectory(tempPath, "plagiarism-test-repos");
         Path projectDir = tempDir.resolve(projectKey);
         Files.createDirectories(projectDir);
 

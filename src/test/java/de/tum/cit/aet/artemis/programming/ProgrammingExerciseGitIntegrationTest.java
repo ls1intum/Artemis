@@ -16,6 +16,7 @@ import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -33,6 +34,9 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
 
     private Git localGit;
 
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
+
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
@@ -43,7 +47,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
 
-        localRepoPath = Files.createTempDirectory("repo");
+        localRepoPath = Files.createTempDirectory(tempPath, "repo");
         localGit = LocalRepository.initialize(localRepoPath, defaultBranch, false);
 
         // create commits

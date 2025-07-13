@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
@@ -11,6 +12,8 @@ import java.util.Optional;
 
 import jakarta.mail.internet.MimeMessage;
 
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -219,6 +222,17 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @AfterEach
     void stopRunningTasks() {
         participantScoreScheduleService.shutdown();
+    }
+
+    // Comment this out if you need the results of some test files for debugging purposes.
+    @AfterAll
+    static void deleteTestFiles() {
+        try {
+            FileUtils.deleteDirectory(Path.of("local", "server-integration-test").toFile());
+        }
+        catch (IOException ignored) {
+            // test should still succeed if directory deletion fails
+        }
     }
 
     protected void resetSpyBeans() {

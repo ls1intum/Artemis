@@ -13,6 +13,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 
+import jakarta.annotation.PostConstruct;
+
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -46,9 +48,20 @@ public class GitUtilService {
     @Value("${artemis.repo-clone-path}")
     private String repoClonePath;
 
-    private final Path remotePath = Files.createTempDirectory("remotegittest").resolve("scm/test-repository");
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
 
-    public GitUtilService() throws IOException {
+    private Path remotePath;
+
+    public GitUtilService() {
+    }
+
+    // we have to create the path in a @PostConstruct to make sure that the tempPath is set
+    @PostConstruct
+    void init() throws IOException {
+        Path base = Files.createTempDirectory(tempPath, "remotegittest");
+        this.remotePath = base.resolve("scm").resolve("test-repository").toAbsolutePath();
+        Files.createDirectories(remotePath);
     }
 
     private Path getLocalPath() {
