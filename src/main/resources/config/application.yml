@@ -370,3 +370,10 @@ eureka:
             git-version: ${git.commit.id.describe:}
             git-commit: ${git.commit.id.abbrev:}
             git-branch: ${git.branch:}
+
+# Helios configuration
+# It is enabled and all the values are set by the ansible
+# Refer to the ansible repository https://github.com/ls1intum/artemis-ansible
+helios:
+  status:
+    enabled: false

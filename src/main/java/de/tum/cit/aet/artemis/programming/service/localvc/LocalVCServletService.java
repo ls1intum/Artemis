@@ -5,7 +5,7 @@ import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonal
 import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -110,17 +110,17 @@ public class LocalVCServletService {
     // TODO As soon as only LocalVC is supported, this Optional can be removed
     private final Optional<VcsAccessLogService> vcsAccessLogService;
 
-    private static URL localVCBaseUrl;
+    private static URI localVCBaseUri;
 
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Value("${artemis.version-control.url}")
-    public void setLocalVCBaseUrl(URL localVCBaseUrl) {
-        LocalVCServletService.localVCBaseUrl = localVCBaseUrl;
+    public void setLocalVCBaseUrl(URI localVCBaseUri) {
+        LocalVCServletService.localVCBaseUri = localVCBaseUri;
     }
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath;
+    private Path localVCBasePath;
 
     @Value("${artemis.version-control.build-agent-git-username}")
     private String buildAgentGitUsername;
@@ -173,7 +173,7 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
         // Find the local repository depending on the name.
-        Path repositoryDir = Path.of(localVCBasePath, repositoryPath);
+        Path repositoryDir = localVCBasePath.resolve(repositoryPath);
 
         log.debug("Path to resolve repository from: {}", repositoryDir);
         if (!Files.exists(repositoryDir)) {
@@ -498,11 +498,11 @@ public class LocalVCServletService {
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
         var urlString = request.getRequestURL().toString().replace("/info/refs", "");
-        return new LocalVCRepositoryUri(Path.of(urlString), localVCBaseUrl);
+        return new LocalVCRepositoryUri(Path.of(urlString), localVCBaseUri);
     }
 
     private LocalVCRepositoryUri parseRepositoryUri(Path repositoryPath) {
-        return new LocalVCRepositoryUri(repositoryPath, localVCBaseUrl);
+        return new LocalVCRepositoryUri(repositoryPath, localVCBaseUri);
     }
 
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
@@ -816,7 +816,7 @@ public class LocalVCServletService {
 
     private static LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
-            return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUrl);
+            return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUri);
         }
         catch (LocalVCInternalException e) {
             // This means something is misconfigured.
