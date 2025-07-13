@@ -14,12 +14,14 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.nio.file.Path;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.test.context.ActiveProfiles;
@@ -29,11 +31,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
-import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 @ResourceLock("AbstractSpringIntegrationLocalVCSamlTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
@@ -44,6 +44,9 @@ public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractA
 
     @Autowired
     protected PasswordService passwordService;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    protected Path localVCRepoPath;
 
     // NOTE: this has to be a MockitoBean, because the class cannot be instantiated in the tests
     @MockitoBean
@@ -95,31 +98,6 @@ public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractA
 
     @Override
     public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
         // Not needed for this test
     }
 
@@ -205,16 +183,6 @@ public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractA
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) {
-        // Not needed for this test
-    }
-
-    @Override
     public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception {
         // Not needed for this test
     }
@@ -240,11 +208,6 @@ public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractA
     }
 
     @Override
-    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) {
-        // Not needed for this test
-    }
-
-    @Override
     public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) {
         // Not needed for this test
     }
@@ -255,22 +218,12 @@ public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractA
     }
 
     @Override
-    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey, boolean b) {
-        // Not needed for this test
-    }
-
-    @Override
     public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
         // Not needed for this test
     }
 
     @Override
     public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockDefaultBranch(ProgrammingExercise programmingExercise) {
         // Not needed for this test
     }
 
