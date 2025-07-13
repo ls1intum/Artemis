@@ -2,6 +2,8 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
+import { MockService } from 'ng-mocks';
+import { AlertService } from 'app/shared/service/alert.service';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 
@@ -54,7 +56,7 @@ describe('CalendarEventService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [CalendarEventService, provideHttpClient(), provideHttpClientTesting()],
+            providers: [CalendarEventService, provideHttpClient(), provideHttpClientTesting(), { provide: AlertService, useValue: MockService(AlertService) }],
         });
 
         service = TestBed.inject(CalendarEventService);
