@@ -213,7 +213,7 @@
             "structureTestOracleWarning": "Diese Aktion extrahiert die Struktur-Tests des Test-Repositories and speichert sie in der Datei test.json. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "checkPlagiarism": "Plagiatsprüfung",
             "checkPlagiarismSuccess": "Plagiatsprüfung abgeschlossen. Ergebnisse sind in der zip-Datei enthalten.",
-            "diffReportError": "Der Diff Report konnte nicht erstellt werden.",
+            "repositoryFilesError": "Repository-Dateien konnten nicht abgerufen werden.",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
@@ -655,7 +655,6 @@
                     "deleted": "Gelöscht",
                     "renamed": "Umbenannt"
                 },
-                "errorWhileFetchingRepos": "Fehler beim Abrufen der Repositories. Bitte überprüfe deine Internetverbindung und öffne das Popup erneut.",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
                 "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
                 "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
@@ -663,10 +662,10 @@
 
                 "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
                 "lineStatTooltipExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden",
-                "lineStatTooltipFullReportExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen.",
-                "lineStatTooltipFullReport": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungs-Repositories hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen.",
-                "lineStatTooltipFullEntry": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungsversionen dieser Datei hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen.",
-                "lineStatTooltipFullEntryExamTimeline": "Gefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe dieser Datei hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen."
+                "lineStatTooltipFullReportExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden.",
+                "lineStatTooltipFullReport": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungs-Repositories hinzugefügt und entfernt wurden.",
+                "lineStatTooltipFullEntry": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungsversionen dieser Datei hinzugefügt und entfernt wurden.",
+                "lineStatTooltipFullEntryExamTimeline": "Gefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe dieser Datei hinzugefügt und entfernt wurden."
             },
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
