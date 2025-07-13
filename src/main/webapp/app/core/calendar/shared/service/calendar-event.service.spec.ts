@@ -6,6 +6,7 @@ import { MockService } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 
 describe('CalendarEventService', () => {
     let service: CalendarEventService;
@@ -68,7 +69,12 @@ describe('CalendarEventService', () => {
     });
 
     it('should load events and create unfiltered event map', fakeAsync(() => {
-        service.includedEventFilterOptions.set(['lectureEvents', 'examEvents', 'tutorialEvents', 'exerciseEvents']);
+        service.includedEventFilterOptions.set([
+            CalendarEventFilterOption.LectureEvents,
+            CalendarEventFilterOption.ExamEvents,
+            CalendarEventFilterOption.TutorialEvents,
+            CalendarEventFilterOption.ExerciseEvents,
+        ]);
 
         service.loadEventsForCurrentMonth(courseId, date).subscribe(() => {
             const result = service.eventMap();
@@ -123,7 +129,7 @@ describe('CalendarEventService', () => {
     }));
 
     it('should load events and create filtered event map', fakeAsync(() => {
-        service.includedEventFilterOptions.set(['lectureEvents', 'examEvents']);
+        service.includedEventFilterOptions.set([CalendarEventFilterOption.LectureEvents, CalendarEventFilterOption.ExamEvents]);
 
         service.loadEventsForCurrentMonth(courseId, date).subscribe(() => {
             const result = service.eventMap();
@@ -173,7 +179,7 @@ describe('CalendarEventService', () => {
             ],
         };
 
-        service.includedEventFilterOptions.set(['examEvents']);
+        service.includedEventFilterOptions.set([CalendarEventFilterOption.ExamEvents]);
 
         service.loadEventsForCurrentMonth(courseId, dayjs('2025-10-01')).subscribe(() => {
             expect(service.eventMap().get('2025-10-01')).toBeUndefined();
@@ -200,7 +206,7 @@ describe('CalendarEventService', () => {
     }));
 
     it('should refresh', fakeAsync(() => {
-        service.includedEventFilterOptions.set(['lectureEvents', 'examEvents']);
+        service.includedEventFilterOptions.set([CalendarEventFilterOption.LectureEvents, CalendarEventFilterOption.ExamEvents]);
         service.loadEventsForCurrentMonth(courseId, date).subscribe();
 
         const initialRequest = httpMock.expectOne((request) => request.url === expectedUrl);
