@@ -17,7 +17,6 @@ import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -67,7 +66,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
     lecturePeriodSection = viewChild.required(LectureUpdatePeriodComponent);
-    attachmentsSection = viewChild(LectureAttachmentsComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
 
@@ -97,8 +95,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         return (
             this.titleSection().titleChannelNameComponent().isValid() &&
             this.lecturePeriodSection().isPeriodSectionValid() &&
-            (this.unitSection()?.isUnitConfigurationValid() ?? true) &&
-            (this.attachmentsSection()?.isFormValid() ?? true)
+            (this.unitSection()?.isUnitConfigurationValid() ?? true)
         );
     });
 
@@ -185,16 +182,10 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         );
 
         if (this.isEditMode()) {
-            updatedFormStatusSections.push(
-                {
-                    title: 'artemisApp.lecture.sections.attachments',
-                    valid: Boolean(this.attachmentsSection()?.isFormValid()),
-                },
-                {
-                    title: 'artemisApp.lecture.sections.units',
-                    valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
-                },
-            );
+            updatedFormStatusSections.push({
+                title: 'artemisApp.lecture.sections.units',
+                valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
+            });
         }
 
         this.formStatusSections = updatedFormStatusSections;

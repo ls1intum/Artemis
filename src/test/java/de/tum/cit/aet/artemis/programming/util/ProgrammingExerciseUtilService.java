@@ -86,6 +86,9 @@ public class ProgrammingExerciseUtilService {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCRepoPath;
+
     @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationTestRepo;
 
@@ -857,15 +860,15 @@ public class ProgrammingExerciseUtilService {
     public void createGitRepository() throws Exception {
         // Create repository
         var testRepo = new LocalRepository(defaultBranch);
-        testRepo.configureRepos("testLocalRepo", "testOriginRepo");
+        testRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
         // Add test file to the repository folder
-        Path filePath = Path.of(testRepo.localRepoFile + "/Test.java");
+        Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/Test.java");
         var file = Files.createFile(filePath).toFile();
         FileUtils.write(file, "Test", Charset.defaultCharset());
         // Create mock repo that has the file
         var mockRepository = mock(Repository.class);
         doReturn(true).when(mockRepository).isValidFile(any());
-        doReturn(testRepo.localRepoFile.toPath()).when(mockRepository).getLocalPath();
+        doReturn(testRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
         // Mock Git service operations
         doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString());
         doNothing().when(gitService).resetToOriginHead(any());

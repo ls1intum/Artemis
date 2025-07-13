@@ -377,9 +377,6 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponent.lecturePeriodSection = signal({
                 isPeriodSectionValid: () => true,
             } as any);
-            lectureUpdateComponent.attachmentsSection = signal({
-                isFormValid: () => true,
-            } as any);
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => true,
             } as any);
@@ -389,7 +386,6 @@ describe('LectureUpdateComponent', () => {
             expect(lectureUpdateComponent.formStatusSections).toEqual([
                 { title: 'artemisApp.lecture.sections.title', valid: true },
                 { title: 'artemisApp.lecture.sections.period', valid: true },
-                { title: 'artemisApp.lecture.sections.attachments', valid: true },
                 { title: 'artemisApp.lecture.sections.units', valid: true },
             ]);
         });
@@ -423,9 +419,6 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponent.lecturePeriodSection = signal({
                 isPeriodSectionValid: () => false,
             } as any);
-            lectureUpdateComponent.attachmentsSection = signal({
-                isFormValid: () => false,
-            } as any);
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => false,
             } as any);
@@ -435,7 +428,6 @@ describe('LectureUpdateComponent', () => {
             expect(lectureUpdateComponent.formStatusSections).toEqual([
                 { title: 'artemisApp.lecture.sections.title', valid: false },
                 { title: 'artemisApp.lecture.sections.period', valid: false },
-                { title: 'artemisApp.lecture.sections.attachments', valid: false },
                 { title: 'artemisApp.lecture.sections.units', valid: false },
             ]);
         });

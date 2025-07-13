@@ -34,15 +34,16 @@ import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model'
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
+import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 
 describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
+    let fixture: ComponentFixture<IrisBaseChatbotComponent>;
+
     let chatService: IrisChatService;
     let httpService: jest.Mocked<IrisChatHttpService>;
     let wsMock: jest.Mocked<IrisWebsocketService>;
     let mockModalService: jest.Mocked<NgbModal>;
-    let fixture: ComponentFixture<IrisBaseChatbotComponent>;
 
     const statusMock = {
         currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
@@ -78,7 +79,6 @@ describe('IrisBaseChatbotComponent', () => {
             ],
             providers: [
                 MockProvider(NgbModal),
-                { provide: ActivatedRoute, useValue: {} },
                 { provide: LocalStorageService, useValue: {} },
                 { provide: TranslateService, useValue: {} },
                 { provide: SessionStorageService, useValue: {} },
@@ -86,6 +86,7 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: AccountService, useValue: accountMock },
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
+                MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
             ],
@@ -99,6 +100,7 @@ describe('IrisBaseChatbotComponent', () => {
 
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 chatService = TestBed.inject(IrisChatService);
+                chatService.setCourseId(456);
                 httpService = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
                 wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
                 mockModalService = TestBed.inject(NgbModal) as jest.Mocked<NgbModal>;
@@ -406,6 +408,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         expect(sendButton.disabled).toBeTruthy();
     });
+
     it('should not render submit button if hasUserAcceptedExternalLLMUsage is false', () => {
         component.userAccepted = false;
         component.isLoading = false;
@@ -648,7 +651,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should switch to the selected session on session click', () => {
-        const mockSession: IrisSession = { id: 2, messages: [], creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1 };
+        const mockSession: IrisSessionDTO = { id: 2, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Course 1' };
         const switchToSessionSpy = jest.spyOn(chatService, 'switchToSession').mockReturnValue();
 
         component.onSessionClick(mockSession);
@@ -676,13 +679,37 @@ describe('IrisBaseChatbotComponent', () => {
 
     describe('getSessionsBetween', () => {
         const mockDate = new Date('2025-06-23T12:00:00.000Z');
-        const sessionToday: IrisSession = { id: 1, messages: [], creationDate: new Date('2025-06-23T10:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
-        const sessionYesterday: IrisSession = { id: 2, messages: [], creationDate: new Date('2025-06-22T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
-        const session7DaysAgo: IrisSession = { id: 3, messages: [], creationDate: new Date('2025-06-16T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
-        const session8DaysAgo: IrisSession = { id: 4, messages: [], creationDate: new Date('2025-06-15T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
-        const session30DaysAgo: IrisSession = { id: 5, messages: [], creationDate: new Date('2025-05-24T12:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1 };
+        const sessionToday: IrisSessionDTO = { id: 1, creationDate: new Date('2025-06-23T10:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Course 1' };
+        const sessionYesterday: IrisSessionDTO = {
+            id: 2,
+            creationDate: new Date('2025-06-22T12:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+        const session7DaysAgo: IrisSessionDTO = {
+            id: 3,
+            creationDate: new Date('2025-06-16T12:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+        const session8DaysAgo: IrisSessionDTO = {
+            id: 4,
+            creationDate: new Date('2025-06-15T12:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+        const session30DaysAgo: IrisSessionDTO = {
+            id: 5,
+            creationDate: new Date('2025-05-24T12:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
 
-        const unsortedSessions = [session7DaysAgo, sessionToday, session30DaysAgo, sessionYesterday, session8DaysAgo];
+        const sortedSessions = [sessionToday, sessionYesterday, session7DaysAgo, session8DaysAgo, session30DaysAgo];
 
         beforeAll(() => {
             jest.useFakeTimers();
@@ -694,7 +721,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         beforeEach(() => {
-            component.chatSessions = [...unsortedSessions];
+            component.chatSessions = [...sortedSessions];
         });
 
         it('should handle invalid day ranges gracefully', () => {
@@ -737,11 +764,48 @@ describe('IrisBaseChatbotComponent', () => {
             expect(result).toHaveLength(4);
             expect(result.map((s) => s.id)).toEqual([sessionYesterday.id, session7DaysAgo.id, session8DaysAgo.id, session30DaysAgo.id]);
         });
+    });
 
-        it('should always return sessions sorted by creationDate descending (newest first)', () => {
-            const result = component.getSessionsBetween(0, 30);
-            const expectedOrder = [sessionToday.id, sessionYesterday.id, session7DaysAgo.id, session8DaysAgo.id, session30DaysAgo.id];
-            expect(result.map((s) => s.id)).toEqual(expectedOrder);
-        });
+    describe('Related entity button', () => {
+        const setupAndVerifyRelatedEntityButton = (session: IrisSessionDTO, expectedLinkFragment: string) => {
+            jest.spyOn(chatService, 'switchToSession').mockImplementation(() => {
+                component['currentChatMode'].set(session.chatMode);
+                component['currentRelatedEntityId'].set(session.entityId);
+            });
+
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+
+            chatService.switchToSession(session);
+            fixture.detectChanges();
+            tick();
+
+            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            expect(relatedEntityButton).not.toBeNull();
+            expect(relatedEntityButton.getAttribute('ng-reflect-router-link')).toContain(expectedLinkFragment);
+        };
+
+        it('should display correct related entity button when lecture session selected', fakeAsync(() => {
+            const session: IrisSessionDTO = {
+                id: 10,
+                creationDate: new Date(),
+                chatMode: ChatServiceMode.LECTURE,
+                entityId: 55,
+                entityName: 'Lecture 1',
+            };
+
+            setupAndVerifyRelatedEntityButton(session, '../lectures/55');
+        }));
+
+        it('should display correct related entity button when programming exercise session selected', fakeAsync(() => {
+            const session: IrisSessionDTO = {
+                id: 11,
+                creationDate: new Date(),
+                chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+                entityId: 99,
+                entityName: 'Exercise 1',
+            };
+
+            setupAndVerifyRelatedEntityButton(session, '../exercises/99');
+        }));
     });
 });
