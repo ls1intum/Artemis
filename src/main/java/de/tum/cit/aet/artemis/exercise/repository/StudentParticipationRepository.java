@@ -168,15 +168,21 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     boolean existsByCourseIdAndStudentId(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
+    // TODO: use ExamGradeScoreDTO (see GradeScoreDTO above for course scores), we basically only need p.id, u.id, ex.id, r.score
+    // NOTE: in an exam there is only one submission for file upload, text, modeling and quiz and there is no team support
     @Query("""
             SELECT DISTINCT p
-             FROM StudentParticipation p
-             LEFT JOIN FETCH p.submissions s
-             LEFT JOIN FETCH s.results r
-             WHERE p.testRun = FALSE
-               AND p.exercise.exerciseGroup.exam.id = :examId
-               AND r.rated = TRUE
-               AND (s.submissionDate = (SELECT MAX(s2.submissionDate) FROM p.submissions s2) OR s.submissionDate IS NULL)
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+            WHERE p.exercise.exerciseGroup.exam.id = :examId
+                AND p.testRun = FALSE
+                AND p.student IS NOT NULL
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.score IS NOT NULL
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     List<StudentParticipation> findByExamIdWithEagerLatestSubmissionsRatedResultAndIgnoreTestRunParticipation(@Param("examId") long examId);
 

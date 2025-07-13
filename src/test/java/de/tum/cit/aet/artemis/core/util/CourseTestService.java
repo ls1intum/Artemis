@@ -560,10 +560,6 @@ public class CourseTestService {
                     mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getTemplateBuildPlanId(), false);
                     mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getSolutionBuildPlanId(), false);
                     mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
-                    mockDelegate.mockDeleteRepository(projectKey, templateRepoName, false);
-                    mockDelegate.mockDeleteRepository(projectKey, solutionRepoName, false);
-                    mockDelegate.mockDeleteRepository(projectKey, testsRepoName, false);
-                    mockDelegate.mockDeleteProjectInVcs(projectKey, false);
                 }
             }
         }
@@ -2525,7 +2521,6 @@ public class CourseTestService {
 
         final String repoSuffix = "-" + userPrefix + "student1";
 
-        mockDelegate.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + repoSuffix, false);
         var buildPlanId = (programmingExercise.getProjectKey() + repoSuffix).toUpperCase();
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId, false);
         request.delete("/api/core/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
