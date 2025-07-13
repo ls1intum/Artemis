@@ -1,6 +1,7 @@
 import { Component, OnInit, WritableSignal, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgClass } from '@angular/common';
+import { finalize } from 'rxjs/operators';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import 'dayjs/locale/de';
 import 'dayjs/locale/en';
@@ -42,6 +43,7 @@ export class CalendarOverviewComponent implements OnInit {
     presentation = signal<'week' | 'month'>('month');
     firstDayOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     firstDayOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
+    isLoading = signal<boolean>(false);
 
     constructor(
         private calendarEventService: CalendarEventService,
@@ -117,6 +119,10 @@ export class CalendarOverviewComponent implements OnInit {
 
     private loadEventsForCurrentMonth(): void {
         if (!this.courseId) return;
-        this.calendarEventService.loadEventsForCurrentMonth(this.courseId, this.firstDayOfCurrentMonth()).subscribe();
+        this.isLoading.set(true);
+        this.calendarEventService
+            .loadEventsForCurrentMonth(this.courseId, this.firstDayOfCurrentMonth())
+            .pipe(finalize(() => this.isLoading.set(false)))
+            .subscribe();
     }
 }

@@ -13,8 +13,13 @@ describe('CalendarEventFilterComponent', () => {
     let fixture: ComponentFixture<CalendarEventFilterComponent>;
     let mockService: jest.Mocked<CalendarEventService>;
 
-    const eventFilterOptions: CalendarEventFilterOption[] = ['lectureEvents', 'exerciseEvents', 'tutorialEvents', 'examEvents'];
-    const includedEventFilterOptions = signal<CalendarEventFilterOption[]>(['lectureEvents', 'examEvents']);
+    const eventFilterOptions: CalendarEventFilterOption[] = [
+        CalendarEventFilterOption.LectureEvents,
+        CalendarEventFilterOption.ExerciseEvents,
+        CalendarEventFilterOption.TutorialEvents,
+        CalendarEventFilterOption.ExamEvents,
+    ];
+    const includedEventFilterOptions = signal<CalendarEventFilterOption[]>([CalendarEventFilterOption.LectureEvents, CalendarEventFilterOption.ExamEvents]);
 
     beforeEach(async () => {
         mockService = {
@@ -50,7 +55,7 @@ describe('CalendarEventFilterComponent', () => {
         chipRemoveButtons[0].nativeElement.click();
         fixture.detectChanges();
 
-        expect(mockService.toggleEventFilterOption).toHaveBeenCalledWith('lectureEvents');
+        expect(mockService.toggleEventFilterOption).toHaveBeenCalledWith(CalendarEventFilterOption.LectureEvents);
     });
 
     it('should show all filter options in the popover', () => {
@@ -98,9 +103,9 @@ describe('CalendarEventFilterComponent', () => {
     });
 
     it('should return correct CSS class for each option', () => {
-        expect(component.getColorClassForFilteringOption('examEvents')).toBe('exam-chip');
-        expect(component.getColorClassForFilteringOption('lectureEvents')).toBe('lecture-chip');
-        expect(component.getColorClassForFilteringOption('tutorialEvents')).toBe('tutorial-chip');
-        expect(component.getColorClassForFilteringOption('exerciseEvents')).toBe('exercise-chip');
+        expect(component.getColorClassForFilteringOption(CalendarEventFilterOption.ExamEvents)).toBe('exam-chip');
+        expect(component.getColorClassForFilteringOption(CalendarEventFilterOption.LectureEvents)).toBe('lecture-chip');
+        expect(component.getColorClassForFilteringOption(CalendarEventFilterOption.TutorialEvents)).toBe('tutorial-chip');
+        expect(component.getColorClassForFilteringOption(CalendarEventFilterOption.ExerciseEvents)).toBe('exercise-chip');
     });
 });

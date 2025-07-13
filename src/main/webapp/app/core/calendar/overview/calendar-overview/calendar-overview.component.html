@@ -36,9 +36,19 @@
             </button>
         </div>
     </div>
-    @if (presentation() === 'month') {
-        <calendar-desktop-month [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" />
-    } @else {
-        <calendar-desktop-week [firstDayOfCurrentWeek]="firstDayOfCurrentWeek()" />
-    }
+
+    <div class="calendar-presentation-container">
+        @if (presentation() === 'month') {
+            <calendar-desktop-month [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" />
+        } @else {
+            <calendar-desktop-week [firstDayOfCurrentWeek]="firstDayOfCurrentWeek()" />
+        }
+        @if (isLoading()) {
+            <div class="loading-overlay">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only" jhiTranslate="loading"></span>
+                </div>
+            </div>
+        }
+    </div>
 </div>

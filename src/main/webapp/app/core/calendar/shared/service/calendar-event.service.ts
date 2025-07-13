@@ -1,10 +1,11 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map, throwError } from 'rxjs';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import timezone from 'dayjs/plugin/timezone';
 import { CalendarEvent, CalendarEventDTO, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
+import { AlertService } from 'app/shared/service/alert.service';
 
 dayjs.extend(timezone);
 
@@ -15,6 +16,7 @@ type CalendarEventMapResponse = HttpResponse<Record<string, CalendarEventDTO[]>>
 })
 export class CalendarEventService {
     private httpClient = inject(HttpClient);
+    private alertService = inject(AlertService);
     private readonly resourceUrl = '/api/core/calendar/courses';
 
     private currentCourseId?: number;
@@ -22,7 +24,12 @@ export class CalendarEventService {
     private currentEventMap = signal<Map<string, CalendarEvent[]>>(new Map());
     readonly eventMap = computed(() => this.filterEventMapByOptions(this.currentEventMap(), this.includedEventFilterOptions()));
 
-    eventFilterOptions: CalendarEventFilterOption[] = ['lectureEvents', 'exerciseEvents', 'tutorialEvents', 'examEvents'];
+    eventFilterOptions: CalendarEventFilterOption[] = [
+        CalendarEventFilterOption.LectureEvents,
+        CalendarEventFilterOption.ExerciseEvents,
+        CalendarEventFilterOption.TutorialEvents,
+        CalendarEventFilterOption.ExamEvents,
+    ];
     includedEventFilterOptions = signal<CalendarEventFilterOption[]>(this.eventFilterOptions);
 
     refresh() {
@@ -52,6 +59,10 @@ export class CalendarEventService {
                     this.currentEventMap.set(parsed);
                     this.currentCourseId = courseId;
                     this.firstDayOfCurrentMonth = firstDayOfCurrentMonth;
+                }),
+                catchError((error) => {
+                    this.alertService.addErrorAlert('artemisApp.calendar.loadingError');
+                    return throwError(() => error);
                 }),
             );
     }
@@ -110,16 +121,16 @@ export class CalendarEventService {
     }
 
     private eventMatchesFilter(event: CalendarEvent, filterOptions: CalendarEventFilterOption[]): boolean {
-        if (filterOptions.includes('examEvents') && event.isOfType(CalendarEventType.Exam)) {
+        if (filterOptions.includes(CalendarEventFilterOption.ExamEvents) && event.isOfType(CalendarEventType.Exam)) {
             return true;
         }
-        if (filterOptions.includes('lectureEvents') && event.isOfType(CalendarEventType.Lecture)) {
+        if (filterOptions.includes(CalendarEventFilterOption.LectureEvents) && event.isOfType(CalendarEventType.Lecture)) {
             return true;
         }
-        if (filterOptions.includes('tutorialEvents') && event.isOfType(CalendarEventType.Tutorial)) {
+        if (filterOptions.includes(CalendarEventFilterOption.TutorialEvents) && event.isOfType(CalendarEventType.Tutorial)) {
             return true;
         }
-        if (filterOptions.includes('exerciseEvents') && event.isOfExerciseType()) {
+        if (filterOptions.includes(CalendarEventFilterOption.ExerciseEvents) && event.isOfExerciseType()) {
             return true;
         }
         return false;

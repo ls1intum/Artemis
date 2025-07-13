@@ -14,4 +14,26 @@
             height: 100%;
         }
     }
+
+    .calendar-presentation-container {
+        position: relative;
+
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: var(--calendar-loading-overlay-background);
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: delayLoading 0s 0.5s forwards;
+            opacity: 0;
+        }
+    }
+}
+
+@keyframes delayLoading {
+    to {
+        opacity: 1;
+    }
 }

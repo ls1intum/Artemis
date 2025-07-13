@@ -38,7 +38,8 @@
             "filterButtonLabel": "Filter",
             "todayButtonLabel": "Today",
             "weekButtonLabel": "Week",
-            "monthButtonLabel": "Month"
+            "monthButtonLabel": "Month",
+            "loadingError": "The calendar events could not be loaded. Please try again by refreshing the page."
         }
     }
 }

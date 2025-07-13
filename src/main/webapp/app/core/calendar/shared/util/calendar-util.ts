@@ -21,6 +21,15 @@ export function areDaysInSameMonth(firstDay: Dayjs, secondDay: Dayjs): boolean {
     return firstDay.month() === secondDay.month();
 }
 
+/**
+ * Generates a unique identifier string for a given day or week, intended for use in Angular structural directives like @for.
+ *
+ * - If a single Dayjs object (representing a day) is passed, returns its formatted date string.
+ * - If an array of Dayjs objects (representing a week) is passed, returns the formatted string of the first day of the week.
+ *
+ * @param {Dayjs | Dayjs[]} dateObject - a single Dayjs object (day) or an array of Dayjs objects (week).
+ * @returns {string} A formatted date string (`'YYYY-MM-DD'`) representing the day or start of the week.
+ */
 export function identify(dateObject: Dayjs | Dayjs[]): string {
     if (dayjs.isDayjs(dateObject)) {
         return dateObject.format('YYYY-MM-DD');
@@ -122,7 +131,12 @@ export function getEventSubtypeNameKey(event: CalendarEvent): string | undefined
     return eventSubtypeNameKeyMap[key];
 }
 
-export type CalendarEventFilterOption = 'examEvents' | 'lectureEvents' | 'tutorialEvents' | 'exerciseEvents';
+export enum CalendarEventFilterOption {
+    ExamEvents = 'examEvents',
+    LectureEvents = 'lectureEvents',
+    TutorialEvents = 'tutorialEvents',
+    ExerciseEvents = 'exerciseEvents',
+}
 
 const filterOptionNameKeyMap: Record<CalendarEventFilterOption, string> = {
     exerciseEvents: 'artemisApp.calendar.filterOption.exercises',
