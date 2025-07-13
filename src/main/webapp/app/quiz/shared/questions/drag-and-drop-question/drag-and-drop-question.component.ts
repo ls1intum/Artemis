@@ -90,7 +90,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     //  and migrating would break narrowing currently.
     @Input()
     showResult: boolean;
-    readonly questionIndex = input<number>(undefined!);
+    questionIndex = input<number>(undefined!);
     readonly score = input<number>(undefined!);
     // TODO: Skipped for migration because:
     //  Accessor inputs cannot be migrated as they are too complex.
@@ -105,7 +105,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
         return this._forceSampleSolution;
     }
     readonly onMappingUpdate = input<any>();
-    readonly filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
+    filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
 
     @Output()
     mappingsChange = new EventEmitter<DragAndDropMapping[]>();

@@ -4,7 +4,6 @@ import {
     Component,
     ElementRef,
     EventEmitter,
-    Input,
     OnChanges,
     OnInit,
     Output,
@@ -12,6 +11,7 @@ import {
     ViewEncapsulation,
     inject,
     input,
+    model,
     viewChild,
 } from '@angular/core';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
@@ -120,14 +120,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     private readonly backgroundImage = viewChild.required<SecuredImageComponent>('backgroundImage');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
 
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() question: DragAndDropQuestion;
+    question = model.required<DragAndDropQuestion>();
     readonly questionIndex = input<number>(undefined!);
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() reEvaluationInProgress: boolean;
+    reEvaluationInProgress = model<boolean>(false);
     readonly filePool = input(
         new Map<
             string,
@@ -183,20 +178,20 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     ngOnInit(): void {
         // create deep copy as backup
-        this.backupQuestion = cloneDeep(this.question);
+        this.backupQuestion = cloneDeep(this.question()!);
 
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();
         this.mouse = new DragAndDropMouseEvent();
-        this.questionEditorText = generateExerciseHintExplanation(this.question);
+        this.questionEditorText = generateExerciseHintExplanation(this.question()!);
 
         // check if question was generated with an ApollonDiagram
-        if (this.question.importedFiles) {
-            this.setBackgroundFile({ target: { files: [new File([this.question.importedFiles.get('diagram-background.png')!], 'diagram-background.png')] } });
-            for (const dragItem of this.question.dragItems ?? []) {
-                if (dragItem.pictureFilePath && this.question.importedFiles.has(dragItem.pictureFilePath)) {
+        if (this.question().importedFiles) {
+            this.setBackgroundFile({ target: { files: [new File([this.question().importedFiles!.get('diagram-background.png')!], 'diagram-background.png')] } });
+            for (const dragItem of this.question().dragItems ?? []) {
+                if (dragItem.pictureFilePath && this.question().importedFiles!.has(dragItem.pictureFilePath)) {
                     this.changeToPictureDragItem(dragItem, {
-                        target: { files: [new File([this.question.importedFiles.get(dragItem.pictureFilePath!)!], dragItem.pictureFilePath!)] },
+                        target: { files: [new File([this.question().importedFiles!.get(dragItem.pictureFilePath!)!], dragItem.pictureFilePath!)] },
                     });
                 }
             }
@@ -214,7 +209,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         }
         /** Update backupQuestion if the question changed **/
         if (changes.question && changes.question.currentValue) {
-            this.backupQuestion = cloneDeep(this.question);
+            this.backupQuestion = cloneDeep(this.question());
         }
 
         const filePool = this.filePool();
@@ -230,8 +225,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     ngAfterViewInit(): void {
-        if (this.question.backgroundFilePath && !this.filePreviewPaths.has(this.question.backgroundFilePath)) {
-            this.filePreviewPaths.set(this.question.backgroundFilePath, this.question.backgroundFilePath);
+        if (this.question().backgroundFilePath && !this.filePreviewPaths.has(this.question().backgroundFilePath!)) {
+            this.filePreviewPaths.set(this.question().backgroundFilePath!, this.question().backgroundFilePath!);
             // Trigger image render with the question background file path in order to adjust the click layer.
             setTimeout(() => {
                 this.changeDetector.markForCheck();
@@ -239,9 +234,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             }, 0);
         }
 
-        if (this.question.dragItems) {
-            for (const dragItem in this.question.dragItems) {
-                const path = this.question.dragItems[dragItem].pictureFilePath;
+        if (this.question().dragItems) {
+            for (const dragItem of this.question().dragItems!) {
+                const path = dragItem.pictureFilePath;
                 if (path && !this.filePreviewPaths.has(path)) {
                     this.filePreviewPaths.set(path, path);
                 }
@@ -322,12 +317,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     setBackgroundFileFromFile(file: File) {
-        if (this.question.backgroundFilePath) {
-            this.removeFile.emit(this.question.backgroundFilePath);
+        if (this.question().backgroundFilePath) {
+            this.removeFile.emit(this.question().backgroundFilePath);
         }
 
         const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(file.name), this.filePool());
-        this.question.backgroundFilePath = fileName;
+        this.question().backgroundFilePath = fileName;
         this.filePreviewPaths.set(fileName, URL.createObjectURL(file));
         this.addNewFile.emit({ fileName, file });
         this.changeDetector.detectChanges();
@@ -429,7 +424,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * React to mouse down events on the background to start dragging
      */
     backgroundMouseDown(): void {
-        if (this.question.backgroundFilePath && this.draggingState === DragState.NONE) {
+        if (this.question().backgroundFilePath && this.draggingState === DragState.NONE) {
             // Save current mouse position as starting position
             this.mouse.startX = this.mouse.x;
             this.mouse.startY = this.mouse.y;
@@ -442,10 +437,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             this.currentDropLocation.height = 0;
 
             // Add drop location to question
-            if (!this.question.dropLocations) {
-                this.question.dropLocations = [];
+            if (!this.question().dropLocations) {
+                this.question().dropLocations = [];
             }
-            this.question.dropLocations.push(this.currentDropLocation);
+            this.question().dropLocations!.push(this.currentDropLocation);
 
             // Update state
             this.draggingState = DragState.CREATE;
@@ -480,7 +475,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param dropLocationToDelete {object} the drop location to delete
      */
     deleteDropLocation(dropLocationToDelete: DropLocation): void {
-        this.question.dropLocations = this.question.dropLocations!.filter((dropLocation) => dropLocation !== dropLocationToDelete);
+        this.question().dropLocations = this.question().dropLocations!.filter((dropLocation) => dropLocation !== dropLocationToDelete);
         this.deleteMappingsForDropLocation(dropLocationToDelete);
     }
 
@@ -494,7 +489,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         duplicatedDropLocation.posY = dropLocation.posY! + dropLocation.height! < 197 ? dropLocation.posY! + 3 : Math.max(0, dropLocation.posY! - 3);
         duplicatedDropLocation.width = dropLocation.width;
         duplicatedDropLocation.height = dropLocation.height;
-        this.question.dropLocations!.push(duplicatedDropLocation);
+        this.question().dropLocations!.push(duplicatedDropLocation);
     }
 
     /**
@@ -550,12 +545,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     addTextDragItem(): void {
         // Add drag item to question
-        if (!this.question.dragItems) {
-            this.question.dragItems = [];
+        if (!this.question().dragItems) {
+            this.question().dragItems = [];
         }
         const dragItem = new DragItem();
         dragItem.text = 'Text';
-        this.question.dragItems.push(dragItem);
+        this.question().dragItems!.push(dragItem);
         this.questionUpdated.emit();
     }
 
@@ -578,10 +573,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const dragItem = new DragItem();
         dragItem.pictureFilePath = fileName;
         // Add drag item to question
-        if (!this.question.dragItems) {
-            this.question.dragItems = [];
+        if (!this.question().dragItems) {
+            this.question().dragItems = [];
         }
-        this.question.dragItems.push(dragItem);
+        this.question().dragItems!.push(dragItem);
 
         this.questionUpdated.emit();
         return dragItem;
@@ -592,7 +587,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param dragItemToDelete {object} the drag item that should be deleted
      */
     deleteDragItem(dragItemToDelete: DragItem): void {
-        this.question.dragItems = this.question.dragItems!.filter((dragItem) => dragItem !== dragItemToDelete);
+        this.question().dragItems = this.question().dragItems!.filter((dragItem) => dragItem !== dragItemToDelete);
         if (dragItemToDelete.pictureFilePath) {
             this.removeFile.emit(dragItemToDelete.pictureFilePath);
             this.filePreviewPaths.delete(dragItemToDelete.pictureFilePath);
@@ -608,7 +603,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     onDragDrop(dropLocation: DropLocation, dropEvent: CdkDragDrop<DragItem, DragItem>): void {
         const dragItem = dropEvent.item.data as DragItem;
         // Replace dragItem with original (because it may be a copy)
-        const questionDragItem = this.question.dragItems!.find((originalDragItem) =>
+        const questionDragItem = this.question().dragItems!.find((originalDragItem) =>
             dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID,
         );
 
@@ -617,13 +612,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             return;
         }
 
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
+        if (!this.question().correctMappings) {
+            this.question().correctMappings = [];
         }
 
         // Check if this mapping already exists
         if (
-            !this.question.correctMappings.some(
+            !this.question().correctMappings!.some(
                 (existingMapping) =>
                     this.dragAndDropQuestionUtil.isSameEntityWithTempId(existingMapping.dropLocation, dropLocation) &&
                     this.dragAndDropQuestionUtil.isSameEntityWithTempId(existingMapping.dragItem, questionDragItem),
@@ -631,7 +626,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         ) {
             // Mapping doesn't exit yet => add this mapping
             const dndMapping = new DragAndDropMapping(questionDragItem, dropLocation);
-            this.question.correctMappings.push(dndMapping);
+            this.question().correctMappings!.push(dndMapping);
 
             // Notify parent of changes
             this.questionUpdated.emit();
@@ -647,7 +642,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const visitedDropLocations: DropLocation[] = [];
         // Save reference to this due nested some calls
         if (
-            this.question.correctMappings!.some((correctMapping) => {
+            this.question().correctMappings!.some((correctMapping) => {
                 if (
                     !visitedDropLocations.some((dropLocation: DropLocation) => {
                         return this.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, correctMapping.dropLocation);
@@ -670,10 +665,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @return {Array} all mappings that belong to the given drop location
      */
     getMappingsForDropLocation(dropLocation: DropLocation): DragAndDropMapping[] {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
+        if (!this.question().correctMappings) {
+            this.question().correctMappings = [];
         }
-        return this.question.correctMappings.filter((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation));
+        return this.question().correctMappings!.filter((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation));
     }
 
     /**
@@ -682,12 +677,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @return {Array} all mappings that belong to the given drag item
      */
     getMappingsForDragItem(dragItem: DragItem): DragAndDropMapping[] {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
+        if (!this.question().correctMappings) {
+            this.question().correctMappings = [];
         }
         return (
-            this.question.correctMappings
-                .filter((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem))
+            this.question()
+                .correctMappings!.filter((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem))
                 /** Moved the sorting from the template to the function call **/
                 .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
         );
@@ -698,10 +693,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param dropLocation {object} the drop location for which we want to delete all mappings
      */
     deleteMappingsForDropLocation(dropLocation: DropLocation): void {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
+        if (!this.question().correctMappings) {
+            this.question().correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation));
+        this.question().correctMappings = this.question().correctMappings!.filter(
+            (mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation),
+        );
         // Notify parent of changes
         this.questionUpdated.emit();
     }
@@ -711,10 +708,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param dragItem {object} the drag item for which we want to delete all mappings
      */
     deleteMappingsForDragItem(dragItem: DragItem): void {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
+        if (!this.question().correctMappings) {
+            this.question().correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem));
+        this.question().correctMappings = this.question().correctMappings!.filter((mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem));
         // Notify parent of changes
         this.questionUpdated.emit();
     }
@@ -724,10 +721,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param mappingToDelete {object} the mapping to delete
      */
     deleteMapping(mappingToDelete: DragAndDropMapping): void {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
+        if (!this.question().correctMappings) {
+            this.question().correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter((mapping) => mapping !== mappingToDelete);
+        this.question().correctMappings = this.question().correctMappings!.filter((mapping) => mapping !== mappingToDelete);
         // Notify parent of changes
         this.questionUpdated.emit();
     }
@@ -798,31 +795,31 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * Resets the question title
      */
     resetQuestionTitle(): void {
-        this.question.title = this.backupQuestion.title;
+        this.question().title = this.backupQuestion.title;
     }
 
     /**
      * Resets the question text
      */
     resetQuestionText(): void {
-        this.question.text = this.backupQuestion.text;
-        this.question.explanation = this.backupQuestion.explanation;
-        this.question.hint = this.backupQuestion.hint;
-        this.questionEditorText = generateExerciseHintExplanation(this.question);
+        this.question().text = this.backupQuestion.text;
+        this.question().explanation = this.backupQuestion.explanation;
+        this.question().hint = this.backupQuestion.hint;
+        this.questionEditorText = generateExerciseHintExplanation(this.question());
     }
 
     /**
      * Resets the whole question
      */
     resetQuestion(): void {
-        this.question.title = this.backupQuestion.title;
-        this.question.invalid = this.backupQuestion.invalid;
-        this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
-        this.question.scoringType = this.backupQuestion.scoringType;
+        this.question().title = this.backupQuestion.title;
+        this.question().invalid = this.backupQuestion.invalid;
+        this.question().randomizeOrder = this.backupQuestion.randomizeOrder;
+        this.question().scoringType = this.backupQuestion.scoringType;
         this.resetBackground();
-        this.question.dropLocations = cloneDeep(this.backupQuestion.dropLocations);
-        this.question.dragItems = cloneDeep(this.backupQuestion.dragItems);
-        this.question.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
+        this.question().dropLocations = cloneDeep(this.backupQuestion.dropLocations);
+        this.question().dragItems = cloneDeep(this.backupQuestion.dragItems);
+        this.question().correctMappings = cloneDeep(this.backupQuestion.correctMappings);
         this.resetQuestionText();
     }
 
@@ -830,8 +827,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * Resets background-picture
      */
     resetBackground(): void {
-        this.removeFile.emit(this.question.backgroundFilePath!);
-        this.question.backgroundFilePath = this.backupQuestion.backgroundFilePath;
+        this.removeFile.emit(this.question().backgroundFilePath!);
+        this.question().backgroundFilePath = this.backupQuestion.backgroundFilePath;
     }
 
     /**
@@ -842,10 +839,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         // Find matching DropLocation in backupQuestion
         const backupDropLocation = this.backupQuestion.dropLocations!.find((currentDL) => currentDL.id === dropLocation.id)!;
         // Find current index of our DropLocation
-        const dropLocationIndex = this.question.dropLocations!.indexOf(dropLocation);
+        const dropLocationIndex = this.question().dropLocations!.indexOf(dropLocation);
         // Remove current DropLocation at given index and insert the backup at the same position
-        this.question.dropLocations!.splice(dropLocationIndex, 1);
-        this.question.dropLocations!.splice(dropLocationIndex, 0, backupDropLocation);
+        this.question().dropLocations!.splice(dropLocationIndex, 1);
+        this.question().dropLocations!.splice(dropLocationIndex, 0, backupDropLocation);
     }
 
     /**
@@ -856,10 +853,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         // Find matching DragItem in backupQuestion
         const backupDragItem = this.backupQuestion.dragItems!.find((currentDI) => currentDI.id === dragItem.id)!;
         // Find current index of our DragItem
-        const dragItemIndex = this.question.dragItems!.indexOf(dragItem);
+        const dragItemIndex = this.question().dragItems!.indexOf(dragItem);
         // Remove current DragItem at given index and insert the backup at the same position
-        this.question.dragItems!.splice(dragItemIndex, 1);
-        this.question.dragItems!.splice(dragItemIndex, 0, backupDragItem);
+        this.question().dragItems!.splice(dragItemIndex, 1);
+        this.question().dragItems!.splice(dragItemIndex, 0, backupDragItem);
         if (dragItem.pictureFilePath) {
             this.removeFile.emit(dragItem.pictureFilePath);
             this.filePreviewPaths.delete(dragItem.pictureFilePath);
@@ -895,12 +892,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.cleanupQuestion();
         for (const { text, action } of textWithDomainActions) {
             if (action === undefined && text.length > 0) {
-                this.question.text = text;
+                this.question().text = text;
             }
             if (action instanceof QuizExplanationAction) {
-                this.question.explanation = text;
+                this.question().explanation = text;
             } else if (action instanceof QuizHintAction) {
-                this.question.hint = text;
+                this.question().hint = text;
             }
         }
     }
@@ -910,9 +907,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @desc Clear the question to avoid double assignments of one attribute
      */
     private cleanupQuestion() {
-        this.question.text = undefined;
-        this.question.explanation = undefined;
-        this.question.hint = undefined;
+        this.question().text = undefined;
+        this.question().explanation = undefined;
+        this.question().hint = undefined;
     }
 
     /**
@@ -928,7 +925,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * Create new drag items for each drop location in the background image
      */
     getImagesFromDropLocations() {
-        for (const someLocation of this.question.dropLocations!) {
+        for (const someLocation of this.question().dropLocations!) {
             // only crop if there is not mapping to this drop location
             if (this.getMappingsForDropLocation(someLocation).length == 0) {
                 const image = new Image();
@@ -963,7 +960,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                         dataUrl = canvas.toDataURL('image/png');
                         const dragItemCreated = this.createImageDragItemFromFile(this.dataUrlToFile(dataUrl, 'placeholder' + someLocation.posX!))!;
                         const dndMapping = new DragAndDropMapping(dragItemCreated, someLocation);
-                        this.question.correctMappings!.push(dndMapping);
+                        this.question().correctMappings!.push(dndMapping);
                     }
                 };
                 image.src = this.backgroundImage().src;
@@ -994,7 +991,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                 backgroundBlankingContext.drawImage(image, 0, 0);
                 backgroundBlankingContext.fillStyle = 'white';
 
-                for (const someLocation of this.question.dropLocations!) {
+                for (const someLocation of this.question().dropLocations!) {
                     // Draw a white rectangle over the specified box location
                     backgroundBlankingContext.fillRect(
                         someLocation.posX! * scalarWidth,
@@ -1040,4 +1037,11 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
+    setPoints(value: number) {
+        const q = this.question();
+        q.points = value;
+        this.question.set(q);
+        this.questionUpdated.emit();
+    }
 }

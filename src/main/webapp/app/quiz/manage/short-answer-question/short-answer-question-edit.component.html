@@ -13,7 +13,7 @@
                 <input
                     id="short-answer-question-title"
                     class="form-control"
-                    [(ngModel)]="shortAnswerQuestion.title"
+                    [(ngModel)]="shortAnswerQuestion().title"
                     (ngModelChange)="questionUpdated.emit()"
                     placeholder="{{ 'artemisApp.quizExercise.placeholder.questionTitle' | artemisTranslate }}"
                 />
@@ -27,8 +27,8 @@
                         type="number"
                         min="0"
                         [max]="MAX_POINTS"
-                        [(ngModel)]="shortAnswerQuestion.points"
-                        (ngModelChange)="questionUpdated.emit()"
+                        [ngModel]="shortAnswerQuestion().points"
+                        (ngModelChange)="setPoints($event)"
                     />
                 </div>
                 <div class="question-type">
@@ -37,7 +37,7 @@
             </div>
         </div>
     }
-    @if (reEvaluationInProgress) {
+    @if (reEvaluationInProgress()) {
         <div class="question-options card-header question-card-header-reevaluation">
             <div class="row">
                 <div class="col-3 col-lg-1 mt-1">
@@ -55,7 +55,7 @@
                         <div class="col-10 col-lg-11">
                             <input
                                 class="form-control"
-                                [(ngModel)]="shortAnswerQuestion.title"
+                                [(ngModel)]="shortAnswerQuestion().title"
                                 placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                                 attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                                 style="width: 100%"
@@ -117,7 +117,7 @@
             <div class="question-options">
                 <div class="form-group">
                     <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                    <select class="form-select" [(ngModel)]="shortAnswerQuestion.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
+                    <select class="form-select" [(ngModel)]="shortAnswerQuestion().scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
                         <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
                         <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
                         <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
@@ -136,10 +136,10 @@
                                 step="1"
                                 value="85"
                                 id="{{ 'matchPercentageSlider' + questionIndex() }}"
-                                [(ngModel)]="shortAnswerQuestion.similarityValue"
+                                [(ngModel)]="shortAnswerQuestion().similarityValue"
                                 (ngModelChange)="questionUpdated.emit()"
                             />
-                            <p>{{ shortAnswerQuestion.similarityValue }} %</p>
+                            <p>{{ shortAnswerQuestion().similarityValue }} %</p>
                         </div>
                     </div>
                     <jhi-match-percentage-info-modal />
@@ -149,7 +149,7 @@
                             type="checkbox"
                             id="{{ 'cbMatchAnswersExactly' + questionIndex() }}"
                             class="form-check-input custom-control-input"
-                            [checked]="shortAnswerQuestion.similarityValue === 100"
+                            [checked]="shortAnswerQuestion().similarityValue === 100"
                             (change)="toggleExactMatchCheckbox(inputElement.checked)"
                         />
                         <label
@@ -163,7 +163,7 @@
                             type="checkbox"
                             id="{{ 'cbMatchLetterCase' + questionIndex() }}"
                             class="form-check-input custom-control-input"
-                            [(ngModel)]="shortAnswerQuestion.matchLetterCase"
+                            [(ngModel)]="shortAnswerQuestion().matchLetterCase"
                             (ngModelChange)="questionUpdated.emit()"
                         />
                         <label
@@ -182,12 +182,12 @@
                 }
             </div>
         }
-        @if (reEvaluationInProgress) {
+        @if (reEvaluationInProgress()) {
             <div class="question-options question-options-reevaluation row align-items-center" style="width: 100%">
                 <div class="col-12 col-lg-4">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                        <select class="form-select" [(ngModel)]="shortAnswerQuestion.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
+                        <select class="form-select" [(ngModel)]="shortAnswerQuestion().scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
                             <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
                             <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
                             <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
@@ -198,21 +198,21 @@
                 <div class="col-12 col-lg-2">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                        <input class="form-control point-input" title="score" type="number" [value]="shortAnswerQuestion.points" disabled style="width: 100%" />
+                        <input class="form-control point-input" title="score" type="number" [value]="shortAnswerQuestion().points" disabled style="width: 100%" />
                     </div>
                 </div>
                 <div class="col-12 col-lg-6 row justify-content-lg-end align-items-start">
                     <div class="col-8 col-lg-4 form-group">
                         <button
                             class="btn btn-outline-secondary invalid-button"
-                            [hidden]="shortAnswerQuestion.invalid"
-                            (click)="shortAnswerQuestion.invalid = true"
+                            [hidden]="shortAnswerQuestion().invalid"
+                            (click)="shortAnswerQuestion().invalid = true"
                             jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
                         ></button>
                         <button
                             class="btn btn-outline-secondary invalid-button"
-                            [hidden]="!shortAnswerQuestion.invalid"
-                            [disabled]="shortAnswerQuestion.invalid"
+                            [hidden]="!shortAnswerQuestion().invalid"
+                            [disabled]="shortAnswerQuestion().invalid"
                             jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
                         ></button>
                     </div>
@@ -238,11 +238,11 @@
                                         step="1"
                                         value="85"
                                         id="{{ 'matchPercentageSlider' + questionIndex() }}"
-                                        [(ngModel)]="shortAnswerQuestion.similarityValue"
+                                        [(ngModel)]="shortAnswerQuestion().similarityValue"
                                         (ngModelChange)="questionUpdated.emit()"
                                         style="width: 60%"
                                     />
-                                    <p style="margin: 0.5rem">{{ shortAnswerQuestion.similarityValue }} %</p>
+                                    <p style="margin: 0.5rem">{{ shortAnswerQuestion().similarityValue }} %</p>
                                     <jhi-match-percentage-info-modal />
                                 </div>
                             </div>
@@ -255,7 +255,7 @@
                                 type="checkbox"
                                 id="{{ 'cbMatchAnswersExactly' + questionIndex() }}"
                                 class="custom-control-input"
-                                [checked]="shortAnswerQuestion.similarityValue === 100"
+                                [checked]="shortAnswerQuestion().similarityValue === 100"
                                 (change)="toggleExactMatchCheckbox(inputElement.checked)"
                             />
                             <label
@@ -271,7 +271,7 @@
                                 type="checkbox"
                                 id="{{ 'cbMatchLetterCase' + questionIndex() }}"
                                 class="custom-control-input"
-                                [(ngModel)]="shortAnswerQuestion.matchLetterCase"
+                                [(ngModel)]="shortAnswerQuestion().matchLetterCase"
                                 (ngModelChange)="questionUpdated.emit()"
                             />
                             <label
@@ -302,7 +302,7 @@
                 </div>
             }
         </div>
-        @if (showVisualMode || reEvaluationInProgress) {
+        @if (showVisualMode || reEvaluationInProgress()) {
             <div class="edit-sa-question" style="padding: 20px" cdkDropListGroup>
                 <h4 jhiTranslate="artemisApp.shortAnswerQuestion.editor.visualModeHeadline"></h4>
                 @if (!reEvaluationInProgress) {
@@ -321,10 +321,10 @@
                             <div class="short-answer-question-display">
                                 @for (element of textPart; track element; let j = $index) {
                                     <div class="short-answer-question-display__element">
-                                        @if (!shortAnswerQuestionUtil.isInputField(element || '') && !reEvaluationInProgress) {
+                                        @if (!shortAnswerQuestionUtil.isInputField(element || '') && !reEvaluationInProgress()) {
                                             <div id="element-{{ i }}-{{ j }}" class="short-answer-question-container" [innerHTML]="element"></div>
                                         }
-                                        @if (!shortAnswerQuestionUtil.isInputField(element || '') && reEvaluationInProgress) {
+                                        @if (!shortAnswerQuestionUtil.isInputField(element || '') && reEvaluationInProgress()) {
                                             <input
                                                 class="short-answer-question-container__input"
                                                 id="element-{{ i }}-{{ j }}-textInput"
@@ -341,18 +341,20 @@
                                                     class="short-answer-question-container__div-input"
                                                     cdkDropList
                                                     (cdkDropListDropped)="
-                                                        onDragDrop(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion), $event)
+                                                        onDragDrop(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion()), $event)
                                                     "
                                                 ></div>
-                                                @if (reEvaluationInProgress) {
+                                                @if (reEvaluationInProgress()) {
                                                     <div style="position: absolute; top: -8px; right: -4px; display: inline-flex">
-                                                        @if (!shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion).invalid) {
+                                                        @if (!shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion()).invalid) {
                                                             <div
                                                                 class="re-evaluate-button"
                                                                 title="Set invalid"
                                                                 (click)="
-                                                                    shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion).invalid =
-                                                                        true
+                                                                    shortAnswerQuestionUtil.getSpot(
+                                                                        shortAnswerQuestionUtil.getSpotNr(element || ''),
+                                                                        shortAnswerQuestion()
+                                                                    ).invalid = true
                                                                 "
                                                             >
                                                                 <fa-icon [icon]="faBan" size="lg" />
@@ -362,16 +364,16 @@
                                                             class="re-evaluate-button"
                                                             title="Reset"
                                                             (click)="
-                                                                resetSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion))
+                                                                resetSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion()))
                                                             "
                                                         >
                                                             <fa-icon [icon]="faUndo" size="lg" />
                                                         </div>
                                                         <div
-                                                            [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'"
+                                                            [ngClass]="reEvaluationInProgress() ? 're-evaluate-button' : 'delete-button'"
                                                             title="Delete"
                                                             (click)="
-                                                                deleteSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion))
+                                                                deleteSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion()))
                                                             "
                                                         >
                                                             <fa-icon [icon]="faTrash" size="lg" />
@@ -390,7 +392,7 @@
                             </div>
                         }
                     </div>
-                    @if (reEvaluationInProgress) {
+                    @if (reEvaluationInProgress()) {
                         <span class="input-group-btn" style="vertical-align: top">
                             <button
                                 class="btn btn-outline-secondary"
@@ -404,19 +406,19 @@
                     }
                 </div>
                 <hr />
-                @if (!shortAnswerQuestion.solutions || !shortAnswerQuestion.solutions.length) {
+                @if (!shortAnswerQuestion().solutions || !shortAnswerQuestion().solutions!.length) {
                     <div class="dnd-instructions">
                         <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemsInstructions"></span>
                     </div>
                 }
-                @if (shortAnswerQuestion.solutions && shortAnswerQuestion.solutions.length) {
+                @if (shortAnswerQuestion().solutions && shortAnswerQuestion().solutions!.length) {
                     <div class="dnd-instructions">
                         <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
                     </div>
                 }
-                @if (shortAnswerQuestion.solutions && shortAnswerQuestion.solutions.length) {
+                @if (shortAnswerQuestion().solutions && shortAnswerQuestion().solutions!.length) {
                     <div class="drag-items" cdkDropList cdkDropListOrientation="horizontal">
-                        @for (solution of shortAnswerQuestion.solutions; track solution) {
+                        @for (solution of shortAnswerQuestion().solutions; track solution) {
                             <div class="drag-item" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="solution">
                                 <div>
                                     <textarea [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>

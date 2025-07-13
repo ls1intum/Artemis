@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, input } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, input, model } from '@angular/core';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -22,9 +22,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, FormsModule, NgbTooltip, NgbCollapse, TranslateDirective, MarkdownEditorMonacoComponent, CdkDropList, CdkDrag, CdkDragHandle, ArtemisTranslatePipe],
 })
 export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() question: MultipleChoiceQuestion;
+    readonly question = model.required<MultipleChoiceQuestion>();
     readonly questionIndex = input<number>(undefined!);
 
     @Output() questionDeleted = new EventEmitter<object>();
@@ -51,13 +49,13 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
 
     ngOnInit(): void {
         this.markdownMap = new Map<number, string>();
-        for (const answer of this.question.answerOptions!) {
+        for (const answer of this.question().answerOptions!) {
             this.markdownMap.set(
                 answer.id!,
                 (answer.isCorrect ? CorrectMultipleChoiceAnswerAction.IDENTIFIER : WrongMultipleChoiceAnswerAction.IDENTIFIER) + ' ' + generateExerciseHintExplanation(answer),
             );
         }
-        this.questionText = this.getQuestionText(this.question);
+        this.questionText = this.getQuestionText(this.question());
     }
 
     /**
@@ -75,7 +73,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      * @param {string} text
      */
     onQuestionChange(text: string): void {
-        parseExerciseHintExplanation(text, this.question);
+        parseExerciseHintExplanation(text, this.question());
         this.questionUpdated.emit();
     }
 
@@ -85,10 +83,10 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      * @param {AnswerOption} answer
      */
     onAnswerOptionChange(text: string, answer: AnswerOption): void {
-        const answerIndex = this.question.answerOptions!.findIndex((answerOption) => {
+        const answerIndex = this.question().answerOptions!.findIndex((answerOption) => {
             return answerOption.id === answer.id;
         });
-        this.parseAnswerMarkdown(text, this.question.answerOptions![answerIndex!]);
+        this.parseAnswerMarkdown(text, this.question().answerOptions![answerIndex!]);
         this.questionUpdated.emit();
     }
 
@@ -157,16 +155,16 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      * Resets the question title
      */
     resetQuestionTitle() {
-        this.question.title = this.backupQuestion().title;
+        this.question().title = this.backupQuestion().title;
     }
 
     /**
      * Resets the question text
      */
     resetQuestionText() {
-        this.question.text = this.backupQuestion().text;
-        this.question.explanation = this.backupQuestion().explanation;
-        this.question.hint = this.backupQuestion().hint;
+        this.question().text = this.backupQuestion().text;
+        this.question().explanation = this.backupQuestion().explanation;
+        this.question().hint = this.backupQuestion().hint;
     }
 
     /**
@@ -175,7 +173,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
     resetQuestion() {
         this.resetQuestionTitle();
         this.resetQuestionText();
-        this.question.answerOptions = cloneDeep(this.backupQuestion().answerOptions);
+        this.question().answerOptions = cloneDeep(this.backupQuestion().answerOptions);
     }
 
     /**
@@ -184,7 +182,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      */
     resetAnswer(answer: AnswerOption) {
         // Find correct answer if they have another order
-        const answerIndex = this.question.answerOptions!.findIndex((answerOption) => {
+        const answerIndex = this.question().answerOptions!.findIndex((answerOption) => {
             return answerOption.id === answer.id;
         });
         // Find correct backup answer
@@ -192,7 +190,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
             return answer.id === answerBackup.id;
         });
         // Overwrite current answerOption at given index with the backup
-        this.question.answerOptions![answerIndex] = cloneDeep(this.backupQuestion().answerOptions![backupAnswerIndex]);
+        this.question().answerOptions![answerIndex] = cloneDeep(this.backupQuestion().answerOptions![backupAnswerIndex]);
     }
 
     /**
@@ -200,8 +198,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      * @param answer {AnswerOption} the Answer which should be deleted
      */
     deleteAnswer(answer: AnswerOption) {
-        const index = this.question.answerOptions!.indexOf(answer);
-        this.question.answerOptions!.splice(index, 1);
+        const index = this.question().answerOptions!.indexOf(answer);
+        this.question().answerOptions!.splice(index, 1);
     }
 
     /**
@@ -209,8 +207,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      * @param  answer {AnswerOption} the Answer which should be deleted
      */
     setAnswerInvalid(answer: AnswerOption) {
-        const answerIndex = this.question.answerOptions!.indexOf(answer);
-        this.question.answerOptions![answerIndex].invalid = true;
+        const answerIndex = this.question().answerOptions!.indexOf(answer);
+        this.question().answerOptions![answerIndex].invalid = true;
         this.questionUpdated.emit();
     }
 
@@ -224,6 +222,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
     }
 
     onReorderAnswerOptionDrop(event: CdkDragDrop<AnswerOption[]>) {
-        moveItemInArray(this.question.answerOptions || [], event.previousIndex, event.currentIndex);
+        moveItemInArray(this.question().answerOptions || [], event.previousIndex, event.currentIndex);
     }
 }

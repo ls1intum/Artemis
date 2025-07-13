@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, inject, input } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, inject, model } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -37,9 +37,7 @@ export class ApollonDiagramListComponent implements OnInit {
     predicate = 'id';
     reverse = true;
 
-    courseId = input<number>();
-
-    protected _courseId: number | null = null;
+    courseId = model.required<number>();
 
     @Output() openDiagram = new EventEmitter<number>();
     @Output() closeDialog = new EventEmitter();
@@ -61,9 +59,11 @@ export class ApollonDiagramListComponent implements OnInit {
      * Initializes Apollon diagrams from the server
      */
     ngOnInit() {
-        this._courseId ??= this.courseId() ?? Number(this.route.snapshot.paramMap.get('courseId'));
+        if (this.courseId() == null) {
+            this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
+        }
 
-        this.courseService.find(this._courseId).subscribe((courseResponse: HttpResponse<Course>) => {
+        this.courseService.find(this.courseId()).subscribe((courseResponse: HttpResponse<Course>) => {
             this.course = courseResponse.body!;
         });
         this.loadDiagrams();
@@ -73,11 +73,11 @@ export class ApollonDiagramListComponent implements OnInit {
      * Loads the Apollon diagrams of this course which will be shown
      */
     loadDiagrams() {
-        if (this._courseId === null) {
+        if (this.courseId() === null) {
             this.alertService.error('artemisApp.apollonDiagram.home.error.loading');
             return;
         }
-        this.apollonDiagramsService.getDiagramsByCourse(this._courseId).subscribe({
+        this.apollonDiagramsService.getDiagramsByCourse(this.courseId()).subscribe({
             next: (response) => {
                 this.apollonDiagrams = response.body!;
             },
@@ -92,11 +92,11 @@ export class ApollonDiagramListComponent implements OnInit {
      * @param apollonDiagram
      */
     delete(apollonDiagram: ApollonDiagram) {
-        if (this._courseId === null) {
+        if (this.courseId() === null) {
             this.alertService.error('artemisApp.apollonDiagram.delete.error', { title: apollonDiagram.title });
             return;
         }
-        this.apollonDiagramsService.delete(apollonDiagram.id!, this._courseId).subscribe({
+        this.apollonDiagramsService.delete(apollonDiagram.id!, this.courseId()).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.apollonDiagram.delete.success', { title: apollonDiagram.title });
                 this.apollonDiagrams = this.apollonDiagrams.filter((diagram) => {

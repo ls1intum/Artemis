@@ -35,8 +35,8 @@ import { QuizQuestionListEditExistingComponent } from '../list-edit-existing/qui
 export class QuizQuestionListEditComponent {
     private modalService = inject(NgbModal);
 
-    readonly courseId = input<number>(undefined!);
-    readonly quizQuestions = input<QuizQuestion[]>([]);
+    courseId = input<number>(undefined!);
+    quizQuestions = input<QuizQuestion[]>([]);
     readonly disabled = input(false);
 
     @Output() onQuestionAdded = new EventEmitter<QuizQuestion>();

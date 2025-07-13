@@ -46,7 +46,7 @@ export class MultipleChoiceQuestionComponent {
     //  and migrating would break narrowing currently.
     @Input()
     showResult: boolean;
-    readonly questionIndex = input<number>(undefined!);
+    questionIndex = input<number>(undefined!);
     readonly score = input<number>(undefined!);
     readonly forceSampleSolution = input<boolean>(undefined!);
     readonly fnOnSelection = input<any>();

@@ -12,7 +12,7 @@
             <input
                 id="mc-question-title"
                 class="form-control"
-                [(ngModel)]="question.title"
+                [(ngModel)]="question().title"
                 (ngModelChange)="questionUpdated.emit()"
                 placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
             />
@@ -20,16 +20,7 @@
         <div class="question-card-header-inputs">
             <div class="form-group question-score">
                 <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                <input
-                    id="score"
-                    class="form-control"
-                    title="score"
-                    type="number"
-                    min="0"
-                    [max]="MAX_POINTS"
-                    [(ngModel)]="question.points"
-                    (ngModelChange)="questionUpdated.emit()"
-                />
+                <input id="score" class="form-control" title="score" type="number" min="0" [max]="MAX_POINTS" [ngModel]="question().points" (ngModelChange)="setPoints($event)" />
             </div>
             <div class="question-type">
                 <h3 class="mb-0"><span class="badge bg-info align-text-top">MC</span></h3>
@@ -42,9 +33,9 @@
                 <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
                 <select
                     class="form-select"
-                    [(ngModel)]="question.scoringType"
+                    [(ngModel)]="question().scoringType"
                     (ngModelChange)="questionUpdated.emit()"
-                    [disabled]="question.singleChoice ?? false"
+                    [disabled]="question().singleChoice ?? false"
                     title="scoring type"
                 >
                     <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
@@ -58,7 +49,7 @@
                     <input
                         type="checkbox"
                         id="{{ 'cbRandomizeOrderMC' + questionIndex() }}"
-                        [(ngModel)]="question.randomizeOrder"
+                        [(ngModel)]="question().randomizeOrder"
                         (ngModelChange)="questionUpdated.emit()"
                         class="form-check-input custom-control-input"
                     />
@@ -74,7 +65,7 @@
                     <input
                         type="checkbox"
                         id="{{ 'cbSingleChoiceMC' + questionIndex() }}"
-                        [(ngModel)]="question.singleChoice"
+                        [(ngModel)]="question().singleChoice"
                         (ngModelChange)="onSingleChoiceChanged(); questionUpdated.emit()"
                         class="form-check-input custom-control-input"
                     />
@@ -109,7 +100,7 @@
                     <!-- Preview -->
                     <ng-container id="previewMonaco">
                         @if (showMultipleChoiceQuestionPreview) {
-                            <jhi-multiple-choice-question [question]="question" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex()" />
+                            <jhi-multiple-choice-question [question]="question()" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex()" />
                         }
                         <hr />
                     </ng-container>
@@ -117,7 +108,7 @@
                     <!-- Visual -->
                     <ng-container id="visual">
                         @if (showMultipleChoiceQuestionVisual) {
-                            <jhi-multiple-choice-visual-question #visual [question]="question" (questionChanged)="changesInVisualMode()" />
+                            <jhi-multiple-choice-visual-question #visual [question]="question()" (questionChanged)="changesInVisualMode()" />
                         }
                     </ng-container>
                     <!-- End of Visual -->
