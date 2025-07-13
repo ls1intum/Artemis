@@ -196,13 +196,8 @@ public class ResultResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Map<Long, String>> getBuildJobIdsForResultsOfParticipation(@PathVariable long participationId) {
         log.debug("REST request to get build job ids for results of participation : {}", participationId);
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
-        List<Result> results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
-
-        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results, participation);
-
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participationId);
+        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(participationId);
         return new ResponseEntity<>(resultBuildJobMap, HttpStatus.OK);
     }
 
