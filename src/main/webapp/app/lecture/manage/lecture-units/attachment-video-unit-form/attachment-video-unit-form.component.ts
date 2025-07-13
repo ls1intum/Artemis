@@ -236,9 +236,6 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
             fileName: this.fileName(),
         };
 
-        // eslint-disable-next-line no-undef
-        console.log('Generate transcript checked:', formValue.generateTranscript);
-
         this.formSubmitted.emit({
             formProperties,
             fileProperties,
