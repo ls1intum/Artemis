@@ -50,7 +50,7 @@ public record FinishedBuildJobDTO(String id, String name, String buildAgentAddre
      * @param buildJobs to convert
      * @return the converted Slice
      */
-    public static Slice<FinishedBuildJobDTO> fromBuildJobsPage(Slice<BuildJob> buildJobs) {
+    public static Slice<FinishedBuildJobDTO> fromBuildJobsSlice(Slice<BuildJob> buildJobs) {
         return buildJobs.map(FinishedBuildJobDTO::of);
     }
 
