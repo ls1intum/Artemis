@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService.CompetencySuggestionResult;
 
 @ExtendWith(MockitoExtension.class)
 class AtlasMLServiceTest {
@@ -84,7 +83,7 @@ class AtlasMLServiceTest {
     @Test
     void testSuggestCompetencies() {
         // Given
-        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test-id", "test description");
+        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description");
 
         List<String> competencyIds = List.of("comp-001", "comp-002");
         AtlasMLCompetencyRelationDTO relation = new AtlasMLCompetencyRelationDTO("comp-001", "comp-002", "ASSUMES");
@@ -169,7 +168,7 @@ class AtlasMLServiceTest {
     @Test
     void testSuggestCompetencies_WhenServiceThrowsException() {
         // Given
-        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test-id", "test description");
+        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description");
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), any(HttpEntity.class),
                 eq(SuggestCompetencyResponseDTO.class))).thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
@@ -178,90 +177,5 @@ class AtlasMLServiceTest {
         assertThatThrownBy(() -> {
             atlasMLService.suggestCompetencies(request);
         }).isInstanceOf(AtlasMLServiceException.class);
-    }
-
-    @Test
-    void testSuggestCompetenciesAsDomain() {
-        // Given
-        List<String> competencyIds = List.of("1", "2");
-        AtlasMLCompetencyRelationDTO relation = new AtlasMLCompetencyRelationDTO("1", "2", "ASSUMES");
-
-        SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencyIds, List.of(relation));
-
-        ResponseEntity<SuggestCompetencyResponseDTO> response = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
-
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), any(HttpEntity.class),
-                eq(SuggestCompetencyResponseDTO.class))).thenReturn(response);
-
-        Competency competency1 = new Competency();
-        competency1.setTitle("Competency 1");
-        Competency competency2 = new Competency();
-        competency2.setTitle("Competency 2");
-        List<Competency> mockedCompetencies = List.of(competency1, competency2);
-
-        when(competencyRepository.findAllById(List.of(1L, 2L))).thenReturn(mockedCompetencies);
-
-        // When
-        List<Competency> result = atlasMLService.suggestCompetenciesAsDomain("test-id", "test description");
-
-        // Then
-        assertThat(result).hasSize(2);
-        assertThat(result).containsExactlyInAnyOrderElementsOf(mockedCompetencies);
-        assertThat(result.get(0).getTitle()).isEqualTo("Competency 1");
-        assertThat(result.get(1).getTitle()).isEqualTo("Competency 2");
-    }
-
-    @Test
-    void testSuggestCompetencyIds() {
-        // Given
-        List<String> competencyIds = List.of("comp-001", "comp-002");
-        AtlasMLCompetencyRelationDTO relation = new AtlasMLCompetencyRelationDTO("comp-001", "comp-002", "ASSUMES");
-
-        SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencyIds, List.of(relation));
-
-        ResponseEntity<SuggestCompetencyResponseDTO> response = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
-
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), any(HttpEntity.class),
-                eq(SuggestCompetencyResponseDTO.class))).thenReturn(response);
-
-        // When
-        List<String> result = atlasMLService.suggestCompetencyIds("test-id", "test description");
-
-        // Then
-        assertThat(result).hasSize(2);
-        assertThat(result).contains("comp-001", "comp-002");
-    }
-
-    @Test
-    void testSuggestCompetenciesWithRelations() {
-        // Given
-        List<String> competencyIds = List.of("1", "2");
-        AtlasMLCompetencyRelationDTO relation = new AtlasMLCompetencyRelationDTO("1", "2", "ASSUMES");
-
-        SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencyIds, List.of(relation));
-
-        ResponseEntity<SuggestCompetencyResponseDTO> response = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
-
-        when(atlasmlRestTemplate.exchange(any(String.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(SuggestCompetencyResponseDTO.class))).thenReturn(response);
-
-        Competency competency1 = new Competency();
-        competency1.setId(1L);
-        competency1.setTitle("Competency 1");
-        Competency competency2 = new Competency();
-        competency2.setId(2L);
-        competency2.setTitle("Competency 2");
-        List<Competency> mockedCompetencies = List.of(competency1, competency2);
-
-        when(competencyRepository.findAllById(List.of(1L, 2L))).thenReturn(mockedCompetencies);
-
-        // When
-        CompetencySuggestionResult result = atlasMLService.suggestCompetenciesWithRelations("test-id", "test description");
-
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getCompetencies()).hasSize(2);
-        assertThat(result.getCompetencies()).containsExactlyInAnyOrder(competency1, competency2);
-        assertThat(result.getRelations()).hasSize(1);
-        assertThat(result.getRelations().get(0).getType()).isEqualTo(RelationType.ASSUMES);
     }
 }

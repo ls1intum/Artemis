@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
@@ -332,26 +334,22 @@ public class CompetencyResource {
 
     /**
      * POST atlas/competencies/suggest : suggests competencies using AtlasML.
-     * Will be removed after testing.
      *
+     * @param request the request containing the description for competency suggestions
      * @return the ResponseEntity with status 200 (OK) and with body the suggested competencies
      */
     @PostMapping("competencies/suggest")
     @FeatureToggle(Feature.AtlasML)
-    public ResponseEntity<Object> suggestCompetencies() {
-        log.debug("REST request to suggest competencies using AtlasML");
+    public ResponseEntity<SuggestCompetencyResponseDTO> suggestCompetencies(@RequestBody SuggestCompetencyRequestDTO request) {
+        log.debug("REST request to suggest competencies using AtlasML with description: {}", request.description());
 
         try {
-            // Using a simple test request - in a real scenario, you might want to accept parameters
-            String testId = "test-suggestion-" + System.currentTimeMillis();
-            String testDescription = "Test competency suggestion request";
-
-            var result = atlasMLService.suggestCompetencies(testId, testDescription);
+            SuggestCompetencyResponseDTO result = atlasMLService.suggestCompetencies(request);
             return ResponseEntity.ok(result);
         }
         catch (Exception e) {
             log.error("Error while suggesting competencies", e);
-            return ResponseEntity.internalServerError().body("Error suggesting competencies: " + e.getMessage());
+            throw new BadRequestAlertException("Error suggesting competencies: " + e.getMessage(), ENTITY_NAME, "suggestionError");
         }
     }
 

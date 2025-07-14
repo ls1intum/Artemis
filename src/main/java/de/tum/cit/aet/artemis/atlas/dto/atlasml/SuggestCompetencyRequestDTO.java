@@ -8,5 +8,5 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Maps to the Python SuggestCompetencyRequest model.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SuggestCompetencyRequestDTO(@JsonProperty("id") String id, @JsonProperty("description") String description) {
+public record SuggestCompetencyRequestDTO(@JsonProperty("description") String description) {
 }

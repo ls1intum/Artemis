@@ -20,6 +20,8 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
@@ -99,32 +101,43 @@ public class AtlasMLService {
      */
     public SuggestCompetencyResponseDTO suggestCompetencies(SuggestCompetencyRequestDTO request) {
         try {
-            log.debug("Requesting competency suggestions for id: {}", request.id());
+            log.debug("Requesting competency suggestions for id: {}", request.description());
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Test");
             HttpEntity<SuggestCompetencyRequestDTO> entity = new HttpEntity<>(request, headers);
 
-            ResponseEntity<SuggestCompetencyResponseDTO> response = atlasmlRestTemplate.exchange(config.getAtlasmlBaseUrl() + SUGGEST_ENDPOINT, HttpMethod.POST, entity,
-                    SuggestCompetencyResponseDTO.class);
+            // Get the raw response as String first to handle empty array responses
+            ResponseEntity<String> response = atlasmlRestTemplate.exchange(config.getAtlasmlBaseUrl() + SUGGEST_ENDPOINT, HttpMethod.POST, entity, String.class);
 
-            log.debug("Received competency suggestions response for id: {}", request.id());
-            return response.getBody();
+            String responseBody = response.getBody();
+
+            // Handle empty array response
+            if (responseBody != null && responseBody.trim().equals("[]")) {
+                return new SuggestCompetencyResponseDTO(List.of(), List.of());
+            }
+
+            // Parse the response as SuggestCompetencyResponseDTO
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                SuggestCompetencyResponseDTO result = objectMapper.readValue(responseBody, SuggestCompetencyResponseDTO.class);
+                return result;
+            }
+            catch (Exception parseException) {
+                throw new AtlasMLServiceException("Failed to parse AtlasML response", parseException);
+            }
         }
         catch (HttpClientErrorException e) {
-            log.error("HTTP client error while suggesting competencies for id {}: {}", request.id(), e.getMessage());
             throw new AtlasMLServiceException("Failed to suggest competencies due to client error", e);
         }
         catch (HttpServerErrorException e) {
-            log.error("HTTP server error while suggesting competencies for id {}: {}", request.id(), e.getMessage());
             throw new AtlasMLServiceException("Failed to suggest competencies due to server error", e);
         }
         catch (ResourceAccessException e) {
-            log.error("Connection error while suggesting competencies for id {}: {}", request.id(), e.getMessage());
             throw new AtlasMLServiceException("Failed to suggest competencies due to connection issue", e);
         }
         catch (Exception e) {
-            log.error("Unexpected error while suggesting competencies for id {}", request.id(), e);
             throw new AtlasMLServiceException("Unexpected error while suggesting competencies", e);
         }
     }
@@ -140,11 +153,22 @@ public class AtlasMLService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Test");
             HttpEntity<SaveCompetencyRequestDTO> entity = new HttpEntity<>(request, headers);
 
-            atlasmlRestTemplate.exchange(config.getAtlasmlBaseUrl() + SAVE_ENDPOINT, HttpMethod.POST, entity, Void.class);
+            // Get the raw response as String first to handle any potential response parsing issues
+            ResponseEntity<String> response = atlasmlRestTemplate.exchange(config.getAtlasmlBaseUrl() + SAVE_ENDPOINT, HttpMethod.POST, entity, String.class);
 
-            log.debug("Received successful response for saving competencies for id: {}", request.id());
+            String responseBody = response.getBody();
+            log.debug("Received raw response for save request id {}: {}", request.id(), responseBody);
+
+            // Check if the response indicates success (empty response or success message)
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.debug("Received successful response for saving competencies for id: {}", request.id());
+            }
+            else {
+                log.warn("Received non-successful response for saving competencies for id {}: {}", request.id(), responseBody);
+            }
         }
         catch (HttpClientErrorException | HttpServerErrorException e) {
             log.error("HTTP error while saving competencies for id {}: {}", request.id(), e.getMessage());
@@ -158,18 +182,6 @@ public class AtlasMLService {
             log.error("Unexpected error while saving competencies for id {}", request.id(), e);
             throw new AtlasMLServiceException("Unexpected error while saving competencies", e);
         }
-    }
-
-    /**
-     * Suggests competencies using simplified parameters.
-     *
-     * @param id          the identifier for the request
-     * @param description the description to base suggestions on
-     * @return the suggested competency IDs and their relations
-     */
-    public SuggestCompetencyResponseDTO suggestCompetencies(String id, String description) {
-        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO(id, description);
-        return suggestCompetencies(request);
     }
 
     /**
@@ -191,67 +203,6 @@ public class AtlasMLService {
             log.error("Failed to save competencies with domain objects for id {}", id, e);
             return false;
         }
-    }
-
-    /**
-     * Suggests competencies and returns them as domain objects.
-     *
-     * @param id          the identifier for the request
-     * @param description the description to base suggestions on
-     * @return the suggested competencies as domain objects
-     */
-    public List<Competency> suggestCompetenciesAsDomain(String id, String description) {
-        SuggestCompetencyResponseDTO response = suggestCompetencies(id, description);
-        if (response.competencies() == null || response.competencies().isEmpty()) {
-            return List.of();
-        }
-
-        List<Long> competencyIds = response.competencies().stream().map(Long::parseLong).toList();
-
-        return competencyRepository.findAllById(competencyIds);
-    }
-
-    /**
-     * Suggests competencies and returns them as domain objects.
-     *
-     * @param request the suggestion request
-     * @return the suggested competencies as domain objects
-     */
-    public List<Competency> suggestCompetenciesAsDomain(SuggestCompetencyRequestDTO request) {
-        return suggestCompetenciesAsDomain(request.id(), request.description());
-    }
-
-    /**
-     * Suggests competencies with relations.
-     *
-     * @param id          the identifier for the request
-     * @param description the description to base suggestions on
-     * @return the competency suggestion result containing competencies and relations
-     */
-    public CompetencySuggestionResult suggestCompetenciesWithRelations(String id, String description) {
-        SuggestCompetencyResponseDTO response = suggestCompetencies(id, description);
-
-        List<Competency> competencies = List.of();
-        if (response.competencies() != null && !response.competencies().isEmpty()) {
-            List<Long> competencyIds = response.competencies().stream().map(Long::parseLong).toList();
-            competencies = competencyRepository.findAllById(competencyIds);
-        }
-
-        List<CompetencyRelation> relations = response.toDomainCompetencyRelations();
-
-        return new CompetencySuggestionResult(competencies, relations);
-    }
-
-    /**
-     * Suggests competency IDs.
-     *
-     * @param id          the identifier for the request
-     * @param description the description to base suggestions on
-     * @return the list of suggested competency IDs
-     */
-    public List<String> suggestCompetencyIds(String id, String description) {
-        SuggestCompetencyResponseDTO response = suggestCompetencies(id, description);
-        return response.competencies() != null ? response.competencies() : List.of();
     }
 
     /**
