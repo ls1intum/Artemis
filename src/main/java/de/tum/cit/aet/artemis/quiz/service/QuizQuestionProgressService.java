@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,8 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 @Service
 public class QuizQuestionProgressService {
 
+    private static final Logger log = LoggerFactory.getLogger(QuizSubmissionService.class);
+
     private final QuizQuestionProgressRepository quizQuestionProgressRepository;
 
     private final QuizQuestionRepository quizQuestionRepository;
@@ -42,10 +46,13 @@ public class QuizQuestionProgressService {
      * Fetch the necessary data for the quiz question progress from the quiz exercise and submission
      * Set the progress data for each answered question
      *
+     * @param quizExercise   The quiz exercise containing the questions
      * @param quizSubmission The quiz submission containing the user's answers
      * @param participation  The student participation for the submission
      */
     public void retrieveProgressFromResultAndSubmission(QuizExercise quizExercise, QuizSubmission quizSubmission, StudentParticipation participation) {
+        log.info("QuizExercise: {}", quizExercise);
+        log.info("QuizSubmission: {}", quizSubmission);
         ZonedDateTime lastAnsweredAt = quizSubmission.getSubmissionDate();
         Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions = new HashMap<>();
         Long userId = participation.getParticipant().getId();
