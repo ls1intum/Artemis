@@ -34,14 +34,13 @@ import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
-import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
+import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -51,9 +50,6 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "irischattokentrackingintegration";
-
-    @Autowired
-    private IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     @Autowired
     private IrisMessageRepository irisMessageRepository;
@@ -73,6 +69,9 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private IrisChatSessionUtilService irisChatSessionUtilService;
+
     private ProgrammingExercise exercise;
 
     private Course course;
@@ -86,23 +85,23 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
-        exercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
+        exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
         programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
         programmingExerciseRepository.save(exercise);
         exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
         // Set the correct repository URIs for the template and the solution participation.
         String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
         TemplateProgrammingExerciseParticipation templateParticipation = exercise.getTemplateParticipation();
-        templateParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
         SolutionProgrammingExerciseParticipation solutionParticipation = exercise.getSolutionParticipation();
-        solutionParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
+        solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
         String assignmentRepositorySlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
         // Add a participation for student1.
         ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        studentParticipation.setRepositoryUri(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, assignmentRepositorySlug));
+        studentParticipation.setRepositoryUri(String.format(localVCBaseUri + "/git/%s/%s.git", projectKey, assignmentRepositorySlug));
         studentParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
         // Prepare the repositories.
@@ -124,8 +123,9 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTokenTrackingHandledExerciseChat() throws Exception {
-        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var messageToSend = createDefaultMockMessage(irisSession);
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         List<PyrisStageDTO> doneStage = new ArrayList<>();
         doneStage.add(new PyrisStageDTO("DoneTest", 10, PyrisStageState.DONE, "Done"));
@@ -158,8 +158,9 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTokenTrackingSavedExerciseChat() {
-        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var irisMessage = createDefaultMockMessage(irisSession);
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage irisMessage = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         irisMessageRepository.save(irisMessage);
         var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         LLMTokenUsageTrace tokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(tokens, LLMServiceType.IRIS,
@@ -174,8 +175,9 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTokenTrackingExerciseChatWithPipelineFail() throws Exception {
-        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var messageToSend = createDefaultMockMessage(irisSession);
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         List<PyrisStageDTO> failedStages = new ArrayList<>();
         failedStages.add(new PyrisStageDTO("TestTokenFail", 10, PyrisStageState.ERROR, "Failed running pipeline"));
@@ -204,17 +206,6 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(usage.getCostPerMillionOutputTokens()).isCloseTo(expectedCost.costPerMillionOutputToken(), Offset.offset(0.01f));
             assertThat(usage.getServicePipelineId()).isEqualTo(expectedCost.pipelineId());
         }
-    }
-
-    private IrisMessage createDefaultMockMessage(IrisSession irisSession) {
-        var messageToSend = irisSession.newMessage();
-        messageToSend.addContent(createMockTextContent(), createMockTextContent(), createMockTextContent());
-        return messageToSend;
-    }
-
-    private IrisMessageContent createMockTextContent() {
-        var text = "The happy dog jumped over the lazy dog.";
-        return new IrisTextMessageContent(text);
     }
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, List<LLMRequest> tokens) throws Exception {
