@@ -50,13 +50,12 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
             FROM Participation p
                 LEFT JOIN FETCH p.submissions s
             WHERE p.id = :participationId
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
-    Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") long participationId);
+    Optional<Participation> findWithEagerSubmissionsById(@Param("participationId") long participationId);
 
     @NotNull
-    default Participation findByIdWithLegalSubmissionsElseThrow(long participationId) {
-        return getValueElseThrow(findWithEagerLegalSubmissionsById(participationId), participationId);
+    default Participation findByIdWithSubmissionsElseThrow(long participationId) {
+        return getValueElseThrow(findWithEagerSubmissionsById(participationId), participationId);
     }
 
     @Query("""
@@ -99,11 +98,11 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
     Set<Participation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Query("""
-                SELECT p
-                FROM Participation p
-                    LEFT JOIN FETCH p.exercise e
-                    LEFT JOIN FETCH e.buildConfig
-                WHERE p.id = :participationId
+            SELECT p
+            FROM Participation p
+                LEFT JOIN FETCH p.exercise e
+                LEFT JOIN FETCH e.buildConfig
+            WHERE p.id = :participationId
             """)
     Optional<Participation> findWithProgrammingExerciseWithBuildConfigById(@Param("participationId") long participationId);
 

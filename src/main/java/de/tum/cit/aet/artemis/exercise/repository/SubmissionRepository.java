@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -75,15 +74,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     Long countByParticipationId(long participationId);
 
     Optional<Submission> findByParticipationIdOrderBySubmissionDateDesc(long participationId);
-
-    /**
-     * Get last submission before date for a participation
-     *
-     * @param participationId the id of the participation
-     * @param submissionDate  cutoff time for submissions
-     * @return the last submission before the cutoff
-     */
-    Optional<Submission> findFirstByParticipationIdAndSubmissionDateBeforeOrderBySubmissionDateDesc(long participationId, ZonedDateTime submissionDate);
 
     /**
      * Get all submissions of a participation and eagerly load results
@@ -315,7 +305,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 JOIN p.submissions s
             WHERE e.id = :exerciseId
                 AND s.submitted = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") long exerciseId);
@@ -335,7 +324,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE e.id = :exerciseId
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
     long countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId);
@@ -589,4 +577,17 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 AND s.submitted = TRUE
             """)
     boolean existsByExerciseIdAndParticipantIdAndSubmitted(@Param("exerciseId") long exerciseId, @Param("userId") long userId);
+
+    @Query("""
+            SELECT s
+            FROM Submission s
+            WHERE s.participation.id = :participationId
+              AND s.id = (
+              SELECT MAX(s2.id)
+              FROM Submission s2
+              WHERE s2.participation.id = :participationId
+                 )
+             """)
+    Optional<Submission> findLatestSubmissionByParticipationId(@Param("participationId") long participationId);
+
 }

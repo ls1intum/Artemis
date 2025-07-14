@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Params } from '@angular/router';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
@@ -49,7 +49,7 @@ export class MetisService implements OnDestroy {
     private forwardedMessageService = inject(ForwardedMessageService);
     private savedPostService = inject(SavedPostService);
     private metisConversationService = inject(MetisConversationService);
-
+    private http = inject(HttpClient);
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
@@ -338,6 +338,14 @@ export class MetisService implements OnDestroy {
         return this.postService.updatePostDisplayPriority(this.courseId, postId, displayPriority).pipe(map((res: HttpResponse<Post>) => res.body!));
     }
 
+    /**
+     * Fetches all pinned posts for the given conversation.
+     * Posts are sorted by creation date in descending order and are not paginated.
+     * Updates the internal pinnedPosts$ observable with the result.
+     *
+     * @param conversationId The ID of the conversation to fetch pinned posts from
+     * @returns An observable of the fetched pinned posts
+     */
     public fetchAllPinnedPosts(conversationId: number): Observable<Post[]> {
         const pinnedFilter: PostContextFilter = {
             courseId: this.courseId,
@@ -764,12 +772,15 @@ export class MetisService implements OnDestroy {
                     const currentPinnedPosts = this.pinnedPosts$.getValue();
                     const indexPinned = currentPinnedPosts.findIndex((pinnedPost) => pinnedPost.id === postDTO.post.id);
                     if (indexPinned > -1) {
+                        // Post is already pinned → update its reference in the pinned list
                         currentPinnedPosts[indexPinned] = postDTO.post;
                         this.pinnedPosts$.next([...currentPinnedPosts]);
                     } else {
+                        // Post just got pinned → prepend to pinned list
                         this.pinnedPosts$.next([postDTO.post, ...currentPinnedPosts]);
                     }
                 } else {
+                    // If post is no longer pinned, remove it from the pinned list
                     this.removeFromPinnedPosts(postDTO.post.id!);
                 }
                 this.addTags(postDTO.post.tags);
@@ -782,6 +793,7 @@ export class MetisService implements OnDestroy {
                 const currentPinnedPosts = this.pinnedPosts$.getValue();
                 const isPinned = currentPinnedPosts.some((pinnedPost) => pinnedPost.id === postDTO.post.id);
                 if (isPinned) {
+                    // If a deleted post was pinned, remove it from the pinned list
                     const updatedPinnedPosts = currentPinnedPosts.filter((pinnedPost) => pinnedPost.id !== postDTO.post.id);
                     this.pinnedPosts$.next(updatedPinnedPosts);
                 }
@@ -880,6 +892,7 @@ export class MetisService implements OnDestroy {
             return of(undefined);
         }
     }
+
     /**
      * Creates forwarded messages by associating original posts with a target conversation.
      *
@@ -896,36 +909,44 @@ export class MetisService implements OnDestroy {
             return throwError(() => new Error('Course ID is not set. Ensure that setCourse() is called before forwarding posts.'));
         }
 
+        // Create a new post object that will serve as the container for the forwarded messages
         const newPost: Post = {
             content: newContent || '',
             conversation: targetConversation,
             hasForwardedMessages: true,
         };
 
+        // Determine whether the forwarded items are posts or answers
         let sourceType = PostingType.POST;
         if (isAnswer) {
             sourceType = PostingType.ANSWER;
         }
 
+        // Create the new post on the server
         return this.postService.create(this.courseId, newPost).pipe(
             switchMap((createdPost: HttpResponse<Post>) => {
                 const createdPostBody = createdPost.body!;
+
+                // Map original posts to ForwardedMessage instances referencing the newly created post
                 const forwardedMessages: ForwardedMessage[] = originalPosts.map(
                     (post) => new ForwardedMessage(undefined, post.id, sourceType, { id: createdPostBody.id } as Post, undefined, newContent || ''),
                 );
 
+                // Send a creation request for each ForwardedMessage
                 const createForwardedMessageObservables = forwardedMessages.map((message) =>
                     this.forwardedMessageService.createForwardedMessage(message).pipe(map((res: HttpResponse<ForwardedMessage>) => res.body!)),
                 );
 
                 return forkJoin(createForwardedMessageObservables).pipe(
                     tap((createdForwardedMessages: ForwardedMessage[]) => {
+                        // If the target is the currently active conversation, update the local cache
                         if (targetConversation.id === this.currentConversation?.id) {
                             const existingPostIndex = this.cachedPosts.findIndex((post) => post.id === createdPostBody.id);
                             if (existingPostIndex === -1) {
                                 this.cachedPosts = [createdPostBody, ...this.cachedPosts];
                             }
 
+                            // Mark posts as having forwarded messages
                             createdForwardedMessages.forEach((fm) => {
                                 const postIndex = this.cachedPosts.findIndex((post) => post.id === fm.destinationPost?.id);
                                 if (postIndex > -1) {
@@ -933,6 +954,8 @@ export class MetisService implements OnDestroy {
                                     this.cachedPosts[postIndex] = { ...post, hasForwardedMessages: true };
                                 }
                             });
+
+                            // Emit updated posts and post count
                             this.posts$.next(this.cachedPosts);
                             this.cachedTotalNumberOfPosts += 1;
                             this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
@@ -977,5 +1000,10 @@ export class MetisService implements OnDestroy {
             const updatedPinnedPosts = currentPinnedPosts.filter((pinnedPost) => pinnedPost.id !== postId);
             this.pinnedPosts$.next(updatedPinnedPosts);
         }
+    }
+
+    enable(courseId: number, withMessaging: boolean): Observable<void> {
+        const httpParams = new HttpParams().set('withMessaging', withMessaging);
+        return this.http.put<void>('api/communication/courses/' + courseId + '/enable', undefined, { params: httpParams });
     }
 }

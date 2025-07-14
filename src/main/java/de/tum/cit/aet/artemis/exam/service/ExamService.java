@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -887,7 +886,6 @@ public class ExamService {
             case QuizExercise ignored -> {
                 // NOTE: due to performance concerns, this is handled differently, search for quizSubmittedAnswerCounts to find out more
                 return true;
-                // NOTE: due to performance concerns, this is handled differently, search for quizSubmittedAnswerCounts to find out more
             }
             case null, default -> throw new IllegalArgumentException("The exercise type of the exercise with id " + exercise.getId() + " is not supported");
         }
@@ -1168,7 +1166,7 @@ public class ExamService {
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
 
         final long numberOfSubmissions = submissionRepository.countByExamIdSubmittedSubmissionsIgnoreTestRuns(examId)
-                + programmingExerciseRepository.countLegalSubmissionsByExamIdSubmitted(examId);
+                + programmingExerciseRepository.countSubmissionsByExamIdSubmitted(examId);
         stats.setNumberOfSubmissions(new DueDateStat(numberOfSubmissions, 0));
 
         DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamForCorrectionRounds(examId,
@@ -1234,26 +1232,6 @@ public class ExamService {
         }
 
         log.info("archive exam took {}", TimeLogUtil.formatDurationFrom(start));
-    }
-
-    /**
-     * Combines the template commits of all programming exercises in the exam.
-     * This is executed before the individual student exams are generated.
-     *
-     * @param exam - the exam which template commits should be combined
-     */
-    public void combineTemplateCommitsOfAllProgrammingExercisesInExam(Exam exam) {
-        var programmingExercises = getAllExercisesForExamByType(exam, ProgrammingExercise.class);
-        programmingExercises.forEach(exercise -> {
-            try {
-                var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExercise.getTemplateParticipation().getVcsRepositoryUri());
-                log.debug("Finished combination of template commits for programming exercise {}", programmingExercise);
-            }
-            catch (GitAPIException e) {
-                log.error("An error occurred when trying to combine template commits for exam {}.", exam.getId(), e);
-            }
-        });
     }
 
     /**

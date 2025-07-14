@@ -515,10 +515,10 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     /**
      * Provides all possible preferences for the course learner profile that can influence the navigation
      *
-     * @return all possible combinations for a three tuple with the values between 1 and 5 (inclusive)
+     * @return all possible combinations for a three tuple with the values between 0 and 5 (inclusive)
      */
     static Stream<Arguments> getLearningPathNavigationPreferencesProvider() {
-        return IntStream.range(0, 5 * 5 * 5).mapToObj(i -> Arguments.of(i / 25 + 1, i / 5 % 5 + 1, i % 5 + 1));
+        return IntStream.range(0, 6 * 6 * 6).mapToObj(i -> Arguments.of(i / 36, i / 6 % 6, i % 6));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

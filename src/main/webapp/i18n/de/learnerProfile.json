@@ -1,8 +1,6 @@
 {
     "artemisApp": {
         "learnerProfile": {
-            "initialValueHint": "Der Initialwert, welcher vom System für die Statistik verwendet wird.",
-            "currentValueHint": "Der aktuelle Wert, berechnet aus dem Initialwert und deinen Interaktionen mit Artemis.",
             "courseLearnerProfile": {
                 "title": "Kurs-Lernprofil",
                 "selectCourse": "Kurs auswählen...",
@@ -21,13 +19,6 @@
                     "label": "Wiederholungsintensität",
                     "description": "Wähle, wie viel du bereit bist, den Kursinhalt zu wiederholen."
                 },
-                "proficiency": {
-                    "label": "Kenntnis",
-                    "description": "Artemis Einschätzung deiner Kenntnis des aktuellen Kurses.",
-                    "minLabel": "Anfänger",
-                    "maxLabel": "Experte",
-                    "tooltip": "Der Startwert der Berechnung wird durch den grauen Punk angezeigt. Falls du diesen ändern möchtest, kannst du das mithilfe des blauen Knopfes."
-                },
                 "profileSaved": "Lernprofil gespeichert",
                 "invalidRange": "Werte müssen zwischen 1 und 5 liegen",
                 "level": {
@@ -37,6 +28,40 @@
                     "high": "Hoch",
                     "veryHigh": "Sehr hoch"
                 }
+            },
+            "feedbackLearnerProfile": {
+                "title": "Feedback-Lernprofil",
+                "description": "Hier kannst du dein Feedback-Lernprofil einsehen und aktualisieren. Diese Einstellungen werden verwendet, um deine Feedback-Erfahrung zu personalisieren.",
+                "alternativeStandard": {
+                    "label": "Alternative vs. Standard",
+                    "description": "Wähle, ob du Feedback bevorzugst, das alternative und kreative Lösungen erkundet, oder Feedback, das auf den Standardansätzen und den häufigsten, am weitesten verbreiteten Lösungen basiert.",
+                    "level": {
+                        "alternative": "Alternative",
+                        "balanced": "Balanced",
+                        "standard": "Standard"
+                    }
+                },
+                "followupSummary": {
+                    "label": "Follow-up vs. Zusammenfassung",
+                    "description": "Wähle, ob du Feedback bevorzugst, das mit einer Follow-up-Frage endet (um weitere Gedanken und Reflexionen zu fördern) oder mit einer Zusammenfassung/einem Abschluss (um das Feedback klar abzuschließen).",
+                    "level": {
+                        "followup": "Follow-up",
+                        "balanced": "Balanced",
+                        "summary": "Zusammenfassung"
+                    }
+                },
+                "briefDetailed": {
+                    "label": "Kurz vs. Detailliert",
+                    "description": "Wähle, ob du Feedback bevorzugst, das kurz und direkt ist, oder detaillierter mit Erklärungen und Beispielen.",
+                    "level": {
+                        "brief": "Kurz",
+                        "balanced": "Balanced",
+                        "detailed": "Detailliert"
+                    }
+                },
+                "profileSaved": "Feedback-Lernprofil gespeichert",
+                "invalidRange": "Werte müssen zwischen 1 und 3 liegen",
+                "error": "Feedback-Lernprofil konnte nicht gespeichert werden"
             }
         }
     }

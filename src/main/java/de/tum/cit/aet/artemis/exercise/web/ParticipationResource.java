@@ -7,8 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +69,6 @@ import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -383,7 +380,7 @@ public class ParticipationResource {
             }
         }
         else if (exercise instanceof ProgrammingExercise) {
-            if (participation.findLatestLegalResult() == null) {
+            if (participation.findLatestResult() == null) {
                 throw new BadRequestAlertException("You need to submit at least once and have the build results", "participation", "noSubmissionExists", true);
             }
         }
@@ -605,15 +602,6 @@ public class ParticipationResource {
         return ResponseEntity.ok().body(updatedParticipations);
     }
 
-    private Set<StudentParticipation> findParticipationWithLatestResults(Exercise exercise) {
-        // TODO: we should reduce the amount of data fetched here and sent to the client: double check which data is actually required in the exercise scores page
-        if (exercise.isTeamMode()) {
-            // For team exercises the students need to be eagerly fetched
-            return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
-        }
-        return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsAndAssessmentNote(exercise.getId());
-    }
-
     /**
      * GET /exercises/:exerciseId/participations : get all the participations for an exercise
      *
@@ -630,15 +618,7 @@ public class ParticipationResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         Set<StudentParticipation> participations;
         if (withLatestResults) {
-            participations = findParticipationWithLatestResults(exercise);
-            participations.forEach(participation -> {
-                participation.setSubmissionCount(participation.getSubmissions().size());
-                if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {
-                    var lastLegalSubmission = participation.getSubmissions().stream().filter(submission -> submission.getType() != SubmissionType.ILLEGAL)
-                            .max(Comparator.naturalOrder());
-                    participation.setSubmissions(lastLegalSubmission.map(Set::of).orElse(Collections.emptySet()));
-                }
-            });
+            participations = participationService.findByExerciseIdWithLatestSubmissionResultAndAssessmentNote(exercise.getId(), exercise.isTeamMode());
         }
         else {
             if (exercise.isTeamMode()) {
@@ -651,6 +631,8 @@ public class ParticipationResource {
             Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
             participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
         }
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
+        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
         participations = participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
             // remove unnecessary data to reduce response size
             participation.setExercise(null);

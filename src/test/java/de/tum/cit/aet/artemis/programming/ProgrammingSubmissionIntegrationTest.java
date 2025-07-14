@@ -3,37 +3,28 @@ package de.tum.cit.aet.artemis.programming;
 import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
-import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseResultTestService.convertBuildResultToJsonObject;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentMatchers;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -43,7 +34,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -58,14 +48,9 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffEntry;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffReport;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
@@ -80,7 +65,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         userUtilService.addUsers(TEST_PREFIX, 10, 2, 1, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow();
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
@@ -770,46 +755,5 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
             programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(exercise, submission, TEST_PREFIX + "student" + i, assessor, AssessmentType.SEMI_AUTOMATIC,
                     false);
         }
-    }
-
-    /**
-     * Tests whether a newly created result is properly reported to the learner profile
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReportResultToLearnerProfile() throws IOException, GitAPIException {
-
-        User user = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
-
-        ProgrammingLanguage programmingLanguage = ProgrammingLanguage.JAVA;
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, programmingLanguage);
-        ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
-        SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
-                .findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        var localRepoFile = Files.createTempDirectory("repo").toFile();
-        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
-        doReturn(repository).when(gitService).getOrCheckoutRepository(any(), anyString(), anyBoolean());
-
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
-
-        ProgrammingExerciseGitDiffEntry entry = new ProgrammingExerciseGitDiffEntry();
-        entry.setLineCount(10);
-        ProgrammingExerciseGitDiffReport report = new ProgrammingExerciseGitDiffReport();
-        report.setEntries(Set.of(entry));
-
-        doReturn(report).when(programmingExerciseGitDiffReportService).getOrCreateReportOfExercise(programmingExercise);
-        doNothing().when(learnerProfileApi).updateProficiency(anySet(), any(Course.class), any(Integer.class), any(Integer.class), any(Double.class));
-
-        var resultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, null, programmingLanguage, true, List.of("test1"),
-                List.of(), new ArrayList<>(), new ArrayList<>(), null);
-
-        final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
-        programmingExerciseGradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
-
-        verify(learnerProfileApi).updateProficiency(eq(Set.of(user)), eq(course), eq(0), eq(10), eq(25.0));
     }
 }

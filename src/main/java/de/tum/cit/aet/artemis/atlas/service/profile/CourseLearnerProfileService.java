@@ -1,18 +1,15 @@
 package de.tum.cit.aet.artemis.atlas.service.profile;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -22,8 +19,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @Lazy
 @Service
 public class CourseLearnerProfileService {
-
-    private static final Logger log = LoggerFactory.getLogger(CourseLearnerProfileService.class);
 
     private final CourseLearnerProfileRepository courseLearnerProfileRepository;
 
@@ -45,38 +40,13 @@ public class CourseLearnerProfileService {
      * @param user   the user for which the profile is created
      * @return Saved CourseLearnerProfile
      */
-    public CourseLearnerProfile getOrCreateCourseLearnerProfile(Course course, User user) {
+    public CourseLearnerProfile createCourseLearnerProfile(Course course, User user) {
 
+        // Ensure that the user has a learner profile (lazy creation)
         if (user.getLearnerProfile() == null) {
             learnerProfileService.createProfile(user);
         }
 
-        return courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course)
-                .orElseGet(() -> courseLearnerProfileRepository.save(createCourseLearnerProfile(user, course)));
-    }
-
-    /**
-     * Gets all {@link CourseLearnerProfile}s for the given Set of {@link Course}s.
-     * If there exists no profile for a course, a profile is created.
-     *
-     * @param user    The user for which to get the profiles
-     * @param courses The courses corresponding to the profiles
-     * @return A Set of CourseLearnerProfiles
-     */
-    public Set<CourseLearnerProfile> getOrCreateByCourses(User user, Set<Course> courses) {
-
-        return courses.stream().map(course -> {
-            Optional<CourseLearnerProfile> courseLearnerProfileOptional = courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course);
-            CourseLearnerProfile courseLearnerProfile = courseLearnerProfileOptional.orElseGet(() -> createCourseLearnerProfile(user, course));
-            // Course field is manually fetched as it is only lazily initialized by default.
-            // This allows further users of the object to interact with the course without fetching it again.
-            courseLearnerProfileRepository.save(courseLearnerProfile);
-            courseLearnerProfile.setCourse(course);
-            return courseLearnerProfile;
-        }).collect(Collectors.toSet());
-    }
-
-    private CourseLearnerProfile createCourseLearnerProfile(User user, Course course) {
         var courseProfile = new CourseLearnerProfile();
         courseProfile.setCourse(course);
 
@@ -88,7 +58,7 @@ public class CourseLearnerProfileService {
         var learnerProfile = learnerProfileRepository.findByUserElseThrow(user);
         courseProfile.setLearnerProfile(learnerProfile);
 
-        return courseProfile;
+        return courseLearnerProfileRepository.save(courseProfile);
     }
 
     /**
@@ -96,17 +66,32 @@ public class CourseLearnerProfileService {
      *
      * @param course the course for which the profiles are created
      * @param users  the users for which the profiles are created with eagerly loaded learner profiles
-     * @return A List of saved CourseLearnerProfiles
      */
-    public List<CourseLearnerProfile> getOrCreateCourseLearnerProfiles(Course course, Set<User> users) {
+    public void createCourseLearnerProfiles(Course course, Set<User> users) {
 
+        // Ensure that all users have a learner profile (lazy creation)
         users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
 
-        Set<CourseLearnerProfile> courseProfiles = users.stream()
-                .map(user -> courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course).orElseGet(() -> createCourseLearnerProfile(user, course)))
-                .collect(Collectors.toSet());
+        Set<LearnerProfile> learnerProfiles = learnerProfileRepository.findAllByUserIn(users);
 
-        return courseLearnerProfileRepository.saveAll(courseProfiles);
+        Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course).orElseGet(() -> {
+
+            CourseLearnerProfile courseProfile = new CourseLearnerProfile();
+            courseProfile.setCourse(course);
+            LearnerProfile learnerProfile = learnerProfiles.stream().filter(profile -> profile.getUser().equals(user)).findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Learner profile for user " + user.getLogin() + " not found"));
+
+            courseProfile.setLearnerProfile(learnerProfile);
+
+            // Initialize values in the middle of Likert scale
+            courseProfile.setAimForGradeOrBonus(3);
+            courseProfile.setRepetitionIntensity(3);
+            courseProfile.setTimeInvestment(3);
+
+            return courseProfile;
+        })).collect(Collectors.toSet());
+
+        courseLearnerProfileRepository.saveAll(courseProfiles);
     }
 
     /**
@@ -126,81 +111,5 @@ public class CourseLearnerProfileService {
      */
     public void deleteAllForCourse(Course course) {
         courseLearnerProfileRepository.deleteAllByCourse(course);
-    }
-
-    /**
-     * Calculates the estimated proficiency of a student utilizing lines changed by a student in a submission,
-     * the score increase achieved and the lines changed between template and sample solution.
-     * The values are cumulated and mapped to a likert scale using a sigmoid curve.
-     *
-     * @param linesChanged           Lines changed by the student.
-     * @param linesChangedInTemplate Lines changed between template and sample solution
-     * @param score                  Score increase by student.
-     * @param currentProficiency     The current proficiency of the student.
-     * @return The estimated proficiency of the student.
-     */
-    private double estimateProficiency(int linesChanged, int linesChangedInTemplate, double score, double currentProficiency) {
-
-        if (score == 0) {
-            // The student submitted a submission without changes.
-            // No assumptions can be made about their proficiency.
-            if (linesChanged == 0) {
-                return currentProficiency;
-            }
-            // The student has changed some code without achieving a better score.
-            // We assume a proficiency of 1.
-            else {
-                return 1;
-            }
-        }
-
-        // weighing factor. Can be tuned to achieve better accuracy.
-        final double WEIGHT_FACTOR = 0.05;
-        // Factor to account for the disparity in line changes needed by students vs. the sample solution.
-        final double LINE_TOLERANCE = 15;
-
-        /*
-         * Calculates exponent for sigmoid curve.
-         * General formula of sigmoid f(t) = 1/(1+e^(-t))
-         * Maps -Inf -> Inf to 0 -> 1.
-         * We map the lines changed by the student, lines changed in the template and the achieved score to -Inf -> Inf.
-         * We tune this with WEIGHT_FACTOR and LINE_TOLERANCE to statistically approach the expected proficiency distribution.
-         */
-        double exp = -(WEIGHT_FACTOR / score * (linesChanged - LINE_TOLERANCE * linesChangedInTemplate * Math.abs(score)));
-
-        // Calculates point on sigmoid.
-        // Flips and scales curve to match to Likert scale.
-        return -4 * (1 / (1 + Math.exp(exp))) + 5;
-    }
-
-    /**
-     * Updates proficiency in the CourseLearnerProfile.
-     * Uses the lines changed by the student, lines changed in the template and the achieved score of a submission to estimate a proficiency.
-     * Moves the current proficiency towards the estimated proficiency.
-     *
-     * @param users                  The set of users affected by the changes.
-     * @param course                 The course the submission is from.
-     * @param linesChanged           The lines changed by the student.
-     * @param linesChangedInTemplate the lines changed in the template.
-     * @param score                  The achieved score increase between this and the last submission.
-     */
-    public void updateProficiency(Set<User> users, Course course, int linesChanged, int linesChangedInTemplate, double score) {
-
-        Set<CourseLearnerProfile> courseLearnerProfiles = users.stream().map(user -> courseLearnerProfileRepository.findByLoginAndCourseElseThrow(user.getLogin(), course))
-                .collect(Collectors.toSet());
-
-        courseLearnerProfiles.forEach(courseLearnerProfile -> {
-            double currentProficiency = courseLearnerProfile.getProficiency();
-            double estimatedProficiency = estimateProficiency(linesChanged, linesChangedInTemplate, score, currentProficiency);
-
-            // Correct current proficiency by 10% of difference between estimated and current proficiency.
-            final double CORRECTION_PERCENTAGE = 0.1;
-            courseLearnerProfile.setProficiency(currentProficiency + CORRECTION_PERCENTAGE * (estimatedProficiency - currentProficiency));
-            courseLearnerProfileRepository.save(courseLearnerProfile);
-
-            log.debug("Update proficiency: LC {}, LCTemplate {}, Score {}. Previous proficiency: {}; Current proficiency: {}", linesChanged, linesChangedInTemplate, score,
-                    currentProficiency, courseLearnerProfile.getProficiency());
-        });
-
     }
 }

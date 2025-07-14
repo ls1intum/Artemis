@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
+import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -21,9 +23,13 @@ public class LearnerProfileApi extends AbstractAtlasApi {
 
     private final CourseLearnerProfileService courseLearnerProfileService;
 
-    public LearnerProfileApi(LearnerProfileService learnerProfileService, CourseLearnerProfileService courseLearnerProfileService) {
+    private final LearnerProfileRepository learnerProfileRepository;
+
+    public LearnerProfileApi(LearnerProfileService learnerProfileService, CourseLearnerProfileService courseLearnerProfileService,
+            LearnerProfileRepository learnerProfileRepository) {
         this.learnerProfileService = learnerProfileService;
         this.courseLearnerProfileService = courseLearnerProfileService;
+        this.learnerProfileRepository = learnerProfileRepository;
     }
 
     public void deleteAllForCourse(Course course) {
@@ -31,11 +37,11 @@ public class LearnerProfileApi extends AbstractAtlasApi {
     }
 
     public void createCourseLearnerProfile(Course course, User user) {
-        courseLearnerProfileService.getOrCreateCourseLearnerProfile(course, user);
+        courseLearnerProfileService.createCourseLearnerProfile(course, user);
     }
 
     public void createCourseLearnerProfiles(Course course, Set<User> students) {
-        courseLearnerProfileService.getOrCreateCourseLearnerProfiles(course, students);
+        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
     }
 
     public void deleteCourseLearnerProfile(Course course, User user) {
@@ -46,11 +52,22 @@ public class LearnerProfileApi extends AbstractAtlasApi {
         learnerProfileService.createProfile(user);
     }
 
-    public void deleteProfile(User user) {
-        learnerProfileService.deleteProfile(user);
+    /**
+     * Get or create a learner profile for a user
+     *
+     * @param user the user for which the profile is retrieved or created
+     * @return Saved LearnerProfile
+     */
+    public LearnerProfile getOrCreateLearnerProfile(User user) {
+        return learnerProfileService.getOrCreateLearnerProfile(user);
     }
 
-    public void updateProficiency(Set<User> users, Course course, int linesChanged, int linesChangedInTemplate, double score) {
-        courseLearnerProfileService.updateProficiency(users, course, linesChanged, linesChangedInTemplate, score);
+    /**
+     * Delete a learner profile by its user
+     *
+     * @param user the user for which the profile is deleted
+     */
+    public void deleteProfile(User user) {
+        learnerProfileRepository.deleteByUser(user);
     }
 }

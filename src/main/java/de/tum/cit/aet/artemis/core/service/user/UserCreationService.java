@@ -21,7 +21,6 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Organization;
@@ -53,18 +52,14 @@ public class UserCreationService {
 
     private final CacheManager cacheManager;
 
-    private final Optional<LearnerProfileApi> learnerProfileApi;
-
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
-            Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager, OrganizationRepository organizationRepository,
-            Optional<LearnerProfileApi> learnerProfileApi) {
+            Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager, OrganizationRepository organizationRepository) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.cacheManager = cacheManager;
         this.organizationRepository = organizationRepository;
-        this.learnerProfileApi = learnerProfileApi;
     }
 
     /**
@@ -127,7 +122,6 @@ public class UserCreationService {
         }
         newUser = saveUser(newUser);
         final User finalNewUser = newUser;
-        learnerProfileApi.ifPresent(api -> api.createProfile(finalNewUser));
         log.debug("Created user: {}", newUser);
         return newUser;
     }
@@ -180,8 +174,6 @@ public class UserCreationService {
 
         addUserToGroupsInternal(user, userDTO.getGroups());
 
-        learnerProfileApi.ifPresent(api -> api.createProfile(user));
-
         log.debug("Created Information for User: {}", user);
         return user;
     }
@@ -220,7 +212,9 @@ public class UserCreationService {
             user.setLastName(lastName);
             user.setEmail(email.toLowerCase());
             user.setLangKey(langKey);
-            user.setImageUrl(imageUrl);
+            if (imageUrl != null) {
+                user.setImageUrl(imageUrl);
+            }
             saveUser(user);
             log.info("Changed Information for User: {}", user);
             optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, null));
@@ -245,7 +239,9 @@ public class UserCreationService {
         if (StringUtils.hasText(updatedUserDTO.getVisibleRegistrationNumber())) {
             user.setRegistrationNumber(updatedUserDTO.getVisibleRegistrationNumber());
         }
-        user.setImageUrl(updatedUserDTO.getImageUrl());
+        if (updatedUserDTO.getImageUrl() != null) {
+            user.setImageUrl(updatedUserDTO.getImageUrl());
+        }
         user.setActivated(updatedUserDTO.isActivated());
         user.setLangKey(updatedUserDTO.getLangKey());
         user.setGroups(updatedUserDTO.getGroups());

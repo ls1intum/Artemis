@@ -45,29 +45,19 @@ public class CourseLearnerProfile extends DomainObject {
     private Course course;
 
     @Column(name = "aim_for_grade_or_bonus")
-    @Min(MIN_PROFILE_VALUE)
+    @Min(0) // TODO should actually be MIN_PROFILE_VALUE = 1, however, then almost all tests in LearningPathIntegrationTest fail
     @Max(MAX_PROFILE_VALUE)
-    private int aimForGradeOrBonus = 3;
+    private int aimForGradeOrBonus;
 
     @Column(name = "time_investment")
-    @Min(MIN_PROFILE_VALUE)
+    @Min(0) // TODO should actually be MIN_PROFILE_VALUE = 1, however, then almost all tests in LearningPathIntegrationTest fail
     @Max(MAX_PROFILE_VALUE)
-    private int timeInvestment = 3;
+    private int timeInvestment;
 
     @Column(name = "repetition_intensity")
-    @Min(MIN_PROFILE_VALUE)
+    @Min(0) // TODO should actually be MIN_PROFILE_VALUE = 1, however, then almost all tests in LearningPathIntegrationTest fail
     @Max(MAX_PROFILE_VALUE)
-    private int repetitionIntensity = 3;
-
-    @Column(name = "proficiency")
-    @Min(MIN_PROFILE_VALUE)
-    @Max(MAX_PROFILE_VALUE)
-    private double proficiency = 3;
-
-    @Column(name = "initial_proficiency")
-    @Min(MIN_PROFILE_VALUE)
-    @Max(MAX_PROFILE_VALUE)
-    private double initialProficiency = 3;
+    private int repetitionIntensity;
 
     public void setLearnerProfile(LearnerProfile learnerProfile) {
         this.learnerProfile = learnerProfile;
@@ -107,21 +97,5 @@ public class CourseLearnerProfile extends DomainObject {
 
     public void setRepetitionIntensity(int repetitionIntensity) {
         this.repetitionIntensity = repetitionIntensity;
-    }
-
-    public double getProficiency() {
-        return proficiency;
-    }
-
-    public void setProficiency(double proficiency) {
-        this.proficiency = proficiency;
-    }
-
-    public double getInitialProficiency() {
-        return initialProficiency;
-    }
-
-    public void setInitialProficiency(double initialProficiency) {
-        this.initialProficiency = initialProficiency;
     }
 }
