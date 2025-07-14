@@ -753,7 +753,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             mcQuestionComponent.watchCollection();
         });
         this.dndQuestionComponents().forEach((dndQuestionComponent) => {
-            dndQuestionComponent.watchCollection();
+            //TODO: Look at
+            //dndQuestionComponent.watchCollection();
         });
         this.shortAnswerQuestionComponents().forEach((shortAnswerQuestionComponent) => {
             shortAnswerQuestionComponent.watchCollection();

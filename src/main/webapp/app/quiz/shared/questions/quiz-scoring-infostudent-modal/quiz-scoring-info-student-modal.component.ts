@@ -30,8 +30,8 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
 
     // TODO: Skipped for migration because:
     //  Your application code writes to the input. This prevents migration.
-    @Input() score: number; // Score of the student that has been achieved
-    readonly questionIndex = input<number>(undefined!); // Question Index of the question
+    @Input() score: number | undefined; // Score of the student that has been achieved
+    readonly questionIndex = input<number | undefined>(undefined!); // Question Index of the question
     // TODO: Skipped for migration because:
     //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
     //  and migrating would break narrowing currently.

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation, input } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, input } from '@angular/core';
 import isMobile from 'ismobilejs-es5';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass, NgStyle } from '@angular/common';
@@ -17,11 +17,8 @@ import { addPublicFilePrefix } from 'app/app.constants';
 })
 export class DragItemComponent implements OnInit {
     readonly minWidth = input<string>(undefined!);
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() dragItem: DragItem;
-    readonly clickDisabled = input<boolean>(undefined!);
+    readonly dragItem = input.required<DragItem>();
+    readonly clickDisabled = input<boolean | undefined>(undefined!);
     readonly invalid = input<boolean>(undefined!);
     readonly filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
     isMobile = false;
