@@ -136,19 +136,19 @@ public class LectureTranscriptionResource {
 
             // Null or invalid response check
             if (response.transcriptionId() == null) {
-                log.error("❌ Nebula returned null or missing transcription ID for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
+                log.error("Nebula returned null or missing transcription ID for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
                 return ResponseEntity.internalServerError().body("Nebula did not return a valid transcription ID.");
             }
 
             // Create placeholder transcription for async processing
             lectureTranscriptionService.createEmptyTranscription(lectureId, lectureUnitId, response.transcriptionId());
 
-            log.info("✅ Transcription started for Lecture ID {}, Unit ID {}, Job ID: {}", lectureId, lectureUnitId, response.transcriptionId());
+            log.info("Transcription started for Lecture ID {}, Unit ID {}, Job ID: {}", lectureId, lectureUnitId, response.transcriptionId());
             return ResponseEntity.ok("Transcription started. Job ID: " + response.transcriptionId());
 
         }
         catch (Exception e) {
-            log.error("❌ Error initiating transcription for Lecture ID: {}, Unit ID: {} → {}", lectureId, lectureUnitId, e.getMessage(), e);
+            log.error("Error initiating transcription for Lecture ID: {}, Unit ID: {} → {}", lectureId, lectureUnitId, e.getMessage(), e);
             return ResponseEntity.internalServerError().body("Failed to start transcription: " + e.getMessage());
         }
     }
@@ -171,11 +171,11 @@ public class LectureTranscriptionResource {
         Optional<String> playlistUrl = tumLiveService.getTumLivePlaylistLink(url);
 
         if (playlistUrl.isPresent()) {
-            log.info("✅ Playlist URL found: {}", playlistUrl.get());
+            log.info("Playlist URL found: {}", playlistUrl.get());
             return ResponseEntity.ok(playlistUrl.get());
         }
         else {
-            log.warn("❌ No playlist URL found for: {}", url);
+            log.warn("No playlist URL found for: {}", url);
             return ResponseEntity.notFound().build();
         }
     }
