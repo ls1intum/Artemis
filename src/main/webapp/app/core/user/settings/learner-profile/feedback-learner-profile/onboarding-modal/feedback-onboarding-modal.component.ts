@@ -7,25 +7,28 @@ import { LearnerProfileApiService } from 'app/core/user/settings/learner-profile
 import { LearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/learner-profile-dto.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-feedback-onboarding-modal',
     standalone: true,
     templateUrl: './feedback-onboarding-modal.component.html',
     styleUrls: ['./feedback-onboarding-modal.component.scss'],
-    imports: [CommonModule, TextResultComponent],
+    imports: [CommonModule, TextResultComponent, TranslateDirective],
 })
 export class FeedbackOnboardingModalComponent {
     @Input() profileMissing = false;
     @Output() onboardingCompleted = new EventEmitter<void>();
     step = 0;
-    readonly totalSteps = 3;
-    selected: (number | null)[] = [null, null, null];
+    readonly totalSteps = 2;
+    selected: (number | null)[] = [null, null];
     feedbackExamples = FEEDBACK_EXAMPLES;
 
     private activeModal = inject(NgbActiveModal);
     private learnerProfileApiService = inject(LearnerProfileApiService);
     private alertService = inject(AlertService);
+    protected translateService = inject(TranslateService);
 
     next() {
         if (this.step < this.totalSteps - 1) {

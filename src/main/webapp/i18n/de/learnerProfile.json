@@ -61,7 +61,35 @@
                 },
                 "profileSaved": "Feedback-Lernprofil gespeichert",
                 "invalidRange": "Werte müssen zwischen 1 und 3 liegen",
-                "error": "Feedback-Lernprofil konnte nicht gespeichert werden"
+                "error": "Feedback-Lernprofil konnte nicht gespeichert werden",
+                "setPreferencesButton": "Feedback-Präferenzen festlegen",
+                "replayOnboardingButton": "Onboarding wiederholen"
+            },
+            "onboardingModal": {
+                "title": "Welches Feedback fühlt sich besser an?",
+                "subtitle": "Schau dir diese beiden Beispiele an und wähle das aus, das du lieber bekommen würdest",
+                "briefFeedback": {
+                    "title": "Kurzes Feedback",
+                    "subtitle": "Kurz und direkt auf den Punkt"
+                },
+                "detailedFeedback": {
+                    "title": "Detailliertes Feedback",
+                    "subtitle": "Ausführlich mit Erklärungen und Beispielen"
+                },
+                "formalToneFeedback": {
+                    "title": "Formelles Feedback",
+                    "subtitle": "Formell und professionell"
+                },
+                "friendlyToneFeedback": {
+                    "title": "Freundliches Feedback",
+                    "subtitle": "Freundlich und zugänglich"
+                },
+                "buttons": {
+                    "back": "Zurück",
+                    "skip": "Überspringen",
+                    "next": "Weiter",
+                    "finish": "Fertig"
+                }
             }
         }
     }

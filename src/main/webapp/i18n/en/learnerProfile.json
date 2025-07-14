@@ -61,7 +61,35 @@
                 },
                 "profileSaved": "Feedback learner profile saved",
                 "invalidRange": "Values must be between 1 and 3",
-                "error": "Feedback learner profile could not be saved"
+                "error": "Feedback learner profile could not be saved",
+                "setPreferencesButton": "Set your feedback preferences",
+                "replayOnboardingButton": "Replay onboarding"
+            },
+            "onboardingModal": {
+                "title": "Which feedback feels better?",
+                "subtitle": "Take a look at these two examples and pick the one you'd rather get",
+                "briefFeedback": {
+                    "title": "Brief Feedback",
+                    "subtitle": "Short and straight to the point"
+                },
+                "detailedFeedback": {
+                    "title": "Detailed Feedback",
+                    "subtitle": "Elaborate with explanations and examples"
+                },
+                "formalToneFeedback": {
+                    "title": "Formal-tone Feedback",
+                    "subtitle": "Formal and professional"
+                },
+                "friendlyToneFeedback": {
+                    "title": "Friendly-tone Feedback",
+                    "subtitle": "Friendly and approachable"
+                },
+                "buttons": {
+                    "back": "Back",
+                    "skip": "Skip",
+                    "next": "Next",
+                    "finish": "Finish"
+                }
             }
         }
     }

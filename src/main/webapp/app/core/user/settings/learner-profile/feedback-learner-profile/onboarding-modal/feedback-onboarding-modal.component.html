@@ -4,12 +4,10 @@
         <span class="progress-circle" [class.active]="step >= 0"></span>
         <span class="progress-line"></span>
         <span class="progress-circle" [class.active]="step >= 1"></span>
-        <span class="progress-line"></span>
-        <span class="progress-circle" [class.active]="step >= 2"></span>
     </div>
     <div class="onboarding-title">
-        <h2>Which feedback feels better?</h2>
-        <div class="onboarding-subtitle">Take a look at these two examples and pic the one you’d rather get</div>
+        <h2 jhiTranslate="artemisApp.learnerProfile.onboardingModal.title"></h2>
+        <div class="onboarding-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.subtitle"></div>
     </div>
     @switch (step) {
         @case (0) {
@@ -17,17 +15,17 @@
                 <div class="feedback-choice-box" [ngClass]="{ selected: selected[0] === 0 }" (click)="select(0, 0)">
                     <div class="feedback-choice-header">
                         <input type="radio" name="q1" [checked]="selected[0] === 0" (click)="$event.stopPropagation(); select(0, 0)" />
-                        <span class="feedback-choice-title">Alternative Feedback</span>
+                        <span class="feedback-choice-title" jhiTranslate="artemisApp.learnerProfile.onboardingModal.briefFeedback.title"></span>
                     </div>
-                    <div class="feedback-choice-subtitle">Explores creative & alternative solutions</div>
+                    <div class="feedback-choice-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.briefFeedback.subtitle"></div>
                     <jhi-text-result [result]="feedbackExamples[0][0]" />
                 </div>
                 <div class="feedback-choice-box" [ngClass]="{ selected: selected[0] === 1 }" (click)="select(0, 1)">
                     <div class="feedback-choice-header">
                         <input type="radio" name="q1" [checked]="selected[0] === 1" (click)="$event.stopPropagation(); select(0, 1)" />
-                        <span class="feedback-choice-title">Standard Feedback</span>
+                        <span class="feedback-choice-title" jhiTranslate="artemisApp.learnerProfile.onboardingModal.detailedFeedback.title"></span>
                     </div>
-                    <div class="feedback-choice-subtitle">Focuses on the most common approaches</div>
+                    <div class="feedback-choice-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.detailedFeedback.subtitle"></div>
                     <jhi-text-result [result]="feedbackExamples[0][1]" />
                 </div>
             </div>
@@ -37,38 +35,18 @@
                 <div class="feedback-choice-box" [ngClass]="{ selected: selected[1] === 0 }" (click)="select(1, 0)">
                     <div class="feedback-choice-header">
                         <input type="radio" name="q2" [checked]="selected[1] === 0" (click)="$event.stopPropagation(); select(1, 0)" />
-                        <span class="feedback-choice-title">Follow-up Feedback</span>
+                        <span class="feedback-choice-title" jhiTranslate="artemisApp.learnerProfile.onboardingModal.formalToneFeedback.title"></span>
                     </div>
-                    <div class="feedback-choice-subtitle">Ends with a follow-up question</div>
+                    <div class="feedback-choice-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.formalToneFeedback.subtitle"></div>
                     <jhi-text-result [result]="feedbackExamples[1][0]" />
                 </div>
                 <div class="feedback-choice-box" [ngClass]="{ selected: selected[1] === 1 }" (click)="select(1, 1)">
                     <div class="feedback-choice-header">
                         <input type="radio" name="q2" [checked]="selected[1] === 1" (click)="$event.stopPropagation(); select(1, 1)" />
-                        <span class="feedback-choice-title">Summarized Feedback</span>
+                        <span class="feedback-choice-title" jhiTranslate="artemisApp.learnerProfile.onboardingModal.friendlyToneFeedback.title"></span>
                     </div>
-                    <div class="feedback-choice-subtitle">Ends with a conclusion</div>
+                    <div class="feedback-choice-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.friendlyToneFeedback.subtitle"></div>
                     <jhi-text-result [result]="feedbackExamples[1][1]" />
-                </div>
-            </div>
-        }
-        @case (2) {
-            <div class="feedback-choice-row">
-                <div class="feedback-choice-box" [ngClass]="{ selected: selected[2] === 0 }" (click)="select(2, 0)">
-                    <div class="feedback-choice-header">
-                        <input type="radio" name="q3" [checked]="selected[2] === 0" (click)="$event.stopPropagation(); select(2, 0)" />
-                        <span class="feedback-choice-title">Brief Feedback</span>
-                    </div>
-                    <div class="feedback-choice-subtitle">Short and straight to the point</div>
-                    <jhi-text-result [result]="feedbackExamples[2][0]" />
-                </div>
-                <div class="feedback-choice-box" [ngClass]="{ selected: selected[2] === 1 }" (click)="select(2, 1)">
-                    <div class="feedback-choice-header">
-                        <input type="radio" name="q3" [checked]="selected[2] === 1" (click)="$event.stopPropagation(); select(2, 1)" />
-                        <span class="feedback-choice-title">Detailed Feedback</span>
-                    </div>
-                    <div class="feedback-choice-subtitle">Elaborate with explanations and examples</div>
-                    <jhi-text-result [result]="feedbackExamples[2][1]" />
                 </div>
             </div>
         }
@@ -76,18 +54,18 @@
 </div>
 <div class="modal-footer feedback-onboarding-footer">
     <div class="footer-left">
-        <button type="button" class="btn btn-secondary" (click)="back()" [disabled]="step === 0">Back</button>
+        <button type="button" class="btn btn-secondary" (click)="back()" [disabled]="step === 0" jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.back"></button>
     </div>
     <div class="footer-right">
         @if (step < totalSteps - 1) {
             @if (selected[step] === null) {
-                <button type="button" class="btn btn-outline-secondary" (click)="next()">Skip</button>
+                <button type="button" class="btn btn-outline-secondary" (click)="next()" jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.skip"></button>
             } @else {
-                <button type="button" class="btn btn-primary" (click)="next()">Next</button>
+                <button type="button" class="btn btn-primary" (click)="next()" jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.next"></button>
             }
         }
         @if (step === totalSteps - 1) {
-            <button type="button" class="btn btn-success" (click)="finish()">Finish</button>
+            <button type="button" class="btn btn-success" (click)="finish()" jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.finish"></button>
         }
     </div>
 </div>
