@@ -5,6 +5,7 @@ import {
     faCircleInfo,
     faCompress,
     faExpand,
+    faLink,
     faPaperPlane,
     faPenToSquare,
     faRedo,
@@ -14,32 +15,29 @@ import {
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject, input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, computed, inject, input, signal } from '@angular/core';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
-import { IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { animate, group, style, transition, trigger } from '@angular/animations';
-import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import * as _ from 'lodash-es';
-import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ChatStatusBarComponent } from './chat-status-bar/chat-status-bar.component';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ActivatedRoute } from '@angular/router';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
@@ -139,6 +137,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faChevronRight = faChevronRight;
     protected readonly facSidebar = facSidebar;
+    protected readonly faLink = faLink;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -149,6 +148,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
 
     // State variables
+    relatedEntityIdSubscription: Subscription;
+    chatModeSubscription: Subscription;
     sessionIdSubscription: Subscription;
     messagesSubscription: Subscription;
     stagesSubscription: Subscription;
@@ -160,6 +161,10 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     routeSubscription: Subscription;
     chatSessionsSubscription: Subscription;
 
+    private currentRelatedEntityId = signal<number | undefined>(undefined);
+    private currentChatMode = signal<ChatServiceMode | undefined>(undefined);
+    relatedEntityRoute = computed<string | undefined>(() => this.computeRelatedEntityRoute(this.currentChatMode(), this.currentRelatedEntityId()));
+    relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.currentChatMode()));
     currentSessionId: number | undefined;
     chatSessions: IrisSessionDTO[] = [];
     messages: IrisMessage[] = [];
@@ -207,6 +212,12 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         });
         this.sessionIdSubscription = this.chatService.currentSessionId().subscribe((sessionId) => {
             this.currentSessionId = sessionId;
+        });
+        this.relatedEntityIdSubscription = this.chatService.currentRelatedEntityId().subscribe((entityId) => {
+            this.currentRelatedEntityId.set(entityId);
+        });
+        this.chatModeSubscription = this.chatService.currentChatMode().subscribe((chatMode) => {
+            this.currentChatMode.set(chatMode);
         });
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
@@ -537,5 +548,30 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     openNewSession() {
         this.chatService.clearChat();
+    }
+
+    private computeRelatedEntityRoute(currentChatMode: ChatServiceMode | undefined, currentRelatedEntityId: number | undefined): string | undefined {
+        if (!currentChatMode || !currentRelatedEntityId) {
+            return undefined;
+        }
+        switch (currentChatMode) {
+            case ChatServiceMode.PROGRAMMING_EXERCISE:
+                return `../exercises/${currentRelatedEntityId}`;
+            case ChatServiceMode.LECTURE:
+                return `../lectures/${currentRelatedEntityId}`;
+            default:
+                return undefined;
+        }
+    }
+
+    private computeRelatedEntityLinkButtonLabel(currentChatMode: ChatServiceMode | undefined): string | undefined {
+        switch (currentChatMode) {
+            case ChatServiceMode.PROGRAMMING_EXERCISE:
+                return `artemisApp.exerciseChatbot.goToRelatedEntityButton.exerciseLabel`;
+            case ChatServiceMode.LECTURE:
+                return `artemisApp.exerciseChatbot.goToRelatedEntityButton.lectureLabel`;
+            default:
+                return undefined;
+        }
     }
 }

@@ -1,13 +1,8 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { DiffInformation, FileStatus } from 'app/programming/shared/utils/diff.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-enum FileStatus {
-    CREATED = 'created',
-    RENAMED = 'renamed',
-    DELETED = 'deleted',
-    UNCHANGED = 'unchanged',
-}
 @Component({
     selector: 'jhi-git-diff-file-panel-title',
     templateUrl: './git-diff-file-panel-title.component.html',
@@ -16,28 +11,7 @@ enum FileStatus {
     imports: [TranslateDirective, NgClass],
 })
 export class GitDiffFilePanelTitleComponent {
-    readonly originalFilePath = input<string>();
-    readonly modifiedFilePath = input<string>();
-
-    readonly titleAndFileStatus = computed(() => this.getTitleAndFileStatus());
-    readonly title = computed(() => this.titleAndFileStatus().title);
-    readonly fileStatus = computed(() => this.titleAndFileStatus().fileStatus);
+    readonly diffInformation = input.required<DiffInformation>();
 
     protected readonly FileStatus = FileStatus;
-
-    private getTitleAndFileStatus(): { title?: string; fileStatus: FileStatus } {
-        const originalFilePath = this.originalFilePath();
-        const modifiedFilePath = this.modifiedFilePath();
-        if (modifiedFilePath && originalFilePath) {
-            if (modifiedFilePath !== originalFilePath) {
-                return { title: `${originalFilePath} → ${modifiedFilePath}`, fileStatus: FileStatus.RENAMED };
-            } else {
-                return { title: modifiedFilePath, fileStatus: FileStatus.UNCHANGED };
-            }
-        } else if (modifiedFilePath) {
-            return { title: modifiedFilePath, fileStatus: FileStatus.CREATED };
-        } else {
-            return { title: originalFilePath, fileStatus: FileStatus.DELETED };
-        }
-    }
 }
