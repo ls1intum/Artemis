@@ -51,8 +51,10 @@ public class QuizQuestionProgressService {
         Long userId = participation.getParticipant().getId();
         Set<SubmittedAnswer> answers = quizSubmission.getSubmittedAnswers();
         List<QuizQuestion> questions = quizExercise.getQuizQuestions();
+        Map<Long, SubmittedAnswer> answerMap = answers.stream().collect(Collectors.toMap(a -> a.getQuizQuestion().getId(), a -> a));
+
         for (QuizQuestion question : questions) {
-            SubmittedAnswer answer = answers.stream().filter(a -> a.getQuizQuestion().getId().equals(question.getId())).findFirst().orElse(null);
+            SubmittedAnswer answer = answerMap.get(question.getId());
             if (answer == null) {
                 continue;
             }
