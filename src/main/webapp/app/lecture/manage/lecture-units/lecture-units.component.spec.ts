@@ -27,9 +27,9 @@ import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { LectureTranscriptionService } from 'app/core/admin/lecture-transcription-ingestion/service/lecture-transcription.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
@@ -664,6 +664,8 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should open edit attachment form when clicked', fakeAsync(() => {
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(null));
+
         wizardUnitComponentFixture.detectChanges();
         tick();
 
