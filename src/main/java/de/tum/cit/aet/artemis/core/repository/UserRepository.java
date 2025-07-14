@@ -910,6 +910,13 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
     }
 
+    /**
+     * Get the login of the currently logged-in user.
+     * If no user is logged in, an exception is thrown.
+     *
+     * @return the login of the currently logged-in user
+     * @throws EntityNotFoundException if no user is logged in
+     */
     default String getCurrentUserLogin() {
         Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();
         if (currentUserLogin.isPresent()) {
