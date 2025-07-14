@@ -189,7 +189,8 @@
                 "forwardedMessageDeleted": "Diese Nachricht wurde gelöscht",
                 "showLess": "Weniger anzeigen",
                 "showMore": "Mehr anzeigen"
-            }
+            },
+            "newMessages": "Neu"
         },
         "communicationDisabled": {
             "title": "Willkommen zur Kommunikation!",

@@ -19,7 +19,7 @@ import {
     input,
     output,
 } from '@angular/core';
-import { faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Observable, Subject, forkJoin, map, takeUntil } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -46,6 +46,7 @@ import { ForwardedMessageDTO, ForwardedMessagesGroupDTO } from 'app/communicatio
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
 import { canCreateNewMessageInConversation } from 'app/communication/conversations/conversation-permissions.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 interface PostGroup {
     author: User | undefined;
@@ -69,6 +70,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     readonly PageType = PageType;
     readonly ButtonType = ButtonType;
+    readonly faArrowDown = faArrowDown;
 
     private scrollDebounceTime = 100; // ms
     scrollSubject = new Subject<number>();
@@ -110,6 +112,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     totalNumberOfPosts = 0;
     page = 1;
     public isFetchingPosts = true;
+    currentUser: User;
+    lastReadPostId: number | undefined;
+    unreadPostsCount: number = 0;
     // Icons
     faTimes = faTimes;
     faEnvelope = faEnvelope;
@@ -120,7 +125,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     focusOnPostId: number | undefined = undefined;
     isOpenThreadOnFocus = false;
 
-    private layoutService: LayoutService = inject(LayoutService);
+    layoutService: LayoutService = inject(LayoutService);
+    accountService: AccountService = inject(AccountService);
 
     constructor() {
         effect(() => {
@@ -170,6 +176,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.pinnedCount.emit(pinnedPosts.length);
                 this.cdr.detectChanges();
             });
+
+        this.accountService.identity().then((user: User) => {
+            this.currentUser = user!;
+        });
 
         // Ensure that all pinned posts are fetched when the component is initialized
         this.metisService.fetchAllPinnedPosts(this._activeConversation!.id!).subscribe();
@@ -262,6 +272,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.allPosts = posts;
             this.setPosts();
             this.isFetchingPosts = false;
+            this.computeLastReadState();
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
@@ -437,7 +448,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     /**
      * Extracts all source post and answer post IDs from forwarded messages.
      */
-    private collectSourceIds(map: Map<number, ForwardedMessageDTO[]>): { sourcePostIds: number[]; sourceAnswerIds: number[] } {
+    private collectSourceIds(map: Map<number, ForwardedMessageDTO[]>): {
+        sourcePostIds: number[];
+        sourceAnswerIds: number[];
+    } {
         const sourcePostIds: number[] = [];
         const sourceAnswerIds: number[] = [];
 
@@ -475,7 +489,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     /**
      * Extracts fetched post and answer post arrays from forkJoin responses.
      */
-    private extractFetchedSources(responses: (Posting[] | undefined)[]): { fetchedPosts: Post[]; fetchedAnswerPosts: AnswerPost[] } {
+    private extractFetchedSources(responses: (Posting[] | undefined)[]): {
+        fetchedPosts: Post[];
+        fetchedAnswerPosts: AnswerPost[];
+    } {
         let fetchedPosts: Post[] = [];
         let fetchedAnswerPosts: AnswerPost[] = [];
 
@@ -573,6 +590,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     setPostForThread(post: Post) {
         this.openThread.emit(post);
     }
+
     handleScrollOnNewMessage = () => {
         if ((this.posts.length > 0 && this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
             this.scrollToBottomOfMessages();
@@ -650,5 +668,21 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      */
     onTriggerNavigateToPost(post: Posting) {
         this.onNavigateToPost.emit(post);
+    }
+
+    private computeLastReadState(): void {
+        const lastReadDate = this._activeConversation?.lastReadDate;
+
+        if (!lastReadDate || !this.allPosts || this.allPosts.length === 0) {
+            this.lastReadPostId = undefined;
+            this.unreadPostsCount = 0;
+            return;
+        }
+        const sorted = this.allPosts
+            .filter((post) => post.creationDate && (post.creationDate.isBefore(lastReadDate) || post.creationDate.isSame(lastReadDate)))
+            .sort((a, b) => b.creationDate!.diff(a.creationDate!));
+
+        this.lastReadPostId = sorted[0]?.id;
+        this.unreadPostsCount = this.allPosts.filter((post) => post.creationDate && post.creationDate.isAfter(lastReadDate)).length;
     }
 }

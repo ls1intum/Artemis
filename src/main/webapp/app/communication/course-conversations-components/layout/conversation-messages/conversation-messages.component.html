@@ -51,6 +51,12 @@
                                     (onNavigateToPost)="onTriggerNavigateToPost($event)"
                                 />
                             </div>
+                            @if (post.id === lastReadPostId && unreadPostsCount > 0) {
+                                <div class="new-messages-separator">
+                                    <div class="separator-line"></div>
+                                    <span class="new-label" jhiTranslate="artemisApp.metis.newMessages">New</span>
+                                </div>
+                            }
                         }
                     </div>
                 }

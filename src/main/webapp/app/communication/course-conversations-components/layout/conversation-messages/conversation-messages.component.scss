@@ -135,3 +135,26 @@ jhi-posting-thread {
     border-radius: 0.25rem;
     background-color: var(--bs-card-bg);
 }
+.new-messages-separator {
+    position: relative;
+    margin: 0.5rem 0;
+    height: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.separator-line {
+    flex-grow: 1;
+    border-top: 1px solid #d0453e;
+    margin-right: 0.5rem;
+}
+
+.new-label {
+    color: #d0453e;
+    font-size: 0.75rem;
+    font-weight: bold;
+    line-height: 1;
+    padding: 0;
+    margin-right: 0.75rem;
+}
