@@ -124,7 +124,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizSubmission.setSubmissionDate(time);
         quizSubmission.setSubmittedAnswers(Set.of(submittedAnswer));
 
-        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizSubmission, participation);
+        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
 
         // Progress exists in database
         Optional<QuizQuestionProgress> progress = quizQuestionProgressTestRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
@@ -145,9 +145,9 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(data.getAttempts().getFirst().getAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
         assertThat(data.getAttempts().getFirst().getScore()).isEqualTo(1.0);
 
-        // Progress does not exist in database
+        // Progress does not exist in the database
         quizQuestionProgressTestRepository.deleteAll();
-        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizSubmission, participation);
+        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
         Optional<QuizQuestionProgress> progressEmpty = quizQuestionProgressTestRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
         assertThat(progressEmpty.get().getUserId()).isEqualTo(userId);
         assertThat(progressEmpty.get().getQuizQuestionId()).isEqualTo(quizQuestionId);
@@ -165,8 +165,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(dataEmpty.getAttempts().getFirst().getAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
         assertThat(dataEmpty.getAttempts().getFirst().getScore()).isEqualTo(1.0);
 
-        submittedAnswer.setQuizQuestion(null);
-        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizSubmission, participation);
     }
 
     @Test

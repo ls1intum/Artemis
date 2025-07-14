@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
@@ -44,14 +45,15 @@ public class QuizQuestionProgressService {
      * @param quizSubmission The quiz submission containing the user's answers
      * @param participation  The student participation for the submission
      */
-    public void retrieveProgressFromResultAndSubmission(QuizSubmission quizSubmission, StudentParticipation participation) {
+    public void retrieveProgressFromResultAndSubmission(QuizExercise quizExercise, QuizSubmission quizSubmission, StudentParticipation participation) {
         ZonedDateTime lastAnsweredAt = quizSubmission.getSubmissionDate();
         Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions = new HashMap<>();
         Long userId = participation.getParticipant().getId();
         Set<SubmittedAnswer> answers = quizSubmission.getSubmittedAnswers();
-        for (SubmittedAnswer answer : answers) {
-            QuizQuestion question = answer.getQuizQuestion();
-            if (question == null) {
+        List<QuizQuestion> questions = quizExercise.getQuizQuestions();
+        for (QuizQuestion question : questions) {
+            SubmittedAnswer answer = answers.stream().filter(a -> a.getQuizQuestion().getId().equals(question.getId())).findFirst().orElse(null);
+            if (answer == null) {
                 continue;
             }
             QuizQuestionProgressData data = processQuestionProgress(question, answer, quizSubmission, userId);
