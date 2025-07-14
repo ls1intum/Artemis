@@ -44,6 +44,7 @@ jobs:
 
 
   docs:
+    needs: check-python-version
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
