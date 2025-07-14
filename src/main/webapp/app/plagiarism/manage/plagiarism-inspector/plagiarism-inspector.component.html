@@ -94,7 +94,7 @@
             <div class="plagiarism-option" [class.disabled]="!enableMinimumSize">
                 <div class="plagiarism-checkbox form-check" for="enableMinimumSize">
                     <input type="checkbox" id="enableMinimumSize" class="plagiarism-option-checkbox form-check-input" [(ngModel)]="enableMinimumSize" checked />
-                    <label for="enableMinimumSize" class="plagiarism-option-label form-check-label" jhiTranslate="artemisApp.plagiarism.minimumSize"></label>
+                    <label for="enableMinimumSize" class="plagiarism-option-label form-check-label" [jhiTranslate]="getMinimumSizeLabel()"></label>
                 </div>
                 <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate" />
                 <input required type="number" [disabled]="!enableMinimumSize" class="form-control" min="0" max="100" id="plagiarism-minimum-size" [(ngModel)]="minimumSize" />

@@ -29,13 +29,11 @@ import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificat
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
-import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
@@ -115,31 +113,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @Override
     public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) {
         log.debug("Called mockUpdatePlanRepository with args {}, {}, {}, {}", exercise, planName, repoNameInCI, repoNameInVcs);
-    }
-
-    @Override
-    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) {
-        log.debug("Called mockCopyRepositoryForParticipation with args {}, {}", exercise, username);
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) {
-        log.debug("Called mockRepositoryWritePermissionsForTeam with args {}, {}, {}, {}", team, newStudent, exercise, status);
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) {
-        log.debug("Called mockRepositoryWritePermissionsForStudent with args {}, {}, {}", student, exercise, status);
-    }
-
-    @Override
-    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
-        log.debug("Called mockRetrieveArtifacts with args {}", participation);
-    }
-
-    @Override
-    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
-        log.debug("Called mockFetchCommitInfo with args {}, {}, {}", projectKey, repositorySlug, hash);
     }
 
     @Override
@@ -225,16 +198,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) {
-        log.debug("Called mockDeleteRepository with args {}, {}, {}", projectKey, repositoryName, shouldFail);
-    }
-
-    @Override
-    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) {
-        log.debug("Called mockDeleteProjectInVcs with args {}, {}", projectKey, shouldFail);
-    }
-
-    @Override
     public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) {
         log.debug("Called mockDeleteBuildPlan with args {}, {}, {}", projectKey, planName, shouldFail);
     }
@@ -260,11 +223,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) {
-        log.debug("Called mockCheckIfProjectExistsInVcs with args {}, {}", exercise, existsInVcs);
-    }
-
-    @Override
     public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) {
         log.debug("Called mockCheckIfProjectExistsInCi with args {}, {}, {}", exercise, existsInCi, shouldFail);
     }
@@ -275,11 +233,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey, boolean b) {
-        log.debug("Called mockRepositoryUriIsValid with args {}, {}, {}", vcsTemplateRepositoryUri, projectKey, b);
-    }
-
-    @Override
     public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
         log.debug("Called mockTriggerBuild with args {}", solutionParticipation);
     }
@@ -287,11 +240,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @Override
     public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
         log.debug("Called mockTriggerBuildFailed with args {}", solutionParticipation);
-    }
-
-    @Override
-    public void mockDefaultBranch(ProgrammingExercise programmingExercise) {
-        log.debug("Called mockDefaultBranch with args {}", programmingExercise);
     }
 
     @Override
