@@ -859,12 +859,19 @@ describe('CourseOverviewComponent', () => {
         expect((component as any).selectedSettingPreset).toBeDefined();
     }));
 
-    it('should only show practice tab on test server', () => {
+    it('should only show practice tab on test server or development', () => {
         component.isTestServer = true;
+        component.isDevelopment = false;
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.some((item) => item.title.includes('Practice'))).toBeTruthy();
 
         component.isTestServer = false;
+        component.isDevelopment = true;
+        const sidebarItemsDev = component.getSidebarItems();
+        expect(sidebarItemsDev.some((item) => item.title.includes('Practice'))).toBeTruthy();
+
+        component.isTestServer = false;
+        component.isDevelopment = false;
         const sidebarItemsProd = component.getSidebarItems();
         expect(sidebarItemsProd.some((item) => item.title.includes('Practice'))).toBeFalsy();
     });

@@ -1,0 +1,54 @@
+.chat-history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.4rem 1rem;
+    font-size: 1rem;
+    min-width: 17rem;
+
+    .chat-history-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .related-entity-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        .related-entity-name {
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            padding: 0.25rem;
+            font-size: 0.5rem;
+            max-width: 5rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    &:hover {
+        color: var(--primary);
+        background-color: var(--iris-client-chat-background);
+
+        .chat-history-text {
+            text-decoration: underline;
+        }
+
+        .related-entity-info .related-entity-name {
+            border: 1px solid var(--primary);
+        }
+    }
+
+    &.chat-history-item-selected {
+        background-color: var(--iris-client-chat-background);
+        color: var(--primary);
+
+        .related-entity-info .related-entity-name {
+            border: 1px solid var(--primary);
+        }
+    }
+}

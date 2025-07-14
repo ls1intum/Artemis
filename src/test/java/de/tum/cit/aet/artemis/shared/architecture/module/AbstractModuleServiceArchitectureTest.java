@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
-import de.tum.cit.aet.artemis.programming.service.GitDiffReportParserService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
@@ -38,7 +37,7 @@ public abstract class AbstractModuleServiceArchitectureTest extends AbstractArch
     void shouldBeInServicePackage() {
         ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(Service.class).should().resideInAPackage("..service..").because("services should be in the package 'service'.");
         final var exceptions = new Class[] { MigrationService.class, SecurityMetersService.class, DomainUserDetailsService.class, OAuth2JWKSService.class, JWTCookieService.class,
-                GitDiffReportParserService.class, ResultWebsocketService.class, LocalCIWebsocketMessagingService.class };
+                ResultWebsocketService.class, LocalCIWebsocketMessagingService.class };
         final var classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }

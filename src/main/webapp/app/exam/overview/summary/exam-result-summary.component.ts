@@ -488,8 +488,8 @@ export class ExamResultSummaryComponent implements OnInit {
         const templateStatus = evaluateTemplateStatus(exercise, participation, result, isBuilding);
 
         return {
-            textColorClass: getTextColorClass(result, templateStatus),
-            resultIconClass: getResultIconClass(result, templateStatus),
+            textColorClass: getTextColorClass(result, participation, templateStatus),
+            resultIconClass: getResultIconClass(result, participation, templateStatus),
         };
     }
 

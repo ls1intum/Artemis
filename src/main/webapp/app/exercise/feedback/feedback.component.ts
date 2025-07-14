@@ -37,6 +37,7 @@ import { FeedbackNodeComponent } from './node/feedback-node.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 
 // Modal -> Result details view
 @Component({
@@ -77,6 +78,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     @Input() exercise?: Exercise;
     @Input() result: Result;
+    @Input() participation: Participation;
 
     /**
      * Specify the feedback.testCase.id values that should be shown, all other values will not be visible.
@@ -161,7 +163,11 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
         this.commitHash = this.getCommitHash().slice(0, 11);
 
-        this.isOnlyCompilationTested = isOnlyCompilationTested(this.result, evaluateTemplateStatus(this.exercise, this.result.submission?.participation, this.result, false));
+        this.isOnlyCompilationTested = isOnlyCompilationTested(
+            this.result,
+            this.participation,
+            evaluateTemplateStatus(this.exercise, this.result.submission?.participation, this.result, false),
+        );
     }
 
     /**
@@ -183,7 +189,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
      * Sets up the information related to the exercise.
      */
     private initializeExerciseInformation() {
-        this.exercise ??= this.result.submission?.participation?.exercise;
+        this.exercise ??= this.participation?.exercise;
         if (this.exercise) {
             this.course = getCourseFromExercise(this.exercise);
         }
@@ -193,7 +199,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
         }
 
         // In case the exerciseType is not set, we try to set it back if the participation is from a programming exercise
-        if (!this.exerciseType && isProgrammingExerciseParticipation(this.result?.submission?.participation)) {
+        if (!this.exerciseType && isProgrammingExerciseParticipation(this.participation)) {
             this.exerciseType = ExerciseType.PROGRAMMING;
         }
 
@@ -214,7 +220,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         feedbacks.forEach((feedback) => (feedback.result = this.result));
                         return of(feedbacks);
                     } else {
-                        return this.resultService.getFeedbackDetailsForResult(this.result.submission!.participation!.id!, this.result).pipe(map((response) => response.body));
+                        return this.resultService.getFeedbackDetailsForResult(this.participation?.id, this.result).pipe(map((response) => response.body));
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
@@ -231,21 +237,18 @@ export class FeedbackComponent implements OnInit, OnChanges {
                     }
 
                     // If the submission is marked with buildFailed, fetch the build logs.
-                    if (
-                        this.result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA &&
-                        this.exerciseType === ExerciseType.PROGRAMMING &&
-                        this.result.submission?.participation &&
-                        (this.result.submission as ProgrammingSubmission).buildFailed
-                    ) {
-                        return this.fetchAndSetBuildLogs(this.result.submission.participation.id!, this.result.id);
+                    const buildFailed = (getLatestSubmission(this.participation) as ProgrammingSubmission)?.buildFailed;
+
+                    if (this.result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && this.exerciseType === ExerciseType.PROGRAMMING && buildFailed) {
+                        return this.fetchAndSetBuildLogs(this.participation.id!, this.result.id);
                     }
 
                     if (this.showScoreChart) {
                         this.updateChart(this.feedbackItemNodes);
                     }
 
-                    if (isStudentParticipation(this.result)) {
-                        this.badge = ResultService.evaluateBadge(this.result.submission!.participation!, this.result);
+                    if (isStudentParticipation(this.participation)) {
+                        this.badge = ResultService.evaluateBadge(this.participation, this.result);
                     }
 
                     return of(null);

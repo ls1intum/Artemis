@@ -58,8 +58,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
@@ -91,8 +89,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
-
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
@@ -102,7 +98,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, Optional<ExamDateApi> examDateApi,
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
-            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService) {
+            ParticipationAuthorizationCheckService participationAuthCheckService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateApi,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -111,7 +107,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
         this.participationAuthCheckService = participationAuthCheckService;
     }
 
@@ -184,37 +179,20 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingSubmission.setType(SubmissionType.MANUAL);
 
         // Instructors are allowed to submit to a programming exercise after the due date, if this happens we set the Submission to INSTRUCTOR
-        // TODO: double check if the user contains the authoities and groups, if not, we need to load the user from the database again
-        if (authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user)) {
+        // TODO: double check if the user contains the authorities and groups, if not, we need to load the user from the database again
+        // TODO: the user can be null if the commit was made via git client so it can not be determined here if the user is a instructor for the exercise in that case
+        if (user != null && authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user)) {
             programmingSubmission.setType(SubmissionType.INSTRUCTOR);
         }
 
         participation.addSubmission(programmingSubmission);
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
-        updateGitDiffReportForTemplateOrSolutionParticipation(participation);
 
         // NOTE: this might an important information if a lock submission policy of the corresponding programming exercise is active
         programmingSubmission.getParticipation().setSubmissionCount(existingSubmissionCount + 1);
 
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
         return programmingSubmission;
-    }
-
-    /**
-     * Update the git-diff of the programming exercise when the push was to a solution or template repository
-     *
-     * @param programmingExerciseParticipation The participation
-     */
-    private void updateGitDiffReportForTemplateOrSolutionParticipation(ProgrammingExerciseParticipation programmingExerciseParticipation) {
-        if (programmingExerciseParticipation instanceof TemplateProgrammingExerciseParticipation
-                || programmingExerciseParticipation instanceof SolutionProgrammingExerciseParticipation) {
-            try {
-                programmingExerciseGitDiffReportService.updateReport(programmingExerciseParticipation.getProgrammingExercise());
-            }
-            catch (Exception e) {
-                log.error("Unable to update git-diff for programming exercise {}", programmingExerciseParticipation.getProgrammingExercise().getId(), e);
-            }
-        }
     }
 
     /**
