@@ -830,10 +830,9 @@ public class QuizExerciseResource {
     public ResponseEntity<List<QuizQuestion>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findById(courseId).orElse(null);
-        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException();
-        }
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
         List<QuizQuestion> quizQuestions = quizQuestionsProgressService.getQuestionsForSession(courseId, user.getId());
         return ResponseEntity.ok(quizQuestions);
     }
