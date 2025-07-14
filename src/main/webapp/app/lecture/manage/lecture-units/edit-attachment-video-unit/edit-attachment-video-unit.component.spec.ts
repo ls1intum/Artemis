@@ -123,6 +123,8 @@ describe('EditAttachmentVideoUnitComponent', () => {
         );
         updateAttachmentVideoUnitSpy = jest.spyOn(attachmentVideoUnitService, 'update');
         navigateSpy = jest.spyOn(router, 'navigate');
+
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(null));
     });
 
     afterEach(() => {
@@ -131,7 +133,10 @@ describe('EditAttachmentVideoUnitComponent', () => {
 
     it('should set form data correctly', async () => {
         fixture.detectChanges();
+
         const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+
+        expect(attachmentVideoUnitFormComponent.formData()).toBeDefined();
 
         expect(attachmentVideoUnitFormComponent.formData()?.formProperties.name).toEqual(attachmentVideoUnit.name);
         expect(attachmentVideoUnitFormComponent.formData()?.formProperties.releaseDate).toEqual(attachmentVideoUnit.releaseDate);
@@ -145,6 +150,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
 
     it('should update attachment video unit with file change without notification', async () => {
         fixture.detectChanges();
+
         const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
         const fileName = 'updated file';
@@ -255,7 +261,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         fixture.detectChanges();
         const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
-        const transcription = { language: 'en', content: 'test transcription' };
+        const transcription = { language: 'en', lectureUnitId: 1, content: 'test transcription' };
         const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: attachmentVideoUnit.name,
