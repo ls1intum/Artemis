@@ -16,8 +16,8 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.context.annotation.Conditional;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -70,7 +70,7 @@ public class ExamRoom extends DomainObject {
      */
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties(value = "examRoom")
+    @JsonManagedReference
     private List<ExamSeat> seats = new ArrayList<>();
 
     /**
@@ -78,7 +78,7 @@ public class ExamRoom extends DomainObject {
      */
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties(value = "examRoom")
+    @JsonManagedReference
     private List<LayoutStrategy> layoutStrategies = new ArrayList<>();
 
     /**
@@ -86,7 +86,7 @@ public class ExamRoom extends DomainObject {
      */
     @OneToMany(mappedBy = "plannedRoomEntity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties(value = "examRoom")
+    @JsonManagedReference
     private Set<ExamUser> examRoomUsers = new HashSet<>();
 
     /* Getters & Setters */

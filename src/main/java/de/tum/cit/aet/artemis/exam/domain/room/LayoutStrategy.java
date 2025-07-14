@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 
 import org.springframework.context.annotation.Conditional;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -36,10 +37,11 @@ public class LayoutStrategy extends DomainObject {
      */
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
+    @JsonBackReference
     private ExamRoom room;
 
     /**
-     * The parameters of the layout strategy, i.e. the data that tells the strategy how to distribute the students.
+     * The parameters of the layout strategy, i.e., the data that tells the strategy how to distribute the students.
      * Contents of this differ as the {@link LayoutStrategy#type} differs.
      */
     @Column(name = "parameters", columnDefinition = "json", nullable = false)

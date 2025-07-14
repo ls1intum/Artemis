@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 
 import org.springframework.context.annotation.Conditional;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -36,6 +37,7 @@ public class ExamSeat extends DomainObject {
      */
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
+    @JsonBackReference
     private ExamRoom room;
 
     /**

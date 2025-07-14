@@ -5,16 +5,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
-import de.tum.cit.aet.artemis.exam.domain.room.ExamSeat;
 
 @Entity
 @Table(name = "exam_user")
@@ -35,11 +33,8 @@ public class ExamUser extends AbstractAuditingEntity {
 
     @ManyToOne
     @JoinColumn(name = "planned_room_id")
+    @JsonBackReference
     private ExamRoom plannedRoomEntity;
-
-    @Transient
-    @JsonIgnore
-    private ExamSeat plannedSeatEntity;
 
     @Column(name = "did_check_image")
     private boolean didCheckImage = false;
@@ -107,14 +102,6 @@ public class ExamUser extends AbstractAuditingEntity {
 
     public void setPlannedRoomEntity(ExamRoom plannedRoomEntity) {
         this.plannedRoomEntity = plannedRoomEntity;
-    }
-
-    public ExamSeat getPlannedSeatEntity() {
-        return plannedSeatEntity;
-    }
-
-    public void setPlannedSeatEntity(ExamSeat plannedSeatEntity) {
-        this.plannedSeatEntity = plannedSeatEntity;
     }
 
     public boolean getDidCheckRegistrationNumber() {

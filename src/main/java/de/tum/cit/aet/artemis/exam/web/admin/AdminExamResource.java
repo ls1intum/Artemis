@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -89,6 +90,7 @@ public class AdminExamResource {
      */
     @PostMapping("exam-rooms/upload")
     public ResponseEntity<Set<ExamRoom>> uploadRoomZip(@RequestParam("file") MultipartFile zipFile) {
+        // TODO: Fix logging priorities, and possibly add/remove a few logs
         Set<ExamRoom> examRooms = new HashSet<>();
 
         try (ZipInputStream zis = new ZipInputStream(zipFile.getInputStream())) {
@@ -98,18 +100,21 @@ public class AdminExamResource {
             while ((entry = zis.getNextEntry()) != null) {
                 String entryName = entry.getName();
 
+                // validate file type
                 if (entry.isDirectory() || !entryName.endsWith(".json")) {
                     log.info("Skipping entry: {} because it's not a json file", entryName);
                     continue;
                 }
 
+                // matches and extracts any non-empty filename - without the path - that ends with '.json'
                 Pattern fileNameExtractorPattern = Pattern.compile("^.*/([^/]+)\\.json$");
                 Matcher fileNameExtractorMatcher = fileNameExtractorPattern.matcher(entryName);
-                if (!fileNameExtractorMatcher.find(1)) {
+                if (!fileNameExtractorMatcher.find()) {
                     log.info("Skipping entry: {} because the filename could not be obtained", entryName);
                 }
                 String longRoomNumber = fileNameExtractorMatcher.group(1);
 
+                log.debug("Starting entry {}", longRoomNumber);
                 String jsonData = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
                 JsonNode jsonRoot = mapper.readTree(jsonData);
 
@@ -121,7 +126,7 @@ public class AdminExamResource {
                 room.setAlternativeName(jsonRoot.path("shortname").asText(null));
                 room.setBuilding(jsonRoot.path("building").asText());
                 // capacity is not stored directly in the JSON, but needs to be calculated.
-                // We skip this for now but will instantiate the field once we first access it.
+                // TODO: capacity Skipped for now, but will need to be re-visited later
 
                 /* Extract the seats from the rows */
                 List<ExamSeat> seats = new ArrayList<>();
@@ -134,7 +139,7 @@ public class AdminExamResource {
                 for (JsonNode rowNode : rowsArray) {
                     JsonNode seatsArray = rowNode.path("seats");
                     if (!seatsArray.isArray()) {
-                        log.warn("Skipping entry '{}' because seatsArray is not an array", entryName);
+                        log.warn("Skipping row '{}' because seatsArray is not an array", entryName);
                         continue;
                     }
 
@@ -155,28 +160,44 @@ public class AdminExamResource {
                 }
 
                 room.setSeats(seats);
-                /* Extracting seats End */
+                /* Extracting seats - End */
 
                 /* Extract layout strategies */
                 List<LayoutStrategy> layouts = new ArrayList<>();
-                JsonNode layoutsArray = jsonRoot.path("layouts");
-                if (!layoutsArray.isArray()) {
-                    log.warn("Skipping entry '{}' because layouts is not an array", entryName);
+                JsonNode layoutsObjectNode = jsonRoot.path("layouts");
+                if (!layoutsObjectNode.isObject()) {
+                    log.warn("Skipping entry '{}' because layouts is not an object", entryName);
                     continue;
                 }
-                for (JsonNode layoutNode : layoutsArray) {
-                    layoutNode.fieldNames().forEachRemaining(log::info);
-                    log.info("Skipping here for now");
-                    LayoutStrategy ls = new LayoutStrategy();
-                    ls.setName(layoutNode.path("name").asText());
-                    ls.setType(LayoutStrategyType.valueOf(layoutNode.path("type").asText("DEFAULT").toUpperCase()));
-                    ls.setParametersJson(layoutNode.path("parameters").toString());
-                    ls.setRoom(room);
-                    layouts.add(ls);
+
+                // Iterate over all possible room layout names, e.g., "default" or "wide"
+                for (Iterator<String> it = layoutsObjectNode.fieldNames(); it.hasNext();) {
+                    String layoutName = it.next();
+                    JsonNode layoutNode = layoutsObjectNode.path(layoutName);
+
+                    // We assume there's only a single layout type, e.g., "auto_layout" or "usable_seats"
+                    final String layoutType = layoutNode.fieldNames().next();
+                    final JsonNode layoutDetailNode = layoutNode.path(layoutType);
+
+                    LayoutStrategy layoutStrategy = new LayoutStrategy();
+                    layoutStrategy.setName(layoutName);
+                    layoutStrategy.setRoom(room);
+                    switch (layoutType) {
+                        case "auto_layout" -> layoutStrategy.setType(LayoutStrategyType.RELATIVE_DISTANCE);
+                        case "usable_seats", "useable_seats" -> layoutStrategy.setType(LayoutStrategyType.FIXED_SELECTION);
+                        default -> {
+                            log.warn("Unknown layout type '{}'", layoutType);
+                            continue;
+                        }
+                    }
+                    ;
+                    layoutStrategy.setParametersJson(String.valueOf(layoutDetailNode));
+
+                    layouts.add(layoutStrategy);
                 }
 
                 room.setLayoutStrategies(layouts);
-                /* Extract layout strategies End */
+                /* Extract layout strategies - End */
 
                 examRooms.add(room);
             }
@@ -185,6 +206,8 @@ public class AdminExamResource {
         catch (IOException | IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Internal error while trying to parse the rooms");
         }
+
+        examRoomRepository.saveAll(examRooms);
 
         return ResponseEntity.ok(examRooms);
     }
