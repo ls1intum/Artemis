@@ -11,8 +11,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -49,20 +47,11 @@ public class LearnerProfile extends DomainObject {
     @JsonIgnoreProperties("learnerProfile")
     private Set<CourseLearnerProfile> courseLearnerProfiles = new HashSet<>();
 
-    @Column(name = "feedback_alternative_standard")
-    @Min(MIN_PROFILE_VALUE)
-    @Max(MAX_PROFILE_VALUE)
-    private int feedbackAlternativeStandard = 2;
+    @Column(name = "is_brief_feedback")
+    private boolean isBriefFeedback = false;
 
-    @Column(name = "feedback_followup_summary")
-    @Min(MIN_PROFILE_VALUE)
-    @Max(MAX_PROFILE_VALUE)
-    private int feedbackFollowupSummary = 2;
-
-    @Column(name = "feedback_brief_detailed")
-    @Min(MIN_PROFILE_VALUE)
-    @Max(MAX_PROFILE_VALUE)
-    private int feedbackBriefDetailed = 2;
+    @Column(name = "is_formal_feedback")
+    private boolean isFormalFeedback = false;
 
     @Column(name = "has_setup_feedback_preferences")
     private boolean hasSetupFeedbackPreferences = false;
@@ -95,28 +84,20 @@ public class LearnerProfile extends DomainObject {
         return this.courseLearnerProfiles.remove(courseLearnerProfile);
     }
 
-    public int getFeedbackAlternativeStandard() {
-        return feedbackAlternativeStandard;
+    public boolean isBriefFeedback() {
+        return isBriefFeedback;
     }
 
-    public void setFeedbackAlternativeStandard(int feedbackAlternativeStandard) {
-        this.feedbackAlternativeStandard = feedbackAlternativeStandard;
+    public void setBriefFeedback(boolean isBriefFeedback) {
+        this.isBriefFeedback = isBriefFeedback;
     }
 
-    public int getFeedbackFollowupSummary() {
-        return feedbackFollowupSummary;
+    public boolean isFormalFeedback() {
+        return isFormalFeedback;
     }
 
-    public void setFeedbackFollowupSummary(int feedbackFollowupSummary) {
-        this.feedbackFollowupSummary = feedbackFollowupSummary;
-    }
-
-    public int getFeedbackBriefDetailed() {
-        return feedbackBriefDetailed;
-    }
-
-    public void setFeedbackBriefDetailed(int feedbackBriefDetailed) {
-        this.feedbackBriefDetailed = feedbackBriefDetailed;
+    public void setFormalFeedback(boolean isFormalFeedback) {
+        this.isFormalFeedback = isFormalFeedback;
     }
 
     public boolean hasSetupFeedbackPreferences() {

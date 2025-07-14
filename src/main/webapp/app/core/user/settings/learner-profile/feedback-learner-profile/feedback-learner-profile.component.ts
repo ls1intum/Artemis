@@ -64,11 +64,18 @@ export class FeedbackLearnerProfileComponent implements OnInit {
         label: this.translateService.instant(option.translationKey),
         value: option.level,
     }));
+    protected readonly briefFeedbackOptions = [
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.briefFeedback.off'), value: false },
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.briefFeedback.on'), value: true },
+    ];
+    protected readonly formalFeedbackOptions = [
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.formalFeedback.off'), value: false },
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.formalFeedback.on'), value: true },
+    ];
 
     /** Signals for learner profile settings */
-    feedbackAlternativeStandard = signal<number | undefined>(undefined);
-    feedbackFollowupSummary = signal<number | undefined>(undefined);
-    feedbackBriefDetailed = signal<number | undefined>(undefined);
+    isBriefFeedback = signal<boolean | undefined>(undefined);
+    isFormalFeedback = signal<boolean | undefined>(undefined);
 
     /** Icon for save button */
     protected readonly faSave = faSave;
@@ -104,21 +111,8 @@ export class FeedbackLearnerProfileComponent implements OnInit {
      * @param learnerProfile - The learner profile containing the values to update
      */
     private updateProfileValues(learnerProfile: LearnerProfileDTO): void {
-        this.feedbackAlternativeStandard.set(
-            learnerProfile.feedbackAlternativeStandard !== undefined && learnerProfile.feedbackAlternativeStandard !== null && learnerProfile.feedbackAlternativeStandard !== 0
-                ? learnerProfile.feedbackAlternativeStandard
-                : undefined,
-        );
-        this.feedbackFollowupSummary.set(
-            learnerProfile.feedbackFollowupSummary !== undefined && learnerProfile.feedbackFollowupSummary !== null && learnerProfile.feedbackFollowupSummary !== 0
-                ? learnerProfile.feedbackFollowupSummary
-                : undefined,
-        );
-        this.feedbackBriefDetailed.set(
-            learnerProfile.feedbackBriefDetailed !== undefined && learnerProfile.feedbackBriefDetailed !== null && learnerProfile.feedbackBriefDetailed !== 0
-                ? learnerProfile.feedbackBriefDetailed
-                : undefined,
-        );
+        this.isBriefFeedback.set(learnerProfile.isBriefFeedback !== undefined && learnerProfile.isBriefFeedback !== null ? learnerProfile.isBriefFeedback : undefined);
+        this.isFormalFeedback.set(learnerProfile.isFormalFeedback !== undefined && learnerProfile.isFormalFeedback !== null ? learnerProfile.isFormalFeedback : undefined);
     }
 
     /**
@@ -133,9 +127,8 @@ export class FeedbackLearnerProfileComponent implements OnInit {
 
         const updatedProfile = new LearnerProfileDTO({
             id: profile.id,
-            feedbackAlternativeStandard: this.feedbackAlternativeStandard(),
-            feedbackFollowupSummary: this.feedbackFollowupSummary(),
-            feedbackBriefDetailed: this.feedbackBriefDetailed(),
+            isBriefFeedback: this.isBriefFeedback(),
+            isFormalFeedback: this.isFormalFeedback(),
         });
 
         try {

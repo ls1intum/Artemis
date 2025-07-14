@@ -83,13 +83,8 @@ public class LearnerProfileResource {
 
         LearnerProfile updateProfile = learnerProfileRepository.findByUserElseThrow(user);
 
-        validateProfileField(learnerProfileDTO.feedbackAlternativeStandard(), "FeedbackAlternativeStandard");
-        validateProfileField(learnerProfileDTO.feedbackFollowupSummary(), "FeedbackFollowupSummary");
-        validateProfileField(learnerProfileDTO.feedbackBriefDetailed(), "FeedbackBriefDetailed");
-
-        updateProfile.setFeedbackAlternativeStandard(learnerProfileDTO.feedbackAlternativeStandard());
-        updateProfile.setFeedbackFollowupSummary(learnerProfileDTO.feedbackFollowupSummary());
-        updateProfile.setFeedbackBriefDetailed(learnerProfileDTO.feedbackBriefDetailed());
+        updateProfile.setBriefFeedback(learnerProfileDTO.isBriefFeedback());
+        updateProfile.setFormalFeedback(learnerProfileDTO.isFormalFeedback());
 
         // Set the flag to true when the user updates their preferences
         updateProfile.setHasSetupFeedbackPreferences(true);
@@ -114,15 +109,10 @@ public class LearnerProfileResource {
             throw new BadRequestAlertException("LearnerProfile already exists", LearnerProfile.ENTITY_NAME, "learnerProfileAlreadyExists", true);
         }
 
-        validateProfileField(learnerProfileDTO.feedbackAlternativeStandard(), "FeedbackAlternativeStandard");
-        validateProfileField(learnerProfileDTO.feedbackFollowupSummary(), "FeedbackFollowupSummary");
-        validateProfileField(learnerProfileDTO.feedbackBriefDetailed(), "FeedbackBriefDetailed");
-
         LearnerProfile profile = new LearnerProfile();
         profile.setUser(user);
-        profile.setFeedbackAlternativeStandard(learnerProfileDTO.feedbackAlternativeStandard());
-        profile.setFeedbackFollowupSummary(learnerProfileDTO.feedbackFollowupSummary());
-        profile.setFeedbackBriefDetailed(learnerProfileDTO.feedbackBriefDetailed());
+        profile.setBriefFeedback(learnerProfileDTO.isBriefFeedback());
+        profile.setFormalFeedback(learnerProfileDTO.isFormalFeedback());
         profile.setHasSetupFeedbackPreferences(true);
 
         LearnerProfile result = learnerProfileRepository.save(profile);

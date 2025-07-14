@@ -52,11 +52,9 @@ export class FeedbackOnboardingModalComponent {
     }
     async finish() {
         try {
-            const mapValue = (val: number | null) => (val === null ? 2 : val === 0 ? 1 : 3);
             const newProfile = new LearnerProfileDTO({
-                feedbackAlternativeStandard: mapValue(this.selected[0]),
-                feedbackFollowupSummary: mapValue(this.selected[1]),
-                feedbackBriefDetailed: mapValue(this.selected[2]),
+                isBriefFeedback: this.selected[0] === 0,
+                isFormalFeedback: this.selected[0] === 1,
                 hasSetupFeedbackPreferences: true,
             });
             if (this.profileMissing) {

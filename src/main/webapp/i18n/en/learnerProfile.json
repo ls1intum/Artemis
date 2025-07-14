@@ -32,35 +32,20 @@
             "feedbackLearnerProfile": {
                 "title": "Feedback Learner Profile",
                 "description": "Here, you are able to view and update your preferences regarding your feedback learner profile. These settings are used to then personalize the automated feedback you get after submitting your exercise.",
-                "alternativeStandard": {
-                    "label": "Alternative vs. Standard",
-                    "description": "Choose whether you prefer feedback that explores creative, alternative solutions or feedback that focuses on the most common, standard approaches.",
-                    "level": {
-                        "alternative": "Alternative",
-                        "balanced": "Balanced",
-                        "standard": "Standard"
-                    }
+                "briefFeedback": {
+                    "label": "Delivery of Feedback",
+                    "description": "Choose whether you prefer brief and straight to the point feedback or detailed feedback with explanations and examples.",
+                    "on": "Brief",
+                    "off": "Detailed"
                 },
-                "followupSummary": {
-                    "label": "Follow-up vs. Summary",
-                    "description": "Choose whether you prefer feedback that ends with a follow-up question (to encourage further thinking and reflection) or with a summary/conclusion (to clearly wrap up the feedback).",
-                    "level": {
-                        "followup": "Follow-up",
-                        "balanced": "Balanced",
-                        "summary": "Summary"
-                    }
-                },
-                "briefDetailed": {
-                    "label": "Brief vs. Detailed",
-                    "description": "Choose whether you like your feedback to be brief and straight to the point, or more detailed with explanations and examples.",
-                    "level": {
-                        "brief": "Brief",
-                        "balanced": "Balanced",
-                        "detailed": "Detailed"
-                    }
+                "formalFeedback": {
+                    "label": "Tone of Feedback",
+                    "description": "Choose whether you prefer formal and professional feedback or friendly and approachable feedback.",
+                    "on": "Formal",
+                    "off": "Friendly"
                 },
                 "profileSaved": "Feedback learner profile saved",
-                "invalidRange": "Values must be between 1 and 3",
+                "invalidRange": "Values must be true or false",
                 "error": "Feedback learner profile could not be saved",
                 "setPreferencesButton": "Set your feedback preferences",
                 "replayOnboardingButton": "Replay onboarding"
