@@ -177,7 +177,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setCommitHash(commit.commitHash());
-        log.info("Create new programmingSubmission with commitHash: {} for participation {}", commit.commitHash(), participation.getId());
+        log.info("Create new programmingSubmission with commitHash: {} for participation: {}", commit.commitHash(), participation.getId());
 
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(submissionDate);
@@ -186,6 +186,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // Instructors are allowed to submit to a programming exercise after the due date, if this happens we set the Submission to INSTRUCTOR
         if (user != null && authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user)) {
             programmingSubmission.setType(SubmissionType.INSTRUCTOR);
+            log.debug("Setting programmingSubmission with commitHash: {} for participation: {} type to {} because an instructor commited.", commit.commitHash(),
+                    participation.getId(), SubmissionType.INSTRUCTOR);
         }
 
         participation.addSubmission(programmingSubmission);
