@@ -8,13 +8,16 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -50,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
+import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 
 class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
@@ -643,6 +647,100 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 Boolean.class);
 
         assertThat(response).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProgrammingExerciseStudentParticipationByRepoName() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now());
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+
+        var repoName = extractRepoName(participation.getRepositoryUri());
+        RepoNameProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.OK,
+                RepoNameProgrammingStudentParticipationDTO.class);
+
+        assertThat(participationDTO.id()).isEqualTo(participation.getId());
+        assertThat(participationDTO.exercise().id()).isEqualTo(participation.getExercise().getId());
+        assertThat(participationDTO.exercise().course().id()).isEqualTo(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProgrammingExerciseStudentParticipationNoParam() throws Exception {
+        String body = request.get("/api/programming/programming-exercise-participations", HttpStatus.BAD_REQUEST, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProgrammingExerciseStudentParticipationByRepoNameNotFound() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+
+        // Generate a random URI that is not in the database
+        URI repoUrl;
+        Optional<ProgrammingExerciseStudentParticipation> foundParticipation;
+        do {
+            repoUrl = new URI(participation.getRepositoryUri());
+            repoUrl = new URI(repoUrl.getScheme(), repoUrl.getUserInfo(), repoUrl.getHost(), repoUrl.getPort(), "/" + UUID.randomUUID().toString(), repoUrl.getQuery(),
+                    repoUrl.getFragment());
+            foundParticipation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl.toString());
+        }
+        while (foundParticipation.isPresent());
+
+        var repoName = extractRepoName(repoUrl.toString());
+        String body = request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProgrammingExerciseStudentParticipationByInvalidRepoName() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+
+        // Generate a random URI that is not in the database
+        URI repoUrl;
+        Optional<ProgrammingExerciseStudentParticipation> foundParticipation;
+        do {
+            repoUrl = new URI(participation.getRepositoryUri());
+
+            // test a repoName which does not match the expected pattern of <project_key>-<repo-type>
+            // generate random string without a dash
+            String invalidRepoName = UUID.randomUUID().toString().replace("-", "");
+            repoUrl = new URI(repoUrl.getScheme(), repoUrl.getUserInfo(), repoUrl.getHost(), repoUrl.getPort(), "/" + invalidRepoName, repoUrl.getQuery(), repoUrl.getFragment());
+            foundParticipation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl.toString());
+        }
+        while (foundParticipation.isPresent());
+
+        var repoName = extractRepoName(repoUrl.toString());
+        String body = request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.BAD_REQUEST, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProgrammingExerciseStudentParticipationByRepoNameNotVisible() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+
+        var repoName = extractRepoName(participation.getRepositoryUri());
+        String body = request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetProgrammingExerciseStudentParticipationByRepoNameExam() throws Exception {
+        var programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(ZonedDateTime.now().plusHours(1),
+                ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3), ZonedDateTime.now().plusHours(4), TEST_PREFIX + "student1", 1000);
+        programmingExercise.setReleaseDate(ZonedDateTime.now());
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+
+        var repoName = extractRepoName(participation.getRepositoryUri());
+        String body = request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.FORBIDDEN, String.class);
+    }
+
+    String extractRepoName(String repoUrl) {
+        // <server.url>/git/<project_key>/<repo-name>.git
+        return repoUrl.substring(repoUrl.lastIndexOf("/") + 1, repoUrl.length() - 4);
     }
 
     @Test
