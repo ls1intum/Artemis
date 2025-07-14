@@ -21,3 +21,16 @@ export enum IngestionState {
     ERROR = 'ERROR',
     PARTIALLY_INGESTED = 'PARTIALLY_INGESTED',
 }
+
+export interface LectureTranscriptionDTO {
+    lectureUnitId: number;
+    language: string;
+    segments: TranscriptionSegment[];
+}
+
+export interface TranscriptionSegment {
+    text?: string;
+    startTime?: number;
+    endTime?: number;
+    slideNumber?: number;
+}

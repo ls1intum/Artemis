@@ -152,7 +152,9 @@
                 "sourceURLValidationError": "Keine valide URL",
                 "urlVideoHelper": "Umwandlung in einbettbares Format ",
                 "urlHelperPlaceholder": "Du kannst hier eine Video-URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
-                "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL"
+                "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL",
+                "videoTranscription": "Video Transkription",
+                "videoTranscriptionPlaceholder": "Füge hier die Transkription des Videos ein."
             },
             "editAttachmentVideoUnit": {
                 "title": "Bearbeite Dateieinheit"
