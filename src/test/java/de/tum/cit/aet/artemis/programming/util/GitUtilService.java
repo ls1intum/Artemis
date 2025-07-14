@@ -56,12 +56,19 @@ public class GitUtilService {
     public GitUtilService() {
     }
 
-    // we have to create the path in a @PostConstruct to make sure that the tempPath is set
     @PostConstruct
     void init() throws IOException {
+        ensureTempPathIsSet();
+        Files.createDirectories(tempPath);
         Path base = Files.createTempDirectory(tempPath, "remotegittest");
         this.remotePath = base.resolve("scm").resolve("test-repository").toAbsolutePath();
         Files.createDirectories(remotePath);
+    }
+
+    private void ensureTempPathIsSet() {
+        if (tempPath == null) {
+            fail("The tempPath is not set. Please check your application properties.");
+        }
     }
 
     private Path getLocalPath() {
