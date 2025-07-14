@@ -43,6 +43,8 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -171,6 +173,7 @@ public class ResultResource {
      */
     @GetMapping("participations/{participationId}/results/{resultId}/details")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get details of Result : {}", resultId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
@@ -196,13 +199,8 @@ public class ResultResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Map<Long, String>> getBuildJobIdsForResultsOfParticipation(@PathVariable long participationId) {
         log.debug("REST request to get build job ids for results of participation : {}", participationId);
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
-        List<Result> results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
-
-        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results, participation);
-
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participationId);
+        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(participationId);
         return new ResponseEntity<>(resultBuildJobMap, HttpStatus.OK);
     }
 

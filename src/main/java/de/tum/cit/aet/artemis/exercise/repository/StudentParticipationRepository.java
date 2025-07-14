@@ -623,6 +623,17 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Optional<StudentParticipation> findWithEagerResultsById(@Param("participationId") long participationId);
 
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
+                INNER JOIN StudentParticipation participation ON user.login = :login AND participation.id = :participationId
+                LEFT JOIN participation.student student
+                LEFT JOIN participation.team team
+                LEFT JOIN team.students teamStudent
+            WHERE student = user OR teamStudent = user
+            """)
+    boolean isOwnerOfStudentParticipation(@Param("login") String login, @Param("participationId") long participationId);
+
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.assessor" })
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(long exerciseId);
 

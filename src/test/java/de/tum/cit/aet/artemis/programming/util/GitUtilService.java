@@ -100,7 +100,7 @@ public class GitUtilService {
             deleteRepos();
 
             Files.createDirectories(remotePath);
-            Git remoteGit = LocalRepository.initialize(remotePath.toFile(), defaultBranch, false);
+            Git remoteGit = LocalRepository.initialize(remotePath, defaultBranch, false);
             // create some files in the remote repository
             remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();
@@ -314,20 +314,6 @@ public class GitUtilService {
 
     public VcsRepositoryUri getRepoUriByType(REPOS repo) {
         return new VcsRepositoryUri(Path.of(getCompleteRepoPathStringByType(repo)).toFile());
-    }
-
-    public static final class MockFileRepositoryUri extends VcsRepositoryUri {
-
-        public MockFileRepositoryUri(File file) {
-            super(file);
-        }
-
-        @Override
-        public VcsRepositoryUri withUser(String username) {
-            // the mocked url should already include the user specific part
-            return this;
-        }
-
     }
 
     public void writeEmptyJsonFileToPath(Path path) throws Exception {

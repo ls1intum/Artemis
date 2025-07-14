@@ -24,7 +24,6 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
     private formSubscription: Subscription;
 
     isCPCCollapsed = true;
-    minimumSizeTooltip?: string;
     readonly faQuestionCircle = faQuestionCircle;
     isFormValid = signal(false);
 
@@ -67,7 +66,6 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
         if (this.exercise() && !this.exercise()?.plagiarismDetectionConfig) {
             this.exercise().plagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG;
         }
-        this.minimumSizeTooltip = this.getMinimumSizeTooltip();
 
         this.form.patchValue({
             continuousPlagiarismControlEnabled: this.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled ?? false,
@@ -80,15 +78,31 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
         });
     }
 
+    getMinimumSizeLabel(): string {
+        switch (this.exercise()?.type) {
+            case ExerciseType.PROGRAMMING: {
+                return 'artemisApp.plagiarism.minimumTokenCount';
+            }
+            case ExerciseType.TEXT: {
+                return 'artemisApp.plagiarism.minimumSize';
+            }
+            default: {
+                return '';
+            }
+        }
+    }
+
     /**
      * Return the translation identifier of the minimum size tooltip for the current exercise type.
      */
-    getMinimumSizeTooltip(): string | undefined {
+    getMinimumSizeTooltip(): string {
         switch (this.exercise()?.type) {
             case ExerciseType.PROGRAMMING:
-                return 'artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise';
+                return 'artemisApp.plagiarism.minimumTokenCountTooltipProgrammingExercise';
             case ExerciseType.TEXT:
                 return 'artemisApp.plagiarism.minimumSizeTooltipTextExercise';
+            default:
+                return '';
         }
     }
 
