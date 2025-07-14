@@ -29,7 +29,8 @@ jobs:
         run: |
           read_the_docs_version=$(cat docs/.readthedocs.yaml | yq '.build.tools.python' | tr -d '"')
           echo "read_the_docs_version=$read_the_docs_version" >> $GITHUB_OUTPUT
-      - name: Extract Python version from this workflow file
+
+      - name: Extract Python version from workflow file
         id: extract_workflow_version
         run: |
           workflow_version=$(cat .github/workflows/docs.yml | yq '.jobs.docs.steps[] | select(.uses == "actions/setup-python@v5") | .with."python-version"' | tr -d '"')
