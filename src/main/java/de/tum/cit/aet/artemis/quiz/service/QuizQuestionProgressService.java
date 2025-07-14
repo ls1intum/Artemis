@@ -57,12 +57,11 @@ public class QuizQuestionProgressService {
         Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions = new HashMap<>();
         Long userId = participation.getParticipant().getId();
         Set<SubmittedAnswer> answers = quizSubmission.getSubmittedAnswers();
-        List<QuizQuestion> questions = quizExercise.getQuizQuestions();
-        Map<Long, SubmittedAnswer> answerMap = answers.stream().collect(Collectors.toMap(a -> a.getQuizQuestion().getId(), a -> a));
+        Map<Long, QuizQuestion> questionMap = quizExercise.getQuizQuestions().stream().collect(Collectors.toMap(QuizQuestion::getId, q -> q));
 
-        for (QuizQuestion question : questions) {
-            SubmittedAnswer answer = answerMap.get(question.getId());
-            if (answer == null) {
+        for (SubmittedAnswer answer : answers) {
+            QuizQuestion question = questionMap.get(answer.getQuizQuestion().getId());
+            if (question == null) {
                 continue;
             }
             QuizQuestionProgressData data = processQuestionProgress(question, answer, quizSubmission, userId);
@@ -85,6 +84,7 @@ public class QuizQuestionProgressService {
         QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(null);
         QuizQuestionProgressData data = existingProgress != null ? existingProgress.getProgressJson() : new QuizQuestionProgressData();
 
+        log.info("question: {}", question);
         double score = question.scoreForAnswer(answer) / question.getPoints();
         updateProgressWithNewAttempt(data, score, quizSubmission.getSubmissionDate());
 
