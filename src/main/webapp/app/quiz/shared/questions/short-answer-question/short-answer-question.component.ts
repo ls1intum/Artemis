@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, ViewEncapsulation, effect, inject, input, model } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
@@ -28,46 +28,15 @@ export class ShortAnswerQuestionComponent {
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
 
     shortAnswerQuestion: ShortAnswerQuestion;
-    _forceSampleSolution: boolean;
 
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input()
-    set question(question: QuizQuestion) {
-        this.shortAnswerQuestion = question as ShortAnswerQuestion;
-        this.watchCollection();
-    }
-
-    // TODO: Map vs. Array --> consistency
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input()
-    submittedTexts: ShortAnswerSubmittedText[];
+    readonly question = input.required<QuizQuestion>();
+    readonly submittedTexts = model<ShortAnswerSubmittedText[]>([]);
     readonly clickDisabled = input<boolean>(undefined!);
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input()
-    showResult: boolean;
+    readonly showResult = input<boolean>(false);
     readonly questionIndex = input<number>(undefined!);
     readonly score = input<number>(undefined!);
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input()
-    set forceSampleSolution(forceSampleSolution) {
-        this._forceSampleSolution = forceSampleSolution;
-        if (this.forceSampleSolution) {
-            this.showSampleSolution();
-        }
-    }
-
-    get forceSampleSolution() {
-        return this._forceSampleSolution;
-    }
+    readonly forceSampleSolution = input<boolean>(false);
     readonly fnOnSubmittedTextUpdate = input<any>();
-
-    @Output()
-    submittedTextsChange = new EventEmitter<ShortAnswerSubmittedText[]>();
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
@@ -79,6 +48,18 @@ export class ShortAnswerQuestionComponent {
     // Icons
     faExclamationCircle = faExclamationCircle;
     farQuestionCircle = faQuestionCircle;
+
+    constructor() {
+        effect(() => {
+            this.shortAnswerQuestion = this.question() as ShortAnswerQuestion;
+            this.watchCollection();
+        });
+        effect(() => {
+            if (this.forceSampleSolution()) {
+                this.showSampleSolution();
+            }
+        });
+    }
 
     /**
      * Update html for text, hint and explanation for the question and every answer option
@@ -99,7 +80,7 @@ export class ShortAnswerQuestionComponent {
      * set as submitted texts
      */
     setSubmittedText() {
-        this.submittedTexts = [];
+        const newSubmittedTexts: ShortAnswerSubmittedText[] = [];
         let i = 0;
         for (const textpart of this.textParts) {
             let j = 0;
@@ -108,13 +89,13 @@ export class ShortAnswerQuestionComponent {
                     const submittedText = new ShortAnswerSubmittedText();
                     submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this.shortAnswerQuestion.id)).value;
                     submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element!), this.shortAnswerQuestion);
-                    this.submittedTexts.push(submittedText);
+                    newSubmittedTexts.push(submittedText);
                 }
                 j++;
             }
             i++;
         }
-        this.submittedTextsChange.emit(this.submittedTexts);
+        this.submittedTexts.set(newSubmittedTexts);
         /** Only execute the onMappingUpdate function if we received such input **/
         const fnOnSubmittedTextUpdate = this.fnOnSubmittedTextUpdate();
         if (fnOnSubmittedTextUpdate) {
@@ -143,7 +124,7 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to get the submitted text
      */
     getSubmittedTextForSpot(spotTag: string): ShortAnswerSubmittedText {
-        return this.submittedTexts.filter((submittedText) => submittedText.spot!.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
+        return this.submittedTexts().filter((submittedText) => submittedText.spot!.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
     }
 
     /**

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, ViewEncapsulation, effect, inject, input, model } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -23,38 +23,16 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class MultipleChoiceQuestionComponent {
     private artemisMarkdown = inject(ArtemisMarkdownService);
 
-    _question: MultipleChoiceQuestion;
-
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input()
-    set question(question: MultipleChoiceQuestion) {
-        this._question = question;
-        this.watchCollection();
-    }
-    get question(): MultipleChoiceQuestion {
-        return this._question;
-    }
-    // TODO: Map vs. Array --> consistency
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input()
-    selectedAnswerOptions: AnswerOption[];
+    readonly question = input.required<MultipleChoiceQuestion>();
+    readonly selectedAnswerOptions = model<AnswerOption[]>([]);
     readonly clickDisabled = input<boolean>(undefined!);
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input()
-    showResult: boolean;
-    questionIndex = input<number>(undefined!);
+    readonly showResult = input<boolean>(false);
+    readonly questionIndex = input<number>(undefined!);
     readonly score = input<number>(undefined!);
     readonly forceSampleSolution = input<boolean>(undefined!);
     readonly fnOnSelection = input<any>();
     readonly submittedResult = input<Result>(undefined!);
     readonly quizQuestions = input<QuizQuestion[]>();
-
-    @Output()
-    selectedAnswerOptionsChange = new EventEmitter<AnswerOption[]>();
 
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
 
@@ -67,15 +45,21 @@ export class MultipleChoiceQuestionComponent {
     faCircle = faCircle;
     faDotCircle = faDotCircle;
 
+    constructor() {
+        effect(() => {
+            this.watchCollection();
+        });
+    }
+
     /**
      * Update html for text, hint and explanation for the question and every answer option
      */
     watchCollection(): void {
         this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
-        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.question.text);
-        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.question.hint);
-        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.question.explanation);
-        this.renderedQuestion.renderedSubElements = this.question.answerOptions!.map((answerOption) => {
+        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.question().text);
+        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.question().hint);
+        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.question().explanation);
+        this.renderedQuestion.renderedSubElements = this.question().answerOptions!.map((answerOption) => {
             const renderedAnswerOption = new RenderedQuizQuestionMarkDownElement();
             renderedAnswerOption.text = this.artemisMarkdown.safeHtmlForMarkdown(answerOption.text);
             renderedAnswerOption.hint = this.artemisMarkdown.safeHtmlForMarkdown(answerOption.hint);
@@ -94,18 +78,19 @@ export class MultipleChoiceQuestionComponent {
             return;
         }
         if (this.isAnswerOptionSelected(answerOption)) {
-            this.selectedAnswerOptions = this.selectedAnswerOptions.filter((selectedAnswerOption) => {
+            const filtered = this.selectedAnswerOptions().filter((selectedAnswerOption) => {
                 if (answerOption.id) {
                     return selectedAnswerOption.id !== answerOption.id;
                 }
                 return selectedAnswerOption !== answerOption;
             });
+            this.selectedAnswerOptions.set(filtered);
         } else if (this.isSingleChoice) {
-            this.selectedAnswerOptions = [answerOption];
+            this.selectedAnswerOptions.set([answerOption]);
         } else {
-            this.selectedAnswerOptions.push(answerOption);
+            const current = this.selectedAnswerOptions();
+            this.selectedAnswerOptions.set([...current, answerOption]);
         }
-        this.selectedAnswerOptionsChange.emit(this.selectedAnswerOptions);
         /** Only execute the onSelection function if we received such input **/
         const fnOnSelection = this.fnOnSelection();
         if (fnOnSelection) {
@@ -119,7 +104,7 @@ export class MultipleChoiceQuestionComponent {
      */
     isAnswerOptionSelected(answerOption: AnswerOption): boolean {
         return (
-            this.selectedAnswerOptions.findIndex((selectedAnswerOption) => {
+            this.selectedAnswerOptions().findIndex((selectedAnswerOption) => {
                 if (answerOption.id) {
                     return selectedAnswerOption.id === answerOption.id;
                 }
@@ -129,6 +114,6 @@ export class MultipleChoiceQuestionComponent {
     }
 
     get isSingleChoice() {
-        return this.question.singleChoice;
+        return this.question().singleChoice;
     }
 }
