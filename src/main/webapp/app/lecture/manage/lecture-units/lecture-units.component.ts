@@ -347,17 +347,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
         if (!this.isEditingLectureUnit && generateTranscript && unit?.id) {
             const transcriptionUrl = playlistUrl ?? unit.videoSource;
 
-            // eslint-disable-next-line no-undef
-            console.log('[DEBUG] Starting transcription with:', {
-                lectureId: this.lecture.id,
-                unitId: unit.id,
-                transcriptionUrl,
-            });
             if (!transcriptionUrl) {
-                // eslint-disable-next-line no-undef
-                console.log('[INFO] Skipping transcription: No transcription URL available.');
-                return;
+                return; // No transcription URL available
             }
+
             this.attachmentVideoUnitService.startTranscription(this.lecture.id!, unit.id, transcriptionUrl).subscribe({
                 next: (res) => {
                     if (res.status === 200) {
@@ -370,9 +363,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
                     this.alertService.error('Transcript failed to start: ' + err.message);
                 },
             });
-        } else {
-            // eslint-disable-next-line no-undef
-            console.log('[INFO] Transcription not triggered. Either editing, disabled, or missing data.');
         }
+        // When editing, disabled, or missing data, simply do nothing
     }
 }
