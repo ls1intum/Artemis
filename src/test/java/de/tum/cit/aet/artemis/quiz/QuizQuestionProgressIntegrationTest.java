@@ -165,6 +165,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(dataEmpty.getAttempts().getFirst().getAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
         assertThat(dataEmpty.getAttempts().getFirst().getScore()).isEqualTo(1.0);
 
+        quizExercise.setQuizQuestions(List.of());
+        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
     }
 
     @Test
