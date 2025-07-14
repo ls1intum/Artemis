@@ -99,7 +99,7 @@ export abstract class CourseCompetencyFormComponent {
         this.descriptionControl?.markAsDirty();
     }
 
-    protected initializeForm() {
+    public initializeForm() {
         if (this.form) {
             return;
         }

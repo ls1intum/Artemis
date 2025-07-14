@@ -31,6 +31,7 @@ import { getComponentInstanceFromFixture } from 'test/helpers/utils/general-test
     template: `<jhi-prerequisite-form
         [isEditMode]="isEditMode"
         (formSubmitted)="formSubmitted($event)"
+        [formData]="formData"
         [courseId]="courseId"
         [hasCancelButton]="hasCancelButton"
         [lecturesOfCourseWithLectureUnits]="lecturesOfCourseWithLectureUnits"
@@ -169,9 +170,10 @@ describe('PrerequisiteFormComponent', () => {
         const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
-        const titleInput = fixture.nativeElement.querySelector('#title');
-        titleInput.value = 'Building a tool: create a plan and implement something!';
-        titleInput.dispatchEvent(new Event('input'));
+        const titleControl = prerequisiteFormComponent.form.get('title');
+        titleControl?.setValue('Building a tool: create a plan and implement something!');
+        titleControl?.markAsDirty();
+        fixture.detectChanges();
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);

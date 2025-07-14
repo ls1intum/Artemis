@@ -6,11 +6,11 @@
                     [formData]="formData()"
                     [isEditMode]="isEditMode()"
                     [isInConnectMode]="isInConnectMode()"
-                    [isInSingleLectureMode]="$any(isInSingleLectureMode)"
-                    [lecturesOfCourseWithLectureUnits]="$any(lecturesOfCourseWithLectureUnits)"
-                    [averageStudentScore]="$any(averageStudentScore)"
+                    [isInSingleLectureMode]="isInSingleLectureMode()"
+                    [lecturesOfCourseWithLectureUnits]="lecturesOfCourseWithLectureUnits()"
+                    [averageStudentScore]="averageStudentScore()"
                     [form]="form"
-                    [courseCompetency]="$any(prerequisite)"
+                    [courseCompetency]="prerequisite()"
                 />
                 <div>
                     <button id="submitButton" class="btn btn-primary me-2" type="submit" [disabled]="!isSubmitPossible">

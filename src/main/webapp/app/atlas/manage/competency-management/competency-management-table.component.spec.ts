@@ -23,7 +23,7 @@ import { getComponentInstanceFromFixture } from 'test/helpers/utils/general-test
 @Component({
     template: `
         <jhi-competency-management-table
-            [courseId]="signal(1)"
+            [courseId]="1"
             [courseCompetencies]="courseCompetencies"
             [(allCompetencies)]="allCompetencies"
             [competencyType]="competencyType"
