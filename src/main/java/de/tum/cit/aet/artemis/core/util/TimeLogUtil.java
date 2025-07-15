@@ -30,12 +30,12 @@ public class TimeLogUtil {
          * '1.94hours': Here it would be obvious that something is off, but how long is that really?
          * This happens because there's not 100 seconds in a minute and also not 100 hours in a day.
          */
-        double durationInMinutes = durationInSeconds / 60.0;
+        int durationInMinutes = (int) (durationInSeconds / 60.0);
         if (durationInMinutes < 60) {
-            return ((int) durationInMinutes) + ":" + ((int) durationInSeconds % 60) + "min";
+            return durationInMinutes + ":" + ((int) durationInSeconds % 60) + "min";
         }
-        double durationInHours = durationInMinutes / 60.0;
-        return ((int) durationInHours) + ":" + ((int) durationInMinutes % 60) + "hours";
+        int durationInHours = (int) (durationInMinutes / 60.0);
+        return durationInHours + ":" + (durationInMinutes % 60) + "hours";
     }
 
     public static String formatDuration(long durationInSeconds) {
