@@ -34,7 +34,8 @@ public class TimeLogUtil {
         if (durationInMinutes < 60) {
             return durationInMinutes + ":" + ((int) durationInSeconds % 60) + "min";
         }
-        int durationInHours = (int) (durationInMinutes / 60.0);
+
+        int durationInHours = durationInMinutes / 60;
         return durationInHours + ":" + (durationInMinutes % 60) + "hours";
     }
 
