@@ -525,21 +525,8 @@
                 </div>
             }
             @if (finishedBuildJobs) {
-                <div>
-                    <div class="row justify-content-center">
-                        <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
-                    </div>
-                    <div class="row justify-content-center">
-                        <ngb-pagination
-                            (pageChange)="onPageChange($event)"
-                            [collectionSize]="totalItems"
-                            [(page)]="page"
-                            [pageSize]="itemsPerPage"
-                            [maxSize]="5"
-                            [rotate]="true"
-                            [boundaryLinks]="true"
-                        />
-                    </div>
+                <div class="row justify-content-center">
+                    <jhi-slice-navigator [config]="paginationConfig" [hasMoreItems]="hasMore()" [isLoading]="isLoading" (pageChange)="onPageChange($event)" />
                 </div>
             }
         </div>
