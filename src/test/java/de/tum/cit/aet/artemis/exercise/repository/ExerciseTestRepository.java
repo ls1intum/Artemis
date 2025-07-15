@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.repository;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -16,7 +15,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * Spring Data JPA repository for the Exercise entity for Tests.
  */
 @Primary
-@Lazy
 @Repository
 public interface ExerciseTestRepository extends ExerciseRepository {
 

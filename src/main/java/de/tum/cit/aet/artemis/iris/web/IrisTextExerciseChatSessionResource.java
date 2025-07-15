@@ -7,7 +7,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +34,6 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * REST controller for managing {@link IrisTextExerciseChatSession}.
  */
 @Profile(PROFILE_IRIS)
-@Lazy
 @RestController
 @RequestMapping("api/iris/text-exercise-chat/")
 public class IrisTextExerciseChatSessionResource {

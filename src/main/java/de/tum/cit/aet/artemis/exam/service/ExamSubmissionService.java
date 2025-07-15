@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 @ConditionalOnProperty(name = "artemis.exam.enabled", havingValue = "true")
-@Lazy
 @Service
 public class ExamSubmissionService {
 

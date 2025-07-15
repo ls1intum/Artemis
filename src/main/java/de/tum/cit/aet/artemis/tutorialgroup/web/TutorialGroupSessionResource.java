@@ -21,7 +21,6 @@ import jakarta.ws.rs.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,7 +53,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurati
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
 @ConditionalOnProperty(name = "artemis.tutorialgroup.enabled", havingValue = "true")
-@Lazy
 @RestController
 @RequestMapping("api/tutorialgroup/")
 public class TutorialGroupSessionResource {

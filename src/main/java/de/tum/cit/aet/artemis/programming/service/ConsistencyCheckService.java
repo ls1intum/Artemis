@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +20,6 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
  * of programming exercises
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ConsistencyCheckService {
 

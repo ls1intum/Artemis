@@ -5,7 +5,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
  */
 @ConditionalOnProperty(name = "artemis.exam.enabled", havingValue = "true")
 @EnforceAdmin
-@Lazy
 @RestController
 @RequestMapping("api/exam/admin/")
 public class AdminExamResource {

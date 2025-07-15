@@ -9,7 +9,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 
@@ -25,7 +24,6 @@ public class CustomMetricsExtensionConfiguration {
 
     @Profile(PROFILE_CORE)
     @Configuration
-    @Lazy
     @ConditionalOnClass(Timed.class)
     @AutoConfigureAfter(JHipsterMetricsEndpointConfiguration.class)
     public static class JHipsterMetricsEndpointConfiguration {
@@ -38,7 +36,6 @@ public class CustomMetricsExtensionConfiguration {
          * @return CustomMetricsExtension object.
          */
         @Bean
-        @Lazy
         @ConditionalOnBean({ JHipsterMetricsEndpoint.class, SimpUserRegistry.class })
         @ConditionalOnMissingBean
         @ConditionalOnAvailableEndpoint

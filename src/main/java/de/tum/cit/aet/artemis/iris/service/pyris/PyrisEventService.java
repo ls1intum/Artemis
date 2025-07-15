@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionServic
 /**
  * Service to handle Pyris events.
  */
-@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class PyrisEventService {

@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
  * Spring Data JPA repository for the Participation entity.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends ArtemisJpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 

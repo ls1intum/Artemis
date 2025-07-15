@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildRunState;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ProgrammingMessagingService {
 

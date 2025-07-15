@@ -6,14 +6,12 @@ import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 @Profile(PROFILE_THEIA)
 @Configuration
-@Lazy
 @ConfigurationProperties(prefix = "theia")
 public class TheiaConfiguration {
 

@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -36,7 +35,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
  * The class also handles generating job ID tokens and validating tokens from request headers based ont these tokens.
  * It uses Hazelcast to store the jobs in a distributed map.
  */
-@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class PyrisJobService {

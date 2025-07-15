@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.core.service.cleanup.DataCleanupService;
  * Provides endpoints for administrators to clean up old or orphaned data in the database.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @RequestMapping("api/core/admin/cleanup/")
 @EnforceAdmin

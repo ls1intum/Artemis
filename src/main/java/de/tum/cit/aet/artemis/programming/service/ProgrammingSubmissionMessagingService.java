@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_SUBMISSION_TOPIC;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 
 @Service
 @Profile(PROFILE_CORE)
-@Lazy
 public class ProgrammingSubmissionMessagingService {
 
     private final TeamRepository teamRepository;

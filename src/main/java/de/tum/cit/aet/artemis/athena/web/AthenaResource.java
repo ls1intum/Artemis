@@ -12,7 +12,6 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -58,7 +57,6 @@ import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
  * REST controller for Athena feedback suggestions.
  */
 @Profile(PROFILE_ATHENA)
-@Lazy
 @RestController
 @RequestMapping("api/athena/")
 public class AthenaResource {

@@ -13,7 +13,6 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
@@ -33,7 +32,6 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
  * Spring Data JPA repository for the Exercise entity.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long> {
 

@@ -4,7 +4,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -19,7 +18,6 @@ import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
  */
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
 @Service
-@Lazy
 public class LearningPathRepositoryService {
 
     private final LearningPathRepository learningPathRepository;

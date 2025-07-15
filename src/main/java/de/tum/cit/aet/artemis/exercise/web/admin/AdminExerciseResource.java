@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Profile(PROFILE_CORE)
 @EnforceAdmin
-@Lazy
 @RestController
 @RequestMapping("api/exercise/admin/")
 public class AdminExerciseResource {

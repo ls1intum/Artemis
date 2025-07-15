@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.SimpMessageType;
@@ -17,7 +16,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 @Profile(PROFILE_CORE)
 @Configuration
 @EnableWebSocketSecurity
-@Lazy
 public class WebsocketSecurityConfiguration {
 
     @Bean

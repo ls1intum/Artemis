@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -82,7 +81,6 @@ import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
  * Service Implementation for managing Exercise.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ExerciseService {
 

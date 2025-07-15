@@ -18,7 +18,6 @@ import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
@@ -43,7 +42,6 @@ import edu.stanford.nlp.util.Sets;
  * Service class to access metrics regarding students' learning progress.
  */
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
-@Lazy
 @Service
 public class LearningMetricsService {
 

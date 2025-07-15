@@ -15,7 +15,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -45,7 +44,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * Spring Data JPA repository for the Result entity.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 

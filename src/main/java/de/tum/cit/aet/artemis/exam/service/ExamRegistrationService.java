@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -42,7 +41,6 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
  * Service Implementation for registering students in the exam.
  */
 @ConditionalOnProperty(name = "artemis.exam.enabled", havingValue = "true")
-@Lazy
 @Service
 public class ExamRegistrationService {
 

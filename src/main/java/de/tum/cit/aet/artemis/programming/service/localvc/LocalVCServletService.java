@@ -30,7 +30,6 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -77,7 +76,6 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
  * This service is responsible for authenticating and authorizing git requests as well as for retrieving the requested Git repositories from disk.
  * It is used by the ArtemisGitServletService, the LocalVCFetchFilter, and the LocalVCPushFilter.
  */
-@Lazy
 @Service
 @Profile(PROFILE_LOCALVC)
 // TODO: we should rename this because its used in the context of https and ssh git operations

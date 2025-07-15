@@ -4,7 +4,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +18,6 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  */
 
 @ConditionalOnProperty(name = "artemis.text.enabled", havingValue = "true")
-@Lazy
 @Service
 public class TextExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 

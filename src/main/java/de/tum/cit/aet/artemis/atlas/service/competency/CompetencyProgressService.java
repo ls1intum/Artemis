@@ -15,7 +15,6 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -48,7 +47,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * Service for calculating the progress of a student in a competency.
  */
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
-@Lazy
 @Service
 public class CompetencyProgressService {
 

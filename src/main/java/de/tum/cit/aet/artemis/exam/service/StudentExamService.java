@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -78,7 +77,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Service Implementation for managing StudentExam.
  */
 @ConditionalOnProperty(name = "artemis.exam.enabled", havingValue = "true")
-@Lazy
 @Service
 public class StudentExamService {
 

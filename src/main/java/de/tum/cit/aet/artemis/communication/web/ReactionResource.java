@@ -9,7 +9,6 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +27,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
  * REST controller for Reaction on Postings.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @RequestMapping("api/communication/")
 public class ReactionResource {

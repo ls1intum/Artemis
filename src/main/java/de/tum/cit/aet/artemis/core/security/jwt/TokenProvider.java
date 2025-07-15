@@ -15,7 +15,6 @@ import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -42,7 +41,6 @@ import tech.jhipster.config.JHipsterProperties;
 
 @Profile(PROFILE_CORE)
 @Component
-@Lazy
 public class TokenProvider {
 
     private static final Logger log = LoggerFactory.getLogger(TokenProvider.class);

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.assessment.repository.cleanup;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,7 +16,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * THE FOLLOWING METHODS ARE USED FOR CLEANUP PURPOSES AND SHOULD NOT BE USED IN OTHER CASES
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface StudentScoreCleanupRepository extends ArtemisJpaRepository<StudentScore, Long> {
 

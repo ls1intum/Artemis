@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import jakarta.annotation.Nullable;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ExerciseDateService {
 

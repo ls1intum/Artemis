@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismMapping;
@@ -16,7 +15,6 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
 
 @ConditionalOnProperty(name = "artemis.plagiarism.enabled", havingValue = "true")
 @Controller
-@Lazy
 public class PlagiarismCaseApi extends AbstractPlagiarismApi {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;

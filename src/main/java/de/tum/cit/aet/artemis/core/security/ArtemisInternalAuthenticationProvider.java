@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.Optional;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 
 @Profile(PROFILE_CORE)
 @Component
-@Lazy
 @ConditionalOnProperty(value = "artemis.user-management.use-external", havingValue = "false")
 public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticationProvider {
 

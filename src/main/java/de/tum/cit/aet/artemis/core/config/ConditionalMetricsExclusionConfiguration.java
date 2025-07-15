@@ -6,7 +6,6 @@ import org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfigu
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 /**
@@ -19,7 +18,6 @@ import org.springframework.context.annotation.Profile;
  * </p>
  */
 @Configuration
-@Lazy
 @Profile(PROFILE_BUILDAGENT)
 @ConditionalOnProperty(name = "artemis.core.enabled", havingValue = "false")
 @EnableAutoConfiguration(exclude = MetricsAutoConfiguration.class)

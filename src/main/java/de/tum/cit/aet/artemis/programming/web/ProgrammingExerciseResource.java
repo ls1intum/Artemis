@@ -19,7 +19,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
@@ -105,7 +104,6 @@ import io.jsonwebtoken.lang.Arrays;
  * REST controller for managing ProgrammingExercise.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseResource {

@@ -11,7 +11,6 @@ import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificat
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ProgrammingTestCaseChangedUserNotificationService {
 

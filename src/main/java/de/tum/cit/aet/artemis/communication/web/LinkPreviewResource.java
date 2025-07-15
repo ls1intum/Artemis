@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 import org.apache.hc.core5.net.InetAddressUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,7 +27,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
  * REST controller for Link Preview.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @RequestMapping("api/communication/")
 public class LinkPreviewResource {

@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -33,7 +32,6 @@ import tech.jhipster.config.JHipsterProperties;
 /**
  * Service for sending emails asynchronously.
  */
-@Lazy
 @Service
 @Profile(PROFILE_CORE)
 public class MailSendingService {

@@ -8,7 +8,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -27,7 +26,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * Assumes that submissions have already been sent to Athena (it only sends submission IDs to choose from).
  * The default choice if Athena does not respond is to choose a random submission.
  */
-@Lazy
 @Service
 @Profile(PROFILE_ATHENA)
 public class AthenaSubmissionSelectionService {

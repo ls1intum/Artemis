@@ -12,7 +12,6 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -25,7 +24,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @ConditionalOnProperty(name = "artemis.exam.enabled", havingValue = "true")
-@Lazy
 @Service
 public class ExamDateService {
 

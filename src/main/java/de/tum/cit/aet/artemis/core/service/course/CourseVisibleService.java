@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +16,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
  */
 @Service
 @Profile(PROFILE_CORE)
-@Lazy
 public class CourseVisibleService {
 
     private final AuthorizationCheckService authCheckService;

@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.core.util.Pair;
 
 @Component
 @Profile(SPRING_PROFILE_DEVELOPMENT)
-@Lazy
 public class BeanInstantiationTracer implements InstantiationAwareBeanPostProcessor {
 
     private static final Logger log = LoggerFactory.getLogger(BeanInstantiationTracer.class);

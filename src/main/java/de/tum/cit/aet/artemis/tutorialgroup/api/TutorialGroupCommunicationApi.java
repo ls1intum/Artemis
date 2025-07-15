@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.tutorialgroup.api;
 import java.util.Optional;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Controller;
 
@@ -12,7 +11,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 
 @ConditionalOnProperty(name = "artemis.tutorialgroup.enabled", havingValue = "true")
 @Controller
-@Lazy
 public class TutorialGroupCommunicationApi extends AbstractTutorialGroupApi {
 
     private final TutorialGroupRepository tutorialGroupRepository;

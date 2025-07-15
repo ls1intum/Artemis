@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -75,7 +74,6 @@ import tech.jhipster.security.RandomUtil;
  * Service class for managing users.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class UserService {
 

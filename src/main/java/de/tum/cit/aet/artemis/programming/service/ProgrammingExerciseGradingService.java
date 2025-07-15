@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -71,7 +70,6 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationResultService;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ProgrammingExerciseGradingService {
 

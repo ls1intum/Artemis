@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +31,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
  * This service is used to access the distributed data structures in Hazelcast.
  * All data structures are created lazily, meaning they are only created when they are first accessed.
  */
-@Lazy
 @Service
 @Profile({ PROFILE_LOCALCI, PROFILE_BUILDAGENT })
 public class DistributedDataAccessService {

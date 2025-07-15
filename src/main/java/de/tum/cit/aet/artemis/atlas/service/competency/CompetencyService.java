@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -39,7 +38,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
  * Service for managing competencies.
  */
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
-@Lazy
 @Service
 public class CompetencyService extends CourseCompetencyService {
 

@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -39,7 +38,6 @@ import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
  */
 @Component
 @ConditionalOnProperty(name = "artemis.user-management.passkey.enabled", havingValue = "true")
-@Lazy
 public class ArtemisPasskeyWebAuthnConfigurer {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisPasskeyWebAuthnConfigurer.class);

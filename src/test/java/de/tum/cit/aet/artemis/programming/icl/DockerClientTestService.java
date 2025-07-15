@@ -30,7 +30,6 @@ import java.util.Map;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.mockito.ArgumentMatcher;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -59,7 +58,6 @@ import com.github.dockerjava.api.model.Image;
 
 import de.tum.cit.aet.artemis.buildagent.service.BuildAgentDockerService;
 
-@Lazy
 @Service
 @Profile({ SPRING_PROFILE_TEST, PROFILE_TEST_BUILDAGENT })
 public class DockerClientTestService {

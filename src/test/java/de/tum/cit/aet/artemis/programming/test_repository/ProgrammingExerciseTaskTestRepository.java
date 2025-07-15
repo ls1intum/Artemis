@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.test_repository;
 
 import java.util.Set;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 
@@ -12,7 +11,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepo
 /**
  * Spring Data repository for the ProgrammingExerciseTask entity.
  */
-@Lazy
 @Repository
 @Primary
 public interface ProgrammingExerciseTaskTestRepository extends ProgrammingExerciseTaskRepository {

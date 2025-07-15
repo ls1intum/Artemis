@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -38,7 +37,6 @@ import de.tum.cit.aet.artemis.programming.web.localci.AeolusTemplateResource;
  * Handles the request to {@link AeolusTemplateResource} and Artemis internal
  * requests to fetch aeolus templates for programming exercises.
  */
-@Lazy
 @Service
 @Profile("aeolus | localci")
 public class AeolusTemplateService {

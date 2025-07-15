@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
@@ -14,7 +13,6 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 
 @ConditionalOnProperty(name = "artemis.exam.enabled", havingValue = "true")
 @Controller
-@Lazy
 public class ExamMetricsApi extends AbstractExamApi {
 
     private final ExamRepository examRepository;

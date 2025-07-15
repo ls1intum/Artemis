@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.user.SimpSubscription;
@@ -22,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @EnforceAdmin
 @RequestMapping("api/atlas/admin/metrics/")

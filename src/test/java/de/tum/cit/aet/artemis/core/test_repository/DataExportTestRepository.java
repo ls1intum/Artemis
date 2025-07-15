@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.test_repository;
 
 import java.util.Set;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
 
-@Lazy
 @Repository
 @Primary
 public interface DataExportTestRepository extends DataExportRepository {

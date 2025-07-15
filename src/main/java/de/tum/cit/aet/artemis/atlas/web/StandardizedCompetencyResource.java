@@ -5,7 +5,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,7 +26,6 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
  */
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
 @FeatureToggle(Feature.StandardizedCompetencies)
-@Lazy
 @RestController
 @RequestMapping("api/atlas/standardized-competencies/")
 public class StandardizedCompetencyResource {

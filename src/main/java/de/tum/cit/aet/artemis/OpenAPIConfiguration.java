@@ -11,7 +11,6 @@ import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import io.swagger.v3.oas.models.Components;
@@ -36,7 +35,6 @@ import io.swagger.v3.oas.models.responses.ApiResponses;
  */
 @Configuration
 @Profile(PROFILE_CORE)
-@Lazy
 public class OpenAPIConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(OpenAPIConfiguration.class);

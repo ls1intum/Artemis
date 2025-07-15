@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Objects;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
@@ -31,7 +30,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 
 @ConditionalOnProperty(name = "artemis.plagiarism.enabled", havingValue = "true")
-@Lazy
 @Service
 public class PlagiarismPostService extends PostingService {
 

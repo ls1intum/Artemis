@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -32,7 +31,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
  * Service implementation to check exam access.
  */
 @ConditionalOnProperty(name = "artemis.exam.enabled", havingValue = "true")
-@Lazy
 @Service
 public class ExamAccessService {
 

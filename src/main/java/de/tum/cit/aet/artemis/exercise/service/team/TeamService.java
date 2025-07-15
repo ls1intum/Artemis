@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -31,7 +30,6 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.web.TeamResource;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class TeamService {
 

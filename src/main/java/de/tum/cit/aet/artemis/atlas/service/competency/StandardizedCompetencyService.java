@@ -14,7 +14,6 @@ import jakarta.ws.rs.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -38,7 +37,6 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
  * Service for managing {@link StandardizedCompetency} entities.
  */
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
-@Lazy
 @Service
 public class StandardizedCompetencyService {
 

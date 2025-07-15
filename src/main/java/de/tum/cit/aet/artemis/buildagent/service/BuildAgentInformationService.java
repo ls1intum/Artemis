@@ -10,7 +10,6 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.GitProperties;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +22,6 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 @Profile(PROFILE_BUILDAGENT)
-@Lazy
 @Service
 public class BuildAgentInformationService {
 

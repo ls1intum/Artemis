@@ -18,7 +18,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
@@ -34,7 +33,6 @@ import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
 @Profile(PROFILE_CORE)
 @Configuration
 @ConditionalOnProperty(name = "spring.liquibase.enabled", havingValue = "true")
-@Lazy
 public class LiquibaseConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(LiquibaseConfiguration.class);

@@ -12,7 +12,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 
 @Profile(PROFILE_CORE_AND_SCHEDULING)
-@Lazy
 @Service
 public class UserSshPublicKeyExpiryNotificationService {
 

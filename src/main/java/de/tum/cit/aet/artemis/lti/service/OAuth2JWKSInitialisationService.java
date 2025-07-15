@@ -4,14 +4,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI_AND_SCHED
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 
-@Lazy
 @Service
 @Profile({ PROFILE_LTI_AND_SCHEDULING })
 public class OAuth2JWKSInitialisationService {

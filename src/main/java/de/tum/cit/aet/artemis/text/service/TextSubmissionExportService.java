@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionExportService;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @ConditionalOnProperty(name = "artemis.text.enabled", havingValue = "true")
-@Lazy
 @Service
 public class TextSubmissionExportService extends SubmissionExportService {
 

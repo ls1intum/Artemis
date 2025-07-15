@@ -18,7 +18,6 @@ import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -67,7 +66,6 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTrigge
 
 // TODO: this class has too many dependencies to other services. We should reduce this
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ProgrammingSubmissionService extends SubmissionService {
 

@@ -7,7 +7,6 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -25,7 +24,6 @@ import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistrationFactory;
 import de.tum.cit.aet.artemis.lti.dto.Lti13PlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 
-@Lazy
 @Service
 @Profile(PROFILE_LTI)
 public class LtiDynamicRegistrationService {

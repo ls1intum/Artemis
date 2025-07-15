@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,7 +45,6 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ProgrammingExerciseService {
 

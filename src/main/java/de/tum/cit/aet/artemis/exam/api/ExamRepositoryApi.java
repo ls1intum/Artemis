@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @ConditionalOnProperty(name = "artemis.exam.enabled", havingValue = "true")
 @Controller
-@Lazy
 public class ExamRepositoryApi extends AbstractExamApi {
 
     private final ExamRepository examRepository;

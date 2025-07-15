@@ -12,7 +12,6 @@ import java.net.SocketTimeoutException;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
@@ -24,7 +23,6 @@ import org.springframework.web.client.RestTemplate;
 
 @Component
 @Profile(PROFILE_APOLLON)
-@Lazy
 public class ApollonRequestMockProvider {
 
     private final RestTemplate restTemplate;

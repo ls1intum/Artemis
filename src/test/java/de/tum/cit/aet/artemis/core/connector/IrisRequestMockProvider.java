@@ -15,7 +15,6 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -48,7 +47,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.Pyri
 
 @Component
 @Profile(PROFILE_IRIS)
-@Lazy
 public class IrisRequestMockProvider {
 
     private final RestTemplate restTemplate;

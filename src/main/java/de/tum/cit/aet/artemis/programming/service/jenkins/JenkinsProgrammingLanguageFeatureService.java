@@ -31,7 +31,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -40,7 +39,6 @@ import de.tum.cit.aet.artemis.programming.service.LicenseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 
-@Lazy
 @Service
 @Profile(PROFILE_JENKINS)
 public class JenkinsProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {

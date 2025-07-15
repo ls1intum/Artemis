@@ -13,7 +13,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
@@ -32,7 +31,6 @@ import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
  * This is based on a copy of {@link uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.StateAuthorizationRequestRepository}.
  */
 @Component
-@Lazy
 @Profile(PROFILE_LTI)
 public class DistributedStateAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 

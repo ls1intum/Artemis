@@ -15,7 +15,6 @@ import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
@@ -43,7 +42,6 @@ import com.hazelcast.core.Hazelcast;
  * by periodically verifying and initiating connections to all expected cluster members.
  */
 @Profile({ PROFILE_BUILDAGENT, PROFILE_CORE })
-@Lazy
 @Configuration
 public class HazelcastConnection {
 

@@ -8,7 +8,6 @@ import java.util.Optional;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,7 +20,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
  * Spring Data JPA repository for the ExerciseGroup entity.
  */
 @ConditionalOnProperty(name = "artemis.exam.enabled", havingValue = "true")
-@Lazy
 @Repository
 public interface ExerciseGroupRepository extends ArtemisJpaRepository<ExerciseGroup, Long> {
 

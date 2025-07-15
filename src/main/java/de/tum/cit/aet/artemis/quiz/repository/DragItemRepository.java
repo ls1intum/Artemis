@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
@@ -16,7 +15,6 @@ import de.tum.cit.aet.artemis.quiz.domain.DragItem;
  * Spring Data JPA repository for the DragItem entity.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface DragItemRepository extends ArtemisJpaRepository<DragItem, Long> {
 

@@ -11,7 +11,6 @@ import java.time.ZonedDateTime;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
@@ -40,7 +39,6 @@ import de.tum.cit.aet.artemis.core.service.export.DataExportService;
  * It contains the REST endpoints for requesting, downloading data exports and checking if a data export can be requested or downloaded.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @RequestMapping("api/core/")
 public class DataExportResource {

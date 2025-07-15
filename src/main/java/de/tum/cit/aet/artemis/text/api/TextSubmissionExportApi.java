@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
 
 @ConditionalOnProperty(name = "artemis.text.enabled", havingValue = "true")
 @Controller
-@Lazy
 public class TextSubmissionExportApi extends AbstractTextApi {
 
     private final TextSubmissionExportService textSubmissionExportService;

@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryReposito
 import de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class AuxiliaryRepositoryService {
 

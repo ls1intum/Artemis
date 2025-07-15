@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -45,7 +44,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Service for receiving feedback suggestions from the Athena service.
  * Assumes that submissions and already given feedback have already been sent to Athena or that the feedback is non-graded.
  */
-@Lazy
 @Service
 @Profile(PROFILE_ATHENA)
 public class AthenaFeedbackSuggestionsService {

@@ -5,13 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 
 @Configuration
-@Lazy
+
 public class ApplicationConfiguration {
 
     /**

@@ -9,7 +9,6 @@ import java.util.List;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,7 +28,6 @@ import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
 
 @Profile(PROFILE_LOCALVC)
-@Lazy
 @RestController
 @RequestMapping("api/programming/ssh-settings/")
 public class SshPublicKeysResource {

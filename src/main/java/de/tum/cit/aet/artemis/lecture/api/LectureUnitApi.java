@@ -6,7 +6,6 @@ import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -23,7 +22,6 @@ import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
  */
 @Profile(PROFILE_CORE)
 @Controller
-@Lazy
 public class LectureUnitApi extends AbstractLectureApi {
 
     private final LectureUnitService lectureUnitService;

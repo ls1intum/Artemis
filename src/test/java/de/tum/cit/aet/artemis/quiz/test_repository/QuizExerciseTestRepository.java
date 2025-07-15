@@ -2,14 +2,12 @@ package de.tum.cit.aet.artemis.quiz.test_repository;
 
 import jakarta.annotation.Nullable;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 
-@Lazy
 @Repository
 @Primary
 public interface QuizExerciseTestRepository extends QuizExerciseRepository {

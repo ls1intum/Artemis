@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -74,7 +73,6 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
 /**
  * Service responsible for initializing the database with specific testdata related to programming exercises for use in integration tests.
  */
-@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseUtilService {

@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.UploadPack;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -17,7 +16,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * This class configures the JGit Servlet, which is used to receive Git push and fetch requests for local VC.
  */
 @Profile(PROFILE_LOCALVC)
-@Lazy
 @Service
 public class ArtemisGitServletService extends GitServlet {
 

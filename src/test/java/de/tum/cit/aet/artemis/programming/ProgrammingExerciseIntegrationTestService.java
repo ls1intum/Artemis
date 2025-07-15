@@ -53,7 +53,6 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -128,7 +127,6 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
  * 1) LocalVC + LocalCI
  */
-@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseIntegrationTestService {

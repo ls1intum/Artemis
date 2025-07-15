@@ -9,7 +9,6 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +16,6 @@ import com.hazelcast.core.HazelcastInstance;
 
 @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Component
-@Lazy
 public class HazelcastHealthIndicator implements HealthIndicator {
 
     private final HazelcastInstance hazelcastInstance;

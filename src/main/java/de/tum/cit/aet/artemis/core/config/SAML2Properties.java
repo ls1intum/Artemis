@@ -9,7 +9,6 @@ import java.util.Set;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Component;
  */
 @Profile(PROFILE_CORE)
 @Component
-@Lazy
 @ConfigurationProperties(Constants.PROFILE_SAML2)
 public class SAML2Properties {
 

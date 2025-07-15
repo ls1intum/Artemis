@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -39,7 +38,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Service to convert exercises, submissions and feedback to DTOs for Athena.
  */
 @Profile(PROFILE_ATHENA)
-@Lazy
 @Service
 public class AthenaDTOConverterService {
 

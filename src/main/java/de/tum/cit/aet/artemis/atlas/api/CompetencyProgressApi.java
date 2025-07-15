@@ -4,7 +4,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 
 @Controller
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
-@Lazy
 public class CompetencyProgressApi extends AbstractAtlasApi {
 
     private final CompetencyProgressService competencyProgressService;

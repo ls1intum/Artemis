@@ -28,7 +28,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -53,7 +52,6 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.Repo
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
  * It is closely related to the {@link BuildJobExecutionService} which contains the methods that are used to execute the build jobs.
  */
-@Lazy
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildJobContainerService {

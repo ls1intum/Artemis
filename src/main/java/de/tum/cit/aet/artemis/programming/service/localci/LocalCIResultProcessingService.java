@@ -13,7 +13,6 @@ import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -50,7 +49,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessaging
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 
 @Profile(PROFILE_LOCALCI)
-@Lazy
 @Service
 public class LocalCIResultProcessingService {
 

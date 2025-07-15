@@ -9,7 +9,6 @@ import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +31,6 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @Profile(PROFILE_CORE)
 @EnforceAdmin
-@Lazy
 @RestController
 @RequestMapping("api/core/admin/")
 public class AdminAuditResource {

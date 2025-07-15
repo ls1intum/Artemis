@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Set;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepo
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 
 @ConditionalOnProperty(name = "artemis.tutorialgroup.enabled", havingValue = "true")
-@Lazy
 @Service
 public class TutorialGroupsConfigurationService {
 

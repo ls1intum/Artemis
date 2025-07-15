@@ -16,13 +16,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Profile({ SPRING_PROFILE_PRODUCTION, SPRING_PROFILE_TEST })
 @Component
-@Lazy
 public class ApiVersionFilter implements Filter {
 
     private static final Logger log = LoggerFactory.getLogger(ApiVersionFilter.class);

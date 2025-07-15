@@ -7,7 +7,6 @@ import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.messaging.support.MessageBuilder;
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class QuizMessagingService {
 

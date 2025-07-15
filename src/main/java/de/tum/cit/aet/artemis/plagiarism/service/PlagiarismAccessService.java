@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonReposito
 
 @Service
 @ConditionalOnProperty(name = "artemis.plagiarism.enabled", havingValue = "true")
-@Lazy
 public class PlagiarismAccessService {
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;

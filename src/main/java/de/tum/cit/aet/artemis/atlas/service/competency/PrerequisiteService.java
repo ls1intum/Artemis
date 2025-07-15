@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -31,7 +30,6 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
  * Service for managing prerequisites.
  */
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
-@Lazy
 @Service
 public class PrerequisiteService extends CourseCompetencyService {
 

@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +43,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class AnswerMessageService extends PostingService {
 

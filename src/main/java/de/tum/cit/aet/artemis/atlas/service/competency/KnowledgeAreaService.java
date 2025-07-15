@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.atlas.service.competency;
 import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
@@ -15,7 +14,6 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
  * Service for managing {@link KnowledgeArea} entities.
  */
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
-@Lazy
 @Service
 public class KnowledgeAreaService {
 

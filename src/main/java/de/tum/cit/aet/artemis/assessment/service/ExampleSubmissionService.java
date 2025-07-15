@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +30,6 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ExampleSubmissionService {
 

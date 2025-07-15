@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
@@ -15,7 +14,6 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 @ConditionalOnProperty(name = "artemis.plagiarism.enabled", havingValue = "true")
 @Controller
-@Lazy
 public class PlagiarismDetectionApi extends AbstractPlagiarismApi {
 
     private final PlagiarismDetectionService plagiarismDetectionService;

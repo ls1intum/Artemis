@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,7 +18,6 @@ import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
  * Spring Data JPA repository for the Online Unit entity.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface OnlineUnitRepository extends ArtemisJpaRepository<OnlineUnit, Long> {
 

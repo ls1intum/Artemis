@@ -6,12 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Lazy
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class PropertiesConfigurationGuard implements InitializingBean {
 

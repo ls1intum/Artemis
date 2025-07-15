@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -61,7 +60,6 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
  * REST controller for managing ProgrammingSubmission.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingSubmissionResource {

@@ -9,7 +9,6 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionIdAndSubmissi
  * Spring Data JPA repository for the ProgrammingSubmission entity.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<ProgrammingSubmission, Long> {
 

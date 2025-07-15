@@ -13,7 +13,6 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -34,7 +33,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
  * Spring Data JPA repository for the StudentExam entity.
  */
 @ConditionalOnProperty(name = "artemis.exam.enabled", havingValue = "true")
-@Lazy
 @Repository
 public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam, Long> {
 

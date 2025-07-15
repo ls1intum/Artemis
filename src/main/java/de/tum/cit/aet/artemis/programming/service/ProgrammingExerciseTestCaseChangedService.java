@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +18,6 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTrigge
 
 @Service
 @Profile(PROFILE_CORE)
-@Lazy
 public class ProgrammingExerciseTestCaseChangedService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestCaseChangedService.class);

@@ -10,7 +10,6 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
@@ -27,7 +26,6 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 
-@Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class NotificationScheduleService {

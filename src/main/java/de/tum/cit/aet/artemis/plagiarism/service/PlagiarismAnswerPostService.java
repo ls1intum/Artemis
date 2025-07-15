@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
@@ -28,7 +27,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 @ConditionalOnProperty(name = "artemis.plagiarism.enabled", havingValue = "true")
-@Lazy
 @Service
 public class PlagiarismAnswerPostService extends PostingService {
 

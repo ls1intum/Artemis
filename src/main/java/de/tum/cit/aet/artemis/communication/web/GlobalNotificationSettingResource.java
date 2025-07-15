@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Map;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/communication/")
-@Lazy
 public class GlobalNotificationSettingResource {
 
     private final GlobalNotificationSettingService globalNotificationSettingService;

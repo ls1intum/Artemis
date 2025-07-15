@@ -10,7 +10,6 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.domain.Page;
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Spring Data JPA for the GradingScale entity
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScale, Long> {
 

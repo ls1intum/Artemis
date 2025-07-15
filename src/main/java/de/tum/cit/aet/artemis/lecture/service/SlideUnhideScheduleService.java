@@ -11,7 +11,6 @@ import java.util.concurrent.ScheduledFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
  * This handles the actual scheduling of tasks.
  */
 @Profile(PROFILE_CORE_AND_SCHEDULING)
-@Lazy
 @Service
 public class SlideUnhideScheduleService {
 

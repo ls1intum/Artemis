@@ -10,7 +10,6 @@ import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -52,7 +51,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 /**
  * Service to handle the chat subsystem of Iris.
  */
-@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisProgrammingExerciseChatSession> implements IrisRateLimitedFeatureInterface {

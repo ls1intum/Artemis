@@ -8,7 +8,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,7 +40,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/core/")
-@Lazy
 public class CourseStatsResource {
 
     private static final Logger log = LoggerFactory.getLogger(CourseStatsResource.class);

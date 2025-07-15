@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 import org.hamcrest.text.MatchesPattern;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -32,7 +31,6 @@ import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
  */
 @Component
 @Profile("aeolus | localci")
-@Lazy
 public class AeolusRequestMockProvider {
 
     private final RestTemplate restTemplate;

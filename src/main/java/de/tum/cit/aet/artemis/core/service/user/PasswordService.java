@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.service.user;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,7 +16,6 @@ import de.tum.cit.aet.artemis.core.config.SecurityConfiguration;
  * b) The passwordEncoder in every other class using password hashing or matching
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class PasswordService {
 

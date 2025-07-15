@@ -19,7 +19,6 @@ import org.springframework.cloud.netflix.eureka.http.RestClientDiscoveryClientOp
 import org.springframework.cloud.netflix.eureka.http.RestClientTransportClientFactories;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.client.RestClient;
 
@@ -30,7 +29,6 @@ import org.springframework.web.client.RestClient;
  */
 @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Configuration
-@Lazy
 public class EurekaClientConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(EurekaClientConfiguration.class);

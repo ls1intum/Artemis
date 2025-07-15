@@ -8,7 +8,6 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +32,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 /**
  * Service responsible for initializing the database with specific test data related to competencies for use in integration tests.
  */
-@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")

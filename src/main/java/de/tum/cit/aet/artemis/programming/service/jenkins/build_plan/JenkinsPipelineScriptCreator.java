@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.io.IOUtils;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -29,7 +28,6 @@ import de.tum.cit.aet.artemis.programming.service.ci.AbstractBuildPlanCreator;
 
 @Profile(PROFILE_CORE)
 @Component
-@Lazy
 public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
 
     private static final String REPLACE_DOCKER_IMAGE_NAME = "#dockerImage";

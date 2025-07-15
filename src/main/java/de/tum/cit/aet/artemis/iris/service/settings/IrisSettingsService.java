@@ -17,7 +17,6 @@ import java.util.TreeSet;
 import java.util.function.Supplier;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -63,7 +62,6 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * enabled for an exercise.
  * See {@link IrisSubSettingsService} for more information on the handling of {@link IrisSubSettings}.
  */
-@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisSettingsService {

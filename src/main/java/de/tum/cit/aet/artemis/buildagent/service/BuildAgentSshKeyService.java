@@ -20,14 +20,12 @@ import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceW
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 
-@Lazy
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildAgentSshKeyService {

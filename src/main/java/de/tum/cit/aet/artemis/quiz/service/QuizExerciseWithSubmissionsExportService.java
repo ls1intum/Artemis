@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
  */
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class QuizExerciseWithSubmissionsExportService {
 

@@ -18,7 +18,6 @@ import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -67,7 +66,6 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
  * 1) Jenkins + LocalVC
  */
-@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class UserTestService {

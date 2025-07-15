@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.zalando.problem.jackson.ProblemModule;
 import org.zalando.problem.violations.ConstraintViolationProblemModule;
@@ -15,7 +14,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @Profile(PROFILE_CORE)
 @Configuration
-@Lazy
 public class JacksonConfiguration {
 
     /**

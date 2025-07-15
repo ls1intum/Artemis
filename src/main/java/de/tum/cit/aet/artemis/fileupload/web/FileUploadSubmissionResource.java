@@ -12,7 +12,6 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -60,7 +59,6 @@ import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionService;
  * REST controller for managing FileUploadSubmission.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadSubmissionResource extends AbstractSubmissionResource {

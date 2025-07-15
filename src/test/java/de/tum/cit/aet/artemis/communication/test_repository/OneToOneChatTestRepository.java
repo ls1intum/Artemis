@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.communication.test_repository;
 
 import java.util.Optional;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +11,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
-@Lazy
 @Repository
 @Primary
 public interface OneToOneChatTestRepository extends OneToOneChatRepository {

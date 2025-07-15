@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpHeaders;
@@ -40,7 +39,6 @@ import tech.jhipster.web.util.PaginationUtil;
  * REST controller for managing Post.
  */
 @ConditionalOnProperty(name = "artemis.plagiarism.enabled", havingValue = "true")
-@Lazy
 @RestController
 @RequestMapping("api/plagiarism/")
 public class PlagiarismPostResource {

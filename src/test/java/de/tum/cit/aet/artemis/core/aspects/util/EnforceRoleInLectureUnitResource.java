@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.aspects.util;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceRoleInLectureUnit;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @RequestMapping("api/core/test/")
 public class EnforceRoleInLectureUnitResource {

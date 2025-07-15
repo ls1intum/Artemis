@@ -13,7 +13,6 @@ import java.util.Optional;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -52,7 +51,6 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class FileUploadSubmissionService extends SubmissionService {
 

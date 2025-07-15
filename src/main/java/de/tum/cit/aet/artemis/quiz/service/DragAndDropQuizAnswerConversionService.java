@@ -24,7 +24,6 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -39,7 +38,6 @@ import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
  * Service for converting a DragAndDropSubmittedAnswer to a PDF file displaying the submitted answer.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class DragAndDropQuizAnswerConversionService {
 

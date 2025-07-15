@@ -6,7 +6,6 @@ import java.time.Instant;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.webauthn.api.AuthenticatorTransport;
 import org.springframework.security.web.webauthn.api.Bytes;
@@ -21,7 +20,6 @@ import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 /**
  * Service responsible for initializing the database with specific testdata related to {@link de.tum.cit.aet.artemis.core.domain.PasskeyCredential} for use in integration tests.
  */
-@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class PasskeyCredentialUtilService {

@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * Spring Data JPA repository for the {@link CourseCompetency} entity.
  */
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
-@Lazy
 @Repository
 public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseCompetency, Long> {
 

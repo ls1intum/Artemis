@@ -43,7 +43,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -83,7 +82,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  */
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExportService {
 

@@ -5,7 +5,6 @@ import static tech.jhipster.web.util.PaginationUtil.generatePaginationHttpHeader
 
 import java.util.List;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.core.service.ScheduleService;
  */
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 @EnforceAdmin
-@Lazy
 @RestController
 @RequestMapping("api/core/admin/")
 public class AdminScheduleResource {

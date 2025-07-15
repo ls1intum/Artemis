@@ -6,7 +6,6 @@ import static java.util.stream.Collectors.toMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,7 +18,6 @@ import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
  * Spring Data repository for the TextAssessmentEvent entity.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface TextAssessmentEventRepository extends ArtemisJpaRepository<TextAssessmentEvent, Long> {
 

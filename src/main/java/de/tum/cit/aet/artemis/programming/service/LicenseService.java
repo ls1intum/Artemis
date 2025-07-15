@@ -7,7 +7,6 @@ import java.util.Objects;
 
 import jakarta.annotation.Nullable;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +18,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * Provides licensing information for proprietary software to build jobs via environment variables.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class LicenseService {
 

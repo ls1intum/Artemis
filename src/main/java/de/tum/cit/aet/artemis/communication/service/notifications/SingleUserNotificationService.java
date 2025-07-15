@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +30,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class SingleUserNotificationService {
 

@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
@@ -16,7 +15,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffRepor
 /**
  * Spring Data JPA repository for the ProgrammingExerciseGitDiffReport entity.
  */
-@Lazy
 @Repository
 @Profile(PROFILE_CORE)
 public interface ProgrammingExerciseGitDiffReportRepository extends ArtemisJpaRepository<ProgrammingExerciseGitDiffReport, Long> {

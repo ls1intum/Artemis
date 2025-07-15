@@ -18,7 +18,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +27,6 @@ import net.lingala.zip4j.ZipFile;
  * A service class to create zip files
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class ZipFileService {
 

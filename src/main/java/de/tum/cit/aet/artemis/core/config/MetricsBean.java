@@ -21,7 +21,6 @@ import org.springframework.boot.actuate.health.HealthContributor;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.actuate.health.NamedContributor;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
@@ -57,7 +56,6 @@ import io.micrometer.core.instrument.Tags;
 
 @Profile(PROFILE_CORE)
 @Component
-@Lazy
 public class MetricsBean {
 
     private static final Logger log = LoggerFactory.getLogger(MetricsBean.class);

@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -60,7 +59,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 // TODO: this class has too many dependencies to other services. We should reduce this
 public class SubmissionService {

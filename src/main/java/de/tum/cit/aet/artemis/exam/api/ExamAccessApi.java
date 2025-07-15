@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.exam.api;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -13,7 +12,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 
 @ConditionalOnProperty(name = "artemis.exam.enabled", havingValue = "true")
 @Controller
-@Lazy
 public class ExamAccessApi extends AbstractExamApi {
 
     private final ExamAccessService examAccessService;

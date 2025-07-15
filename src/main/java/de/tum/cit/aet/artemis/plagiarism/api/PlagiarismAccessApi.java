@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.api;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -10,7 +9,6 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAccessService;
 
 @Controller
 @ConditionalOnProperty(name = "artemis.plagiarism.enabled", havingValue = "true")
-@Lazy
 public class PlagiarismAccessApi extends AbstractPlagiarismApi {
 
     private final PlagiarismAccessService plagiarismAccessService;

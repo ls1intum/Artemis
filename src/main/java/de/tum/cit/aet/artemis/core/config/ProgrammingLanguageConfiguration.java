@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -23,7 +22,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  */
 @ConfigurationProperties(prefix = "artemis.continuous-integration.build")
 @Profile(PROFILE_CORE)
-@Lazy
 public class ProgrammingLanguageConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingLanguageConfiguration.class);

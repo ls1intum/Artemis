@@ -8,7 +8,6 @@ import java.util.Optional;
 import jakarta.annotation.Nullable;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -31,7 +30,6 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @ConditionalOnProperty(name = "artemis.text.enabled", havingValue = "true")
-@Lazy
 @Service
 public class TextAssessmentService extends AssessmentService {
 

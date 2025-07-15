@@ -4,13 +4,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Profile(PROFILE_CORE)
 @Component
-@Lazy
 public class FeatureToggleInfoContributor implements InfoContributor {
 
     private final FeatureToggleService featureToggleService;

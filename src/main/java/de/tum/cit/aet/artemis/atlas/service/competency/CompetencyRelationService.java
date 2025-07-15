@@ -8,7 +8,6 @@ import java.util.Set;
 import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
@@ -23,7 +22,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
  */
 
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
-@Lazy
 @Service
 public class CompetencyRelationService {
 

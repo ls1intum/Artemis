@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
-@Lazy
 public class DeferredEagerBeanInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DeferredEagerBeanInitializer.class);

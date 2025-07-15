@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +45,6 @@ import de.tum.cit.aet.artemis.quiz.service.DragAndDropQuizAnswerConversionServic
  * This service is also used to export the student submissions for archival.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class DataExportQuizExerciseCreationService {
 

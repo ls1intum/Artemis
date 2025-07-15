@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
@@ -23,7 +22,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @Repository
 public interface StudentScoreRepository extends ArtemisJpaRepository<StudentScore, Long> {
 

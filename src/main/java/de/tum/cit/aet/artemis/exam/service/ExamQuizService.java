@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -25,7 +24,6 @@ import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
 
 @ConditionalOnProperty(name = "artemis.exam.enabled", havingValue = "true")
-@Lazy
 @Service
 public class ExamQuizService {
 

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.atlas.service.learningpath;
 import java.util.List;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
@@ -25,7 +24,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * Service for navigating through a learning path.
  */
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
-@Lazy
 @Service
 public class LearningPathNavigationService {
 

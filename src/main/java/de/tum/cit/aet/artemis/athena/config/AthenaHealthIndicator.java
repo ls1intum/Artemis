@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
  * Service determining the health of the Athena service and its assessment modules.
  */
 @Component
-@Lazy
 @Profile(PROFILE_ATHENA)
 public class AthenaHealthIndicator implements HealthIndicator {
 

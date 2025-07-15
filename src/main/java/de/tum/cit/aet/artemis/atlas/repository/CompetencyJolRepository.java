@@ -4,7 +4,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,7 +16,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Spring Data JPA repository for the {@link CompetencyJol} entity.
  */
 @ConditionalOnProperty(name = "artemis.atlas.enabled", havingValue = "true")
-@Lazy
 @Repository
 public interface CompetencyJolRepository extends ArtemisJpaRepository<CompetencyJol, Long> {
 

@@ -7,7 +7,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -34,7 +33,6 @@ import de.tum.cit.aet.artemis.quiz.service.QuizScheduleService;
  * This service is only available on a node with the 'scheduling' profile.
  * It receives messages from Hazelcast whenever another node sends a message to a specific topic and processes it on this node.
  */
-@Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class InstanceMessageReceiveService {

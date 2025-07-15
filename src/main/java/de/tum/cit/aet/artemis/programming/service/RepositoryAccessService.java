@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +24,6 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
  * Service for checking if a user has access to a repository.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class RepositoryAccessService {
 

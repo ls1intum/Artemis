@@ -61,7 +61,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -154,7 +153,6 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService.MockFileRepository
  * 1) Jenkins + LocalVC
  * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary.
  */
-@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseTestService {

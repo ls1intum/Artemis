@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -50,7 +49,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_CORE)
-@Lazy
 @RestController
 @RequestMapping("api/communication/courses/")
 public class ConversationResource extends ConversationManagementResource {

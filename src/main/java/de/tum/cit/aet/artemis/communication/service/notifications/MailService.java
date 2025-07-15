@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
@@ -25,7 +24,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * We use the MailSendingService to send emails asynchronously.
  */
 @Profile(PROFILE_CORE)
-@Lazy
 @Service
 public class MailService {
 

@@ -13,7 +13,6 @@ import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +34,6 @@ import de.tum.cit.aet.artemis.core.util.ClientEnvironment;
  */
 @Profile(PROFILE_CORE)
 @Service
-@Lazy
 public class ArtemisSuccessfulLoginService {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisSuccessfulLoginService.class);
