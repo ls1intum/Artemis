@@ -23,12 +23,19 @@ public class TimeLogUtil {
         if (durationInSeconds < 60) {
             return roundOffTo2DecPlaces(durationInSeconds) + "sec";
         }
+
+        /*
+         * Minutes and hours need a special treatment to prevent formats like this:
+         * '1.58min': Is this supposed to mean 1 min and 58 seconds or 1 min and 35 seconds?
+         * '1.94hours': Here it would be obvious that something is off, but how long is that really?
+         * This happens because there's not 100 seconds in a minute and also not 100 hours in a day.
+         */
         double durationInMinutes = durationInSeconds / 60.0;
         if (durationInMinutes < 60) {
-            return roundOffTo2DecPlaces(durationInMinutes) + "min";
+            return durationInMinutes + ":" + (durationInSeconds % 60) + "min";
         }
         double durationInHours = durationInMinutes / 60.0;
-        return roundOffTo2DecPlaces(durationInHours) + "hours";
+        return durationInHours + ":" + (durationInMinutes % 60) + "hours";
     }
 
     public static String formatDuration(long durationInSeconds) {
