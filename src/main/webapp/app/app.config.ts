@@ -31,7 +31,6 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { BundleOptimizationService } from './shared/bundle-optimization/bundle-optimization.service';
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -78,8 +77,6 @@ export const appConfig: ApplicationConfig = {
             inject(TraceService);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
-            // Initialize bundle optimization service for bundle preloading
-            inject(BundleOptimizationService);
             // we load this as early as possible to ensure that all config options are loaded before any routing or rendering happens
             // this is important so that all components can access the profile info, by returning it here, this blocks the app initialization until profile info was loaded
             return profileService.loadProfileInfo();

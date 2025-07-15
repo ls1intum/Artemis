@@ -20,9 +20,8 @@
         <meta name="application-name" content="Artemis" />
         <meta name="msapplication-TileColor" content="#2b5797" />
 
-        <!-- Performance optimizations -->
+        <link rel="preload" href="/public/images/logo.png" as="image" fetchpriority="high" />
         <link rel="preconnect" href="https://sentry.ase.in.tum.de" crossorigin />
-        <link rel="dns-prefetch" href="/" />
 
         <!-- Critical inline CSS for loading spinner -->
         <style>
@@ -129,9 +128,12 @@
         <script type="text/javascript">
             // show an error message if the app loading takes more than 5 sec
             window.onload = function () {
-                setTimeout(showError, 5000);
+                window.__errorTimeoutId = setTimeout(showError, 5000);
             };
             function showError() {
+                if (document.body.classList.contains('app-loaded')) {
+                    return;
+                }
                 const errorElm = document.getElementById('loading-error');
                 if (errorElm && errorElm.style) {
                     errorElm.style.display = 'block';
