@@ -15,7 +15,7 @@
     [submissions]="submissions()"
     [exerciseProjectKey]="exercise()?.projectKey"
 />
-@if (exercise()?.gitDiffReport) {
+@if (diffInformation() && diffReady()) {
     <div>
         <dt>
             <span
@@ -34,11 +34,11 @@
         <dd>
             <div class="fw-bold">
                 <jhi-git-diff-line-stat
-                    [addedLineCount]="addedLineCount"
-                    [removedLineCount]="removedLineCount"
+                    [addedLineCount]="addedLineCount()"
+                    [removedLineCount]="removedLineCount()"
                     ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipExamTimeline' | artemisTranslate }}"
                 />
-                @if (addedLineCount > 0 || removedLineCount > 0) {
+                @if (addedLineCount() > 0 || removedLineCount() > 0) {
                     <jhi-button
                         [featureToggle]="FeatureToggle.ProgrammingExercises"
                         [isLoading]="isLoadingDiffReport"

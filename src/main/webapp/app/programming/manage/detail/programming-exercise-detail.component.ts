@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
-import { Subject, Subscription, of } from 'rxjs';
+import { Observable, Subject, Subscription, forkJoin, from, of } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -52,8 +52,7 @@ import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
-import { catchError, mergeMap, tap } from 'rxjs/operators';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
+import { catchError, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
@@ -66,6 +65,7 @@ import { RepositoryType } from '../../shared/code-editor/model/code-editor.model
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -137,6 +137,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     programmingExercise: ProgrammingExercise;
     programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
+    repositoryDiffInformation: RepositoryDiffInformation;
+    templateFileContentByPath: Map<string, string>;
+    solutionFileContentByPath: Map<string, string>;
     competencies: Competency[];
     isExamExercise: boolean;
     supportsAuxiliaryRepositories: boolean;
@@ -145,6 +148,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     teamBaseResource: string;
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
+    diffReady = false;
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
     formattedGradingInstructions: SafeHtml;
@@ -154,9 +158,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     plagiarismEnabled = false;
 
     isAdmin = false;
-    addedLineCount: number;
-    removedLineCount: number;
-    isLoadingDiffReport: boolean;
     isBuildPlanEditable = false;
 
     plagiarismCheckSupported = false; // default value
@@ -170,6 +171,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     exerciseDetailSections: DetailOverviewSection[];
+
+    private lastUpdateTime = 0;
+    private readonly UPDATE_DEBOUNCE_MS = 1000;
 
     ngOnInit() {
         this.isBuildPlanEditable = this.profileService.isProfileActive('jenkins');
@@ -237,13 +241,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     tap((submissionPolicy) => {
                         this.programmingExercise.submissionPolicy = submissionPolicy;
                     }),
-                    mergeMap(() => this.programmingExerciseService.getDiffReport(exerciseId)),
+                    mergeMap(() => this.fetchRepositoryFiles()),
                     catchError(() => {
-                        this.alertService.error('artemisApp.programmingExercise.diffReportError');
-                        return of(undefined);
+                        this.alertService.error('artemisApp.programmingExercise.repositoryFilesError');
+                        return of({ templateFiles: new Map<string, string>(), solutionFiles: new Map<string, string>() });
                     }),
-                    tap((gitDiffReport) => {
-                        this.processGitDiffReport(gitDiffReport);
+                    switchMap(({ templateFiles, solutionFiles }: { templateFiles: Map<string, string> | undefined; solutionFiles: Map<string, string> | undefined }) => {
+                        return from(this.handleDiff(templateFiles, solutionFiles));
                     }),
                 )
                 // split pipe to keep type checks
@@ -466,16 +470,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         type: ProgrammingExerciseParticipationType.SOLUTION,
                     },
                 },
-                this.addedLineCount !== undefined &&
-                    this.removedLineCount !== undefined && {
+                this.repositoryDiffInformation &&
+                    this.templateFileContentByPath &&
+                    this.solutionFileContentByPath &&
+                    this.diffReady && {
                         type: DetailType.ProgrammingDiffReport,
                         title: 'artemisApp.programmingExercise.diffReport.title',
                         titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
                         data: {
-                            addedLineCount: this.addedLineCount,
-                            removedLineCount: this.removedLineCount,
-                            isLoadingDiffReport: this.isLoadingDiffReport,
-                            gitDiffReport: exercise.gitDiffReport,
+                            repositoryDiffInformation: this.repositoryDiffInformation,
+                            templateFileContentByPath: this.templateFileContentByPath,
+                            solutionFileContentByPath: this.solutionFileContentByPath,
                         },
                     },
                 !!exercise.buildConfig?.buildScript &&
@@ -605,7 +610,39 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     onParticipationChange(): void {
-        this.loadGitDiffReport();
+        // Debounce rapid successive calls to prevent infinite loops
+        const now = Date.now();
+        if (now - this.lastUpdateTime < this.UPDATE_DEBOUNCE_MS) {
+            return;
+        }
+
+        const previousDiffInfo = this.repositoryDiffInformation;
+        const previousTemplateFiles = this.templateFileContentByPath;
+        const previousSolutionFiles = this.solutionFileContentByPath;
+
+        this.fetchRepositoryFiles()
+            .pipe(
+                switchMap(({ templateFiles, solutionFiles }) => {
+                    return from(this.handleDiff(templateFiles, solutionFiles));
+                }),
+                tap(() => {
+                    // Update exercise details if any diff-related data has actually changed
+                    const diffDataChanged =
+                        this.repositoryDiffInformation !== previousDiffInfo ||
+                        this.templateFileContentByPath !== previousTemplateFiles ||
+                        this.solutionFileContentByPath !== previousSolutionFiles;
+
+                    if (diffDataChanged) {
+                        this.exerciseDetailSections = this.getExerciseDetails();
+                        this.lastUpdateTime = Date.now();
+                    }
+                }),
+            )
+            .subscribe({
+                error: (error) => {
+                    this.alertService.error('artemisApp.programmingExercise.participationChangeError');
+                },
+            });
     }
 
     generateStructureOracle() {
@@ -694,43 +731,35 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return link;
     }
 
-    /**
-     * Calculates the added and removed lines of the diff
-     * @param gitDiffReport
-     * @returns whether the report has changed compared to the last run
-     */
-    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined): boolean {
-        const isGitDiffReportUpdated =
-            gitDiffReport &&
-            (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
-                this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash);
-        if (!isGitDiffReportUpdated) {
-            return false;
-        }
-
-        this.programmingExercise.gitDiffReport = gitDiffReport;
-        gitDiffReport.programmingExercise = this.programmingExercise;
-        const calculateLineCount = (
-            entries: {
-                lineCount?: number;
-                previousLineCount?: number;
-            }[] = [],
-            key: 'lineCount' | 'previousLineCount',
-        ) => entries.map((entry) => entry[key] ?? 0).reduce((sum, count) => sum + count, 0);
-        this.addedLineCount = calculateLineCount(gitDiffReport.entries, 'lineCount');
-        this.removedLineCount = calculateLineCount(gitDiffReport.entries, 'previousLineCount');
-
-        return true;
+    fetchRepositoryFiles(): Observable<{ templateFiles: Map<string, string> | undefined; solutionFiles: Map<string, string> | undefined }> {
+        return forkJoin({
+            templateFiles: this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.programmingExercise.id!),
+            solutionFiles: this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.programmingExercise.id!),
+        });
     }
 
-    loadGitDiffReport() {
-        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe({
-            next: (gitDiffReport) => {
-                this.processGitDiffReport(gitDiffReport);
-            },
-            error: () => {
-                this.alertService.error('artemisApp.programmingExercise.diffReportError');
-            },
-        });
+    async handleDiff(templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined) {
+        if (!templateFiles || !solutionFiles) {
+            return;
+        }
+
+        try {
+            this.templateFileContentByPath = templateFiles;
+            this.solutionFileContentByPath = solutionFiles;
+            this.repositoryDiffInformation = await processRepositoryDiff(templateFiles, solutionFiles);
+            // Set ready state to true when diff processing is complete
+            this.diffReady = true;
+        } catch (error) {
+            this.alertService.error('artemisApp.programmingExercise.diffProcessingError');
+            // Reset to a consistent state
+            this.diffReady = false;
+            this.repositoryDiffInformation = {
+                diffInformations: [],
+                totalLineChange: {
+                    addedLineCount: 0,
+                    removedLineCount: 0,
+                },
+            };
+        }
     }
 }
