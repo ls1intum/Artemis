@@ -191,7 +191,7 @@
                 "showMore": "Mehr anzeigen"
             },
             "newMessages": "Neu",
-            "newMessagesButton": "Es gibt neue Nachrichten"
+            "newMessagesButton": "ungelesene Nachrichten"
         },
         "communicationDisabled": {
             "title": "Willkommen zur Kommunikation!",

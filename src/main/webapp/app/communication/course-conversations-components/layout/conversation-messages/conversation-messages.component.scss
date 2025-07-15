@@ -146,12 +146,12 @@ jhi-posting-thread {
 
 .separator-line {
     flex-grow: 1;
-    border-top: 1px solid #d0453e;
+    border-top: 1px solid var(--primary);
     margin-right: 0.5rem;
 }
 
 .new-label {
-    color: #d0453e;
+    color: var(--primary);
     font-size: 0.75rem;
     font-weight: bold;
     line-height: 1;

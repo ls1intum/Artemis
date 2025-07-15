@@ -28,7 +28,7 @@ import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'a
 import { MetisService } from 'app/communication/service/metis.service';
 import { Channel, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -79,7 +79,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     readonly PageType = PageType;
     readonly ButtonType = ButtonType;
-    readonly faArrowDown = faArrowDown;
+    readonly ButtonSize = ButtonSize;
 
     private scrollDebounceTime = 100; // ms
     scrollSubject = new Subject<number>();
@@ -127,9 +127,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     unreadPostsCount: number = 0;
     atNewPostPosition = false;
     // Icons
-    faTimes = faTimes;
-    faEnvelope = faEnvelope;
-    faCircleNotch = faCircleNotch;
+    protected readonly faTimes = faTimes;
+    protected readonly faEnvelope = faEnvelope;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faArrowDown = faArrowDown;
+
     isMobile = false;
     isHiddenInputWithCallToAction = false;
     isHiddenInputFull = false;
