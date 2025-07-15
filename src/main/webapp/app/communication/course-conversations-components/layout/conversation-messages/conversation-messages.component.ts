@@ -28,7 +28,7 @@ import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'a
 import { MetisService } from 'app/communication/service/metis.service';
 import { Channel, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -58,7 +58,16 @@ interface PostGroup {
     templateUrl: './conversation-messages.component.html',
     styleUrls: ['./conversation-messages.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FaIconComponent, TranslateDirective, InfiniteScrollDirective, NgClass, PostingThreadComponent, PostCreateEditModalComponent, MessageInlineInputComponent],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        InfiniteScrollDirective,
+        NgClass,
+        PostingThreadComponent,
+        PostCreateEditModalComponent,
+        MessageInlineInputComponent,
+        ButtonComponent,
+    ],
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
     metisService = inject(MetisService);
@@ -115,6 +124,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     currentUser: User;
     lastReadPostId: number | undefined;
     unreadPostsCount: number = 0;
+    atNewPostPosition = false;
     // Icons
     faTimes = faTimes;
     faEnvelope = faEnvelope;
@@ -661,6 +671,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (this.elementsAtScrollPosition && this.elementsAtScrollPosition.length > 0 && this.canStartSaving) {
             this.saveScrollPosition(this.elementsAtScrollPosition[0].post.id!);
         }
+        this.atNewPostPosition = this.isFirstUnreadPostVisible();
+        this.cdr.detectChanges();
     }
 
     /**
@@ -683,6 +695,84 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             .sort((a, b) => b.creationDate!.diff(a.creationDate!));
 
         this.lastReadPostId = sorted[0]?.id;
-        this.unreadPostsCount = this.allPosts.filter((post) => post.creationDate && post.creationDate.isAfter(lastReadDate)).length;
+        this.unreadPostsCount = this.allPosts.filter((post) => post.creationDate && post.creationDate.isAfter(lastReadDate) && post.author?.id !== this.currentUser.id).length;
+        this.atNewPostPosition = this.unreadPostsCount > 0 && this.lastReadPostVisible();
+    }
+
+    scrollToFirstUnreadPostBottomAligned(): void {
+        this.atNewPostPosition = true;
+        if (!this.lastReadPostId || !this.allPosts.length) {
+            return;
+        }
+        const sorted = [...this.allPosts].sort((a, b) => a.creationDate!.valueOf() - b.creationDate!.valueOf());
+        const indexOfLastRead = sorted.findIndex((post) => post.id === this.lastReadPostId);
+        if (indexOfLastRead === -1 || indexOfLastRead === sorted.length - 1) {
+            return;
+        }
+
+        const firstUnreadPost = sorted[indexOfLastRead + 1];
+        const unreadComponent = this.messages.find((message) => message.post.id === firstUnreadPost.id);
+        if (!unreadComponent) {
+            return;
+        }
+
+        requestAnimationFrame(() => {
+            const containerEl = this.content.nativeElement;
+            const postEl = unreadComponent.elementRef.nativeElement;
+
+            const postOffsetTop = postEl.offsetTop;
+            const postHeight = postEl.offsetHeight;
+            const containerHeight = containerEl.clientHeight;
+
+            // Scroll so that the post's bottom aligns with the bottom of the scroll container
+            const newScrollTop = postOffsetTop + postHeight - containerHeight;
+
+            containerEl.scrollTop = Math.max(0, newScrollTop);
+        });
+    }
+
+    private getFirstUnreadComponent(): PostingThreadComponent | undefined {
+        if (!this.lastReadPostId || !this.allPosts.length) {
+            return undefined;
+        }
+
+        const sorted = [...this.allPosts].sort((a, b) => a.creationDate!.valueOf() - b.creationDate!.valueOf());
+        const indexOfLastRead = sorted.findIndex((post) => post.id === this.lastReadPostId);
+
+        if (indexOfLastRead === -1 || indexOfLastRead === sorted.length - 1) {
+            return undefined;
+        }
+
+        const firstUnreadPost = sorted[indexOfLastRead + 1];
+        return this.messages.find((message) => message.post.id === firstUnreadPost.id);
+    }
+
+    lastReadPostVisible(): boolean {
+        const unreadComponent = this.getFirstUnreadComponent();
+        if (!unreadComponent) {
+            return false;
+        }
+
+        const postElement = unreadComponent.elementRef.nativeElement;
+        const containerElement = this.content.nativeElement;
+
+        const postTop = postElement.offsetTop;
+        const postBottom = postTop + postElement.offsetHeight;
+        const containerScrollTop = containerElement.scrollTop;
+        const containerBottom = containerScrollTop + containerElement.clientHeight;
+
+        return postTop >= containerScrollTop && postBottom <= containerBottom;
+    }
+
+    private isFirstUnreadPostVisible(): boolean {
+        const unreadComponent = this.getFirstUnreadComponent();
+        if (!unreadComponent) {
+            return false;
+        }
+
+        const postRect = unreadComponent.elementRef.nativeElement.getBoundingClientRect();
+        const containerRect = this.content.nativeElement.getBoundingClientRect();
+
+        return postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;
     }
 }

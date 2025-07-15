@@ -190,7 +190,8 @@
                 "showLess": "Weniger anzeigen",
                 "showMore": "Mehr anzeigen"
             },
-            "newMessages": "Neu"
+            "newMessages": "Neu",
+            "newMessagesButton": "Es gibt neue Nachrichten"
         },
         "communicationDisabled": {
             "title": "Willkommen zur Kommunikation!",

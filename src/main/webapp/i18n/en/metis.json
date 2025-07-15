@@ -190,7 +190,8 @@
                 "showLess": "Show less",
                 "showMore": "Show more"
             },
-            "newMessages": "New"
+            "newMessages": "New",
+            "newMessagesButton": "There are new messages"
         },
         "communicationDisabled": {
             "title": "Welcome to Communication!",
