@@ -117,6 +117,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     newPost?: Post;
     posts: Post[] = [];
     allPosts: Post[] = [];
+    unreadPosts: Post[] = [];
     groupedPosts: PostGroup[] = [];
     totalNumberOfPosts = 0;
     page = 1;
@@ -683,94 +684,56 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private computeLastReadState(): void {
+        this.unreadPosts = this.getUnreadPosts();
+        this.unreadPostsCount = this.unreadPosts.length;
+        if (this.unreadPostsCount > 0) {
+            this.lastReadPostId = this.getLastReadPost()?.id;
+        }
+    }
+
+    /**
+     * Returns a list of posts that were created after the lastReadDate
+     * and were not authored by the current user (i.e. true unread posts).
+     */
+    private getUnreadPosts(): Post[] {
+        const lastReadDate = this._activeConversation?.lastReadDate;
+        if (!lastReadDate || !this.allPosts?.length) {
+            return [];
+        }
+
+        return this.allPosts
+            .filter((post) => post.creationDate?.isAfter(lastReadDate) && post.author?.id !== this.currentUser.id)
+            .sort((a, b) => b.creationDate!.diff(a.creationDate!));
+    }
+
+    /**
+     * Returns the last post that was read by the current user.
+     * This is determined by checking the creation date of each post against the lastReadDate of the conversation.
+     */
+    private getLastReadPost(): Post | undefined {
         const lastReadDate = this._activeConversation?.lastReadDate;
 
         if (!lastReadDate || !this.allPosts || this.allPosts.length === 0) {
-            this.lastReadPostId = undefined;
-            this.unreadPostsCount = 0;
-            return;
-        }
-        const sorted = this.allPosts
-            .filter((post) => post.creationDate && (post.creationDate.isBefore(lastReadDate) || post.creationDate.isSame(lastReadDate)))
-            .sort((a, b) => b.creationDate!.diff(a.creationDate!));
-
-        this.lastReadPostId = sorted[0]?.id;
-        this.unreadPostsCount = this.allPosts.filter((post) => post.creationDate && post.creationDate.isAfter(lastReadDate) && post.author?.id !== this.currentUser.id).length;
-        this.atNewPostPosition = this.unreadPostsCount > 0 && this.lastReadPostVisible();
-    }
-
-    scrollToFirstUnreadPostBottomAligned(): void {
-        this.atNewPostPosition = true;
-        if (!this.lastReadPostId || !this.allPosts.length) {
-            return;
-        }
-        const sorted = [...this.allPosts].sort((a, b) => a.creationDate!.valueOf() - b.creationDate!.valueOf());
-        const indexOfLastRead = sorted.findIndex((post) => post.id === this.lastReadPostId);
-        if (indexOfLastRead === -1 || indexOfLastRead === sorted.length - 1) {
-            return;
-        }
-
-        const firstUnreadPost = sorted[indexOfLastRead + 1];
-        const unreadComponent = this.messages.find((message) => message.post.id === firstUnreadPost.id);
-        if (!unreadComponent) {
-            return;
-        }
-
-        requestAnimationFrame(() => {
-            const containerEl = this.content.nativeElement;
-            const postEl = unreadComponent.elementRef.nativeElement;
-
-            const postOffsetTop = postEl.offsetTop;
-            const postHeight = postEl.offsetHeight;
-            const containerHeight = containerEl.clientHeight;
-
-            // Scroll so that the post's bottom aligns with the bottom of the scroll container
-            const newScrollTop = postOffsetTop + postHeight - containerHeight;
-
-            containerEl.scrollTop = Math.max(0, newScrollTop);
-        });
-    }
-
-    private getFirstUnreadComponent(): PostingThreadComponent | undefined {
-        if (!this.lastReadPostId || !this.allPosts.length) {
             return undefined;
         }
 
-        const sorted = [...this.allPosts].sort((a, b) => a.creationDate!.valueOf() - b.creationDate!.valueOf());
-        const indexOfLastRead = sorted.findIndex((post) => post.id === this.lastReadPostId);
-
-        if (indexOfLastRead === -1 || indexOfLastRead === sorted.length - 1) {
-            return undefined;
-        }
-
-        const firstUnreadPost = sorted[indexOfLastRead + 1];
-        return this.messages.find((message) => message.post.id === firstUnreadPost.id);
-    }
-
-    lastReadPostVisible(): boolean {
-        const unreadComponent = this.getFirstUnreadComponent();
-        if (!unreadComponent) {
-            return false;
-        }
-
-        const postElement = unreadComponent.elementRef.nativeElement;
-        const containerElement = this.content.nativeElement;
-
-        const postTop = postElement.offsetTop;
-        const postBottom = postTop + postElement.offsetHeight;
-        const containerScrollTop = containerElement.scrollTop;
-        const containerBottom = containerScrollTop + containerElement.clientHeight;
-
-        return postTop >= containerScrollTop && postBottom <= containerBottom;
+        return this.allPosts
+            .filter((post) => post.creationDate && post.author?.id !== this.currentUser.id && (post.creationDate.isBefore(lastReadDate) || post.creationDate.isSame(lastReadDate)))
+            .sort((a, b) => b.creationDate!.valueOf() - a.creationDate!.valueOf())[0];
     }
 
     private isFirstUnreadPostVisible(): boolean {
-        const unreadComponent = this.getFirstUnreadComponent();
-        if (!unreadComponent) {
+        if (!this.unreadPosts.length || !this.content?.nativeElement) {
+            return false;
+        }
+        const firstUnreadPost = this.unreadPosts[this.unreadPosts.length - 1];
+        const message = this.messages.find((m) => m.post.id === firstUnreadPost.id);
+
+        if (!message?.elementRef?.nativeElement) {
             return false;
         }
 
-        const postRect = unreadComponent.elementRef.nativeElement.getBoundingClientRect();
+        const postRect = message.elementRef.nativeElement.getBoundingClientRect();
         const containerRect = this.content.nativeElement.getBoundingClientRect();
 
         return postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;
