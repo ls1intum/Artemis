@@ -10,7 +10,10 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -18,10 +21,15 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersionContent;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -33,6 +41,11 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "exerciseversiontest";
+
+    private static final Logger log = LoggerFactory.getLogger(ExerciseVersionServiceTest.class);
+
+    @LocalServerPort
+    protected int port;
 
     @Autowired
     private ExerciseVersionService exerciseVersionService;
@@ -52,11 +65,15 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
+    @Autowired
+    protected ParticipationUtilService participationUtilService;
+
     private User user;
 
     @BeforeEach
     void init() {
         // Create a user with instructor permissions
+        localVCLocalCITestService.setPort(port);
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
     }
@@ -72,10 +89,33 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         return (TextExercise) course.getExercises().iterator().next();
     }
 
-    private ProgrammingExercise createProgrammingExercise() {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
-        programmingExercise = programmingExerciseRepository.findOneWithEagerEverything(programmingExercise.getId());
+    private ProgrammingExercise createProgrammingExercise() throws Exception {
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        String projectKey = programmingExercise.getProjectKey();
+        programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+
+        // Set the correct repository URIs for the template and the solution participation.
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+        // Prepare the repositories.
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
+
+        // Check that the repository folders were created in the file system for all base repositories.
+        localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise, localVCBasePath);
+
         // Create a programming exercise
         return programmingExercise;
     }
@@ -106,6 +146,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         assertThat(version.getAuthor().getId()).isEqualTo(user.getId());
 
         var content = version.getContent();
+        log.debug("ExerciseVersionContent: {}", content);
         assertThat(content).isNotNull();
         assertThat(content.title()).isEqualTo(exercise.getTitle());
         assertThat(content.shortName()).isEqualTo(exercise.getShortName());
@@ -130,6 +171,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     private void verifyLastCommit(VcsRepositoryUri uri, String savedCommitId) {
         var commitHash = gitService.getLastCommitHash(uri);
+        log.debug("commit hash: {} for repository: {}, expected commit hash: {}", commitHash.getName(), uri, savedCommitId);
         assertThat(commitHash).isNotNull();
         assertThat(savedCommitId).isEqualTo(commitHash.getName());
     }
@@ -159,7 +201,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "user", roles = "INSTRUCTOR")
-    void testCreateExerciseVersion_programmingExercise() {
+    void testCreateExerciseVersion_programmingExercise() throws Exception {
         var programmingExercise = createProgrammingExercise();
         // Create version
         exerciseVersionService.createExerciseVersion(programmingExercise, user);
@@ -178,7 +220,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "user", roles = "INSTRUCTOR")
-    void testCreateExerciseVersion_quizExercise() {
+    void testCreateExerciseVersion_quizExercise() throws Exception {
         var quizExercise = createQuizExercise();
         // Create version
         exerciseVersionService.createExerciseVersion(quizExercise, user);
@@ -197,7 +239,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "user", roles = "INSTRUCTOR")
-    void testCreateExerciseVersion_noNewVersionNeeded() {
+    void testCreateExerciseVersion_noNewVersionNeeded() throws Exception {
         var programmingExercise = createProgrammingExercise();
         // Create initial version
         exerciseVersionService.createExerciseVersion(programmingExercise, user);
@@ -205,9 +247,13 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         Optional<ExerciseVersion> initialVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId());
         assertThat(initialVersion).isPresent();
 
+        log.debug("initial version: {}", initialVersion);
+
         // Try to create another version without changes
         exerciseVersionService.createExerciseVersion(programmingExercise, user);
         Optional<ExerciseVersion> secondVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId());
+
+        log.debug("second version: {}", secondVersion);
 
         // Verify no new version was created
         assertThat(secondVersion).isPresent();
@@ -216,13 +262,15 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "user", roles = "INSTRUCTOR")
-    void testCreateExerciseVersion_newVersionNeeded() {
+    void testCreateExerciseVersion_newVersionNeeded() throws Exception {
         var programmingExercise = createProgrammingExercise();
 
         // Create initial version
         exerciseVersionService.createExerciseVersion(programmingExercise, user);
         Optional<ExerciseVersion> initialVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId());
         assertThat(initialVersion).isPresent();
+
+        log.debug("initial version: {}", initialVersion);
 
         // Make a change to the exercise
         String updatedTitle = "Updated Title " + System.currentTimeMillis();
@@ -239,6 +287,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         // Second version should not be the same as the first version
         assertThat(secondVersion.get().getId()).isNotEqualTo(initialVersion.get().getId());
 
+        log.debug("second version: {}", secondVersion);
         // Verify two versions exist
         long versionCount = exerciseVersionRepository.count();
         assertThat(versionCount).isEqualTo(2);
