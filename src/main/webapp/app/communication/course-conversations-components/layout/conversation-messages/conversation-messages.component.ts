@@ -735,14 +735,14 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
         const { postRect, containerRect } = rects;
         const isVisible = postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;
-
+        //we use 20 as offset, since some times the post is not fully visible at the bottom without it
+        const heightOffset = 20;
         if (!isVisible) {
             requestAnimationFrame(() => {
                 const postOffsetTop = postElement.offsetTop;
                 const postHeight = postElement.offsetHeight;
                 const containerHeight = containerElement.clientHeight;
-
-                const newScrollTop = postOffsetTop + postHeight - containerHeight;
+                const newScrollTop = postOffsetTop + postHeight - containerHeight + heightOffset;
                 containerElement.scrollTop = Math.max(0, newScrollTop);
             });
         }
