@@ -1,21 +1,18 @@
-package de.tum.cit.aet.artemis.iris.domain.settings;
+package de.tum.cit.aet.artemis.iris.domain.settings.subsettings;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 
 /**
  * Represents the specific ingestion sub-settings of lectures for Iris.
  * This class extends {@link IrisSubSettings} to provide settings required for lecture data ingestion.
  */
-@Entity
-@DiscriminatorValue("LECTURE_INGESTION")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class IrisLectureIngestionSubSettings extends IrisSubSettings {
 
-    @Column(name = "auto_ingest_on_lecture_attachment_upload")
     private boolean autoIngestOnLectureAttachmentUpload = true;
 
     public boolean getAutoIngestOnLectureAttachmentUpload() {

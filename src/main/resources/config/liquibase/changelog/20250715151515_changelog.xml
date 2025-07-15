@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20250715151515-create-json-columns" author="morrien">
+        <addColumn tableName="iris_settings">
+            <column name="iris_programming_exercise_chat_settings" type="json"/>
+            <column name="iris_text_exercise_chat_settings" type="json"/>
+            <column name="iris_course_chat_settings" type="json"/>
+            <column name="iris_lecture_ingestion_settings" type="json"/>
+            <column name="iris_lecture_chat_settings" type="json"/>
+            <column name="iris_faq_ingestion_settings" type="json"/>
+            <column name="iris_competency_generation_settings" type="json"/>
+            <column name="iris_tutor_suggestion_settings" type="json"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- MySQL: parameterized procedure + calls, now without id/discriminator -->
+    <changeSet id="20250715151515-migrate-chat-settings-param-mysql" author="morrien">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
+
+        <sql splitStatements="false" stripComments="false"><![CDATA[
+DELIMITER $$
+CREATE PROCEDURE migrate_chat_settings(
+    IN fk_col      VARCHAR(64),
+    IN json_col    VARCHAR(64),
+    IN type_name   VARCHAR(64)
+)
+BEGIN
+    SET @stmt = CONCAT(
+        'UPDATE iris_settings AS s ',
+        'JOIN iris_sub_settings AS t ON s.', fk_col, ' = t.id ',
+        'SET s.', json_col, ' = JSON_MERGE_PATCH(\'{}\', JSON_OBJECT(',
+            '\'type\',                                      \'', type_name, '\', ',
+            '\'enabled\',                                   t.enabled, ',
+            '\'rate_limit\',                                t.rate_limit, ',
+            '\'rate_limit_timeframe_hours\',                t.rate_limit_timeframe_hours, ',
+            '\'auto_ingest_on_lecture_attachment_upload\',  t.auto_ingest_on_lecture_attachment_upload, ',
+            '\'allowed_variants\',                          t.allowed_variants, ',
+            '\'selected_variant\',                          t.selected_variant, ',
+            '\'enabled_for_categories\',                    t.enabled_for_categories, ',
+            '\'disabled_proactive_events\',                 t.disabled_proactive_events, ',
+            '\'auto_ingest_on_faq_creation\',               t.auto_ingest_on_faq_creation, ',
+            '\'custom_instructions\',                       t.custom_instructions',
+        '))'
+    );
+    PREPARE dyn FROM @stmt;
+    EXECUTE dyn;
+    DEALLOCATE PREPARE dyn;
+END$$
+DELIMITER ;
+        ]]></sql>
+
+        <sql>CALL migrate_chat_settings('iris_chat_settings_id','iris_programming_exercise_chat_settings','programming-exercise-chat');</sql>
+        <sql>CALL migrate_chat_settings('iris_text_exercise_chat_settings_id','iris_text_exercise_chat_settings','text-exercise-chat');</sql>
+        <sql>CALL migrate_chat_settings('iris_course_chat_settings_id','iris_course_chat_settings','course-chat');</sql>
+        <sql>CALL migrate_chat_settings('iris_lecture_ingestion_settings_id','iris_lecture_ingestion_settings','lecture-ingestion');</sql>
+        <sql>CALL migrate_chat_settings('iris_lecture_chat_settings_id','iris_lecture_chat_settings','lecture-chat');</sql>
+        <sql>CALL migrate_chat_settings('iris_faq_ingestion_settings_id','iris_faq_ingestion_settings','faq-ingestion');</sql>
+        <sql>CALL migrate_chat_settings('iris_competency_generation_settings_id','iris_competency_generation_settings','competency-generation');</sql>
+        <sql>CALL migrate_chat_settings('iris_tutor_suggestion_settings_id','iris_tutor_suggestion_settings','tutor-suggestion');</sql>
+
+        <sql>DROP PROCEDURE migrate_chat_settings;</sql>
+
+        <rollback>
+            <update tableName="iris_settings">
+                <column name="iris_programming_exercise_chat_settings"/>
+                <column name="iris_text_exercise_chat_settings"/>
+                <column name="iris_course_chat_settings"/>
+                <column name="iris_lecture_ingestion_settings"/>
+                <column name="iris_lecture_chat_settings"/>
+                <column name="iris_faq_ingestion_settings"/>
+                <column name="iris_competency_generation_settings"/>
+                <column name="iris_tutor_suggestion_settings"/>
+            </update>
+        </rollback>
+    </changeSet>
+
+    <!-- PostgreSQL: parameterized function + calls, now without id/discriminator -->
+    <changeSet id="20250715151515-migrate-chat-settings-param-postgres" author="morrien">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+
+        <sql splitStatements="false" stripComments="false"><![CDATA[
+CREATE OR REPLACE FUNCTION migrate_chat_settings(
+    fk_col    TEXT,
+    json_col  TEXT,
+    type_name TEXT
+) RETURNS void AS $$
+DECLARE
+    stmt TEXT;
+BEGIN
+    stmt := format(
+        'UPDATE iris_settings AS s
+         SET %I = (
+           (jsonb_strip_nulls(to_jsonb(t))
+             - ''id''
+             - ''discriminator''
+           )
+           || jsonb_build_object(''type'', %L)
+         )::json
+         FROM public.iris_sub_settings AS t
+         WHERE s.%I = t.id;',
+        json_col, type_name, fk_col
+    );
+    EXECUTE stmt;
+END;
+$$ LANGUAGE plpgsql;
+        ]]></sql>
+
+        <sql>SELECT migrate_chat_settings('iris_chat_settings_id','iris_programming_exercise_chat_settings','programming-exercise-chat');</sql>
+        <sql>SELECT migrate_chat_settings('iris_text_exercise_chat_settings_id','iris_text_exercise_chat_settings','text-exercise-chat');</sql>
+        <sql>SELECT migrate_chat_settings('iris_course_chat_settings_id','iris_course_chat_settings','course-chat');</sql>
+        <sql>SELECT migrate_chat_settings('iris_lecture_ingestion_settings_id','iris_lecture_ingestion_settings','lecture-ingestion');</sql>
+        <sql>SELECT migrate_chat_settings('iris_lecture_chat_settings_id','iris_lecture_chat_settings','lecture-chat');</sql>
+        <sql>SELECT migrate_chat_settings('iris_faq_ingestion_settings_id','iris_faq_ingestion_settings','faq-ingestion');</sql>
+        <sql>SELECT migrate_chat_settings('iris_competency_generation_settings_id','iris_competency_generation_settings','competency-generation');</sql>
+        <sql>SELECT migrate_chat_settings('iris_tutor_suggestion_settings_id','iris_tutor_suggestion_settings','tutor-suggestion');</sql>
+
+        <sql>DROP FUNCTION migrate_chat_settings(TEXT, TEXT, TEXT);</sql>
+
+        <rollback>
+            <update tableName="iris_settings">
+                <column name="iris_programming_exercise_chat_settings"/>
+                <column name="iris_text_exercise_chat_settings"/>
+                <column name="iris_course_chat_settings"/>
+                <column name="iris_lecture_ingestion_settings"/>
+                <column name="iris_lecture_chat_settings"/>
+                <column name="iris_faq_ingestion_settings"/>
+                <column name="iris_competency_generation_settings"/>
+                <column name="iris_tutor_suggestion_settings"/>
+            </update>
+        </rollback>
+    </changeSet>
+
+    <!-- Create a JSON_VALUE function for PostgreSQL to allow for equal JSON handling in HQL-->
+    <changeSet id="20250715151515-create-json_value-function-postgres" author="morrien">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+
+        <sql splitStatements="false" stripComments="false"><![CDATA[
+CREATE OR REPLACE FUNCTION JSON_VALUE(p_json JSON, p_path TEXT)
+  RETURNS TEXT
+  LANGUAGE sql
+  IMMUTABLE
+AS $$
+    -- strip leading "$." then extract as text
+    SELECT (p_json::jsonb)->>substr(p_path, 3);
+$$;
+        ]]></sql>
+
+        <rollback>
+            <sql>DROP FUNCTION IF EXISTS JSON_VALUE(JSON, TEXT);</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- Delete the old table and columns -->
+    <!--
+    <changeSet id="20250715151515-drop-iris-sub-settings" author="morrien">
+        <dropTable tableName="iris_sub_settings"/>
+
+        <dropColumn tableName="iris_settings" columnName="iris_chat_id"/>
+        <dropColumn tableName="iris_settings" columnName="text_exercise_chat_id"/>
+        <dropColumn tableName="iris_settings" columnName="course_chat_id"/>
+        <dropColumn tableName="iris_settings" columnName="lecture_ingestion_id"/>
+        <dropColumn tableName="iris_settings" columnName="lecture_chat_id"/>
+        <dropColumn tableName="iris_settings" columnName="faq_ingestion_id"/>
+        <dropColumn tableName="iris_settings" columnName="competency_generation_id"/>
+        <dropColumn tableName="iris_settings" columnName="tutor_suggestion_id"/>
+    </changeSet>
+    -->
+</databaseChangeLog>
