@@ -27,7 +27,6 @@ import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
-import de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer;
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
@@ -109,8 +108,8 @@ public class ArtemisApp {
      * @param context the application context
      */
     private static void deferredEagerBeanInitialization(ConfigurableApplicationContext context) {
-        DeferredEagerBeanInitializer initializer = context.getBean(DeferredEagerBeanInitializer.class);
-        initializer.initializeDeferredEagerBeans();
+        // DeferredEagerBeanInitializer initializer = context.getBean(DeferredEagerBeanInitializer.class);
+        // initializer.initializeDeferredEagerBeans();
     }
 
     private static void logApplicationStartup(Environment env, BuildProperties buildProperties, GitProperties gitProperties) {

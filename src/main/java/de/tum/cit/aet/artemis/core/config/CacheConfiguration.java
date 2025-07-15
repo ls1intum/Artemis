@@ -32,7 +32,6 @@ import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -88,7 +87,6 @@ import tech.jhipster.config.cache.PrefixedKeyGenerator;
  * configuration from runtime coordination, the system ensures better modularity, testability, and maintainability.
  */
 @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
-@Lazy(value = false)
 @Configuration
 @EnableCaching
 public class CacheConfiguration {
