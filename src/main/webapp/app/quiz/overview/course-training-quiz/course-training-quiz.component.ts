@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { CoursePracticeQuizService } from 'app/quiz/overview/service/course-practice-quiz.service';
+import { CourseTrainingQuizService } from 'app/quiz/overview/service/course-training-quiz.service';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -23,11 +23,11 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 
 @Component({
-    selector: 'jhi-course-practice-quiz',
+    selector: 'jhi-course-training-quiz',
     imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent],
-    templateUrl: './course-practice-quiz.component.html',
+    templateUrl: './course-training-quiz.component.html',
 })
-export class CoursePracticeQuizComponent {
+export class CourseTrainingQuizComponent {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
@@ -35,7 +35,7 @@ export class CoursePracticeQuizComponent {
 
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private quizService = inject(CoursePracticeQuizService);
+    private quizService = inject(CourseTrainingQuizService);
 
     currentIndex = signal(0);
     private quizParticipationService = inject(QuizParticipationService);

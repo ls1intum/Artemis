@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CoursePracticeComponent } from './course-practice.component';
+import { CoursePracticeComponent } from './course-training.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockBuilder } from 'ng-mocks';
 import { of } from 'rxjs';

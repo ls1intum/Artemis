@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { CoursePracticeQuizService } from './course-practice-quiz.service';
+import { CoursePracticeQuizService } from './course-training-quiz.service';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

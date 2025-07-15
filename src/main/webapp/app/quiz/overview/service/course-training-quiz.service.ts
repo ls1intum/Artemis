@@ -7,18 +7,15 @@ import { map } from 'rxjs/operators';
 @Injectable({
     providedIn: 'root',
 })
-export class CoursePracticeQuizService {
+export class CourseTrainingQuizService {
     private http = inject(HttpClient);
-
-    questions: Observable<QuizQuestion[]>;
 
     /**
      * Retrieves a set of quiz questions for a given course by course ID from the server and returns them as an Observable.
      * @param courseId
      */
     getQuizQuestions(courseId: number): Observable<QuizQuestion[]> {
-        this.questions = this.http.get<Set<QuizQuestion>>(`api/quiz/courses/${courseId}/practice/quiz`).pipe(map((questions) => Array.from(questions)));
-        return this.questions;
+        return this.http.get<Set<QuizQuestion>>(`api/quiz/courses/${courseId}/practice/quiz`).pipe(map((questions) => Array.from(questions)));
     }
 
     areQuestionsAvailable(courseId: number): Observable<boolean> {

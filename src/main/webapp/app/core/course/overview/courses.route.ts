@@ -22,7 +22,7 @@ export enum CourseOverviewRoutePath {
     COMMUNICATION = 'communication',
     SETTINGS = 'settings',
     TRAINING = 'training',
-    PRACTICE_QUIZ = 'training/quiz',
+    TRAINING_QUIZ = 'training/quiz',
 }
 
 export const routes: Routes = [
@@ -333,7 +333,7 @@ export const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.TRAINING,
-                loadComponent: () => import('app/core/course/overview/course-practice/course-practice.component').then((m) => m.CoursePracticeComponent),
+                loadComponent: () => import('app/core/course/overview/course-practice/course-training.component').then((m) => m.CourseTrainingComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.training',
@@ -342,8 +342,8 @@ export const routes: Routes = [
                 },
             },
             {
-                path: CourseOverviewRoutePath.PRACTICE_QUIZ,
-                loadComponent: () => import('app/quiz/overview/course-practice-quiz/course-practice-quiz.component').then((m) => m.CoursePracticeQuizComponent),
+                path: CourseOverviewRoutePath.TRAINING_QUIZ,
+                loadComponent: () => import('app/quiz/overview/course-training-quiz/course-training-quiz.component').then((m) => m.CourseTrainingQuizComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.training',

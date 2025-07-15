@@ -5,11 +5,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { EMPTY } from 'rxjs';
 
 @Component({
-    selector: 'jhi-course-practice',
+    selector: 'jhi-course-training',
     imports: [ButtonComponent],
-    templateUrl: './course-practice.component.html',
+    templateUrl: './course-training.component.html',
 })
-export class CoursePracticeComponent {
+export class CourseTrainingComponent {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
 

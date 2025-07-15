@@ -13,7 +13,7 @@ import { CourseOverviewService } from 'app/core/course/overview/services/course-
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { forkJoin } from 'rxjs';
-import { CoursePracticeQuizService } from 'app/quiz/overview/service/course-practice-quiz.service';
+import { CourseTrainingQuizService } from 'app/quiz/overview/service/course-training-quiz.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -53,7 +53,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private courseOverviewService = inject(CourseOverviewService);
     private ltiService = inject(LtiService);
     private exerciseService = inject(ExerciseService);
-    private coursePracticeQuizService = inject(CoursePracticeQuizService);
+    private courseTrainingQuizService = inject(CourseTrainingQuizService);
 
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
@@ -90,8 +90,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.coursePracticeQuizService.areQuestionsAvailable(this.courseId).subscribe((available: boolean) => {
-            // Hier kannst du mit dem Wert weiterarbeiten, z.B. eine Property setzen
+        this.courseTrainingQuizService.areQuestionsAvailable(this.courseId).subscribe((available: boolean) => {
             this.showTrainingButton = available;
         });
 
