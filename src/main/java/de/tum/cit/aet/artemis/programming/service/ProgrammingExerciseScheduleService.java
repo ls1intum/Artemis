@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -243,14 +242,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         final ZonedDateTime now = ZonedDateTime.now();
 
-        // For any course exercise with a valid release date
-        if (exercise.getReleaseDate() != null && now.isBefore(exercise.getReleaseDate())) {
-            scheduleTemplateCommitCombination(exercise);
-        }
-        else {
-            scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.RELEASE);
-        }
-
         // For any course exercise that needsToBeScheduled (buildAndTestAfterDueDate and/or manual assessment)
         if (exercise.getDueDate() != null && now.isBefore(exercise.getDueDate())) {
             scheduleScoreUpdate(exercise);
@@ -268,15 +259,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
 
         scheduleParticipationTasks(exercise, now);
-    }
-
-    private void scheduleTemplateCommitCombination(ProgrammingExercise exercise) {
-        if (exercise.getReleaseDate() != null) {
-            scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.SHORTLY_BEFORE_RELEASE, () -> combineTemplateCommitsForExercise(exercise).run(),
-                    "combine template commits");
-            log.info("Scheduled combining template commits before release date for programming exercise \"{}\" (#{}) for {}.", exercise.getTitle(), exercise.getId(),
-                    exercise.getReleaseDate());
-        }
     }
 
     private void scheduleScoreUpdate(ProgrammingExercise exercise) {
@@ -391,23 +373,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         }
         log.debug("Scheduled Exam Programming Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
-    }
-
-    @NotNull
-    private Runnable combineTemplateCommitsForExercise(ProgrammingExercise exercise) {
-        return () -> {
-            log.debug("Start combine template commits for programming exercise {}.", exercise.getId());
-            SecurityUtils.setAuthorizationObject();
-            try {
-                ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
-                        .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUri());
-                log.debug("Combined template repository commits of programming exercise {}.", programmingExerciseWithTemplateParticipation.getId());
-            }
-            catch (GitAPIException e) {
-                log.error("Failed to communicate with GitService for combining template commits of exercise {}", exercise.getId(), e);
-            }
-        };
     }
 
     @NotNull

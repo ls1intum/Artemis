@@ -8,6 +8,8 @@ import java.net.UnknownHostException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +18,6 @@ import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -51,7 +52,6 @@ public class HazelcastConnection {
     private final DiscoveryClient discoveryClient;
 
     // the service registry, in our current deployment this is the jhipster registry which offers a Eureka Server under the hood
-
     private final Optional<Registration> registration;
 
     private final Environment env;
@@ -66,6 +66,42 @@ public class HazelcastConnection {
         this.discoveryClient = discoveryClient;
         this.registration = registration;
         this.env = env;
+    }
+
+    /**
+     * Connects the local Hazelcast instance to other known service instances after the application
+     * has fully started. This enables dynamic TCP/IP cluster membership by resolving peers via
+     * the service registry (e.g., Eureka).
+     *
+     * <p>
+     * Executed only if a {@link Registration} is available, indicating a clustered environment.
+     * This method uses the {@link DiscoveryClient} to retrieve other instances of the same service
+     * and registers them in the Hazelcast configuration for joining the cluster.
+     *
+     * <p>
+     * Called once after the {@link FullStartupEvent} is fired to avoid premature initialization
+     * before all services are available.
+     */
+    // we should use @PostConstruct here because the lazy instantiation works properly and FullStartupEvent is sent too early.
+    @PostConstruct
+    private void connectHazelcast() {
+        if (registration.isEmpty()) {
+            // If there is no registration, we are not running in a clustered environment and cannot connect Hazelcast nodes.
+            return;
+        }
+        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
+        if (hazelcastInstance == null) {
+            log.error("Hazelcast instance not found, cannot connect to cluster members");
+            return;
+        }
+        var config = hazelcastInstance.getConfig();
+
+        String serviceId = registration.get().getServiceId();
+        var instances = discoveryClient.getInstances(serviceId);
+        log.info("Connecting Hazelcast instance '{}' to {} other cluster members", instanceName, instances.size());
+        for (ServiceInstance instance : instances) {
+            addHazelcastClusterMember(instance, config);
+        }
     }
 
     /**
@@ -102,39 +138,6 @@ public class HazelcastConnection {
             if (hazelcastMemberAddresses.stream().noneMatch(member -> member.equals(instanceHostClean))) {
                 addHazelcastClusterMember(instance, hazelcastInstance.getConfig());
             }
-        }
-    }
-
-    /**
-     * Connects the local Hazelcast instance to other known service instances after the application
-     * has fully started. This enables dynamic TCP/IP cluster membership by resolving peers via
-     * the service registry (e.g., Eureka).
-     *
-     * <p>
-     * Executed only if a {@link Registration} is available, indicating a clustered environment.
-     * This method uses the {@link DiscoveryClient} to retrieve other instances of the same service
-     * and registers them in the Hazelcast configuration for joining the cluster.
-     *
-     * <p>
-     * Called once after the {@link FullStartupEvent} is fired to avoid premature initialization
-     * before all services are available.
-     */
-    @EventListener(FullStartupEvent.class)
-    private void connectHazelcast() {
-        if (registration.isEmpty()) {
-            // If there is no registration, we are not running in a clustered environment and cannot connect Hazelcast nodes.
-            return;
-        }
-        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
-        if (hazelcastInstance == null) {
-            log.error("Hazelcast instance not found, cannot connect to cluster members");
-            return;
-        }
-        var config = hazelcastInstance.getConfig();
-
-        String serviceId = registration.get().getServiceId();
-        for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-            addHazelcastClusterMember(instance, config);
         }
     }
 

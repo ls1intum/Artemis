@@ -186,6 +186,18 @@ public class LectureUtilService {
     }
 
     /**
+     * Creates and saves an AttachmentVideoUnit without an Attachment.
+     *
+     * @return The created AttachmentVideoUnit
+     */
+    public AttachmentVideoUnit createAttachmentVideoUnitWithoutAttachment() {
+        AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.setDescription("Lorem Ipsum");
+        attachmentVideoUnit.setVideoSource("http://video.fake");
+        return attachmentVideoUnitRepository.save(attachmentVideoUnit);
+    }
+
+    /**
      * Creates and saves an AttachmentVideoUnit with an Attachment. The Attachment can be created with or without a link to an image file.
      *
      * @param withFile True, if the Attachment should link to a file

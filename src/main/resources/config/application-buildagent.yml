@@ -109,3 +109,7 @@ management:
 eureka:
    client:
         enabled: true
+
+helios:
+  status:
+    enabled: false

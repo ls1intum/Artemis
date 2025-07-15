@@ -15,6 +15,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -265,11 +267,12 @@ public class LectureResource {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record AttachmentVideoUnitDTO(Long id, String name, List<SlideDTO> slides, AttachmentDTO attachment, ZonedDateTime releaseDate, String type) {
+    public record AttachmentVideoUnitDTO(Long id, String name, List<SlideDTO> slides, @Nullable AttachmentDTO attachment, ZonedDateTime releaseDate, String type) {
 
         public static AttachmentVideoUnitDTO from(AttachmentVideoUnit attachmentVideoUnit) {
+            var attachment = attachmentVideoUnit.getAttachment();
             return new AttachmentVideoUnitDTO(attachmentVideoUnit.getId(), attachmentVideoUnit.getName(), new ArrayList<>(),
-                    AttachmentDTO.from(attachmentVideoUnit.getAttachment()), attachmentVideoUnit.getReleaseDate(), "attachment");
+                    attachment != null ? AttachmentDTO.from(attachment) : null, attachmentVideoUnit.getReleaseDate(), "attachment");
         }
     }
 

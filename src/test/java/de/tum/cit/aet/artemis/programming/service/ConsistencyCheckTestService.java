@@ -131,7 +131,6 @@ public class ConsistencyCheckTestService {
      * @throws Exception if an error occurs
      */
     public void testCheckConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
-        mockDelegate.mockCheckIfProjectExistsInVcs(exercise1, true);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getSolutionBuildPlanId(), true, false);
         exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise1, ProgrammingExercise.class, HttpStatus.CREATED);

@@ -63,8 +63,6 @@ public abstract class IrisSession extends DomainObject {
     @Column(name = "latest_suggestions")
     private String latestSuggestions;
 
-    // TODO: This is only used in the tests -> Remove
-    @Deprecated
     public IrisMessage newMessage() {
         var message = new IrisMessage();
         message.setSession(this);

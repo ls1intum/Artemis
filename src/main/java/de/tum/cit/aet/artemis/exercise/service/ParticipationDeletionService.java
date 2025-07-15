@@ -247,7 +247,7 @@ public class ParticipationDeletionService {
         if (participation.getRepositoryUri() != null) {
             versionControlService.orElseThrow().deleteRepository(participation.getVcsRepositoryUri());
             gitService.deleteLocalRepository(participation.getVcsRepositoryUri());
-            participation.setRepositoryUri(null);
+            participation.setRepositoryUri((String) null);
             participation.setInitializationState(InitializationState.FINISHED);
             programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
         }

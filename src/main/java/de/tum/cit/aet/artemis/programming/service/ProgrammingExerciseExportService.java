@@ -548,16 +548,16 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         Path zipPath = uniquePath.resolve("zip");
 
         try {
-            gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), clonePath, true);
+            gitService.getOrCheckoutRepositoryWithLocalPath(exercise.getVcsTestRepositoryUri(), clonePath, true);
             if (!clonePath.toFile().exists()) {
                 Files.createDirectories(clonePath);
             }
             String assignmentPath = RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(exercise.getProgrammingLanguage());
             FileUtils.deleteDirectory(clonePath.resolve(assignmentPath).toFile());
-            gitService.getOrCheckoutRepository(exercise.getVcsSolutionRepositoryUri(), clonePath.resolve(assignmentPath), true);
+            gitService.getOrCheckoutRepositoryWithLocalPath(exercise.getVcsSolutionRepositoryUri(), clonePath.resolve(assignmentPath), true);
             for (AuxiliaryRepository auxRepo : exercise.getAuxiliaryRepositoriesForBuildPlan()) {
                 FileUtils.deleteDirectory(clonePath.resolve(auxRepo.getCheckoutDirectory()).toFile());
-                gitService.getOrCheckoutRepository(auxRepo.getVcsRepositoryUri(), clonePath.resolve(auxRepo.getCheckoutDirectory()), true);
+                gitService.getOrCheckoutRepositoryWithLocalPath(auxRepo.getVcsRepositoryUri(), clonePath.resolve(auxRepo.getCheckoutDirectory()), true);
             }
 
             return Optional.of(gitService.zipFiles(clonePath, zippedRepoName, zipPath.toString(), contentFilter).toFile());
@@ -665,7 +665,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         Path localRepoPath;
 
         // Checkout the repository
-        try (Repository repository = gitService.getOrCheckoutRepository(repositoryUri, repositoryDir, false)) {
+        try (Repository repository = gitService.getOrCheckoutRepositoryWithLocalPath(repositoryUri, repositoryDir, false)) {
             gitService.resetToOriginHead(repository);
             localRepoPath = repository.getLocalPath();
         }
@@ -722,9 +722,9 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         try {
-            var repositoryDir = fileService.getTemporaryUniquePathWithoutPathCreation(workingDir, 5);
+            var tempRepositoryPath = fileService.getTemporaryUniquePathWithoutPathCreation(workingDir, 5);
             // Checkout the repository
-            Repository repository = gitService.getOrCheckoutRepository(participation, repositoryDir.toString());
+            Repository repository = gitService.getOrCheckoutRepository(participation, tempRepositoryPath);
             if (repository == null) {
                 log.warn("Cannot checkout repository for participation id: {}", participation.getId());
                 return null;
