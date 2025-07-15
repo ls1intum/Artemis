@@ -32,10 +32,10 @@ public class TimeLogUtil {
          */
         double durationInMinutes = durationInSeconds / 60.0;
         if (durationInMinutes < 60) {
-            return durationInMinutes + ":" + (durationInSeconds % 60) + "min";
+            return ((int) durationInMinutes) + ":" + ((int) durationInSeconds % 60) + "min";
         }
         double durationInHours = durationInMinutes / 60.0;
-        return durationInHours + ":" + (durationInMinutes % 60) + "hours";
+        return ((int) durationInHours) + ":" + ((int) durationInMinutes % 60) + "hours";
     }
 
     public static String formatDuration(long durationInSeconds) {
