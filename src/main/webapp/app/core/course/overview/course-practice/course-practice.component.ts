@@ -17,6 +17,6 @@ export class CoursePracticeComponent {
     courseId = computed(() => this.paramsSignal()?.['courseId']);
 
     public navigateToPractice(): void {
-        this.router.navigate(['courses', this.courseId(), 'practice', 'quiz']);
+        this.router.navigate(['courses', this.courseId(), 'training', 'quiz']);
     }
 }

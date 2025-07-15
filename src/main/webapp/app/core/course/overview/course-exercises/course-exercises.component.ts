@@ -198,4 +198,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.multiLaunchSubscription?.unsubscribe();
         this.queryParamsSubscription?.unsubscribe();
     }
+
+    handleExerciseButtonClick() {
+        this.router.navigate(['../training'], { relativeTo: this.route, replaceUrl: true });
+    }
 }

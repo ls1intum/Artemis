@@ -21,8 +21,8 @@ export enum CourseOverviewRoutePath {
     STATISTICS = 'statistics',
     COMMUNICATION = 'communication',
     SETTINGS = 'settings',
-    PRACTICE = 'practice',
-    PRACTICE_QUIZ = 'practice/quiz',
+    TRAINING = 'training',
+    PRACTICE_QUIZ = 'training/quiz',
 }
 
 export const routes: Routes = [
@@ -332,11 +332,11 @@ export const routes: Routes = [
                 canActivate: [CourseOverviewGuard],
             },
             {
-                path: CourseOverviewRoutePath.PRACTICE,
+                path: CourseOverviewRoutePath.TRAINING,
                 loadComponent: () => import('app/core/course/overview/course-practice/course-practice.component').then((m) => m.CoursePracticeComponent),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.practice',
+                    pageTitle: 'overview.training',
                     hasSidebar: false,
                     showRefreshButton: true,
                 },
@@ -346,7 +346,7 @@ export const routes: Routes = [
                 loadComponent: () => import('app/quiz/overview/course-practice-quiz/course-practice-quiz.component').then((m) => m.CoursePracticeQuizComponent),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.practice',
+                    pageTitle: 'overview.training',
                 },
             },
             {

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, effect, inject, input, output } from '@angular/core';
-import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faDumbbell, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { SidebarEventService } from './service/sidebar-event.service';
@@ -48,6 +48,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     private sidebarEventService = inject(SidebarEventService);
     private modalService = inject(NgbModal);
 
+    @Output() exerciseButtonClicked = new EventEmitter<void>();
     @Output() onSelectConversation = new EventEmitter<number | string>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
     onDirectChatPressed = output<void>();
@@ -63,6 +64,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Input() collapseState: CollapseState;
     sidebarItemAlwaysShow = input.required<SidebarItemShowAlways>();
     @Input() showFilter = false;
+    showExerciseButton = input<boolean>(false);
     inCommunication = input<boolean>(false);
     searchValue = '';
     isCollapsed = false;
@@ -87,6 +89,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     readonly faSearch = faSearch;
     readonly faHashtag = faHashtag;
     readonly faCheckDouble = faCheckDouble;
+    readonly faDumbbell = faDumbbell;
 
     sidebarDataBeforeFiltering: SidebarData;
 
@@ -215,5 +218,9 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
 
     markAllMessagesAsChecked() {
         this.onMarkAllChannelsAsRead.emit();
+    }
+
+    onExerciseButtonClicked() {
+        this.exerciseButtonClicked.emit();
     }
 }

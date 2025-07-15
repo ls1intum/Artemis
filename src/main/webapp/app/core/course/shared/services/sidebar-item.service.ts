@@ -7,7 +7,6 @@ import {
     faChartColumn,
     faCog,
     faComments,
-    faDumbbell,
     faFlag,
     faGraduationCap,
     faList,
@@ -81,16 +80,6 @@ export class CourseSidebarItemService {
             hidden: false,
         };
         return [...items, exercisesItem, statisticsItem];
-    }
-
-    getPracticeItem(): SidebarItem {
-        return {
-            routerLink: 'practice',
-            icon: faDumbbell,
-            title: 'Practice',
-            translation: 'overview.practice',
-            hidden: false,
-        };
     }
 
     getExamsItem(courseId?: number): SidebarItem {

@@ -330,10 +330,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             sidebarItems.push(faqItem);
         }
 
-        if (this.isTestServer || this.isDevelopment) {
-            sidebarItems.push(this.sidebarItemService.getPracticeItem());
-        }
-
         sidebarItems.push(this.sidebarItemService.getNotificationSettingsItem());
 
         return sidebarItems;

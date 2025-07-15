@@ -9,6 +9,8 @@
                     [collapseState]="DEFAULT_COLLAPSE_STATE"
                     [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
                     [showFilter]="true"
+                    [showExerciseButton]="true"
+                    (exerciseButtonClicked)="handleExerciseButtonClick()"
                 />
             </div>
         } @else if (isMultiLaunch) {
@@ -19,6 +21,8 @@
                 [collapseState]="DEFAULT_COLLAPSE_STATE"
                 [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
                 [showFilter]="true"
+                [showExerciseButton]="true"
+                (exerciseButtonClicked)="handleExerciseButtonClick()"
             />
         }
 
