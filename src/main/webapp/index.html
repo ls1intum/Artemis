@@ -20,7 +20,7 @@
         <meta name="application-name" content="Artemis" />
         <meta name="msapplication-TileColor" content="#2b5797" />
 
-        <link rel="preload" href="/public/images/logo.png" as="image" fetchpriority="high" />
+        <link rel="preload" href="assets/logo.png" as="image" fetchpriority="high" />
         <link rel="preconnect" href="https://sentry.ase.in.tum.de" crossorigin />
 
         <!-- Critical inline CSS for loading spinner -->
@@ -34,17 +34,13 @@
                 }
             }
 
-            /* Hide initial loading screen when Angular app loads */
-            body.app-loaded #initial-loading {
+            body.app-loaded #initial-loading,
+            body.app-loaded #loading-error {
                 display: none !important;
             }
         </style>
 
-        <!-- Performance timing marks -->
         <script>
-            // Mark when HTML parsing starts
-            performance.mark('html-parse-start');
-
             // Hide loading screen when Angular app is ready
             document.addEventListener('DOMContentLoaded', function () {
                 // Check if Angular app has rendered
@@ -52,7 +48,6 @@
                     const appContent = document.querySelector('jhi-app > div:not(#initial-loading):not(#loading-error)');
                     if (appContent) {
                         document.body.classList.add('app-loaded');
-                        performance.mark('app-ready');
                         clearInterval(checkAppReady);
                     }
                 }, 100);
