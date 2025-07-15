@@ -72,6 +72,7 @@ graalvmNative {
             buildArgs.addAll([
                 '--initialize-at-run-time=com.hazelcast.shaded.org.jctools.queues,com.hazelcast.shaded.org.jctools.util'
             ])
+            buildArgs.addAll(['--initialize-at-build-time=com.hazelcast.instance.GeneratedBuildProperties'])
 
 //            // Hazelcast
 //            buildArgs.add("--initialize-at-build-time=com.hazelcast")

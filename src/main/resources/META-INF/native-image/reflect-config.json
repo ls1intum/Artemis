@@ -178,14 +178,89 @@
         "name": "com.hazelcast.internal.util.BuildInfoProvider",
         "allDeclaredFields": true,
         "allDeclaredConstructors": true,
-        "allPublicMethods": true
+        "allDeclaredMethods": true,
+        "queryAllDeclaredMethods": true,
+        "queryAllDeclaredConstructors": true
     },
     {
         "name": "com.hazelcast.instance.BuildInfoProvider",
         "allDeclaredFields": true,
         "allDeclaredConstructors": true,
         "allDeclaredMethods": true,
-        "allowUnsafeAccess": true
+        "queryAllDeclaredMethods": true,
+        "queryAllDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.instance.GeneratedBuildProperties",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "queryAllDeclaredMethods": true,
+        "queryAllDeclaredConstructors": true,
+        "queryAllPublicMethods": true,
+        "fields": [
+            {"name": "LAST_LTS_VERSION", "allowWrite": true, "allowUnsafeAccess": true}
+        ]
+    },
+    {
+        "name": "java.lang.Class",
+        "methods": [
+            {"name": "getDeclaredField", "parameterTypes": ["java.lang.String"]},
+            {"name": "getDeclaredFields"},
+            {"name": "getField", "parameterTypes": ["java.lang.String"]},
+            {"name": "getFields"}
+        ]
+    },
 
+    {
+        "name": "com.hazelcast.internal.cluster.Versions",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "queryAllDeclaredMethods": true,
+        "queryAllDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.version.Version",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.internal.cluster.impl.MemberVersion",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.shaded.org.jctools.queues.MpmcArrayQueueProducerIndexField",
+        "allDeclaredFields": true,
+        "fields": [
+            {"name": "producerIndex", "allowUnsafeAccess": true}
+        ]
+    },
+    {
+        "name": "com.hazelcast.shaded.org.jctools.queues.MpmcArrayQueueConsumerIndexField",
+        "allDeclaredFields": true,
+        "fields": [
+            {"name": "consumerIndex", "allowUnsafeAccess": true}
+        ]
+    },
+    {
+        "name": "com.hazelcast.shaded.org.jctools.queues.MpmcArrayQueueProducerLimitField",
+        "allDeclaredFields": true,
+        "fields": [
+            {"name": "producerLimit", "allowUnsafeAccess": true}
+        ]
+    },
+    {
+        "name": "com.hazelcast.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueProducerFields",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "com.hazelcast.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueConsumerFields",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true
     }
 ]
