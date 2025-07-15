@@ -49,9 +49,9 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
-import de.tum.cit.aet.artemis.quiz.test_repository.QuizQuestionTestRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 
 /**
@@ -96,7 +96,7 @@ public class QuizExerciseUtilService {
     private DragAndDropMappingRepository dragAndDropMappingRepository;
 
     @Autowired
-    private QuizQuestionTestRepository quizQuestionTestRepository;
+    private QuizQuestionRepository quizQuestionRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
@@ -371,7 +371,7 @@ public class QuizExerciseUtilService {
         dragAndDropMapping.setQuestion(dragAndDropQuestion);
         incorrectDragAndDropMapping.setQuestion(dragAndDropQuestion);
         mappingWithImage.setQuestion(dragAndDropQuestion);
-        quizQuestionTestRepository.save(dragAndDropQuestion);
+        quizQuestionRepository.save(dragAndDropQuestion);
         submittedAnswerRepository.save(submittedAnswerMC);
         submittedAnswerRepository.save(submittedAnswerSC);
         submittedAnswerRepository.save(submittedShortAnswer);
@@ -380,7 +380,7 @@ public class QuizExerciseUtilService {
         quizSubmission.addSubmittedAnswers(submittedDragAndDropAnswer);
         quizSubmission.addSubmittedAnswers(submittedAnswerSC);
         studentParticipation.addSubmission(quizSubmission);
-        quizQuestionTestRepository.save(dragAndDropQuestion);
+        quizQuestionRepository.save(dragAndDropQuestion);
         quizExercise = quizExerciseRepository.save(quizExercise);
         studentParticipationRepository.save(studentParticipation);
         quizSubmissionRepository.save(quizSubmission);

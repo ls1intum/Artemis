@@ -29,10 +29,10 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
-import de.tum.cit.aet.artemis.quiz.test_repository.QuizQuestionProgressTestRepository;
-import de.tum.cit.aet.artemis.quiz.test_repository.QuizQuestionTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -41,10 +41,10 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     private QuizQuestionProgressService quizQuestionProgressService;
 
     @Autowired
-    private QuizQuestionProgressTestRepository quizQuestionProgressTestRepository;
+    private QuizQuestionProgressRepository quizQuestionProgressRepository;
 
     @Autowired
-    private QuizQuestionTestRepository quizQuestionTestRepository;
+    private QuizQuestionRepository quizQuestionRepository;
 
     @Autowired
     private UserTestRepository userTestRepository;
@@ -84,7 +84,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         participation.setParticipant(user);
 
         quizQuestion = new MultipleChoiceQuestion();
-        quizQuestion = quizQuestionTestRepository.save(quizQuestion);
+        quizQuestion = quizQuestionRepository.save(quizQuestion);
         quizQuestionId = quizQuestion.getId();
 
         quizQuestionProgress = new QuizQuestionProgress();
@@ -101,7 +101,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         quizQuestionProgress.setProgressJson(progressData);
         quizQuestionProgress.setLastAnsweredAt(ZonedDateTime.now());
-        quizQuestionProgressTestRepository.save(quizQuestionProgress);
+        quizQuestionProgressRepository.save(quizQuestionProgress);
     }
 
     @WithMockUser(username = "testuser")
@@ -127,7 +127,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
 
         // Progress exists in database
-        Optional<QuizQuestionProgress> progress = quizQuestionProgressTestRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
+        Optional<QuizQuestionProgress> progress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
         assertThat(progress).isNotNull();
         assertThat(progress.get().getUserId()).isEqualTo(userId);
         assertThat(progress.get().getQuizQuestionId()).isEqualTo(quizQuestionId);
@@ -146,9 +146,9 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(data.getAttempts().getFirst().getScore()).isEqualTo(1.0);
 
         // Progress does not exist in the database
-        quizQuestionProgressTestRepository.deleteAll();
+        quizQuestionProgressRepository.deleteAll();
         quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
-        Optional<QuizQuestionProgress> progressEmpty = quizQuestionProgressTestRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
+        Optional<QuizQuestionProgress> progressEmpty = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
         assertThat(progressEmpty.get().getUserId()).isEqualTo(userId);
         assertThat(progressEmpty.get().getQuizQuestionId()).isEqualTo(quizQuestionId);
         assertThat(progressEmpty.get().getLastAnsweredAt().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(time.truncatedTo(ChronoUnit.SECONDS));
@@ -171,8 +171,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     void testSaveAndRetrieveProgress() {
-        quizQuestionProgressTestRepository.save(quizQuestionProgress);
-        Optional<QuizQuestionProgress> loaded = quizQuestionProgressTestRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
+        quizQuestionProgressRepository.save(quizQuestionProgress);
+        Optional<QuizQuestionProgress> loaded = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
         assertThat(loaded).isPresent();
     }
 
@@ -193,7 +193,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         List<Long> questionIdsWithPriority = new ArrayList<>();
 
         for (int i = 0; i < 12; i++) {
-            QuizQuestion question = quizQuestionTestRepository.save(new MultipleChoiceQuestion());
+            QuizQuestion question = quizQuestionRepository.save(new MultipleChoiceQuestion());
             questions.add(question);
 
             QuizQuestionProgress progress = new QuizQuestionProgress();
@@ -203,7 +203,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
             data.setPriority(priorities[i]);
             progress.setProgressJson(data);
             progress.setLastAnsweredAt(ZonedDateTime.now());
-            quizQuestionProgressTestRepository.save(progress);
+            quizQuestionProgressRepository.save(progress);
             questionIdsWithPriority.add(question.getId());
         }
 

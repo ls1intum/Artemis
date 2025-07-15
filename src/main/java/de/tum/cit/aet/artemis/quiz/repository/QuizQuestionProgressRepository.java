@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.quiz.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -18,8 +17,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 @Repository
 public interface QuizQuestionProgressRepository extends ArtemisJpaRepository<QuizQuestionProgress, Long> {
 
-    Optional<QuizQuestionProgress> findByUserIdAndQuizQuestionId(Long userId, Long quizQuestionId);
+    Optional<QuizQuestionProgress> findByUserIdAndQuizQuestionId(long userId, long quizQuestionId);
 
-    List<QuizQuestionProgress> findAllByUserIdAndQuizQuestionIdIn(Long userId, Set<Long> quizQuestionIds);
+    Set<QuizQuestionProgress> findAllByUserIdAndQuizQuestionIdIn(long userId, Set<Long> quizQuestionIds);
 
 }

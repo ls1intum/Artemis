@@ -137,13 +137,13 @@ public class QuizQuestionProgressService {
     /**
      * The function updates the progress of quiz questions and save it to the database
      *
-     * @param answeredQuestions List of quiz questions that were answered
+     * @param answeredQuestions Set of quiz questions that were answered
      * @param lastAnsweredAt    Time when the question was last answered
      * @param userId            The ID of the user for the participation
      */
     public void updateProgress(Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions, ZonedDateTime lastAnsweredAt, Long userId) {
         Set<Long> questionIds = answeredQuestions.keySet().stream().map(QuizQuestion::getId).collect(Collectors.toSet());
-        List<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIds);
+        Set<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIds);
         Map<Long, QuizQuestionProgress> progressMap = progressList.stream().collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> progress));
 
         List<QuizQuestionProgress> progressToSave = answeredQuestions.entrySet().stream().map(entry -> {
@@ -170,7 +170,7 @@ public class QuizQuestionProgressService {
     public List<QuizQuestion> getQuestionsForSession(Long courseId, Long userId) {
         Set<QuizQuestion> allQuestions = quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
         Set<Long> questionIds = allQuestions.stream().map(QuizQuestion::getId).collect(Collectors.toSet());
-        List<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIds);
+        Set<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIds);
         Map<Long, Integer> priorityMap = progressList.stream()
                 .collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> progress.getProgressJson().getPriority()));
         List<QuizQuestion> selectedQuestions = allQuestions.stream().sorted(Comparator.comparingInt(q -> priorityMap.getOrDefault(q.getId(), 0))).limit(10).toList();

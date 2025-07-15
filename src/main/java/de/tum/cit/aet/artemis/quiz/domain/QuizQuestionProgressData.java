@@ -11,9 +11,6 @@ import java.util.List;
  */
 public class QuizQuestionProgressData {
 
-    public QuizQuestionProgressData() {
-    };
-
     private double lastScore;
 
     // The number of times the question has been answered correctly in a row starting from the last answer
@@ -39,12 +36,12 @@ public class QuizQuestionProgressData {
 
     public static class Attempt {
 
-        public Attempt() {
-        };
-
         private ZonedDateTime answeredAt;
 
         private double score;
+
+        public Attempt() {
+        }
 
         // Getters and Setters
 
@@ -63,6 +60,9 @@ public class QuizQuestionProgressData {
         public void setScore(double score) {
             this.score = score;
         }
+    }
+
+    public QuizQuestionProgressData() {
     }
 
     // Getters and Setters
