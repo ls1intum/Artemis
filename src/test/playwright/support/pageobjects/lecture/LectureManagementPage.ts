@@ -69,6 +69,19 @@ export class LectureManagementPage {
     }
 
     /**
+     * Navigates to the attachments page of a specified lecture by its identifier.
+     * @param lectureId - The identifier of the lecture to navigate to its attachments page.
+     */
+    async openAttachmentsPage(lectureId: number) {
+        await this.getLecture(lectureId).locator('#attachments').click();
+    }
+
+    async openAttachmentUnitCreationPage(lectureId: number) {
+        await this.openAttachmentsPage(lectureId);
+        await this.page.locator('#add-attachment').click();
+    }
+
+    /**
      * Opens the creation form for a new unit of the specified type.
      * @param type - The type of unit to create.
      */
