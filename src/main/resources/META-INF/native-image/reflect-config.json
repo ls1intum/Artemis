@@ -262,5 +262,122 @@
         "name": "com.hazelcast.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueConsumerFields",
         "allDeclaredFields": true,
         "allDeclaredMethods": true
+    },
+
+    {
+        "name": "com.hazelcast.internal.partition.impl.MigrationStats",
+        "allPublicMethods": true,
+        "allDeclaredMethods": true,
+        "methods": [
+            {"name": "getElapsedMigrationTimeNanoseconds", "parameterTypes": []},
+            {"name": "getPlannedMigrations", "parameterTypes": []},
+            {"name": "getCompletedMigrations", "parameterTypes": []},
+            {"name": "getTotalCompletedMigrations", "parameterTypes": []},
+            {"name": "getElapsedMigrationOperationTime", "parameterTypes": []},
+            {"name": "getTotalElapsedMigrationOperationTime", "parameterTypes": []}
+        ]
+    },
+    {
+        "name": "com.hazelcast.internal.partition.impl.PartitionStateManager",
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.hazelcast.internal.partition.impl.MigrationManager",
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.hazelcast.internal.partition.impl.PartitionServiceState",
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.hazelcast.spi.impl.operationservice.impl.OperationServiceImpl",
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.hazelcast.internal.memory.impl.*",
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.hazelcast.internal.networking.nio.*",
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.hazelcast.internal.server.tcp.TcpServerConnectionManager",
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.hazelcast.internal.cluster.impl.ClusterServiceImpl",
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.hazelcast.internal.memory.impl.HeapMemoryManager",
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.hazelcast.internal.networking.nio.NioNetworking",
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.github.dockerjava.api.model.Container",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allPublicMethods": true,
+        "allPublicFields": true
+    },
+    {
+        "name": "com.github.dockerjava.api.model.ContainerConfig",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true
+    },
+    {
+        "name": "com.github.dockerjava.api.model.ContainerHostConfig",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true
+    },
+    {
+        "name": "com.github.dockerjava.api.model.ContainerNetwork",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true
+    },
+    {
+        "name": "com.github.dockerjava.api.model.ContainerNetworkSettings",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true
+    },
+    {
+        "name": "com.github.dockerjava.api.model.ContainerPort",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true
+    },
+    {
+        "name": "com.github.dockerjava.api.model.ContainerMount",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true
+    },
+    {
+        "name": "com.fasterxml.jackson.databind.deser.BeanDeserializer",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.fasterxml.jackson.databind.deser.BuilderBasedDeserializer",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true
     }
 ]
