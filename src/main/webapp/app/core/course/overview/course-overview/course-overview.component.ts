@@ -91,7 +91,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
     >(undefined);
     isTestServer = this.profileService.isTestServer();
-    isDevelopment = this.profileService.isDevelopment();
 
     // Icons
     faTimes = faTimes;

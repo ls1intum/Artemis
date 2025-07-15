@@ -9,8 +9,8 @@
                     [collapseState]="DEFAULT_COLLAPSE_STATE"
                     [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
                     [showFilter]="true"
-                    [showExerciseButton]="true"
-                    (exerciseButtonClicked)="handleExerciseButtonClick()"
+                    [showExerciseButton]="showTrainingButton"
+                    (exerciseButtonClicked)="handleTrainingButtonClick()"
                 />
             </div>
         } @else if (isMultiLaunch) {
@@ -21,8 +21,8 @@
                 [collapseState]="DEFAULT_COLLAPSE_STATE"
                 [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
                 [showFilter]="true"
-                [showExerciseButton]="true"
-                (exerciseButtonClicked)="handleExerciseButtonClick()"
+                [showExerciseButton]="showTrainingButton"
+                (exerciseButtonClicked)="handleTrainingButtonClick()"
             />
         }
 

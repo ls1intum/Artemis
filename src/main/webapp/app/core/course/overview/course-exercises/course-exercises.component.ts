@@ -13,6 +13,7 @@ import { CourseOverviewService } from 'app/core/course/overview/services/course-
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { forkJoin } from 'rxjs';
+import { CoursePracticeQuizService } from 'app/quiz/overview/service/course-practice-quiz.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -52,6 +53,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private courseOverviewService = inject(CourseOverviewService);
     private ltiService = inject(LtiService);
     private exerciseService = inject(ExerciseService);
+    private coursePracticeQuizService = inject(CoursePracticeQuizService);
 
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
@@ -63,6 +65,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     courseId: number;
     sortedExercises?: Exercise[];
 
+    showTrainingButton = false;
     exerciseSelected = true;
     accordionExerciseGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sidebarData: SidebarData;
@@ -85,6 +88,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             if (params['exerciseIDs']) {
                 this.multiLaunchExerciseIDs = params['exerciseIDs'].split(',').map((id: string) => Number(id));
             }
+        });
+
+        this.coursePracticeQuizService.areQuestionsAvailable(this.courseId).subscribe((available: boolean) => {
+            // Hier kannst du mit dem Wert weiterarbeiten, z.B. eine Property setzen
+            this.showTrainingButton = available;
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);
@@ -199,7 +207,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.queryParamsSubscription?.unsubscribe();
     }
 
-    handleExerciseButtonClick() {
+    handleTrainingButtonClick() {
         this.router.navigate(['../training'], { relativeTo: this.route, replaceUrl: true });
     }
 }

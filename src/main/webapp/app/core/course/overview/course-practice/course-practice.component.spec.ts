@@ -51,6 +51,6 @@ describe('CoursePracticeComponent', () => {
         const router = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(router, 'navigate');
         component.navigateToPractice();
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'practice', 'quiz']);
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'training', 'quiz']);
     });
 });
