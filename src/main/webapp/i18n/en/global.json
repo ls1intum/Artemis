@@ -358,6 +358,7 @@
     "pendingChanges": "WARNING: You have unsaved changes. Press Cancel to go back and save these changes, or OK to lose these changes.",
     "overview": {
         "training": "Training",
+        "practice": "Practice",
         "title": "Course overview",
         "aboutUs": "About",
         "course": "Course details",
