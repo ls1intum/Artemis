@@ -100,14 +100,10 @@ export class CourseTrainingQuizComponent {
      */
     nextQuestion(): void {
         this.submitted = false;
-        if (this.isLastQuestion()) {
-            this.navigateToPractice();
-        } else {
-            this.currentIndex.set(this.currentIndex() + 1);
-            const question = this.currentQuestion();
-            if (question) {
-                this.initQuestion(question);
-            }
+        this.currentIndex.set(this.currentIndex() + 1);
+        const question = this.currentQuestion();
+        if (question) {
+            this.initQuestion(question);
         }
     }
 

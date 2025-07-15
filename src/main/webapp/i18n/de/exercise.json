@@ -158,6 +158,7 @@
                     "emptyError": "{{ exercise }}: Keine Ergebnisse gefunden"
                 }
             },
+            "endTraining": "Training beenden",
             "openTraining": "Trainingsmodus öffnen",
             "startTraining": "Training starten",
             "nextQuestion": "Nächste Frage",
