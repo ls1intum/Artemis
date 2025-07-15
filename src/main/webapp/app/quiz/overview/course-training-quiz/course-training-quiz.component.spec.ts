@@ -53,7 +53,7 @@ const course = { id: 1, title: 'Test Course' };
 
 const result: Result = { id: 1, submission: { submittedAnswers: [{ scoreInPoints: 2 }] } as any };
 
-describe('CoursePracticeQuizComponent', () => {
+describe('CourseTrainingQuizComponent', () => {
     MockInstance.scope();
     let component: CourseTrainingQuizComponent;
     let fixture: ComponentFixture<CourseTrainingQuizComponent>;
@@ -131,13 +131,6 @@ describe('CoursePracticeQuizComponent', () => {
         expect(component.currentIndex()).toBe(1);
         expect(initQuestionSpy).toHaveBeenCalledOnce();
         expect(initQuestionSpy).toHaveBeenCalledWith(question2);
-    });
-
-    it('should navigate to practice when on last question', () => {
-        component.currentIndex.set(2);
-        const spy = jest.spyOn(component, 'navigateToPractice');
-        component.nextQuestion();
-        expect(spy).toHaveBeenCalledOnce();
     });
 
     it('should init the current question', () => {

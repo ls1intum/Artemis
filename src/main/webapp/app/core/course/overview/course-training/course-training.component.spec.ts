@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CoursePracticeComponent } from './course-training.component';
+import { CourseTrainingComponent } from './course-training.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockBuilder } from 'ng-mocks';
 import { of } from 'rxjs';
 
-describe('CoursePracticeComponent', () => {
-    let component: CoursePracticeComponent;
-    let fixture: ComponentFixture<CoursePracticeComponent>;
+describe('CourseTrainingComponent', () => {
+    let component: CourseTrainingComponent;
+    let fixture: ComponentFixture<CourseTrainingComponent>;
 
     beforeEach(async () => {
-        await MockBuilder(CoursePracticeComponent)
+        await MockBuilder(CourseTrainingComponent)
             .keep(Router)
             .provide({
                 provide: ActivatedRoute,
@@ -21,7 +21,7 @@ describe('CoursePracticeComponent', () => {
                 },
             });
 
-        fixture = TestBed.createComponent(CoursePracticeComponent);
+        fixture = TestBed.createComponent(CourseTrainingComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });
@@ -35,12 +35,12 @@ describe('CoursePracticeComponent', () => {
     });
 
     it('should check for missing parent route', async () => {
-        await MockBuilder(CoursePracticeComponent).keep(Router).provide({
+        await MockBuilder(CourseTrainingComponent).keep(Router).provide({
             provide: ActivatedRoute,
             useValue: {},
         });
 
-        const fixtureNoParent = TestBed.createComponent(CoursePracticeComponent);
+        const fixtureNoParent = TestBed.createComponent(CourseTrainingComponent);
         const componentNoParent = fixtureNoParent.componentInstance;
         fixtureNoParent.detectChanges();
 

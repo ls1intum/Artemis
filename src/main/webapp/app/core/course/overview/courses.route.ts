@@ -333,7 +333,7 @@ export const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.TRAINING,
-                loadComponent: () => import('app/core/course/overview/course-practice/course-training.component').then((m) => m.CourseTrainingComponent),
+                loadComponent: () => import('app/core/course/overview/course-training/course-training.component').then((m) => m.CourseTrainingComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.training',
