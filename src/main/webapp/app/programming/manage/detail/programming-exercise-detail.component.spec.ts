@@ -26,11 +26,44 @@ import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+
+// Mock the diff.utils module to avoid Monaco Editor issues in tests
+jest.mock('app/programming/shared/utils/diff.utils', () => ({
+    ...jest.requireActual('app/programming/shared/utils/diff.utils'),
+    processRepositoryDiff: jest.fn().mockImplementation((templateFiles, solutionFiles) => {
+        // Handle the case where files are undefined (when repository fetch fails)
+        if (!templateFiles || !solutionFiles) {
+            return Promise.resolve(undefined);
+        }
+        return Promise.resolve({
+            diffInformations: [
+                {
+                    originalFileContent: 'testing line differences',
+                    modifiedFileContent: 'testing line diff\nnew line',
+                    originalPath: 'Example.java',
+                    modifiedPath: 'Example.java',
+                    diffReady: true,
+                    fileStatus: 'unchanged',
+                    lineChange: {
+                        addedLineCount: 2,
+                        removedLineCount: 1,
+                    },
+                    title: 'Example.java',
+                },
+            ],
+            totalLineChange: {
+                addedLineCount: 2,
+                removedLineCount: 1,
+            },
+        } as RepositoryDiffInformation);
+    }),
+}));
 
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -42,9 +75,10 @@ describe('ProgrammingExerciseDetailComponent', () => {
     let submissionPolicyService: SubmissionPolicyService;
     let programmingLanguageFeatureService: ProgrammingLanguageFeatureService;
     let statisticsServiceStub: jest.SpyInstance;
-    let gitDiffReportStub: jest.SpyInstance;
     let submissionPolicyServiceStub: jest.SpyInstance;
     let findWithTemplateAndSolutionParticipationStub: jest.SpyInstance;
+    let getTemplateRepositoryFilesStub: jest.SpyInstance;
+    let getSolutionRepositoryFilesStub: jest.SpyInstance;
     let router: Router;
 
     const mockProgrammingExercise = {
@@ -57,6 +91,28 @@ describe('ProgrammingExerciseDetailComponent', () => {
             id: 2,
         } as SolutionProgrammingExerciseParticipation,
     } as ProgrammingExercise;
+
+    const mockDiffInformation = {
+        diffInformations: [
+            {
+                originalFileContent: 'testing line differences',
+                modifiedFileContent: 'testing line diff\nnew line',
+                originalPath: 'Example.java',
+                modifiedPath: 'Example.java',
+                diffReady: false,
+                fileStatus: 'unchanged',
+                lineChange: {
+                    addedLineCount: 2,
+                    removedLineCount: 1,
+                },
+                title: 'Example.java',
+            },
+        ],
+        totalLineChange: {
+            addedLineCount: 2,
+            removedLineCount: 1,
+        },
+    } as unknown as RepositoryDiffInformation;
 
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
@@ -71,21 +127,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         numberOfResolvedPosts: 2,
         resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
-
-    const gitDiffReport = {
-        templateRepositoryCommitHash: 'x1',
-        solutionRepositoryCommitHash: 'x2',
-        entries: [
-            {
-                previousFilePath: '/src/test.java',
-                filePath: '/src/test.java',
-                previousStartLine: 1,
-                startLine: 1,
-                previousLineCount: 2,
-                lineCount: 2,
-            },
-        ],
-    } as ProgrammingExerciseGitDiffReport;
 
     const profileInfo = {
         activeProfiles: [],
@@ -110,6 +151,12 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
+
+        // Mock the ResizeObserver, which is not available in the test environment
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
         fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
         comp = fixture.componentInstance;
 
@@ -126,7 +173,12 @@ describe('ProgrammingExerciseDetailComponent', () => {
         findWithTemplateAndSolutionParticipationStub = jest
             .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
             .mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })));
-        gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
+        getTemplateRepositoryFilesStub = jest
+            .spyOn(exerciseService, 'getTemplateRepositoryTestFilesWithContent')
+            .mockReturnValue(of(new Map([[mockDiffInformation.diffInformations[0].originalPath, mockDiffInformation.diffInformations[0].originalFileContent ?? '']])));
+        getSolutionRepositoryFilesStub = jest
+            .spyOn(exerciseService, 'getSolutionRepositoryTestFilesWithContent')
+            .mockReturnValue(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent ?? '']])));
         submissionPolicyServiceStub = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
 
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
@@ -140,14 +192,15 @@ describe('ProgrammingExerciseDetailComponent', () => {
     });
 
     it('should reload on participation change', fakeAsync(() => {
-        const loadDiffSpy = jest.spyOn(comp, 'loadGitDiffReport');
+        const fetchRepositoryFilesSpy = jest.spyOn(comp, 'fetchRepositoryFiles');
         jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
         comp.programmingExercise = mockProgrammingExercise;
         comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
         comp.onParticipationChange();
         tick();
-        expect(loadDiffSpy).toHaveBeenCalledOnce();
-        expect(gitDiffReportStub).toHaveBeenCalledOnce();
+        expect(fetchRepositoryFilesSpy).toHaveBeenCalledOnce();
+        expect(getTemplateRepositoryFilesStub).toHaveBeenCalledOnce();
+        expect(getSolutionRepositoryFilesStub).toHaveBeenCalledOnce();
     }));
 
     describe('onInit for course exercise', () => {
@@ -166,7 +219,8 @@ describe('ProgrammingExerciseDetailComponent', () => {
             // THEN
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(submissionPolicyServiceStub).toHaveBeenCalledOnce();
-            expect(gitDiffReportStub).toHaveBeenCalledOnce();
+            expect(getTemplateRepositoryFilesStub).toHaveBeenCalledOnce();
+            expect(getSolutionRepositoryFilesStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             await Promise.resolve();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
@@ -174,8 +228,8 @@ describe('ProgrammingExerciseDetailComponent', () => {
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
             expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
             expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
-            expect(comp.programmingExercise.gitDiffReport).toBeDefined();
-            expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
+            expect(comp.repositoryDiffInformation).toBeDefined();
+            expect(comp.repositoryDiffInformation.diffInformations).toHaveLength(1);
         });
 
         it.each([true, false])(
@@ -192,17 +246,37 @@ describe('ProgrammingExerciseDetailComponent', () => {
             },
         );
 
-        it('should create detail sections after getDiffReport error', fakeAsync(() => {
+        it('should handle repositoryFilesError gracefully', fakeAsync(() => {
+            // Create a fresh programming exercise for this test
+            const testExercise = new ProgrammingExercise(new Course(), undefined);
+            testExercise.id = 456; // Different ID to avoid conflicts
+
+            // Set up the route data for this test
+            const route = TestBed.inject(ActivatedRoute);
+            route.data = of({ programmingExercise: testExercise });
+
             const errorSpy = jest.spyOn(alertService, 'error');
-            gitDiffReportStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            // Mock the repository file services to throw errors only for this test
+            const templateFilesSpy = jest
+                .spyOn(exerciseService, 'getTemplateRepositoryTestFilesWithContent')
+                .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            const solutionFilesSpy = jest
+                .spyOn(exerciseService, 'getSolutionRepositoryTestFilesWithContent')
+                .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
             comp.ngOnInit();
-            tick();
+            tick(1000); // Wait for all async operations to complete
 
-            expect(errorSpy).toHaveBeenCalledOnce();
-            expect(comp.exerciseDetailSections).toBeDefined();
-            expect(comp.addedLineCount).toBeUndefined();
-            expect(comp.removedLineCount).toBeUndefined();
+            // The error should be reported
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.repositoryFilesError');
+
+            // Repository diff information should not be set due to the error
+            expect(comp.repositoryDiffInformation).toBeUndefined();
+
+            // Clean up the spies
+            templateFilesSpy.mockRestore();
+            solutionFilesSpy.mockRestore();
         }));
     });
 
@@ -228,12 +302,13 @@ describe('ProgrammingExerciseDetailComponent', () => {
             await Promise.resolve();
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
-            expect(gitDiffReportStub).toHaveBeenCalledOnce();
+            expect(getTemplateRepositoryFilesStub).toHaveBeenCalledOnce();
+            expect(getSolutionRepositoryFilesStub).toHaveBeenCalledOnce();
             await Promise.resolve();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeTrue();
-            expect(comp.programmingExercise.gitDiffReport).toBeDefined();
-            expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
+            expect(comp.repositoryDiffInformation).toBeDefined();
+            expect(comp.repositoryDiffInformation.diffInformations).toHaveLength(1);
         }));
     });
 
@@ -254,24 +329,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         expect(profileInfoStub).toHaveBeenCalledOnce();
         expect(comp.isBuildPlanEditable).toBe(editable);
-    });
-
-    it('should combine template commit', () => {
-        const combineCommitsSpy = jest.spyOn(exerciseService, 'combineTemplateRepositoryCommits').mockReturnValue(of(new HttpResponse({ body: null })));
-        const successSpy = jest.spyOn(alertService, 'success');
-        comp.programmingExercise = mockProgrammingExercise;
-        comp.combineTemplateCommits();
-        expect(combineCommitsSpy).toHaveBeenCalledOnce();
-        expect(successSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should alert on combine template commit error', () => {
-        const combineCommitsSpy = jest.spyOn(exerciseService, 'combineTemplateRepositoryCommits').mockReturnValue(throwError(() => new HttpResponse({ body: null })));
-        const errorSpy = jest.spyOn(alertService, 'error');
-        comp.programmingExercise = mockProgrammingExercise;
-        comp.combineTemplateCommits();
-        expect(combineCommitsSpy).toHaveBeenCalledOnce();
-        expect(errorSpy).toHaveBeenCalledOnce();
     });
 
     it('should delete programming exercise', () => {
