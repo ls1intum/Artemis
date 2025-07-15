@@ -191,8 +191,7 @@
                 "showMore": "Show more"
             },
             "newMessages": "New",
-            "newMessageButton": "{{ count }} unread message",
-            "newMessagesButton": "{{ count }} unread messages"
+            "newMessagesButton": "Jump to first unread message"
         },
         "communicationDisabled": {
             "title": "Welcome to Communication!",
