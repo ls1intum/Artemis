@@ -25,6 +25,10 @@ import { HttpResponse } from '@angular/common/http';
 import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingType } from '../../../shared/entities/posting.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { AccountService } from '../../../../core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -74,7 +78,13 @@ examples.forEach((activeConversation) => {
                     MockComponent(PostCreateEditModalComponent),
                     MockDirective(TranslateDirective),
                 ],
-                providers: [MockProvider(MetisConversationService), MockProvider(MetisService), MockProvider(NgbModal)],
+                providers: [
+                    MockProvider(MetisConversationService),
+                    MockProvider(MetisService),
+                    MockProvider(NgbModal),
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: AccountService, useClass: MockAccountService },
+                ],
             }).compileComponents();
         }));
 
@@ -584,6 +594,119 @@ examples.forEach((activeConversation) => {
             expect(component.groupedPosts[1].posts).toHaveLength(1);
             expect(component.groupedPosts[0].author?.id).toBe(1);
             expect(component.groupedPosts[1].author?.id).toBe(2);
+        });
+
+        it('should return only unread posts not authored by the current user and sort them descending by creationDate', () => {
+            const lastReadDate = dayjs().subtract(10, 'minutes');
+            const currentUser = { id: 99, internal: false };
+            const otherUser = { id: 42, internal: false };
+
+            component._activeConversation = {
+                ...component._activeConversation,
+                lastReadDate,
+            };
+
+            component.currentUser = currentUser;
+
+            const posts: Post[] = [
+                { id: 1, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread
+                { id: 2, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // unread but own
+                { id: 3, creationDate: dayjs().subtract(20, 'minutes'), author: otherUser } as Post, // read
+                { id: 4, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post, // unread
+            ];
+            component.allPosts = posts;
+            const unreadPosts = (component as any).getUnreadPosts();
+            expect(unreadPosts).toHaveLength(2);
+            expect(unreadPosts.map((p: Post) => p.id)).toEqual([4, 1]); // sorted by creationDate descending
+        });
+        it('should compute unreadPosts, unreadPostsCount, and lastReadPostId correctly', () => {
+            const lastReadDate = dayjs().subtract(10, 'minutes');
+            const currentUser = { id: 99, internal: false };
+            const otherUser = { id: 42, internal: false };
+
+            component._activeConversation = {
+                ...component._activeConversation,
+                lastReadDate,
+            };
+
+            component.currentUser = currentUser;
+
+            const posts: Post[] = [
+                { id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: otherUser } as Post, // read
+                { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread
+                { id: 3, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // unread but own
+                { id: 4, creationDate: dayjs(), author: otherUser } as Post, // unread
+            ];
+
+            component.allPosts = posts;
+
+            const getLastReadPostSpy = jest.spyOn(component as any, 'getLastReadPost');
+            getLastReadPostSpy.mockReturnValue(posts[0]);
+
+            (component as any).computeLastReadState();
+
+            expect(component.unreadPosts).toHaveLength(2);
+            expect(component.unreadPostsCount).toBe(2);
+            expect(component.lastReadPostId).toBe(1);
+            expect(getLastReadPostSpy).toHaveBeenCalled();
+        });
+        it('should return the last read post not authored by the current user', () => {
+            const currentUser = { id: 99, internal: false };
+            const otherUser = { id: 42, internal: false };
+
+            const lastReadDate = dayjs().subtract(10, 'minutes');
+            component._activeConversation = {
+                ...component._activeConversation,
+                lastReadDate,
+            };
+            component.currentUser = currentUser;
+
+            const posts: Post[] = [
+                { id: 1, creationDate: dayjs().subtract(20, 'minutes'), author: otherUser } as Post,
+                { id: 2, creationDate: dayjs().subtract(15, 'minutes'), author: otherUser } as Post,
+                { id: 3, creationDate: dayjs().subtract(11, 'minutes'), author: otherUser } as Post,
+                { id: 4, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post,
+                { id: 5, creationDate: dayjs().subtract(8, 'minutes'), author: currentUser } as Post,
+            ];
+
+            component.allPosts = posts;
+
+            const result = (component as any).getLastReadPost();
+            expect(result).toBeDefined();
+            expect(result!.id).toBe(3);
+        });
+        it('should return undefined if no eligible posts exist', () => {
+            const currentUser = { id: 99, internal: false };
+            component._activeConversation = {
+                ...component._activeConversation,
+                lastReadDate: dayjs().subtract(10, 'minutes'),
+            };
+            component.currentUser = currentUser;
+            component.allPosts = [
+                { id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: currentUser } as Post,
+                { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: currentUser } as Post,
+            ];
+            const result = (component as any).getLastReadPost();
+            expect(result).toBeUndefined();
+        });
+
+        it('should return true if the first unread post is fully visible within the container', () => {
+            const mockRects = {
+                postRect: { top: 100, bottom: 200 },
+                containerRect: { top: 50, bottom: 300 },
+            };
+            jest.spyOn(component as any, 'getBoundingRectsForFirstUnreadPost').mockReturnValue(mockRects);
+            const result = (component as any).isFirstUnreadPostVisible();
+            expect(result).toBeTrue();
+        });
+        it('should return false if the first unread post is partially or fully out of view', () => {
+            const mockRects = {
+                postRect: { top: 100, bottom: 400 },
+                containerRect: { top: 50, bottom: 300 },
+            };
+            jest.spyOn(component as any, 'getBoundingRectsForFirstUnreadPost').mockReturnValue(mockRects);
+            const result = (component as any).isFirstUnreadPostVisible();
+            expect(result).toBeFalse();
         });
     });
 });
