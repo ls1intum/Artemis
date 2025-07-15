@@ -201,7 +201,7 @@ examples.forEach((activeConversation) => {
             const mockMessages = [
                 {
                     post: { id: 1 },
-                    elementRef: { nativeElement: { getBoundingClientRect: jest.fn().mockReturnValue({ top: 200, bottom: 300 }) } },
+                    elementRef: { nativeElement: { getBoundingClientRect: jest.fn().mockReturnValue({ top: 200, bottom: 320 }) } },
                 },
             ] as unknown as PostingThreadComponent[];
 
@@ -755,9 +755,9 @@ examples.forEach((activeConversation) => {
                 return 0;
             });
             (component as any).scrollToFirstUnreadPostIfNotVisible();
-            const expectedScrollTop = mockPostElement.offsetTop + mockPostElement.offsetHeight - mockContainerElement.clientHeight;
+            const heightOffset = 20;
+            const expectedScrollTop = mockPostElement.offsetTop + mockPostElement.offsetHeight - mockContainerElement.clientHeight + heightOffset;
             expect(mockContainerElement.scrollTop).toBe(expectedScrollTop);
-
             rafSpy.mockRestore();
         });
     });
