@@ -1,0 +1,26 @@
+[
+    {
+        "name": "java.time.ZonedDateTime"
+    },
+    {
+        "name": "java.time.LocalDateTime"
+    },
+    {
+        "name": "java.time.LocalDate"
+    },
+    {
+        "name": "java.time.LocalTime"
+    },
+    {
+        "name": "java.time.ZoneId"
+    },
+    {
+        "name": "java.time.ZoneOffset"
+    },
+    {
+        "name": "java.time.OffsetDateTime"
+    },
+    {
+        "name": "java.time.Instant"
+    }
+]

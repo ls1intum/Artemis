@@ -73,6 +73,20 @@ graalvmNative {
                 '--initialize-at-run-time=com.hazelcast.shaded.org.jctools.queues,com.hazelcast.shaded.org.jctools.util'
             ])
             buildArgs.addAll(['--initialize-at-build-time=com.hazelcast.instance.GeneratedBuildProperties'])
+            buildArgs.addAll([
+                // tell the native‑image builder to include the java.se module
+                '--add-modules=java.se',
+                // give Hazelcast access to internal/ref (needed for ReferenceQueue performance)
+                '--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED',
+                // open the core java.lang APIs
+                '--add-opens=java.base/java.lang=ALL-UNNAMED',
+                // open NIO classes
+                '--add-opens=java.base/java.nio=ALL-UNNAMED',
+                '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
+                // open the management APIs
+                '--add-opens=java.management/sun.management=ALL-UNNAMED',
+                '--add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED'
+            ])
 
 //            // Hazelcast
 //            buildArgs.add("--initialize-at-build-time=com.hazelcast")
