@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -18,9 +17,7 @@ public class ProgrammingTestCaseChangedUserNotificationService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    // The GroupNotificationService has many dependencies. We cannot refactor it to avoid that. Therefore, we lazily inject it here, so it's only instantiated when needed, or our
-    // DeferredEagerInitialization kicks, but not on startup.
-    public ProgrammingTestCaseChangedUserNotificationService(@Lazy GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService) {
+    public ProgrammingTestCaseChangedUserNotificationService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
     }
