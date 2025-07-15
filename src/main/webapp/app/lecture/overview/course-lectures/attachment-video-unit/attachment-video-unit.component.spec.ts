@@ -161,7 +161,7 @@ describe('AttachmentVideoUnitComponent', () => {
         component.toggleCollapse(false); // triggers fetchTranscript
         fixture.detectChanges();
 
-        await fixture.whenStable(); // ⏳ wait for async code in fetchTranscript()
+        await fixture.whenStable(); // wait for async code in fetchTranscript()
 
         expect(httpSpy).toHaveBeenCalledWith('/api/lecture/lecture-unit/1/transcript');
         expect(component.transcriptSegments()).toEqual(segmentsMock);
