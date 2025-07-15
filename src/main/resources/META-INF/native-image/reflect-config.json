@@ -537,6 +537,24 @@
         "allDeclaredConstructors": true
     },
     {
+        "name": "java.time.Ser",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "java.time.ZonedDateTime",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "java.time.LocalDateTime",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
         "name": "de.tum.cit.aet.artemis.core.config.Constants",
         "allDeclaredFields": true
     },
