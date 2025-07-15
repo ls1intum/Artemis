@@ -116,7 +116,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             readonly: this.readOnly,
             model: this.umlModel,
             type: this.diagramType || UMLDiagramType.ClassDiagram,
-            enablePopups: this.enablePopups,
         });
 
         this.apollonEditor.subscribeToModelChange((state) => {
