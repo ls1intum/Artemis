@@ -252,7 +252,7 @@ public class LectureTranscriptionResource {
      */
     @GetMapping("/video-utils/get-tum-live-playlist")
     public ResponseEntity<String> getTumLivePlaylist(@RequestParam String url) {
-        log.info("📥 Received request to fetch playlist for TUM Live URL: {}", url);
+        log.info("Received request to fetch playlist for TUM Live URL: {}", url);
 
         Optional<String> playlistUrl = tumLiveService.getTumLivePlaylistLink(url);
 

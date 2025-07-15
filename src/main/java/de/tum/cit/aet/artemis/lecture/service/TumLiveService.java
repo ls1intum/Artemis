@@ -42,7 +42,7 @@ public class TumLiveService {
 
         // MOCK for stream 55921
         if ("55921".equals(streamId)) {
-            String mockUrl = "https://edge.live.rbg.tum.de/vod/WiSe24ItP_2025_02_05_15_10COMB.mp4/playlist.m3u8";
+            String mockUrl = "https://edge.live.rbg.tum.de/vod/WiSe24ItP_2025_02_05_15_10COMB.mp4/playlist.m3u8?jwt=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTI2MDY0MzMsIlVzZXJJRCI6MjIzNSwiUGxheWxpc3QiOiJodHRwczovL2VkZ2UubGl2ZS5yYmcudHVtLmRlL3ZvZC9XaVNlMjRJdFBfMjAyNV8wMl8wNV8xNV8xMENPTUIubXA0L3BsYXlsaXN0Lm0zdTgiLCJEb3dubG9hZCI6ZmFsc2UsIlN0cmVhbUlEIjoiNTU5MjEiLCJDb3Vyc2VJRCI6IjE0ODMifQ.P_8DExq6e94lgY6pfKPyKXHcmLTG9KqZItBulg7nsxHgX0-H8OiDbD4oNLB-GT1Iagorfjg_h3uV3bgNTKToISbMPsKotIYeyIoMZYabWEG0fG3JGW6wEOslH62QZAQQrZkOlui66PKWKh8Yvg4xaYwd-TkZ8Q9C1SbG7RMN_FoOstnwCtCymLlQndba_5AiVKfM9tRMQnUOSNVY71cb6f7ovQWA3q0uHsd2G05XpW6fjPkn-gglZNry40-nc71qB5b-LMy7gOjxRrb74FjVbrEK31jDZDaIRJeVoxDvGwKfkPTA_zEpedK05pKc1L7p1AVjv_aiVLJCqasheIsdAA";
             log.info("🔁 Using mocked playlist URL for stream {}: {}", streamId, mockUrl);
             return Optional.of(mockUrl);
         }
@@ -75,7 +75,7 @@ public class TumLiveService {
     private String extractStreamId(String videoUrl) {
         try {
             String path = new URI(videoUrl).getPath();
-            Matcher matcher = Pattern.compile(".*/(\\d+)(?:/.*)?$").matcher(path);
+            Matcher matcher = Pattern.compile("/(\\d+)(?:/|$)").matcher(path);
             return matcher.find() ? matcher.group(1) : null;
         }
         catch (URISyntaxException e) {
