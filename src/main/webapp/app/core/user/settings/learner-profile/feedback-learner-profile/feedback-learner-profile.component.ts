@@ -11,7 +11,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { LearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/learner-profile-dto.model';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
-import { ALTERNATIVE_STANDARD_OPTIONS, BRIEF_DETAILED_OPTIONS, FOLLOWUP_SUMMARY_OPTIONS } from 'app/core/user/settings/learner-profile/entities/learner-profile-options.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeedbackOnboardingModalComponent } from 'app/core/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-onboarding-modal.component';
 
@@ -52,18 +51,6 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     /**
      * Options mapped from shared options with translated labels.
      */
-    protected readonly feedbackAlternativeStandardOptions = ALTERNATIVE_STANDARD_OPTIONS.map((option) => ({
-        label: this.translateService.instant(option.translationKey),
-        value: option.level,
-    }));
-    protected readonly feedbackFollowupSummaryOptions = FOLLOWUP_SUMMARY_OPTIONS.map((option) => ({
-        label: this.translateService.instant(option.translationKey),
-        value: option.level,
-    }));
-    protected readonly feedbackBriefDetailedOptions = BRIEF_DETAILED_OPTIONS.map((option) => ({
-        label: this.translateService.instant(option.translationKey),
-        value: option.level,
-    }));
     protected readonly briefFeedbackOptions = [
         { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.briefFeedback.off'), value: false },
         { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.briefFeedback.on'), value: true },
