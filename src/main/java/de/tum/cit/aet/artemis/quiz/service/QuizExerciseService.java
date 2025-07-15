@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -25,6 +26,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -34,12 +36,17 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -47,6 +54,7 @@ import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
+import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
@@ -58,6 +66,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository;
@@ -87,10 +96,24 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final ExerciseService exerciseService;
 
+    private final UserRepository userRepository;
+
+    private final QuizBatchRepository quizBatchRepository;
+
+    private final ChannelService channelService;
+
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
+
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
+    private final Optional<SlideApi> slideApi;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService) {
+            ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
+            ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<SlideApi> slideApi) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -100,6 +123,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.exerciseService = exerciseService;
+        this.userRepository = userRepository;
+        this.quizBatchRepository = quizBatchRepository;
+        this.channelService = channelService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
+        this.competencyProgressApi = competencyProgressApi;
+        this.slideApi = slideApi;
     }
 
     /**
@@ -531,20 +560,133 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return newQuizExercise;
     }
 
-    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, QuizExerciseFromEditorDTO quizExerciseFromEditorDTO) {
-        quizExercise.setTitle(quizExerciseFromEditorDTO.title());
-        quizExercise.setChannelName(quizExerciseFromEditorDTO.channelName());
-        quizExercise.setCategories(quizExerciseFromEditorDTO.categories());
-        quizExercise.setCompetencyLinks(quizExerciseFromEditorDTO.competencyLinks() != null ? quizExerciseFromEditorDTO.competencyLinks() : new HashSet<>());
-        quizExercise.setDifficulty(quizExerciseFromEditorDTO.difficulty());
-        quizExercise.setDuration(quizExerciseFromEditorDTO.duration());
-        quizExercise.setRandomizeQuestionOrder(quizExerciseFromEditorDTO.randomizeQuestionOrder());
-        quizExercise.setQuizMode(quizExerciseFromEditorDTO.quizMode());
-        quizExercise.setQuizBatches(quizExerciseFromEditorDTO.quizBatches() != null ? quizExerciseFromEditorDTO.quizBatches() : new HashSet<>());
-        quizExercise.setReleaseDate(quizExerciseFromEditorDTO.releaseDate());
-        quizExercise.setStartDate(quizExerciseFromEditorDTO.startDate());
-        quizExercise.setDueDate(quizExerciseFromEditorDTO.dueDate());
-        quizExercise.setIncludedInOverallScore(quizExerciseFromEditorDTO.includedInOverallScore());
-        quizExercise.setQuizQuestions(quizExerciseFromEditorDTO.quizQuestions());
+    /**
+     * Performs the update of a quiz exercise, including validations, file handling, saving, logging,
+     * notifications, and asynchronous updates. This method uses the original quiz for comparisons
+     * (e.g., to detect changes or prevent invalid modifications) and applies updates from the provided
+     * updated quiz exercise.
+     *
+     * @param originalQuiz     the original quiz exercise loaded from the database, used for comparisons
+     *                             and checks (e.g., to verify if the quiz has started or for file change detection).
+     * @param updatedQuiz      the quiz exercise object containing the updated values to be applied and saved.
+     * @param files            the list of multipart files for drag-and-drop question updates (may be null or empty).
+     * @param notificationText optional text to include in notifications sent about the exercise update.
+     * @return the updated and saved quiz exercise.
+     * @throws IOException              if an error occurs during file handling or updates.
+     * @throws BadRequestAlertException if the updated quiz is invalid (e.g., fails validation checks,
+     *                                      quiz has already started, or conversion between exam/course types).
+     */
+    public QuizExercise performUpdate(QuizExercise originalQuiz, QuizExercise updatedQuiz, List<MultipartFile> files, String notificationText) throws IOException {
+
+        if (!updatedQuiz.isValid()) {
+            throw new BadRequestAlertException("The quiz exercise is not valid", ENTITY_NAME, "invalidQuiz");
+        }
+
+        updatedQuiz.validateGeneralSettings();
+
+        updatedQuiz.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // Check if quiz has already started
+        var batches = quizBatchRepository.findAllByQuizExercise(originalQuiz);
+        if (batches.stream().anyMatch(QuizBatch::isStarted)) {
+            throw new BadRequestAlertException("The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.", ENTITY_NAME, "quizHasStarted");
+        }
+
+        updatedQuiz.reconnectJSONIgnoreAttributes();
+
+        if (updatedQuiz.getQuizMode() != QuizMode.SYNCHRONIZED || updatedQuiz.getQuizBatches() == null || updatedQuiz.getQuizBatches().size() > 1) {
+            updatedQuiz.setQuizBatches(batches);
+        }
+
+        handleDndQuizFileUpdates(updatedQuiz, originalQuiz, files);
+
+        Channel updatedChannel = channelService.updateExerciseChannel(originalQuiz, updatedQuiz);
+
+        updatedQuiz = save(updatedQuiz);
+        exerciseService.logUpdate(updatedQuiz, updatedQuiz.getCourseViaExerciseGroupOrCourseMember(), user);
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, updatedQuiz, notificationText);
+        if (updatedChannel != null) {
+            updatedQuiz.setChannelName(updatedChannel.getName());
+        }
+        QuizExercise finalQuizExercise = updatedQuiz;
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(finalQuizExercise)));
+        slideApi.ifPresent(api -> api.handleDueDateChange(originalQuiz, finalQuizExercise));
+        return updatedQuiz;
     }
+
+    /**
+     * Merges the properties of the QuizExerciseFromEditorDTO into the QuizExercise domain object.
+     *
+     * @param quizExercise              The QuizExercise domain object to be updated
+     * @param quizExerciseFromEditorDTO The DTO containing the properties to be merged into the domain object.
+     */
+    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, QuizExerciseFromEditorDTO quizExerciseFromEditorDTO) {
+        if (quizExerciseFromEditorDTO.title() != null) {
+            quizExercise.setTitle(quizExerciseFromEditorDTO.title());
+        }
+        if (quizExerciseFromEditorDTO.channelName() != null) {
+            quizExercise.setChannelName(quizExerciseFromEditorDTO.channelName());
+        }
+        if (quizExerciseFromEditorDTO.categories() != null) {
+            quizExercise.setCategories(quizExerciseFromEditorDTO.categories());
+        }
+        if (quizExerciseFromEditorDTO.competencyLinks() != null) {
+            quizExercise.setCompetencyLinks(new HashSet<>(quizExerciseFromEditorDTO.competencyLinks()));
+        }
+        if (quizExerciseFromEditorDTO.difficulty() != null) {
+            quizExercise.setDifficulty(quizExerciseFromEditorDTO.difficulty());
+        }
+        if (quizExerciseFromEditorDTO.duration() != null) {
+            quizExercise.setDuration(quizExerciseFromEditorDTO.duration());
+        }
+        if (quizExerciseFromEditorDTO.randomizeQuestionOrder() != null) {
+            quizExercise.setRandomizeQuestionOrder(quizExerciseFromEditorDTO.randomizeQuestionOrder());
+        }
+        if (quizExerciseFromEditorDTO.quizMode() != null) {
+            quizExercise.setQuizMode(quizExerciseFromEditorDTO.quizMode());
+        }
+        if (quizExerciseFromEditorDTO.quizBatches() != null) {
+            quizExercise.setQuizBatches(new HashSet<>(quizExerciseFromEditorDTO.quizBatches()));
+        }
+        if (quizExerciseFromEditorDTO.releaseDate() != null) {
+            quizExercise.setReleaseDate(quizExerciseFromEditorDTO.releaseDate());
+        }
+        if (quizExerciseFromEditorDTO.startDate() != null) {
+            quizExercise.setStartDate(quizExerciseFromEditorDTO.startDate());
+        }
+        if (quizExerciseFromEditorDTO.dueDate() != null) {
+            quizExercise.setDueDate(quizExerciseFromEditorDTO.dueDate());
+        }
+        if (quizExerciseFromEditorDTO.includedInOverallScore() != null) {
+            quizExercise.setIncludedInOverallScore(quizExerciseFromEditorDTO.includedInOverallScore());
+        }
+        if (quizExerciseFromEditorDTO.quizQuestions() != null) {
+            quizExercise.setQuizQuestions(quizExerciseFromEditorDTO.quizQuestions());
+        }
+    }
+
+    /**
+     * Creates a copy of the quiz exercise with all fields that are necessary to compare the updated
+     * quiz exercise with the original one.
+     *
+     * @param quizExercise the quiz exercise to copy
+     * @return a copy of the quiz exercise with all fields required for an update.
+     */
+    public QuizExercise copyFieldsForUpdate(QuizExercise quizExercise) {
+        QuizExercise copy = new QuizExercise();
+        BeanUtils.copyProperties(quizExercise, copy);
+        if (!quizExercise.isExamExercise()) {
+            copy.setCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
+        }
+        copy.setExerciseGroup(quizExercise.getExerciseGroup());
+        copy.setQuizQuestions(quizExercise.getQuizQuestions());
+        copy.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
+        copy.setCompetencyLinks(quizExercise.getCompetencyLinks());
+        copy.setQuizBatches(quizExercise.getQuizBatches());
+        copy.setGradingCriteria(quizExercise.getGradingCriteria());
+        return copy;
+    }
+
 }

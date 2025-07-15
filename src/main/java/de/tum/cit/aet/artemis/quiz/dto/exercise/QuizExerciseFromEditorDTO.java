@@ -14,4 +14,5 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 public record QuizExerciseFromEditorDTO(String title, String channelName, Set<String> categories, Set<CompetencyExerciseLink> competencyLinks, DifficultyLevel difficulty,
         Integer duration, Boolean randomizeQuestionOrder, QuizMode quizMode, Set<QuizBatch> quizBatches, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
         IncludedInOverallScore includedInOverallScore, List<QuizQuestion> quizQuestions) {
+
 }
