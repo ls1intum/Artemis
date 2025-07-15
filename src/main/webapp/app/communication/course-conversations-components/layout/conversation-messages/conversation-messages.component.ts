@@ -722,20 +722,68 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             .sort((a, b) => b.creationDate!.valueOf() - a.creationDate!.valueOf())[0];
     }
 
+    /**
+     * Checks whether the first unread post is fully visible in the scroll container.
+     */
     private isFirstUnreadPostVisible(): boolean {
-        if (!this.unreadPosts.length || !this.content?.nativeElement) {
+        const rects = this.getBoundingRectsForFirstUnreadPost();
+        if (!rects) {
             return false;
         }
+
+        const { postRect, containerRect } = rects;
+        return postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;
+    }
+
+    /**
+     * Scrolls the container to the first unread post (bottom-aligned),
+     * only if it is currently not visible in the viewport.
+     */
+    scrollToFirstUnreadPostIfNotVisible(): void {
+        const rects = this.getBoundingRectsForFirstUnreadPost();
+        if (!rects) {
+            return;
+        }
+
         const firstUnreadPost = this.unreadPosts[this.unreadPosts.length - 1];
-        const message = this.messages.find((m) => m.post.id === firstUnreadPost.id);
+        const component = this.messages.find((m) => m.post.id === firstUnreadPost.id);
+        const postElement = component!.elementRef.nativeElement;
+        const containerElement = this.content.nativeElement;
 
-        if (!message?.elementRef?.nativeElement) {
-            return false;
+        const { postRect, containerRect } = rects;
+        const isVisible = postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;
+
+        if (!isVisible) {
+            requestAnimationFrame(() => {
+                const postOffsetTop = postElement.offsetTop;
+                const postHeight = postElement.offsetHeight;
+                const containerHeight = containerElement.clientHeight;
+
+                const newScrollTop = postOffsetTop + postHeight - containerHeight;
+                containerElement.scrollTop = Math.max(0, newScrollTop);
+            });
+        }
+    }
+
+    /**
+     * Returns the bounding rectangles of the first unread post and the scroll container.
+     * Returns `undefined` if the post or container is not available in the DOM.
+     */
+    private getBoundingRectsForFirstUnreadPost(): { postRect: DOMRect; containerRect: DOMRect } | undefined {
+        if (!this.unreadPosts.length || !this.content?.nativeElement) {
+            return undefined;
         }
 
-        const postRect = message.elementRef.nativeElement.getBoundingClientRect();
+        const firstUnreadPost = this.unreadPosts[this.unreadPosts.length - 1];
+        const component = this.messages.find((m) => m.post.id === firstUnreadPost.id);
+
+        if (!component?.elementRef?.nativeElement) {
+            return undefined;
+        }
+
+        const postRect = component.elementRef.nativeElement.getBoundingClientRect();
         const containerRect = this.content.nativeElement.getBoundingClientRect();
 
-        return postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;
+        return { postRect, containerRect };
     }
 }
