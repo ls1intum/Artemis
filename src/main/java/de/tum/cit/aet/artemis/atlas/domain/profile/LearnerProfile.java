@@ -40,7 +40,7 @@ public class LearnerProfile extends DomainObject {
     public static final int MAX_PROFILE_VALUE = 3;
 
     @JsonIgnoreProperties("learnerProfile")
-    @OneToOne(mappedBy = "learnerProfile", cascade = CascadeType.PERSIST)
+    @OneToOne(mappedBy = "learnerProfile")
     private User user;
 
     @OneToMany(mappedBy = "learnerProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

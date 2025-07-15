@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MAX_PROFILE_VALUE;
-import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MIN_PROFILE_VALUE;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -39,19 +36,6 @@ public class LearnerProfileResource {
     public LearnerProfileResource(UserRepository userRepository, LearnerProfileRepository learnerProfileRepository) {
         this.userRepository = userRepository;
         this.learnerProfileRepository = learnerProfileRepository;
-    }
-
-    /**
-     * Validates that fields are within {@link LearnerProfile#MIN_PROFILE_VALUE} and {@link LearnerProfile#MAX_PROFILE_VALUE}.
-     *
-     * @param value     Value of the field
-     * @param fieldName Field name
-     */
-    private void validateProfileField(int value, String fieldName) {
-        if (value < MIN_PROFILE_VALUE || value > MAX_PROFILE_VALUE) {
-            String message = String.format("%s (%d) is outside valid bounds [%d, %d]", fieldName, value, MIN_PROFILE_VALUE, MAX_PROFILE_VALUE);
-            throw new BadRequestAlertException(message, LearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
-        }
     }
 
     /**
@@ -115,7 +99,10 @@ public class LearnerProfileResource {
         profile.setFormalFeedback(learnerProfileDTO.isFormalFeedback());
         profile.setHasSetupFeedbackPreferences(true);
 
-        LearnerProfile result = learnerProfileRepository.save(profile);
-        return ResponseEntity.ok(LearnerProfileDTO.of(result));
+        user.setLearnerProfile(profile);
+        userRepository.save(user);
+
+        LearnerProfile persistedProfile = learnerProfileRepository.findByUser(user).orElseThrow();
+        return ResponseEntity.ok(LearnerProfileDTO.of(persistedProfile));
     }
 }
