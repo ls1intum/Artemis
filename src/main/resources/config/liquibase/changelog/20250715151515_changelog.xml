@@ -159,6 +159,34 @@ $$;
         </rollback>
     </changeSet>
 
+<changeSet id="20250715151515-create-json-value-function-h2" author="morrien">
+    <preConditions onFail="MARK_RAN">
+        <dbms type="h2"/>
+    </preConditions>
+
+    <sql splitStatements="false" stripComments="false"><![CDATA[
+CREATE ALIAS IF NOT EXISTS JSON_VALUE AS $$
+String jsonValue(String json, String path) throws Exception {
+    if (json == null) {
+        return null;
+    }
+    String key = (path != null && path.startsWith("$."))
+        ? path.substring(2)
+        : path;
+    com.fasterxml.jackson.databind.JsonNode node =
+        new com.fasterxml.jackson.databind.ObjectMapper()
+            .readTree(json)
+            .get(key);
+    return (node == null || node.isNull()) ? null : node.asText();
+}
+$$;
+        ]]></sql>
+
+    <rollback>
+        <sql>DROP ALIAS IF EXISTS JSON_VALUE;</sql>
+    </rollback>
+</changeSet>
+
     <!-- Delete the old table and columns -->
     <!--
     <changeSet id="20250715151515-drop-iris-sub-settings" author="morrien">
