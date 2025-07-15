@@ -199,19 +199,36 @@
         "queryAllDeclaredConstructors": true,
         "queryAllPublicMethods": true,
         "fields": [
-            {"name": "LAST_LTS_VERSION", "allowWrite": true, "allowUnsafeAccess": true}
+            {
+                "name": "LAST_LTS_VERSION",
+                "allowWrite": true,
+                "allowUnsafeAccess": true
+            }
         ]
     },
     {
         "name": "java.lang.Class",
         "methods": [
-            {"name": "getDeclaredField", "parameterTypes": ["java.lang.String"]},
-            {"name": "getDeclaredFields"},
-            {"name": "getField", "parameterTypes": ["java.lang.String"]},
-            {"name": "getFields"}
+            {
+                "name": "getDeclaredField",
+                "parameterTypes": [
+                    "java.lang.String"
+                ]
+            },
+            {
+                "name": "getDeclaredFields"
+            },
+            {
+                "name": "getField",
+                "parameterTypes": [
+                    "java.lang.String"
+                ]
+            },
+            {
+                "name": "getFields"
+            }
         ]
     },
-
     {
         "name": "com.hazelcast.internal.cluster.Versions",
         "allDeclaredFields": true,
@@ -236,21 +253,30 @@
         "name": "com.hazelcast.shaded.org.jctools.queues.MpmcArrayQueueProducerIndexField",
         "allDeclaredFields": true,
         "fields": [
-            {"name": "producerIndex", "allowUnsafeAccess": true}
+            {
+                "name": "producerIndex",
+                "allowUnsafeAccess": true
+            }
         ]
     },
     {
         "name": "com.hazelcast.shaded.org.jctools.queues.MpmcArrayQueueConsumerIndexField",
         "allDeclaredFields": true,
         "fields": [
-            {"name": "consumerIndex", "allowUnsafeAccess": true}
+            {
+                "name": "consumerIndex",
+                "allowUnsafeAccess": true
+            }
         ]
     },
     {
         "name": "com.hazelcast.shaded.org.jctools.queues.MpmcArrayQueueProducerLimitField",
         "allDeclaredFields": true,
         "fields": [
-            {"name": "producerLimit", "allowUnsafeAccess": true}
+            {
+                "name": "producerLimit",
+                "allowUnsafeAccess": true
+            }
         ]
     },
     {
@@ -263,18 +289,35 @@
         "allDeclaredFields": true,
         "allDeclaredMethods": true
     },
-
     {
         "name": "com.hazelcast.internal.partition.impl.MigrationStats",
         "allPublicMethods": true,
         "allDeclaredMethods": true,
         "methods": [
-            {"name": "getElapsedMigrationTimeNanoseconds", "parameterTypes": []},
-            {"name": "getPlannedMigrations", "parameterTypes": []},
-            {"name": "getCompletedMigrations", "parameterTypes": []},
-            {"name": "getTotalCompletedMigrations", "parameterTypes": []},
-            {"name": "getElapsedMigrationOperationTime", "parameterTypes": []},
-            {"name": "getTotalElapsedMigrationOperationTime", "parameterTypes": []}
+            {
+                "name": "getElapsedMigrationTimeNanoseconds",
+                "parameterTypes": []
+            },
+            {
+                "name": "getPlannedMigrations",
+                "parameterTypes": []
+            },
+            {
+                "name": "getCompletedMigrations",
+                "parameterTypes": []
+            },
+            {
+                "name": "getTotalCompletedMigrations",
+                "parameterTypes": []
+            },
+            {
+                "name": "getElapsedMigrationOperationTime",
+                "parameterTypes": []
+            },
+            {
+                "name": "getTotalElapsedMigrationOperationTime",
+                "parameterTypes": []
+            }
         ]
     },
     {
@@ -379,5 +422,363 @@
         "allDeclaredFields": true,
         "allDeclaredMethods": true,
         "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.HazelcastCacheRegionFactory",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.instance.HazelcastInstanceLoader",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "condition": {
+            "typeReachable": "com.hazelcast.hibernate.shaded.caffeine.cache.BLCHeader$DrainStatusRef"
+        },
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.BLCHeader$DrainStatusRef",
+        "allDeclaredFields": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.UnsafeAccess",
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.NodeFactory",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.LocalCacheFactory",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.Caffeine",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.BoundedLocalCache",
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.BoundedLocalCache$BLCHeader",
+        "allDeclaredFields": true,
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.BoundedLocalCache$BLCHeader$DrainStatusRef",
+        "allDeclaredFields": true,
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.BoundedLocalCache$BoundedLocalManualCache",
+        "allDeclaredFields": true,
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.SS",
+        "allDeclaredFields": true,
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.PS",
+        "allDeclaredFields": true,
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.SSMS",
+        "allDeclaredFields": true,
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.SSMSW",
+        "allDeclaredFields": true,
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.PSW",
+        "allDeclaredFields": true,
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.PSWMS",
+        "allDeclaredFields": true,
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "com.hazelcast.hibernate.shaded.caffeine.cache.StripedBuffer",
+        "allDeclaredFields": true,
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "org.hibernate.persister.entity.JoinedSubclassEntityPersister",
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "org.hibernate.persister.entity.SingleTableEntityPersister",
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "org.hibernate.persister.entity.UnionSubclassEntityPersister",
+        "allDeclaredConstructors": true
+    },
+
+    {
+        "name": "de.tum.cit.aet.artemis.core.config.Constants",
+        "allDeclaredFields": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseRatingCountDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.dashboard.ResultCountDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.ExerciseAverageScoreDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.ScoreDistributionDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSumDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.score.TeamScoreSumDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequestsDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponsesDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintsDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequestsDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalculationDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyInformationDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyLectureUnitMasteryCalculationDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyProgressDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitInformationDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.atlas.dto.metrics.ScoreDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.communication.dto.CourseNotificationWithStatusDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.communication.dto.GeneralConversationInfo",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.communication.dto.UserConversationInfo",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.core.dto.CourseStatisticsAverageScore",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.core.dto.StatisticsEntry",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.core.dto.UserRoleDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresAggregatedInformation",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.lecture.dto.SlideDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.programming.dto.BuildJobStatisticsDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionIdAndSubmissionDateDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "SavedPost",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
     }
 ]
