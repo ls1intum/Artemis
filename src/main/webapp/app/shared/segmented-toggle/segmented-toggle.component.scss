@@ -6,3 +6,20 @@
     display: flex;
     width: 100%;
 }
+
+.btn-default {
+    border: 1px solid #ced4da;
+    background: #fff;
+    color: #495057;
+    transition:
+        background 0.2s,
+        color 0.2s,
+        border 0.2s;
+}
+.btn-default:hover {
+    background: #e9ecef;
+    color: #212529;
+    border: 1px solid #adb5bd;
+    cursor: pointer;
+    z-index: 1;
+}
