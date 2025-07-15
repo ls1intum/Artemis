@@ -633,7 +633,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizExercise.setCategories(quizExerciseFromEditorDTO.categories());
         }
         if (quizExerciseFromEditorDTO.competencyLinks() != null) {
-            quizExercise.setCompetencyLinks(new HashSet<>(quizExerciseFromEditorDTO.competencyLinks()));
+            quizExercise.getCompetencyLinks().clear();
+            quizExercise.getCompetencyLinks().addAll(quizExerciseFromEditorDTO.competencyLinks());
         }
         if (quizExerciseFromEditorDTO.difficulty() != null) {
             quizExercise.setDifficulty(quizExerciseFromEditorDTO.difficulty());
@@ -648,7 +649,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizExercise.setQuizMode(quizExerciseFromEditorDTO.quizMode());
         }
         if (quizExerciseFromEditorDTO.quizBatches() != null) {
-            quizExercise.setQuizBatches(new HashSet<>(quizExerciseFromEditorDTO.quizBatches()));
+            quizExercise.getQuizBatches().clear();
+            quizExercise.getQuizBatches().addAll(quizExerciseFromEditorDTO.quizBatches());
         }
         if (quizExerciseFromEditorDTO.releaseDate() != null) {
             quizExercise.setReleaseDate(quizExerciseFromEditorDTO.releaseDate());
