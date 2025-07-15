@@ -72,6 +72,20 @@ graalvmNative {
             buildArgs.addAll([
                 '--initialize-at-run-time=com.hazelcast.shaded.org.jctools.queues,com.hazelcast.shaded.org.jctools.util'
             ])
+
+//            buildArgs.addAll([
+//                '--initialize-at-build-time=org.springframework',
+//                '--initialize-at-build-time=com.hazelcast',
+//            '--initialize-at-build-time=org.apache.commons.logging.impl.SLF4JLocationAwareLog',
+//                '--initialize-at-build-time=com.fasterxml.jackson',
+//
+//                // Exclude problematic classes
+//                '--initialize-at-run-time=org.springframework.boot.context.config.ConfigDataEnvironment',
+//                '--initialize-at-run-time=org.springframework.boot.autoconfigure.web.embedded',
+//                '--initialize-at-run-time=org.springframework.security.config.annotation.method.configuration.AuthorizationProxyWebConfiguration$$SpringCGLIB$$0',
+//                '--initialize-at-run-time=org.springframework.cloud.loadbalancer.config.BlockingLoadBalancerClientAutoConfiguration$BlockingLoadBalancerRetryConfig$$SpringCGLIB$$0',
+//                '--initialize-at-run-time=org.springframework.core.io.VfsUtils'
+//            ])
             buildArgs.addAll(['--initialize-at-build-time=com.hazelcast.instance.GeneratedBuildProperties'])
             buildArgs.addAll([
                 // tell the native‑image builder to include the java.se module
