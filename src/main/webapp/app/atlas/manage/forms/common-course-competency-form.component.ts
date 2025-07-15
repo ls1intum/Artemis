@@ -41,7 +41,6 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
     averageStudentScore = input<number>();
     form = input.required<FormGroup>();
     courseCompetency = input.required<CourseCompetency>();
-
     onTitleOrDescriptionChange = output<void>();
 
     protected readonly competencyValidators = CourseCompetencyValidators;

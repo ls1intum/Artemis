@@ -19,6 +19,7 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Component } from '@angular/core';
 import { getComponentInstanceFromFixture } from 'test/helpers/utils/general-test.utils';
+import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
 
 @Component({
     template: `<jhi-competency-form
@@ -39,7 +40,6 @@ class WrappedComponent {
     lecturesOfCourseWithLectureUnits?: Lecture[];
     averageStudentScore?: number;
     competency: Competency;
-
     formSubmitted(formData: CourseCompetencyFormData) {}
 }
 
@@ -106,7 +106,7 @@ describe('CompetencyFormComponent', () => {
         exampleLecture.lectureUnits = [exampleLectureUnit];
 
         fixture.detectChanges();
-        tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
+        tick(250); // async validator fires after 250 ms and fully filled in form should now be valid!
         expect(competencyFormComponent.form.valid).toBeTrue();
         expect(getAllTitlesSpy).toHaveBeenCalledOnce();
         const submitFormSpy = jest.spyOn(competencyFormComponent, 'submitForm');
@@ -134,8 +134,10 @@ describe('CompetencyFormComponent', () => {
             taxonomy: CompetencyTaxonomy.ANALYZE,
             optional: true,
         };
-        fixture.detectChanges();
+
         component.formData = formData;
+        fixture.detectChanges();
+
         competencyFormComponent.ngOnChanges();
 
         expect(competencyFormComponent.titleControl?.value).toEqual(formData.title);
@@ -185,7 +187,7 @@ describe('CompetencyFormComponent', () => {
         const courseCompetencyService = TestBed.inject(CourseCompetencyService);
         jest.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
         component.isEditMode = true;
-        component.formData.title = 'initialName';
+        component.formData = { title: 'initialName' } as CourseCompetencyFormData;
 
         fixture.detectChanges();
 

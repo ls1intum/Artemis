@@ -17,8 +17,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { InputSignal, signal } from '@angular/core';
-import { CompetencyFormControlsWithViewed } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
 
 describe('CompetencyRecommendationDetailComponent', () => {
     let fixture: ComponentFixture<CompetencyRecommendationDetailComponent>;
@@ -51,18 +49,18 @@ describe('CompetencyRecommendationDetailComponent', () => {
     });
 
     beforeEach(() => {
-        //initialize component
-        component.form = signal(
-            new FormGroup({
-                competency: new FormGroup({
-                    title: new FormControl('Title' as string | undefined, { nonNullable: true }),
-                    description: new FormControl('Description' as string | undefined, { nonNullable: true }),
-                    taxonomy: new FormControl(CompetencyTaxonomy.ANALYZE as CompetencyTaxonomy | undefined, { nonNullable: true }),
-                }),
-                viewed: new FormControl(false, { nonNullable: true }),
+        // Set component inputs using fixture.componentRef.setInput() for signal inputs
+        const testForm = new FormGroup({
+            competency: new FormGroup({
+                title: new FormControl('Title' as string | undefined, { nonNullable: true }),
+                description: new FormControl('Description' as string | undefined, { nonNullable: true }),
+                taxonomy: new FormControl(CompetencyTaxonomy.ANALYZE as CompetencyTaxonomy | undefined, { nonNullable: true }),
             }),
-        ) as unknown as InputSignal<FormGroup<CompetencyFormControlsWithViewed>>;
-        component.index = signal(0) as unknown as InputSignal<number>;
+            viewed: new FormControl(false, { nonNullable: true }),
+        });
+
+        fixture.componentRef.setInput('form', testForm);
+        fixture.componentRef.setInput('index', 0);
     });
 
     afterEach(() => {

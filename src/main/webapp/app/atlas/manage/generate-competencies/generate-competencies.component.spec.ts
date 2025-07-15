@@ -160,9 +160,8 @@ describe('GenerateCompetenciesComponent', () => {
         fixture.detectChanges();
         const router = fixture.debugElement.injector.get<Router>(Router);
         const navigateSpy = jest.spyOn(router, 'navigate');
-        const cancelButton = fixture.debugElement.nativeElement.querySelector('#cancelButton > .jhi-btn');
-
-        cancelButton.click();
+        const cancelButtonDe = fixture.debugElement.query(By.css('#cancelButton'));
+        cancelButtonDe.triggerEventHandler('onClick', null);
 
         expect(navigateSpy).toHaveBeenCalled();
     });
@@ -185,14 +184,15 @@ describe('GenerateCompetenciesComponent', () => {
         const openSpy = jest.spyOn(modalService, 'open');
         const saveSpy = jest.spyOn(comp, 'save');
 
-        //create competency recomendations that are UNVIEWED
         comp.competencies.push(createCompetencyFormGroup());
-        const saveButton = fixture.debugElement.nativeElement.querySelector('#saveButton > .jhi-btn');
-        saveButton.click();
 
         fixture.detectChanges();
 
+        comp.onSubmit();
+
+        fixture.detectChanges();
         await fixture.whenStable();
+
         expect(openSpy).toHaveBeenCalledOnce();
         expect(saveSpy).not.toHaveBeenCalled();
     });
@@ -205,20 +205,18 @@ describe('GenerateCompetenciesComponent', () => {
 
         const navigateSpy = jest.spyOn(router, 'navigate');
         const openSpy = jest.spyOn(modalService, 'open');
-        const response: HttpResponse<Competency[]> = new HttpResponse({
-            body: [],
-            status: 200,
-        });
+        const response: HttpResponse<Competency[]> = new HttpResponse({ body: [], status: 200 });
         const createBulkSpy = jest.spyOn(competencyService, 'createBulk').mockReturnValue(of(response));
 
-        //create competency recomendations that are VIEWED
         comp.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
-        const saveButton = fixture.debugElement.nativeElement.querySelector('#saveButton > .jhi-btn');
-        saveButton.click();
 
         fixture.detectChanges();
 
+        comp.onSubmit();
+
+        fixture.detectChanges();
         await fixture.whenStable();
+
         expect(openSpy).not.toHaveBeenCalled();
         expect(createBulkSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledOnce();
