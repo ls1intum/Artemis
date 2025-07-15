@@ -34,6 +34,12 @@
                 @for (group of groupedPosts; track postsGroupTrackByFn($index, group)) {
                     <div class="message-group">
                         @for (post of group.posts; track postsTrackByFn($index, post)) {
+                            @if (post.id === firstUnreadPostId && unreadPostsCount > 0) {
+                                <div class="new-messages-separator">
+                                    <div class="separator-line" id="unread-post-line"></div>
+                                    <span class="new-label" jhiTranslate="artemisApp.metis.newMessages">New</span>
+                                </div>
+                            }
                             <div class="post-item">
                                 <jhi-posting-thread
                                     #postingThread
@@ -51,19 +57,13 @@
                                     (onNavigateToPost)="onTriggerNavigateToPost($event)"
                                 />
                             </div>
-                            @if (post.id === lastReadPostId && unreadPostsCount > 0) {
-                                <div class="new-messages-separator">
-                                    <div class="separator-line" id="unread-post-line"></div>
-                                    <span class="new-label" jhiTranslate="artemisApp.metis.newMessages">New</span>
-                                </div>
-                            }
                         }
                     </div>
                 }
                 @if (unreadPostsCount > 0 && !atNewPostPosition) {
                     <div class="scroll-sticky-wrapper">
                         <jhi-button
-                            [btnType]="ButtonType.PRIMARY_OUTLINE"
+                            [btnType]="ButtonType.PRIMARY"
                             [btnSize]="ButtonSize.SMALL"
                             [icon]="faArrowDown"
                             id="new-messages-btn"

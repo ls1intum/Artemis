@@ -640,54 +640,10 @@ examples.forEach((activeConversation) => {
 
             component.allPosts = posts;
 
-            const getLastReadPostSpy = jest.spyOn(component as any, 'getLastReadPost');
-            getLastReadPostSpy.mockReturnValue(posts[0]);
-
             (component as any).computeLastReadState();
 
             expect(component.unreadPosts).toHaveLength(2);
             expect(component.unreadPostsCount).toBe(2);
-            expect(component.lastReadPostId).toBe(1);
-            expect(getLastReadPostSpy).toHaveBeenCalled();
-        });
-        it('should return the last read post not authored by the current user', () => {
-            const currentUser = { id: 99, internal: false };
-            const otherUser = { id: 42, internal: false };
-
-            const lastReadDate = dayjs().subtract(10, 'minutes');
-            component._activeConversation = {
-                ...component._activeConversation,
-                lastReadDate,
-            };
-            component.currentUser = currentUser;
-
-            const posts: Post[] = [
-                { id: 1, creationDate: dayjs().subtract(20, 'minutes'), author: otherUser } as Post,
-                { id: 2, creationDate: dayjs().subtract(15, 'minutes'), author: otherUser } as Post,
-                { id: 3, creationDate: dayjs().subtract(11, 'minutes'), author: otherUser } as Post,
-                { id: 4, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post,
-                { id: 5, creationDate: dayjs().subtract(8, 'minutes'), author: currentUser } as Post,
-            ];
-
-            component.allPosts = posts;
-
-            const result = (component as any).getLastReadPost();
-            expect(result).toBeDefined();
-            expect(result!.id).toBe(3);
-        });
-        it('should return undefined if no eligible posts exist', () => {
-            const currentUser = { id: 99, internal: false };
-            component._activeConversation = {
-                ...component._activeConversation,
-                lastReadDate: dayjs().subtract(10, 'minutes'),
-            };
-            component.currentUser = currentUser;
-            component.allPosts = [
-                { id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: currentUser } as Post,
-                { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: currentUser } as Post,
-            ];
-            const result = (component as any).getLastReadPost();
-            expect(result).toBeUndefined();
         });
 
         it('should return true if the first unread post is fully visible within the container', () => {

@@ -123,7 +123,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     page = 1;
     public isFetchingPosts = true;
     currentUser: User;
-    lastReadPostId: number | undefined;
+    firstUnreadPostId: number | undefined;
     unreadPostsCount: number = 0;
     atNewPostPosition = false;
     // Icons
@@ -688,9 +688,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private computeLastReadState(): void {
         this.unreadPosts = this.getUnreadPosts();
         this.unreadPostsCount = this.unreadPosts.length;
-        if (this.unreadPostsCount > 0) {
-            this.lastReadPostId = this.getLastReadPost()?.id;
-        }
     }
 
     /**
@@ -706,22 +703,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         return this.allPosts
             .filter((post) => post.creationDate?.isAfter(lastReadDate) && post.author?.id !== this.currentUser.id)
             .sort((a, b) => b.creationDate!.diff(a.creationDate!));
-    }
-
-    /**
-     * Returns the last post that was read by the current user.
-     * This is determined by checking the creation date of each post against the lastReadDate of the conversation.
-     */
-    private getLastReadPost(): Post | undefined {
-        const lastReadDate = this._activeConversation?.lastReadDate;
-
-        if (!lastReadDate || !this.allPosts || this.allPosts.length === 0) {
-            return undefined;
-        }
-
-        return this.allPosts
-            .filter((post) => post.creationDate && post.author?.id !== this.currentUser.id && (post.creationDate.isBefore(lastReadDate) || post.creationDate.isSame(lastReadDate)))
-            .sort((a, b) => b.creationDate!.valueOf() - a.creationDate!.valueOf())[0];
     }
 
     /**
@@ -776,8 +757,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return undefined;
         }
 
-        const firstUnreadPost = this.unreadPosts[this.unreadPosts.length - 1];
-        const component = this.messages.find((m) => m.post.id === firstUnreadPost.id);
+        this.firstUnreadPostId = this.unreadPosts[this.unreadPosts.length - 1].id;
+        const component = this.messages.find((m) => m.post.id === this.firstUnreadPostId);
 
         if (!component?.elementRef?.nativeElement) {
             return undefined;
