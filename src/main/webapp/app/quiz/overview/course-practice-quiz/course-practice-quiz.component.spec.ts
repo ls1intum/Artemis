@@ -258,6 +258,6 @@ describe('CoursePracticeQuizComponent', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         component.navigateToPractice();
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'practice']);
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'training']);
     });
 });
