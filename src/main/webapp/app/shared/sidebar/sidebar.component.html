@@ -2,16 +2,13 @@
     <div class="d-flex sidebar rounded-3 px-2 sidebar-width hide-on_print" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
         <div class="w-100 bg-module">
             <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
+                @if (showExerciseButton()) {
+                    <div class="d-flex justify-content-center mt-2 mb-1">
+                        <jhi-button (click)="onExerciseButtonClicked()" [title]="'artemisApp.exercise.openTraining'" class="mb-1" fa-icon [icon]="faDumbbell" />
+                    </div>
+                }
                 @if (searchFieldEnabled) {
                     <div class="mt-2 mb-1" [ngClass]="{ 'd-flex align-items-center': inCommunication() }">
-                        @if (showExerciseButton()) {
-                            <div class="mb-2">
-                                <button class="btn btn-primary w-100" (click)="onExerciseButtonClicked()">
-                                    <fa-icon [icon]="faDumbbell" />
-                                    <span>Quiz Trainings Mode</span>
-                                </button>
-                            </div>
-                        }
                         <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-1 flex-grow-1 search-filter" />
                         @if (showFilter) {
                             <div class="ms-2 mt-2 text-primary">

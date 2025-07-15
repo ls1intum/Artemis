@@ -22,6 +22,7 @@ import { SidebarCardDirective } from './directive/sidebar-card.directive';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarItemShowAlways, SidebarTypes } from 'app/shared/types/sidebar';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-sidebar',
@@ -40,6 +41,7 @@ import { ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarI
         SidebarAccordionComponent,
         SidebarCardDirective,
         SearchFilterPipe,
+        ButtonComponent,
     ],
 })
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
