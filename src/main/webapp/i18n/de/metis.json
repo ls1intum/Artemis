@@ -191,7 +191,8 @@
                 "showMore": "Mehr anzeigen"
             },
             "newMessages": "Neu",
-            "newMessagesButton": "Zur ersten ungelesenen Nachricht springen"
+            "newMessageButton": "{{ count }} ungelesene Nachricht",
+            "newMessagesButton": "{{ count }} ungelesene Nachrichten"
         },
         "communicationDisabled": {
             "title": "Willkommen zur Kommunikation!",

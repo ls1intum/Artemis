@@ -29,6 +29,18 @@
                 [scrollWindow]="false"
                 (scrolledUp)="fetchNextPage()"
             >
+                @if (unreadPostsCount > 0 && !atNewPostPosition) {
+                    <div class="scroll-sticky-wrapper">
+                        <button type="button" class="btn btn-primary btn-sm" id="new-messages-btn" (click)="scrollToFirstUnreadPostIfNotVisible()">
+                            <fa-icon [icon]="faArrowDown" class="me-1" />
+                            <span
+                                [jhiTranslate]="unreadPostsCount === 1 ? 'artemisApp.metis.newMessageButton' : 'artemisApp.metis.newMessagesButton'"
+                                [translateValues]="{ count: unreadPostsCount }"
+                            ></span>
+                        </button>
+                    </div>
+                }
+
                 <!-- list of all top level posts -->
                 <!-- answers are opened in the thread sidebar -->
                 @for (group of groupedPosts; track postsGroupTrackByFn($index, group)) {
@@ -58,19 +70,6 @@
                                 />
                             </div>
                         }
-                    </div>
-                }
-                @if (unreadPostsCount > 0 && !atNewPostPosition) {
-                    <div class="scroll-sticky-wrapper">
-                        <jhi-button
-                            [btnType]="ButtonType.PRIMARY"
-                            [btnSize]="ButtonSize.SMALL"
-                            [icon]="faArrowDown"
-                            id="new-messages-btn"
-                            [title]="'artemisApp.metis.newMessagesButton'"
-                            (onClick)="scrollToFirstUnreadPostIfNotVisible()"
-                            >New messages</jhi-button
-                        >
                     </div>
                 }
                 @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && isMobile) {
