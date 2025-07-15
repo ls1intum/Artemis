@@ -8,7 +8,6 @@ import java.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
  */
 @Profile(PROFILE_CORE)
 @Service
-@Lazy
 public class SlideLifecycleService implements SlideLifecycleServiceApi {
 
     private static final Logger log = LoggerFactory.getLogger(SlideLifecycleService.class);
