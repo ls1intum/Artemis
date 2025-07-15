@@ -22,8 +22,7 @@
             <dbms type="mysql"/>
         </preConditions>
 
-        <sql splitStatements="false" stripComments="false"><![CDATA[
-DELIMITER $$
+    <sql splitStatements="false" stripComments="false"><![CDATA[
 CREATE PROCEDURE migrate_chat_settings(
     IN fk_col      VARCHAR(64),
     IN json_col    VARCHAR(64),
@@ -50,9 +49,8 @@ BEGIN
     PREPARE dyn FROM @stmt;
     EXECUTE dyn;
     DEALLOCATE PREPARE dyn;
-END$$
-DELIMITER ;
-        ]]></sql>
+END;
+    ]]></sql>
 
         <sql>CALL migrate_chat_settings('iris_chat_settings_id','iris_programming_exercise_chat_settings','programming-exercise-chat');</sql>
         <sql>CALL migrate_chat_settings('iris_text_exercise_chat_settings_id','iris_text_exercise_chat_settings','text-exercise-chat');</sql>
