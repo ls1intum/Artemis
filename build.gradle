@@ -474,6 +474,8 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"
     testImplementation "org.junit.jupiter:junit-jupiter-engine:${junit_version}"
     testImplementation "org.junit.jupiter:junit-jupiter-params:${junit_version}"
+    testImplementation 'org.junit.platform:junit-platform-launcher:1.9.2'
+
 
     // NOTE: make sure this corresponds to the version used for JUnit in the testImplementation
     testImplementation "org.junit.platform:junit-platform-commons:${junit_platform_version}"
