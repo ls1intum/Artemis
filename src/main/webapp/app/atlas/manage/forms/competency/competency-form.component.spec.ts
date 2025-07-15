@@ -19,7 +19,6 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Component } from '@angular/core';
 import { getComponentInstanceFromFixture } from 'test/helpers/utils/general-test.utils';
-import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
 
 @Component({
     template: `<jhi-competency-form
