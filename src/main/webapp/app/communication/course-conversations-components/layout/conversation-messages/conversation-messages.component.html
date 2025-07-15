@@ -62,7 +62,9 @@
                 }
                 @if (unreadPostsCount > 0 && !atNewPostPosition) {
                     <div class="scroll-sticky-wrapper">
-                        <jhi-button id="new-messages-btn" [title]="'artemisApp.metis.newMessagesButton'">New messages</jhi-button>
+                        <jhi-button [icon]="faArrowDown" id="new-messages-btn" [title]="'artemisApp.metis.newMessagesButton'" (onClick)="scrollToFirstUnreadPostIfNotVisible()"
+                            >New messages</jhi-button
+                        >
                     </div>
                 }
                 @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && isMobile) {
