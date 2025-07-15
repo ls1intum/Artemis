@@ -140,7 +140,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     layoutService: LayoutService = inject(LayoutService);
     accountService: AccountService = inject(AccountService);
-
     constructor() {
         effect(() => {
             this.focusOnPostId = this.focusPostId();
@@ -238,6 +237,15 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         });
         this.content.nativeElement.addEventListener('scroll', () => {
             this.findElementsAtScrollPosition();
+        });
+
+        const el = this.content.nativeElement;
+        const observer = new MutationObserver(() => {
+            this.findElementsAtScrollPosition();
+        });
+        observer.observe(el, {
+            childList: true,
+            subtree: true,
         });
     }
 
