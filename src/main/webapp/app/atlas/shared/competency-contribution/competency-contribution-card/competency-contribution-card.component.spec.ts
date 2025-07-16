@@ -20,7 +20,7 @@ describe('CompetencyContributionCardComponent', () => {
                 CompetencyContributionCardComponent,
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
+                FaIconComponent,
                 MockComponent(FaLayersComponent),
                 MockComponent(NgbProgressbar),
                 MockModule(NgbTooltipModule),

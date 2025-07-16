@@ -13,8 +13,8 @@ describe('DocumentationButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip)],
-            declarations: [DocumentationButtonComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+            imports: [MockDirective(NgbTooltip), FaIconComponent],
+            declarations: [DocumentationButtonComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(TranslateService)],
         })
             .compileComponents()

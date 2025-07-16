@@ -16,8 +16,8 @@ describe('ExportModalComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [NgbNavModule],
-            declarations: [ExportModalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
+            imports: [NgbNavModule, FaIconComponent],
+            declarations: [ExportModalComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [MockProvider(NgbActiveModal), MockProvider(TranslateService)],
         })
             .compileComponents()

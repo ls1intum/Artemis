@@ -13,7 +13,8 @@ describe('AdditionalFeedbackComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [AdditionalFeedbackComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+            imports: [FaIconComponent],
+            declarations: [AdditionalFeedbackComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(LocaleConversionService, {

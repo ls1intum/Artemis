@@ -165,8 +165,8 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip)],
-            declarations: [ExerciseScoresExportButtonComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
+            imports: [MockDirective(NgbTooltip), FaIconComponent],
+            declarations: [ExerciseScoresExportButtonComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(AlertService), { provide: ResultService, useClass: MockResultService }, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

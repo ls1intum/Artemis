@@ -60,13 +60,12 @@ describe('TutorialGroupFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule, FaIconComponent],
             declarations: [
                 TutorialGroupFormComponent,
                 ScheduleFormComponent,
                 MarkdownEditorStubComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisDateRangePipe),
             ],

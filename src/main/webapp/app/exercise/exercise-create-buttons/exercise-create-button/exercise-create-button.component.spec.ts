@@ -21,7 +21,7 @@ describe('ExerciseCreateButtonComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockComponent(FaIconComponent), ExerciseCreateButtonComponent],
+            imports: [FaIconComponent, ExerciseCreateButtonComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },

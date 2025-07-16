@@ -33,7 +33,7 @@ describe('CourseNotificationPresetPickerComponent', () => {
             imports: [
                 CourseNotificationPresetPickerComponent,
                 MockDirective(TranslateDirective),
-                MockComponent(FaIconComponent),
+                FaIconComponent,
                 MockDirective(NgbDropdown),
                 MockDirective(NgbDropdownToggle),
                 MockDirective(NgbDropdownMenu),

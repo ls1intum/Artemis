@@ -41,6 +41,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { FileService } from 'app/shared/service/file.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('FileUploadSubmissionComponent', () => {
     let comp: FileUploadSubmissionComponent;
@@ -53,7 +54,7 @@ describe('FileUploadSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgxDatatableModule],
+            imports: [NgxDatatableModule, FaIconComponent],
             declarations: [
                 FileUploadSubmissionComponent,
                 MockComponent(ComplaintsForTutorComponent),

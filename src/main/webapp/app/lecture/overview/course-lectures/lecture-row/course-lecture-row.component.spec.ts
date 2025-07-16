@@ -35,15 +35,9 @@ describe('CourseLectureRow', () => {
                     { path: 'courses/:courseId/lectures', component: DummyComponent },
                     { path: 'courses/:courseId/lectures/:lectureId', component: DummyComponent },
                 ]),
+                FaIconComponent,
             ],
-            declarations: [
-                DummyComponent,
-                CourseLectureRowComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockComponent(FaIconComponent),
-                MockPipe(ArtemisTimeAgoPipe),
-            ],
+            declarations: [DummyComponent, CourseLectureRowComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()

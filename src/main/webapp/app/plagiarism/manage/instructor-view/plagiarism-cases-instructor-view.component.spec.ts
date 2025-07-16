@@ -21,6 +21,7 @@ import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/pl
 import { Component, ElementRef, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({ template: '' })
 class DummyComponent {}
@@ -113,6 +114,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
                         component: DummyComponent,
                     },
                 ]),
+                FaIconComponent,
             ],
             declarations: [
                 PlagiarismCasesInstructorViewComponent,

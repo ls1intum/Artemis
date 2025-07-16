@@ -20,6 +20,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
@@ -42,7 +43,7 @@ describe('FaqUpdateComponent', () => {
         courseId = 1;
         const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
         TestBed.configureTestingModule({
-            imports: [MockModule(BrowserAnimationsModule)],
+            imports: [MockModule(BrowserAnimationsModule), FaIconComponent],
             declarations: [FaqUpdateComponent, MockComponent(MarkdownEditorMonacoComponent), MockPipe(HtmlForMarkdownPipe), MockRouterLinkDirective],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

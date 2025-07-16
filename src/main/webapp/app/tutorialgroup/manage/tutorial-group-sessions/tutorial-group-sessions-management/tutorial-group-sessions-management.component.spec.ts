@@ -45,6 +45,7 @@ describe('TutorialGroupSessionsManagement', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 TutorialGroupSessionsManagementComponent,
                 TutorialGroupSessionRowStubComponent,
@@ -52,7 +53,6 @@ describe('TutorialGroupSessionsManagement', () => {
                 LoadingIndicatorContainerStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(RemoveSecondsPipe),
-                MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
             ],
             providers: [

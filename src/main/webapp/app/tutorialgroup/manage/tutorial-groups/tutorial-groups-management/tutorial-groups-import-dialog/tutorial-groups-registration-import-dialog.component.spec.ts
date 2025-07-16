@@ -31,8 +31,8 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FormsModule, ReactiveFormsModule],
-            declarations: [TutorialGroupsRegistrationImportDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
+            imports: [FormsModule, ReactiveFormsModule, FaIconComponent],
+            declarations: [TutorialGroupsRegistrationImportDialogComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [MockProvider(TranslateService), MockProvider(AlertService), MockProvider(TutorialGroupsService), MockProvider(NgbActiveModal)],
         }).compileComponents();
 

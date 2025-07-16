@@ -25,6 +25,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { provideHttpClient } from '@angular/common/http';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('TextBlockFeedbackEditorComponent', () => {
     let component: TextBlockFeedbackEditorComponent;
@@ -35,7 +36,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), MockDirective(NgbTooltip)],
+            imports: [TranslateModule.forRoot(), MockDirective(NgbTooltip), FaIconComponent],
             declarations: [
                 TextBlockFeedbackEditorComponent,
                 AssessmentCorrectionRoundBadgeComponent,

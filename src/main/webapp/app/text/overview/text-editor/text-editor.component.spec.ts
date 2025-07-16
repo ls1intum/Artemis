@@ -50,6 +50,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
@@ -74,7 +75,7 @@ describe('TextEditorComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([textEditorRoute[0]])],
+            imports: [RouterModule.forRoot([textEditorRoute[0]]), FaIconComponent],
             declarations: [
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),

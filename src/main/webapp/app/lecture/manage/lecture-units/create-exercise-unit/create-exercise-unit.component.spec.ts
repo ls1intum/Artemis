@@ -38,13 +38,8 @@ describe('CreateExerciseUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
-                CreateExerciseUnitComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(SortDirective),
-                MockDirective(SortByDirective),
-                MockComponent(FaIconComponent),
-            ],
+            imports: [FaIconComponent],
+            declarations: [CreateExerciseUnitComponent, MockPipe(ArtemisTranslatePipe), MockDirective(SortDirective), MockDirective(SortByDirective)],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),

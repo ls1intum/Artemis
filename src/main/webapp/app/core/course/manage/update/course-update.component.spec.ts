@@ -47,6 +47,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
@@ -850,7 +851,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
+            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule), FaIconComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -973,7 +974,7 @@ describe('Course Management Update Component Create', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
+            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule), FaIconComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

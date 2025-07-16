@@ -47,12 +47,12 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     const router = new MockRouter();
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 TutorialGroupFreePeriodsManagementComponent,
                 LoadingIndicatorContainerStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
                 TutorialGroupFreePeriodsTableComponent,
                 MockDirective(TranslateDirective),

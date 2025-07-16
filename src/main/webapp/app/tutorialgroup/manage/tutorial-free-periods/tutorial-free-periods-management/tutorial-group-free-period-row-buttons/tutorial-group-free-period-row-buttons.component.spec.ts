@@ -30,10 +30,10 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 TutorialGroupFreePeriodRowButtonsComponent,
                 MockPipe(ArtemisDatePipe),
-                MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),

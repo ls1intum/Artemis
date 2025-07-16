@@ -21,6 +21,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('Course Management Tab Bar Component', () => {
     let component: CourseManagementTabBarComponent;
@@ -53,7 +54,7 @@ describe('Course Management Tab Bar Component', () => {
                 MockDirective(FeatureToggleLinkDirective),
                 MockDirective(FeatureToggleHideDirective),
             ],
-            imports: [RouterModule],
+            imports: [RouterModule, FaIconComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

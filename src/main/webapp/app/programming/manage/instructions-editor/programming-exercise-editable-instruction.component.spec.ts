@@ -33,6 +33,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -71,7 +72,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip), FaIconComponent],
             declarations: [
                 ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionAnalysisComponent),

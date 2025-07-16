@@ -25,6 +25,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('SidebarComponent', () => {
     let component: SidebarComponent;
@@ -39,6 +40,7 @@ describe('SidebarComponent', () => {
                 MockModule(RouterModule),
                 MockDirective(TranslateDirective),
                 MockComponent(ExerciseFilterModalComponent),
+                FaIconComponent,
             ],
             declarations: [
                 SidebarComponent,

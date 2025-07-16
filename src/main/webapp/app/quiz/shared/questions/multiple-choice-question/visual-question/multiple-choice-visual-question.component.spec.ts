@@ -20,7 +20,7 @@ describe('QuizVisualEditorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MultipleChoiceVisualQuestionComponent, MockModule(NgbTooltipModule), MockComponent(FaIconComponent)],
+            imports: [MultipleChoiceVisualQuestionComponent, MockModule(NgbTooltipModule), FaIconComponent],
             declarations: [MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(ArtemisNavigationUtilService),

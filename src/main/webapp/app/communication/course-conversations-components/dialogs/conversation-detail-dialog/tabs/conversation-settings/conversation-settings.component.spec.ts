@@ -35,13 +35,8 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                declarations: [
-                    ConversationSettingsComponent,
-                    MockDirective(DeleteButtonDirective),
-                    MockComponent(FaIconComponent),
-                    MockPipe(ArtemisTranslatePipe),
-                    MockDirective(TranslateDirective),
-                ],
+                imports: [FaIconComponent],
+                declarations: [ConversationSettingsComponent, MockDirective(DeleteButtonDirective), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
                 providers: [MockProvider(NgbModal), MockProvider(ChannelService), MockProvider(GroupChatService), MockProvider(AlertService)],
             }).compileComponents();
         }));

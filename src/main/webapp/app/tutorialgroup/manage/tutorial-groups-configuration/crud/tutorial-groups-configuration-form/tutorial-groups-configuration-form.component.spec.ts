@@ -28,14 +28,8 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, OwlDateTimeModule, OwlNativeDateTimeModule],
-            declarations: [
-                TutorialGroupsConfigurationFormComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDateRangePipe),
-                MockComponent(FaIconComponent),
-                MockDirective(TranslateDirective),
-            ],
+            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, OwlDateTimeModule, OwlNativeDateTimeModule, FaIconComponent],
+            declarations: [TutorialGroupsConfigurationFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDateRangePipe), MockDirective(TranslateDirective)],
         })
             .compileComponents()
             .then(() => {

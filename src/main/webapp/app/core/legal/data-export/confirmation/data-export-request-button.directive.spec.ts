@@ -6,6 +6,7 @@ import { DataExportRequestButtonDirective } from 'app/core/legal/data-export/con
 import { DataExportConfirmationDialogService } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-test-component',
@@ -23,7 +24,7 @@ describe('DataExportRequestButtonDirective', () => {
 
     beforeEach(() =>
         TestBed.configureTestingModule({
-            imports: [TestComponent],
+            imports: [TestComponent, FaIconComponent],
             providers: [
                 {
                     provide: TranslateService,
