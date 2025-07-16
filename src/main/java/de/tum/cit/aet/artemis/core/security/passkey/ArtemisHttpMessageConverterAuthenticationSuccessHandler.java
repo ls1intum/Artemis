@@ -24,6 +24,7 @@ import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.util.Assert;
 
+import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
@@ -86,7 +87,7 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
         Map<String, Object> details = new HashMap<>(authentication.getDetails() == null ? Map.of() : Map.of("details", authentication.getDetails()));
-        auditEventRepository.add(new AuditEvent(Instant.now(), authentication.getName(), "AUTHENTICATION_PASSKEY_SUCCESS", details));
+        auditEventRepository.add(new AuditEvent(Instant.now(), authentication.getName(), AuditEventConstants.AUTHENTICATION_PASSKEY_SUCCESS, details));
         artemisSuccessfulLoginService.sendLoginEmail(authentication.getName(), AuthenticationMethod.PASSKEY, HttpRequestUtils.getClientEnvironment(request));
 
         this.converter.write(new AuthenticationSuccess(redirectUrl), MediaType.APPLICATION_JSON, new ServletServerHttpResponse(response));
