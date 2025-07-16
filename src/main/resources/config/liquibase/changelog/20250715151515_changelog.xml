@@ -16,7 +16,7 @@
         </addColumn>
     </changeSet>
 
-    <!-- MySQL: parameterized procedure + calls, now without id/discriminator -->
+    <!-- MySQL: parameterized procedure -->
     <changeSet id="20250715151515-migrate-chat-settings-param-mysql" author="morrien">
         <preConditions onFail="MARK_RAN">
             <dbms type="mysql"/>
@@ -77,7 +77,7 @@ END;
         </rollback>
     </changeSet>
 
-    <!-- PostgreSQL: parameterized function + calls, now without id/discriminator -->
+    <!-- PostgreSQL: parameterized function -->
     <changeSet id="20250715151515-migrate-chat-settings-param-postgres" author="morrien">
         <preConditions onFail="MARK_RAN">
             <dbms type="postgresql"/>
@@ -188,16 +188,16 @@ $$;
     <!-- Delete the old table and columns -->
     <!--
     <changeSet id="20250715151515-drop-iris-sub-settings" author="morrien">
-        <dropTable tableName="iris_sub_settings"/>
+        <dropColumn tableName="iris_settings" columnName="iris_chat_settings_id"/>
+        <dropColumn tableName="iris_settings" columnName="iris_text_exercise_chat_settings_id"/>
+        <dropColumn tableName="iris_settings" columnName="iris_course_chat_settings_id"/>
+        <dropColumn tableName="iris_settings" columnName="iris_lecture_ingestion_settings_id"/>
+        <dropColumn tableName="iris_settings" columnName="iris_lecture_chat_settings_id"/>
+        <dropColumn tableName="iris_settings" columnName="iris_faq_ingestion_settings_id"/>
+        <dropColumn tableName="iris_settings" columnName="iris_competency_generation_settings_id"/>
+        <dropColumn tableName="iris_settings" columnName="iris_tutor_suggestion_settings_id"/>
 
-        <dropColumn tableName="iris_settings" columnName="iris_chat_id"/>
-        <dropColumn tableName="iris_settings" columnName="text_exercise_chat_id"/>
-        <dropColumn tableName="iris_settings" columnName="course_chat_id"/>
-        <dropColumn tableName="iris_settings" columnName="lecture_ingestion_id"/>
-        <dropColumn tableName="iris_settings" columnName="lecture_chat_id"/>
-        <dropColumn tableName="iris_settings" columnName="faq_ingestion_id"/>
-        <dropColumn tableName="iris_settings" columnName="competency_generation_id"/>
-        <dropColumn tableName="iris_settings" columnName="tutor_suggestion_id"/>
+        <dropTable tableName="iris_sub_settings"/>
     </changeSet>
     -->
 </databaseChangeLog>
