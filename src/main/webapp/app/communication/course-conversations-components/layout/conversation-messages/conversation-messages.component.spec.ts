@@ -646,13 +646,13 @@ examples.forEach((activeConversation) => {
             expect(component.unreadPostsCount).toBe(2);
         });
 
-        it('should return true if the first unread post is fully visible within the container', () => {
-            const mockRects = {
-                postRect: { top: 100, bottom: 200 },
-                containerRect: { top: 50, bottom: 300 },
-            };
-            jest.spyOn(component as any, 'getBoundingRectsForFirstUnreadPost').mockReturnValue(mockRects);
-            const result = (component as any).isFirstUnreadPostVisible();
+        it('should return true if at least one unread post is visible', () => {
+            const mockPostId = 1;
+            component.unreadPosts = [{ id: mockPostId } as any];
+
+            jest.spyOn(component as any, 'isPostVisible').mockImplementation((id: number) => id === mockPostId);
+
+            const result = (component as any).isAnyUnreadPostVisible();
             expect(result).toBeTrue();
         });
         it('should return false if the first unread post is partially or fully out of view', () => {
@@ -661,7 +661,7 @@ examples.forEach((activeConversation) => {
                 containerRect: { top: 50, bottom: 300 },
             };
             jest.spyOn(component as any, 'getBoundingRectsForFirstUnreadPost').mockReturnValue(mockRects);
-            const result = (component as any).isFirstUnreadPostVisible();
+            const result = (component as any).isAnyUnreadPostVisible();
             expect(result).toBeFalse();
         });
 
@@ -685,6 +685,7 @@ examples.forEach((activeConversation) => {
                 addEventListener: jest.fn(),
                 removeEventListener: jest.fn(),
             };
+
             component.unreadPosts = [mockPost];
             component.messages = [
                 {
@@ -695,6 +696,9 @@ examples.forEach((activeConversation) => {
             component.content = {
                 nativeElement: mockContainerElement,
             } as any;
+
+            (component as any).setFirstUnreadPostId();
+
             const result = (component as any).getBoundingRectsForFirstUnreadPost();
             expect(result).toEqual({ postRect: mockPostRect, containerRect: mockContainerRect });
         });

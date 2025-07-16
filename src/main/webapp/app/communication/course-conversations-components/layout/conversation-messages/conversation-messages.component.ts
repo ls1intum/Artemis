@@ -682,7 +682,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (this.elementsAtScrollPosition && this.elementsAtScrollPosition.length > 0 && this.canStartSaving) {
             this.saveScrollPosition(this.elementsAtScrollPosition[0].post.id!);
         }
-        this.atNewPostPosition = this.isFirstUnreadPostVisible();
+        this.setFirstUnreadPostId();
+        this.atNewPostPosition = this.isAnyUnreadPostVisible();
         this.cdr.detectChanges();
     }
 
@@ -711,19 +712,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         return this.allPosts
             .filter((post) => post.creationDate?.isAfter(lastReadDate) && post.author?.id !== this.currentUser.id)
             .sort((a, b) => b.creationDate!.diff(a.creationDate!));
-    }
-
-    /**
-     * Checks whether the first unread post is fully visible in the scroll container.
-     */
-    private isFirstUnreadPostVisible(): boolean {
-        const rects = this.getBoundingRectsForFirstUnreadPost();
-        if (!rects) {
-            return false;
-        }
-
-        const { postRect, containerRect } = rects;
-        return postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;
     }
 
     /**
@@ -757,17 +745,15 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     /**
-     * Returns the bounding rectangles of the first unread post and the scroll container.
+     * Returns the bounding rectangles of the given post and the scroll container.
      * Returns `undefined` if the post or container is not available in the DOM.
      */
-    private getBoundingRectsForFirstUnreadPost(): { postRect: DOMRect; containerRect: DOMRect } | undefined {
-        if (!this.unreadPosts.length || !this.content?.nativeElement) {
+    private getBoundingRectsForPost(postId: number): { postRect: DOMRect; containerRect: DOMRect } | undefined {
+        if (!this.content?.nativeElement) {
             return undefined;
         }
 
-        this.firstUnreadPostId = this.unreadPosts[this.unreadPosts.length - 1].id;
-        const component = this.messages.find((m) => m.post.id === this.firstUnreadPostId);
-
+        const component = this.messages.find((m) => m.post.id === postId);
         if (!component?.elementRef?.nativeElement) {
             return undefined;
         }
@@ -776,5 +762,44 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         const containerRect = this.content.nativeElement.getBoundingClientRect();
 
         return { postRect, containerRect };
+    }
+
+    /**
+     * Returns the bounding rectangles of the first unread post and the scroll container.
+     * Returns `undefined` if the post or container is not available in the DOM.
+     */
+    private getBoundingRectsForFirstUnreadPost(): { postRect: DOMRect; containerRect: DOMRect } | undefined {
+        if (!this.unreadPosts.length || !this.firstUnreadPostId) {
+            return undefined;
+        }
+
+        return this.getBoundingRectsForPost(this.firstUnreadPostId);
+    }
+
+    private isPostVisible(postId: number): boolean {
+        const rects = this.getBoundingRectsForPost(postId);
+        if (!rects) {
+            return false;
+        }
+
+        const { postRect, containerRect } = rects;
+
+        return postRect.bottom > containerRect.top && postRect.top < containerRect.bottom;
+    }
+
+    private isAnyUnreadPostVisible(): boolean {
+        if (!this.unreadPosts?.length) {
+            return false;
+        }
+
+        return this.unreadPosts.some((unreadPost) => this.isPostVisible(unreadPost.id!));
+    }
+
+    private setFirstUnreadPostId(): void {
+        if (this.unreadPosts.length > 0) {
+            this.firstUnreadPostId = this.unreadPosts[this.unreadPosts.length - 1].id;
+        } else {
+            this.firstUnreadPostId = undefined;
+        }
     }
 }
