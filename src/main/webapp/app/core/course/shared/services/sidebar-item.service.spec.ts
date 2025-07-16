@@ -92,33 +92,34 @@ describe('CourseSidebarItemService', () => {
     });
 
     describe('getStudentDefaultItems', () => {
-        it('should return items without dashboard when hasDashboard is false', () => {
-            const items = service.getStudentDefaultItems(false);
+        it('should return items without dashboard when hasDashboard is false and questionsAvailableForPractice is false', () => {
+            const items = service.getStudentDefaultItems(false, false);
 
             expect(items).toHaveLength(2);
             expect(items[0].title).toBe('Exercises');
             expect(items[1].title).toBe('Statistics');
         });
 
-        it('should include dashboard item when hasDashboard is true', () => {
-            const items = service.getStudentDefaultItems(true);
+        it('should include dashboard item when hasDashboard is true and questionsAvailableForPractice is true', () => {
+            const items = service.getStudentDefaultItems(true, true);
 
-            expect(items).toHaveLength(3);
+            expect(items).toHaveLength(4);
             expect(items[0].title).toBe('Dashboard');
             expect(items[1].title).toBe('Exercises');
-            expect(items[2].title).toBe('Statistics');
+            expect(items[2].title).toBe('Training');
+            expect(items[3].title).toBe('Statistics');
         });
     });
 
     describe('Individual item methods', () => {
         it('getPracticeItem should return correct item', () => {
-            const item = service.getPracticeItem();
+            const item = service.getTrainingItem();
 
             expect(item).toEqual({
-                routerLink: 'practice',
+                routerLink: 'training',
                 icon: faDumbbell,
-                title: 'Practice',
-                translation: 'overview.practice',
+                title: 'Training',
+                translation: 'overview.training',
                 hidden: false,
             });
         });
