@@ -12,7 +12,6 @@ import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-
 enum TableColumn {
     ID = 'ID',
     USER_NAME = 'USER_NAME',
@@ -50,6 +49,10 @@ export class LearningPathsTableComponent {
     private readonly debounceLoadLearningPaths = BaseApiHttpService.debounce(this.loadLearningPaths.bind(this), 300);
 
     readonly averageProgress = signal<number | undefined>(undefined);
+    readonly formattedAverageProgress = computed(() => {
+        const progress = this.averageProgress();
+        return progress !== undefined ? progress.toFixed(2) : undefined;
+    });
 
     constructor() {
         effect(() => {
@@ -98,7 +101,6 @@ export class LearningPathsTableComponent {
     async setPage(pageNumber: number): Promise<void> {
         this.page.set(pageNumber);
         await this.loadLearningPaths(this.courseId());
-        await this.loadAverageProgress(this.courseId());
     }
 
     openCompetencyGraph(learningPathId: number, name: string | undefined): void {

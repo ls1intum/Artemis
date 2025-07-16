@@ -241,6 +241,7 @@ public class LearningPathService {
         double totalProgress = learningPaths.stream().mapToInt(LearningPath::getProgress).sum();
 
         double averageProgress = totalProgress / learningPaths.size();
+        averageProgress = Math.round(averageProgress * 100.0) / 100.0;
 
         return new LearningPathAverageProgressDTO(courseId, averageProgress, learningPaths.size());
     }

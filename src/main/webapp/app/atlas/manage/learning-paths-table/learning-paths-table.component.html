@@ -59,7 +59,7 @@
         </div>
         <div class="mt-3">
             <strong jhiTranslate="artemisApp.learningPathManagement.averageProgress"></strong>:
-            {{ averageProgress() !== undefined ? averageProgress() + '%' : 'N/A' }}
+            {{ formattedAverageProgress() !== undefined ? formattedAverageProgress() + '%' : 'N/A' }}
         </div>
         <ngb-pagination
             [maxSize]="5"
