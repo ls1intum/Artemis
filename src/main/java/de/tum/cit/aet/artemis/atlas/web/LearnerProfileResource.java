@@ -46,11 +46,25 @@ public class LearnerProfileResource {
      */
     @GetMapping("learner-profile")
     @EnforceAtLeastStudent
-    public ResponseEntity<LearnerProfileDTO> getLearnerProfile() {
+    public ResponseEntity<LearnerProfileDTO> getOrCreateLearnerProfile() {
         User user = userRepository.getUser();
-        log.debug("REST request to get LearnerProfile of user {}", user.getLogin());
-        LearnerProfile profile = learnerProfileRepository.findByUserElseThrow(user);
-        return ResponseEntity.ok(LearnerProfileDTO.of(profile));
+        log.debug("REST request to get or create LearnerProfile of user {}", user.getLogin());
+
+        if (learnerProfileRepository.findByUser(user).isPresent()) {
+            return ResponseEntity.ok(LearnerProfileDTO.of(learnerProfileRepository.findByUserElseThrow(user)));
+        }
+
+        LearnerProfile profile = new LearnerProfile();
+        profile.setUser(user);
+        profile.setBriefFeedback(false);
+        profile.setFormalFeedback(false);
+        profile.setHasSetupFeedbackPreferences(false);
+
+        user.setLearnerProfile(profile);
+        userRepository.save(user);
+
+        LearnerProfile persistedProfile = learnerProfileRepository.findByUser(user).orElseThrow();
+        return ResponseEntity.ok(LearnerProfileDTO.of(persistedProfile));
     }
 
     /**
