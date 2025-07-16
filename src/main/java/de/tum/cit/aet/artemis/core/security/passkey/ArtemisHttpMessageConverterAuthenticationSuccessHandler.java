@@ -1,11 +1,16 @@
 package de.tum.cit.aet.artemis.core.security.passkey;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
@@ -32,6 +37,8 @@ import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
  */
 public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
+    private final AuditEventRepository auditEventRepository;
+
     private HttpMessageConverter<Object> converter;
 
     private RequestCache requestCache = new HttpSessionRequestCache();
@@ -40,8 +47,9 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
 
     private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
 
-    public ArtemisHttpMessageConverterAuthenticationSuccessHandler(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService,
-            ArtemisSuccessfulLoginService artemisSuccessfulLoginService) {
+    public ArtemisHttpMessageConverterAuthenticationSuccessHandler(final AuditEventRepository auditEventRepository, HttpMessageConverter<Object> converter,
+            JWTCookieService jwtCookieService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService) {
+        this.auditEventRepository = auditEventRepository;
         this.jwtCookieService = jwtCookieService;
         this.converter = converter;
         this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
@@ -77,6 +85,8 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
+        Map<String, Object> details = new HashMap<>(authentication.getDetails() == null ? Map.of() : Map.of("details", authentication.getDetails()));
+        auditEventRepository.add(new AuditEvent(Instant.now(), authentication.getName(), "AUTHENTICATION_PASSKEY_SUCCESS", details));
         artemisSuccessfulLoginService.sendLoginEmail(authentication.getName(), AuthenticationMethod.PASSKEY, HttpRequestUtils.getClientEnvironment(request));
 
         this.converter.write(new AuthenticationSuccess(redirectUrl), MediaType.APPLICATION_JSON, new ServletServerHttpResponse(response));
