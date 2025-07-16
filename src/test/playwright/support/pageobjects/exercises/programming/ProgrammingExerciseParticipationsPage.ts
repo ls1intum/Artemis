@@ -1,5 +1,6 @@
-import { Page, expect } from '@playwright/test';
+import { Page, expect, Locator } from '@playwright/test';
 import { RepositoryPage } from './RepositoryPage';
+import { UserCredentials } from '../../../users';
 
 export class ProgrammingExerciseParticipationsPage {
     private readonly page: Page;
@@ -9,23 +10,42 @@ export class ProgrammingExerciseParticipationsPage {
     }
 
     getParticipation(participationId: number) {
+        return this.getParticipationByText(participationId.toString());
+    }
+
+    getStudentParticipation(user: UserCredentials) {
+        return this.getParticipationByText(user.username);
+    }
+
+    private getParticipationByText(text: string) {
         return this.page
             .getByRole('table')
             .getByRole('row')
-            .filter({ hasText: `${participationId}` });
+            .filter({ hasText: `${text}` });
     }
 
-    private async getParticipationCell(participationId: number, columnName: string) {
+    public async openStudentParticipationSubmissions(user: UserCredentials) {
+        let row = this.getStudentParticipation(user);
+        await row.waitFor({ state: 'visible' });
+        let id = await this.getParticipationCellByLocator(row, 'Submissions');
+        await id!.locator('a').click();
+        await this.page.waitForURL('**/participations/*/submissions');
+    }
+
+    public async getParticipationCellByLocator(participationRow: Locator, columnName: string) {
         const headerCells = this.page.getByRole('table').getByRole('columnheader');
         const numberOfColumns = await headerCells.count();
-        const participationRow = this.getParticipation(participationId);
-
         for (let columnIndex = 0; columnIndex < numberOfColumns; columnIndex++) {
             const textContent = await headerCells.nth(columnIndex).textContent();
             if (textContent?.includes(columnName)) {
                 return participationRow.getByRole('cell').nth(columnIndex);
             }
         }
+    }
+
+    private async getParticipationCell(participationId: number, columnName: string) {
+        let participationRow: Locator = this.getParticipation(participationId);
+        return await this.getParticipationCellByLocator(participationRow, columnName);
     }
 
     async openRepositoryOnNewPage(participationId: number): Promise<RepositoryPage> {
