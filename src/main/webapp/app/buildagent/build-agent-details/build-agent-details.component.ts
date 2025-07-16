@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
 import {
@@ -43,6 +43,7 @@ import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
 import { TwoStageStepperComponent } from 'app/buildagent/shared/twostagestepper/two-stage-stepper.component';
 
 @Component({
@@ -68,6 +69,7 @@ import { TwoStageStepperComponent } from 'app/buildagent/shared/twostagestepper/
         NgxDatatableModule,
         NgbPagination,
         FormsModule,
+        SliceNavigatorComponent,
         TwoStageStepperComponent,
     ],
 })
@@ -95,6 +97,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     readonly runningBuildJobsChannel = '/topic/admin/running-jobs';
 
     finishedBuildJobs: FinishedBuildJob[] = [];
+
+    hasMore = signal(true);
+
     newConcurrency: number;
     maxConcurrentJobs: number = navigator.hardwareConcurrency || 16;
 
@@ -109,6 +114,10 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     readonly faSort = faSort;
     readonly faSync = faSync;
     readonly faCog = faCog;
+    readonly paginationConfig: PaginationConfig = {
+        pageSize: ITEMS_PER_PAGE,
+        initialPage: 1,
+    };
 
     //Filter
     searchSubscription: Subscription;
@@ -345,7 +354,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * @private
      */
     private onSuccess(finishedBuildJobs: FinishedBuildJob[], headers: HttpHeaders) {
-        this.totalItems = Number(headers.get('X-Total-Count'));
+        this.hasMore.set(headers.get('x-has-next') === 'true');
         this.finishedBuildJobs = finishedBuildJobs;
         this.setFinishedBuildJobsDuration();
     }
@@ -393,11 +402,12 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     /**
      * Callback function when the user navigates through the page results
      *
-     * @param pageNumber The current page number
+     * @param event The event containing the new page number
      */
-    onPageChange(pageNumber: number) {
-        if (pageNumber) {
-            this.page = pageNumber;
+    onPageChange(event: PageChangeEvent) {
+        const newPage = event?.page;
+        if (newPage) {
+            this.page = newPage;
             this.loadFinishedBuildJobs();
         }
     }

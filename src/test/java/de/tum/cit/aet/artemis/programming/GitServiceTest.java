@@ -48,7 +48,6 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
     @AfterEach
     void afterEach() {
         gitUtilService.deleteRepos();
-        gitService.clearCachedRepositories();
     }
 
     @Test
@@ -190,20 +189,10 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
     @Test
     void testGetExistingCheckedOutRepositoryByLocalPathRemovesEmptyRepo() throws IOException {
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
-
         doReturn(localRepo.getLocalPath()).when(gitService).getLocalPathOfRepo(any(), any());
-
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUri())).isFalse();
-
         gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUri());
-
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUri())).isTrue();
-
         FileUtils.deleteDirectory(localRepo.getLocalPath().toFile());
-
         Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUri());
-
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUri())).isFalse();
         assertThat(repo).isNull();
     }
 
