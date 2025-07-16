@@ -572,6 +572,19 @@ public class LocalVCServletService {
     }
 
     /**
+     * Retrieves a user based on the provided authorization header.
+     *
+     * @param authorizationHeader the authorization header containing Basic credentials
+     * @return the {@link User}
+     * @throws LocalVCAuthException if the user could not be found or if the authorization header is invalid
+     */
+    public User getUserByAuthHeader(String authorizationHeader) throws LocalVCAuthException {
+        UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+        String username = usernameAndPassword.username();
+        return userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
+    }
+
+    /**
      * Attempts to load a programming exercise participation based on the provided parameters.
      *
      * @param usingSSH                 {@code true} if the user's session is over SSH, {@code false} if over HTTP
