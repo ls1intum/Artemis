@@ -106,7 +106,7 @@ describe('Course Management Update Component', () => {
             data: of({ course }),
         } as any as ActivatedRoute;
         TestBed.configureTestingModule({
-            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
+            imports: [FaIconComponent, MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

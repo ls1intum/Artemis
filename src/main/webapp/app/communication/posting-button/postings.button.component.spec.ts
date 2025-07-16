@@ -3,6 +3,7 @@ import { DebugElement } from '@angular/core';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { getElement } from 'test/helpers/utils/general-test.utils';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 describe('PostingButtonComponent', () => {
     let component: PostingButtonComponent;
@@ -22,7 +23,7 @@ describe('PostingButtonComponent', () => {
     });
 
     it('should have icon shown if property set', () => {
-        component.buttonIcon = 'plus';
+        component.buttonIcon = faPlus;
         fixture.detectChanges();
         const button = getElement(debugElement, 'fa-icon');
         expect(button).not.toBeNull();

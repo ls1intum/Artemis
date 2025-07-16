@@ -9,10 +9,7 @@ describe('ChannelIconComponent', () => {
     let fixture: ComponentFixture<ChannelIconComponent>;
 
     beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [ChannelIconComponent],
-        }).compileComponents();
+        TestBed.configureTestingModule({ imports: [ChannelIconComponent, FaIconComponent] }).compileComponents();
     }));
 
     beforeEach(() => {
