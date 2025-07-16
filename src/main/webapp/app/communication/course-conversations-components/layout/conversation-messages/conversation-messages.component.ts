@@ -743,8 +743,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
         const { postRect, containerRect } = rects;
         const isVisible = postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;
-        //we use 20 as offset, since some times the post is not fully visible at the bottom without it
-        const heightOffset = 20;
+        //we use 1 as offset, since some times the post is not fully visible at the bottom. This is due to the fact that the post might have a small margin at the bottom.
+        const heightOffset = 1;
         if (!isVisible) {
             requestAnimationFrame(() => {
                 const postOffsetTop = postElement.offsetTop;

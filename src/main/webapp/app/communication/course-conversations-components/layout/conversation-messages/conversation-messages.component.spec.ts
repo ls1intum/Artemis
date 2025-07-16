@@ -755,7 +755,7 @@ examples.forEach((activeConversation) => {
                 return 0;
             });
             (component as any).scrollToFirstUnreadPostIfNotVisible();
-            const heightOffset = 20;
+            const heightOffset = 1;
             const expectedScrollTop = mockPostElement.offsetTop + mockPostElement.offsetHeight - mockContainerElement.clientHeight + heightOffset;
             expect(mockContainerElement.scrollTop).toBe(expectedScrollTop);
             rafSpy.mockRestore();
