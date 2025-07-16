@@ -733,7 +733,9 @@
             },
             "artemisIntelligence": {
                 "consistencyCheckAlert": {
-                    "title": "Resultat der Konsistenzprüfung"
+                    "title": "Resultat der Konsistenzprüfung",
+                    "improvement": "Verbesserungsempfehlung",
+                    "inconsistencies": "Bitte überprüfe die FAQ auf inhaltliche Inkonsistenzen und passe es entsprechend an, damit es stimmig und klar verständlich ist."
                 }
             }
         },
