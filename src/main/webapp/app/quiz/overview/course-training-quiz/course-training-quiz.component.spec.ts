@@ -133,13 +133,6 @@ describe('CourseTrainingQuizComponent', () => {
         expect(initQuestionSpy).toHaveBeenCalledWith(question2);
     });
 
-    it('should navigate to practice when on last question', () => {
-        component.currentIndex.set(2);
-        const spy = jest.spyOn(component, 'navigateToPractice');
-        component.nextQuestion();
-        expect(spy).toHaveBeenCalledOnce();
-    });
-
     it('should init the current question', () => {
         component.initQuestion(question1);
         expect(component.showingResult).toBeFalsy();

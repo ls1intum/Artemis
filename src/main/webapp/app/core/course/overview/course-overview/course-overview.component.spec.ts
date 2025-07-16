@@ -64,6 +64,8 @@ import { CourseNotificationService } from 'app/communication/course-notification
 import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
 import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
 import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
+import { CourseTrainingQuizService } from '../../../../quiz/overview/service/course-training-quiz.service';
+import { QuizQuestion } from '../../../../quiz/shared/entities/quiz-question.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -142,6 +144,7 @@ describe('CourseOverviewComponent', () => {
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
+    let courseTrainingQuizService: CourseTrainingQuizService;
     let router: MockRouter;
     let jhiWebsocketServiceSubscribeSpy: jest.SpyInstance;
     let findOneForDashboardStub: jest.SpyInstance;
@@ -248,6 +251,7 @@ describe('CourseOverviewComponent', () => {
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(WebsocketService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
+                courseTrainingQuizService = TestBed.inject(CourseTrainingQuizService);
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
                 jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
@@ -295,6 +299,7 @@ describe('CourseOverviewComponent', () => {
         const notifyAboutCourseAccessStub = jest.spyOn(courseAccessStorageService, 'onCourseAccessed');
         const getSidebarItems = jest.spyOn(component, 'getSidebarItems');
         const getCourseActionItems = jest.spyOn(component, 'getCourseActionItems');
+        const getQuestionsAvailableForPracticeStub = jest.spyOn(courseTrainingQuizService, 'getQuizQuestions');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
@@ -305,6 +310,7 @@ describe('CourseOverviewComponent', () => {
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
         expect(getSidebarItems).toHaveBeenCalledOnce();
         expect(getCourseActionItems).toHaveBeenCalledOnce();
+        expect(getQuestionsAvailableForPracticeStub).toHaveBeenCalledOnce();
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
             course1.id,
             CourseAccessStorageService.STORAGE_KEY,
@@ -323,12 +329,20 @@ describe('CourseOverviewComponent', () => {
         expect(sidebarItems.length).toBeGreaterThan(0);
         expect(sidebarItems[0].title).toContain('Dashboard');
         expect(sidebarItems[1].title).toContain('Exercises');
-        expect(sidebarItems[2].title).toContain('Training');
-        expect(sidebarItems[3].title).toContain('Lectures');
+        expect(sidebarItems[2].title).toContain('Lectures');
     });
 
     it('should create sidebar items with default items', () => {
         component.course.set({ id: 123, lectures: [], exams: [] });
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
+        expect(sidebarItems[0].title).toContain('Exercises');
+        expect(sidebarItems[1].title).toContain('Lectures');
+    });
+
+    it('should create sidebar items for student if questions are available for practice', () => {
+        component.course.set({ id: 123, lectures: [], exams: [] });
+        component.questionsAvailableForPractice.set(true);
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
         expect(sidebarItems[0].title).toContain('Exercises');
@@ -340,13 +354,13 @@ describe('CourseOverviewComponent', () => {
         component.course.set({ id: 123, numberOfPrerequisites: 3, learningPathsEnabled: true });
         component.atlasEnabled = true;
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[3].title).toContain('Competencies');
-        expect(sidebarItems[4].title).toContain('Learning Path');
+        expect(sidebarItems[2].title).toContain('Competencies');
+        expect(sidebarItems[3].title).toContain('Learning Path');
     });
     it('should create faq item when faqs are enabled', () => {
         component.course.set({ id: 123, faqEnabled: true });
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[3].title).toContain('FAQs');
+        expect(sidebarItems[2].title).toContain('FAQs');
     });
 
     it('loads conversations when switching to message tab once', async () => {
@@ -859,5 +873,33 @@ describe('CourseOverviewComponent', () => {
 
         expect((component as any).selectableSettingPresets).toBeDefined();
         expect((component as any).selectedSettingPreset).toBeDefined();
+    }));
+
+    it('should set questionsAvailableForPractice to true if questions are available', fakeAsync(() => {
+        const mockQuizQuestion: QuizQuestion = {
+            id: 1,
+            title: 'Testfrage',
+            randomizeOrder: false,
+            invalid: false,
+            exportQuiz: false,
+        };
+
+        jest.spyOn(courseTrainingQuizService, 'getQuizQuestions').mockReturnValue(of([mockQuizQuestion]));
+
+        component.ngOnInit();
+
+        tick();
+
+        expect(component.questionsAvailableForPractice()).toBeTrue();
+    }));
+
+    it('should set questionsAvailableForPractice to false if no questions are available', fakeAsync(() => {
+        jest.spyOn(courseTrainingQuizService, 'getQuizQuestions').mockReturnValue(of([]));
+
+        component.ngOnInit();
+
+        tick();
+
+        expect(component.questionsAvailableForPractice()).toBeFalse();
     }));
 });
