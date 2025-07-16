@@ -1,0 +1,457 @@
+components:
+  responses:
+    UnauthorizedError:
+      content:
+        application/json:
+          schema:
+            properties:
+              detail:
+                type: string
+            type: object
+      description: Authentication failed - API key is missing or invalid
+  schemas:
+    ArtifactLocation:
+      description: Location information for artifacts.
+      properties:
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional description of the location
+          title: Description
+        end_line:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: End line in the content
+          title: End Line
+        file_path:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Path in the repository, empty for problem statement
+          title: File Path
+        start_line:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Start line in the content
+          title: Start Line
+        type:
+          $ref: '#/components/schemas/ArtifactType'
+          description: Type of artifact
+      required:
+      - type
+      title: ArtifactLocation
+      type: object
+    ArtifactType:
+      description: Artifact type enumeration.
+      enum:
+      - PROBLEM_STATEMENT
+      - TEMPLATE_REPOSITORY
+      - SOLUTION_REPOSITORY
+      - TEST_REPOSITORY
+      title: ArtifactType
+      type: string
+    ComponentHealth:
+      description: Health status of an individual system component.
+      properties:
+        details:
+          nullable: true
+      required:
+      - status
+      title: ComponentHealth
+      type: object
+    ConsistencyCheckRequest:
+      description: Request model for consistency check
+      properties:
+        issue_categories:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ConsistencyIssueCategory'
+            type: array
+          - type: 'null'
+          description: Specify issue categories to check (leave empty for all)
+          title: Issue Categories
+        problem_statement:
+          description: Problem statement to check
+          title: Problem Statement
+          type: string
+        solution_repository:
+          $ref: '#/components/schemas/Repository'
+          description: Solution repository to check
+        template_repository:
+          $ref: '#/components/schemas/Repository'
+          description: Template repository to check
+        test_repository:
+          $ref: '#/components/schemas/Repository'
+          description: Test repository to check
+      required:
+      - problem_statement
+      - solution_repository
+      - template_repository
+      - test_repository
+      title: ConsistencyCheckRequest
+      type: object
+    ConsistencyCheckResponse:
+      description: Response model for consistency check
+      properties:
+        issues:
+          description: List of consistency issues found
+          items:
+            $ref: '#/components/schemas/ConsistencyIssue'
+          title: Issues
+          type: array
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+          description: Response metadata
+      required:
+      - issues
+      - metadata
+      title: ConsistencyCheckResponse
+      type: object
+    ConsistencyIssue:
+      description: Represents a consistency issue found during review.
+      properties:
+        category:
+          $ref: '#/components/schemas/ConsistencyIssueCategory'
+          description: Specific category of the issue
+        description:
+          description: Description of the consistency issue
+          title: Description
+          type: string
+        primary_location:
+          $ref: '#/components/schemas/ArtifactLocation'
+          description: Primary location where issue was detected
+        related_locations:
+          description: Related locations across artifacts
+          items:
+            $ref: '#/components/schemas/ArtifactLocation'
+          title: Related Locations
+          type: array
+        severity:
+          $ref: '#/components/schemas/ConsistencyIssueSeverity'
+          description: Severity level of the issue
+        suggested_fix:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Simple suggested fix as a string
+          title: Suggested Fix
+        type:
+          $ref: '#/components/schemas/ConsistencyIssueType'
+          description: Type category of the issue
+      required:
+      - description
+      - severity
+      - type
+      - category
+      - primary_location
+      title: ConsistencyIssue
+      type: object
+    ConsistencyIssueCategory:
+      description: Specific categories for consistency issues.
+      enum:
+      - METHOD_SIGNATURE_MISMATCH
+      - CONSTRUCTOR_SIGNATURE_MISMATCH
+      - INTERFACE_IMPLEMENTATION_CONFLICT
+      - TYPE_DECLARATION_CONFLICT
+      - INHERITANCE_HIERARCHY_MISMATCH
+      - PACKAGE_STRUCTURE_MISMATCH
+      - MISSING_REQUIRED_ELEMENT
+      - NAMING_INCONSISTENCY
+      - UML_TEXT_DEVIATION
+      - EXAMPLE_CONTRADICTION
+      - SPECIFICATION_AMBIGUITY
+      - CONSTRAINT_VIOLATION
+      - REQUIREMENT_GAP
+      - TEST_OBJECTIVE_MISMATCH
+      - TEST_COVERAGE_INCOMPLETE
+      - TEST_DATA_INCONSISTENT
+      - GRADING_CRITERIA_CONFLICT
+      - TEST_METHOD_NAMING_CONFLICT
+      - COGNITIVE_LEVEL_MISMATCH
+      - SCAFFOLDING_DISCONTINUITY
+      - PREREQUISITE_ASSUMPTION_VIOLATION
+      - LEARNING_OBJECTIVE_CONTRADICTION
+      - COMPLEXITY_PROGRESSION_VIOLATION
+      - SKILL_TRANSFER_IMPEDIMENT
+      title: ConsistencyIssueCategory
+      type: string
+    ConsistencyIssueSeverity:
+      description: Severity levels for consistency issues.
+      enum:
+      - LOW
+      - MEDIUM
+      - HIGH
+      title: ConsistencyIssueSeverity
+      type: string
+    ConsistencyIssueType:
+      description: Type categories for consistency issues.
+      enum:
+      - STRUCTURAL
+      - SEMANTIC
+      - ASSESSMENT
+      - PEDAGOGICAL
+      title: ConsistencyIssueType
+      type: string
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    HealthCheck:
+      description: Response model for system health information.
+      example:
+        components:
+          system:
+            details:
+              platform: macOS-14.3.1-arm64
+            status: OK
+        status: OK
+        timestamp: '2025-03-06T12:00:00'
+        uptime_seconds: 3600
+        version: 1.0.0
+      properties:
+        components:
+          additionalProperties:
+            $ref: '#/components/schemas/ComponentHealth'
+          description: Status of individual components
+          title: Components
+          type: object
+        status:
+          description: Overall system status
+          title: Status
+          type: string
+        timestamp:
+          description: Time when health check was performed
+          format: date-time
+          title: Timestamp
+          type: string
+        uptime_seconds:
+          description: Application uptime in seconds
+          title: Uptime Seconds
+          type: integer
+        version:
+          description: Application version
+          title: Version
+          type: string
+      required:
+      - status
+      - version
+      - uptime_seconds
+      title: HealthCheck
+      type: object
+    Metadata:
+      description: Metadata for requests and responses.
+      properties:
+        trace_id:
+          description: UUID with LLM trace ID
+          title: Trace Id
+          type: string
+      required:
+      - trace_id
+      title: Metadata
+      type: object
+    Repository:
+      description: Represents a collection of files that form a repository.
+      properties:
+        files:
+          description: Files contained in the repository
+          items:
+            $ref: '#/components/schemas/RepositoryFile'
+          title: Files
+          type: array
+      required:
+      - files
+      title: Repository
+      type: object
+    RepositoryFile:
+      description: Represents a file in a repository with content.
+      properties:
+        content:
+          description: File content
+          title: Content
+          type: string
+        path:
+          description: File path relative to the repository root
+          title: Path
+          type: string
+      required:
+      - path
+      - content
+      title: RepositoryFile
+      type: object
+    RewriteProblemStatementRequest:
+      description: Request model for problem statement rewriting
+      properties:
+        text:
+          description: Text to rewrite
+          title: Text
+          type: string
+      required:
+      - text
+      title: RewriteProblemStatementRequest
+      type: object
+    RewriteProblemStatementResponse:
+      description: Response model for problem statement rewriting
+      properties:
+        rewritten_text:
+          description: Rewritten text
+          title: Rewritten Text
+          type: string
+      required:
+      - rewritten_text
+      title: RewriteProblemStatementResponse
+      type: object
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+  securitySchemes:
+    ApiKeyAuth:
+      description: API key authentication
+      in: header
+      name: X-API-Key
+      type: apiKey
+info:
+  contact:
+    email: felixtj.dietrich@tum.de
+    name: Felix T.J. Dietrich
+  description: Hyperion is an AI-powered microservice that empowers instructors by
+    generating and refining programming exercises. By integrating with modern learning
+    management systems and CI build agents, Hyperion delivers context-aware suggestions
+    and code stubs to enhance educational content.
+  title: Hyperion
+  version: 0.1.0
+openapi: 3.1.0
+paths:
+  /health:
+    get:
+      description: "## Perform a Health Check\n\nEndpoint to perform a health check\
+        \ on the service. This endpoint can be used by:\n\n- Container orchestrators\
+        \ like Docker or Kubernetes to ensure service health\n- Load balancers to\
+        \ determine if the service should receive traffic\n- Monitoring tools to track\
+        \ service availability\n\nThe endpoint returns information about system health\
+        \ including uptime and version.\n\nReturns:\n    HealthCheck: Health status\
+        \ information"
+      operationId: get_health_health_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+          description: Return HTTP Status Code 200 (OK) with system health information
+      security: []
+      summary: Perform a Health Check
+      tags:
+      - healthcheck
+  /health/live:
+    get:
+      description: 'Simple liveness check endpoint that returns 200 OK when the service
+        is running.
+
+        This endpoint is lightweight and can be called frequently by infrastructure.'
+      operationId: get_liveness_health_live_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Simple liveness check that always returns OK if service is
+            running
+      security: []
+      summary: Liveness Check
+      tags:
+      - healthcheck
+  /review-and-refine/consistency-check:
+    post:
+      description: 'Check consistency between problem statement, solution, template,
+        and test repositories.
+
+
+        Analyzes the provided exercise artifacts and identifies potential
+
+        consistency issues across different artifact types.'
+      operationId: consistency_check_review_and_refine_consistency_check_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsistencyCheckRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsistencyCheckResponse'
+          description: Successful Response
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Consistency Check
+      tags:
+      - review-and-refine
+  /review-and-refine/problem-statement-rewrite:
+    post:
+      description: 'Rewrite and improve a problem statement.
+
+
+        Takes a problem statement text and returns an improved version
+
+        with better clarity, structure, and pedagogical value.'
+      operationId: problem_statement_rewrite_review_and_refine_problem_statement_rewrite_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RewriteProblemStatementRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewriteProblemStatementResponse'
+          description: Successful Response
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Problem Statement Rewrite
+      tags:
+      - review-and-refine
+security:
+- ApiKeyAuth: []
