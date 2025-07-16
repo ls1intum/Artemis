@@ -50,7 +50,10 @@ export class LearningPathsTableComponent {
     private readonly debounceLoadLearningPaths = BaseApiHttpService.debounce(this.loadLearningPaths.bind(this), 300);
 
     readonly averageProgress = signal<number | undefined>(undefined);
-
+    readonly formattedAverageProgress = computed(() => {
+        const progress = this.averageProgress();
+        return progress !== undefined ? progress.toFixed(2) : undefined;
+    });
     constructor() {
         effect(() => {
             const courseId = this.courseId();

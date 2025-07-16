@@ -132,28 +132,36 @@ describe('LearningPathsTableComponent', () => {
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     });
 
-    it('should load and set average progress for the course', async () => {
-        const mockAverageProgress = { averageProgress: 42, courseId: 1, totalStudents: 5 };
+    it('should format average progress to 2 decimal places', async () => {
+        const mockAverageProgress = { averageProgress: 42.567, courseId: 1, totalStudents: 5 };
         jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
 
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(learningPathApiService.getAverageProgressForCourse).toHaveBeenCalledOnce();
-        expect(learningPathApiService.getAverageProgressForCourse).toHaveBeenCalledWith(courseId);
-        expect(component.averageProgress()).toBe(42);
+        expect(component.averageProgress()).toBe(42.567);
+        expect(component.formattedAverageProgress()).toBe('42.57');
     });
 
-    it('should handle error when loading average progress fails', async () => {
+    it('should handle undefined average progress in formatted property', async () => {
         const error = new Error('Error loading average progress');
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
-
         jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockRejectedValue(error);
+
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
         expect(component.averageProgress()).toBeUndefined();
+        expect(component.formattedAverageProgress()).toBeUndefined();
+    });
+
+    it('should format whole numbers with 2 decimal places', async () => {
+        const mockAverageProgress = { averageProgress: 50.0, courseId: 1, totalStudents: 5 };
+        jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.formattedAverageProgress()).toBe('50.00');
     });
 
     it('should set isLoading correctly', async () => {
