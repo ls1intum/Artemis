@@ -76,6 +76,11 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
         this.requestCache = requestCache;
     }
 
+    private void addAuditLogForPasskeyAuthenticationSuccess(HttpServletRequest request, Authentication authentication) {
+        Map<String, Object> details = new HashMap<>(authentication.getDetails() == null ? Map.of() : Map.of("details", authentication.getDetails()));
+        auditEventRepository.add(new AuditEvent(Instant.now(), authentication.getName(), AuditEventConstants.AUTHENTICATION_PASSKEY_SUCCESS, details));
+    }
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         final SavedRequest savedRequest = this.requestCache.getRequest(request, response);
@@ -86,8 +91,7 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
-        Map<String, Object> details = new HashMap<>(authentication.getDetails() == null ? Map.of() : Map.of("details", authentication.getDetails()));
-        auditEventRepository.add(new AuditEvent(Instant.now(), authentication.getName(), AuditEventConstants.AUTHENTICATION_PASSKEY_SUCCESS, details));
+        this.addAuditLogForPasskeyAuthenticationSuccess(request, authentication);
         artemisSuccessfulLoginService.sendLoginEmail(authentication.getName(), AuthenticationMethod.PASSKEY, HttpRequestUtils.getClientEnvironment(request));
 
         this.converter.write(new AuthenticationSuccess(redirectUrl), MediaType.APPLICATION_JSON, new ServletServerHttpResponse(response));
