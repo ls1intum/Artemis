@@ -7,9 +7,9 @@ import { EMPTY } from 'rxjs';
 @Component({
     selector: 'jhi-course-practice',
     imports: [ButtonComponent],
-    templateUrl: './course-practice.component.html',
+    templateUrl: './course-training.component.html',
 })
-export class CoursePracticeComponent {
+export class CourseTrainingComponent {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
 
@@ -17,6 +17,6 @@ export class CoursePracticeComponent {
     courseId = computed(() => this.paramsSignal()?.['courseId']);
 
     public navigateToPractice(): void {
-        this.router.navigate(['courses', this.courseId(), 'practice', 'quiz']);
+        this.router.navigate(['courses', this.courseId(), 'training', 'quiz']);
     }
 }

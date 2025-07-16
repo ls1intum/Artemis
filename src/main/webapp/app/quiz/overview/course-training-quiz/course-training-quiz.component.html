@@ -37,7 +37,11 @@
             <jhi-button id="submit-question" class="ms-2" (onClick)="onSubmit()" [title]="'artemisApp.exercise.submit'" />
         }
         @if (submitted) {
-            <jhi-button class="ms-2" (onClick)="nextQuestion()" [title]="'artemisApp.exercise.nextQuestion'" />
+            @if (isLastQuestion()) {
+                <jhi-button class="ms-2" (onClick)="navigateToPractice()" [title]="'artemisApp.exercise.endTraining'" />
+            } @else {
+                <jhi-button class="ms-2" (onClick)="nextQuestion()" [title]="'artemisApp.exercise.nextQuestion'" />
+            }
         }
     }
 </div>

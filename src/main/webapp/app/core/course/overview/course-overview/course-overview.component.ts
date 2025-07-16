@@ -37,7 +37,7 @@ import { CourseNotificationSettingInfo } from 'app/communication/shared/entities
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { CourseTrainingQuizService } from 'app/quiz/overview/service/course-training-quiz.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -69,6 +69,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private modalService = inject(NgbModal);
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
+    private courseTrainingQuizService = inject(CourseTrainingQuizService);
     protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
     protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
 
@@ -77,7 +78,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private quizExercisesChannel: string;
     private examStartedSubscription: Subscription;
     manageViewLink = signal<string[]>(['']);
-    profileService = inject(ProfileService);
 
     protected selectableSettingPresets: CourseNotificationSettingPreset[];
     protected selectedSettingPreset?: CourseNotificationSettingPreset;
@@ -90,8 +90,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     activatedComponentReference = signal<
         CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
     >(undefined);
-    isTestServer = this.profileService.isTestServer();
-    isDevelopment = this.profileService.isDevelopment();
+    questionsAvailableForPractice = signal<boolean>(false);
 
     // Icons
     faTimes = faTimes;
@@ -113,6 +112,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.subscription = this.route?.params.subscribe(async (params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.courseId.set(id);
+
+            this.courseTrainingQuizService.getQuizQuestions(this.courseId()).subscribe((questions) => {
+                this.questionsAvailableForPractice.set(!!questions && questions.length > 0);
+            });
 
             this.courseNotificationSettingService.getSettingInfo(this.courseId(), false).subscribe((settingInfo) => {
                 if (settingInfo) {
@@ -292,7 +295,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         const currentCourse = this.course();
 
         // Use the service to get sidebar items
-        const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled);
+        const defaultItems = this.sidebarItemService.getStudentDefaultItems(
+            currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled,
+            this.questionsAvailableForPractice(),
+        );
         sidebarItems.push(...defaultItems);
 
         if (currentCourse?.lectures) {
@@ -328,10 +334,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         if (currentCourse?.faqEnabled) {
             const faqItem = this.sidebarItemService.getFaqItem();
             sidebarItems.push(faqItem);
-        }
-
-        if (this.isTestServer || this.isDevelopment) {
-            sidebarItems.push(this.sidebarItemService.getPracticeItem());
         }
 
         sidebarItems.push(this.sidebarItemService.getNotificationSettingsItem());

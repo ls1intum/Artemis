@@ -58,8 +58,9 @@ export class CourseSidebarItemService {
         return [overviewItem, this.getExamsItem(courseId), exercisesItem, statisticsItem];
     }
 
-    getStudentDefaultItems(hasDashboard = false): SidebarItem[] {
+    getStudentDefaultItems(hasDashboard = false, questionsAvailable: boolean): SidebarItem[] {
         const items = [];
+        const training = [];
 
         if (hasDashboard) {
             items.push(this.getDashboardItem());
@@ -73,6 +74,10 @@ export class CourseSidebarItemService {
             hidden: false,
         };
 
+        if (questionsAvailable) {
+            training.push(this.getTrainingItem());
+        }
+
         const statisticsItem: SidebarItem = {
             routerLink: 'statistics',
             icon: faChartColumn,
@@ -80,15 +85,15 @@ export class CourseSidebarItemService {
             translation: 'artemisApp.courseOverview.menu.statistics',
             hidden: false,
         };
-        return [...items, exercisesItem, statisticsItem];
+        return [...items, exercisesItem, ...training, statisticsItem];
     }
 
-    getPracticeItem(): SidebarItem {
+    getTrainingItem(): SidebarItem {
         return {
-            routerLink: 'practice',
+            routerLink: 'training',
             icon: faDumbbell,
-            title: 'Practice',
-            translation: 'overview.practice',
+            title: 'Training',
+            translation: 'overview.training',
             hidden: false,
         };
     }

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CoursePracticeQuizComponent } from './course-practice-quiz.component';
+import { CourseTrainingQuizComponent } from './course-training-quiz.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MockBuilder } from 'ng-mocks';
@@ -7,7 +7,7 @@ import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { CoursePracticeQuizService } from 'app/quiz/overview/service/course-practice-quiz.service';
+import { CourseTrainingQuizService } from '../service/course-training-quiz.service';
 import { MockSyncStorage } from 'src/test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -53,16 +53,16 @@ const course = { id: 1, title: 'Test Course' };
 
 const result: Result = { id: 1, submission: { submittedAnswers: [{ scoreInPoints: 2 }] } as any };
 
-describe('CoursePracticeQuizComponent', () => {
+describe('CourseTrainingQuizComponent', () => {
     MockInstance.scope();
-    let component: CoursePracticeQuizComponent;
-    let fixture: ComponentFixture<CoursePracticeQuizComponent>;
-    let quizService: CoursePracticeQuizService;
+    let component: CourseTrainingQuizComponent;
+    let fixture: ComponentFixture<CourseTrainingQuizComponent>;
+    let quizService: CourseTrainingQuizService;
 
     const mockQuestions = [question1, question2, question3];
 
     beforeEach(async () => {
-        await MockBuilder(CoursePracticeQuizComponent)
+        await MockBuilder(CourseTrainingQuizComponent)
             .keep(Router)
             .provide([
                 provideHttpClient(),
@@ -78,12 +78,12 @@ describe('CoursePracticeQuizComponent', () => {
                     },
                 },
             ]);
-        quizService = TestBed.inject(CoursePracticeQuizService);
+        quizService = TestBed.inject(CourseTrainingQuizService);
         jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(of([question1, question2, question3]));
         jest.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: course })));
         MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as SecuredImageComponent));
 
-        fixture = TestBed.createComponent(CoursePracticeQuizComponent);
+        fixture = TestBed.createComponent(CourseTrainingQuizComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });
@@ -258,6 +258,6 @@ describe('CoursePracticeQuizComponent', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         component.navigateToPractice();
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'practice']);
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'training']);
     });
 });
