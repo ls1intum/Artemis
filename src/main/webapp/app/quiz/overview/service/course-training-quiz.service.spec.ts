@@ -4,7 +4,7 @@ import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
-describe('CoursePracticeQuizService', () => {
+describe('CourseTrainingQuizService', () => {
     let service: CourseTrainingQuizService;
     let httpMock: HttpTestingController;
 

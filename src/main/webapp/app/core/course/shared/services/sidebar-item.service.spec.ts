@@ -112,7 +112,7 @@ describe('CourseSidebarItemService', () => {
     });
 
     describe('Individual item methods', () => {
-        it('getPracticeItem should return correct item', () => {
+        it('getTrainingItem should return correct item', () => {
             const item = service.getTrainingItem();
 
             expect(item).toEqual({

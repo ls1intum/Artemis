@@ -259,7 +259,7 @@ export class CourseTrainingQuizComponent {
     /**
      * navigates to the course practice page
      */
-    navigateToPractice(): void {
+    navigateToTraining(): void {
         this.router.navigate(['courses', this.courseId(), 'training']);
     }
 }
