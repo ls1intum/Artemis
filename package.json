@@ -40,7 +40,7 @@
         "@siemens/ngx-datatable": "22.4.1",
         "@swimlane/ngx-charts": "22.0.0",
         "@swimlane/ngx-graph": "10.0.0",
-        "@tumaet/apollon": "4.0.5-alpha.0",
+        "@tumaet/apollon": "4.1.0-alpha.0",
         "@vscode/codicons": "0.0.36",
         "@vscode/markdown-it-katex": "1.1.1",
         "bootstrap": "5.3.7",
