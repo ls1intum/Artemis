@@ -18,8 +18,8 @@ describe('CourseTutorialGroupCardComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([])],
-            declarations: [CourseTutorialGroupCardComponent, MockComponent(FaIconComponent), TranslatePipeMock, MockDirective(TranslateDirective)],
+            imports: [FaIconComponent, RouterModule.forRoot([])],
+            declarations: [CourseTutorialGroupCardComponent, TranslatePipeMock, MockDirective(TranslateDirective)],
             providers: [
                 {
                     provide: TranslateService,

@@ -13,7 +13,7 @@ describe('SearchFilterComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), MockModule(FontAwesomeModule)],
+            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), FontAwesomeModule],
             declarations: [SearchFilterComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();

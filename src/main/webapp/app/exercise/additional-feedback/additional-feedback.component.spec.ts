@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -13,7 +13,7 @@ describe('AdditionalFeedbackComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [AdditionalFeedbackComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+            declarations: [AdditionalFeedbackComponent, MockPipe(ArtemisTranslatePipe), FaIconComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(LocaleConversionService, {
