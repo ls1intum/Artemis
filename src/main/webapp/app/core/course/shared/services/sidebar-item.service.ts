@@ -59,7 +59,7 @@ export class CourseSidebarItemService {
         return [overviewItem, this.getExamsItem(courseId), exercisesItem, statisticsItem];
     }
 
-    getStudentDefaultItems(hasDashboard = false, questionsAvailable: boolean): SidebarItem[] {
+    getStudentDefaultItems(hasDashboard = false, questionsAvailable = false): SidebarItem[] {
         const items = [];
         const training = [];
 

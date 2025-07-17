@@ -37,7 +37,6 @@ import { CourseNotificationSettingInfo } from 'app/communication/shared/entities
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
-import { CourseTrainingQuizService } from 'app/quiz/overview/service/course-training-quiz.service';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
@@ -70,7 +69,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private modalService = inject(NgbModal);
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
-    private courseTrainingQuizService = inject(CourseTrainingQuizService);
     private calendarEventService = inject(CalendarEventService);
     protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
     protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
@@ -92,7 +90,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     activatedComponentReference = signal<
         CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
     >(undefined);
-    questionsAvailableForPractice = signal<boolean>(false);
 
     // Icons
     faTimes = faTimes;
@@ -114,10 +111,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.subscription = this.route?.params.subscribe(async (params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.courseId.set(id);
-
-            this.courseTrainingQuizService.getQuizQuestions(this.courseId()).subscribe((questions) => {
-                this.questionsAvailableForPractice.set(!!questions && questions.length > 0);
-            });
 
             this.courseNotificationSettingService.getSettingInfo(this.courseId(), false).subscribe((settingInfo) => {
                 if (settingInfo) {
@@ -300,7 +293,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         // Use the service to get sidebar items
         const defaultItems = this.sidebarItemService.getStudentDefaultItems(
             currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled,
-            this.questionsAvailableForPractice(),
+            currentCourse?.trainingEnabled,
         );
         sidebarItems.push(...defaultItems);
 
