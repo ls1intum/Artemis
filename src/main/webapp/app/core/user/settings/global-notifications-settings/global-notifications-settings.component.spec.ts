@@ -145,7 +145,7 @@ describe('GlobalNotificationsSettingsComponent', () => {
             fixture.detectChanges();
 
             const anchorElements = fixture.debugElement.queryAll(By.directive(RouterLink));
-            const actualRouterLinks = anchorElements.map((debugElement) => debugElement.injector.get(RouterLink).routerLink.join('/'));
+            const actualRouterLinks = anchorElements.map((debugElement) => (debugElement.injector.get(RouterLink).routerLink as string[]).join('/'));
             const expectedRouterLinks = component.notificationTypeLinks.map((link) => link.routerLink.join('/'));
 
             expectedRouterLinks.forEach((expected) => {
