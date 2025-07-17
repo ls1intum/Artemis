@@ -31,6 +31,7 @@ import { CourseSidebarItemService } from 'app/core/course/shared/services/sideba
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { TutorialGroupsChecklistComponent } from 'app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
@@ -74,26 +75,10 @@ import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course
     ],
 })
 export class CourseManagementContainerComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
-    private readonly eventManager = inject(EventManager);
-    private readonly featureToggleService = inject(FeatureToggleService);
-    private readonly sidebarItemService = inject(CourseSidebarItemService);
-    private readonly courseAdminService = inject(CourseAdminService);
-
-    protected readonly faTimes = faTimes;
-    protected readonly faEye = faEye;
-    protected readonly faWrench = faWrench;
-    protected readonly faTable = faTable;
-    protected readonly faFlag = faFlag;
-    protected readonly faListAlt = faListAlt;
-    protected readonly faChartBar = faChartBar;
-    protected readonly faClipboard = faClipboard;
-    protected readonly faSync = faSync;
-    protected readonly faCircleNotch = faCircleNotch;
-    protected readonly faChevronRight = faChevronRight;
-    protected readonly faChevronLeft = faChevronLeft;
-    protected readonly faQuestion = faQuestion;
-
-    protected readonly ButtonSize = ButtonSize;
+    private eventManager = inject(EventManager);
+    private featureToggleService = inject(FeatureToggleService);
+    private sidebarItemService = inject(CourseSidebarItemService);
+    private courseAdminService = inject(CourseAdminService);
 
     private eventSubscriber: Subscription;
     private featureToggleSub: Subscription;
@@ -125,6 +110,23 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         | BuildQueueComponent
         | undefined
     >(undefined);
+
+    // Icons
+    faTimes = faTimes;
+    faEye = faEye;
+    faWrench = faWrench;
+    faTable = faTable;
+    faFlag = faFlag;
+    faListAlt = faListAlt;
+    faChartBar = faChartBar;
+    faClipboard = faClipboard;
+    faSync = faSync;
+    faCircleNotch = faCircleNotch;
+    faChevronRight = faChevronRight;
+    faChevronLeft = faChevronLeft;
+    faQuestion = faQuestion;
+
+    protected readonly ButtonSize = ButtonSize;
 
     async ngOnInit() {
         this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
@@ -375,9 +377,26 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private getExistingSummaryEntries(): EntitySummary {
+        const numberOfExercisesPerType = new Map<ExerciseType, number>();
+        this.course()?.exercises?.forEach((exercise) => {
+            if (exercise.type === undefined) {
+                return;
+            }
+            const oldValue = numberOfExercisesPerType.get(exercise.type) ?? 0;
+            numberOfExercisesPerType.set(exercise.type, oldValue + 1);
+        });
+
+        const numberStudents = this.course()?.numberOfStudents ?? 0;
+        const numberTutors = this.course()?.numberOfTeachingAssistants ?? 0;
+        const numberEditors = this.course()?.numberOfEditors ?? 0;
+        const numberInstructors = this.course()?.numberOfInstructors ?? 0;
         const isTestCourse = this.course()?.testCourse;
 
         return {
+            'artemisApp.course.delete.summary.numberStudents': numberStudents,
+            'artemisApp.course.delete.summary.numberTutors': numberTutors,
+            'artemisApp.course.delete.summary.numberEditors': numberEditors,
+            'artemisApp.course.delete.summary.numberInstructors': numberInstructors,
             'artemisApp.course.delete.summary.isTestCourse': isTestCourse,
         };
     }
