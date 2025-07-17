@@ -32,7 +32,7 @@ describe('CompetencyContributionCardComponent', () => {
         fixture = TestBed.createComponent(CompetencyContributionCardComponent);
         component = fixture.componentInstance;
 
-        runInInjectionContext(TestBed, () => {
+        TestBed.runInInjectionContext(() => {
             component.courseId = input<number>(1);
             component.competencyId = input<number>(2);
             component.title = input<string>('Test Title');
