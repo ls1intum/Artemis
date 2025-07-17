@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.exam.api;
 
+import java.util.Set;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
@@ -27,5 +30,9 @@ public class ExamApi extends AbstractExamApi {
 
     public boolean shouldStudentSeeResult(StudentExam studentExam, StudentParticipation participation) {
         return ExamService.shouldStudentSeeResult(studentExam, participation);
+    }
+
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(long courseId, boolean userIsStudent) {
+        return examService.getCalendarEventDTOsFromExams(courseId, userIsStudent);
     }
 }

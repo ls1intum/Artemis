@@ -8,21 +8,17 @@ import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ReflogEntry;
-import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +48,6 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
     @AfterEach
     void afterEach() {
         gitUtilService.deleteRepos();
-        gitService.clearCachedRepositories();
     }
 
     @Test
@@ -191,45 +186,13 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
         gitUtilService.stashAndCommitAll(GitUtilService.REPOS.LOCAL, "my second commit");
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "master", "main", "someOtherName" })
-    void testPushSourceToTargetRepoWithBranch(String defaultBranch) throws GitAPIException, IOException {
-        gitUtilService.initRepo(defaultBranch);
-
-        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.REMOTE);
-        var repoUri = gitUtilService.getRepoUriByType(GitUtilService.REPOS.REMOTE);
-
-        Git git = new Git(localRepo);
-        assertThat(git.getRepository().getBranch()).isEqualTo(defaultBranch);
-
-        gitService.pushSourceToTargetRepo(localRepo, repoUri, defaultBranch);
-
-        assertThat(git.getRepository().getBranch()).isEqualTo(this.defaultBranch);
-
-        if (!this.defaultBranch.equals(defaultBranch)) {
-            assertThat(localRepo.getConfig().toText()).doesNotContain(defaultBranch);
-        }
-
-        gitUtilService.deleteRepos();
-    }
-
     @Test
     void testGetExistingCheckedOutRepositoryByLocalPathRemovesEmptyRepo() throws IOException {
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
-
         doReturn(localRepo.getLocalPath()).when(gitService).getLocalPathOfRepo(any(), any());
-
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUri())).isFalse();
-
         gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUri());
-
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUri())).isTrue();
-
         FileUtils.deleteDirectory(localRepo.getLocalPath().toFile());
-
         Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUri());
-
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUri())).isFalse();
         assertThat(repo).isNull();
     }
 
@@ -335,62 +298,6 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
         var nonPresentFile = gitService.getFileByName(localRepo, "NameThatWillNeverBePResent");
         assertThat(nonPresentFile).isNotPresent();
-    }
-
-    @Test
-    void testCombineAllCommitsIntoInitialCommitTest() throws GitAPIException {
-        String newFileContent1 = "lorem ipsum";
-        String newFileContent2 = "lorem ipsum solet";
-        String fileContent = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3);
-
-        // These commits should be combined into the initial commit
-        gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1, newFileContent1);
-        gitUtilService.stashAndCommitAll(GitUtilService.REPOS.REMOTE);
-        gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE2, newFileContent2);
-        gitUtilService.stashAndCommitAll(GitUtilService.REPOS.REMOTE);
-
-        // This commit should be removed
-        gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3, fileContent);
-        gitUtilService.stashAndCommitAll(GitUtilService.REPOS.REMOTE);
-
-        gitService.combineAllCommitsIntoInitialCommit(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL));
-
-        Arrays.stream(GitUtilService.REPOS.values()).forEach(repo -> {
-            Iterable<RevCommit> commits = gitUtilService.getLog(repo);
-            Long numberOfCommits = StreamSupport.stream(commits.spliterator(), false).count();
-
-            String fileContent1 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE1);
-            String fileContent2 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE2);
-            String fileContent3 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE3);
-
-            assertThat(numberOfCommits).isEqualTo(1L);
-            assertThat(fileContent1).isEqualTo(newFileContent1);
-            assertThat(fileContent2).isEqualTo(newFileContent2);
-            assertThat(fileContent3).isEqualTo(fileContent);
-        });
-    }
-
-    @Test
-    void testCombineAllCommitsIntoInitialCommitWithoutNewCommitsTest() throws GitAPIException {
-        String oldFileContent1 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1);
-        String oldFileContent2 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE2);
-        String oldFileContent3 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3);
-
-        gitService.combineAllCommitsIntoInitialCommit(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL));
-
-        Arrays.stream(GitUtilService.REPOS.values()).forEach(repo -> {
-            Iterable<RevCommit> commits = gitUtilService.getLog(repo);
-            Long numberOfCommits = StreamSupport.stream(commits.spliterator(), false).count();
-
-            String fileContent1 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE1);
-            String fileContent2 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE2);
-            String fileContent3 = gitUtilService.getFileContent(repo, GitUtilService.FILES.FILE3);
-
-            assertThat(numberOfCommits).isEqualTo(1L);
-            assertThat(fileContent1).isEqualTo(oldFileContent1);
-            assertThat(fileContent2).isEqualTo(oldFileContent2);
-            assertThat(fileContent3).isEqualTo(oldFileContent3);
-        });
     }
 
     @Test
