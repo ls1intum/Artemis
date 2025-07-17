@@ -398,6 +398,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private combineSummary(summary: CourseDeletionSummaryDTO) {
         return {
             ...this.getExistingSummaryEntries(),
+            'artemisApp.course.delete.summary.numberStudents': summary.numberOfStudents,
+            'artemisApp.course.delete.summary.numberTutors': summary.numberOfTutors,
+            'artemisApp.course.delete.summary.numberEditors': summary.numberOfEditors,
+            'artemisApp.course.delete.summary.numberInstructors': summary.numberOfInstructors,
             'artemisApp.course.delete.summary.numberExams': summary.numberExams,
             'artemisApp.course.delete.summary.numberLectures': summary.numberLectures,
             'artemisApp.course.delete.summary.numberProgrammingExercises': summary.numberProgrammingExercises,
