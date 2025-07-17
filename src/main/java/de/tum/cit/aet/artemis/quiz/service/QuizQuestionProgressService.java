@@ -283,13 +283,13 @@ public class QuizQuestionProgressService {
         }
     }
 
+    /**
+     *
+     * @param courseId The id of the course for which the questions are to be checked
+     * @return true if there are questions availble for training, false otherwise
+     */
     public boolean questionsAvailableForTraining(Long courseId) {
         Set<QuizQuestion> questions = quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
-        if (questions.isEmpty()) {
-            return false;
-        }
-        else {
-            return true;
-        }
+        return !questions.isEmpty();
     }
 }

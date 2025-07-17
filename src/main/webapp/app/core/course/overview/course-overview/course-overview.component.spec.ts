@@ -68,7 +68,6 @@ import { CourseTrainingQuizService } from '../../../../quiz/overview/service/cou
 import { QuizQuestion } from '../../../../quiz/shared/entities/quiz-question.model';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
-
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
 const dueDateStat1: DueDateStat = { inTime: 1, late: 0, total: 1 };
