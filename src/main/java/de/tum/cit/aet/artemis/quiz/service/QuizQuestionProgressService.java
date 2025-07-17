@@ -283,4 +283,13 @@ public class QuizQuestionProgressService {
         }
     }
 
+    public boolean questionsAvailableForTraining(Long courseId) {
+        Set<QuizQuestion> questions = quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
+        if (questions.isEmpty()) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
 }
