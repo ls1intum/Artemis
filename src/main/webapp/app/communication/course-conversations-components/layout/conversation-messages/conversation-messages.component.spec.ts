@@ -765,5 +765,53 @@ examples.forEach((activeConversation) => {
             expect(mockContainerElement.scrollTop).toBe(expectedScrollTop);
             rafSpy.mockRestore();
         });
+
+        it('should return bounding rects if both post and container are available', () => {
+            const postId = 123;
+            const mockPostRect = { top: 10, bottom: 110 } as DOMRect;
+            const mockContainerRect = { top: 0, bottom: 300 } as DOMRect;
+
+            component.messages = [
+                {
+                    post: { id: postId },
+                    elementRef: {
+                        nativeElement: {
+                            getBoundingClientRect: () => mockPostRect,
+                        },
+                    },
+                },
+            ] as any;
+
+            component.content = {
+                nativeElement: {
+                    getBoundingClientRect: () => mockContainerRect,
+                    addEventListener: jest.fn(),
+                    removeEventListener: jest.fn(),
+                },
+            } as any;
+            const result = (component as any).getBoundingRectsForPost(postId);
+            expect(result).toEqual({ postRect: mockPostRect, containerRect: mockContainerRect });
+        });
+
+        it('should return true if the post is fully within the container bounds', () => {
+            const postId = 1;
+            const rects = {
+                postRect: { top: 50, bottom: 150 },
+                containerRect: { top: 0, bottom: 300 },
+            };
+            jest.spyOn(component as any, 'getBoundingRectsForPost').mockReturnValue(rects);
+            const result = (component as any).isPostVisible(postId);
+            expect(result).toBeTrue();
+        });
+        it('should return false if the post is below the container bounds', () => {
+            const postId = 1;
+            const rects = {
+                postRect: { top: 310, bottom: 400 },
+                containerRect: { top: 0, bottom: 300 },
+            };
+            jest.spyOn(component as any, 'getBoundingRectsForPost').mockReturnValue(rects);
+            const result = (component as any).isPostVisible(postId);
+            expect(result).toBeFalse();
+        });
     });
 });
