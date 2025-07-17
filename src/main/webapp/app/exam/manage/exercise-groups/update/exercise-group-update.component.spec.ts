@@ -8,10 +8,10 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/update/exercise-group-update.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import '@angular/localize/init';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -40,8 +40,8 @@ describe('ExerciseGroupUpdateComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
+                LocalStorageService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: mockRouter },
                 MockProvider(AlertService),

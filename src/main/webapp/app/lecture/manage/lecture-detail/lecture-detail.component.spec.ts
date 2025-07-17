@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { of, throwError } from 'rxjs';
@@ -11,8 +12,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -56,7 +55,7 @@ describe('LectureDetailComponent', () => {
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 MockProvider(SessionStorageService),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
+
                 { provide: ProfileService, useClass: MockProfileService },
             ],
         })

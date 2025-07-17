@@ -9,8 +9,6 @@ import { ChannelService } from 'app/communication/conversations/service/channel.
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/channel-reference.action';
 import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
@@ -56,7 +54,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
+
                 MockProvider(LectureService),
                 MockProvider(CourseManagementService),
                 MockProvider(ChannelService),

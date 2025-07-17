@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -10,7 +11,6 @@ import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unref
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { ParticipationSubmissionComponent } from 'app/exercise/participation-submission/participation-submission.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
@@ -101,8 +101,8 @@ describe('ParticipationSubmissionComponent', () => {
                 JhiLanguageHelper,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
+                LocalStorageService,
                 { provide: ComplaintService, useClass: MockComplaintService },
                 { provide: ActivatedRoute, useValue: route() },
                 provideHttpClient(),

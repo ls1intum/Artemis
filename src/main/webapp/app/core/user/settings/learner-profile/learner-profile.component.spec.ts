@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { LearnerProfileComponent } from './learner-profile.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -9,8 +10,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { LearnerProfileApiService } from './learner-profile-api.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { SessionStorageService } from 'ngx-webstorage';
 
 describe('LearnerProfileComponent', () => {
     let component: LearnerProfileComponent;
@@ -20,7 +19,7 @@ describe('LearnerProfileComponent', () => {
         await TestBed.configureTestingModule({
             imports: [LearnerProfileComponent],
             providers: [
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(LearnerProfileApiService),

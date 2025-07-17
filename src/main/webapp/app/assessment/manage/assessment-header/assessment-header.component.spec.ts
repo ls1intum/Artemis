@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AlertService } from 'app/shared/service/alert.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
@@ -54,9 +54,9 @@ describe('AssessmentHeaderComponent', () => {
                     provide: AlertService,
                     useClass: AlertService, // use the real one
                 },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
+                LocalStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
                 MockProvider(GradingSystemService, {
                     findGradingScaleForExam: () => {
                         return of(

@@ -3,8 +3,8 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 import { FeedbackAnalysisService } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 
-import { LocalStorageService } from 'ngx-webstorage';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 export interface FilterData {
     tasks: string[];
@@ -54,10 +54,10 @@ export class FeedbackFilterModalComponent {
     }
 
     clearFilter(): void {
-        this.localStorage.clear(this.FILTER_TASKS_KEY);
-        this.localStorage.clear(this.FILTER_TEST_CASES_KEY);
-        this.localStorage.clear(this.FILTER_OCCURRENCE_KEY);
-        this.localStorage.clear(this.FILTER_ERROR_CATEGORIES_KEY);
+        this.localStorage.remove(this.FILTER_TASKS_KEY);
+        this.localStorage.remove(this.FILTER_TEST_CASES_KEY);
+        this.localStorage.remove(this.FILTER_OCCURRENCE_KEY);
+        this.localStorage.remove(this.FILTER_ERROR_CATEGORIES_KEY);
         this.filters = {
             tasks: [],
             testCases: [],

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextExamSummaryComponent } from 'app/exam/overview/summary/exercises/text-exam-summary/text-exam-summary.component';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
@@ -10,8 +11,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
@@ -30,10 +29,7 @@ describe('TextExamSummaryComponent', () => {
                     provide: TranslateService,
                     useClass: MockTranslateService,
                 },
-                {
-                    provide: SessionStorageService,
-                    useClass: MockSyncStorage,
-                },
+                SessionStorageService,
                 {
                     provide: ProfileService,
                     useClass: MockProfileService,

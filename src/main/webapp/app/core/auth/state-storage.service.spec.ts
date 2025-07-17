@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 
 describe('StateStorageService', () => {
     let service: StateStorageService;
@@ -14,7 +13,7 @@ describe('StateStorageService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [{ provide: SessionStorageService, useClass: MockSyncStorage }],
+            providers: [SessionStorageService],
         })
             .compileComponents()
             .then(() => {

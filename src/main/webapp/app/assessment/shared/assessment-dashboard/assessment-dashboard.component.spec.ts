@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
@@ -134,8 +134,8 @@ describe('AssessmentDashboardInformationComponent', () => {
         return TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },

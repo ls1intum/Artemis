@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -20,8 +21,6 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { SessionStorageService } from 'ngx-webstorage';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { AddUsersFormData } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 
@@ -43,7 +42,7 @@ examples.forEach((activeConversation) => {
                     MockProvider(ConversationService),
                     MockProvider(GroupChatService),
                     { provide: TranslateService, useClass: MockTranslateService },
-                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    SessionStorageService,
                     provideHttpClient(),
                     provideHttpClientTesting(),
                 ],

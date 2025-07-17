@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { HttpResponse } from '@angular/common/http';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 import { Observable, ReplaySubject } from 'rxjs';
-import { LocalStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
@@ -37,15 +37,14 @@ export class ScienceSettingsService {
     }
 
     private getStoredScienceSettings(): ScienceSetting[] {
-        const storedIdentifier = this.localStorageService.retrieve(SCIENCE_SETTING_LOCAL_STORAGE_KEY);
-        return storedIdentifier ? JSON.parse(storedIdentifier) : [];
+        return this.localStorageService.retrieve<ScienceSetting[]>(SCIENCE_SETTING_LOCAL_STORAGE_KEY) || [];
     }
 
     private storeScienceSettings(settings?: ScienceSetting[]): void {
         if (settings) {
             this.localStorageService.store(SCIENCE_SETTING_LOCAL_STORAGE_KEY, JSON.stringify(settings));
         } else {
-            this.localStorageService.clear(SCIENCE_SETTING_LOCAL_STORAGE_KEY);
+            this.localStorageService.remove(SCIENCE_SETTING_LOCAL_STORAGE_KEY);
         }
         this.currentScienceSettingsSubject.next(this.getStoredScienceSettings());
     }

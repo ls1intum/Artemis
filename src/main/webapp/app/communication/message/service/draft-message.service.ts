@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { LocalStorageService } from 'ngx-webstorage';
 import { inject } from '@angular/core';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 const DRAFT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -26,7 +26,7 @@ export class DraftService {
             return undefined;
         }
 
-        const raw = this.localStorageService.retrieve(key);
+        const raw = this.localStorageService.retrieve<string>(key);
 
         if (raw) {
             try {
@@ -59,7 +59,7 @@ export class DraftService {
 
     clearDraft(key: string): void {
         if (key && key !== '') {
-            this.localStorageService.clear(key);
+            this.localStorageService.remove(key);
         }
     }
 }

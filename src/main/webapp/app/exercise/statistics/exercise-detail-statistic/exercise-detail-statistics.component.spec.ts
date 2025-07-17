@@ -1,8 +1,7 @@
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
@@ -10,6 +9,7 @@ import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-route
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { DoughnutChartComponent } from 'app/exercise/statistics/doughnut-chart/doughnut-chart.component';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 describe('ExerciseDetailStatisticsComponent', () => {
     let fixture: ComponentFixture<ExerciseDetailStatisticsComponent>;
@@ -39,11 +39,7 @@ describe('ExerciseDetailStatisticsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [ExerciseDetailStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockComponent(DoughnutChartComponent)],
-            providers: [
-                { provide: Router, useClass: MockRouter },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-            ],
+            providers: [{ provide: Router, useClass: MockRouter }, LocalStorageService, SessionStorageService],
         })
             .compileComponents()
             .then(() => {

@@ -2,11 +2,11 @@ import { Injectable, Renderer2, RendererFactory2, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 
 import { LANGUAGES } from './language.constants';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { captureException } from '@sentry/angular';
-import { SessionStorageService } from 'ngx-webstorage';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 @Injectable({ providedIn: 'root' })

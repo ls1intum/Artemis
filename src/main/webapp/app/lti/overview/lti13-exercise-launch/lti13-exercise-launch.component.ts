@@ -4,10 +4,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { captureException } from '@sentry/angular';
-import { SessionStorageService } from 'ngx-webstorage';
 import { LtiService } from 'app/shared/service/lti.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 
 type LtiLaunchResponse = {
     targetLinkUri: string;

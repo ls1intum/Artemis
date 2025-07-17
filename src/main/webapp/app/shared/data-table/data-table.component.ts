@@ -13,12 +13,12 @@ import {
     ViewEncapsulation,
     inject,
 } from '@angular/core';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@siemens/ngx-datatable';
 import { flatten, get, isNumber } from 'lodash-es';
 import { BaseEntity, StringBaseEntity } from 'app/shared/model/base-entity';
-import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
 import { faCircleNotch, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
@@ -269,7 +269,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * Get "items per page" setting from local storage. If it does not exist, use the default.
      */
     private getCachedEntitiesPerPage = () => {
-        const cachedValue = this.localStorage.retrieve(this.perPageCacheKey);
+        const cachedValue = this.localStorage.retrieve<string>(this.perPageCacheKey);
         if (cachedValue) {
             const parsedValue = parseInt(cachedValue, 10) || cachedValue;
             if (this.PAGING_VALUES.includes(parsedValue as any)) {

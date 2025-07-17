@@ -2,12 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params, convertToParamMap, provideRouter } from '@angular/router';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -125,10 +124,7 @@ describe('StudentExamsComponent', () => {
         MockProvider(AlertService),
         MockProvider(ArtemisTranslatePipe),
         MockDirective(TranslateDirective),
-        {
-            provide: LocalStorageService,
-            useClass: MockLocalStorageService,
-        },
+        LocalStorageService,
         {
             provide: ActivatedRoute,
             useValue: {

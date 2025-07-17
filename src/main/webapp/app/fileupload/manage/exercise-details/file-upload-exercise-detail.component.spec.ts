@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { of } from 'rxjs';
 import { FileUploadExerciseDetailComponent } from 'app/fileupload/manage/exercise-details/file-upload-exercise-detail.component';
 import { MockFileUploadExerciseService, fileUploadExercise } from 'test/helpers/mocks/service/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -73,8 +73,8 @@ describe('FileUploadExercise Management Detail Component', () => {
                 AlertService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),

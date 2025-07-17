@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 import { BehaviorSubject } from 'rxjs';
-import { LocalStorageService } from 'ngx-webstorage';
 import FingerprintJS, { GetResult } from '@fingerprintjs/fingerprintjs';
 import { v4 as uuid } from 'uuid';
 
@@ -42,6 +42,6 @@ export class BrowserFingerprintService {
     }
 
     private clearInstance(): void {
-        this.localStorage.clear(this.BROWSER_INSTANCE_KEY);
+        this.localStorage.remove(this.BROWSER_INSTANCE_KEY);
     }
 }

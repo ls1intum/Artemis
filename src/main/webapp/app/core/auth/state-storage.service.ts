@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { SessionStorageService } from 'ngx-webstorage';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 
+// TODO: get rid of this simple wrapper, it does not provide a lot of value
 @Injectable({ providedIn: 'root' })
 export class StateStorageService {
     private sessionStorage = inject(SessionStorageService);
@@ -16,7 +17,7 @@ export class StateStorageService {
     /**
      * Get the previousURL of the current session.
      */
-    getUrl(): string {
-        return this.sessionStorage.retrieve('previousUrl');
+    getUrl(): string | undefined {
+        return this.sessionStorage.retrieve<string>('previousUrl');
     }
 }

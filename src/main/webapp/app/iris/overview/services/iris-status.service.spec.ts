@@ -1,12 +1,12 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { WebsocketService } from 'app/shared/service/websocket.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 import { of } from 'rxjs';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { LocalStorageService } from 'ngx-webstorage';
 
 describe('IrisStatusService', () => {
     let service: IrisStatusService;
@@ -19,7 +19,7 @@ describe('IrisStatusService', () => {
                 provideHttpClientTesting(),
                 IrisStatusService,
                 { provide: WebsocketService, useValue: { connectionState: of({ connected: true, intendedDisconnect: false, wasEverConnectedBefore: true }) } },
-                { provide: LocalStorageService },
+                LocalStorageService,
                 { provide: ProfileService, useValue: { isProfileActive: jest.fn().mockReturnValue(true) } },
             ],
         });

@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { of } from 'rxjs';
 import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-statistics.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
@@ -50,8 +50,8 @@ describe('ExerciseStatisticsComponent', () => {
         TestBed.configureTestingModule({
             imports: [NoopAnimationsModule],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 provideHttpClient(),

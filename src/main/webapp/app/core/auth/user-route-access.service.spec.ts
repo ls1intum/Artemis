@@ -3,10 +3,10 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { ActivatedRouteSnapshot, Route, Router, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Mutable } from 'test/helpers/mutable';
@@ -48,9 +48,9 @@ describe('UserRouteAccessService', () => {
             providers: [
                 mockedActivatedRouteSnapshot(route),
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(StateStorageService),
                 provideHttpClient(),

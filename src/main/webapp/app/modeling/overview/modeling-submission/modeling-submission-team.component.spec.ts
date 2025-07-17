@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
@@ -87,8 +87,8 @@ describe('ModelingSubmissionComponent', () => {
                 MockProvider(ChangeDetectorRef),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ComplaintService, useClass: MockComplaintService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 provideHttpClient(),

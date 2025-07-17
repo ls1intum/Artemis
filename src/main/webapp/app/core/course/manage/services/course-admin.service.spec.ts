@@ -5,10 +5,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { take } from 'rxjs/operators';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
@@ -28,8 +28,8 @@ describe('Course Admin Service', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: Router, useClass: MockRouter },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });

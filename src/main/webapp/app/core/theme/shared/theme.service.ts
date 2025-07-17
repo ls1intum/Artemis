@@ -1,6 +1,6 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { IconDefinition, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 export const THEME_LOCAL_STORAGE_KEY = 'artemisapp.theme.preference';
 export const THEME_OVERRIDE_ID = 'artemis-theme-override';
@@ -112,7 +112,7 @@ export class ThemeService {
 
         // An unknown theme was stored. Let's clear it
         if (storedIdentifier && !storedTheme) {
-            this.localStorageService.clear(THEME_LOCAL_STORAGE_KEY);
+            this.localStorageService.remove(THEME_LOCAL_STORAGE_KEY);
         }
 
         return storedTheme;
@@ -156,7 +156,7 @@ export class ThemeService {
         if (preference) {
             this.localStorageService.store(THEME_LOCAL_STORAGE_KEY, preference.identifier);
         } else {
-            this.localStorageService.clear(THEME_LOCAL_STORAGE_KEY);
+            this.localStorageService.remove(THEME_LOCAL_STORAGE_KEY);
         }
         this._userPreference.set(preference);
     }

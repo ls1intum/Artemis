@@ -7,10 +7,10 @@ import { PostingButtonComponent } from 'app/communication/posting-button/posting
 import { PostingCreateEditDirective } from 'app/communication/directive/posting-create-edit.directive';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { LocalStorageService } from 'ngx-webstorage';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { DraftService } from 'app/communication/message/service/draft-message.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 import { Subscription } from 'rxjs';
 
 @Component({

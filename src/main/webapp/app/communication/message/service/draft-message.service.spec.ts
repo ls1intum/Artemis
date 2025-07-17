@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 import { DraftService } from './draft-message.service';
-import { LocalStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -11,7 +10,7 @@ describe('DraftService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [DraftService, { provide: LocalStorageService, useClass: MockSyncStorage }],
+            providers: [DraftService, LocalStorageService],
         });
         draftService = TestBed.inject(DraftService);
         localStorageService = TestBed.inject(LocalStorageService);

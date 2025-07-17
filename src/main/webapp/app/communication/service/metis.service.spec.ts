@@ -2,6 +2,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/communication/service/metis.service';
@@ -18,8 +19,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProvider } from 'ng-mocks';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
@@ -94,7 +93,6 @@ describe('Metis Service', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         });
         metisService = TestBed.inject(MetisService);

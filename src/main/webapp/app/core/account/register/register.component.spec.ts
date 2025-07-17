@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
 import { RegisterService } from 'app/core/account/register/register.service';
 import { RegisterComponent } from 'app/core/account/register/register.component';
 import { User } from 'app/core/user/user.model';
 import { ElementRef } from '@angular/core';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -25,8 +25,8 @@ describe('Register Component Tests', () => {
                 imports: [RegisterComponent],
                 providers: [
                     FormBuilder,
-                    { provide: LocalStorageService, useClass: MockSyncStorage },
-                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    LocalStorageService,
+                    SessionStorageService,
                     { provide: ProfileService, useClass: MockProfileService },
                     { provide: TranslateService, useClass: MockTranslateService },
                     provideHttpClient(),

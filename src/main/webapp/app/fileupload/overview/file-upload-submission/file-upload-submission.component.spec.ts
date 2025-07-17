@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
@@ -71,8 +71,8 @@ describe('FileUploadSubmissionComponent', () => {
             ],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
+                LocalStorageService,
                 { provide: ComplaintService, useClass: MockComplaintService },
                 { provide: FileUploadSubmissionService, useClass: MockFileUploadSubmissionService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },

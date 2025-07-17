@@ -1,7 +1,6 @@
 import { THEME_LOCAL_STORAGE_KEY, THEME_OVERRIDE_ID, Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 describe('ThemeService', () => {
     let service: ThemeService;
@@ -18,10 +17,7 @@ describe('ThemeService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: ThemeService, useClass: ThemeService },
-            ],
+            providers: [{ provide: ThemeService, useClass: ThemeService }],
         })
             .compileComponents()
             .then(() => {

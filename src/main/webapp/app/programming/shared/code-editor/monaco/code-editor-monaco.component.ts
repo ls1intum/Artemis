@@ -16,8 +16,8 @@ import {
     viewChildren,
 } from '@angular/core';
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 import { firstValueFrom, timeout } from 'rxjs';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/core/course/shared/entities/course.model';

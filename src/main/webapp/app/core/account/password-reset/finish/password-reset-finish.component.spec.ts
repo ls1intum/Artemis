@@ -2,13 +2,13 @@ import { ElementRef } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { of, throwError } from 'rxjs';
 
 import { PasswordResetFinishComponent } from 'app/core/account/password-reset/finish/password-reset-finish.component';
 import { PasswordResetFinishService } from 'app/core/account/password-reset/finish/password-reset-finish.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -27,8 +27,8 @@ describe('Component Tests', () => {
                         provide: ActivatedRoute,
                         useValue: new MockActivatedRoute({ key: 'XYZPDQ' }),
                     },
-                    { provide: LocalStorageService, useClass: MockSyncStorage },
-                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    LocalStorageService,
+                    SessionStorageService,
                     { provide: ProfileService, useClass: MockProfileService },
                     provideHttpClient(),
                 ],

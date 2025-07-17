@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -155,8 +155,10 @@ export class AccountService implements IAccountService {
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting
-                        const langKey = this.userIdentity.langKey || this.sessionStorage.retrieve('locale');
-                        this.translateService.use(langKey);
+                        const langKey = this.userIdentity.langKey || this.sessionStorage.retrieve<string>('locale');
+                        if (langKey) {
+                            this.translateService.use(langKey);
+                        }
                     } else {
                         this.userIdentity = undefined;
                     }

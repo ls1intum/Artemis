@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { triggerChanges } from 'test/helpers/utils/general-test.utils';
@@ -30,12 +30,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip)],
             declarations: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-                provideHttpClient(),
-            ],
+            providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         })
             .compileComponents()
             .then(() => {

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { By } from '@angular/platform-browser';
@@ -26,13 +27,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { AccountService } from '../../core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -64,10 +62,9 @@ describe('AnswerPostComponent', () => {
                 { provide: DOCUMENT, useValue: document },
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         })
             .compileComponents()

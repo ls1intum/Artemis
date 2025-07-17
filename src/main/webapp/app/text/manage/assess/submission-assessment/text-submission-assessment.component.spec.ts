@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { TextSubmissionAssessmentComponent } from 'app/text/manage/assess/submission-assessment/text-submission-assessment.component';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
@@ -27,8 +29,6 @@ import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-resp
 import { AlertService } from 'app/shared/service/alert.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
@@ -168,8 +168,8 @@ describe('TextSubmissionAssessmentComponent', () => {
             providers: [
                 provideRouter([]),
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AthenaService, useClass: MockAthenaService },
                 MockProvider(Router),

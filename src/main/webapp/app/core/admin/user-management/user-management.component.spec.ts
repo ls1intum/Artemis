@@ -9,6 +9,8 @@ import {
     UserStorageKey,
 } from 'app/core/admin/user-management/user-management.component';
 import { AccountService } from 'app/core/auth/account.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -18,11 +20,8 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
@@ -61,10 +60,10 @@ describe('User Management Component', () => {
                     useValue: route,
                 },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
+
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: Router, useClass: MockRouter },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
                 {
                     provide: ActivatedRoute,

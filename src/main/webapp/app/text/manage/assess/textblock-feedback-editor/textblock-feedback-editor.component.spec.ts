@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
@@ -11,8 +12,6 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { ChangeDetectorRef } from '@angular/core';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -26,6 +25,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { provideHttpClient } from '@angular/common/http';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 
 describe('TextBlockFeedbackEditorComponent', () => {
     let component: TextBlockFeedbackEditorComponent;
@@ -49,9 +49,9 @@ describe('TextBlockFeedbackEditorComponent', () => {
             providers: [
                 MockProvider(ChangeDetectorRef),
                 { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },

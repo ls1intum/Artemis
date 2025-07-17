@@ -3,6 +3,7 @@ import { appConfig } from 'app/app.config';
 import { MonacoConfig } from 'app/core/config/monaco.config';
 import { ProdConfig } from 'app/core/config/prod.config';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { AppComponent } from './app.component';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import isMobile from 'ismobilejs-es5';
@@ -11,7 +12,6 @@ import locale from '@angular/common/locales/en';
 import dayjs from 'dayjs/esm';
 import { NgbDatepickerConfig, NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { SessionStorageService } from 'ngx-webstorage';
 import { artemisIconPack } from 'app/shared/icons/icons';
 
 ProdConfig();
@@ -32,7 +32,7 @@ bootstrapApplication(AppComponent, appConfig)
         registerLocaleData(locale);
         dpConfig.minDate = { year: dayjs().subtract(100, 'year').year(), month: 1, day: 1 };
         translateService.setDefaultLang('en');
-        const languageKey = sessionStorageService.retrieve('locale') || languageHelper.determinePreferredLanguage();
+        const languageKey: string = sessionStorageService.retrieve('locale') || languageHelper.determinePreferredLanguage();
         translateService.use(languageKey);
         tooltipConfig.container = 'body';
         if (isMobile(window.navigator.userAgent).any ?? false) {

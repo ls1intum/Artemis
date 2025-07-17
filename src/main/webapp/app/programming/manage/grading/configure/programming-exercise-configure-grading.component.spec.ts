@@ -35,10 +35,11 @@ import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Subject, of } from 'rxjs';
 import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -49,7 +50,6 @@ import { MockProgrammingBuildRunService } from 'test/helpers/mocks/service/mock-
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
 import { MockProgrammingExerciseWebsocketService } from 'test/helpers/mocks/service/mock-programming-exercise-websocket.service';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { expectElementToBeEnabled, getElement } from 'test/helpers/utils/general-test.utils';
 import { ProgrammingExerciseGradingTasksTableComponent } from 'app/programming/manage/grading/tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -218,8 +218,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
                 { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
                 { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: Router, useClass: MockRouter },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },

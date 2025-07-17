@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 import { MockPipe } from 'ng-mocks';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 
 describe('ExpandableSectionComponent', () => {
     let component: ExpandableSectionComponent;
@@ -13,7 +12,7 @@ describe('ExpandableSectionComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [ExpandableSectionComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
+            providers: [LocalStorageService],
         })
             .compileComponents()
             .then(() => {

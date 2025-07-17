@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
@@ -8,7 +9,6 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 
 import { CourseSidebarComponent } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
@@ -48,8 +48,6 @@ import { CourseConversationsComponent } from 'app/communication/shared/course-co
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -192,8 +190,7 @@ describe('CourseManagementContainerComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },

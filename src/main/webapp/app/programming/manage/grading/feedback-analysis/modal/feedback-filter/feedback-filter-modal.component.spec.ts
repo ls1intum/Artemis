@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackFilterModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
-import { LocalStorageService } from 'ngx-webstorage';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 describe('FeedbackFilterModalComponent', () => {
     let fixture: ComponentFixture<FeedbackFilterModalComponent>;

@@ -5,7 +5,7 @@ import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/
 import { User } from 'app/core/user/user.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { RouterModule } from '@angular/router';
 import { CourseTutorialGroupCardComponent } from 'app/tutorialgroup/overview/course-tutorial-group-card/course-tutorial-group-card.component';

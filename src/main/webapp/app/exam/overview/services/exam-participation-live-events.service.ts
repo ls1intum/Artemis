@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 import dayjs from 'dayjs/esm';
-import { LocalStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, Observable, Subject, Subscription, distinct, filter, map, tap } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { User } from 'app/core/user/user.model';
@@ -208,7 +208,7 @@ export class ExamParticipationLiveEventsService {
     }
 
     private loadAcknowledgedEventsMapFromLocalStorage(): { [studentExamId: string]: StudentExamAcknowledgedEvents } {
-        const fromStorage = this.localStorageService.retrieve(EVENT_ACKNOWLEDGEMENT_LOCAL_STORAGE_KEY);
+        const fromStorage = this.localStorageService.retrieve<string>(EVENT_ACKNOWLEDGEMENT_LOCAL_STORAGE_KEY);
         return fromStorage ? JSON.parse(fromStorage) : {};
     }
 

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO } from 'test/helpers/sample/conversationExampleModels';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/core/course/shared/entities/course.model';
