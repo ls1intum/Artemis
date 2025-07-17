@@ -38,6 +38,27 @@ public class ModelingExerciseFactory {
     }
 
     /**
+     * Generates a ModelingExercise for a Course.
+     *
+     * @param releaseDate       The release date of the exercise
+     * @param startDate         The start date of the exercise
+     * @param dueDate           The due date of the exercise
+     * @param assessmentDueDate The assessment due date of the exercise
+     * @param diagramType       The DiagramType of the exercise
+     * @param course            The Course the exercise belongs to
+     * @return The generated ModelingExercise
+     */
+    public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
+            DiagramType diagramType, Course course) {
+        var modelingExercise = (ModelingExercise) ExerciseFactory.populateExercise(new ModelingExercise(), releaseDate, dueDate, assessmentDueDate, course);
+        modelingExercise.setStartDate(startDate);
+        modelingExercise.setDiagramType(diagramType);
+        modelingExercise.setExampleSolutionModel("This is my example solution model");
+        modelingExercise.setExampleSolutionExplanation("This is my example solution model");
+        return modelingExercise;
+    }
+
+    /**
      * Generates a ModelingExercise for an Exam.
      *
      * @param diagramType   The DiagramType of the exercise
