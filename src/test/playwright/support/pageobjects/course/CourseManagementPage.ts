@@ -77,7 +77,7 @@ export class CourseManagementPage {
                 this.page.locator('text=/Number of Modeling Exercises: \\d+/').innerText(),
                 this.page.locator('text=/Number of Quiz Exercises: \\d+/').innerText(),
                 this.page.locator('text=/Number of Text Exercises: \\d+/').innerText(),
-                this.page.locator('text=/Number of Modeling Exercises: \\d+/').innerText(),
+                this.page.locator('text=/Number of File Upload: \\d+/').innerText(),
             ]);
             const [programmingExercisesCount, modelingExercisesCount, quizExercisesCount, textExercisesCount, fileUploadExercisesCount] = exerciseStrings.map((text) =>
                 Number(text.split(':')[1].trim()),
