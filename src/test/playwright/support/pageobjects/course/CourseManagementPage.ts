@@ -73,15 +73,17 @@ export class CourseManagementPage {
         if (expectedCourseSummary) {
             await this.assertCourseMemberCounts(expectedCourseSummary.students, expectedCourseSummary.tutors, expectedCourseSummary.editors, expectedCourseSummary.instructors);
             const exerciseStrings = await Promise.all([
+                this.page.locator('text=/Number of Lectures: \\d+/').innerText(),
                 this.page.locator('text=/Number of Programming Exercises: \\d+/').innerText(),
                 this.page.locator('text=/Number of Modeling Exercises: \\d+/').innerText(),
                 this.page.locator('text=/Number of Quiz Exercises: \\d+/').innerText(),
                 this.page.locator('text=/Number of Text Exercises: \\d+/').innerText(),
                 this.page.locator('text=/Number of File Upload: \\d+/').innerText(),
             ]);
-            const [programmingExercisesCount, modelingExercisesCount, quizExercisesCount, textExercisesCount, fileUploadExercisesCount] = exerciseStrings.map((text) =>
-                Number(text.split(':')[1].trim()),
+            const [lecturesCount, programmingExercisesCount, modelingExercisesCount, quizExercisesCount, textExercisesCount, fileUploadExercisesCount] = exerciseStrings.map(
+                (text) => Number(text.split(':')[1].trim()),
             );
+            expect(lecturesCount).toBe(expectedCourseSummary.lectures);
             expect(programmingExercisesCount).toBe(expectedCourseSummary.programingExercises);
             expect(modelingExercisesCount).toBe(expectedCourseSummary.modelingExercises);
             expect(quizExercisesCount).toBe(expectedCourseSummary.quizExercises);

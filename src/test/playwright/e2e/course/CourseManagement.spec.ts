@@ -47,6 +47,7 @@ export interface CourseSummary {
     tutors: number;
     editors: number;
     instructors: number;
+    lectures: number;
     programingExercises: number;
     modelingExercises: number;
     quizExercises: number;
@@ -275,11 +276,15 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await exerciseAPIRequests.createFileUploadExercise({ course });
             await exerciseAPIRequests.createFileUploadExercise({ course });
 
+            await courseManagementAPIRequests.createLecture(course);
+            await courseManagementAPIRequests.createLecture(course);
+
             const expectedCourseSummaryValues: CourseSummary = {
                 students: 3,
                 tutors: 1,
                 editors: 0,
                 instructors: 1,
+                lectures: 2,
                 programingExercises: 1,
                 modelingExercises: 3,
                 quizExercises: 2,
