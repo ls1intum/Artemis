@@ -6,6 +6,7 @@ import { base64StringToBlob, convertBooleanToCheckIconClass, dayjsToString, gene
 import { expect } from '@playwright/test';
 import { Fixtures } from '../../fixtures/fixtures';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
+import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 
 // Common primitives
 const courseData = {
@@ -48,6 +49,7 @@ export interface CourseSummary {
     tutors: number;
     editors: number;
     instructors: number;
+    exams: number;
     lectures: number;
     programingExercises: number;
     modelingExercises: number;
@@ -256,7 +258,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await expect(courseManagement.getCourse(course.id!)).toBeHidden();
         });
 
-        test('Delete summary shows correct values', async ({ navigationBar, courseManagement, courseManagementAPIRequests, exerciseAPIRequests }) => {
+        test('Delete summary shows correct values', async ({ page, navigationBar, courseManagement, courseManagementAPIRequests, exerciseAPIRequests }) => {
             await PlaywrightUserManagement.createUserInCourse(course.id!, studentOne, UserRole.Student, navigationBar, courseManagement);
             await PlaywrightUserManagement.createUserInCourse(course.id!, studentTwo, UserRole.Student, navigationBar, courseManagement);
             await PlaywrightUserManagement.createUserInCourse(course.id!, studentThree, UserRole.Student, navigationBar, courseManagement);
@@ -280,12 +282,18 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await courseManagementAPIRequests.createLecture(course);
             await courseManagementAPIRequests.createLecture(course);
 
+            const examAPIRequests = new ExamAPIRequests(page);
+            await examAPIRequests.createExam({ course, title: 'Exam 1 - ' + generateUUID() });
+            await examAPIRequests.createExam({ course, title: 'Exam 2 - ' + generateUUID() });
+            await examAPIRequests.createExam({ course, title: 'Exam 3 - ' + generateUUID() });
+
             const expectedCourseSummaryValues: CourseSummary = {
                 isTestCourse: true,
                 students: 3,
                 tutors: 1,
                 editors: 0,
                 instructors: 1,
+                exams: 3,
                 lectures: 2,
                 programingExercises: 1,
                 modelingExercises: 3,
