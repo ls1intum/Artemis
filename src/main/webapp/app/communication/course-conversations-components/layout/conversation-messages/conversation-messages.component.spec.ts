@@ -596,7 +596,7 @@ examples.forEach((activeConversation) => {
             expect(component.groupedPosts[1].author?.id).toBe(2);
         });
 
-        it('should return only unread posts not authored by the current user and sort them descending by creationDate', () => {
+        it('should return only unread posts by the current user and sort them descending by creationDate', () => {
             const lastReadDate = dayjs().subtract(10, 'minutes');
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
@@ -610,14 +610,14 @@ examples.forEach((activeConversation) => {
 
             const posts: Post[] = [
                 { id: 1, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread
-                { id: 2, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // unread but own
+                { id: 2, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // unread
                 { id: 3, creationDate: dayjs().subtract(20, 'minutes'), author: otherUser } as Post, // read
                 { id: 4, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post, // unread
             ];
             component.allPosts = posts;
             const unreadPosts = (component as any).getUnreadPosts();
-            expect(unreadPosts).toHaveLength(2);
-            expect(unreadPosts.map((p: Post) => p.id)).toEqual([4, 1]); // sorted by creationDate descending
+            expect(unreadPosts).toHaveLength(3);
+            expect(unreadPosts.map((p: Post) => p.id)).toEqual([1, 2, 4]);
         });
         it('should compute unreadPosts, unreadPostsCount, and lastReadPostId correctly', () => {
             const lastReadDate = dayjs().subtract(10, 'minutes');
@@ -634,7 +634,7 @@ examples.forEach((activeConversation) => {
             const posts: Post[] = [
                 { id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: otherUser } as Post, // read
                 { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread
-                { id: 3, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // unread but own
+                { id: 3, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // unread
                 { id: 4, creationDate: dayjs(), author: otherUser } as Post, // unread
             ];
 
@@ -642,8 +642,8 @@ examples.forEach((activeConversation) => {
 
             (component as any).computeLastReadState();
 
-            expect(component.unreadPosts).toHaveLength(2);
-            expect(component.unreadPostsCount).toBe(2);
+            expect(component.unreadPosts).toHaveLength(3);
+            expect(component.unreadPostsCount).toBe(3);
         });
 
         it('should return true if at least one unread post is visible', () => {
@@ -742,7 +742,7 @@ examples.forEach((activeConversation) => {
                 postRect: { top: 400, bottom: 510 },
                 containerRect: { top: 0, bottom: 300 },
             };
-
+            component.firstUnreadPostId = mockPostId;
             component.unreadPosts = [mockPost];
             component.messages = [
                 {
@@ -758,9 +758,10 @@ examples.forEach((activeConversation) => {
                 fn(0);
                 return 0;
             });
+
             (component as any).scrollToFirstUnreadPostIfNotVisible();
             const heightOffset = 1;
-            const expectedScrollTop = mockPostElement.offsetTop + mockPostElement.offsetHeight - mockContainerElement.clientHeight + heightOffset;
+            const expectedScrollTop = mockRects.postRect.bottom - mockRects.containerRect.bottom + heightOffset;
             expect(mockContainerElement.scrollTop).toBe(expectedScrollTop);
             rafSpy.mockRestore();
         });

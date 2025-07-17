@@ -709,9 +709,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return [];
         }
 
-        return this.allPosts
-            .filter((post) => post.creationDate?.isAfter(lastReadDate) && post.author?.id !== this.currentUser.id)
-            .sort((a, b) => b.creationDate!.diff(a.creationDate!));
+        const sortedPosts = [...this.allPosts].sort((a, b) => a.creationDate!.diff(b.creationDate!));
+        const indexFirstRelevantPost = sortedPosts.findIndex((post) => post.creationDate?.isAfter(lastReadDate) && post.author?.id !== this.currentUser.id);
+        return indexFirstRelevantPost >= 0 ? sortedPosts.slice(indexFirstRelevantPost) : [];
     }
 
     /**
@@ -723,23 +723,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (!rects) {
             return;
         }
-
-        const firstUnreadPost = this.unreadPosts[this.unreadPosts.length - 1];
-        const component = this.messages.find((m) => m.post.id === firstUnreadPost.id);
-        const postElement = component!.elementRef.nativeElement;
+        const component = this.messages.find((m) => m.post.id === this.firstUnreadPostId);
+        if (!component?.elementRef?.nativeElement) {
+            return;
+        }
         const containerElement = this.content.nativeElement;
-
         const { postRect, containerRect } = rects;
         const isVisible = postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;
-        //we use 1 as offset, since some times the post is not fully visible at the bottom. This is due to the fact that the post might have a small margin at the bottom.
-        const heightOffset = 1;
         if (!isVisible) {
             requestAnimationFrame(() => {
-                const postOffsetTop = postElement.offsetTop;
-                const postHeight = postElement.offsetHeight;
-                const containerHeight = containerElement.clientHeight;
-                const newScrollTop = postOffsetTop + postHeight - containerHeight + heightOffset;
-                containerElement.scrollTop = Math.max(0, newScrollTop);
+                const offset = postRect.bottom - containerRect.bottom + 1; // +1 px for margin compensation
+                containerElement.scrollTop += offset;
             });
         }
     }
@@ -797,7 +791,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private setFirstUnreadPostId(): void {
         if (this.unreadPosts.length > 0) {
-            this.firstUnreadPostId = this.unreadPosts[this.unreadPosts.length - 1].id;
+            this.firstUnreadPostId = this.unreadPosts[0].id;
         } else {
             this.firstUnreadPostId = undefined;
         }
