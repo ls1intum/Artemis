@@ -340,7 +340,6 @@ export const routes: Routes = [
                     hasSidebar: false,
                     showRefreshButton: true,
                 },
-                canActivate: [UserRouteAccessService, CourseOverviewGuard],
             },
             {
                 path: CourseOverviewRoutePath.TRAINING_QUIZ,
@@ -349,7 +348,6 @@ export const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.training',
                 },
-                canActivate: [UserRouteAccessService, CourseOverviewGuard],
             },
             {
                 path: '',
