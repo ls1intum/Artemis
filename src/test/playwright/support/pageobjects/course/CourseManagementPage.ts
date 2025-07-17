@@ -2,6 +2,7 @@ import { Page, expect } from '@playwright/test';
 import { UserCredentials } from '../../users';
 import { COURSE_ADMIN_BASE } from '../../constants';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseUserCounts } from '../../../e2e/course/CourseManagement.spec';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Management page.
@@ -63,24 +64,71 @@ export class CourseManagementPage {
     /**
      * Deletes the specified course.
      * @param course - The course to be deleted.
+     * @param courseUserCounts - if defined, the course user counts are asserted before deletion.
      */
-    async deleteCourse(course: Course) {
+    async deleteCourse(course: Course, courseUserCounts?: CourseUserCounts) {
         await this.page.locator('#delete-course').click();
         await expect(this.page.locator('#delete')).toBeDisabled();
+
+        if (courseUserCounts) {
+            await this.assertCourseMemberCounts(courseUserCounts.students, courseUserCounts.tutors, courseUserCounts.editors, courseUserCounts.instructors);
+        }
+
         await this.page.locator('#confirm-entity-name').fill(course.title!);
         const responsePromise = this.page.waitForResponse(`${COURSE_ADMIN_BASE}/${course.id}`);
         await this.page.locator('#delete').click();
         await responsePromise;
     }
 
+    async assertCourseMemberCounts(expectedNumberOfStudents: number, expectedNumberOfTutors: number, expectedNumberOfEditors: number, expectedNumberOfInstructors: number) {
+        const userCountString = await Promise.all([
+            this.page.locator('text=/Number of Students: \\d+/').innerText(),
+            this.page.locator('text=/Number of Tutors: \\d+/').innerText(),
+            this.page.locator('text=/Number of Editors: \\d+/').innerText(),
+            this.page.locator('text=/Number of Instructors: \\d+/').innerText(),
+        ]);
+
+        const [studentsCount, tutorsCount, editorsCount, instructorsCount] = userCountString.map((text) => Number(text.split(':')[1].trim()));
+
+        expect(studentsCount).toBe(expectedNumberOfStudents);
+        expect(tutorsCount).toBe(expectedNumberOfTutors);
+        expect(editorsCount).toBe(expectedNumberOfEditors);
+        expect(instructorsCount).toBe(expectedNumberOfInstructors);
+    }
+
     /**
      * Adds the user to the student group of the course
      * @param credentials the user that gets added to the student group of the course
+     * @returnToInitialPage if true, the user is redirected to the course page {@link openCourse}
      * */
     async addStudentToCourse(credentials: UserCredentials) {
         const responsePromise = this.page.waitForResponse(`api/core/courses/*/students/${credentials.username}`);
         await this.page.locator('#user-management-dropdown').click();
         await this.page.locator('#add-student').click();
+        await this.confirmUserIntoGroup(credentials);
+        await responsePromise;
+    }
+
+    /**
+     * Adds the user to the tutor group of the course
+     * @param credentials the user that gets added to the tutor group of the course
+     * */
+    async addTutorToCourse(credentials: UserCredentials) {
+        const responsePromise = this.page.waitForResponse(`api/core/courses/*/tutors/${credentials.username}`);
+        await this.page.locator('#user-management-dropdown').click();
+        await this.page.locator('#add-tutor').click();
+        await this.confirmUserIntoGroup(credentials);
+        await responsePromise;
+    }
+
+    /**
+     * Adds the user to the instructor group of the course
+     * @param credentials the user that gets added to the instructor group of the course
+     * */
+    async addInstructorToCourse(credentials: UserCredentials) {
+        const responsePromise = this.page.waitForResponse(`api/core/courses/*/instructors/${credentials.username}`);
+        await this.page.locator('#user-management-dropdown').click();
+        await this.page.locator('#add-instructor').click();
         await this.confirmUserIntoGroup(credentials);
         await responsePromise;
     }
