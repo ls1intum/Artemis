@@ -120,6 +120,15 @@ export class PlaywrightUserManagement {
         return response.json();
     }
 
+    /**
+     * Creates a user in a course with the specified role. This method takes care of navigating to the course management page, no prerequisites for a previous page state are required.
+     *
+     * @param courseId for which the user should be created
+     * @param userCredentials of the user to be created
+     * @param role of the user to be created
+     * @param navigationBar to navigate to the course management page
+     * @param courseManagement to perform the user creation
+     */
     public static async createUserInCourse(
         courseId: number,
         userCredentials: UserCredentials,
