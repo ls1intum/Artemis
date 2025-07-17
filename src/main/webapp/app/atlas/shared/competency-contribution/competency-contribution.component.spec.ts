@@ -47,7 +47,7 @@ describe('CompetencyContributionComponent', () => {
     });
 
     it('should fetch for exercise', () => {
-        runInInjectionContext(TestBed, () => {
+        TestBed.runInInjectionContext(() => {
             component.courseId = input<number>(1);
             component.isExercise = input<boolean>(true);
             component.learningObjectId = input<number>(2);
@@ -60,7 +60,7 @@ describe('CompetencyContributionComponent', () => {
     });
 
     it('should fetch for lecture unit', () => {
-        runInInjectionContext(TestBed, () => {
+        TestBed.runInInjectionContext(() => {
             component.courseId = input<number>(1);
             component.isExercise = input<boolean>(false);
             component.learningObjectId = input<number>(2);

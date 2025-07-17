@@ -125,7 +125,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should use inputValues if present instead of loading new details', fakeAsync(() => {
-        runInInjectionContext(TestBed, () => {
+        TestBed.runInInjectionContext(() => {
             comp.inputExercise = input<TextExercise>(textExercise);
             comp.inputParticipation = input<StudentParticipation>(participation);
             comp.inputSubmission = input<TextSubmission>({ id: 1, text: 'test' });

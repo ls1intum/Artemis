@@ -8,7 +8,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockComponent } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
