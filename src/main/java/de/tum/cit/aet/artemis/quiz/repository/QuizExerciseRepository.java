@@ -18,7 +18,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.dao.QuizExerciseCalendarEventDAO;
+import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -92,7 +92,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     Set<QuizExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dao.QuizExerciseCalendarEventDAO(
+            SELECT new de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO(
                 exercise.quizMode,
                 exercise.title,
                 exercise.releaseDate,
@@ -104,7 +104,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 LEFT JOIN exercise.quizBatches batch ON exercise.quizMode = de.tum.cit.aet.artemis.quiz.domain.QuizMode.SYNCHRONIZED
             WHERE exercise.course.id = :courseId
             """)
-    Set<QuizExerciseCalendarEventDAO> getQuizExerciseCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
+    Set<QuizExerciseCalendarEventDTO> getQuizExerciseCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
 
     /**
      * Finds a quiz exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.

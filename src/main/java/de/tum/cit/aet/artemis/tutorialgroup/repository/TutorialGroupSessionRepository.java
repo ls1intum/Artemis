@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
@@ -45,7 +45,7 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
     Set<TutorialGroupSession> findAllByTutorialGroupId(@Param("tutorialGroupId") Long tutorialGroupId);
 
     @Query("""
-                SELECT new de.tum.cit.aet.artemis.core.dto.CalendarEventDTO(
+                SELECT new de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO(
                     de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.TUTORIAL,
                     de.tum.cit.aet.artemis.core.util.CalendarEventSemantics.START_AND_END_DATE,
                     "Tutorial Session",

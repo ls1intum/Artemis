@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 import jakarta.ws.rs.BadRequestException;
 
-import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 
 public final class CalendarUtil {
 

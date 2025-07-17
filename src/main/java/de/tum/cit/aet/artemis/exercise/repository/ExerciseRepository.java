@@ -22,7 +22,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.core.dao.NonQuizExerciseCalendarEventDAO;
+import de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
@@ -666,7 +666,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     }
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dao.NonQuizExerciseCalendarEventDAO(
+            SELECT new de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO(
                 CASE TYPE(exercise)
                     WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.FILE_UPLOAD_EXERCISE
                     WHEN TextExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.TEXT_EXERCISE
@@ -682,5 +682,5 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Exercise exercise
             WHERE exercise.course.id = :courseId AND TYPE(exercise) IN (FileUploadExercise, TextExercise, ModelingExercise, ProgrammingExercise)
             """)
-    Set<NonQuizExerciseCalendarEventDAO> getNonQuizExerciseCalendarEventsDAOsForCourseId(@Param("courseId") long courseId);
+    Set<NonQuizExerciseCalendarEventDTO> getNonQuizExerciseCalendarEventsDAOsForCourseId(@Param("courseId") long courseId);
 }

@@ -23,8 +23,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.dao.ExamCalendarEventDAO;
 import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.ExamCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -529,7 +529,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dao.ExamCalendarEventDAO(
+            SELECT new de.tum.cit.aet.artemis.core.dto.calendar.ExamCalendarEventDTO(
                 exam.title,
                 exam.visibleDate,
                 exam.startDate,
@@ -542,5 +542,5 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             FROM Exam exam
             WHERE exam.course.id = :courseId
             """)
-    Set<ExamCalendarEventDAO> getExamCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
+    Set<ExamCalendarEventDTO> getExamCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
 }

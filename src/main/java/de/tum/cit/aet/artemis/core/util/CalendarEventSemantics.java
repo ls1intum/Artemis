@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
-import de.tum.cit.aet.artemis.core.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
