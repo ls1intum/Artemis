@@ -92,7 +92,7 @@ describe('CourseSidebarItemService', () => {
     });
 
     describe('getStudentDefaultItems', () => {
-        it('should return items without dashboard when hasDashboard is false and questionsAvailableForPractice is false', () => {
+        it('should return items without dashboard when hasDashboard is false and questionsAvailableForTraining is false', () => {
             const items = service.getStudentDefaultItems(false, false);
 
             expect(items).toHaveLength(3);
@@ -101,7 +101,7 @@ describe('CourseSidebarItemService', () => {
             expect(items[2].title).toBe('Calendar');
         });
 
-        it('should include dashboard item when hasDashboard is true and questionsAvailableForPractice is true', () => {
+        it('should include dashboard item when hasDashboard is true and questionsAvailableForTraining is true', () => {
             const items = service.getStudentDefaultItems(true, true);
 
             expect(items).toHaveLength(5);

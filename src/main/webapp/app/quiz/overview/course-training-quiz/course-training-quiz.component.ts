@@ -99,11 +99,12 @@ export class CourseTrainingQuizComponent {
      * increments the current question index or navigates to the course practice page if the last question is reached
      */
     nextQuestion(): void {
-        this.submitted = false;
-        this.currentIndex.set(this.currentIndex() + 1);
-        const question = this.currentQuestion();
-        if (question) {
-            this.initQuestion(question);
+        if (this.currentIndex() < this.questions().length - 1) {
+            this.currentIndex.set(this.currentIndex() + 1);
+            const question = this.currentQuestion();
+            if (question) {
+                this.initQuestion(question);
+            }
         }
     }
 
@@ -113,6 +114,7 @@ export class CourseTrainingQuizComponent {
      */
     initQuestion(question: QuizQuestion): void {
         this.showingResult = false;
+        this.submitted = false;
         this.submission = new QuizSubmission();
         if (question) {
             switch (question.type) {

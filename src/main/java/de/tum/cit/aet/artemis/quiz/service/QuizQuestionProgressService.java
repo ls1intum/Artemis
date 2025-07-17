@@ -289,7 +289,6 @@ public class QuizQuestionProgressService {
      * @return true if there are questions availble for training, false otherwise
      */
     public boolean questionsAvailableForTraining(Long courseId) {
-        Set<QuizQuestion> questions = quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
-        return !questions.isEmpty();
+        return quizQuestionRepository.areQuizQuestionsAvailableForPractice(courseId);
     }
 }

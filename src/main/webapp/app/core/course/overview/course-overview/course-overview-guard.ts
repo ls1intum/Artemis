@@ -77,8 +77,6 @@ export class CourseOverviewGuard implements CanActivate {
                 hasAccess = isCommunicationEnabled(course);
                 break;
             case CourseOverviewRoutePath.TRAINING:
-                hasAccess = course?.trainingEnabled ?? false;
-                break;
             case CourseOverviewRoutePath.TRAINING_QUIZ:
                 hasAccess = course?.trainingEnabled ?? false;
                 break;

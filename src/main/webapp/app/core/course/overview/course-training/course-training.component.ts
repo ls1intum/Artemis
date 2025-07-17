@@ -16,7 +16,7 @@ export class CourseTrainingComponent {
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
     courseId = computed(() => this.paramsSignal()?.['courseId']);
 
-    public navigateToPractice(): void {
+    public navigateToTraining(): void {
         this.router.navigate(['courses', this.courseId(), 'training', 'quiz']);
     }
 }

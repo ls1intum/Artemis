@@ -77,7 +77,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         // 1 optional DB call to get the amount of notifications inside the course.
 
         var course = courses.getFirst();
-        // potentially, we might get a course that has faqs disabled, in which case we would have 12 calls instead of 13
+        // potentially, we might get a course that has faqs disabled, in which case we would have 14 calls instead of 15
         int numberOfCounts = course.isFaqEnabled() ? 15 : 14;
         assertThatDb(() -> {
             log.info("Start course for dashboard call for one course");
