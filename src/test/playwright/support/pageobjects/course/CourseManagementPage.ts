@@ -97,40 +97,41 @@ export class CourseManagementPage {
     }
 
     /**
-     * Adds the user to the student group of the course
-     * @param credentials the user that gets added to the student group of the course
-     * @returnToInitialPage if true, the user is redirected to the course page {@link openCourse}
-     * */
+     * Adds the user to a specific group of the course.
+     * @param credentials The user that gets added to the group.
+     * @param groupType The type of group (e.g., 'students', 'tutors', 'instructors').
+     * @param selector The selector for the group action button.
+     */
+    private async addUserToGroup(credentials: UserCredentials, groupType: string, selector: string) {
+        const responsePromise = this.page.waitForResponse(`api/core/courses/*/${groupType}/${credentials.username}`);
+        await this.page.locator('#user-management-dropdown').click();
+        await this.page.locator(selector).click();
+        await this.confirmUserIntoGroup(credentials);
+        await responsePromise;
+    }
+
+    /**
+     * Adds the user to the student group of the course.
+     * @param credentials The user that gets added to the student group of the course.
+     */
     async addStudentToCourse(credentials: UserCredentials) {
-        const responsePromise = this.page.waitForResponse(`api/core/courses/*/students/${credentials.username}`);
-        await this.page.locator('#user-management-dropdown').click();
-        await this.page.locator('#add-student').click();
-        await this.confirmUserIntoGroup(credentials);
-        await responsePromise;
+        await this.addUserToGroup(credentials, 'students', '#add-student');
     }
 
     /**
-     * Adds the user to the tutor group of the course
-     * @param credentials the user that gets added to the tutor group of the course
-     * */
+     * Adds the user to the tutor group of the course.
+     * @param credentials The user that gets added to the tutor group of the course.
+     */
     async addTutorToCourse(credentials: UserCredentials) {
-        const responsePromise = this.page.waitForResponse(`api/core/courses/*/tutors/${credentials.username}`);
-        await this.page.locator('#user-management-dropdown').click();
-        await this.page.locator('#add-tutor').click();
-        await this.confirmUserIntoGroup(credentials);
-        await responsePromise;
+        await this.addUserToGroup(credentials, 'tutors', '#add-tutor');
     }
 
     /**
-     * Adds the user to the instructor group of the course
-     * @param credentials the user that gets added to the instructor group of the course
-     * */
+     * Adds the user to the instructor group of the course.
+     * @param credentials The user that gets added to the instructor group of the course.
+     */
     async addInstructorToCourse(credentials: UserCredentials) {
-        const responsePromise = this.page.waitForResponse(`api/core/courses/*/instructors/${credentials.username}`);
-        await this.page.locator('#user-management-dropdown').click();
-        await this.page.locator('#add-instructor').click();
-        await this.confirmUserIntoGroup(credentials);
-        await responsePromise;
+        await this.addUserToGroup(credentials, 'instructors', '#add-instructor');
     }
 
     /**
