@@ -61,45 +61,7 @@ export class CourseManagementPage {
         await this.getCourse(courseID).locator('#course-card-header').click();
     }
 
-    /**
-     * Deletes the specified course.
-     * @param course - The course to be deleted.
-     * @param expectedCourseSummary - if defined, the course user counts are asserted before deletion.
-     */
-    async deleteCourse(course: Course, expectedCourseSummary?: CourseSummary) {
-        await this.page.locator('#delete-course').click();
-        await expect(this.page.locator('#delete')).toBeDisabled();
-
-        if (expectedCourseSummary) {
-            await this.assertCourseMemberCounts(expectedCourseSummary.students, expectedCourseSummary.tutors, expectedCourseSummary.editors, expectedCourseSummary.instructors);
-            expect(await this.page.locator(`text=/Test Course: ${expectedCourseSummary.isTestCourse}/`).isVisible()).toBe(true);
-            const exerciseStrings = await Promise.all([
-                this.page.locator('text=/Number of Exams: \\d+/').innerText(),
-                this.page.locator('text=/Number of Lectures: \\d+/').innerText(),
-                this.page.locator('text=/Number of Programming Exercises: \\d+/').innerText(),
-                this.page.locator('text=/Number of Modeling Exercises: \\d+/').innerText(),
-                this.page.locator('text=/Number of Quiz Exercises: \\d+/').innerText(),
-                this.page.locator('text=/Number of Text Exercises: \\d+/').innerText(),
-                this.page.locator('text=/Number of File Upload Exercises: \\d+/').innerText(),
-            ]);
-            const [examsCount, lecturesCount, programmingExercisesCount, modelingExercisesCount, quizExercisesCount, textExercisesCount, fileUploadExercisesCount] =
-                exerciseStrings.map((text) => Number(text.split(':')[1].trim()));
-            expect(examsCount).toBe(expectedCourseSummary.exams);
-            expect(lecturesCount).toBe(expectedCourseSummary.lectures);
-            expect(programmingExercisesCount).toBe(expectedCourseSummary.programingExercises);
-            expect(modelingExercisesCount).toBe(expectedCourseSummary.modelingExercises);
-            expect(quizExercisesCount).toBe(expectedCourseSummary.quizExercises);
-            expect(textExercisesCount).toBe(expectedCourseSummary.textExercises);
-            expect(fileUploadExercisesCount).toBe(expectedCourseSummary.fileUploadExercises);
-        }
-
-        await this.page.locator('#confirm-entity-name').fill(course.title!);
-        const responsePromise = this.page.waitForResponse(`${COURSE_ADMIN_BASE}/${course.id}`);
-        await this.page.locator('#delete').click();
-        await responsePromise;
-    }
-
-    async assertCourseMemberCounts(expectedNumberOfStudents: number, expectedNumberOfTutors: number, expectedNumberOfEditors: number, expectedNumberOfInstructors: number) {
+    private async assertCourseMemberCounts(expectedNumberOfStudents: number, expectedNumberOfTutors: number, expectedNumberOfEditors: number, expectedNumberOfInstructors: number) {
         const userCountStrings = await Promise.all([
             this.page.locator('text=/Number of Students: \\d+/').innerText(),
             this.page.locator('text=/Number of Tutors: \\d+/').innerText(),
@@ -113,6 +75,46 @@ export class CourseManagementPage {
         expect(tutorsCount).toBe(expectedNumberOfTutors);
         expect(editorsCount).toBe(expectedNumberOfEditors);
         expect(instructorsCount).toBe(expectedNumberOfInstructors);
+    }
+
+    private async assertCourseSummary(expectedCourseSummary: CourseSummary) {
+        await this.assertCourseMemberCounts(expectedCourseSummary.students, expectedCourseSummary.tutors, expectedCourseSummary.editors, expectedCourseSummary.instructors);
+
+        expect(await this.page.locator(`text=/Test Course: ${expectedCourseSummary.isTestCourse}/`).isVisible()).toBe(true);
+
+        const exerciseTypes = [
+            { label: 'Number of Exams', expected: expectedCourseSummary.exams },
+            { label: 'Number of Lectures', expected: expectedCourseSummary.lectures },
+            { label: 'Number of Programming Exercises', expected: expectedCourseSummary.programingExercises },
+            { label: 'Number of Modeling Exercises', expected: expectedCourseSummary.modelingExercises },
+            { label: 'Number of Quiz Exercises', expected: expectedCourseSummary.quizExercises },
+            { label: 'Number of Text Exercises', expected: expectedCourseSummary.textExercises },
+            { label: 'Number of File Upload Exercises', expected: expectedCourseSummary.fileUploadExercises },
+        ];
+
+        for (const { label, expected } of exerciseTypes) {
+            const actual = Number((await this.page.locator(`text=/${label}: \\d+/`).innerText()).split(':')[1].trim());
+            expect(actual).toBe(expected);
+        }
+    }
+
+    /**
+     * Deletes the specified course.
+     * @param course - The course to be deleted.
+     * @param expectedCourseSummary - if defined, the course user counts are asserted before deletion.
+     */
+    async deleteCourse(course: Course, expectedCourseSummary?: CourseSummary) {
+        await this.page.locator('#delete-course').click();
+        await expect(this.page.locator('#delete')).toBeDisabled();
+
+        if (expectedCourseSummary) {
+            await this.assertCourseSummary(expectedCourseSummary);
+        }
+
+        await this.page.locator('#confirm-entity-name').fill(course.title!);
+        const responsePromise = this.page.waitForResponse(`${COURSE_ADMIN_BASE}/${course.id}`);
+        await this.page.locator('#delete').click();
+        await responsePromise;
     }
 
     /**
