@@ -555,6 +555,108 @@
         "allDeclaredFields": true
     },
     {
+        "name": "java.util.ImmutableCollections$ListN",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "java.util.ImmutableCollections$SetN",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "java.util.ImmutableCollections$MapN",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "java.util.ImmutableCollections$List12",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "java.util.ImmutableCollections$Set12",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "io.jsonwebtoken.Jwts",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "io.jsonwebtoken.Jwts$ENC",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "io.jsonwebtoken.Jwts$SIG",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "io.jsonwebtoken.Jwts$KEY",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "io.jsonwebtoken.Jwts$ZIP",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "io.jsonwebtoken.impl.DefaultJwtBuilder",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "io.jsonwebtoken.impl.DefaultJwtParser",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "io.jsonwebtoken.impl.DefaultJwtParserBuilder",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "io.jsonwebtoken.security.Keys",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "io.jsonwebtoken.impl.security.DefaultKeyPairBuilder",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "io.jsonwebtoken.impl.security.RsaKeyAlgorithm",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
+        "name": "io.jsonwebtoken.impl.security.HmacShaKeyAlgorithm",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true,
+        "allDeclaredFields": true
+    },
+    {
         "name": "de.tum.cit.aet.artemis.core.config.Constants",
         "allDeclaredFields": true
     },
@@ -873,6 +975,11 @@
     },
     {
         "name": "SavedPost",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO",
         "allDeclaredConstructors": true,
         "allDeclaredMethods": true
     }

@@ -25,5 +25,20 @@
     },
     {
         "name": "java.time.Ser"
+    },
+    {
+        "name": "java.util.ImmutableCollections$ListN"
+    },
+    {
+        "name": "java.util.ImmutableCollections$SetN"
+    },
+    {
+        "name": "java.util.ImmutableCollections$MapN"
+    },
+    {
+        "name": "java.util.ImmutableCollections$List12"
+    },
+    {
+        "name": "java.util.ImmutableCollections$Set12"
     }
 ]
