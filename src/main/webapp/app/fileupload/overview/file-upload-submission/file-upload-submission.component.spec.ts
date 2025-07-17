@@ -210,8 +210,7 @@ describe('FileUploadSubmissionComponent', () => {
         tick();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
+        expect(submitButton.componentInstance.disabled).toBeTrue();
 
         tick();
         fixture.destroy();
@@ -230,8 +229,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         expect(comp.isLate).toBeTrue();
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
+        expect(submitButton.componentInstance.disabled).toBeFalse();
 
         tick();
         fixture.destroy();
@@ -248,9 +246,9 @@ describe('FileUploadSubmissionComponent', () => {
         comp.result = result;
         fixture.detectChanges();
 
+        expect(comp.isLate).toBeTrue();
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
+        expect(submitButton.componentInstance.disabled).toBeTrue();
 
         tick();
         fixture.destroy();

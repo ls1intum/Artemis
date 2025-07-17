@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { By } from '@angular/platform-browser';
 import { ExerciseImportFromFileComponent } from 'app/exercise/import/from-file/exercise-import-from-file.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -17,6 +17,8 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service.ts';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ExerciseImportFromFileComponent', () => {
     let component: ExerciseImportFromFileComponent;
@@ -27,9 +29,9 @@ describe('ExerciseImportFromFileComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockComponent(HelpIconComponent), MockComponent(ButtonComponent)],
+            imports: [MockComponent(HelpIconComponent), ButtonComponent, FaIconComponent],
             declarations: [ExerciseImportFromFileComponent, MockDirective(TranslateDirective)],
-            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }, MockProvider(FeatureToggleService)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseImportFromFileComponent);
@@ -121,19 +123,17 @@ describe('ExerciseImportFromFileComponent', () => {
     it('should disable upload button as long as no file is selected', () => {
         component.fileForImport = undefined;
         fixture.detectChanges();
-        const uploadButton: HTMLButtonElement = fixture.debugElement.nativeElement.querySelector('#upload-exercise-btn');
-        //that's the only way we can access the disabled property of the button, the standard way doesn't work
-        // @ts-ignore
-        expect(JSON.parse(uploadButton.attributes.getNamedItem('ng-reflect-disabled').value)).toBeTrue();
+
+        const uploadButton = fixture.debugElement.query(By.css('#upload-exercise-btn'));
+        expect(uploadButton.componentInstance.disabled).toBeTrue();
     });
 
     it('should enable upload button once file is selected', () => {
         component.fileForImport = new File([''], 'test.zip', { type: 'application/zip' });
         fixture.detectChanges();
-        const uploadButton = fixture.debugElement.nativeElement.querySelector('#upload-exercise-btn');
-        //that's the only way we can access the disabled property of the button, the standard way doesn't work
-        // @ts-ignore
-        expect(JSON.parse(uploadButton.attributes.getNamedItem('ng-reflect-disabled').value)).toBeFalse();
+
+        const uploadButton = fixture.debugElement.query(By.css('#upload-exercise-btn'));
+        expect(uploadButton.componentInstance.disabled).toBeFalse();
     });
 
     async function assertErrorAlertIsRaisedWithoutOneValidJsonFile() {

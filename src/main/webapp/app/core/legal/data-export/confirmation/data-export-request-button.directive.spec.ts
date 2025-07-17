@@ -22,19 +22,19 @@ describe('DataExportRequestButtonDirective', () => {
     let translateService: TranslateService;
     let translateSpy: jest.SpyInstance;
 
-    beforeEach(() =>
-        TestBed.configureTestingModule({
+    beforeEach(() => {
+        const mockModalService = {
+            open: jest.fn().mockReturnValue({
+                result: Promise.resolve(),
+                componentInstance: {},
+            }),
+        };
+
+        return TestBed.configureTestingModule({
             imports: [TestComponent, FaIconComponent],
             providers: [
-                {
-                    provide: TranslateService,
-                    useClass: MockTranslateService,
-                },
-                // if we don't provide the NgbModal, the dialogError subscriptions are undefined.
-                {
-                    provide: NgbModal,
-                    useValue: null,
-                },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: NgbModal, useValue: mockModalService },
             ],
         })
             .compileComponents()
@@ -44,8 +44,8 @@ describe('DataExportRequestButtonDirective', () => {
                 dataExportConfirmationDialogService = TestBed.inject(DataExportConfirmationDialogService);
                 translateService = TestBed.inject(TranslateService);
                 translateSpy = jest.spyOn(translateService, 'instant');
-            }),
-    );
+            });
+    });
 
     afterEach(() => {
         jest.restoreAllMocks();

@@ -82,37 +82,37 @@ describe('TextBlockFeedbackEditorComponent', () => {
     });
 
     it('should show delete button for empty feedback only', () => {
-        let button = compiled.querySelector('.close fa-icon[ng-reflect-icon="[object Object]"]');
-        let confirm = compiled.querySelector('.close jhi-confirm-icon');
+        let button = compiled.querySelector('#dismiss-icon');
+        let confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeTruthy();
         expect(confirm).toBeFalsy();
 
         component.feedback.credits = 1;
         fixture.detectChanges();
-        button = compiled.querySelector('.close fa-icon[ng-reflect-icon="[object Object]"]');
-        confirm = compiled.querySelector('.close jhi-confirm-icon');
+        button = compiled.querySelector('#dismiss-icon');
+        confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.detailText = 'Lorem Ipsum';
         fixture.detectChanges();
-        button = compiled.querySelector('.close fa-icon[ng-reflect-icon="[object Object]"]');
-        confirm = compiled.querySelector('.close jhi-confirm-icon');
+        button = compiled.querySelector('#dismiss-icon');
+        confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.credits = 0;
         fixture.detectChanges();
-        button = compiled.querySelector('.close fa-icon[ng-reflect-icon="[object Object]"]');
-        confirm = compiled.querySelector('.close jhi-confirm-icon');
+        button = compiled.querySelector('#dismiss-icon');
+        confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.detailText = '';
         fixture.detectChanges();
 
-        button = compiled.querySelector('.close fa-icon[ng-reflect-icon="[object Object]"]');
-        confirm = compiled.querySelector('.close jhi-confirm-icon');
+        button = compiled.querySelector('#dismiss-icon');
+        confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeTruthy();
         expect(confirm).toBeFalsy();
     });

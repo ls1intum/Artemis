@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { GLOBAL_NOTIFICATION_TYPES, GlobalNotificationsSettingsComponent } from './global-notifications-settings.component';
@@ -143,13 +144,13 @@ describe('GlobalNotificationsSettingsComponent', () => {
             tick();
             fixture.detectChanges();
 
-            const element: HTMLElement = fixture.nativeElement;
-            const links = element.querySelectorAll('a.small');
+            const anchorElements = fixture.debugElement.queryAll(By.directive(RouterLink));
+            const actualRouterLinks = anchorElements.map((debugElement) => debugElement.injector.get(RouterLink).routerLink.join('/'));
+            const expectedRouterLinks = component.notificationTypeLinks.map((link) => link.routerLink.join('/'));
 
-            const notificationLinks = component.notificationTypeLinks;
-            notificationLinks.forEach((link) => {
-                const matchingLink = Array.from(links).find((a) => a.getAttribute('ng-reflect-router-link') === link.routerLink.join(','));
-                expect(matchingLink).toBeDefined();
+            expectedRouterLinks.forEach((expected) => {
+                const found = actualRouterLinks.some((actual) => actual === expected);
+                expect(found).toBeTrue();
             });
         }));
     });
