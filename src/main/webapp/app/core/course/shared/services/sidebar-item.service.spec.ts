@@ -104,7 +104,7 @@ describe('CourseSidebarItemService', () => {
         it('should include dashboard item when hasDashboard is true and questionsAvailableForPractice is true', () => {
             const items = service.getStudentDefaultItems(true, true);
 
-            expect(items).toHaveLength(4);
+            expect(items).toHaveLength(5);
             expect(items[0].title).toBe('Dashboard');
             expect(items[1].title).toBe('Exercises');
             expect(items[2].title).toBe('Training');
