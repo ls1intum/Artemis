@@ -38,7 +38,6 @@ import { CourseNotificationSettingService } from 'app/communication/course-notif
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CourseTrainingQuizService } from 'app/quiz/overview/service/course-training-quiz.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
