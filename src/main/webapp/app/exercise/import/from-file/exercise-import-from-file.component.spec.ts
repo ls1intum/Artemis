@@ -17,7 +17,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service.ts';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ExerciseImportFromFileComponent', () => {
