@@ -38,8 +38,8 @@
         "@ngx-translate/http-loader": "16.0.1",
         "@sentry/angular": "9.39.0",
         "@siemens/ngx-datatable": "24.1.0",
-        "@swimlane/ngx-charts": "22.0.0",
-        "@swimlane/ngx-graph": "10.0.0",
+        "@swimlane/ngx-charts": "23.0.0-alpha.0",
+        "@swimlane/ngx-graph": "11.0.0-alpha.0",
         "@vscode/codicons": "0.0.36",
         "@vscode/markdown-it-katex": "1.1.2",
         "bootstrap": "5.3.7",
@@ -85,30 +85,7 @@
         "zone.js": "0.15.1"
     },
     "overrides": {
-        "@angular-builders/jest": {
-            "@angular-devkit/build-angular": "^20.0.0",
-            "@angular/common": "^20.0.0",
-            "@angular/core": "^20.0.0"
-        },
         "@babel/runtime": "7.27.6",
-        "@swimlane/ngx-charts": {
-            "@angular/animations": "^20.0.0",
-            "@angular/common": "^20.0.0",
-            "@angular/core": "^20.0.0",
-            "@angular/cdk": "20.1.2",
-            "@angular/forms": "^20.0.0",
-            "@angular/platform-browser": "^20.0.0",
-            "@angular/platform-browser-dynamic": "^20.0.0"
-        },
-        "@swimlane/ngx-graph": {
-            "@angular/animations": "^20.0.0",
-            "@angular/common": "^20.0.0",
-            "@angular/core": "^20.0.0",
-            "@angular/cdk": "20.1.2",
-            "@angular/forms": "^20.0.0",
-            "@angular/platform-browser": "^20.0.0",
-            "@angular/platform-browser-dynamic": "^20.0.0"
-        },
         "braces": "3.0.3",
         "cookie": "1.0.2",
         "critters": "0.0.25",
@@ -120,12 +97,6 @@
         "express": "5.1.0",
         "jsdom": "26.1.0",
         "katex": "0.16.22",
-        "ng-mocks": {
-            "@angular/common": "^20.0.0",
-            "@angular/core": "^20.0.0",
-            "@angular/forms": "^20.0.0",
-            "@angular/platform-browser": "^20.0.0"
-        },
         "ngx-webstorage": {
             "@angular/common": "^20.0.0",
             "@angular/core": "^20.0.0",
@@ -135,8 +106,8 @@
         "rimraf": "6.0.1",
         "semver": "7.7.2",
         "tough-cookie": "5.1.2",
-        "vite": "7.0.4",
-        "webpack": "5.100.1",
+        "vite": "7.0.5",
+        "webpack": "5.100.2",
         "webpack-dev-middleware": "7.4.2",
         "webpack-dev-server": "5.2.2",
         "word-wrap": "1.2.5",
