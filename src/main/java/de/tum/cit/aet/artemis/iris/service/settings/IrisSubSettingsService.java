@@ -207,6 +207,9 @@ public class IrisSubSettingsService {
         if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAutoIngestOnLectureAttachmentUpload(newSettings.getAutoIngestOnLectureAttachmentUpload());
+            currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
+            currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
+                    parentSettings != null ? parentSettings.allowedVariants() : null));
         }
 
         return currentSettings;
@@ -277,6 +280,9 @@ public class IrisSubSettingsService {
         if (isCourseOrGlobalSettings(settingsType)) {
             currentSettings.setEnabled(newSettings.isEnabled());
             currentSettings.setAutoIngestOnFaqCreation(newSettings.getAutoIngestOnFaqCreation());
+            currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
+            currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
+                    parentSettings != null ? parentSettings.allowedVariants() : null));
         }
 
         return currentSettings;

@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 
 /**
  * Spring Data JPA repository for the ProgrammingExercise entity.
@@ -154,7 +155,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
      * <ul>
-     * <li>The release date is in the future → Schedule combine template commits</li>
      * <li>The build and test student submissions after due date is in the future</li>
      * <li>The due date is in the future</li>
      * <li>There are participations in the exercise with individual due dates in the future</li>
@@ -291,9 +291,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
                 LEFT JOIN FETCH p.buildConfig
+                LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
             """)
-    Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndAndBuildConfig(
+    Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(
             @Param("exerciseId") long exerciseId);
 
     @Query("""
@@ -306,6 +307,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.auxiliaryRepositories
                 LEFT JOIN FETCH p.buildConfig
                 LEFT JOIN FETCH p.plagiarismDetectionConfig
+                LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findByIdForImport(@Param("exerciseId") long exerciseId);
@@ -479,8 +481,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
-    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig" })
-    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig", "gradingCriteria" })
+    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(long exerciseId);
 
     long countByShortNameAndCourse(String shortName, Course course);
 
@@ -541,15 +543,15 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id and fetch related plagiarism detection config and team config.
+     * Find a programming exercise by its id and fetch related plagiarism detection config, team config and grading criteria.
      * Throws an EntityNotFoundException if the exercise cannot be found.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      */
     @NotNull
-    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigTeamConfigAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(programmingExerciseId), programmingExerciseId);
+    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -899,6 +901,16 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         validateTitle(programmingExercise, course);
         validateCourseAndExerciseShortName(programmingExercise, course);
     }
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO(
+                p.shortName,
+                p.course.shortName
+            )
+            FROM ProgrammingExercise p
+            WHERE p.id = :programmingExerciseId
+            """)
+    ProgrammingExerciseNamesDTO findNames(@Param("programmingExerciseId") long programmingExerciseId);
 
     /**
      * Fetch options for the {@link ProgrammingExercise} entity.

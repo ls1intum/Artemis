@@ -38,6 +38,7 @@ import { CourseNotificationSettingService } from 'app/communication/course-notif
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -69,6 +70,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private modalService = inject(NgbModal);
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
+    private calendarEventService = inject(CalendarEventService);
     protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
     protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
 
@@ -91,6 +93,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
     >(undefined);
     isTestServer = this.profileService.isTestServer();
+    isDevelopment = this.profileService.isDevelopment();
 
     // Icons
     faTimes = faTimes;
@@ -250,6 +253,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.loadCourseSubscription?.unsubscribe();
         if (refresh) {
             this.loadCourseSubscription = observable.subscribe();
+            this.calendarEventService.refresh();
         }
         return observable;
     }
@@ -296,7 +300,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
         if (currentCourse?.lectures) {
             const lecturesItem = this.sidebarItemService.getLecturesItem();
-            sidebarItems.splice(-1, 0, lecturesItem);
+            sidebarItems.splice(-2, 0, lecturesItem);
         }
 
         if (currentCourse?.exams && this.hasVisibleExams()) {
@@ -329,7 +333,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             sidebarItems.push(faqItem);
         }
 
-        if (this.isTestServer) {
+        if (this.isTestServer || this.isDevelopment) {
             sidebarItems.push(this.sidebarItemService.getPracticeItem());
         }
 

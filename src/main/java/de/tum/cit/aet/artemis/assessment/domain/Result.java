@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.assessment.domain;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS;
 import static de.tum.cit.aet.artemis.core.config.Constants.SIZE_OF_UNSIGNED_TINYINT;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundToNDecimalPlaces;
@@ -227,7 +228,11 @@ public class Result extends DomainObject implements Comparable<Result> {
             this.rated = true;
             return;
         }
-        this.rated = !submissionDate.isAfter(optionalDueDate.get());
+        var dueDate = optionalDueDate.get();
+        if (getSubmission().getParticipation().getExercise() instanceof ProgrammingExercise) {
+            dueDate = dueDate.plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS);
+        }
+        this.rated = !submissionDate.isAfter(dueDate);
     }
 
     /**

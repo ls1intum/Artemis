@@ -5,7 +5,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { FEATURE_PASSKEY } from 'app/app.constants';
+import { MODULE_FEATURE_PASSKEY } from 'app/app.constants';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subscription } from 'rxjs';
@@ -67,7 +67,7 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     isPasskeyEnabled = false;
 
     ngOnInit(): void {
-        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(FEATURE_PASSKEY);
+        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
         this.filteredNotificationTypes = this.notificationTypes.filter((type) => this.isSettingAvailable(type));
         this.notificationLabels = Object.fromEntries(this.filteredNotificationTypes.map((type) => [type, this.getNotificationTypeLabel(type)]));
         this.loadSettings();

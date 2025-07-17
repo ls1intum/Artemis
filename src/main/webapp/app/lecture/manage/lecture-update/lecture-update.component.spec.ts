@@ -13,7 +13,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -34,6 +34,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 describe('LectureUpdateComponent', () => {
     let lectureService: LectureService;
@@ -95,6 +96,7 @@ describe('LectureUpdateComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                MockProvider(CalendarEventService),
             ],
         })
             .compileComponents()
@@ -128,12 +130,15 @@ describe('LectureUpdateComponent', () => {
                 }),
             ),
         );
+        const calendarEventService = TestBed.inject(CalendarEventService);
+        const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
 
         lectureUpdateComponent.save();
         lectureUpdateComponentFixture.detectChanges();
 
         expect(createSpy).toHaveBeenCalledOnce();
         expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1' });
+        expect(refreshSpy).toHaveBeenCalledOnce();
     });
 
     it('should edit a lecture', fakeAsync(() => {
@@ -156,6 +161,8 @@ describe('LectureUpdateComponent', () => {
                 }),
             ),
         );
+        const calendarEventService = TestBed.inject(CalendarEventService);
+        const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
 
         lectureUpdateComponent.save();
         tick();
@@ -166,6 +173,7 @@ describe('LectureUpdateComponent', () => {
 
         expect(updateSpy).toHaveBeenCalledOnce();
         expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated', channelName: 'test1Updated' });
+        expect(refreshSpy).toHaveBeenCalledOnce();
     }));
 
     it('should select process units checkbox', fakeAsync(() => {
@@ -369,9 +377,6 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponent.lecturePeriodSection = signal({
                 isPeriodSectionValid: () => true,
             } as any);
-            lectureUpdateComponent.attachmentsSection = signal({
-                isFormValid: () => true,
-            } as any);
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => true,
             } as any);
@@ -381,7 +386,6 @@ describe('LectureUpdateComponent', () => {
             expect(lectureUpdateComponent.formStatusSections).toEqual([
                 { title: 'artemisApp.lecture.sections.title', valid: true },
                 { title: 'artemisApp.lecture.sections.period', valid: true },
-                { title: 'artemisApp.lecture.sections.attachments', valid: true },
                 { title: 'artemisApp.lecture.sections.units', valid: true },
             ]);
         });
@@ -415,9 +419,6 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponent.lecturePeriodSection = signal({
                 isPeriodSectionValid: () => false,
             } as any);
-            lectureUpdateComponent.attachmentsSection = signal({
-                isFormValid: () => false,
-            } as any);
             lectureUpdateComponent.unitSection = signal({
                 isUnitConfigurationValid: () => false,
             } as any);
@@ -427,7 +428,6 @@ describe('LectureUpdateComponent', () => {
             expect(lectureUpdateComponent.formStatusSections).toEqual([
                 { title: 'artemisApp.lecture.sections.title', valid: false },
                 { title: 'artemisApp.lecture.sections.period', valid: false },
-                { title: 'artemisApp.lecture.sections.attachments', valid: false },
                 { title: 'artemisApp.lecture.sections.units', valid: false },
             ]);
         });
