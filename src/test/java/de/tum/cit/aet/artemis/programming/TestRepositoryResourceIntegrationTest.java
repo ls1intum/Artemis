@@ -490,7 +490,6 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRepositoryState() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        doReturn(true).when(gitService).isRepositoryCached(any());
         var status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(status.repositoryStatus()).isEqualTo(RepositoryStatusDTOType.UNCOMMITTED_CHANGES);
         // TODO: also test other states

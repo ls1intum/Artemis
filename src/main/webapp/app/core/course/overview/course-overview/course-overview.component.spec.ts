@@ -65,6 +65,7 @@ import { CourseNotificationSettingPreset } from 'app/communication/shared/entiti
 import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
 import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -211,6 +212,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(TeamService),
                 MockProvider(WebsocketService),
                 MockProvider(ArtemisServerDateService),
+                MockProvider(CalendarEventService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
                 MockProvider(TutorialGroupsService),
@@ -339,13 +341,14 @@ describe('CourseOverviewComponent', () => {
         component.course.set({ id: 123, numberOfPrerequisites: 3, learningPathsEnabled: true });
         component.atlasEnabled = true;
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[2].title).toContain('Competencies');
-        expect(sidebarItems[3].title).toContain('Learning Path');
+        expect(sidebarItems[3].title).toContain('Competencies');
+        expect(sidebarItems[4].title).toContain('Learning Path');
     });
+
     it('should create faq item when faqs are enabled', () => {
         component.course.set({ id: 123, faqEnabled: true });
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[2].title).toContain('FAQs');
+        expect(sidebarItems[3].title).toContain('FAQs');
     });
 
     it('loads conversations when switching to message tab once', async () => {
@@ -506,9 +509,14 @@ describe('CourseOverviewComponent', () => {
         const subscribeStub = jest.spyOn(findOneForDashboardResponse, 'subscribe');
         findOneForDashboardStub.mockReturnValue(findOneForDashboardResponse);
 
+        // check that calendar events are refreshed
+        const calendarEventService = TestBed.inject(CalendarEventService);
+        const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+
         component.loadCourse(true);
 
         expect(subscribeStub).toHaveBeenCalledOnce();
+        expect(refreshSpy).toHaveBeenCalledOnce();
     });
 
     it('should have visible exams', () => {

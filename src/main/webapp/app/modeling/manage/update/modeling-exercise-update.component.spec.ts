@@ -14,7 +14,7 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -32,6 +32,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -56,6 +57,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                MockProvider(CalendarEventService),
             ],
         }).compileComponents();
 
@@ -96,12 +98,14 @@ describe('ModelingExerciseUpdateComponent', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('should call create service on save for new entity', fakeAsync(() => {
+            it('should call create service on save for new entity and refresh calendar events', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
                 const entity = { ...modelingExercise };
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+                const calendarEventService = TestBed.inject(CalendarEventService);
+                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
 
                 // WHEN
                 comp.save();
@@ -109,6 +113,7 @@ describe('ModelingExerciseUpdateComponent', () => {
 
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(entity);
+                expect(refreshSpy).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
             }));
         });
@@ -127,12 +132,14 @@ describe('ModelingExerciseUpdateComponent', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('should call update service on save for existing entity', fakeAsync(() => {
+            it('should call update service on save for existing entity and refresh calendar events', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
                 const entity = { ...modelingExercise };
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+                const calendarEventService = TestBed.inject(CalendarEventService);
+                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
 
                 // WHEN
                 comp.save();
@@ -140,6 +147,7 @@ describe('ModelingExerciseUpdateComponent', () => {
 
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(entity, {});
+                expect(refreshSpy).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
             }));
         });
