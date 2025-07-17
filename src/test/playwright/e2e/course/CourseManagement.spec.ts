@@ -48,8 +48,6 @@ export interface CourseUserCounts {
     instructors: number;
 }
 
-// export interface
-
 test.describe('Course management', { tag: '@fast' }, () => {
     test.describe('Manual student selection', () => {
         let course: Course;
