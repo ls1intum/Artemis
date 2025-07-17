@@ -1,8 +1,4 @@
 export interface CourseDeletionSummaryDTO {
-    numberOfStudents: number;
-    numberOfTutors: number;
-    numberOfEditors: number;
-    numberOfInstructors: number;
     numberOfBuilds: number;
     numberOfCommunicationPosts: number;
     numberOfAnswerPosts: number;
