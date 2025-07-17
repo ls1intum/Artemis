@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyContributionComponent } from './competency-contribution.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CompetencyContributionCardComponent } from 'app/atlas/shared/competency-contribution/competency-contribution-card/competency-contribution-card.component';
-import { input, runInInjectionContext } from '@angular/core';
+import { input } from '@angular/core';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { CarouselModule } from 'primeng/carousel';

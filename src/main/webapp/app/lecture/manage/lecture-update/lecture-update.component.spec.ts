@@ -42,7 +42,6 @@ describe('LectureUpdateComponent', () => {
     let lectureUpdateComponentFixture: ComponentFixture<LectureUpdateComponent>;
     let lectureUpdateComponent: LectureUpdateComponent;
     let router: Router;
-    let _activatedRoute: ActivatedRoute; // has no use right now; The '_' is a hint for eslint not to complain
 
     let pastLecture: Lecture;
 
@@ -110,7 +109,7 @@ describe('LectureUpdateComponent', () => {
 
         lectureService = TestBed.inject(LectureService);
         router = TestBed.inject(Router);
-        _activatedRoute = TestBed.inject(ActivatedRoute);
+        TestBed.inject(ActivatedRoute);
     }
 
     it('should create lecture', async () => {
