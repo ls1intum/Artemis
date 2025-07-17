@@ -40,5 +40,8 @@
     },
     {
         "name": "java.util.ImmutableCollections$Set12"
+    },
+    {
+        "name": "java.util.CollSer"
     }
 ]
