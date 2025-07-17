@@ -32,7 +32,6 @@ import { CourseSidebarItemService } from 'app/core/course/shared/services/sideba
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { TutorialGroupsChecklistComponent } from 'app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
@@ -380,26 +379,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private getExistingSummaryEntries(): EntitySummary {
-        const numberOfExercisesPerType = new Map<ExerciseType, number>();
-        this.course()?.exercises?.forEach((exercise) => {
-            if (exercise.type === undefined) {
-                return;
-            }
-            const oldValue = numberOfExercisesPerType.get(exercise.type) ?? 0;
-            numberOfExercisesPerType.set(exercise.type, oldValue + 1);
-        });
-
-        const numberStudents = this.course()?.numberOfStudents ?? 0;
-        const numberTutors = this.course()?.numberOfTeachingAssistants ?? 0;
-        const numberEditors = this.course()?.numberOfEditors ?? 0;
-        const numberInstructors = this.course()?.numberOfInstructors ?? 0;
         const isTestCourse = this.course()?.testCourse;
 
         return {
-            'artemisApp.course.delete.summary.numberStudents': numberStudents,
-            'artemisApp.course.delete.summary.numberTutors': numberTutors,
-            'artemisApp.course.delete.summary.numberEditors': numberEditors,
-            'artemisApp.course.delete.summary.numberInstructors': numberInstructors,
             'artemisApp.course.delete.summary.isTestCourse': isTestCourse,
         };
     }
@@ -416,6 +398,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private combineSummary(summary: CourseDeletionSummaryDTO) {
         return {
             ...this.getExistingSummaryEntries(),
+            'artemisApp.course.delete.summary.numberStudents': summary.numberStudents,
+            'artemisApp.course.delete.summary.numberTutors': summary.numberTutors,
+            'artemisApp.course.delete.summary.numberEditors': summary.numberEditors,
+            'artemisApp.course.delete.summary.numberInstructors': summary.numberInstructors,
             'artemisApp.course.delete.summary.numberExams': summary.numberExams,
             'artemisApp.course.delete.summary.numberLectures': summary.numberLectures,
             'artemisApp.course.delete.summary.numberProgrammingExercises': summary.numberProgrammingExercises,
