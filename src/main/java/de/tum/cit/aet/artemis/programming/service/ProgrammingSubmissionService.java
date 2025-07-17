@@ -172,17 +172,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setCommitHash(commit.commitHash());
-        log.info("Create new programmingSubmission with commitHash: {} for participation {}", commit.commitHash(), participation.getId());
+        log.info("Create new programmingSubmission with commitHash: {} for participation: {}", commit.commitHash(), participation.getId());
 
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(submissionDate);
         programmingSubmission.setType(SubmissionType.MANUAL);
 
         // Instructors are allowed to submit to a programming exercise after the due date, if this happens we set the Submission to INSTRUCTOR
-        // TODO: double check if the user contains the authorities and groups, if not, we need to load the user from the database again
-        // TODO: the user can be null if the commit was made via git client so it can not be determined here if the user is a instructor for the exercise in that case
         if (user != null && authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user)) {
             programmingSubmission.setType(SubmissionType.INSTRUCTOR);
+            log.debug("Setting programmingSubmission with commitHash: {} for participation: {} type to {} because an instructor commited.", commit.commitHash(),
+                    participation.getId(), SubmissionType.INSTRUCTOR);
         }
 
         participation.addSubmission(programmingSubmission);

@@ -332,7 +332,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         Repository repositoryWithInvalidPath = new Git(new Repository(new BaseRepositoryBuilder<>().setGitDir(path.toFile())) {
 
             @Override
-            public void create(boolean bare) throws IOException {
+            public void create(boolean bare) {
 
             }
 
@@ -362,7 +362,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             }
 
             @Override
-            public void scanForRepoChanges() throws IOException {
+            public void scanForRepoChanges() {
 
             }
 
@@ -645,13 +645,14 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
             BuildJob buildJob = buildJobRepository.findBuildJobByResult(result).orElseThrow();
 
-            Set<ResultBuildJob> resultBuildJobSet = buildJobRepository.findBuildJobIdsForResultIds(List.of(result.getId()));
+            Set<ResultBuildJob> resultBuildJobSet = buildJobRepository.findBuildJobIdsWithResultForParticipationId(studentParticipation.getId());
 
             assertThat(resultBuildJobSet).hasSize(1);
             assertThat(resultBuildJobSet.iterator().next().buildJobId()).isEqualTo(buildJob.getBuildJobId());
 
+            var names = programmingExerciseRepository.findNames(studentParticipation.getProgrammingExercise().getId());
             // Assert that the corresponding build job are stored in the file system
-            assertThat(buildLogEntryService.buildJobHasLogFile(buildJob.getBuildJobId(), studentParticipation.getProgrammingExercise())).isTrue();
+            assertThat(buildLogEntryService.buildJobHasLogFile(buildJob.getBuildJobId(), names)).isTrue();
 
             // Retrieve the build logs from the file system
             buildLogs = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJob.getBuildJobId());
