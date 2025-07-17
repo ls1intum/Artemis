@@ -5,6 +5,7 @@ import { admin, instructor, PlaywrightUserManagement, studentOne, studentThree, 
 import { base64StringToBlob, convertBooleanToCheckIconClass, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { expect } from '@playwright/test';
 import { Fixtures } from '../../fixtures/fixtures';
+import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 
 // Common primitives
 const courseData = {
@@ -41,11 +42,16 @@ const editedCourseData = {
 const allowGroupCustomization = process.env.ALLOW_GROUP_CUSTOMIZATION;
 const dateFormat = 'MMM D, YYYY HH:mm';
 
-export interface CourseUserCounts {
+export interface CourseSummary {
     students: number;
     tutors: number;
     editors: number;
     instructors: number;
+    programingExercises: number;
+    modelingExercises: number;
+    quizExercises: number;
+    textExercises: number;
+    fileUploadExercises: number;
 }
 
 test.describe('Course management', { tag: '@fast' }, () => {
@@ -248,23 +254,43 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await expect(courseManagement.getCourse(course.id!)).toBeHidden();
         });
 
-        test('Delete summary shows correct values', async ({ page, navigationBar, courseManagement }) => {
+        test('Delete summary shows correct values', async ({ navigationBar, courseManagement, courseManagementAPIRequests, exerciseAPIRequests }) => {
             await PlaywrightUserManagement.createUserInCourse(course.id!, studentOne, UserRole.Student, navigationBar, courseManagement);
             await PlaywrightUserManagement.createUserInCourse(course.id!, studentTwo, UserRole.Student, navigationBar, courseManagement);
             await PlaywrightUserManagement.createUserInCourse(course.id!, studentThree, UserRole.Student, navigationBar, courseManagement);
             await PlaywrightUserManagement.createUserInCourse(course.id!, tutor, UserRole.Tutor, navigationBar, courseManagement);
             await PlaywrightUserManagement.createUserInCourse(course.id!, instructor, UserRole.Instructor, navigationBar, courseManagement);
-            const courseUserCounts: CourseUserCounts = {
+
+            await exerciseAPIRequests.createProgrammingExercise({ course });
+
+            await exerciseAPIRequests.createModelingExercise({ course });
+            await exerciseAPIRequests.createModelingExercise({ course });
+            await exerciseAPIRequests.createModelingExercise({ course });
+
+            await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], title: 'Course Exercise Quiz 1' });
+            await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], title: 'Course Exercise Quiz 2' });
+
+            await exerciseAPIRequests.createTextExercise({ course });
+
+            await exerciseAPIRequests.createFileUploadExercise({ course });
+            await exerciseAPIRequests.createFileUploadExercise({ course });
+
+            const expectedCourseSummaryValues: CourseSummary = {
                 students: 3,
                 tutors: 1,
                 editors: 0,
                 instructors: 1,
+                programingExercises: 1,
+                modelingExercises: 3,
+                quizExercises: 2,
+                textExercises: 1,
+                fileUploadExercises: 2,
             };
 
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
             await courseManagement.openCourseSettings();
-            await courseManagement.deleteCourse(course, courseUserCounts);
+            await courseManagement.deleteCourse(course, expectedCourseSummaryValues);
         });
     });
 

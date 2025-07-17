@@ -2,7 +2,7 @@ import { Page, expect } from '@playwright/test';
 import { UserCredentials } from '../../users';
 import { COURSE_ADMIN_BASE } from '../../constants';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { CourseUserCounts } from '../../../e2e/course/CourseManagement.spec';
+import { CourseSummary } from '../../../e2e/course/CourseManagement.spec';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Management page.
@@ -64,14 +64,29 @@ export class CourseManagementPage {
     /**
      * Deletes the specified course.
      * @param course - The course to be deleted.
-     * @param courseUserCounts - if defined, the course user counts are asserted before deletion.
+     * @param expectedCourseSummary - if defined, the course user counts are asserted before deletion.
      */
-    async deleteCourse(course: Course, courseUserCounts?: CourseUserCounts) {
+    async deleteCourse(course: Course, expectedCourseSummary?: CourseSummary) {
         await this.page.locator('#delete-course').click();
         await expect(this.page.locator('#delete')).toBeDisabled();
 
-        if (courseUserCounts) {
-            await this.assertCourseMemberCounts(courseUserCounts.students, courseUserCounts.tutors, courseUserCounts.editors, courseUserCounts.instructors);
+        if (expectedCourseSummary) {
+            await this.assertCourseMemberCounts(expectedCourseSummary.students, expectedCourseSummary.tutors, expectedCourseSummary.editors, expectedCourseSummary.instructors);
+            const exerciseStrings = await Promise.all([
+                this.page.locator('text=/Number of Programming Exercises: \\d+/').innerText(),
+                this.page.locator('text=/Number of Modeling Exercises: \\d+/').innerText(),
+                this.page.locator('text=/Number of Quiz Exercises: \\d+/').innerText(),
+                this.page.locator('text=/Number of Text Exercises: \\d+/').innerText(),
+                this.page.locator('text=/Number of Modeling Exercises: \\d+/').innerText(),
+            ]);
+            const [programmingExercisesCount, modelingExercisesCount, quizExercisesCount, textExercisesCount, fileUploadExercisesCount] = exerciseStrings.map((text) =>
+                Number(text.split(':')[1].trim()),
+            );
+            expect(programmingExercisesCount).toBe(expectedCourseSummary.programingExercises);
+            expect(modelingExercisesCount).toBe(expectedCourseSummary.modelingExercises);
+            expect(quizExercisesCount).toBe(expectedCourseSummary.quizExercises);
+            expect(textExercisesCount).toBe(expectedCourseSummary.textExercises);
+            expect(fileUploadExercisesCount).toBe(expectedCourseSummary.fileUploadExercises);
         }
 
         await this.page.locator('#confirm-entity-name').fill(course.title!);
@@ -81,14 +96,14 @@ export class CourseManagementPage {
     }
 
     async assertCourseMemberCounts(expectedNumberOfStudents: number, expectedNumberOfTutors: number, expectedNumberOfEditors: number, expectedNumberOfInstructors: number) {
-        const userCountString = await Promise.all([
+        const userCountStrings = await Promise.all([
             this.page.locator('text=/Number of Students: \\d+/').innerText(),
             this.page.locator('text=/Number of Tutors: \\d+/').innerText(),
             this.page.locator('text=/Number of Editors: \\d+/').innerText(),
             this.page.locator('text=/Number of Instructors: \\d+/').innerText(),
         ]);
 
-        const [studentsCount, tutorsCount, editorsCount, instructorsCount] = userCountString.map((text) => Number(text.split(':')[1].trim()));
+        const [studentsCount, tutorsCount, editorsCount, instructorsCount] = userCountStrings.map((text) => Number(text.split(':')[1].trim()));
 
         expect(studentsCount).toBe(expectedNumberOfStudents);
         expect(tutorsCount).toBe(expectedNumberOfTutors);
