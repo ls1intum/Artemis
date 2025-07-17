@@ -43,6 +43,7 @@ const allowGroupCustomization = process.env.ALLOW_GROUP_CUSTOMIZATION;
 const dateFormat = 'MMM D, YYYY HH:mm';
 
 export interface CourseSummary {
+    isTestCourse: boolean;
     students: number;
     tutors: number;
     editors: number;
@@ -280,6 +281,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await courseManagementAPIRequests.createLecture(course);
 
             const expectedCourseSummaryValues: CourseSummary = {
+                isTestCourse: true,
                 students: 3,
                 tutors: 1,
                 editors: 0,

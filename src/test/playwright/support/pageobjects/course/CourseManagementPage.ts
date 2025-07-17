@@ -72,13 +72,14 @@ export class CourseManagementPage {
 
         if (expectedCourseSummary) {
             await this.assertCourseMemberCounts(expectedCourseSummary.students, expectedCourseSummary.tutors, expectedCourseSummary.editors, expectedCourseSummary.instructors);
+            expect(await this.page.locator(`text=/Test Course: ${expectedCourseSummary.isTestCourse}/`).isVisible()).toBe(true);
             const exerciseStrings = await Promise.all([
                 this.page.locator('text=/Number of Lectures: \\d+/').innerText(),
                 this.page.locator('text=/Number of Programming Exercises: \\d+/').innerText(),
                 this.page.locator('text=/Number of Modeling Exercises: \\d+/').innerText(),
                 this.page.locator('text=/Number of Quiz Exercises: \\d+/').innerText(),
                 this.page.locator('text=/Number of Text Exercises: \\d+/').innerText(),
-                this.page.locator('text=/Number of File Upload: \\d+/').innerText(),
+                this.page.locator('text=/Number of File Upload Exercises: \\d+/').innerText(),
             ]);
             const [lecturesCount, programmingExercisesCount, modelingExercisesCount, quizExercisesCount, textExercisesCount, fileUploadExercisesCount] = exerciseStrings.map(
                 (text) => Number(text.split(':')[1].trim()),
