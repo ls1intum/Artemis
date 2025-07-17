@@ -114,7 +114,8 @@
                 "plagiarismCases": "Plagiatsfälle",
                 "gradingSystem": "Notenschlüssel",
                 "faq": "FAQ",
-                "settings": "Einstellungen"
+                "settings": "Einstellungen",
+                "calendar": "Kalender"
             },
             "exerciseFilter": {
                 "filter": "Filter",
