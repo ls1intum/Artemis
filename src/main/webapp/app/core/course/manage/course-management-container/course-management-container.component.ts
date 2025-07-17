@@ -19,6 +19,7 @@ import {
     faSync,
     faTable,
     faTimes,
+    faTrash,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -52,6 +53,7 @@ import { CourseConversationsComponent } from 'app/communication/shared/course-co
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -72,6 +74,7 @@ import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course
         CourseTitleBarComponent,
         DeleteButtonDirective,
         HasAnyAuthorityDirective,
+        FaIconComponent,
     ],
 })
 export class CourseManagementContainerComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -93,6 +96,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     protected readonly faChevronRight = faChevronRight;
     protected readonly faChevronLeft = faChevronLeft;
     protected readonly faQuestion = faQuestion;
+    protected readonly faTrash = faTrash;
 
     protected readonly ButtonSize = ButtonSize;
 
