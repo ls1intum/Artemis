@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import {
+    faCalendarDays,
     faChalkboardUser,
     faChartBar,
     faChartColumn,
@@ -85,7 +86,16 @@ export class CourseSidebarItemService {
             translation: 'artemisApp.courseOverview.menu.statistics',
             hidden: false,
         };
-        return [...items, exercisesItem, ...training, statisticsItem];
+
+        const calendarItem: SidebarItem = {
+            routerLink: 'calendar',
+            icon: faCalendarDays,
+            title: 'Calendar',
+            translation: 'artemisApp.courseOverview.menu.calendar',
+            hidden: false,
+        };
+
+        return [...items, exercisesItem, ...training, statisticsItem, calendarItem];
     }
 
     getTrainingItem(): SidebarItem {

@@ -95,9 +95,10 @@ describe('CourseSidebarItemService', () => {
         it('should return items without dashboard when hasDashboard is false and questionsAvailableForPractice is false', () => {
             const items = service.getStudentDefaultItems(false, false);
 
-            expect(items).toHaveLength(2);
+            expect(items).toHaveLength(3);
             expect(items[0].title).toBe('Exercises');
             expect(items[1].title).toBe('Statistics');
+            expect(items[2].title).toBe('Calendar');
         });
 
         it('should include dashboard item when hasDashboard is true and questionsAvailableForPractice is true', () => {
@@ -108,6 +109,7 @@ describe('CourseSidebarItemService', () => {
             expect(items[1].title).toBe('Exercises');
             expect(items[2].title).toBe('Training');
             expect(items[3].title).toBe('Statistics');
+            expect(items[4].title).toBe('Calendar');
         });
     });
 
