@@ -75,10 +75,26 @@ import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course
     ],
 })
 export class CourseManagementContainerComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
-    private eventManager = inject(EventManager);
-    private featureToggleService = inject(FeatureToggleService);
-    private sidebarItemService = inject(CourseSidebarItemService);
-    private courseAdminService = inject(CourseAdminService);
+    private readonly eventManager = inject(EventManager);
+    private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly sidebarItemService = inject(CourseSidebarItemService);
+    private readonly courseAdminService = inject(CourseAdminService);
+
+    protected readonly faTimes = faTimes;
+    protected readonly faEye = faEye;
+    protected readonly faWrench = faWrench;
+    protected readonly faTable = faTable;
+    protected readonly faFlag = faFlag;
+    protected readonly faListAlt = faListAlt;
+    protected readonly faChartBar = faChartBar;
+    protected readonly faClipboard = faClipboard;
+    protected readonly faSync = faSync;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faChevronLeft = faChevronLeft;
+    protected readonly faQuestion = faQuestion;
+
+    protected readonly ButtonSize = ButtonSize;
 
     private eventSubscriber: Subscription;
     private featureToggleSub: Subscription;
@@ -110,23 +126,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         | BuildQueueComponent
         | undefined
     >(undefined);
-
-    // Icons
-    faTimes = faTimes;
-    faEye = faEye;
-    faWrench = faWrench;
-    faTable = faTable;
-    faFlag = faFlag;
-    faListAlt = faListAlt;
-    faChartBar = faChartBar;
-    faClipboard = faClipboard;
-    faSync = faSync;
-    faCircleNotch = faCircleNotch;
-    faChevronRight = faChevronRight;
-    faChevronLeft = faChevronLeft;
-    faQuestion = faQuestion;
-
-    protected readonly ButtonSize = ButtonSize;
 
     async ngOnInit() {
         this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
