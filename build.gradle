@@ -28,8 +28,8 @@ plugins {
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
     id "org.openapi.generator" version "7.14.0"
     id 'org.graalvm.buildtools.native' version '0.10.6'
+    id 'org.hibernate.orm' version "${hibernate_version}"
 }
-
 graalvmNative {
     metadataRepository {
         enabled = true
@@ -475,7 +475,8 @@ dependencies {
     implementation "org.springframework.security:spring-security-saml2-service-provider:${spring_security_version}"
 
     implementation "io.jsonwebtoken:jjwt-api:${jwt_version}"
-    runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwt_version}"
+    // implementation required to register runtime hints for the native image.
+    implementation "io.jsonwebtoken:jjwt-impl:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
     // required by sshd-git
@@ -663,3 +664,4 @@ tasks.named("dependencyUpdates").configure {
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
 // 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups at the moment)
 // 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups at the moment)
+def void enhance(Closure<Boolean> booleanClosure) {}
