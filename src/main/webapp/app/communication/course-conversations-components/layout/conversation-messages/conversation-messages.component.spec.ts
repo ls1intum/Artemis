@@ -759,7 +759,7 @@ examples.forEach((activeConversation) => {
                 return 0;
             });
             (component as any).scrollToFirstUnreadPostIfNotVisible();
-            const scrollOffset = 10;
+            const scrollOffset = 15;
             const expectedScrollTop = Math.max(mockPostElement.offsetTop - scrollOffset, 0);
             expect(mockContainerElement.scrollTop).toBe(expectedScrollTop);
 
