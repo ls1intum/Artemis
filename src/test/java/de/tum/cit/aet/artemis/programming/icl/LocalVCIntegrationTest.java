@@ -30,6 +30,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
@@ -352,10 +353,10 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         Path largeFile = assignmentRepository.workingCopyGitRepoFile.toPath().resolve("large-file.txt");
-        Files.write(largeFile, new byte[11 * 1024 * 1024]); // 11 MB
+        FileUtils.writeByteArrayToFile(largeFile.toFile(), new byte[11 * 1024 * 1024]); // 11 MB
 
         assignmentRepository.workingCopyGitRepo.add().addFilepattern("large-file.txt").call();
-        assignmentRepository.workingCopyGitRepo.commit().setMessage("Add large file").call();
+        GitService.commit(assignmentRepository.workingCopyGitRepo).setMessage("Add large file").call();
 
         String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
         PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRemote(repositoryUri)
