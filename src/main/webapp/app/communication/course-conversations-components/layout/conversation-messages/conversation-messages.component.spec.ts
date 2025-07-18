@@ -62,13 +62,12 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [FormsModule, ReactiveFormsModule],
+                imports: [FormsModule, ReactiveFormsModule, FaIconComponent],
                 declarations: [
                     ConversationMessagesComponent,
                     InfiniteScrollStubDirective,
                     MockPipe(ArtemisTranslatePipe),
                     MockComponent(ButtonComponent),
-                    MockComponent(FaIconComponent),
                     MockComponent(PostingThreadComponent),
                     MockComponent(MessageInlineInputComponent),
                     MockComponent(PostCreateEditModalComponent),
