@@ -90,6 +90,7 @@ export class CourseManagementPage {
             { label: 'Number of Quiz Exercises', expected: expectedCourseSummary.quizExercises },
             { label: 'Number of Text Exercises', expected: expectedCourseSummary.textExercises },
             { label: 'Number of File Upload Exercises', expected: expectedCourseSummary.fileUploadExercises },
+            { label: 'Number of Communication Posts', expected: expectedCourseSummary.communicationPosts },
         ];
 
         for (const { label, expected } of exerciseTypes) {

@@ -56,6 +56,7 @@ export interface CourseSummary {
     quizExercises: number;
     textExercises: number;
     fileUploadExercises: number;
+    communicationPosts: number;
 }
 
 test.describe('Course management', { tag: '@fast' }, () => {
@@ -258,7 +259,16 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await expect(courseManagement.getCourse(course.id!)).toBeHidden();
         });
 
-        test('Delete summary shows correct values', async ({ page, navigationBar, courseManagement, courseManagementAPIRequests, exerciseAPIRequests }) => {
+        test('Delete summary shows correct values', async ({
+            page,
+            navigationBar,
+            courseManagement,
+            courseManagementAPIRequests,
+            exerciseAPIRequests,
+            login,
+            courseMessages,
+            communicationAPIRequests,
+        }) => {
             await PlaywrightUserManagement.createUserInCourse(course.id!, studentOne, UserRole.Student, navigationBar, courseManagement);
             await PlaywrightUserManagement.createUserInCourse(course.id!, studentTwo, UserRole.Student, navigationBar, courseManagement);
             await PlaywrightUserManagement.createUserInCourse(course.id!, studentThree, UserRole.Student, navigationBar, courseManagement);
@@ -287,6 +297,20 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await examAPIRequests.createExam({ course, title: 'Exam 2 - ' + generateUUID() });
             await examAPIRequests.createExam({ course, title: 'Exam 3 - ' + generateUUID() });
 
+            await login(admin, `/courses/${course.id}/communication`);
+            await courseMessages.acceptCodeOfConductButton();
+            const channel = await communicationAPIRequests.createCourseMessageChannel(course, 'test-channel', 'Test Channel', false, true);
+            await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, admin);
+
+            await login(admin, `/courses/${course.id}/communication?conversationId=${channel.id}`);
+            const messageText = 'Test Message';
+            await courseMessages.writeMessage(messageText + ' 1');
+            await courseMessages.save();
+
+            await login(admin, `/courses/${course.id}/communication?conversationId=${channel.id}`);
+            await courseMessages.writeMessage(messageText + ' 2');
+            await courseMessages.save();
+
             const expectedCourseSummaryValues: CourseSummary = {
                 isTestCourse: true,
                 students: 3,
@@ -300,6 +324,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
                 quizExercises: 2,
                 textExercises: 1,
                 fileUploadExercises: 2,
+                communicationPosts: 2,
             };
 
             await navigationBar.openCourseManagement();
