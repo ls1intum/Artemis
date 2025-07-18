@@ -5,12 +5,18 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.PreReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +39,8 @@ public class LocalVCPrePushHook implements PreReceiveHook {
         this.localVCServletService = localVCServletService;
         this.user = user;
     }
+
+    private static final long MAX_BLOB_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
     /**
      * Called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was successful).
@@ -102,6 +110,32 @@ public class LocalVCPrePushHook implements PreReceiveHook {
                     return;
                 }
             }
+
+            // ----------- Check for large blobs (>10MB) -----------
+            ObjectReader reader = repository.newObjectReader();
+            RevWalk revWalk = new RevWalk(reader);
+            RevCommit newCommit = revWalk.parseCommit(command.getNewId());
+
+            // Use TreeWalk to walk all new files in the tree
+            TreeWalk treeWalk = new TreeWalk(reader);
+            treeWalk.addTree(newCommit.getTree());
+            treeWalk.setRecursive(true);
+
+            while (treeWalk.next()) {
+                ObjectId objectId = treeWalk.getObjectId(0);
+                ObjectLoader loader = reader.open(objectId);
+
+                if (loader.getType() == Constants.OBJ_BLOB && loader.getSize() > MAX_BLOB_SIZE_BYTES) {
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
+                            String.format("File '%s' exceeds 10MB size limit (%.2f MB)", treeWalk.getPathString(), loader.getSize() / (1024.0 * 1024.0)));
+                    reader.close();
+                    revWalk.close();
+                    return;
+                }
+            }
+
+            reader.close();
+            revWalk.close();
 
             git.close();
         }
