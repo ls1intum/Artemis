@@ -34,9 +34,7 @@
                 "distributedDataCleared": "Verteilte Daten erfolgreich gelöscht.",
                 "distributedDataClearFailed": "Löschen der verteilten Daten fehlgeschlagen.",
                 "buildAgentCapacityAdjusted": "Build-Agent-Kapazität erfolgreich angepasst.",
-                "buildAgentCapacityAdjustFailed": "Anpassung der Build-Agent-Kapazität fehlgeschlagen.",
-                "buildAgentsCapacityAdjusted": "Kapazität aller Build-Agenten erfolgreich angepasst.",
-                "buildAgentsCapacityAdjustFailed": "Anpassung der Kapazität aller Build-Agenten fehlgeschlagen."
+                "buildAgentCapacityAdjustFailed": "Anpassung der Build-Agent-Kapazität fehlgeschlagen."
             },
             "pause": "Anhalten",
             "resume": "Fortsetzen",

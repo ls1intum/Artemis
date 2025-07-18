@@ -118,12 +118,6 @@ public class SharedQueueManagementService {
         distributedDataAccessService.getAdjustBuildAgentCapacityTopic().publish(new BuildAgentCapacityAdjustmentDTO(agentName, newCapacity));
     }
 
-    public void adjustAllBuildAgentsCapacity(int newCapacity) {
-        if (newCapacity <= 0)
-            throw new IllegalArgumentException("New capacity must be greater than 0");
-        distributedDataAccessService.getAdjustBuildAgentCapacityTopic().publish(new BuildAgentCapacityAdjustmentDTO(null, newCapacity));
-    }
-
     /**
      * Cancel a build job by removing it from the queue or stopping the build process.
      *

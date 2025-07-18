@@ -295,19 +295,6 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * Adjust the concurrent build size of all build agents.
-     *
-     * @param newSize the new concurrent build size for all agents
-     * @return the ResponseEntity with the result of the adjustment
-     */
-    @PutMapping("agents/concurrent-builds/{newSize}")
-    public ResponseEntity<Void> adjustAllBuildAgentsCapacity(@PathVariable int newSize) {
-        log.debug("REST request to adjust concurrent build size of all agents to {}", newSize);
-        localCIBuildJobQueueService.adjustAllBuildAgentsCapacity(newSize);
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
      * {@code PUT /admin/clear-distributed-data} : Clear all distributed data.
      * This endpoint allows administrators to clear all distributed data. See {@link SharedQueueManagementService#clearDistributedData()}.
      *

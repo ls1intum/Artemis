@@ -34,9 +34,7 @@
                 "distributedDataCleared": "Distributed data cleared successfully.",
                 "distributedDataClearFailed": "Failed to clear distributed data.",
                 "buildAgentCapacityAdjusted": "Build agent capacity adjusted successfully.",
-                "buildAgentCapacityAdjustFailed": "Failed to adjust build agent capacity.",
-                "buildAgentsCapacityAdjusted": "All build agents capacity adjusted successfully.",
-                "buildAgentsCapacityAdjustFailed": "Failed to adjust all build agents capacity."
+                "buildAgentCapacityAdjustFailed": "Failed to adjust build agent capacity."
             },
             "pause": "Pause",
             "resume": "Resume",
