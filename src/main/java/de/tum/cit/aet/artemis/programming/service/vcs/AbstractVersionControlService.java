@@ -79,7 +79,8 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             }
             if (ex instanceof LargeObjectException) {
                 throw new VersionControlException(
-                        "Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName + " because a file in the repo is too large.");
+                        "Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName + " because a file in the repo is too large.",
+                        ex);
             }
             throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, ex);
         }
