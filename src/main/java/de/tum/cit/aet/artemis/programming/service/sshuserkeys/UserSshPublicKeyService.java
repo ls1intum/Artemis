@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -32,11 +31,8 @@ public class UserSshPublicKeyService {
 
     private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
-    public UserSshPublicKeyService(UserSshPublicKeyRepository userSshPublicKeyRepository, SingleUserNotificationService singleUserNotificationService) {
+    public UserSshPublicKeyService(UserSshPublicKeyRepository userSshPublicKeyRepository) {
         this.userSshPublicKeyRepository = userSshPublicKeyRepository;
-        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**

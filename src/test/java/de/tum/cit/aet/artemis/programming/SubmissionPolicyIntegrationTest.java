@@ -47,9 +47,9 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        userUtilService.addInstructor("other-instructor-group", TEST_PREFIX + "other-instructor");
+        userUtilService.addInstructor("other-instructor-group", TEST_PREFIX + "other-instructor1");
         userUtilService.addEditor("other-editor-group", TEST_PREFIX + "other-editor");
-        userUtilService.addStudent("other-student-group", TEST_PREFIX + "other-student");
+        userUtilService.addStudent("other-student-group", TEST_PREFIX + "other-student1");
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseId = programmingExercise.getId();
@@ -231,7 +231,6 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(20.0), participation1, "commit1");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, "commit2");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, "commit3");
-        mockRepositoryWritePermissionsForStudent(userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2"), programmingExercise, HttpStatus.OK);
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(3).policy(), HttpStatus.OK);
     }
 

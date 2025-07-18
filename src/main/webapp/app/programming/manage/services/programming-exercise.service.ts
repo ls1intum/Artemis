@@ -12,7 +12,6 @@ import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -127,14 +126,6 @@ export class ProgrammingExerciseService {
                 observe: 'response',
             })
             .pipe(map((response: HttpResponse<PlagiarismResultDTO>) => response.body!));
-    }
-
-    /**
-     * Combines all commits of the template repository to one
-     * @param exerciseId of the particular programming exercise
-     */
-    combineTemplateRepositoryCommits(exerciseId: number) {
-        return this.http.put(`${this.resourceUrl}/${exerciseId}/combine-template-commits`, { responseType: 'text' });
     }
 
     /**
@@ -501,74 +492,6 @@ export class ProgrammingExerciseService {
         this.exerciseService.setAccessRightsExerciseEntityResponseType(exerciseRes);
         this.exerciseService.sendExerciseTitleToTitleService(exerciseRes?.body ?? undefined);
         return exerciseRes;
-    }
-
-    /**
-     * Gets the git-diff report of a programming exercise
-     *
-     * @param exerciseId The id of a programming exercise
-     */
-    getDiffReport(exerciseId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/diff-report`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
-    }
-
-    /**
-     * Gets the git-diff report of a programming exercise for two specific submissions
-     * The user needs to have at least the 'instructor' authority to access this endpoint.
-     * @param exerciseId The id of a programming exercise
-     * @param olderSubmissionId The id of the older submission
-     * @param newerSubmissionId The id of the newer submission
-     */
-    getDiffReportForSubmissions(exerciseId: number, olderSubmissionId: number, newerSubmissionId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${olderSubmissionId}/diff-report/${newerSubmissionId}`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
-    }
-
-    /**
-     * Gets the git-diff report of a programming exercise for a specific submission with the template
-     * The user needs to have at least the 'instructor' authority to access this endpoint.
-     * @param exerciseId The id of a programming exercise
-     * @param submissionId The id of a submission
-     */
-    getDiffReportForSubmissionWithTemplate(exerciseId: number, submissionId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report-with-template`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
-    }
-
-    /**
-     * Gets the git-diff report of a programming exercise for two specific commits.
-     * The user needs to have access to the participation to access this endpoint.
-     * @param exerciseId The id of a programming exercise
-     * @param participationId The id of a participation
-     * @param olderCommitHash The hash of the older commit
-     * @param newerCommitHash The hash of the newer commit
-     * @param repositoryType The type of the repository (optional)
-     */
-    getDiffReportForCommits(
-        exerciseId: number,
-        participationId: number | undefined,
-        olderCommitHash: string,
-        newerCommitHash: string,
-        repositoryType?: string,
-    ): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        const params: { repositoryType?: string; participationId?: number } = {};
-        if (repositoryType !== undefined) {
-            params.repositoryType = repositoryType;
-        }
-        if (participationId !== undefined && !isNaN(participationId)) {
-            params.participationId = participationId;
-        }
-
-        return this.http
-            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/commits/${olderCommitHash}/diff-report/${newerCommitHash}`, {
-                observe: 'response',
-                params: params,
-            })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
     }
 
     /**
