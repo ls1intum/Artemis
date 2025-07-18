@@ -90,7 +90,6 @@ export default tseslint.config(
             ...prettierPlugin.configs.recommended.rules,
             ...tsPlugin.configs.recommended.rules,
             ...angularPlugin.configs.recommended.rules,
-            '@angular-eslint/prefer-inject': 'off',
             '@typescript-eslint/no-non-null-assertion': 'off',
             '@typescript-eslint/no-unsafe-return': 'off',
             '@typescript-eslint/no-unsafe-member-access': 'off',

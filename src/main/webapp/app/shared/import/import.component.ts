@@ -23,7 +23,7 @@ export type Column<T extends BaseEntity> = {
     template: '',
 })
 export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
-    protected readonly router = inject(Router);
+    protected router = inject(Router);
     private sortService = inject(SortService);
     protected activeModal = inject(NgbActiveModal);
 

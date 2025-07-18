@@ -12,7 +12,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
  * a simple wrapper to prevent compile errors in IntelliJ
  */
 export class ArtemisTranslatePipe implements PipeTransform, OnDestroy {
-    private readonly translatePipe: TranslatePipe;
+    private translatePipe: TranslatePipe;
 
     /**
      * We cannot inject() ChangeDetectorRef here, since this is a pipe (other than a component where its possible)
