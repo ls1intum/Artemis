@@ -9,7 +9,7 @@ exercise_Ids: list[int] = []
 def sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
     """Sanitize the exercise name to create a valid short name."""
     valid_short_name = re.sub(r'[^a-zA-Z0-9]', '', exercise_name)
-    if not valid_short_name[0].isalpha():
+    if not valid_short_name or not valid_short_name[0].isalpha():
         valid_short_name = f"A{valid_short_name}"
     return f"{valid_short_name}{short_name_index}"
 
