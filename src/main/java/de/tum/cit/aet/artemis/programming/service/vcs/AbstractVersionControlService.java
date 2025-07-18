@@ -7,6 +7,7 @@ import java.util.Objects;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.errors.LargeObjectException;
 import org.eclipse.jgit.internal.JGitText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +66,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         try (Repository targetRepo = gitService.copyBareRepository(sourceRepoUri, targetRepoUri, sourceBranch)) {
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
-        catch (IOException ex) {
+        catch (IOException | LargeObjectException ex) {
             Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUri);
             // clean up in case of an error
             try {
@@ -75,6 +76,10 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             catch (IOException ioException) {
                 // ignore
                 log.error("Could not delete directory of the failed cloned repository in: {}", localPath);
+            }
+            if (ex instanceof LargeObjectException) {
+                throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName
+                        + " due to a file in the repository being too large.");
             }
             throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, ex);
         }
