@@ -735,6 +735,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
         const isVisible = postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;
         const postIsTallerThanContainer = postRect.bottom - postRect.top > containerRect.bottom - containerRect.top;
+        //15 is an arbitrary to ensure the "new" line above the first unread post is visible
         const scrollOffset = postIsTallerThanContainer ? 15 : 0;
 
         if (!isVisible) {
