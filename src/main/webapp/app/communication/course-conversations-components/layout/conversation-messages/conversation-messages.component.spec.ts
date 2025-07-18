@@ -722,15 +722,13 @@ examples.forEach((activeConversation) => {
             const result = (component as any).getBoundingRectsForFirstUnreadPost();
             expect(result).toBeUndefined();
         });
-        it('should scroll to the first unread post if it is not fully visible', () => {
+        it('should scroll to the first unread post if it is not visible', () => {
             const mockPostId = 123;
             const mockPost = { id: mockPostId } as Post;
-
             const mockPostElement = {
                 offsetTop: 500,
-                offsetHeight: 100,
+                offsetHeight: 400,
             };
-
             const mockContainerElement = {
                 scrollTop: 0,
                 clientHeight: 300,
@@ -739,7 +737,7 @@ examples.forEach((activeConversation) => {
             };
 
             const mockRects = {
-                postRect: { top: 400, bottom: 510 },
+                postRect: { top: 400, bottom: 800 },
                 containerRect: { top: 0, bottom: 300 },
             };
             component.firstUnreadPostId = mockPostId;
@@ -753,16 +751,18 @@ examples.forEach((activeConversation) => {
             component.content = {
                 nativeElement: mockContainerElement,
             } as any;
+
             jest.spyOn(component as any, 'getBoundingRectsForFirstUnreadPost').mockReturnValue(mockRects);
+
             const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((fn: FrameRequestCallback) => {
                 fn(0);
                 return 0;
             });
-
             (component as any).scrollToFirstUnreadPostIfNotVisible();
-            const heightOffset = 1;
-            const expectedScrollTop = mockRects.postRect.bottom - mockRects.containerRect.bottom + heightOffset;
+            const scrollOffset = 10;
+            const expectedScrollTop = Math.max(mockPostElement.offsetTop - scrollOffset, 0);
             expect(mockContainerElement.scrollTop).toBe(expectedScrollTop);
+
             rafSpy.mockRestore();
         });
 

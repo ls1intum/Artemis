@@ -715,25 +715,32 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     /**
-     * Scrolls the container to the first unread post (bottom-aligned),
-     * only if it is currently not visible in the viewport.
+     * Scrolls the container to the first unread post (top-aligned),
+     * if it is not currently visible. If the post is taller than the container,
+     * a small offset is applied to keep the line above visible.
      */
     scrollToFirstUnreadPostIfNotVisible(): void {
         const rects = this.getBoundingRectsForFirstUnreadPost();
         if (!rects) {
             return;
         }
+
         const component = this.messages.find((m) => m.post.id === this.firstUnreadPostId);
         if (!component?.elementRef?.nativeElement) {
             return;
         }
+
         const containerElement = this.content.nativeElement;
         const { postRect, containerRect } = rects;
+
         const isVisible = postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;
+        const postIsTallerThanContainer = postRect.bottom - postRect.top > containerRect.bottom - containerRect.top;
+        const scrollOffset = postIsTallerThanContainer ? 15 : 0;
+
         if (!isVisible) {
             requestAnimationFrame(() => {
-                const offset = postRect.bottom - containerRect.bottom + 1; // +1 px for margin compensation
-                containerElement.scrollTop += offset;
+                const offsetTop = component.elementRef.nativeElement.offsetTop;
+                containerElement.scrollTop = Math.max(offsetTop - scrollOffset, 0);
             });
         }
     }
