@@ -23,9 +23,9 @@ export type Column<T extends BaseEntity> = {
     template: '',
 })
 export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
-    protected router = inject(Router);
-    private sortService = inject(SortService);
-    protected activeModal = inject(NgbActiveModal);
+    protected readonly router = inject(Router);
+    private readonly sortService = inject(SortService);
+    protected readonly activeModal = inject(NgbActiveModal);
 
     loading = false;
     content: SearchResult<T>;
