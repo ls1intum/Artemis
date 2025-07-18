@@ -19,8 +19,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class CourseCompetenciesRelationGraphComponent {
     protected readonly faFileImport = faFileImport;
 
-    readonly courseCompetencies = input.required<CourseCompetency[]>();
-    readonly relations = input.required<CompetencyRelationDTO[]>();
+    courseCompetencies = input.required<CourseCompetency[]>();
+    relations = input.required<CompetencyRelationDTO[]>();
 
     readonly selectedRelationId = model.required<number | undefined>();
 

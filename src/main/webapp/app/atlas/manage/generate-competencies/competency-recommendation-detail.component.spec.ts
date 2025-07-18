@@ -49,8 +49,8 @@ describe('CompetencyRecommendationDetailComponent', () => {
     });
 
     beforeEach(() => {
-        //initialize component
-        component.form = new FormGroup({
+        // Set component inputs using fixture.componentRef.setInput() for signal inputs
+        const testForm = new FormGroup({
             competency: new FormGroup({
                 title: new FormControl('Title' as string | undefined, { nonNullable: true }),
                 description: new FormControl('Description' as string | undefined, { nonNullable: true }),
@@ -58,7 +58,9 @@ describe('CompetencyRecommendationDetailComponent', () => {
             }),
             viewed: new FormControl(false, { nonNullable: true }),
         });
-        component.index = 0;
+
+        fixture.componentRef.setInput('form', testForm);
+        fixture.componentRef.setInput('index', 0);
     });
 
     afterEach(() => {
@@ -77,7 +79,7 @@ describe('CompetencyRecommendationDetailComponent', () => {
 
         //component should not start out in edit mode
         expect(component.isInEditMode).toBeFalse();
-        expect(component.form.controls.competency.disabled).toBeTrue();
+        expect(component.form().controls.competency.disabled).toBeTrue();
 
         const editButton = fixture.debugElement.nativeElement.querySelector('#editButton-0 > .jhi-btn');
         editButton.click();

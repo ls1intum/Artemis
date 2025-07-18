@@ -30,8 +30,8 @@ describe('StandardizedCompetencyDetailComponent', () => {
             .then(() => {
                 componentFixture = TestBed.createComponent(StandardizedCompetencyDetailComponent);
                 component = componentFixture.componentInstance;
-                component.competency = defaultCompetency;
-                component.knowledgeAreaTitle = defaultKnowledgeAreaTitle;
+                componentFixture.componentRef.setInput('competency', defaultCompetency);
+                componentFixture.componentRef.setInput('knowledgeAreaTitle', defaultKnowledgeAreaTitle);
             });
     });
 

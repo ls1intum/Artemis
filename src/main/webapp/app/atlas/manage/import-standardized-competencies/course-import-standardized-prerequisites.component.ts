@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, ViewChild, inject } from '@angular/core';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { CourseImportStandardizedCourseCompetenciesComponent } from 'app/atlas/manage/import-standardized-competencies/course-import-standardized-course-competencies.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -35,7 +35,12 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
     ],
 })
 export class CourseImportStandardizedPrerequisitesComponent extends CourseImportStandardizedCourseCompetenciesComponent {
+    @ViewChild('tree', { static: false }) tree!: KnowledgeAreaTreeComponent;
     private prerequisiteService = inject(PrerequisiteService);
+
+    protected getTreeComponent(): { expandedNodes: Set<number>; collapseAll(): void; expandAll(): void } | undefined {
+        return this.tree;
+    }
 
     protected importCompetencies() {
         super.importCompetencies(this.prerequisiteService);
