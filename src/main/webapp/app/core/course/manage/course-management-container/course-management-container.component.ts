@@ -378,26 +378,18 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.courseSub?.unsubscribe();
     }
 
-    private getExistingSummaryEntries(): EntitySummary {
-        const isTestCourse = this.course()?.testCourse;
-
-        return {
-            'artemisApp.course.delete.summary.isTestCourse': isTestCourse,
-        };
-    }
-
     fetchCourseDeletionSummary(): Observable<EntitySummary> {
         const courseId = this.course()?.id;
         if (!courseId) {
             return of({});
         }
 
-        return this.courseAdminService.getDeletionSummary(courseId).pipe(map((response) => (response.body ? this.combineSummary(response.body) : {})));
+        return this.courseAdminService.getDeletionSummary(courseId).pipe(map((response) => (response.body ? this.combineFetchedSummaryWithPresentValues(response.body) : {})));
     }
 
-    private combineSummary(summary: CourseDeletionSummaryDTO) {
+    private combineFetchedSummaryWithPresentValues(summary: CourseDeletionSummaryDTO) {
         return {
-            ...this.getExistingSummaryEntries(),
+            'artemisApp.course.delete.summary.isTestCourse': this.course()?.testCourse,
             'artemisApp.course.delete.summary.numberStudents': summary.numberOfStudents,
             'artemisApp.course.delete.summary.numberTutors': summary.numberOfTutors,
             'artemisApp.course.delete.summary.numberEditors': summary.numberOfEditors,

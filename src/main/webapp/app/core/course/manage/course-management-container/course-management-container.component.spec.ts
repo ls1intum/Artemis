@@ -413,21 +413,14 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.isSidebarCollapsed()).toBeFalse();
     });
 
-    it('should get existing summary entries correctly', () => {
+    it('should fetch course deletion summary correctly', () => {
         component.course.set({
             ...course1,
             testCourse: true,
         });
 
-        const summary = (component as any).getExistingSummaryEntries();
-
-        expect(summary['artemisApp.course.delete.summary.isTestCourse']).toBeTrue();
-    });
-
-    it('should fetch course deletion summary correctly', () => {
-        component.course.set(course1);
-
         component.fetchCourseDeletionSummary().subscribe((summary: EntitySummary) => {
+            expect(summary['artemisApp.course.delete.summary.isTestCourse']).toBeTrue();
             expect(summary['artemisApp.course.delete.summary.numberStudents']).toBe(100);
             expect(summary['artemisApp.course.delete.summary.numberTutors']).toBe(10);
             expect(summary['artemisApp.course.delete.summary.numberEditors']).toBe(5);
