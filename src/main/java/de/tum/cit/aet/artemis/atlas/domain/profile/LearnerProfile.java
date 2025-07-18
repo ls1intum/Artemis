@@ -11,6 +11,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -47,11 +49,15 @@ public class LearnerProfile extends DomainObject {
     @JsonIgnoreProperties("learnerProfile")
     private Set<CourseLearnerProfile> courseLearnerProfiles = new HashSet<>();
 
-    @Column(name = "is_brief_feedback")
-    private boolean isBriefFeedback = false;
+    @Column(name = "feedback_detail")
+    @Min(MIN_PROFILE_VALUE)
+    @Max(MAX_PROFILE_VALUE)
+    private int feedbackDetail = 2;
 
-    @Column(name = "is_formal_feedback")
-    private boolean isFormalFeedback = false;
+    @Column(name = "feedback_formality")
+    @Min(MIN_PROFILE_VALUE)
+    @Max(MAX_PROFILE_VALUE)
+    private int feedbackFormality = 2;
 
     @Column(name = "has_setup_feedback_preferences")
     private boolean hasSetupFeedbackPreferences = false;
@@ -84,20 +90,20 @@ public class LearnerProfile extends DomainObject {
         return this.courseLearnerProfiles.remove(courseLearnerProfile);
     }
 
-    public boolean isBriefFeedback() {
-        return isBriefFeedback;
+    public int getFeedbackDetail() {
+        return feedbackDetail;
     }
 
-    public void setBriefFeedback(boolean isBriefFeedback) {
-        this.isBriefFeedback = isBriefFeedback;
+    public void setFeedbackDetail(int feedbackDetail) {
+        this.feedbackDetail = feedbackDetail;
     }
 
-    public boolean isFormalFeedback() {
-        return isFormalFeedback;
+    public int getFeedbackFormality() {
+        return feedbackFormality;
     }
 
-    public void setFormalFeedback(boolean isFormalFeedback) {
-        this.isFormalFeedback = isFormalFeedback;
+    public void setFeedbackFormality(int feedbackFormality) {
+        this.feedbackFormality = feedbackFormality;
     }
 
     public boolean hasSetupFeedbackPreferences() {

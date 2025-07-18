@@ -18,14 +18,14 @@
         <div class="row row-cols-1 row-cols-xl-2 gx-5 align-items-end">
             <!-- Brief vs. Detailed setting -->
             <div class="col">
-                <div class="title" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.briefFeedback.label"></div>
-                <div class="description" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.briefFeedback.description"></div>
-                <jhi-segmented-toggle [options]="briefFeedbackOptions" [(selected)]="isBriefFeedback" (selectedChange)="onToggleChange()" />
+                <div class="title" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.label"></div>
+                <div class="description" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.description"></div>
+                <jhi-segmented-toggle [options]="feedbackDetailOptions" [(selected)]="feedbackDetail" (selectedChange)="onToggleChange()" />
             </div>
             <div class="col">
-                <div class="title" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.formalFeedback.label"></div>
-                <div class="description" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.formalFeedback.description"></div>
-                <jhi-segmented-toggle [options]="formalFeedbackOptions" [(selected)]="isFormalFeedback" (selectedChange)="onToggleChange()" />
+                <div class="title" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.label"></div>
+                <div class="description" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.description"></div>
+                <jhi-segmented-toggle [options]="feedbackFormalityOptions" [(selected)]="feedbackFormality" (selectedChange)="onToggleChange()" />
             </div>
         </div>
     </div>

@@ -3,25 +3,16 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20250714232650" author="ahmetsenturk">
+    <changeSet id="20250718201805" author="ahmetsenturk">
         <addColumn tableName="learner_profile">
             <column name="has_setup_feedback_preferences" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
-        <addColumn tableName="learner_profile">
-            <column name="is_brief_feedback" type="boolean" defaultValueBoolean="false">
-                <constraints nullable="false"/>
-            </column>
-        </addColumn>
-        <addColumn tableName="learner_profile">
-            <column name="is_formal_feedback" type="boolean" defaultValueBoolean="false">
-                <constraints nullable="false"/>
-            </column>
-        </addColumn>
+        <renameColumn tableName="learner_profile" oldColumnName="feedback_followup_summary" newColumnName="feedback_formality" columnDataType="int"/>
+        <renameColumn tableName="learner_profile" oldColumnName="feedback_brief_detailed" newColumnName="feedback_detail" columnDataType="int"/>
         <dropColumn tableName="learner_profile" columnName="feedback_alternative_standard"/>
-        <dropColumn tableName="learner_profile" columnName="feedback_followup_summary"/>
-        <dropColumn tableName="learner_profile" columnName="feedback_brief_detailed"/>
+
     </changeSet>
 
 </databaseChangeLog> 

@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LearnerProfileDTO(long id, boolean isBriefFeedback, boolean isFormalFeedback, boolean hasSetupFeedbackPreferences) {
+public record LearnerProfileDTO(long id, int feedbackDetail, int feedbackFormality, boolean hasSetupFeedbackPreferences) {
 
     /**
      * Creates LearnerProfileDTO from given LearnerProfile.
@@ -20,7 +20,8 @@ public record LearnerProfileDTO(long id, boolean isBriefFeedback, boolean isForm
         if (learnerProfile == null) {
             return null;
         }
-        return new LearnerProfileDTO(learnerProfile.getId(), learnerProfile.isBriefFeedback(), learnerProfile.isFormalFeedback(), learnerProfile.hasSetupFeedbackPreferences());
+        return new LearnerProfileDTO(learnerProfile.getId(), learnerProfile.getFeedbackDetail(), learnerProfile.getFeedbackFormality(),
+                learnerProfile.hasSetupFeedbackPreferences());
     }
 
     /**

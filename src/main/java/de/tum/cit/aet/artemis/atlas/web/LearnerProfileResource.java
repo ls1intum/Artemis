@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
+import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MAX_PROFILE_VALUE;
+import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MIN_PROFILE_VALUE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -39,6 +42,19 @@ public class LearnerProfileResource {
     }
 
     /**
+     * Validates that fields are within {@link LearnerProfile#MIN_PROFILE_VALUE} and {@link LearnerProfile#MAX_PROFILE_VALUE}.
+     *
+     * @param value     Value of the field
+     * @param fieldName Field name
+     */
+    private void validateProfileField(int value, String fieldName) {
+        if (value < MIN_PROFILE_VALUE || value > MAX_PROFILE_VALUE) {
+            String message = String.format("%s (%d) is outside valid bounds [%d, %d]", fieldName, value, MIN_PROFILE_VALUE, MAX_PROFILE_VALUE);
+            throw new BadRequestAlertException(message, LearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
+        }
+    }
+
+    /**
      * GET learner-profile : get the {@link LearnerProfile} of the current user.
      * If no profile exists for the current user, a BadRequestAlertException is thrown.
      *
@@ -56,8 +72,8 @@ public class LearnerProfileResource {
 
         LearnerProfile profile = new LearnerProfile();
         profile.setUser(user);
-        profile.setBriefFeedback(false);
-        profile.setFormalFeedback(false);
+        profile.setFeedbackDetail(2);
+        profile.setFeedbackFormality(2);
         profile.setHasSetupFeedbackPreferences(false);
 
         user.setLearnerProfile(profile);
@@ -81,8 +97,11 @@ public class LearnerProfileResource {
 
         LearnerProfile updateProfile = learnerProfileRepository.findByUserElseThrow(user);
 
-        updateProfile.setBriefFeedback(learnerProfileDTO.isBriefFeedback());
-        updateProfile.setFormalFeedback(learnerProfileDTO.isFormalFeedback());
+        validateProfileField(learnerProfileDTO.feedbackDetail(), "FeedbackDetail");
+        validateProfileField(learnerProfileDTO.feedbackFormality(), "FeedbackFormality");
+
+        updateProfile.setFeedbackDetail(learnerProfileDTO.feedbackDetail());
+        updateProfile.setFeedbackFormality(learnerProfileDTO.feedbackFormality());
 
         // Set the flag to true when the user updates their preferences
         updateProfile.setHasSetupFeedbackPreferences(true);
@@ -109,8 +128,12 @@ public class LearnerProfileResource {
 
         LearnerProfile profile = new LearnerProfile();
         profile.setUser(user);
-        profile.setBriefFeedback(learnerProfileDTO.isBriefFeedback());
-        profile.setFormalFeedback(learnerProfileDTO.isFormalFeedback());
+
+        validateProfileField(learnerProfileDTO.feedbackDetail(), "FeedbackDetail");
+        validateProfileField(learnerProfileDTO.feedbackFormality(), "FeedbackFormality");
+
+        profile.setFeedbackDetail(learnerProfileDTO.feedbackDetail());
+        profile.setFeedbackFormality(learnerProfileDTO.feedbackFormality());
         profile.setHasSetupFeedbackPreferences(true);
 
         user.setLearnerProfile(profile);

@@ -8,7 +8,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FEEDBACK_EXAMPLES } from './feedback-examples';
 
 class MockActiveModal {
     close = jest.fn();
@@ -96,9 +95,8 @@ describe('FeedbackOnboardingModalComponent', () => {
             await component.finish();
             expect(postSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    feedbackAlternativeStandard: 1,
-                    feedbackFollowupSummary: 3,
-                    feedbackBriefDetailed: 2,
+                    feedbackDetail: 2,
+                    feedbackFormality: 3,
                     hasSetupFeedbackPreferences: true,
                 }),
             );
@@ -122,9 +120,8 @@ describe('FeedbackOnboardingModalComponent', () => {
             expect(putSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
                     id: 42,
-                    feedbackAlternativeStandard: 3,
-                    feedbackFollowupSummary: 2,
-                    feedbackBriefDetailed: 1,
+                    feedbackDetail: 2,
+                    feedbackFormality: 3,
                     hasSetupFeedbackPreferences: true,
                 }),
             );

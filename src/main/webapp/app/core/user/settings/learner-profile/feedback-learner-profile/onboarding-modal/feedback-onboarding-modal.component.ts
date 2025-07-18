@@ -53,8 +53,8 @@ export class FeedbackOnboardingModalComponent {
     async finish() {
         try {
             const newProfile = new LearnerProfileDTO({
-                isBriefFeedback: this.selected[0] === 0, // Brief (0) = true, Detailed (1) = false
-                isFormalFeedback: this.selected[1] === 0, // Formal (0) = true, Friendly (1) = false
+                feedbackDetail: this.selected[0] === 0 ? 1 : this.selected[0] === 1 ? 3 : 2,
+                feedbackFormality: this.selected[1] === 0 ? 1 : this.selected[1] === 1 ? 3 : 2,
                 hasSetupFeedbackPreferences: true,
             });
             if (this.profileMissing) {

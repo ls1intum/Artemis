@@ -32,17 +32,19 @@
             "feedbackLearnerProfile": {
                 "title": "Feedback Learner Profile",
                 "description": "Here, you are able to view and update your preferences regarding your feedback learner profile. These settings are used to then personalize the automated feedback you get after submitting your exercise.",
-                "briefFeedback": {
+                "feedbackDetail": {
                     "label": "Delivery of Feedback",
                     "description": "Choose whether you prefer brief and straight to the point feedback or detailed feedback with explanations and examples.",
-                    "on": "Brief",
-                    "off": "Detailed"
+                    "brief": "Brief",
+                    "neutral": "Neutral",
+                    "detailed": "Detailed"
                 },
-                "formalFeedback": {
+                "feedbackFormality": {
                     "label": "Tone of Feedback",
                     "description": "Choose whether you prefer formal and professional feedback or friendly and approachable feedback.",
-                    "on": "Formal",
-                    "off": "Friendly"
+                    "formal": "Formal",
+                    "neutral": "Neutral",
+                    "friendly": "Friendly"
                 },
                 "profileSaved": "Feedback learner profile saved",
                 "invalidRange": "Values must be true or false",

@@ -89,13 +89,13 @@ class LearnerProfileServiceTest {
     void learnerProfileDTO_of_shouldClampValuesWithinRange() {
         LearnerProfile profile = new LearnerProfile();
         profile.setId(42L);
-        profile.setBriefFeedback(false);
-        profile.setFormalFeedback(true);
+        profile.setFeedbackDetail(2);
+        profile.setFeedbackFormality(1);
 
         LearnerProfileDTO dto = LearnerProfileDTO.of(profile);
         assertThat(dto.id()).isEqualTo(42L);
-        assertThat(dto.isBriefFeedback()).isFalse();
-        assertThat(dto.isFormalFeedback()).isTrue();
+        assertThat(dto.feedbackDetail()).isEqualTo(2);
+        assertThat(dto.feedbackFormality()).isEqualTo(1);
     }
 
     @Test

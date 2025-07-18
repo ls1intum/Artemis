@@ -32,17 +32,19 @@
             "feedbackLearnerProfile": {
                 "title": "Feedback-Lernprofil",
                 "description": "Hier kannst du dein Feedback-Lernprofil einsehen und aktualisieren. Diese Einstellungen werden verwendet, um deine Feedback-Erfahrung zu personalisieren.",
-                "briefFeedback": {
+                "feedbackDetail": {
                     "label": "Lieferung des Feedbacks",
                     "description": "Wähle, ob du kurzes und direkt auf den Punkt oder detailliertes Feedback mit Erklärungen und Beispielen bevorzugst.",
-                    "on": "Kurz",
-                    "off": "Detailliert"
+                    "brief": "Kurz",
+                    "neutral": "Neutral",
+                    "detailed": "Detailliert"
                 },
-                "formalFeedback": {
+                "feedbackFormality": {
                     "label": "Tone des Feedbacks",
                     "description": "Wähle, ob du formelles und professionelles oder freundliches und zugängliches Feedback bevorzugst.",
-                    "on": "Formell",
-                    "off": "Freundlich"
+                    "formal": "Formell",
+                    "neutral": "Neutral",
+                    "friendly": "Freundlich"
                 },
                 "profileSaved": "Feedback-Lernprofil gespeichert",
                 "invalidRange": "Werte müssen true oder false sein",

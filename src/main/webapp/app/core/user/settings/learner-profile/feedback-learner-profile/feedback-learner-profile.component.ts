@@ -23,6 +23,7 @@ import { FeedbackOnboardingModalComponent } from 'app/core/user/settings/learner
 export class FeedbackLearnerProfileComponent implements OnInit {
     private alertService = inject(AlertService);
     private learnerProfileAPIService = inject(LearnerProfileApiService);
+    private modalService = inject(NgbModal);
     protected translateService = inject(TranslateService);
 
     /** Signal containing the learner profile for the current user */
@@ -31,9 +32,8 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     /** Flag indicating whether the profile editing is disabled */
     disabled = true;
 
+    /** Flag indicating whether the profile is missing */
     profileMissing = false;
-
-    constructor(private modalService: NgbModal) {}
 
     openOnboardingModal() {
         const modalRef = this.modalService.open(FeedbackOnboardingModalComponent, { size: 'lg' });
@@ -51,18 +51,20 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     /**
      * Options mapped from shared options with translated labels.
      */
-    protected readonly briefFeedbackOptions = [
-        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.briefFeedback.off'), value: false },
-        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.briefFeedback.on'), value: true },
+    protected readonly feedbackDetailOptions = [
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.brief'), value: 1 },
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.neutral'), value: 2 },
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.detailed'), value: 3 },
     ];
-    protected readonly formalFeedbackOptions = [
-        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.formalFeedback.off'), value: false },
-        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.formalFeedback.on'), value: true },
+    protected readonly feedbackFormalityOptions = [
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.formal'), value: 1 },
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.neutral'), value: 2 },
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.friendly'), value: 3 },
     ];
 
     /** Signals for learner profile settings */
-    isBriefFeedback = signal<boolean | undefined>(undefined);
-    isFormalFeedback = signal<boolean | undefined>(undefined);
+    feedbackDetail = signal<number | undefined>(undefined);
+    feedbackFormality = signal<number | undefined>(undefined);
 
     /** Icon for save button */
     protected readonly faSave = faSave;
@@ -98,8 +100,8 @@ export class FeedbackLearnerProfileComponent implements OnInit {
      * @param learnerProfile - The learner profile containing the values to update
      */
     private updateProfileValues(learnerProfile: LearnerProfileDTO): void {
-        this.isBriefFeedback.set(learnerProfile.isBriefFeedback !== undefined && learnerProfile.isBriefFeedback !== null ? learnerProfile.isBriefFeedback : undefined);
-        this.isFormalFeedback.set(learnerProfile.isFormalFeedback !== undefined && learnerProfile.isFormalFeedback !== null ? learnerProfile.isFormalFeedback : undefined);
+        this.feedbackDetail.set(learnerProfile.feedbackDetail ?? undefined);
+        this.feedbackFormality.set(learnerProfile.feedbackFormality ?? undefined);
     }
 
     /**
@@ -114,8 +116,8 @@ export class FeedbackLearnerProfileComponent implements OnInit {
 
         const updatedProfile = new LearnerProfileDTO({
             id: profile.id,
-            isBriefFeedback: this.isBriefFeedback(),
-            isFormalFeedback: this.isFormalFeedback(),
+            feedbackDetail: this.feedbackDetail(),
+            feedbackFormality: this.feedbackFormality(),
         });
 
         try {

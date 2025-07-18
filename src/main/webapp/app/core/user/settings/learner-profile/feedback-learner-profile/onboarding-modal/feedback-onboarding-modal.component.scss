@@ -2,17 +2,20 @@
     margin-top: 1rem;
     margin-bottom: 1rem;
 }
+
 .modal-footer {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
 }
+
 .onboarding-progress {
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 1.5rem;
 }
+
 .progress-circle {
     width: 18px;
     height: 18px;
@@ -24,30 +27,36 @@
         background 0.2s,
         border 0.2s;
 }
+
 .progress-circle.active {
     background: #1976d2;
     border-color: #1976d2;
 }
+
 .progress-line {
     width: 32px;
     height: 2px;
     background: #1976d2;
     margin: 0 6px;
 }
+
 .onboarding-title {
     text-align: center;
     margin-bottom: 1.5rem;
 }
+
 .onboarding-title h2 {
     font-size: 1.5rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
 }
+
 .onboarding-subtitle {
     color: #555;
     font-size: 1rem;
     margin-bottom: 1.5rem;
 }
+
 .feedback-choice-row {
     display: flex;
     gap: 2rem;
@@ -55,6 +64,7 @@
     margin-bottom: 2rem;
     flex-wrap: wrap;
 }
+
 .feedback-choice-box {
     flex: 1 1 320px;
     border: 2px solid #d3d3d3;
@@ -70,50 +80,60 @@
     box-sizing: border-box;
     margin-bottom: 1rem;
 }
+
 .feedback-choice-box.selected {
     border-color: #1976d2;
     box-shadow: 0 0 0 2px #1976d233;
     background: #f5faff;
 }
+
 .feedback-choice-box:hover {
     border-color: #1976d2;
 }
+
 .feedback-choice-header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 0.2rem;
 }
+
 .feedback-choice-title {
     font-weight: 600;
     font-size: 1.1rem;
 }
+
 .feedback-choice-subtitle {
     color: #555;
     font-size: 0.98rem;
     margin-bottom: 1rem;
 }
+
 .feedback-choice-box input[type='radio'] {
     accent-color: #1976d2;
     margin-right: 0.5rem;
 }
+
 .feedback-onboarding-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-top: 1.5rem;
 }
+
 .footer-left {
     flex: 1;
     display: flex;
     justify-content: flex-start;
 }
+
 .footer-right {
     flex: 1;
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
 }
+
 .close-cross {
     position: absolute;
     top: 18px;
@@ -127,10 +147,12 @@
     opacity: 0.7;
     transition: opacity 0.2s;
 }
+
 .close-cross:hover {
     opacity: 1;
     color: #1976d2;
 }
+
 .modal-dialog {
     width: 90vw;
     max-width: 900px;
@@ -148,6 +170,7 @@
         width: 95vw;
         max-width: 1600px;
     }
+
     .feedback-choice-box {
         max-width: 800px;
     }
@@ -159,6 +182,7 @@
         align-items: stretch;
         gap: 1rem;
     }
+
     .feedback-choice-box {
         max-width: 100%;
         min-width: 0;
