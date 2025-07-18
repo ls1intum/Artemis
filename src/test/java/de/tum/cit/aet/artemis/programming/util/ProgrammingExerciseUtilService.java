@@ -160,6 +160,22 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
+     * Generates a programming exercise for the given course. Configures only the exercise's schedule, no other properties.
+     *
+     * @param course            The course of the exercise.
+     * @param releaseDate       The release date of the exercise.
+     * @param startDate         The start date of the exercise.
+     * @param dueDate           The due date of the exercise.
+     * @param assessmentDueDate The assessment due date of the exercise.
+     * @return The newly generated programming exercise.
+     */
+    public ProgrammingExercise createProgrammingExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
+            ZonedDateTime assessmentDueDate) {
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(releaseDate, startDate, dueDate, assessmentDueDate, course);
+        return programmingExerciseRepository.save(programmingExercise);
+    }
+
+    /**
      * Create an example programming exercise
      *
      * @return the created programming exercise
