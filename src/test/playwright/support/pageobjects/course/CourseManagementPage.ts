@@ -61,28 +61,14 @@ export class CourseManagementPage {
         await this.getCourse(courseID).locator('#course-card-header').click();
     }
 
-    private async assertCourseMemberCounts(expectedNumberOfStudents: number, expectedNumberOfTutors: number, expectedNumberOfEditors: number, expectedNumberOfInstructors: number) {
-        const userCountStrings = await Promise.all([
-            this.page.locator('text=/Number of Students: \\d+/').innerText(),
-            this.page.locator('text=/Number of Tutors: \\d+/').innerText(),
-            this.page.locator('text=/Number of Editors: \\d+/').innerText(),
-            this.page.locator('text=/Number of Instructors: \\d+/').innerText(),
-        ]);
-
-        const [studentsCount, tutorsCount, editorsCount, instructorsCount] = userCountStrings.map((text) => Number(text.split(':')[1].trim()));
-
-        expect(studentsCount).toBe(expectedNumberOfStudents);
-        expect(tutorsCount).toBe(expectedNumberOfTutors);
-        expect(editorsCount).toBe(expectedNumberOfEditors);
-        expect(instructorsCount).toBe(expectedNumberOfInstructors);
-    }
-
     private async assertCourseSummary(expectedCourseSummary: CourseSummary) {
-        await this.assertCourseMemberCounts(expectedCourseSummary.students, expectedCourseSummary.tutors, expectedCourseSummary.editors, expectedCourseSummary.instructors);
-
         expect(await this.page.locator(`text=/Test Course: ${expectedCourseSummary.isTestCourse}/`).isVisible()).toBe(true);
 
         const exerciseTypes = [
+            { label: 'Number of Students', expected: expectedCourseSummary.students },
+            { label: 'Number of Tutors', expected: expectedCourseSummary.tutors },
+            { label: 'Number of Editors', expected: expectedCourseSummary.editors },
+            { label: 'Number of Instructors', expected: expectedCourseSummary.instructors },
             { label: 'Number of Exams', expected: expectedCourseSummary.exams },
             { label: 'Number of Lectures', expected: expectedCourseSummary.lectures },
             { label: 'Number of Programming Exercises', expected: expectedCourseSummary.programingExercises },
