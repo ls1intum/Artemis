@@ -88,7 +88,7 @@ export class CourseManagementPage {
     /**
      * Deletes the specified course.
      * @param course - The course to be deleted.
-     * @param expectedCourseSummary - if defined, the course user counts are asserted before deletion.
+     * @param expectedCourseSummary - if defined, the course summary is asserted to contain the expected values before deletion
      */
     async deleteCourse(course: Course, expectedCourseSummary?: CourseSummary) {
         await this.page.locator('#delete-course').click();
