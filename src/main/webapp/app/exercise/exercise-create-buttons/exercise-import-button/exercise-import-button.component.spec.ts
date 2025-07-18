@@ -8,7 +8,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockComponent } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
@@ -22,7 +21,7 @@ describe('ExerciseImportButtonComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockComponent(FaIconComponent), ExerciseImportButtonComponent],
+            imports: [FaIconComponent, ExerciseImportButtonComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },

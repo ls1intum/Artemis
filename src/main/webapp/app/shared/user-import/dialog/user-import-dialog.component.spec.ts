@@ -34,14 +34,8 @@ describe('UsersImportDialogComponent', () => {
     const testDir = path.join(process.cwd(), 'src', 'test', 'javascript', 'spec', 'helpers', 'sample', 'user-import');
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [FormsModule],
-            declarations: [
-                UsersImportDialogComponent,
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
-                MockComponent(HelpIconComponent),
-            ],
+            imports: [FormsModule, FaIconComponent],
+            declarations: [UsersImportDialogComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [
                 MockProvider(NgbActiveModal),
                 MockProvider(AlertService),

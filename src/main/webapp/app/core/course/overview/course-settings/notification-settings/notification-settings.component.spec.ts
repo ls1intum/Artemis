@@ -92,7 +92,7 @@ describe('NotificationSettingsComponent', () => {
             imports: [
                 NotificationSettingsComponent,
                 MockDirective(TranslateDirective),
-                MockComponent(FaIconComponent),
+                FaIconComponent,
                 MockComponent(CourseNotificationPresetPickerComponent),
                 MockComponent(CourseNotificationSettingSpecificationCardComponent),
             ],

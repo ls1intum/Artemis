@@ -136,7 +136,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockComponent(DiscussionSectionComponent)],
+            imports: [MockComponent(DiscussionSectionComponent), FaIconComponent],
             declarations: [
                 CourseExerciseDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -156,7 +156,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(RatingComponent),
                 MockRouterLinkDirective,
                 MockComponent(ExerciseDetailsStudentActionsComponent),
-                MockComponent(FaIconComponent),
                 MockDirective(ExtensionPointDirective),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(LtiInitializerComponent),

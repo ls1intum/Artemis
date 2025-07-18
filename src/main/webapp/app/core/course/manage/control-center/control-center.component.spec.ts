@@ -21,8 +21,8 @@ describe('ControlCenterComponent', () => {
         course = { id: 1, isAtLeastInstructor: true } as Course;
 
         await TestBed.configureTestingModule({
-            imports: [MockDirective(TranslateDirective)],
-            declarations: [ControlCenterComponent, MockComponent(HelpIconComponent), MockComponent(FaIconComponent), MockComponent(IrisEnabledComponent)],
+            imports: [MockDirective(TranslateDirective), FaIconComponent],
+            declarations: [ControlCenterComponent, MockComponent(HelpIconComponent), MockComponent(IrisEnabledComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

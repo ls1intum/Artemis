@@ -1,10 +1,12 @@
 import { test } from '../../support/fixtures';
 import dayjs from 'dayjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { admin, studentOne } from '../../support/users';
+import { admin, instructor, PlaywrightUserManagement, studentOne, studentThree, studentTwo, tutor, UserRole } from '../../support/users';
 import { base64StringToBlob, convertBooleanToCheckIconClass, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { expect } from '@playwright/test';
 import { Fixtures } from '../../fixtures/fixtures';
+import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
+import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 
 // Common primitives
 const courseData = {
@@ -40,6 +42,22 @@ const editedCourseData = {
 
 const allowGroupCustomization = process.env.ALLOW_GROUP_CUSTOMIZATION;
 const dateFormat = 'MMM D, YYYY HH:mm';
+
+export interface CourseSummary {
+    isTestCourse: boolean;
+    students: number;
+    tutors: number;
+    editors: number;
+    instructors: number;
+    exams: number;
+    lectures: number;
+    programingExercises: number;
+    modelingExercises: number;
+    quizExercises: number;
+    textExercises: number;
+    fileUploadExercises: number;
+    communicationPosts: number;
+}
 
 test.describe('Course management', { tag: '@fast' }, () => {
     test.describe('Manual student selection', () => {
@@ -239,6 +257,71 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await courseManagement.openCourseSettings();
             await courseManagement.deleteCourse(course);
             await expect(courseManagement.getCourse(course.id!)).toBeHidden();
+        });
+
+        test('Delete summary shows correct values', async ({
+            page,
+            navigationBar,
+            courseManagement,
+            courseManagementAPIRequests,
+            exerciseAPIRequests,
+            login,
+            courseMessages,
+            communicationAPIRequests,
+        }) => {
+            await PlaywrightUserManagement.createUserInCourse(course.id!, studentOne, UserRole.Student, navigationBar, courseManagement);
+            await PlaywrightUserManagement.createUserInCourse(course.id!, studentTwo, UserRole.Student, navigationBar, courseManagement);
+            await PlaywrightUserManagement.createUserInCourse(course.id!, studentThree, UserRole.Student, navigationBar, courseManagement);
+            await PlaywrightUserManagement.createUserInCourse(course.id!, tutor, UserRole.Tutor, navigationBar, courseManagement);
+            await PlaywrightUserManagement.createUserInCourse(course.id!, instructor, UserRole.Instructor, navigationBar, courseManagement);
+
+            await exerciseAPIRequests.createProgrammingExercise({ course });
+
+            await exerciseAPIRequests.createModelingExercise({ course });
+            await exerciseAPIRequests.createModelingExercise({ course });
+            await exerciseAPIRequests.createModelingExercise({ course });
+
+            await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], title: 'Course Exercise Quiz 1' });
+            await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], title: 'Course Exercise Quiz 2' });
+
+            await exerciseAPIRequests.createTextExercise({ course });
+
+            await exerciseAPIRequests.createFileUploadExercise({ course });
+            await exerciseAPIRequests.createFileUploadExercise({ course });
+
+            await courseManagementAPIRequests.createLecture(course);
+            await courseManagementAPIRequests.createLecture(course);
+
+            const examAPIRequests = new ExamAPIRequests(page);
+            await examAPIRequests.createExam({ course, title: 'Exam 1 - ' + generateUUID() });
+            await examAPIRequests.createExam({ course, title: 'Exam 2 - ' + generateUUID() });
+            await examAPIRequests.createExam({ course, title: 'Exam 3 - ' + generateUUID() });
+
+            const channel = await courseMessages.setupCommunicationChannel(login, admin, course, communicationAPIRequests);
+            const messageText = 'Test Message';
+            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id, messageText + ' 1');
+            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id, messageText + ' 2');
+
+            const expectedCourseSummaryValues: CourseSummary = {
+                isTestCourse: true,
+                students: 3,
+                tutors: 1,
+                editors: 0,
+                instructors: 1,
+                exams: 3,
+                lectures: 2,
+                programingExercises: 1,
+                modelingExercises: 3,
+                quizExercises: 2,
+                textExercises: 1,
+                fileUploadExercises: 2,
+                communicationPosts: 2,
+            };
+
+            await navigationBar.openCourseManagement();
+            await courseManagement.openCourse(course.id!);
+            await courseManagement.openCourseSettings();
+            await courseManagement.deleteCourse(course, expectedCourseSummaryValues);
         });
     });
 
