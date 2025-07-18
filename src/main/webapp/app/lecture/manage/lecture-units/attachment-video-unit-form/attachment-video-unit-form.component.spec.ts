@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -19,14 +19,8 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
-            declarations: [
-                AttachmentVideoUnitFormComponent,
-                FormDateTimePickerComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
-                MockComponent(CompetencySelectionComponent),
-            ],
+            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule), FontAwesomeTestingModule],
+            declarations: [AttachmentVideoUnitFormComponent, FormDateTimePickerComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencySelectionComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

@@ -20,6 +20,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('CourseManagementCardComponent', () => {
     let fixture: ComponentFixture<CourseManagementCardComponent>;
@@ -54,6 +55,7 @@ describe('CourseManagementCardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 CourseManagementCardComponent,
                 MockPipe(ArtemisTranslatePipe),

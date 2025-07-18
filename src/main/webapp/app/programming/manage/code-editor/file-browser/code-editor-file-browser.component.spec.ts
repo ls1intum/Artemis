@@ -19,6 +19,7 @@ import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/serv
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('CodeEditorFileBrowserComponent', () => {
     let comp: CodeEditorFileBrowserComponent;
@@ -38,6 +39,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 CodeEditorFileBrowserComponent,
                 CodeEditorFileBrowserFileComponent,
