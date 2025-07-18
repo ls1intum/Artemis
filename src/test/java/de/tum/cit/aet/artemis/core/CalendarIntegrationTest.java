@@ -28,6 +28,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
@@ -1194,7 +1195,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
     void shouldReturnCorrectEventsForStudentWhenQueriedForMultipleMonths() throws Exception {
-        TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
+        TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(), tutor,
                 new HashSet<>(Set.of(student)));
         TutorialGroupSession tutorialGroupSession1 = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE.minusMonths(1),
                 FIXED_DATE.minusMonths(1).plusHours(3), 5);
