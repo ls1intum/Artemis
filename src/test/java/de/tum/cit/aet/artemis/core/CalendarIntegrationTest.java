@@ -220,8 +220,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
         void shouldReturnCorrectEventsForTutorialGroupSessionAsStudent() throws Exception {
-            TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
-                    new HashSet<>(Set.of(student)));
+            TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(),
+                    tutor, new HashSet<>(Set.of(student)));
             TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusHours(2),
                     5);
             Long courseId = course.getId();
@@ -241,8 +241,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
         void shouldReturnCorrectEventsForTutorialGroupSessionAsCourseStaffMember() throws Exception {
-            TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
-                    new HashSet<>(Set.of(student)));
+            TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(),
+                    tutor, new HashSet<>(Set.of(student)));
             TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusHours(2),
                     5);
             Long courseId = course.getId();
@@ -1226,7 +1226,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void shouldSplitEventAcrossDaysWhenEventSpansMultipleDays() throws Exception {
-        TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", "English", tutor,
+        TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(), tutor,
                 new HashSet<>(Set.of(student)));
         TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusDays(2), 5);
         Long courseId = course.getId();
@@ -1256,7 +1256,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void shouldGroupEventsAccordingToClientTimeZone() throws Exception {
         ZonedDateTime berlinStart = ZonedDateTime.of(2025, 5, 15, 2, 30, 0, 0, TEST_TIMEZONE);
         ZonedDateTime berlinEnd = berlinStart.plusHours(2);
-        TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Early Tutorial", "", 10, false, "Garching", "English", tutor,
+        TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Early Tutorial", "", 10, false, "Garching", Language.ENGLISH.name(), tutor,
                 new HashSet<>(Set.of(student)));
         TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), berlinStart, berlinEnd, 5);
 
