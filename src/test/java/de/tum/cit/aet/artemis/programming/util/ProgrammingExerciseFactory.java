@@ -63,6 +63,23 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
+     * Generates a programming exercise for the given course. Configures only exercise's schedule, no other properties.
+     *
+     * @param releaseDate       The release date of the exercise.
+     * @param startDate         The start date of the exercise.
+     * @param dueDate           The due date of the exercise.
+     * @param assessmentDueDate The assessment due date of the exercise.
+     * @param course            The course of the exercise.
+     * @return The newly generated programming exercise.
+     */
+    public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
+            Course course) {
+        var programmingExercise = (ProgrammingExercise) ExerciseFactory.populateExercise(new ProgrammingExercise(), releaseDate, dueDate, assessmentDueDate, course);
+        programmingExercise.setStartDate(startDate);
+        return programmingExercise;
+    }
+
+    /**
      * Generates a programming exercise with the given release, due date, and programming language. This exercise is added to the provided course.
      *
      * @param releaseDate         The release date of the exercise.
