@@ -1,0 +1,36 @@
+.number-input {
+    // Use Bootstrap's btn-group as base, just override specific properties
+    width: fit-content;
+
+    // Override button styles to be more compact and match input borders
+    .btn {
+        min-width: 28px;
+        padding: 0.25rem 0.5rem;
+        border-color: #dee2e6;
+
+        // Make buttons same height as small form controls
+        line-height: 1.25;
+    }
+
+    .number-input-field {
+        width: 32px;
+        text-align: center;
+        border-radius: 0;
+        padding: 0.25rem 0rem;
+
+        /* Hide spinner buttons */
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        &::-moz-number-spin-button {
+            display: none;
+        }
+
+        &[type='number'] {
+            -moz-appearance: textfield;
+        }
+    }
+}

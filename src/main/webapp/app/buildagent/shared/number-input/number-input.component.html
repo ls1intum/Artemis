@@ -1,0 +1,11 @@
+<div class="number-input btn-group" role="group">
+    <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="!canDecrement" (click)="decrement()" [attr.aria-label]="'Decrease value'">
+        <fa-icon [icon]="faChevronDown" />
+    </button>
+
+    <input type="number" class="form-control btn-sm number-input-field" [value]="value" [min]="minValue" [max]="maxValue" [disabled]="disabled" (blur)="onInputBlur($event)" />
+
+    <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="!canIncrement" (click)="increment()" [attr.aria-label]="'Increase value'">
+        <fa-icon [icon]="faChevronUp" />
+    </button>
+</div>

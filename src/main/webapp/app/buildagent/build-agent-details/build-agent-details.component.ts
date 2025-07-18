@@ -44,7 +44,7 @@ import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
-import { TwoStageStepperComponent } from 'app/buildagent/shared/twostagestepper/two-stage-stepper.component';
+import { NumberInputComponent } from 'app/buildagent/shared/number-input/number-input.component';
 
 @Component({
     selector: 'jhi-build-agent-details',
@@ -70,7 +70,7 @@ import { TwoStageStepperComponent } from 'app/buildagent/shared/twostagestepper/
         NgbPagination,
         FormsModule,
         SliceNavigatorComponent,
-        TwoStageStepperComponent,
+        NumberInputComponent,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
@@ -101,7 +101,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     hasMore = signal(true);
 
     newConcurrency: number;
-    maxConcurrentJobs: number = navigator.hardwareConcurrency || 16;
 
     //icons
     readonly faCircleCheck = faCircleCheck;
@@ -290,7 +289,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     }
 
     adjustBuildAgentCapacity(): void {
-        if (!this.newConcurrency || this.newConcurrency < 1 || this.newConcurrency > this.maxConcurrentJobs) {
+        if (!this.newConcurrency || this.newConcurrency < 1) {
             return;
         }
 

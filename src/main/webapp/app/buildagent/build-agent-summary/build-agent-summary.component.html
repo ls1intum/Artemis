@@ -21,10 +21,6 @@
                     <fa-icon [icon]="faTrash" />
                     <span jhiTranslate="artemisApp.buildAgents.clearDistributedData.title"></span>
                 </button>
-                <div class="d-flex align-items-center ms-3">
-                    <label class="form-label mb-0 me-2" jhiTranslate="artemisApp.buildAgents.concurrencyLabel"></label>
-                    <jhi-two-stage-stepper [currentValue]="newConcurrencyForAll" [minValue]="1" [maxValue]="maxConcurrentJobs" (valueChange)="onConcurrencyChange($event)" />
-                </div>
             </div>
         </div>
         <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildAgent" [allEntities]="buildAgents!">
@@ -86,15 +82,21 @@
                             }
                         </ng-template>
                     </ngx-datatable-column>
-                    <ngx-datatable-column prop="maxNumberOfConcurrentBuildJobs" [minWidth]="100">
+                    <ngx-datatable-column prop="maxNumberOfConcurrentBuildJobs" [minWidth]="120">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('maxNumberOfConcurrentBuildJobs')">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('maxNumberOfConcurrentBuildJobs')" />
                             </span>
                         </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            <span>{{ value }}</span>
+                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                            <div class="d-flex align-items-center">
+                                <jhi-number-input
+                                    [value]="concurrencyMap[row.buildAgent?.name] || value"
+                                    [minValue]="1"
+                                    (valueChange)="onConcurrencyChange(row.buildAgent?.name, $event)"
+                                />
+                            </div>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="numberOfCurrentBuildJobs" [minWidth]="100">

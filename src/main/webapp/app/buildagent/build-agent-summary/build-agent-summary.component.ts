@@ -16,13 +16,13 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { FormsModule } from '@angular/forms';
-import { TwoStageStepperComponent } from 'app/buildagent/shared/twostagestepper/two-stage-stepper.component';
+import { NumberInputComponent } from 'app/buildagent/shared/number-input/number-input.component';
 
 @Component({
     selector: 'jhi-build-agents',
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
-    imports: [TranslateDirective, NgxDatatableModule, DataTableComponent, FontAwesomeModule, RouterModule, FormsModule, TwoStageStepperComponent],
+    imports: [TranslateDirective, NgxDatatableModule, DataTableComponent, FontAwesomeModule, RouterModule, FormsModule, NumberInputComponent],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
@@ -39,8 +39,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     websocketSubscription: Subscription;
     restSubscription: Subscription;
     routerLink: string;
-    newConcurrencyForAll: number = 1;
-    maxConcurrentJobs: number = navigator.hardwareConcurrency || 16;
+    concurrencyMap: { [agentName: string]: number } = {};
 
     //icons
     protected readonly faTimes = faTimes;
@@ -76,10 +75,18 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
     private updateBuildAgents(buildAgents: BuildAgentInformation[]) {
         this.buildAgents = buildAgents;
+        // Calculate total build capacity of the cluster
         this.buildCapacity = this.buildAgents
             .filter((agent) => agent.status !== BuildAgentStatus.PAUSED && agent.status !== BuildAgentStatus.SELF_PAUSED)
             .reduce((sum, agent) => sum + (agent.maxNumberOfConcurrentBuildJobs || 0), 0);
         this.currentBuilds = this.buildAgents.reduce((sum, agent) => sum + (agent.numberOfCurrentBuildJobs || 0), 0);
+
+        // Initialize individual concurrency values
+        this.buildAgents.forEach((agent) => {
+            if (agent.buildAgent?.name && !this.concurrencyMap[agent.buildAgent.name]) {
+                this.concurrencyMap[agent.buildAgent.name] = agent.maxNumberOfConcurrentBuildJobs || 1;
+            }
+        });
     }
 
     /**
@@ -177,30 +184,34 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
         });
     }
 
-    onConcurrencyChange(newValue: number) {
-        this.newConcurrencyForAll = newValue;
-        this.adjustAllBuildAgentsCapacity();
-    }
-
-    adjustAllBuildAgentsCapacity() {
-        if (!this.newConcurrencyForAll || this.newConcurrencyForAll < 1 || this.newConcurrencyForAll > this.maxConcurrentJobs) {
+    adjustBuildAgentCapacity(agentName: string, newCapacity: number) {
+        if (!agentName || newCapacity < 1) {
             return;
         }
 
-        this.buildAgentsService.adjustAllBuildAgentsCapacity(this.newConcurrencyForAll).subscribe({
+        this.buildAgentsService.adjustBuildAgentCapacity(agentName, newCapacity).subscribe({
             next: () => {
                 this.load();
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
-                    message: 'artemisApp.buildAgents.alerts.buildAgentsCapacityAdjusted',
+                    message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjusted',
                 });
             },
             error: () => {
                 this.alertService.addAlert({
                     type: AlertType.DANGER,
-                    message: 'artemisApp.buildAgents.alerts.buildAgentsCapacityAdjustFailed',
+                    message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjustFailed',
                 });
             },
         });
+    }
+
+    onConcurrencyChange(agentName: string, newValue: number) {
+        if (isNaN(newValue) || newValue < 1) {
+            return;
+        }
+
+        this.concurrencyMap[agentName] = newValue;
+        this.adjustBuildAgentCapacity(agentName, newValue);
     }
 }
