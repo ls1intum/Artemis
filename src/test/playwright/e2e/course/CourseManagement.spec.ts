@@ -297,19 +297,10 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await examAPIRequests.createExam({ course, title: 'Exam 2 - ' + generateUUID() });
             await examAPIRequests.createExam({ course, title: 'Exam 3 - ' + generateUUID() });
 
-            await login(admin, `/courses/${course.id}/communication`);
-            await courseMessages.acceptCodeOfConductButton();
-            const channel = await communicationAPIRequests.createCourseMessageChannel(course, 'test-channel', 'Test Channel', false, true);
-            await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, admin);
-
-            await login(admin, `/courses/${course.id}/communication?conversationId=${channel.id}`);
+            const channel = await courseMessages.setupCommunicationChannel(login, admin, course, communicationAPIRequests);
             const messageText = 'Test Message';
-            await courseMessages.writeMessage(messageText + ' 1');
-            await courseMessages.save();
-
-            await login(admin, `/courses/${course.id}/communication?conversationId=${channel.id}`);
-            await courseMessages.writeMessage(messageText + ' 2');
-            await courseMessages.save();
+            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id, messageText + ' 1');
+            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id, messageText + ' 2');
 
             const expectedCourseSummaryValues: CourseSummary = {
                 isTestCourse: true,
