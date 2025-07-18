@@ -128,6 +128,16 @@ public abstract class AbstractGitService {
      * This method sets up the repository to avoid auto garbage collection and disables the use of symbolic links to enhance security.
      * It also makes sure that the default branch and HEAD are correctly configured.
      * Works for both, local checkout repositories and bare repositories (without working directory).
+     * The method disables automatic garbage collection of the repository to prevent potential issues with file deletion
+     * as discussed in multiple resources. It also avoids the use of symbolic links for security reasons,
+     * following best practices against remote code execution vulnerabilities.
+     * References:
+     * <ul>
+     * <li><a href="https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds">JGit
+     * Files.delete() fails to delete a file, but file.delete() succeeds</a></li>
+     * <li><a href="https://git-scm.com/docs/git-gc">Git garbage collection</a></li>
+     * <li><a href="https://www.eclipse.org/lists/jgit-dev/msg03734.html">How to completely disable auto GC in JGit</a></li>
+     * </ul>
      *
      * @param localPath           The path to the local repository directory, not null.
      * @param remoteRepositoryUri The URI of the remote repository, not null.
@@ -136,21 +146,6 @@ public abstract class AbstractGitService {
      * @return The configured Repository instance.
      * @throws IOException             If an I/O error occurs during repository initialization or configuration.
      * @throws InvalidRefNameException If the provided default branch name is invalid.
-     *
-     *                                     <p>
-     *                                     The method disables automatic garbage collection of the repository to prevent potential issues with file deletion
-     *                                     as discussed in multiple resources. It also avoids the use of symbolic links for security reasons,
-     *                                     following best practices against remote code execution vulnerabilities.
-     *                                     </p>
-     *
-     *                                     <p>
-     *                                     References:
-     *                                     <ul>
-     *                                     <li>https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds</li>
-     *                                     <li>https://git-scm.com/docs/git-gc</li>
-     *                                     <li>https://www.eclipse.org/lists/jgit-dev/msg03734.html</li>
-     *                                     </ul>
-     *                                     </p>
      */
     @NotNull
     public static Repository linkRepositoryForExistingGit(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare)
@@ -188,6 +183,30 @@ public abstract class AbstractGitService {
 
             gitRepoConfig.save();
 
+            return repository;
+        }
+    }
+
+    /**
+     * Opens an existing bare repository from the filesystem. Avoids write operations for git settings necessary for new repositories
+     * and ensures that the repository is set up correctly with the specified default branch.
+     *
+     * @param localPath         The path to the local repository directory, not null.
+     * @param bareRepositoryUri The URI of the bare repository, not null.
+     * @param defaultBranch     The name of the default branch to be checked out, not null.
+     * @return The configured Repository instance.
+     * @throws IOException             If an I/O error occurs during repository initialization or configuration.
+     * @throws InvalidRefNameException If the provided default branch name is invalid.
+     */
+    @NotNull
+    public static Repository getExistingBareRepository(Path localPath, VcsRepositoryUri bareRepositoryUri, String defaultBranch) throws IOException, InvalidRefNameException {
+        // Open the repository from the filesystem
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        builder.setBare();
+        builder.setGitDir(localPath.toFile());
+        builder.setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
+
+        try (Repository repository = new Repository(builder, localPath, bareRepositoryUri)) {
             return repository;
         }
     }
