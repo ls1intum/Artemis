@@ -1,0 +1,61 @@
+name: Java Code Quality Analysis
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  code-quality-analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Check LOC and number of class dependencies
+        run: |
+          # Run the analysis and capture output
+          output=$(python analyze_java_code.py \
+            --max-lines ${{ vars.MAX_LINES || 1000 }} \
+            --max-params ${{ vars.MAX_PARAMS || 10 }} \
+            ${{ vars.INCLUDE_REPO_DEPS == 'true' && '--include-repo-deps' || '' }})
+
+          large_classes=$(echo "$output" | grep -o "Found [0-9]* classes with more than" | grep -o "[0-9]*")
+          complex_beans=$(echo "$output" | grep -o "Found [0-9]* Spring beans with constructors having more than" | grep -o "[0-9]*")
+
+          max_large_classes=9
+          max_complex_beans=15
+
+          echo "Large classes found: $large_classes (max allowed: $max_large_classes)"
+          echo "Complex beans found: $complex_beans (max allowed: $max_complex_beans)"
+
+          # Check thresholds
+          violations=0
+
+          if [ "$large_classes" -gt "$max_large_classes" ]; then
+            echo "❌ Too many large classes: $large_classes > $max_large_classes"
+            violations=$((violations + 1))
+          else
+            echo "✅ Large classes within threshold: $large_classes <= $max_large_classes"
+          fi
+
+          if [ "$complex_beans" -gt "$max_complex_beans" ]; then
+            echo "❌ Too many complex beans: $complex_beans > $max_complex_beans"
+            violations=$((violations + 1))
+          else
+            echo "✅ Complex beans within threshold: $complex_beans <= $max_complex_beans"
+          fi
+
+          if [ $violations -gt 0 ]; then
+            echo "::error::Code quality check failed: $violations violation(s) found"
+            exit 1
+          else
+            echo "✅ All code quality checks passed!"
+          fi
