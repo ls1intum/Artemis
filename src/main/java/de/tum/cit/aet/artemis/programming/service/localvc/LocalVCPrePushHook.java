@@ -128,9 +128,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
                 if (loader.getType() == Constants.OBJ_BLOB && loader.getSize() > MAX_BLOB_SIZE_BYTES) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
                             String.format("File '%s' exceeds 10MB size limit (%.2f MB)", treeWalk.getPathString(), loader.getSize() / (1024.0 * 1024.0)));
-                    reader.close();
-                    revWalk.close();
-                    return;
+                    break;
                 }
             }
 
