@@ -246,6 +246,10 @@ describe('CourseManagementContainerComponent', () => {
                     of(
                         new HttpResponse({
                             body: {
+                                numberOfStudents: 100,
+                                numberOfTutors: 10,
+                                numberOfEditors: 5,
+                                numberOfInstructors: 2,
                                 numberExams: 2,
                                 numberLectures: 3,
                                 numberProgrammingExercises: 5,
@@ -424,6 +428,10 @@ describe('CourseManagementContainerComponent', () => {
         component.course.set(course1);
 
         component.fetchCourseDeletionSummary().subscribe((summary: EntitySummary) => {
+            expect(summary['artemisApp.course.delete.summary.numberStudents']).toBe(100);
+            expect(summary['artemisApp.course.delete.summary.numberTutors']).toBe(10);
+            expect(summary['artemisApp.course.delete.summary.numberEditors']).toBe(5);
+            expect(summary['artemisApp.course.delete.summary.numberInstructors']).toBe(2);
             expect(summary['artemisApp.course.delete.summary.numberExams']).toBe(2);
             expect(summary['artemisApp.course.delete.summary.numberLectures']).toBe(3);
             expect(summary['artemisApp.course.delete.summary.numberProgrammingExercises']).toBe(5);
