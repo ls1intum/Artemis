@@ -671,32 +671,6 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Combine all commits into one in the template repository of a given exercise.
-     *
-     * @param exerciseId of the exercise
-     * @return the ResponseEntity with status
-     *         200 (OK) if combine has been successfully executed
-     *         403 (Forbidden) if the user is not admin and course instructor or
-     *         500 (Internal Server Error)
-     */
-    @PutMapping(value = "programming-exercises/{exerciseId}/combine-template-commits", produces = MediaType.TEXT_PLAIN_VALUE)
-    @EnforceAtLeastEditor
-    @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> combineTemplateRepositoryCommits(@PathVariable long exerciseId) {
-        log.debug("REST request to combine the commits of the template repository of ProgrammingExercise with id: {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-        try {
-            var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
-            gitService.combineAllCommitsOfRepositoryIntoOne(exerciseRepoUri);
-            return new ResponseEntity<>(HttpStatus.OK);
-        }
-        catch (IllegalStateException | GitAPIException ex) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
      * PUT /programming-exercises/{exerciseId}/generate-tests : Makes a call to
      * StructureOracleGenerator to generate the structure oracle aka the test.json
      * file
