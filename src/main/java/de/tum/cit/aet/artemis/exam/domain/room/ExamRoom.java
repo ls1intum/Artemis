@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Conditional;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 
@@ -27,43 +27,37 @@ import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 @Entity
 @Table(name = "exam_room")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ExamRoom extends DomainObject {
+public class ExamRoom extends AbstractAuditingEntity {
 
     /**
      * The verbose room number.
      */
-    @Column(name = "long_room_number", nullable = false)
+    @Column(name = "long_room_number", nullable = false, length = 50)
     private String longRoomNumber;
 
     /**
      * The short room number.
      */
-    @Column(name = "short_room_number", nullable = false)
+    @Column(name = "short_room_number", nullable = false, length = 50)
     private String shortRoomNumber;
 
     /**
      * The name of the exam room.
      */
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, length = 255)
     private String name;
 
     /**
      * An alternative name for the exam room, doesn't need to exist.
      */
-    @Column(name = "alternative_name", nullable = true)
+    @Column(name = "alternative_name", nullable = true, length = 255)
     private String alternativeName;
 
     /**
      * The building where the exam room resides inside.
      */
-    @Column(name = "building", nullable = false)
+    @Column(name = "building", nullable = false, length = 255)
     private String building;
-
-    /**
-     * Maximum capacity of the room. Doesn't need to exist, i.e., be pre-calculated.
-     */
-    @Column(name = "capacity", nullable = true)
-    private Integer capacity;
 
     /**
      * All seats of this exam room.
@@ -128,14 +122,6 @@ public class ExamRoom extends DomainObject {
 
     public void setBuilding(String building) {
         this.building = building;
-    }
-
-    public Integer getCapacity() {
-        return capacity;
-    }
-
-    public void setCapacity(Integer capacity) {
-        this.capacity = capacity;
     }
 
     public List<ExamSeat> getSeats() {

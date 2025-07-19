@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.exam.domain.room;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -23,13 +25,14 @@ public class ExamSeat extends DomainObject {
     /**
      * The name of the seat. This is usually a combination of the row and column name.
      */
-    @Column(name = "label", nullable = false)
+    @Column(name = "label", nullable = false, length = 50)
     private String label; // For example, "A1", "4", or "{row},{column}"
 
     /**
      * The condition of the seat.
      */
-    @Column(name = "seat_condition", nullable = false)
+    @Enumerated(EnumType.STRING)  // for human readability in the DB
+    @Column(name = "seat_condition", nullable = false, length = 50)
     private SeatCondition seatCondition = SeatCondition.USABLE;
 
     /**
@@ -37,7 +40,7 @@ public class ExamSeat extends DomainObject {
      */
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference  // required to solve (de-)serialization issues
     private ExamRoom room;
 
     /**

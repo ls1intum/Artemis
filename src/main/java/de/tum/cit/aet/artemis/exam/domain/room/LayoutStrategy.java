@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.exam.domain.room;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -23,21 +25,29 @@ public class LayoutStrategy extends DomainObject {
     /**
      * The name of the layout strategy. Can be anything, but common ones are "default", "wide", and "corona"
      */
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, length = 255)
     private String name;
 
     /**
      * The type of this layout strategy. May be one of {@link LayoutStrategyType}.
      */
-    @Column(name = "type", nullable = false)
+    @Enumerated(EnumType.STRING)  // for human readability in the DB
+    @Column(name = "type", nullable = false, length = 50)
     private LayoutStrategyType type;
+
+    /**
+     * The capacity of this layout strategy, i.e., how many students can be at max seated using this strategy.
+     * This is nullable by default, to lazily defer that calculation for expensive to calculate layouts.
+     */
+    @Column(name = "capacity", nullable = true)
+    private Integer capacity;
 
     /**
      * The room this layout strategy belongs to. One room may have multiple layout strategies.
      */
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference  // required to solve (de-)serialization issues
     private ExamRoom room;
 
     /**
@@ -62,6 +72,14 @@ public class LayoutStrategy extends DomainObject {
 
     public void setType(LayoutStrategyType type) {
         this.type = type;
+    }
+
+    public Integer getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(Integer capacity) {
+        this.capacity = capacity;
     }
 
     public ExamRoom getRoom() {

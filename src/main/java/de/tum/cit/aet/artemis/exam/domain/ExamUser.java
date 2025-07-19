@@ -32,8 +32,8 @@ public class ExamUser extends AbstractAuditingEntity {
     private String plannedSeat;
 
     @ManyToOne
-    @JoinColumn(name = "planned_room_id")
-    @JsonBackReference
+    @JoinColumn(name = "planned_room_id", nullable = true)
+    @JsonBackReference  // required to solve (de-)serialization issues
     private ExamRoom plannedRoomEntity;
 
     @Column(name = "did_check_image")
