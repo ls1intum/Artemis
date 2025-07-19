@@ -66,7 +66,7 @@ public interface VersionControlService {
     boolean checkIfProjectExists(String projectKey, String projectName);
 
     /**
-     * Copies a repository from one project to another one. The project can be the same.
+     * Copies a repository from one project to another one. The project can be the same. The commit history is not preserved
      *
      * @param sourceProjectKey     The key of the template project (normally based on the course and exercise short name)
      * @param sourceRepositoryName The name of the repository which should be copied
@@ -78,5 +78,20 @@ public interface VersionControlService {
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
     VcsRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
+            Integer attempt) throws VersionControlException;
+
+    /**
+     * Copies a repository from one project to another one. The project can be the same. The commit history is preserved.
+     *
+     * @param sourceProjectKey     The key of the template project (normally based on the course and exercise short name)
+     * @param sourceRepositoryName The name of the repository which should be copied
+     * @param sourceBranch         The default branch of the source repository
+     * @param targetProjectKey     The key of the target project to which to copy the new repository to
+     * @param targetRepositoryName The desired name of the target repository
+     * @param attempt              The attempt number
+     * @return The URL for cloning the repository
+     * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
+     */
+    VcsRepositoryUri copyRepositoryWithHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
             Integer attempt) throws VersionControlException;
 }
