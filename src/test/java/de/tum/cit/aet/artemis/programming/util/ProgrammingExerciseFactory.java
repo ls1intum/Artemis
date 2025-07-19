@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Set;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
