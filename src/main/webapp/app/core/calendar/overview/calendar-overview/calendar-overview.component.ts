@@ -1,12 +1,12 @@
-import { Component, OnInit, WritableSignal, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import 'dayjs/locale/de';
-import 'dayjs/locale/en';
-import isoWeek from 'dayjs/plugin/isoWeek';
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import 'dayjs/esm/locale/en';
+import 'dayjs/esm/locale/de';
+import isoWeek from 'dayjs/esm/plugin/isoWeek';
+import isSameOrBefore from 'dayjs/esm/plugin/isSameOrBefore';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -34,9 +34,11 @@ dayjs.extend(isSameOrBefore);
     styleUrl: './calendar-overview.component.scss',
 })
 export class CalendarOverviewComponent implements OnInit {
+    private calendarEventService = inject(CalendarEventService);
+    private translateService = inject(TranslateService);
     private activatedRoute = inject(ActivatedRoute);
     private courseId?: number;
-    private currentLocale: WritableSignal<string>;
+    private currentLocale = signal(this.translateService.currentLang);
 
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
@@ -44,13 +46,6 @@ export class CalendarOverviewComponent implements OnInit {
     firstDayOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     firstDayOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
     isLoading = signal<boolean>(false);
-
-    constructor(
-        private calendarEventService: CalendarEventService,
-        private translateService: TranslateService,
-    ) {
-        this.currentLocale = signal(this.translateService.currentLang);
-    }
 
     ngOnInit(): void {
         this.translateService.onLangChange.subscribe((event) => {
