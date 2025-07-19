@@ -25,6 +25,10 @@ import { HttpResponse } from '@angular/common/http';
 import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingType } from '../../../shared/entities/posting.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { AccountService } from '../../../../core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -73,7 +77,13 @@ examples.forEach((activeConversation) => {
                     MockComponent(PostCreateEditModalComponent),
                     MockDirective(TranslateDirective),
                 ],
-                providers: [MockProvider(MetisConversationService), MockProvider(MetisService), MockProvider(NgbModal)],
+                providers: [
+                    MockProvider(MetisConversationService),
+                    MockProvider(MetisService),
+                    MockProvider(NgbModal),
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: AccountService, useClass: MockAccountService },
+                ],
             }).compileComponents();
         }));
 
@@ -190,7 +200,7 @@ examples.forEach((activeConversation) => {
             const mockMessages = [
                 {
                     post: { id: 1 },
-                    elementRef: { nativeElement: { getBoundingClientRect: jest.fn().mockReturnValue({ top: 200, bottom: 300 }) } },
+                    elementRef: { nativeElement: { getBoundingClientRect: jest.fn().mockReturnValue({ top: 200, bottom: 320 }) } },
                 },
             ] as unknown as PostingThreadComponent[];
 
@@ -583,6 +593,224 @@ examples.forEach((activeConversation) => {
             expect(component.groupedPosts[1].posts).toHaveLength(1);
             expect(component.groupedPosts[0].author?.id).toBe(1);
             expect(component.groupedPosts[1].author?.id).toBe(2);
+        });
+
+        it('should return only unread posts by the current user and sort them descending by creationDate', () => {
+            const lastReadDate = dayjs().subtract(10, 'minutes');
+            const currentUser = { id: 99, internal: false };
+            const otherUser = { id: 42, internal: false };
+
+            component._activeConversation = {
+                ...component._activeConversation,
+                lastReadDate,
+            };
+
+            component.currentUser = currentUser;
+
+            const posts: Post[] = [
+                { id: 1, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread
+                { id: 2, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // unread
+                { id: 3, creationDate: dayjs().subtract(20, 'minutes'), author: otherUser } as Post, // read
+                { id: 4, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post, // unread
+            ];
+            component.allPosts = posts;
+            const unreadPosts = (component as any).getUnreadPosts();
+            expect(unreadPosts).toHaveLength(3);
+            expect(unreadPosts.map((p: Post) => p.id)).toEqual([1, 2, 4]);
+        });
+        it('should compute unreadPosts, unreadPostsCount, and lastReadPostId correctly', () => {
+            const lastReadDate = dayjs().subtract(10, 'minutes');
+            const currentUser = { id: 99, internal: false };
+            const otherUser = { id: 42, internal: false };
+
+            component._activeConversation = {
+                ...component._activeConversation,
+                lastReadDate,
+            };
+
+            component.currentUser = currentUser;
+
+            const posts: Post[] = [
+                { id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: otherUser } as Post, // read
+                { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread
+                { id: 3, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // unread
+                { id: 4, creationDate: dayjs(), author: otherUser } as Post, // unread
+            ];
+
+            component.allPosts = posts;
+
+            (component as any).computeLastReadState();
+
+            expect(component.unreadPosts).toHaveLength(3);
+            expect(component.unreadPostsCount).toBe(3);
+        });
+
+        it('should return true if at least one unread post is visible', () => {
+            const mockPostId = 1;
+            component.unreadPosts = [{ id: mockPostId } as any];
+
+            jest.spyOn(component as any, 'isPostVisible').mockImplementation((id: number) => id === mockPostId);
+
+            const result = (component as any).isAnyUnreadPostVisible();
+            expect(result).toBeTrue();
+        });
+        it('should return false if the first unread post is partially or fully out of view', () => {
+            const mockRects = {
+                postRect: { top: 100, bottom: 400 },
+                containerRect: { top: 50, bottom: 300 },
+            };
+            jest.spyOn(component as any, 'getBoundingRectsForFirstUnreadPost').mockReturnValue(mockRects);
+            const result = (component as any).isAnyUnreadPostVisible();
+            expect(result).toBeFalse();
+        });
+
+        it('should return postRect and containerRect if the first unread post and container are available', () => {
+            const mockPostId = 123;
+            const mockPost = { id: mockPostId } as Post;
+            const mockPostRect = {
+                top: 50,
+                bottom: 150,
+            } as DOMRect;
+            const mockContainerRect = {
+                top: 0,
+                bottom: 300,
+            } as DOMRect;
+            const mockPostElement = {
+                getBoundingClientRect: jest.fn().mockReturnValue(mockPostRect),
+            };
+
+            const mockContainerElement = {
+                getBoundingClientRect: jest.fn().mockReturnValue(mockContainerRect),
+                addEventListener: jest.fn(),
+                removeEventListener: jest.fn(),
+            };
+
+            component.unreadPosts = [mockPost];
+            component.messages = [
+                {
+                    post: { id: mockPostId },
+                    elementRef: { nativeElement: mockPostElement },
+                },
+            ] as any;
+            component.content = {
+                nativeElement: mockContainerElement,
+            } as any;
+
+            (component as any).setFirstUnreadPostId();
+
+            const result = (component as any).getBoundingRectsForFirstUnreadPost();
+            expect(result).toEqual({ postRect: mockPostRect, containerRect: mockContainerRect });
+        });
+        it('should return undefined if no matching message element is found', () => {
+            const mockPostId = 123;
+            const mockPost = { id: mockPostId } as Post;
+
+            component.unreadPosts = [mockPost];
+            component.messages = [] as any;
+
+            component.content = {
+                nativeElement: {
+                    getBoundingClientRect: () => ({
+                        top: 0,
+                        bottom: 300,
+                    }),
+                    removeEventListener: jest.fn(),
+                },
+            } as any;
+
+            const result = (component as any).getBoundingRectsForFirstUnreadPost();
+            expect(result).toBeUndefined();
+        });
+        it('should scroll to the first unread post if it is not visible', () => {
+            const mockPostId = 123;
+            const mockPost = { id: mockPostId } as Post;
+            const mockPostElement = {
+                offsetTop: 500,
+                offsetHeight: 400,
+            };
+            const mockContainerElement = {
+                scrollTop: 0,
+                clientHeight: 300,
+                scrollTo: jest.fn(),
+                removeEventListener: jest.fn(),
+            };
+
+            const mockRects = {
+                postRect: { top: 400, bottom: 800 },
+                containerRect: { top: 0, bottom: 300 },
+            };
+            component.firstUnreadPostId = mockPostId;
+            component.unreadPosts = [mockPost];
+            component.messages = [
+                {
+                    post: { id: mockPostId },
+                    elementRef: { nativeElement: mockPostElement },
+                },
+            ] as any;
+            component.content = {
+                nativeElement: mockContainerElement,
+            } as any;
+
+            jest.spyOn(component as any, 'getBoundingRectsForFirstUnreadPost').mockReturnValue(mockRects);
+
+            const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((fn: FrameRequestCallback) => {
+                fn(0);
+                return 0;
+            });
+            (component as any).scrollToFirstUnreadPostIfNotVisible();
+            const scrollOffset = 15;
+            const expectedScrollTop = Math.max(mockPostElement.offsetTop - scrollOffset, 0);
+            expect(mockContainerElement.scrollTop).toBe(expectedScrollTop);
+
+            rafSpy.mockRestore();
+        });
+
+        it('should return bounding rects if both post and container are available', () => {
+            const postId = 123;
+            const mockPostRect = { top: 10, bottom: 110 } as DOMRect;
+            const mockContainerRect = { top: 0, bottom: 300 } as DOMRect;
+
+            component.messages = [
+                {
+                    post: { id: postId },
+                    elementRef: {
+                        nativeElement: {
+                            getBoundingClientRect: () => mockPostRect,
+                        },
+                    },
+                },
+            ] as any;
+
+            component.content = {
+                nativeElement: {
+                    getBoundingClientRect: () => mockContainerRect,
+                    addEventListener: jest.fn(),
+                    removeEventListener: jest.fn(),
+                },
+            } as any;
+            const result = (component as any).getBoundingRectsForPost(postId);
+            expect(result).toEqual({ postRect: mockPostRect, containerRect: mockContainerRect });
+        });
+
+        it('should return true if the post is fully within the container bounds', () => {
+            const postId = 1;
+            const rects = {
+                postRect: { top: 50, bottom: 150 },
+                containerRect: { top: 0, bottom: 300 },
+            };
+            jest.spyOn(component as any, 'getBoundingRectsForPost').mockReturnValue(rects);
+            const result = (component as any).isPostVisible(postId);
+            expect(result).toBeTrue();
+        });
+        it('should return false if the post is below the container bounds', () => {
+            const postId = 1;
+            const rects = {
+                postRect: { top: 310, bottom: 400 },
+                containerRect: { top: 0, bottom: 300 },
+            };
+            jest.spyOn(component as any, 'getBoundingRectsForPost').mockReturnValue(rects);
+            const result = (component as any).isPostVisible(postId);
+            expect(result).toBeFalse();
         });
     });
 });
