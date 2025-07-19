@@ -66,14 +66,8 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [NgbTooltipModule],
-                declarations: [
-                    ConversationMemberRowComponent,
-                    MockPipe(ArtemisTranslatePipe),
-                    MockComponent(FaIconComponent),
-                    MockComponent(ProfilePictureComponent),
-                    MockDirective(TranslateDirective),
-                ],
+                imports: [NgbTooltipModule, FaIconComponent],
+                declarations: [ConversationMemberRowComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ProfilePictureComponent), MockDirective(TranslateDirective)],
                 providers: [
                     MockProvider(AccountService),
                     MockProvider(NgbModal),
