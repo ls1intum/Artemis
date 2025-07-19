@@ -1,16 +1,18 @@
 import { IrisVariant } from 'app/iris/shared/entities/settings/iris-variant';
 import {
-    IrisChatSubSettings,
+    IrisProgrammingExerciseChatSubSettings,
     IrisCompetencyGenerationSubSettings,
     IrisCourseChatSubSettings,
+    IrisFaqIngestionSubSettings,
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
+    IrisTutorSuggestionSubSettings,
 } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { IrisGlobalSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 
 export function mockSettings() {
-    const mockChatSettings = new IrisChatSubSettings();
+    const mockChatSettings = new IrisProgrammingExerciseChatSubSettings();
     mockChatSettings.id = 1;
     mockChatSettings.enabled = true;
     mockChatSettings.disabledProactiveEvents = [];
@@ -32,14 +34,25 @@ export function mockSettings() {
     mockIrisLectureSettings.id = 42;
     mockIrisLectureSettings.enabled = true;
 
+    const mockIrisTutorSuggestionSettings = new IrisTutorSuggestionSubSettings();
+    mockIrisTutorSuggestionSettings.id = 99;
+    mockIrisTutorSuggestionSettings.enabled = true;
+
+    const mockFaqIngestionSettings = new IrisFaqIngestionSubSettings();
+    mockFaqIngestionSettings.id = 8;
+    mockFaqIngestionSettings.enabled = true;
+    mockFaqIngestionSettings.autoIngestOnFaqCreation = true;
+
     const irisSettings = new IrisGlobalSettings();
     irisSettings.id = 1;
-    irisSettings.irisChatSettings = mockChatSettings;
+    irisSettings.irisProgrammingExerciseChatSettings = mockChatSettings;
     irisSettings.irisTextExerciseChatSettings = mockTextExerciseChatSettings;
     irisSettings.irisCourseChatSettings = mockCourseChatSettings;
     irisSettings.irisCompetencyGenerationSettings = mockCompetencyGenerationSettings;
     irisSettings.irisLectureIngestionSettings = mockLectureIngestionSettings;
     irisSettings.irisLectureChatSettings = mockIrisLectureSettings;
+    irisSettings.irisTutorSuggestionSettings = mockIrisTutorSuggestionSettings;
+    irisSettings.irisFaqIngestionSettings = mockFaqIngestionSettings;
     return irisSettings;
 }
 

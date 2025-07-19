@@ -4,9 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
  * REST controller for managing ModelingAssessment.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/modeling/")
 public class ModelingAssessmentResource extends AssessmentResource {
@@ -151,11 +152,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
         Result result = assessmentService.updateAssessmentAfterComplaint(modelingSubmission.getLatestResult(), modelingExercise, assessmentUpdate);
 
-        var participation = result.getParticipation();
+        var participation = result.getSubmission().getParticipation();
         // remove circular dependencies if the results of the participation are there
-        if (participation != null && Hibernate.isInitialized(participation.getResults()) && participation.getResults() != null) {
-            participation.setResults(null);
-        }
 
         if (participation instanceof StudentParticipation studentParticipation && !authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
             studentParticipation.setParticipant(null);

@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class FeatureToggleService {
 
@@ -63,15 +65,19 @@ public class FeatureToggleService {
         features = hazelcastInstance.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except the Science API) are enabled once the system starts up
+        // This ensures that all features (except the Science API and TutorSuggestions) are enabled once the system starts up
         for (Feature feature : Feature.values()) {
-            if (!features.containsKey(feature) && feature != Feature.Science) {
+            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions) {
                 features.put(feature, true);
             }
         }
         // init science feature from config
         if (!features.containsKey(Feature.Science)) {
             features.put(Feature.Science, scienceEnabledOnStart);
+        }
+
+        if (!features.containsKey(Feature.TutorSuggestions)) {
+            features.put(Feature.TutorSuggestions, false);
         }
     }
 

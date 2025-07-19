@@ -14,13 +14,14 @@ const esModules = [
     '@angular/service-worker',
     '@ctrl/ngx-emoji-mart',
     '@danielmoncada/angular-datetime-picker',
-    '@siemens/ngx-datatable',
     '@fortawesome/angular-fontawesome',
     '@ls1intum/apollon',
     '@ng-bootstrap/ng-bootstrap',
     '@ngx-translate/core',
     '@ngx-translate/http-loader',
+    '@primeuix',
     '@sentry/angular',
+    '@siemens/ngx-datatable',
     '@swimlane/ngx-charts',
     '@swimlane/ngx-graph',
     'collapse-white-space',
@@ -46,15 +47,15 @@ const esModules = [
     'franc-min',
     'internmap',
     'lodash-es',
+    'markdown-it-github-alerts',
     'monaco-editor',
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
     'ngx-webstorage',
+    'primeng',
     'rxjs/operators',
     'trigram-utils',
-    'primeng',
-    '@primeuix'
 ].join('|');
 
 const {
@@ -81,25 +82,28 @@ module.exports = {
         ],
     ],
     collectCoverageFrom: [
-        'src/main/webapp/**/*.ts',
-        '!src/main/webapp/**/*.module.ts',  // ignore modules files because they cannot be properly tested
-        '!src/main/webapp/**/*.routes.ts',   // ignore routes files because they cannot be properly tested
-        '!src/main/webapp/**/*.route.ts',   // ignore route files because they cannot be properly tested
-        '!**/node_modules/**',
+        '<rootDir>/src/main/webapp/**/*.ts',
+        '!<rootDir>/src/main/webapp/**/*.module.ts',  // ignore modules files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.routes.ts',   // ignore routes files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.route.ts',   // ignore route files because they cannot be properly tested
+        '!<rootDir>/**/node_modules/**',
+        '!<rootDir>/src/main/webapp/app/openapi/**', // ignore openapi files because they are generated
     ],
     coveragePathIgnorePatterns: [
-        'src/main/webapp/app/core/config/prod.config.ts',
+        '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
+        '<rootDir>/src/main/webapp/app/openapi/',
     ],
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 89.15,
-            branches: 75.25,
-            functions: 83.02,
-            lines: 89.22,
+            statements: 89.61,
+            branches: 75.83,
+            functions: 83.50,
+            lines: 89.68,
         },
     },
-    coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
+    // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
+    coverageReporters: ['clover', 'json', 'lcov', 'text-summary','json-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],

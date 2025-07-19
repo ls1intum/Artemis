@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +14,7 @@ import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class FaqService {
 
@@ -66,10 +68,9 @@ public class FaqService {
      * Automatically updates or ingests a specific FAQ into the Pyris system for a given course.
      * If the PyrisWebhookService is unavailable, the method does nothing.
      *
-     * @param courseId the ID of the course to which the FAQ belongs
-     * @param faq      the FAQ to be ingested or updated in Pyris
+     * @param faq the FAQ to be ingested or updated in Pyris
      */
-    public void autoIngestFaqsIntoPyris(Long courseId, Faq faq) {
+    public void autoIngestFaqIntoPyris(Faq faq) {
         if (pyrisFaqApi.isEmpty()) {
             return;
         }
@@ -78,6 +79,6 @@ public class FaqService {
             return;
         }
 
-        pyrisFaqApi.get().autoUpdateFaqInPyris(courseId, faq);
+        pyrisFaqApi.get().autoUpdateFaqInPyris(faq);
     }
 }

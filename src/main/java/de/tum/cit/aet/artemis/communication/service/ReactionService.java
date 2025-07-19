@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismPostApi;
 import de.tum.cit.aet.artemis.plagiarism.exception.PlagiarismApiNotPresentException;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ReactionService {
 
@@ -96,7 +98,7 @@ public class ReactionService {
      * @param reactionId id of the reaction to delete
      * @param courseId   id of the course the according posting belongs to
      */
-    public void deleteReactionById(Long reactionId, Long courseId) {
+    public void deleteReactionByIdIfAllowedElseThrow(Long reactionId, Long courseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         Reaction reaction = reactionRepository.findByIdElseThrow(reactionId);
@@ -128,7 +130,7 @@ public class ReactionService {
 
         PlagiarismPostApi api = plagiarismPostApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismPostApi.class));
         api.preparePostForBroadcast(updatedPost);
-        api.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
+        api.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
         reactionRepository.deleteById(reactionId);
     }
 
@@ -190,7 +192,7 @@ public class ReactionService {
         updatedPost.setConversation(post.getConversation());
 
         api.preparePostForBroadcast(post);
-        api.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
+        api.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null);
         return savedReaction;
     }
 }

@@ -348,4 +348,33 @@ describe('ProgrammingExerciseTask Service', () => {
         expect(addedTask!.testCases).toHaveLength(1);
         expect(addedTask!.testCases[0].id).toBe(27);
     });
+
+    it('should return totalWeights property correctly', () => {
+        const totalWeights = service.totalWeights;
+        expect(totalWeights).toBe(2); // Sum of weights from active test cases
+    });
+
+    it('should handle unconfigured service in hasUnsavedChanges', () => {
+        const freshService = TestBed.inject(ProgrammingExerciseTaskService);
+        expect(freshService.hasUnsavedChanges()).toBeFalse();
+    });
+
+    it('should update task points correctly when updateTasks is called', () => {
+        const originalTasks = service.currentTasks;
+        const updatedTasks = service.updateTasks();
+
+        expect(updatedTasks).toBe(originalTasks);
+        expect(updatedTasks).toHaveLength(3);
+    });
+
+    it('should toggle ignoreInactive correctly', () => {
+        const originalIgnoreInactive = service.ignoreInactive;
+        service.toggleIgnoreInactive();
+
+        expect(service.ignoreInactive).toBe(!originalIgnoreInactive);
+
+        // Toggle back
+        service.toggleIgnoreInactive();
+        expect(service.ignoreInactive).toBe(originalIgnoreInactive);
+    });
 });

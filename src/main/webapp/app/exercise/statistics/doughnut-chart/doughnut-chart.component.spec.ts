@@ -49,6 +49,17 @@ describe('DoughnutChartComponent', () => {
         expect(component.ngxDoughnutData[1].value).toBe(0);
         expect(component.ngxDoughnutData[2].value).toBe(1);
     });
+
+    it('should use fallback value when currentAbsolute is undefined and stats are not received', () => {
+        component.currentAbsolute = undefined;
+        component.receivedStats = false;
+        component.ngOnChanges();
+
+        expect(component.ngxDoughnutData[0].value).toBe(0);
+        expect(component.ngxDoughnutData[1].value).toBe(0);
+        expect(component.ngxDoughnutData[2].value).toBe(1);
+    });
+
     describe('setting titles for different chart types', () => {
         it('should set title for average exercise score', () => {
             component.contentType = DoughnutChartType.AVERAGE_EXERCISE_SCORE;

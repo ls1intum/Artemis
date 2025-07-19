@@ -30,6 +30,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -57,6 +58,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private calendarEventService = inject(CalendarEventService);
     private modalService = inject(NgbModal);
     private router = inject(Router);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -137,7 +139,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Returns the exma working time in minutes, rounded to one decimal place.
+     * Returns the exam working time in minutes, rounded to one decimal place.
      * Used for display purposes.
      */
     get workingTimeInMinutesRounded(): number {
@@ -289,6 +291,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     private async onSaveSuccess(exam: Exam) {
         this.isSaving = false;
+        this.calendarEventService.refresh();
         await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);
     }
@@ -335,14 +338,26 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         const examMaxPointsValid = this.isValidMaxPoints;
         const examValidWorkingTime = this.validateWorkingTime;
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
+        const examValidNumberOfExercises = this.isValidNumberOfExercises;
         return (
             examConductionDatesValid &&
             examReviewDatesValid &&
             examNumberOfCorrectionsValid &&
             examMaxPointsValid &&
             examValidWorkingTime &&
-            examValidExampleSolutionPublicationDate
+            examValidExampleSolutionPublicationDate &&
+            examValidNumberOfExercises
         );
+    }
+
+    /**
+     * Returns a boolean indicating whether the exam's number of exercises is valid.
+     * The number of exercises is valid if it's not set, or if it's at least 1.
+     *
+     * @returns {boolean} `true` if the exam's number of exercises is valid, `false` otherwise.
+     */
+    get isValidNumberOfExercises(): boolean {
+        return this.exam.numberOfExercisesInExam === undefined || this.exam.numberOfExercisesInExam === null || this.exam.numberOfExercisesInExam! >= 1;
     }
 
     /**

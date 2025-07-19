@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -45,6 +46,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
  * REST controller for managing Faqs.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/communication/")
 public class FaqResource {
@@ -93,7 +95,7 @@ public class FaqResource {
         }
         Faq savedFaq = faqRepository.save(faq);
         FaqDTO dto = new FaqDTO(savedFaq);
-        faqService.autoIngestFaqsIntoPyris(courseId, savedFaq);
+        faqService.autoIngestFaqIntoPyris(savedFaq);
         return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
 
@@ -120,7 +122,7 @@ public class FaqResource {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
         Faq updatedFaq = faqRepository.save(faq);
-        faqService.autoIngestFaqsIntoPyris(courseId, updatedFaq);
+        faqService.autoIngestFaqIntoPyris(updatedFaq);
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);
     }
@@ -233,9 +235,24 @@ public class FaqResource {
     @Profile(PROFILE_IRIS)
     @PostMapping("courses/{courseId}/faqs/ingest")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> ingestFaqInIris(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> faqId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
+    public ResponseEntity<Void> ingestFaqInIris(@PathVariable long courseId, @RequestParam(required = false) Optional<Long> faqId) {
         faqService.ingestFaqsIntoPyris(courseId, faqId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * PUT courses/:courseId/faqs/enable : Enables faqs for a course.
+     *
+     * @param courseId the id of the course for which the faq should be enabled
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("courses/{courseId}/faqs/enable")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> enableFaqForCourse(@PathVariable long courseId) {
+        log.debug("REST request to enable faq for course with id: {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        course.setFaqEnabled(true);
+        courseRepository.save(course);
         return ResponseEntity.ok().build();
     }
 
@@ -261,9 +278,4 @@ public class FaqResource {
             checkRoleForCourse(courseId, Role.INSTRUCTOR);
         }
     }
-
-    private boolean checkIfFaqIsAccepted(Faq faq) {
-        return faq.getFaqState() == FaqState.ACCEPTED;
-    }
-
 }

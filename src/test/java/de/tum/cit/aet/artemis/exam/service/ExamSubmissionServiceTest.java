@@ -75,7 +75,7 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        exercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        exercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exam = examRepository.findByCourseId(course.getId()).getFirst();
         studentExam = examUtilService.addStudentExam(exam);

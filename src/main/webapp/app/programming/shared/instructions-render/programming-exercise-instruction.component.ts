@@ -43,6 +43,7 @@ import { ProgrammingExerciseInstructionStepWizardComponent } from './step-wizard
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -250,13 +251,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
     loadInitialResult(): Observable<Result | undefined> {
-        if (this.participation?.id && this.participation?.results?.length) {
+        const results = getAllResultsOfAllSubmissions(this.participation.submissions);
+        if (this.participation?.id && results.length) {
             // Get the result with the highest id (most recent result)
-            const latestResult = findLatestResult(this.participation.results);
+            const latestResult = findLatestResult(results);
             if (!latestResult) {
                 return of(undefined);
             }
-            latestResult.participation = this.participation;
             return latestResult.feedbacks ? of(latestResult) : this.loadAndAttachResultDetails(latestResult);
         } else if (this.participation && this.participation.id) {
             // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
@@ -271,7 +272,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return undefined.
      */
     loadLatestResult(): Observable<Result | undefined> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!, true).pipe(
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!).pipe(
             catchError(() => of(undefined)),
             mergeMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
         );
@@ -283,7 +284,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param result - result to which instructions will be attached.
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
-        const currentParticipation = result.participation ? result.participation : this.participation;
+        const currentParticipation = this.participation;
         return this.resultService.getFeedbackDetailsForResult(currentParticipation.id!, result).pipe(
             map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
@@ -394,6 +395,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             environmentInjector: this.injector,
         });
         componentRef.instance.exercise = this.exercise;
+        componentRef.instance.participation = this.participation;
         componentRef.instance.taskName = taskName;
         componentRef.instance.latestResult = this.latestResult;
         componentRef.instance.testIds = testIds;

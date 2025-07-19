@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultStats;
 
@@ -25,9 +24,8 @@ public class PlagiarismResultResponseBuilder {
      *
      * @param plagiarismResult the plagiarism checks result to build the response for
      * @return an HTTP response about the given plagiarism checks results
-     * @param <E> type of the plagiarism checks result
      */
-    public static <E extends PlagiarismResult<? extends PlagiarismSubmissionElement>> ResponseEntity<PlagiarismResultDTO<E>> buildPlagiarismResultResponse(E plagiarismResult) {
+    public static ResponseEntity<PlagiarismResultDTO> buildPlagiarismResultResponse(PlagiarismResult plagiarismResult) {
         if (plagiarismResult == null) {
             return ResponseEntity.ok(null);
         }
@@ -38,10 +36,10 @@ public class PlagiarismResultResponseBuilder {
         double maximalSimilarity = getSimilarities(plagiarismResult).max().orElse(0.0);
         var stats = new PlagiarismResultStats(numberOfDetectedSubmissions, averageSimilarity, maximalSimilarity, plagiarismResult.getCreatedBy());
 
-        return ResponseEntity.ok(new PlagiarismResultDTO<>(plagiarismResult, stats));
+        return ResponseEntity.ok(new PlagiarismResultDTO(plagiarismResult, stats));
     }
 
-    private static DoubleStream getSimilarities(PlagiarismResult<?> plagiarismResult) {
+    private static DoubleStream getSimilarities(PlagiarismResult plagiarismResult) {
         return plagiarismResult.getComparisons().stream().mapToDouble(PlagiarismComparison::getSimilarity);
     }
 }

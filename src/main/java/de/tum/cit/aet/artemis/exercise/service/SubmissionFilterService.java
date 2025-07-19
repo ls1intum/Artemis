@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * A service that filters the submissions of a participation mainly for the course dashboard. Different logic is
  * required for the different types of exercises.
  */
+@Lazy
 @Service
 @Profile(PROFILE_CORE)
 public class SubmissionFilterService {
@@ -76,7 +78,7 @@ public class SubmissionFilterService {
         // during the allowed timeframe of the exercise (or participation, if the participant has a different due date)
         if (latestResult == null) {
             Optional<ZonedDateTime> optionalDueDate = ExerciseDateService.getDueDate(participation);
-            return optionalDueDate.map(dueDate -> programmingSubmission.getSubmissionDate().isBefore(dueDate)).orElse(true);
+            return optionalDueDate.map(dueDate -> programmingSubmission.getSubmissionDate() != null && programmingSubmission.getSubmissionDate().isBefore(dueDate)).orElse(true);
         }
         // if the result is not rated, we don't consider it
         if (Boolean.FALSE.equals(latestResult.isRated())) {

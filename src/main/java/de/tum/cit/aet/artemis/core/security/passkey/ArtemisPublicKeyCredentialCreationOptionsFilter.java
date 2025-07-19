@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.security.passkey;
 
-import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
-
 import java.io.IOException;
 import java.util.function.Supplier;
 
@@ -18,12 +16,13 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.authorization.AuthenticatedAuthorizationManager;
-import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
+import org.springframework.security.authorization.AuthorizationResult;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialCreationOptions;
 import org.springframework.security.web.webauthn.jackson.WebauthnJackson2Module;
@@ -50,11 +49,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
  */
 public class ArtemisPublicKeyCredentialCreationOptionsFilter extends OncePerRequestFilter {
 
+    static final String DEFAULT_REGISTER_OPTIONS_URL = "/webauthn/register/options";
+
     private PublicKeyCredentialCreationOptionsRepository repository = new HttpSessionPublicKeyCredentialCreationOptionsRepository();
 
     private final SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder.getContextHolderStrategy();
 
-    private final RequestMatcher matcher = antMatcher(HttpMethod.POST, "/webauthn/register/options");
+    private final RequestMatcher matcher = PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, DEFAULT_REGISTER_OPTIONS_URL);
 
     private final AuthorizationManager<HttpServletRequest> authorization = AuthenticatedAuthorizationManager.authenticated();
 
@@ -92,8 +93,8 @@ public class ArtemisPublicKeyCredentialCreationOptionsFilter extends OncePerRequ
 
         Supplier<SecurityContext> context = this.securityContextHolderStrategy.getDeferredContext();
         Supplier<Authentication> authentication = () -> context.get().getAuthentication();
-        AuthorizationDecision decision = this.authorization.check(authentication, request);
-        if (!decision.isGranted()) {
+        AuthorizationResult result = this.authorization.authorize(authentication, request);
+        if (result == null || !result.isGranted()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }

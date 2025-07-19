@@ -56,13 +56,17 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     ngOnInit() {
         this.routerLink = this.router.url;
-        this.result = this.participation.results?.[0];
+        this.participation.exercise = this.exercise;
+        this.result = this.participation.submissions![0].results![0];
+        // TODO this is not a a perfect solution.
+        this.result.submission = this.submission;
+        this.result.submission.participation = this.participation;
         this.commitHash = this.submission?.commitHash?.slice(0, 11);
         this.isInCourseManagement = this.router.url.includes('course-management');
         const isBuilding = false;
         const missingResultInfo = MissingResultInformation.NONE;
 
-        const templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.participation.results?.[0], isBuilding, missingResultInfo);
+        const templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, isBuilding, missingResultInfo);
 
         if (this.result) {
             this.feedbackComponentParameters = prepareFeedbackComponentParameters(

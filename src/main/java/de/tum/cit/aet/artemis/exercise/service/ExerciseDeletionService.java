@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +32,7 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.text.api.TextApi;
@@ -41,14 +42,15 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Service Implementation for managing Exercise.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ExerciseDeletionService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseDeletionService.class);
 
-    private final ParticipationService participationService;
+    private final ParticipationDeletionService participationDeletionService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseDeletionService programmingExerciseDeletionService;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -74,13 +76,14 @@ public class ExerciseDeletionService {
 
     private final Optional<IrisSettingsApi> irisSettingsApi;
 
-    public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationService participationService, ProgrammingExerciseService programmingExerciseService,
-            QuizExerciseService quizExerciseService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
-            Optional<StudentExamApi> studentExamApi, Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi,
-            ChannelRepository channelRepository, ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi) {
+    public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
+            ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
+            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
+            Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelRepository channelRepository,
+            ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi) {
         this.exerciseRepository = exerciseRepository;
-        this.participationService = participationService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.participationDeletionService = participationDeletionService;
+        this.programmingExerciseDeletionService = programmingExerciseDeletionService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.quizExerciseService = quizExerciseService;
@@ -112,11 +115,11 @@ public class ExerciseDeletionService {
         try (var threadPool = Executors.newFixedThreadPool(10)) {
             var futures = exercise.getStudentParticipations().stream().map(participation -> CompletableFuture.runAsync(() -> {
                 try {
-                    participationService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
+                    participationDeletionService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
                     if (!deleteRepositories) {
                         return; // in this case, we are done with the participation
                     }
-                    participationService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
+                    participationDeletionService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
                 }
                 catch (Exception exception) {
                     log.error("Failed to clean the student participation {} for programming exercise {}", participation.getId(), exerciseId);
@@ -160,7 +163,7 @@ public class ExerciseDeletionService {
         plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exerciseId));
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
-        participationService.deleteAllByExercise(exercise, false);
+        participationDeletionService.deleteAllByExercise(exercise, false);
 
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
         exercise = exerciseRepository.findByIdWithEagerExampleSubmissionsElseThrow(exerciseId);
@@ -184,7 +187,7 @@ public class ExerciseDeletionService {
 
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
-            programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);
+            programmingExerciseDeletionService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
             // fetch the exercise again to allow Hibernate to delete it properly
@@ -192,10 +195,7 @@ public class ExerciseDeletionService {
             exerciseRepository.delete(exercise);
         }
 
-        if (competencyProgressApi.isPresent()) {
-            var api = competencyProgressApi.get();
-            competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(api::updateProgressByCompetencyAsync);
-        }
+        competencyProgressApi.ifPresent(api -> competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(api::updateProgressByCompetencyAsync));
     }
 
     /**
@@ -224,6 +224,7 @@ public class ExerciseDeletionService {
         plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exercise.getId()));
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
-        participationService.deleteAllByExercise(exercise, true);
+        // TODO: recalculateCompetencyProgress = true does not make sense here for exam exercises
+        participationDeletionService.deleteAllByExercise(exercise, true);
     }
 }

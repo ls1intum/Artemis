@@ -23,10 +23,11 @@ import { DocumentationButtonComponent } from 'app/shared/components/buttons/docu
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -104,6 +105,7 @@ describe('Lecture', () => {
         } as unknown as ProfileInfo;
 
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 LectureComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -222,13 +224,13 @@ describe('Lecture', () => {
         lectureComponent.toggleFilters([]);
 
         const filteredLectures = lectureComponent.filteredLectures;
-        expect(lectureComponent.filteredLectures).toContainAllValues(lectureComponent.lectures);
+        expect(lectureComponent.filteredLectures).toIncludeAllMembers(lectureComponent.lectures);
         expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
 
         // Apply all filters
         lectureComponent.toggleFilters([LectureDateFilter.PAST, LectureDateFilter.CURRENT, LectureDateFilter.FUTURE, LectureDateFilter.UNSPECIFIED]);
         expect(lectureComponent.activeFilters.size).toBe(4);
-        expect(lectureComponent.filteredLectures).toContainAllValues(lectureComponent.lectures);
+        expect(lectureComponent.filteredLectures).toIncludeAllMembers(lectureComponent.lectures);
 
         // Check that no filters is equal to all filters
         expect(lectureComponent.filteredLectures).toEqual(filteredLectures);
@@ -238,21 +240,21 @@ describe('Lecture', () => {
         lectureComponentFixture.detectChanges();
         lectureComponent.toggleFilters([LectureDateFilter.PAST]);
         expect(lectureComponent.filteredLectures).toBeArrayOfSize(2);
-        expect(lectureComponent.filteredLectures).toContainAllValues([pastLecture, pastLecture2]);
+        expect(lectureComponent.filteredLectures).toIncludeAllMembers([pastLecture, pastLecture2]);
     });
 
     it('should filter for current lectures', () => {
         lectureComponentFixture.detectChanges();
         lectureComponent.toggleFilters([LectureDateFilter.CURRENT]);
         expect(lectureComponent.filteredLectures).toBeArrayOfSize(3);
-        expect(lectureComponent.filteredLectures).toContainAllValues([currentLecture, currentLecture2, currentLecture3]);
+        expect(lectureComponent.filteredLectures).toIncludeAllMembers([currentLecture, currentLecture2, currentLecture3]);
     });
 
     it('should filter for future lectures', () => {
         lectureComponentFixture.detectChanges();
         lectureComponent.toggleFilters([LectureDateFilter.FUTURE]);
         expect(lectureComponent.filteredLectures).toBeArrayOfSize(2);
-        expect(lectureComponent.filteredLectures).toContainAllValues([futureLecture, futureLecture2]);
+        expect(lectureComponent.filteredLectures).toIncludeAllMembers([futureLecture, futureLecture2]);
     });
 
     it('should filter for lectures without dates', () => {

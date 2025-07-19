@@ -1,18 +1,26 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -21,20 +29,29 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
+import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class LectureService {
 
@@ -52,8 +69,15 @@ public class LectureService {
 
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
+    private final Optional<CompetencyApi> competencyApi;
+
+    private final ExerciseService exerciseService;
+
+    private final LectureUnitRepository lectureUnitRepository;
+
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
-            Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyRelationApi> competencyRelationApi) {
+            Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyRelationApi> competencyRelationApi,
+            Optional<CompetencyApi> competencyApi, ExerciseService exerciseService, LectureUnitRepository lectureUnitRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -61,6 +85,9 @@ public class LectureService {
         this.irisLectureApi = irisLectureApi;
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRelationApi = competencyRelationApi;
+        this.competencyApi = competencyApi;
+        this.exerciseService = exerciseService;
+        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     /**
@@ -87,23 +114,6 @@ public class LectureService {
     }
 
     /**
-     * Lecture with only active attachment units
-     *
-     * @param lectureWithAttachmentUnits lecture that has attachment units
-     */
-    public void filterActiveAttachmentUnits(Lecture lectureWithAttachmentUnits) {
-
-        List<LectureUnit> filteredAttachmentUnits = new ArrayList<>();
-        for (LectureUnit unit : lectureWithAttachmentUnits.getLectureUnits()) {
-            if (unit instanceof AttachmentUnit && (((AttachmentUnit) unit).getAttachment().getReleaseDate() == null
-                    || ((AttachmentUnit) unit).getAttachment().getReleaseDate().isBefore(ZonedDateTime.now()))) {
-                filteredAttachmentUnits.add(unit);
-            }
-        }
-        lectureWithAttachmentUnits.setLectureUnits(filteredAttachmentUnits);
-    }
-
-    /**
      * Filter active attachments for a set of lectures. All lectures must be from the same course.
      *
      * @param course                  course all the lectures are from
@@ -127,6 +137,7 @@ public class LectureService {
 
     /**
      * Search for all lectures fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged.
+     * It only returns results for which the user (at least editor) has access to the course.
      *
      * @param search The search query defining the search term and the size of the returned page
      * @param user   The user for whom to fetch all available lectures
@@ -153,11 +164,12 @@ public class LectureService {
      */
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
         if (irisLectureApi.isPresent()) {
-            Lecture lectureWithAttachmentUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
-            List<AttachmentUnit> attachmentUnitList = lectureWithAttachmentUnits.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
-                    .map(lectureUnit -> (AttachmentUnit) lectureUnit).toList();
-            if (!attachmentUnitList.isEmpty()) {
-                irisLectureApi.get().deleteLectureFromPyrisDB(attachmentUnitList);
+            Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
+            List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
+                    .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
+
+            if (!attachmentVideoUnitList.isEmpty()) {
+                irisLectureApi.get().deleteLectureFromPyrisDB(attachmentVideoUnitList);
             }
         }
 
@@ -182,10 +194,10 @@ public class LectureService {
      */
     public void ingestLecturesInPyris(Set<Lecture> lectures) {
         if (irisLectureApi.isPresent()) {
-            List<AttachmentUnit> attachmentUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentUnit)
-                    .map(unit -> (AttachmentUnit) unit).toList();
-            for (AttachmentUnit attachmentUnit : attachmentUnitList) {
-                irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit);
+            List<AttachmentVideoUnit> attachmentVideoUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentVideoUnit)
+                    .map(unit -> (AttachmentVideoUnit) unit).toList();
+            for (AttachmentVideoUnit attachmentVideoUnit : attachmentVideoUnitList) {
+                irisLectureApi.get().addLectureUnitToPyrisDB(attachmentVideoUnit);
             }
         }
     }
@@ -193,13 +205,13 @@ public class LectureService {
     /**
      * Ingest the transcriptions in the Pyris system
      *
-     * @param transcription Transcription to be ingested
-     * @param course        The course containing the transcription
-     * @param lecture       The lecture containing the transcription
-     * @param lectureUnit   The lecture unit containing the transcription
+     * @param transcription       Transcription to be ingested
+     * @param course              The course containing the transcription
+     * @param lecture             The lecture containing the transcription
+     * @param attachmentVideoUnit The lecture unit containing the transcription
      */
-    public void ingestTranscriptionInPyris(LectureTranscription transcription, Course course, Lecture lecture, VideoUnit lectureUnit) {
-        irisLectureApi.ifPresent(webhookService -> webhookService.addTranscriptionsToPyrisDB(transcription, course, lecture, lectureUnit));
+    public void ingestTranscriptionInPyris(LectureTranscription transcription, Course course, Lecture lecture, AttachmentVideoUnit attachmentVideoUnit) {
+        irisLectureApi.ifPresent(webhookService -> webhookService.addTranscriptionsToPyrisDB(transcription, course, lecture, attachmentVideoUnit));
     }
 
     /**
@@ -209,5 +221,145 @@ public class LectureService {
      */
     public void deleteLectureTranscriptionInPyris(LectureTranscription existingLectureTranscription) {
         irisLectureApi.ifPresent(webhookService -> webhookService.deleteLectureTranscription(existingLectureTranscription));
+    }
+
+    /**
+     * Retrieves a detailed {@link Lecture} for a given lecture ID and user.
+     * <p>
+     * This method:
+     * <ul>
+     * <li>Fetches the lecture with units and attachments.</li>
+     * <li>Ensures the lecture is linked to a valid course.</li>
+     * <li>Determines which lecture units the user has completed and updates them accordingly.</li>
+     * <li>Optionally enriches the lecture with competency links via the injected {@code competencyApi}.</li>
+     * <li>Filters the lecture content to match the user’s access rights.</li>
+     * </ul>
+     * <p>
+     * <strong>Rationale:</strong> Combines lecture details, user-specific completion data, and optional competencies into a user-tailored view. It enforces data integrity,
+     * supports optional enrichment, and ensures proper access control.
+     *
+     * @param lectureId the ID of the lecture
+     * @param user      the user requesting lecture details
+     * @return the filtered {@link Lecture} object
+     * @throws BadRequestAlertException if the lecture is not linked to a course
+     */
+    // TODO: use a DTO instead of the Lecture entity to avoid sending unnecessary data to the client
+    public Lecture getForDetails(long lectureId, User user) {
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(lectureId);
+        Course course = lecture.getCourse();
+        if (course == null) {
+            throw new BadRequestAlertException("The course belonging to this lecture does not exist", "lecture", "courseNotFound");
+        }
+        Set<LectureUnitCompletion> completionsForLectureAndUser = lectureUnitRepository.findCompletionsForLectureAndUser(lectureId, user.getId());
+        Map<Long, LectureUnitCompletion> byUnit = completionsForLectureAndUser.stream().collect(toMap(cu -> cu.getLectureUnit().getId(), identity()));
+
+        lecture.getLectureUnits().forEach(lectureUnit -> {
+            LectureUnitCompletion completion = byUnit.get(lectureUnit.getId());
+            lectureUnit.setCompletedUsers(completion != null ? Set.of(completion) : Set.of());
+            lectureUnit.getCompetencyLinks().forEach(competencyLink -> {
+                if (competencyLink.getCompetency() != null && Hibernate.isInitialized(competencyLink.getCompetency())) {
+                    competencyLink.getCompetency().setCourse(null); // Avoid sending the course to the client multiple times in the response to save data
+                }
+            });
+        });
+        competencyApi.ifPresent(api -> api.addCompetencyLinksToExerciseUnits(lecture));
+        return filterLectureContentForUser(lecture, user);
+    }
+
+    /**
+     * Filters a {@link Lecture} object’s content based on the user's access rights.
+     * <p>
+     * This method:
+     * <ul>
+     * <li>Filters out inactive attachments not visible to the user.</li>
+     * <li>Removes Hibernate-added {@code null} lecture units to maintain integrity.</li>
+     * <li>Collects exercises from the lecture units and filters out those the user should not see.</li>
+     * <li>Enriches permitted exercises with full details needed for the dashboard.</li>
+     * <li>Filters lecture units based on user permissions and updates each with completion status and competencies.</li>
+     * </ul>
+     * <p>
+     * <strong>Rationale:</strong> Ensures that only authorized and fully detailed content is shown to the user. It handles Hibernate’s quirks (e.g., null entries) and aligns with
+     * access control and information completeness for the dashboard.
+     *
+     * @param lecture the {@link Lecture} to filter which includes lecture units (with competency links) and attachments
+     * @param user    the user requesting access
+     * @return the filtered {@link Lecture}
+     */
+    private Lecture filterLectureContentForUser(Lecture lecture, User user) {
+        lecture = filterActiveAttachments(lecture, user);
+
+        // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
+        // hibernate sometimes adds nulls into the list of lecture units to keep the order
+        Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(ExerciseUnit.class::isInstance).map(ExerciseUnit.class::cast)
+                .map(ExerciseUnit::getExercise).collect(Collectors.toSet());
+
+        Set<Long> exerciseIdsUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(relatedExercises, user).stream().map(Exercise::getId)
+                .collect(Collectors.toSet());
+        Map<Long, Exercise> exerciseIdToExercise = exerciseService.loadExercisesWithInformationForDashboard(exerciseIdsUserIsAllowedToSee, user).stream()
+                .collect(Collectors.toMap(Exercise::getId, Function.identity()));
+
+        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> switch (lectureUnit) {
+            case null -> false;
+            case ExerciseUnit exerciseUnit -> exerciseUnit.getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
+                    && exerciseIdToExercise.containsKey(exerciseUnit.getExercise().getId());
+            default -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
+        }).peek(lectureUnit -> {
+            lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
+            // lecture units already contain the competency links, so we do not need to load them again
+            if (lectureUnit instanceof ExerciseUnit exerciseUnit) {
+                Exercise exercise = exerciseUnit.getExercise();
+                // we replace the exercise with one that contains all the information needed for correct display
+                Exercise exerciseWithInfo = exerciseIdToExercise.get(exercise.getId());
+                if (exerciseWithInfo != null) {
+                    exerciseUnit.setExercise(exerciseWithInfo);
+                }
+                // re-add the competencies already loaded with the exercise unit
+                exerciseUnit.getExercise().setCompetencyLinks(exercise.getCompetencyLinks());
+            }
+        }).toList();
+
+        lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
+        return lecture;
+    }
+
+    /**
+     * Retrieves a {@link LectureCalendarEventDTO} for each {@link Lecture} associated to the given courseId.
+     * Each DTO encapsulates the visibleDate, startDate and endDate of the respective lecture.
+     * <p>
+     * The method then derives a set of {@link CalendarEventDTO}s from the DTOs. Whether events are included in the result
+     * depends on the visibleDate and whether the logged-in user is a student of the {@link Course})
+     *
+     * @param courseId      the ID of the course
+     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @return the set of results
+     */
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent) {
+        Set<LectureCalendarEventDTO> daos = lectureRepository.getLectureCalendarEventDAOsForCourseId(courseId);
+        return daos.stream().map(dao -> deriveCalendarEventDTO(dao, userIsStudent)).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
+    }
+
+    /**
+     * Derives an event for a given {@link LectureCalendarEventDTO} that represents either startDate if exclusively available, or endDate
+     * if exclusively available or both startDate and endDate if both are available.
+     * <p>
+     * The event is only derived given that either the lecture represented by a DTO is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     *
+     * @param dto           the dao from which to derive the event
+     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @return the derived event
+     */
+    private Optional<CalendarEventDTO> deriveCalendarEventDTO(LectureCalendarEventDTO dto, boolean userIsStudent) {
+        if (userIsStudent && dto.visibleDate() != null && ZonedDateTime.now().isBefore(dto.visibleDate())) {
+            return Optional.empty();
+        }
+        if (dto.startDate() == null && dto.endDate() != null) {
+            return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.END_DATE, dto.title(), dto.endDate(), null, null, null));
+        }
+        if (dto.startDate() != null && dto.endDate() == null) {
+            return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.START_DATE, dto.title(), dto.startDate(), null, null, null));
+        }
+        return Optional
+                .of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.START_AND_END_DATE, dto.title(), dto.startDate(), dto.endDate(), null, null));
     }
 }

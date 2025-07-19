@@ -101,7 +101,7 @@ module replacement in the client.
   `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see
   :ref:`Client Setup <client-setup>`).
 * **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles
-  ``dev,localci,localvc,artemis,scheduling,buildagent,core,atlas,ldap-only,local``.
+  ``dev,localci,localvc,artemis,scheduling,buildagent,core,atlas,ldap,local``.
 * **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles
   ``dev,jenkins,localvc,artemis,scheduling,core,atlas,local``.
 * **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with ``athena`` profile and Local VC / CI enabled

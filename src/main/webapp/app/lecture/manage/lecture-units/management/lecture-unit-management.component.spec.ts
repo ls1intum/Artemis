@@ -1,13 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
-import { AttachmentUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Component, Input } from '@angular/core';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
-import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -16,7 +15,6 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
-import { VideoUnit } from 'app/lecture/shared/entities/lecture-unit/videoUnit.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
@@ -63,16 +61,15 @@ describe('LectureUnitManagementComponent', () => {
     let getProfileInfo: jest.SpyInstance;
     let getCombinedCourseSettings: jest.SpyInstance;
 
-    let attachmentUnit: AttachmentUnit;
+    let attachmentVideoUnit: AttachmentVideoUnit;
     let exerciseUnit: ExerciseUnit;
     let textUnit: TextUnit;
-    let videoUnit: VideoUnit;
     let lecture: Lecture;
     let course: Course;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip), FaIconComponent],
             declarations: [
                 LectureUnitManagementComponent,
                 MockComponent(UnitCreationCardComponent),
@@ -80,10 +77,8 @@ describe('LectureUnitManagementComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(ExerciseUnitComponent),
-                MockComponent(AttachmentUnitComponent),
-                MockComponent(VideoUnitComponent),
+                MockComponent(AttachmentVideoUnitComponent),
                 MockComponent(TextUnitComponent),
-                MockComponent(FaIconComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockRouterLinkDirective,
@@ -126,23 +121,21 @@ describe('LectureUnitManagementComponent', () => {
         getCombinedCourseSettings = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
         textUnit = new TextUnit();
         textUnit.id = 0;
-        videoUnit = new VideoUnit();
-        videoUnit.id = 1;
         exerciseUnit = new ExerciseUnit();
         exerciseUnit.id = 2;
-        attachmentUnit = new AttachmentUnit();
-        attachmentUnit.id = 3;
+        attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 3;
         course = new Course();
         course.id = 99;
         lecture = new Lecture();
         lecture.id = 0;
         lecture.course = course;
-        lecture.lectureUnits = [textUnit, videoUnit, exerciseUnit, attachmentUnit];
+        lecture.lectureUnits = [textUnit, exerciseUnit, attachmentVideoUnit];
         const returnValue = of(new HttpResponse({ body: lecture, status: 200 }));
         findLectureSpy.mockReturnValue(returnValue);
         findLectureWithDetailsSpy.mockReturnValue(returnValue);
         updateOrderSpy.mockReturnValue(returnValue);
-        deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: videoUnit, status: 200 })));
+        deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
         const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
         getProfileInfo.mockReturnValue(profileInfo);
         const irisCourseSettings = new IrisCourseSettings();
@@ -180,10 +173,9 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should give the correct delete question translation key', () => {
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentUnit())).toBe('artemisApp.attachmentUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentVideoUnit())).toBe('artemisApp.attachmentVideoUnit.delete.question');
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.question');
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new TextUnit())).toBe('artemisApp.textUnit.delete.question');
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new VideoUnit())).toBe('artemisApp.videoUnit.delete.question');
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new OnlineUnit())).toBe('artemisApp.onlineUnit.delete.question');
     });
 
@@ -196,9 +188,8 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should give the correct confirmation text translation key', () => {
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentUnit())).toBe('artemisApp.attachmentUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentVideoUnit())).toBe('artemisApp.attachmentVideoUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.typeNameToConfirm');
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new VideoUnit())).toBe('artemisApp.videoUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new TextUnit())).toBe('artemisApp.textUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new OnlineUnit())).toBe('artemisApp.onlineUnit.delete.typeNameToConfirm');
     });
@@ -212,10 +203,9 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should give the correct action type', () => {
-        expect(lectureUnitManagementComponent.getActionType(new AttachmentUnit())).toEqual(ActionType.Delete);
+        expect(lectureUnitManagementComponent.getActionType(new AttachmentVideoUnit())).toEqual(ActionType.Delete);
         expect(lectureUnitManagementComponent.getActionType(new ExerciseUnit())).toEqual(ActionType.Unlink);
         expect(lectureUnitManagementComponent.getActionType(new TextUnit())).toEqual(ActionType.Delete);
-        expect(lectureUnitManagementComponent.getActionType(new VideoUnit())).toEqual(ActionType.Delete);
         expect(lectureUnitManagementComponent.getActionType(new OnlineUnit())).toEqual(ActionType.Delete);
     });
 
@@ -254,7 +244,7 @@ describe('LectureUnitManagementComponent', () => {
         );
         lectureUnitManagementComponent.updateIngestionStates();
         expect(lectureUnitService.getIngestionState).toHaveBeenCalledWith(lecture.course!.id!, lecture.id);
-        expect(attachmentUnit.pyrisIngestionState).toBe(IngestionState.DONE);
+        expect(attachmentVideoUnit.pyrisIngestionState).toBe(IngestionState.DONE);
     });
 
     it('should handle error when ingestLectureUnitInPyris fails', () => {
@@ -272,9 +262,9 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     describe('isViewButtonAvailable', () => {
-        it('should return true for an attachment unit with a PDF link', () => {
+        it('should return true for an attachment video unit with a PDF link', () => {
             const lectureUnit = {
-                type: LectureUnitType.ATTACHMENT,
+                type: LectureUnitType.ATTACHMENT_VIDEO,
                 attachment: { link: 'file.pdf' },
             } as LectureUnit;
             expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeTrue();
@@ -282,7 +272,7 @@ describe('LectureUnitManagementComponent', () => {
 
         it('should return false for file extension different than .pdf', () => {
             const lectureUnit = {
-                type: LectureUnitType.ATTACHMENT,
+                type: LectureUnitType.ATTACHMENT_VIDEO,
                 attachment: { link: 'file.txt' },
             };
             expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeFalse();

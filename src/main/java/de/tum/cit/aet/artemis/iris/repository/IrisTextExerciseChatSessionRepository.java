@@ -5,9 +5,11 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -25,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
  * Provides custom queries for finding text exercise chat sessions based on different criteria.
  */
 @Profile(PROFILE_IRIS)
+@Lazy
 @Repository
 public interface IrisTextExerciseChatSessionRepository extends ArtemisJpaRepository<IrisTextExerciseChatSession, Long> {
 
@@ -36,11 +39,10 @@ public interface IrisTextExerciseChatSessionRepository extends ArtemisJpaReposit
      * @return A list of text exercise chat sessions sorted by creation date in descending order.
      */
     @Query("""
-
             SELECT s
                 FROM IrisTextExerciseChatSession s
-                WHERE s.exercise.id = :exerciseId
-                    AND s.user.id = :userId
+                WHERE s.exerciseId = :exerciseId
+                    AND s.userId = :userId
                 ORDER BY s.creationDate DESC
             """)
     List<IrisTextExerciseChatSession> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
@@ -48,11 +50,14 @@ public interface IrisTextExerciseChatSessionRepository extends ArtemisJpaReposit
     @Query("""
             SELECT s
             FROM IrisTextExerciseChatSession s
-            WHERE s.exercise.id = :exerciseId
-                AND s.user.id = :userId
+            WHERE s.exerciseId = :exerciseId
+                AND s.userId = :userId
             ORDER BY s.creationDate DESC
             """)
     List<IrisTextExerciseChatSession> findSessionsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = "messages")
+    Optional<IrisTextExerciseChatSession> findSessionWithMessagesByIdAndUserId(Long id, Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
     List<IrisTextExerciseChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
@@ -64,7 +69,7 @@ public interface IrisTextExerciseChatSessionRepository extends ArtemisJpaReposit
      * @param exerciseId the ID of the exercise to find the text exercise chat sessions for
      * @param userId     the ID of the user to find the text exercise chat sessions for
      * @param pageable   the pagination information
-     * @return a list of {@code IrisExerciseChatSession} with messages, or an empty list if no sessions are found
+     * @return a list of {@code IrisTextExerciseChatSession} with messages, or an empty list if no sessions are found
      */
     default List<IrisTextExerciseChatSession> findLatestByExerciseIdAndUserIdWithMessages(Long exerciseId, Long userId, Pageable pageable) {
         List<Long> ids = findSessionsByExerciseIdAndUserId(exerciseId, userId, pageable).stream().map(DomainObject::getId).toList();

@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -78,6 +80,7 @@ import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
  * REST controller for managing ExerciseGroup.
  */
 @Conditional(ExamEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/exam/")
 public class StudentExamResource {
@@ -175,9 +178,9 @@ public class StudentExamResource {
 
         examService.loadQuizExercisesForStudentExam(studentExam);
 
-        // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
+        // fetch participations, latest submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, true);
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, true);
 
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
@@ -680,8 +683,6 @@ public class StudentExamResource {
             throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
         }
 
-        examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
-
         User instructor = userRepository.getUser();
         log.info("REST request to start exercises for student exams of exam {}", examId);
         AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructor.getLogin());
@@ -783,7 +784,7 @@ public class StudentExamResource {
         final var ipAddress = !storeSessionDataInStudentExamSession ? null : HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
         final String browserFingerprint = !storeSessionDataInStudentExamSession ? null : request.getHeader("X-Artemis-Client-Fingerprint");
         final String instanceId = !storeSessionDataInStudentExamSession ? null : request.getHeader("X-Artemis-Client-Instance-ID");
-        final String userAgent = !storeSessionDataInStudentExamSession ? null : request.getHeader("User-Agent");
+        final String userAgent = !storeSessionDataInStudentExamSession ? null : request.getHeader(HttpHeaders.USER_AGENT);
         ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
         examSession.hideDetails();
         examSession.setInitialSession(this.examSessionService.checkExamSessionIsInitial(studentExam.getId()));

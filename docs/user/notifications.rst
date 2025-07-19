@@ -7,52 +7,73 @@ Notifications
     :local:
     :depth: 2
 
-Artemis supports customizable web and email notifications. Users can enable and disable different notification types.
+Artemis offers customizable notifications through multiple channels: web, email, and push notifications. Users can enable or disable specific notification types in their user settings. All notifications are specific to each course and can be accessed within the course interface.
 
 Web Notifications
 ^^^^^^^^^^^^^^^^^
 
-The web notifications can be found on the top right of the page by clicking on the bell icon.
-A red indicator shows the number of new messages.
+Web notifications appear on the bottom right corner of your screen immediately when received. They automatically disappear after a short time. You can:
 
-|notification-top-bar|
+* Click on a notification to navigate directly to the relevant page (such as a message channel)
+* Hide a notification by hovering over it and clicking the X icon in the top right corner, which also marks it as seen
 
-|notification-side-bar|
+|notification-web|
 
-Notifications About Incoming Messages and Replies
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+All notifications you receive (whether through web, push, or email) are accessible by clicking the bell icon in the top right corner of the course page. Notifications are organized into categories (General and Communication) and can be archived to keep your feed organized.
 
-This video shows how web notifications works for incoming messages and replies:
+|notification-general|
+
+This video provides an overview of how to interact with notifications in the web client.
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/40578?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/61337?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Watch this video on TUM-Live.
     </iframe>
 
 Email Notifications
 ^^^^^^^^^^^^^^^^^^^
 
-Artemis can also send out emails for certain notification types.
-Additionally, Artemis can send out a weekly summary at Friday 5pm.
+Artemis can send email notifications for certain notification types. See the "Notification Types" section below for details on which notifications support email delivery.
 
 |notification-email|
 
 Push Notifications
 ^^^^^^^^^^^^^^^^^^
 
-Artemis can also send out push notification to the Artemis native iOS and Android apps.
-To support push notifications admins have to explicitly activate this in the artemis configuration.
+Artemis can send push notifications to the native Artemis iOS and Android apps.
 
-This notifications are e2e encrypted and sent via the TUM hosted Hermes service ( https://hermes.artemis.cit.tum.de/ ).
-Users explicitly have to opt-in via their mobile application to receive push notifications and can deactivate them at any time.
+These notifications are encrypted and delivered through the Hermes service (https://hermes.artemis.cit.tum.de).
+Users must explicitly opt in through their mobile application to receive push notifications and can deactivate them at any time.
 
 |notification-push|
 
-Overview
+Settings
 ^^^^^^^^
 
-The following tables gives an overview of all supported notification types:
+You can customize which types of notifications you want to receive and through which channels (email, web, push, or none).
+These settings can be configured at the course level:
+
+#. Navigate to a course
+#. Access the settings from the sidebar
+#. Select your notification preferences
+
+For convenience, Artemis provides preset configurations that you can apply with a single click.
+
+|notification-settings|
+
+This video demonstrates how to update notification settings within the web client.
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/61335?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
+Notification Types
+^^^^^^^^^^^^^^^^^^
+
+The table below shows all supported notification types and which channels they support:
 
 .. list-table:: Notification Types
    :widths: 20 10 10 10
@@ -63,364 +84,150 @@ The following tables gives an overview of all supported notification types:
      - Web
      - Email
 
-   * - **Course-Wide Discussion Notifications**
+   * - **Communication Notifications**
      -
      -
      -
 
-   * - NEW_COURSE_POST
+   * - NewPostNotification
      - X
      - X
      -
 
-   * - NEW_REPLY_FOR_COURSE_POST
+   * - NewAnswerNotification
      - X
      - X
      -
 
-   * - NEW_ANNOUNCEMENT_POST
+   * - NewMentionNotification
      - X
      - X
-     - X
-
-   * - **Exercise Notifications**
-     -
-     -
-     -
-
-   * - EXERCISE_RELEASED
-     - X
-     - X
-     - X
-
-   * - EXERCISE_PRACTICE
-     - X
-     - X
-     - X
-
-   * - EXERCISE_SUBMISSION_ASSESSED
-     - X
-     - X
-     - X
-
-   * - FILE_SUBMISSION_SUCCESSFUL
-     - X
-     - X
-     - X
-
-   * - NEW_EXERCISE_POST
-     - X
-     - X
-     -
-
-   * - NEW_REPLY_FOR_EXERCISE_POST
-     - X
-     - X
-     -
-
-   * - **Lecture Notifications**
-     -
-     -
-     -
-
-   * - ATTACHMENT_CHANGE
-     - X
-     - X
-     - X
-
-   * - NEW_LECTURE_POST
-     - X
-     - X
-     -
-
-   * - NEW_REPLY_FOR_LECTURE_POST
-     - X
-     - X
-     -
-
-   * - **New message/replies Notifications**
-     -
-     -
-     -
-
-   * - CONVERSATION_NEW_MESSAGE
-     - X
-     - X
-     -
-
-   * - CONVERSATION_NEW_REPLY_MESSAGE
-     - X
-     - X
      -
 
-   * - CONVERSATION_USER_MENTIONED
+   * - NewAnnouncementNotification
      - X
      - X
      - X
 
-   * - CONVERSATION_CREATE_GROUP_CHAT
+   * - AddedToChannelNotification
      - X
      - X
      -
 
-   * - CONVERSATION_ADD_USER_CHANNEL
-     - X
-     - X
-     -
-
-   * - CONVERSATION_ADD_USER_GROUP_CHAT
-     -
+   * - RemovedFromChannelNotification
      - X
-     -
-
-   * - CONVERSATION_REMOVE_USER_GROUP_CHAT
-     -
      - X
      -
 
-   * - CONVERSATION_REMOVE_USER_CHANNEL
-     -
+   * - ChannelDeletedNotification
      - X
-     -
-
-   * - CONVERSATION_DELETE_CHANNEL
-     -
      - X
-     -
-
-   * - **Tutorial Group Notifications**
-     -
      -
-     -
-
-   * - TUTORIAL_GROUP_REGISTRATION_STUDENT
-     - X
-     - X
-     - X
-
-   * - TUTORIAL_GROUP_DEREGISTRATION_STUDENT
-     - X
-     - X
-     - X
-
-   * - TUTORIAL_GROUP_DELETED
-     - X
-     - X
-     - X
-
-   * - TUTORIAL_GROUP_UPDATED
-     - X
-     - X
-     - X
 
-   * - **Tutor Notifications**
+   * - **General Notifications**
      -
      -
      -
-
-   * - TUTORIAL_GROUP_REGISTRATION_TUTOR
-     - X
-     - X
-     - X
 
-   * - TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR
+   * - NewExerciseNotification
      - X
      - X
      - X
 
-   * - TUTORIAL_GROUP_DEREGISTRATION_TUTOR
+   * - ExerciseOpenForPracticeNotification
      - X
      - X
      - X
-
-   * - TUTORIAL_GROUP_ASSIGNED
-     - X
-     - X
-     - X
-
-   * - TUTORIAL_GROUP_UNASSIGNED
-     - X
-     - X
-     - X
-
-   * - **Editor Notifications**
-     -
-     -
-     -
 
-   * - PROGRAMMING_TEST_CASES_CHANGED
-     -
+   * - ExerciseAssessedNotification
      - X
-     -
-
-   * - **Instructor Notifications**
-     -
-     -
-     -
-
-   * - COURSE_ARCHIVE_STARTED
      - X
-     -
-     -
-
-   * - COURSE_ARCHIVE_FINISHED_WITHOUT_ERRORS
-     -
      - X
-     -
 
-   * - COURSE_ARCHIVE_FINISHED_WITH_ERRORS
-     -
+   * - ExerciseUpdatedNotification
      - X
-     -
-
-   * - COURSE_ARCHIVE_FAILED
-     -
      - X
      -
 
-   * - EXAM_ARCHIVE_STARTED
-     -
+   * - QuizExerciseStartedNotification
      - X
-     -
-
-   * - EXAM_ARCHIVE_FINISHED_WITHOUT_ERRORS
-     -
      - X
      -
 
-   * - EXAM_ARCHIVE_FINISHED_WITH_ERRORS
-     -
+   * - AttachmentChangedNotification
      - X
-     -
-
-   * - EXAM_ARCHIVE_FAILED
-     -
      - X
      -
-
-   * - **SSH Key Notifications**
-     -
-     -
-     -
-
-   * - SSH_KEY_ADDED
-     - X
-     - X
-     - X
-
-   * - SSH_KEY_EXPIRES_SOON
-     - X
-     - X
-     - X
 
-   * - SSH_KEY_HAS_EXPIRED
-     - X
+   * - NewManualFeedbackRequestNotification
      - X
      - X
-
-   * - **VCS Access Token Notifications**
-     -
-     -
      -
 
-   * - VCS_ACCESS_TOKEN_ADDED
+   * - DuplicateTestCaseNotification
      - X
      - X
      - X
 
-   * - VCS_ACCESS_TOKEN_EXPIRED
+   * - NewCpcPlagiarismCaseNotification
      - X
      - X
      - X
 
-   * - VCS_ACCESS_TOKEN_EXPIRES_SOON
+   * - NewPlagiarismCaseNotification
      - X
      - X
      - X
 
-   * - **Unassigned Notifications**
-     -
-     -
-     -
-
-   * - EXERCISE_UPDATED
-     -
+   * - ProgrammingBuildRunUpdateNotification
      - X
-     -
-
-   * - QUIZ_EXERCISE_STARTED
      - X
-     - X
      -
 
-   * - DUPLICATE_TEST_CASE
-     - X
-     - X
+   * - ProgrammingTestCasesChangedNotification
      - X
-
-   * - ILLEGAL_SUBMISSION
-     -
      - X
      -
 
-   * - NEW_PLAGIARISM_CASE_STUDENT
+   * - PlagiarismCaseVerdictNotification
      - X
      - X
      - X
 
-   * - NEW_CPC_PLAGIARISM_CASE_STUDENT
+   * - TutorialGroupAssignedNotification
      - X
      - X
      - X
 
-   * - PLAGIARISM_CASE_VERDICT_STUDENT
+   * - TutorialGroupDeletedNotification
      - X
      - X
      - X
 
-   * - PLAGIARISM_CASE_REPLY
+   * - RegisteredToTutorialGroupNotification
      - X
      - X
-     - X
-
-   * - NEW_MANUAL_FEEDBACK_REQUEST
-     -
      - X
-     -
 
-   * - DATA_EXPORT_CREATED
+   * - TutorialGroupUnassignedNotification
      - X
      - X
      - X
 
-   * - DATA_EXPORT_FAILED
+   * - DeregisteredFromTutorialGroupNotification
      - X
      - X
      - X
-
-
-For the exact contents sent for each notification, please check out the usages of the `NotificationPlaceholderCreator` interface in the code.
-
-
-Settings
-^^^^^^^^
-
-The user can change their preference for different types of notifications and decide if they want to receive emails, web notifications, push notifications or no notification.
-These settings can be found after opening the web notifications. The gear on the top left of the sidebar then leads to the settings.
-The push notification settings can currently only be found in the respective application.
 
-|notification-settings|
-|notification-settings-mobile|
+For detailed information about the content sent with each notification, you can look at the examples in the notification settings or refer to the implementation in the `course-notification.service.ts` service and the corresponding localization files in the codebase.
 
-.. |notification-top-bar| image:: notifications/top-bar.png
-    :width: 500
-.. |notification-side-bar| image:: notifications/side-bar.png
-    :width: 500
-.. |notification-email| image:: notifications/email.png
+.. |notification-email| image:: notifications/notification-email.png
     :width: 1000
-.. |notification-settings| image:: notifications/settings.png
+.. |notification-settings| image:: notifications/notification-settings.png
     :width: 1000
-.. |notification-settings-mobile| image:: notifications/notification-settings-mobile.jpeg
-    :width: 300
 .. |notification-push| image:: notifications/notification-push.png
-    :width: 300
+    :width: 250
+.. |notification-general| image:: notifications/notification-general.png
+    :width: 400
+.. |notification-web| image:: notifications/notification-web.png
+    :width: 1200

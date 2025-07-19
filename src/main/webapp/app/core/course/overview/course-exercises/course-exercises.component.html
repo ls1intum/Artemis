@@ -24,8 +24,8 @@
 
         @if (exerciseSelected) {
             <div
-                [ngClass]="{ 'exercise-content-sidebar-width': !isCollapsed }"
-                class="exercise-content-width module-bg rounded-3"
+                [ngClass]="{ 'content-sidebar-width': !isCollapsed }"
+                class="content-width module-bg rounded-3"
                 [ngStyle]="isShownViaLti ? { height: '90vh', position: 'relative' } : {}"
             >
                 <router-outlet (deactivate)="onSubRouteDeactivate()" />

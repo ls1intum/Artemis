@@ -284,7 +284,7 @@ public abstract class RepositoryResource {
             // For Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
             if (profileService.isLocalVCorCIActive()) {
-                localVCServletService.orElseThrow().processNewPush(null, repository, Optional.empty(), Optional.empty(), vcsAccessLog);
+                localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog);
             }
             return new ResponseEntity<>(HttpStatus.OK);
         });
@@ -322,16 +322,8 @@ public abstract class RepositoryResource {
         VcsRepositoryUri repositoryUri = getRepositoryUri(domainId);
 
         try {
-            boolean isClean;
-            // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
-            // Retrieving the default branch is not necessary if the repository is already cached.
-            if (gitService.isRepositoryCached(repositoryUri)) {
-                isClean = repositoryService.isWorkingCopyClean(repositoryUri);
-            }
-            else {
-                String branch = getOrRetrieveBranchOfDomainObject(domainId);
-                isClean = repositoryService.isWorkingCopyClean(repositoryUri, branch);
-            }
+            String branch = getOrRetrieveBranchOfDomainObject(domainId);
+            boolean isClean = repositoryService.isWorkingCopyClean(repositoryUri, branch);
             repositoryStatus = isClean ? CLEAN : UNCOMMITTED_CHANGES;
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {

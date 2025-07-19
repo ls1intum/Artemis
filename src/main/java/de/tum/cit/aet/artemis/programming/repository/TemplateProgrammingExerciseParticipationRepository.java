@@ -6,9 +6,11 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -28,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * Spring Data JPA repository for the Participation entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface TemplateProgrammingExerciseParticipationRepository
         extends DynamicSpecificationRepository<TemplateProgrammingExerciseParticipation, Long, TemplateParticipationFetchOptions> {
@@ -35,7 +38,8 @@ public interface TemplateProgrammingExerciseParticipationRepository
     @Query("""
             SELECT p
             FROM TemplateProgrammingExerciseParticipation p
-                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH p.programmingExercise e
             WHERE p.buildPlanId = :buildPlanId
             """)
@@ -54,8 +58,24 @@ public interface TemplateProgrammingExerciseParticipationRepository
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "submissions" })
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.feedbacks", "submissions.results.feedbacks.testCase" })
     Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT tp
+            FROM TemplateProgrammingExerciseParticipation tp
+             LEFT JOIN FETCH tp.submissions s
+            WHERE tp.programmingExercise.id IN :exerciseIds
+            AND (
+                  s.id = (
+                    SELECT MAX(s2.id)
+                    FROM Submission s2
+                    WHERE s2.participation.id = tp.id
+                  )
+                  OR s.id IS NULL
+                )
+             """)
+    Set<TemplateProgrammingExerciseParticipation> findAllWithLatestSubmissionByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
     @NotNull
     default TemplateProgrammingExerciseParticipation findByExerciseIdElseThrow(final Specification<TemplateProgrammingExerciseParticipation> specification, long exerciseId) {

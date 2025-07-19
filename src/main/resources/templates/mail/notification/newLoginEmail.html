@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title th:text="#{email.notification.login.title}">Notification Title</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+
+
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}" />
+
+<div id="message-body">
+    <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}" />
+
+    <p>
+        <span th:text="#{email.notification.login.text(
+            ${authenticationMethod},
+            ${loginDate},
+            ${loginTime},
+            ${requestOrigin}
+        )}">Someone logged into your Artemis account. If you have not logged in to Artemis, make sure to reset your login credentials</span>:
+
+        <a th:href="${resetLink}" th:text="${resetLink}">User Account</a>
+    </p>
+    <th:block th:replace="~{mail/notification/fragments :: farewell}" />
+</div>
+
+<th:block th:replace="~{mail/notification/fragments :: footer}"/>
+
+</body>
+</html>

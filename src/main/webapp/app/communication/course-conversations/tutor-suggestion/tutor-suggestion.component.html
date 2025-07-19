@@ -1,0 +1,34 @@
+@if (irisEnabled) {
+    <div class="iris-suggestion">
+        <div class="iris-suggestion-field">
+            <div class="iris-text-content">
+                <div class="iris-logo">
+                    <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+                </div>
+                @if (suggestion) {
+                    @for (content of suggestion?.content; track content.id) {
+                        <div>
+                            @for (line of (content | as: IrisTextMessageContent).textContent.split('\n'); track line) {
+                                <div [innerHTML]="line" class="iris-suggestion-text"></div>
+                            }
+                        </div>
+                    }
+                    <jhi-chat-status-bar [stages]="stages" />
+                } @else {
+                    @if (irisIsActive) {
+                        @if (error) {
+                            <div class="iris-suggestion-text">
+                                {{ error }}
+                            </div>
+                        } @else {
+                            <div class="iris-suggestion-text" jhiTranslate="artemisApp.iris.tutorSuggestion.loading"></div>
+                        }
+                        <jhi-chat-status-bar [stages]="stages" />
+                    } @else {
+                        <div class="iris-suggestion-text" jhiTranslate="artemisApp.iris.tutorSuggestion.noIris"></div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+}

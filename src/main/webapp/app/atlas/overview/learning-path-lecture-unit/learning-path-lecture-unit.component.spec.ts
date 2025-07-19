@@ -1,8 +1,6 @@
 import { LearningPathLectureUnitComponent } from 'app/atlas/overview/learning-path-lecture-unit/learning-path-lecture-unit.component';
-import { VideoUnit } from 'app/lecture/shared/entities/lecture-unit/videoUnit.model';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
-import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -24,6 +22,7 @@ import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { ElementRef, signal } from '@angular/core';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 describe('LearningPathLectureUnitComponent', () => {
     let component: LearningPathLectureUnitComponent;
@@ -35,7 +34,7 @@ describe('LearningPathLectureUnitComponent', () => {
     let setLearningObjectCompletionSpy: jest.SpyInstance;
 
     const learningPathId = 1;
-    const lectureUnit: VideoUnit = {
+    const lectureUnit: AttachmentVideoUnit = {
         id: 1,
         description: 'Example video unit',
         name: 'Example video',
@@ -47,7 +46,7 @@ describe('LearningPathLectureUnitComponent', () => {
         },
         completed: false,
         visibleToStudents: true,
-        source: 'https://www.youtube.com/embed/8iU8LPEa4o0',
+        videoSource: 'https://www.youtube.com/embed/8iU8LPEa4o0',
     };
 
     MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
@@ -81,7 +80,7 @@ describe('LearningPathLectureUnitComponent', () => {
         })
             .overrideComponent(LearningPathLectureUnitComponent, {
                 remove: {
-                    imports: [VideoUnitComponent, TextUnitComponent, AttachmentUnitComponent, ExerciseUnitComponent, OnlineUnitComponent],
+                    imports: [TextUnitComponent, AttachmentVideoUnitComponent, ExerciseUnitComponent, OnlineUnitComponent],
                 },
             })
             .compileComponents();

@@ -44,17 +44,15 @@ public final class Constants {
 
     /**
      * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
-     * Submissions after the grace period exceeded will be flagged as illegal.
+     * Submissions after the grace period exceeded will be unrated.
      * <p>
-     * This is needed because locking programming exercise repositories might take up to 60 seconds,
-     * especially for exercises with many participants.
      * If the student was able to successfully push their solution, this solution should still be graded, even if
-     * the push was a few seconds late.
+     * the processing of the push was up to 1s late.
      * <p>
-     * Have a look at isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User, ProgrammingSubmission) in
-     * de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService
+     * Have a look at setRatedIfNotAfterDueDate(Participation participation, ZonedDateTime submissionDate) in
+     * de.tum.cit.aet.artemis.assessment.domain.Result.
      */
-    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 60;
+    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
 
     public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
 
@@ -160,6 +158,9 @@ public final class Constants {
     // Also, the value on the client side must match this value.
     public static final int COMPLAINT_TEXT_LIMIT = 65535;
 
+    // This value limits the amount of characters allowed for custom instructions in Iris sub-settings.
+    public static final int IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
+
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
@@ -263,8 +264,6 @@ public final class Constants {
 
     public static final String USE_EXTERNAL = "useExternal";
 
-    public static final String PASSKEY_ENABLED = "passkeyEnabled";
-
     public static final String EXTERNAL_CREDENTIAL_PROVIDER = "externalCredentialProvider";
 
     public static final String EXTERNAL_PASSWORD_RESET_LINK_MAP = "externalPasswordResetLinkMap";
@@ -334,18 +333,6 @@ public final class Constants {
     public static final String PROFILE_LDAP = "ldap";
 
     /**
-     * The name of the Spring profile used for authentication via LDAP only.
-     * Use this profile if you want to use LDAP authentication (incl. user synchronization)
-     * NOTE: in the future we will remove this profile and combine both (due to ambiguity), then there will only be the LDAP profile exclusively
-     */
-    @Deprecated
-    public static final String PROFILE_LDAP_ONLY = "ldap-only";
-
-    // Will be removed and replaced with PROFILE_LDAP
-    @Deprecated
-    public static final String PROFILE_LDAP_OR_LDAP_ONLY = PROFILE_LDAP + " | " + PROFILE_LDAP_ONLY;
-
-    /**
      * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.cit.aet.artemis.lti.web.LtiResource}.
      */
     public static final String PROFILE_LTI = "lti";
@@ -371,6 +358,11 @@ public final class Constants {
      * NOTE: secondary nodes should only use PROFILE_CORE
      */
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
+
+    /**
+     * Profile combination for one primary node, where LTI AND scheduling is active
+     */
+    public static final String PROFILE_LTI_AND_SCHEDULING = PROFILE_LTI + " & " + PROFILE_SCHEDULING;
 
     /**
      * The name of the Spring profile used for Theia as an external online IDE.
@@ -451,6 +443,16 @@ public final class Constants {
      * The name of the property used to enable or disable the passkey authentication functionality.
      */
     public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
+
+    /**
+     * The name of the property used to define the directories for file uploads.
+     */
+    public static final String UPLOADS_FILE_PATH_PROPERTY_NAME = "artemis.file-upload-path";
+
+    /**
+     * The fallback value when no value for the uploads file path is defined.
+     */
+    public static final String UPLOADS_FILE_PATH_DEFAULT = "uploads";
 
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database

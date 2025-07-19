@@ -5,6 +5,8 @@ import { of } from 'rxjs';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { provideHttpClient } from '@angular/common/http';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 describe('IrisStatusService', () => {
     let service: IrisStatusService;
@@ -17,6 +19,8 @@ describe('IrisStatusService', () => {
                 provideHttpClientTesting(),
                 IrisStatusService,
                 { provide: WebsocketService, useValue: { connectionState: of({ connected: true, intendedDisconnect: false, wasEverConnectedBefore: true }) } },
+                { provide: LocalStorageService },
+                { provide: ProfileService, useValue: { isProfileActive: jest.fn().mockReturnValue(true) } },
             ],
         });
 
@@ -39,11 +43,11 @@ describe('IrisStatusService', () => {
         let isActive: boolean;
         service.getActiveStatus().subscribe((active) => {
             isActive = active;
-            expect(isActive).toBeTrue();
+            expect(isActive).toBeFalse();
         });
         const req = httpMock.expectOne('api/iris/status');
         expect(req.request.method).toBe('GET');
-        req.flush({ active: true, rateLimitInfo: { currentMessageCount: 100, rateLimit: 50, rateLimitTimeframeHours: 0 } });
+        req.flush({ active: false, rateLimitInfo: { currentMessageCount: 100, rateLimit: 50, rateLimitTimeframeHours: 0 } });
         tick();
     }));
 

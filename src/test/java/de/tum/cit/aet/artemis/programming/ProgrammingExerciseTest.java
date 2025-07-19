@@ -14,19 +14,25 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
 class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     private static final String TEST_PREFIX = "peinttest";
 
@@ -36,7 +42,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExerciseId = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
+        programmingExerciseId = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
     void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
@@ -172,7 +178,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     void testDeleteProgrammingExerciseChannel() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();
-        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(programmingExercise);
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(programmingExercise);
 
         request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 

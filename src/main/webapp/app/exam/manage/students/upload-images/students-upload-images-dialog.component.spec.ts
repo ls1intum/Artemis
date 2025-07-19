@@ -29,14 +29,8 @@ describe('StudentsUploadImagesDialogComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [FormsModule],
-            declarations: [
-                StudentsUploadImagesDialogComponent,
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
-                MockComponent(HelpIconComponent),
-            ],
+            imports: [FaIconComponent, FormsModule],
+            declarations: [StudentsUploadImagesDialogComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [
                 MockProvider(NgbActiveModal),
                 MockProvider(AlertService),
@@ -53,13 +47,10 @@ describe('StudentsUploadImagesDialogComponent', () => {
                 fixture = TestBed.createComponent(StudentsUploadImagesDialogComponent);
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
+                fixture.componentRef.setInput('courseId', course.id);
+                fixture.componentRef.setInput('exam', exam);
 
-                TestBed.runInInjectionContext(() => {
-                    component.exam = exam;
-                    component.courseId = course.id!;
-                });
-
-                ngbModal = TestBed.get(NgbActiveModal);
+                ngbModal = TestBed.inject(NgbActiveModal);
             });
     });
 

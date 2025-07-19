@@ -21,13 +21,18 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
-import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { NgModel } from '@angular/forms';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -41,27 +46,42 @@ describe('ModelingExerciseUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockComponent(NgbPagination)],
-            declarations: [ModelingExerciseUpdateComponent],
+            imports: [MockComponent(NgbPagination), OwlDateTimeModule, OwlNativeDateTimeModule],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
-                MockProvider(TranslateService),
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                MockProvider(CalendarEventService),
             ],
-        })
-            .overrideTemplate(ModelingExerciseUpdateComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
         comp = fixture.componentInstance;
         service = TestBed.inject(ModelingExerciseService);
         courseService = TestBed.inject(CourseManagementService);
         exerciseService = TestBed.inject(ExerciseService);
+
+        const route = TestBed.inject(ActivatedRoute);
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), new ExerciseGroup());
+        modelingExercise.id = 123;
+        modelingExercise.course = new Course();
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ modelingExercise: modelingExercise });
+        route.snapshot = {
+            paramMap: {
+                get: (key: string) => 'mockValue',
+            },
+        } as any;
+
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
     });
 
     describe('save', () => {
@@ -78,12 +98,14 @@ describe('ModelingExerciseUpdateComponent', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('should call create service on save for new entity', fakeAsync(() => {
+            it('should call create service on save for new entity and refresh calendar events', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
                 const entity = { ...modelingExercise };
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+                const calendarEventService = TestBed.inject(CalendarEventService);
+                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
 
                 // WHEN
                 comp.save();
@@ -91,6 +113,7 @@ describe('ModelingExerciseUpdateComponent', () => {
 
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(entity);
+                expect(refreshSpy).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
             }));
         });
@@ -109,12 +132,14 @@ describe('ModelingExerciseUpdateComponent', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('should call update service on save for existing entity', fakeAsync(() => {
+            it('should call update service on save for existing entity and refresh calendar events', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
                 const entity = { ...modelingExercise };
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+                const calendarEventService = TestBed.inject(CalendarEventService);
+                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
 
                 // WHEN
                 comp.save();
@@ -122,6 +147,7 @@ describe('ModelingExerciseUpdateComponent', () => {
 
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(entity, {});
+                expect(refreshSpy).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
             }));
         });
@@ -300,24 +326,26 @@ describe('ModelingExerciseUpdateComponent', () => {
     });
 
     it('should subscribe and unsubscribe to input element changes', () => {
+        jest.spyOn(console, 'error').mockImplementation(); // Suppress console errors from getCurrentModel, did not find a way to mock apollonEditor!.model properly
+
         const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
-        comp.modelingExercise = { startDate: dayjs(), dueDate: dayjs(), assessmentDueDate: dayjs(), releaseDate: dayjs() } as ModelingExercise;
-        comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject(), formValid: true } } as ExerciseTitleChannelNameComponent;
         comp.teamConfigFormGroupComponent = { formValidChanges: new Subject(), formValid: true } as TeamConfigFormGroupComponent;
         comp.bonusPoints = { valueChanges: new Subject(), valid: true } as any as NgModel;
         comp.points = { valueChanges: new Subject(), valid: true } as any as NgModel;
 
+        comp.ngOnInit();
         comp.ngAfterViewInit();
+        fixture.detectChanges();
 
         (comp.points.valueChanges as Subject<boolean>).next(false);
         (comp.bonusPoints.valueChanges as Subject<boolean>).next(false);
         comp.teamConfigFormGroupComponent.formValidChanges.next(false);
-        comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(false);
+        comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
+        fixture.detectChanges();
         expect(calculateValidSpy).toHaveBeenCalledTimes(4);
 
         comp.ngOnDestroy();
 
-        expect(comp.titleChannelNameComponentSubscription?.closed).toBeTrue();
         expect(comp.bonusPointsSubscription?.closed).toBeTrue();
         expect(comp.pointsSubscription?.closed).toBeTrue();
     });

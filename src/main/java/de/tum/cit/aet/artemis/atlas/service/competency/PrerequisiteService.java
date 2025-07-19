@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
  * Service for managing prerequisites.
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class PrerequisiteService extends CourseCompetencyService {
 

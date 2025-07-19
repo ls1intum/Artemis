@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -46,6 +46,7 @@ import { JsonPipe, NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -86,9 +87,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private exerciseGroupService = inject(ExerciseGroupService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private modalService = inject(NgbModal);
+    private calendarEventService = inject(CalendarEventService);
 
-    @ViewChild('quizQuestionsEdit')
-    quizQuestionListEditComponent: QuizQuestionListEditComponent;
+    readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
@@ -243,6 +244,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (!this.quizExercise) {
             this.quizExercise = this.initializeNewQuizExercise();
         } else {
+            this.prepareEntity(this.quizExercise);
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         }
 
@@ -485,14 +487,14 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         }
 
         Exercise.sanitize(this.quizExercise);
-        const filesMap = this.quizQuestionListEditComponent.fileMap;
+        const filesMap = this.quizQuestionListEditComponent().fileMap;
         const files = new Map<string, Blob>();
         filesMap.forEach((value, key) => {
             files.set(key, value.file);
         });
 
         this.isSaving = true;
-        this.quizQuestionListEditComponent.parseAllQuestions();
+        this.quizQuestionListEditComponent().parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
             if (this.isImport) {
                 this.quizExerciseService.import(this.quizExercise, files).subscribe({
@@ -546,11 +548,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.isSaving = false;
         this.pendingChangesCache = false;
         this.prepareEntity(quizExercise);
-        this.quizQuestionListEditComponent.fileMap.clear();
+        this.quizQuestionListEditComponent().fileMap.clear();
         this.quizExercise = quizExercise;
         this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
-        this.savedEntity = cloneDeep(quizExercise);
+        this.savedEntity = cloneDeep(this.quizExercise);
         this.changeDetector.detectChanges();
 
         // Navigate back only if it's an import
@@ -560,6 +562,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         } else if (isCreate) {
             this.router.navigate(['..', quizExercise.id, 'edit'], { relativeTo: this.route, skipLocationChange: true });
         }
+        this.calendarEventService.refresh();
     }
 
     /**
@@ -583,6 +586,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             quizExercise.releaseDate = quizExercise.releaseDate ? dayjs(quizExercise.releaseDate) : dayjs();
             quizExercise.duration = Number(quizExercise.duration);
             quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
+        }
+        for (const question of quizExercise.quizQuestions ?? []) {
+            if (question.type === QuizQuestionType.SHORT_ANSWER) {
+                this.shortAnswerQuestionUtil.prepareShortAnswerQuestion(question as ShortAnswerQuestion);
+            }
         }
     }
 

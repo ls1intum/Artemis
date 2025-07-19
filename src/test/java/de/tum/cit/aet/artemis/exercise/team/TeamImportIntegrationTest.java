@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -92,10 +93,10 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
         course = courseUtilService.addCourseWithModelingAndTextExercise();
 
         // Make both source and destination exercise team exercises
-        sourceExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
+        sourceExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
         sourceExercise.setMode(ExerciseMode.TEAM);
         sourceExercise = exerciseRepository.save(sourceExercise);
-        destinationExercise = exerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
+        destinationExercise = ExerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         destinationExercise.setMode(ExerciseMode.TEAM);
         destinationExercise = exerciseRepository.save(destinationExercise);
         Pair<List<Team>, List<Team>> importedTeamsWithBody = getImportedTeamsAndBody("import", TEST_PREFIX + "student", REGISTRATION_NUMBER_PREFIX + "R");

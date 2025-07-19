@@ -7,7 +7,7 @@ import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.s
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { provideHttpClient } from '@angular/common/http';
 
-describe('Iris Chat Http Service', () => {
+describe('IrisChatHttpService', () => {
     let service: IrisChatHttpService;
     let httpMock: HttpTestingController;
 
@@ -89,7 +89,7 @@ describe('Iris Chat Http Service', () => {
             const returnedFromService = mockConversation;
             const expected = returnedFromService;
             service
-                .getCurrentSessionOrCreateIfNotExists(ChatServiceMode.EXERCISE + '/' + irisExercise.id!)
+                .getCurrentSessionOrCreateIfNotExists(ChatServiceMode.PROGRAMMING_EXERCISE + '/' + irisExercise.id!)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });

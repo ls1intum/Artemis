@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.buildagent.dto;
 
 import java.time.ZonedDateTime;
 
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -39,18 +39,18 @@ public record FinishedBuildJobDTO(String id, String name, String buildAgentAddre
             SubmissionDTO submissionDTO = result.getSubmission() == null ? null : SubmissionDTO.of(result.getSubmission(), false, null, null);
 
             return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(),
-                    ParticipationDTO.of(result.getParticipation()), submissionDTO, result.getAssessmentType(), result.getTestCaseCount(), result.getPassedTestCaseCount(),
-                    result.getCodeIssueCount());
+                    ParticipationDTO.of(result.getSubmission().getParticipation()), submissionDTO, result.getAssessmentType(), result.getTestCaseCount(),
+                    result.getPassedTestCaseCount(), result.getCodeIssueCount());
         }
     }
 
     /**
-     * Converts a Page of BuildJobs into a Page of FinishedBuildJobDTOs
+     * Converts a Slice of BuildJobs into a Slice of FinishedBuildJobDTOs
      *
      * @param buildJobs to convert
-     * @return the converted Page
+     * @return the converted Slice
      */
-    public static Page<FinishedBuildJobDTO> fromBuildJobsPage(Page<BuildJob> buildJobs) {
+    public static Slice<FinishedBuildJobDTO> fromBuildJobsSlice(Slice<BuildJob> buildJobs) {
         return buildJobs.map(FinishedBuildJobDTO::of);
     }
 

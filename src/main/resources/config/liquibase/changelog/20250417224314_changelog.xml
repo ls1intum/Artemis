@@ -10,6 +10,5 @@
         <dropTable tableName="programming_exercise_solution_entry"/>
         <dropTable tableName="exercise_hint"/>
         <dropTable tableName="exercise_hint_activation"/>
-
     </changeSet>
 </databaseChangeLog>

@@ -24,13 +24,13 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
@@ -54,7 +54,6 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.BonusService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -62,6 +61,8 @@ import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.ExamCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -71,6 +72,8 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
+import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
+import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -115,17 +118,19 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Service Implementation for managing exams.
  */
 @Conditional(ExamEnabled.class)
+@Lazy
 @Service
 public class ExamService {
 
     private static final int EXAM_ACTIVE_DAYS = 7;
 
-    private final QuizResultService quizResultService;
-
-    @Value("${artemis.course-archives-path}")
-    private Path examArchivesDirPath;
-
     private static final Logger log = LoggerFactory.getLogger(ExamService.class);
+
+    private static final boolean IS_TEST_RUN = false;
+
+    private static final String NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY = "You are not allowed to access the grade summary of a student exam ";
+
+    private final QuizResultService quizResultService;
 
     private final UserRepository userRepository;
 
@@ -155,8 +160,6 @@ public class ExamService {
 
     private final CourseExamExportService courseExamExportService;
 
-    private final GroupNotificationService groupNotificationService;
-
     private final GradingScaleRepository gradingScaleRepository;
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
@@ -177,19 +180,17 @@ public class ExamService {
 
     private final ObjectMapper defaultObjectMapper;
 
-    private static final boolean IS_TEST_RUN = false;
-
-    private static final String NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY = "You are not allowed to access the grade summary of a student exam ";
+    @Value("${artemis.course-archives-path}")
+    private Path examArchivesDirPath;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
             ExamLiveEventsService examLiveEventsService, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService,
-            GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi, AuthorizationCheckService authorizationCheckService,
-            BonusService bonusService, ExerciseDeletionService exerciseDeletionService, SubmittedAnswerRepository submittedAnswerRepository,
-            AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository,
-            QuizResultService quizResultService) {
+            CourseExamExportService courseExamExportService, GitService gitService, GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
+            AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
+            SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
+            CourseRepository courseRepository, QuizResultService quizResultService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -203,7 +204,6 @@ public class ExamService {
         this.submissionRepository = submissionRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.courseExamExportService = courseExamExportService;
-        this.groupNotificationService = groupNotificationService;
         this.gitService = gitService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.plagiarismCaseApi = plagiarismCaseApi;
@@ -216,6 +216,65 @@ public class ExamService {
         this.courseRepository = courseRepository;
         this.defaultObjectMapper = new ObjectMapper();
         this.quizResultService = quizResultService;
+    }
+
+    private static boolean isSecondCorrectionEnabled(Exam exam) {
+        return exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).anyMatch(Exercise::getSecondCorrectionEnabled);
+    }
+
+    /**
+     * Determines whether the student should see the result of the exam.
+     * This is the case if the exam is started and not ended yet or if the results are already published.
+     *
+     * @param studentExam   The student exam
+     * @param participation The participation of the student
+     * @return true if the student should see the result, false otherwise
+     */
+    public static boolean shouldStudentSeeResult(StudentExam studentExam, StudentParticipation participation) {
+        return (studentExam.getExam().isStarted() && !studentExam.isEnded() && participation instanceof ProgrammingExerciseStudentParticipation)
+                || studentExam.areResultsPublishedYet();
+    }
+
+    /**
+     * Helper method which attaches the result to its participation's latest submission.
+     * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
+     * We also attach the result if the results are already published for the exam.
+     * If no suitable Result is found for StudentParticipation, an empty Result set is assigned to prevent LazyInitializationException on future reads.
+     * See {@link StudentExam#areResultsPublishedYet}
+     *
+     * @param studentExam         the given studentExam
+     * @param participation       the given participation of the student
+     * @param isAtLeastInstructor flag for instructor access privileges
+     */
+    private static void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {
+        // Only set the result during the exam for programming exercises (for direct automatic feedback) or after publishing the results
+        boolean isStudentAllowedToSeeResult = shouldStudentSeeResult(studentExam, participation);
+        Optional<Submission> latestSubmission = participation.findLatestSubmission();
+
+        if (latestSubmission.isPresent()) {
+            var lastSubmission = latestSubmission.get();
+            if (isStudentAllowedToSeeResult || isAtLeastInstructor) {
+                Result latestResult = lastSubmission.getLatestResult();
+                if (latestResult != null) {
+                    latestResult.setSubmission(lastSubmission);
+                    latestResult.filterSensitiveInformation();
+                    lastSubmission.setResults(List.of(latestResult));
+                }
+            }
+            else {
+                lastSubmission.setResults(List.of());
+            }
+        }
+    }
+
+    private static Set<Exercise> getAllExercisesForExam(Exam exam) {
+        return getAllExercisesForExamByType(exam, Exercise.class);
+    }
+
+    private static <T extends Exercise> Set<T> getAllExercisesForExamByType(Exam exam, Class<T> exerciseType) {
+        return exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream())
+                // this also filters potential null values
+                .filter(exerciseType::isInstance).map(exerciseType::cast).collect(Collectors.toSet());
     }
 
     /**
@@ -248,7 +307,7 @@ public class ExamService {
     public ExamScoresDTO calculateExamScores(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithLatestSubmissionWithRelevantResultIgnoreTestRunParticipations(examId);
         log.info("Try to find quiz submitted answer counts");
         List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
         log.info("Found {} quiz submitted answer counts", submittedAnswerCounts.size());
@@ -317,16 +376,12 @@ public class ExamService {
         return new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getExamMaxPoints(), averagePointsAchieved, hasSecondCorrectionAndStarted, exerciseGroups, studentResults);
     }
 
-    private static boolean isSecondCorrectionEnabled(Exam exam) {
-        return exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).anyMatch(Exercise::getSecondCorrectionEnabled);
-    }
-
     /**
      * Calculates max points, max bonus points and achieved points per exercise if the given studentExam is assessed.
      * Includes the corresponding grade and grade type as well if a GradingScale is set for the relevant exam.
      *
      * @param studentExam             a StudentExam instance that will have its points and grades calculated if it is assessed
-     * @param participationsOfStudent StudentParticipation list for the given studentExam
+     * @param participationsOfStudent StudentParticipation list for the given studentExam with eagerly loaded latest submission and result
      * @return Student Exam results with exam grade calculated if applicable
      */
     @NotNull
@@ -489,7 +544,7 @@ public class ExamService {
 
     /**
      * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
-     * See {@link StudentParticipationRepository#findByStudentExamWithEagerSubmissionsResult}
+     * See {@link StudentParticipationRepository#findByStudentExamWithEagerLatestSubmissionsResult}
      *
      * @param studentExam the studentExam for which to load exercises
      */
@@ -516,8 +571,8 @@ public class ExamService {
      */
     public void fetchParticipationsSubmissionsAndResultsForExam(StudentExam studentExam, User currentUser) {
 
-        // 1st: fetch participations, submissions and results (a distinction for test runs, real exams and test exams is done within the following method)
-        var participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
+        // 1st: fetch participations, with latest submissions and results (a distinction for test runs, real exams and test exams is done within the following method)
+        var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, false);
 
         // 2nd: fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
@@ -541,7 +596,7 @@ public class ExamService {
      *
      * @param studentExam         the given student exam
      * @param exercise            the exercise for which the user participation should be filtered
-     * @param participations      the set of participations, wherein to search for the relevant participation
+     * @param participations      the set of participations with eagerly loaded latest submission and result, wherein to search for the relevant participation
      * @param isAtLeastInstructor flag for instructor access privileges
      */
     public void filterParticipationForExercise(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
@@ -573,22 +628,17 @@ public class ExamService {
             // we might need this information for programming exercises with submission policy
             participation.setSubmissionCount(participation.getSubmissions().size());
 
-            // only include the latest submission
-            Optional<Submission> optionalLatestSubmission = participation.findLatestLegalOrIllegalSubmission();
+            // only loaded the latest submission
+            Optional<Submission> optionalLatestSubmission = participation.getSubmissions().stream().findFirst();
             if (optionalLatestSubmission.isPresent()) {
                 Submission latestSubmission = optionalLatestSubmission.get();
                 latestSubmission.setParticipation(null);
-                participation.setSubmissions(Set.of(latestSubmission));
                 setResultIfNecessary(studentExam, participation, isAtLeastInstructor);
 
                 if (exercise instanceof QuizExercise && latestSubmission instanceof QuizSubmission quizSubmission) {
                     // filter quiz solutions when the publishing result date is not set (or when set before the publish result date)
                     quizSubmission.filterForExam(studentExam.areResultsPublishedYet(), isAtLeastInstructor);
                 }
-            }
-            else {
-                // To prevent LazyInitializationException.
-                participation.setResults(Set.of());
             }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
@@ -600,62 +650,12 @@ public class ExamService {
     }
 
     /**
-     * Determines whether the student should see the result of the exam.
-     * This is the case if the exam is started and not ended yet or if the results are already published.
-     *
-     * @param studentExam   The student exam
-     * @param participation The participation of the student
-     * @return true if the student should see the result, false otherwise
-     */
-    public static boolean shouldStudentSeeResult(StudentExam studentExam, StudentParticipation participation) {
-        return (studentExam.getExam().isStarted() && !studentExam.isEnded() && participation instanceof ProgrammingExerciseStudentParticipation)
-                || studentExam.areResultsPublishedYet();
-    }
-
-    /**
-     * Helper method which attaches the result to its participation.
-     * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
-     * We also attach the result if the results are already published for the exam.
-     * If no suitable Result is found for StudentParticipation, an empty Result set is assigned to prevent LazyInitializationException on future reads.
-     * See {@link StudentExam#areResultsPublishedYet}
-     *
-     * @param studentExam         the given studentExam
-     * @param participation       the given participation of the student
-     * @param isAtLeastInstructor flag for instructor access privileges
-     */
-    private static void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {
-        // Only set the result during the exam for programming exercises (for direct automatic feedback) or after publishing the results
-        boolean isStudentAllowedToSeeResult = shouldStudentSeeResult(studentExam, participation);
-        Optional<Submission> latestSubmission = participation.findLatestSubmission();
-
-        // To prevent LazyInitializationException.
-        participation.setResults(Set.of());
-        if (latestSubmission.isPresent()) {
-            var lastSubmission = latestSubmission.get();
-            if (isStudentAllowedToSeeResult || isAtLeastInstructor) {
-                // Also set the latest result into the participation as the client expects it there for programming exercises
-                Result latestResult = lastSubmission.getLatestResult();
-                if (latestResult != null) {
-                    latestResult.setParticipation(null);
-                    latestResult.setSubmission(lastSubmission);
-                    latestResult.filterSensitiveInformation();
-                    // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
-                    // lastResult -> lastSubmission
-                    participation.setResults(Set.of(latestResult));
-                }
-                participation.setSubmissions(Set.of(lastSubmission));
-            }
-            lastSubmission.setResults(null);
-        }
-    }
-
-    /**
      * Generates a StudentResult from the given studentExam and participations of the student by aggregating scores and points
      * achieved per exercise by the relevant student if the given studentExam is assessed.
      * Calculates the corresponding grade if a GradingScale is given.
      *
      * @param studentExam                    a StudentExam instance that will have its points and grades calculated if it is assessed
-     * @param participationsOfStudent        StudentParticipation list for the given studentExam
+     * @param participationsOfStudent        StudentParticipation list for the given studentExam with eagerly loaded latest submission and results
      * @param exam                           the relevant exam
      * @param gradingScale                   optional GradingScale that will be used to set the grade type and the achieved grade if present
      * @param calculateFirstCorrectionPoints flag to determine whether to calculate the first correction results or not
@@ -689,8 +689,10 @@ public class ExamService {
                 continue;
             }
             // Relevant Result is already calculated
-            if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
-                Result relevantResult = studentParticipation.getResults().iterator().next();
+            Optional<Result> optionalRelevantResult = studentParticipation.getSubmissions().stream().findFirst()
+                    .flatMap(submission -> Optional.ofNullable(submission.getLatestResult()));
+            if (optionalRelevantResult.isPresent()) {
+                Result relevantResult = optionalRelevantResult.get();
                 PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(exercise.getId());
                 double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
                 double achievedPoints = calculateAchievedPoints(exercise, relevantResult, exam.getCourse(), plagiarismPointDeductionPercentage);
@@ -703,7 +705,7 @@ public class ExamService {
                 // Collect points of first correction, if a second correction exists
                 if (calculateFirstCorrectionPoints && exam.getNumberOfCorrectionRoundsInExam() == 2
                         && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                    var latestSubmission = studentParticipation.findLatestSubmission();
+                    Optional<Submission> latestSubmission = studentParticipation.getSubmissions().stream().findFirst();
                     if (latestSubmission.isPresent()) {
                         Submission submission = latestSubmission.get();
                         // Check if second correction already started
@@ -850,8 +852,8 @@ public class ExamService {
         return participationsOfStudent.stream().collect(Collectors.toMap(participation -> participation.getExercise().getId(), participation -> {
             PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(participation.getStudent().orElseThrow().getId(), participation.getExercise().getId());
             double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
-
-            return calculateAchievedPoints(participation.getExercise(), participation.getResults().stream().findFirst().orElse(null), course, plagiarismPointDeductionPercentage);
+            Result result = participation.getSubmissions().stream().findFirst().flatMap(submission -> submission.getResults().stream().findFirst()).orElse(null);
+            return calculateAchievedPoints(participation.getExercise(), result, course, plagiarismPointDeductionPercentage);
         }));
     }
 
@@ -888,7 +890,6 @@ public class ExamService {
             case QuizExercise ignored -> {
                 // NOTE: due to performance concerns, this is handled differently, search for quizSubmittedAnswerCounts to find out more
                 return true;
-                // NOTE: due to performance concerns, this is handled differently, search for quizSubmittedAnswerCounts to find out more
             }
             case null, default -> throw new IllegalArgumentException("The exercise type of the exercise with id " + exercise.getId() + " is not supported");
         }
@@ -1068,6 +1069,8 @@ public class ExamService {
             totalNumberOfComplaintResponse += numberOfComplaintResponse;
         }
 
+        boolean existsUnassessedQuizzes = submissionRepository.existsUnassessedQuizzesByExamId(exam.getId());
+
         if (isInstructor) {
             // set number of student exams that have been generated
             long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId());
@@ -1097,11 +1100,11 @@ public class ExamService {
             }
 
             return new ExamChecklistDTO(numberOfGeneratedStudentExams, numberOfTestRuns, totalNumberOfAssessmentsFinished, totalNumberOfParticipationsForAssessment,
-                    numberOfStudentExamsSubmitted, numberOfStudentExamsStarted, totalNumberOfComplaints, totalNumberOfComplaintResponse, exercisesPrepared, null, null);
+                    numberOfStudentExamsSubmitted, numberOfStudentExamsStarted, totalNumberOfComplaints, totalNumberOfComplaintResponse, exercisesPrepared, existsUnassessedQuizzes,
+                    null);
 
         }
 
-        boolean existsUnassessedQuizzes = submissionRepository.existsUnassessedQuizzesByExamId(exam.getId());
         boolean existsUnsubmittedExercises = submissionRepository.existsUnsubmittedExercisesByExamId(exam.getId());
 
         // For non-instructors, consider what limited information they should receive and adjust accordingly
@@ -1132,16 +1135,6 @@ public class ExamService {
     private <T extends Exercise> Set<T> getAllExercisesForExamByType(Long examId, Class<T> exerciseType) {
         var exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         return getAllExercisesForExamByType(exam, exerciseType);
-    }
-
-    private static Set<Exercise> getAllExercisesForExam(Exam exam) {
-        return getAllExercisesForExamByType(exam, Exercise.class);
-    }
-
-    private static <T extends Exercise> Set<T> getAllExercisesForExamByType(Exam exam, Class<T> exerciseType) {
-        return exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream())
-                // this also filters potential null values
-                .filter(exerciseType::isInstance).map(exerciseType::cast).collect(Collectors.toSet());
     }
 
     /**
@@ -1177,18 +1170,19 @@ public class ExamService {
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
 
         final long numberOfSubmissions = submissionRepository.countByExamIdSubmittedSubmissionsIgnoreTestRuns(examId)
-                + programmingExerciseRepository.countLegalSubmissionsByExamIdSubmitted(examId);
+                + programmingExerciseRepository.countSubmissionsByExamIdSubmitted(examId);
         stats.setNumberOfSubmissions(new DueDateStat(numberOfSubmissions, 0));
 
         DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamForCorrectionRounds(examId,
                 exam.getNumberOfCorrectionRoundsInExam());
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
-        final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(examId, ComplaintType.COMPLAINT);
+        final long numberOfComplaints = complaintRepository.countByResult_Submission_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(examId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
 
         final long numberOfComplaintResponses = complaintResponseRepository
-                .countByComplaint_Result_Participation_Exercise_ExerciseGroup_Exam_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(examId, ComplaintType.COMPLAINT);
+                .countByComplaint_Result_Submission_Participation_Exercise_ExerciseGroup_Exam_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(examId,
+                        ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
         final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExamId(userRepository.getUserWithGroupsAndAuthorities().getId(), examId);
@@ -1242,26 +1236,6 @@ public class ExamService {
         }
 
         log.info("archive exam took {}", TimeLogUtil.formatDurationFrom(start));
-    }
-
-    /**
-     * Combines the template commits of all programming exercises in the exam.
-     * This is executed before the individual student exams are generated.
-     *
-     * @param exam - the exam which template commits should be combined
-     */
-    public void combineTemplateCommitsOfAllProgrammingExercisesInExam(Exam exam) {
-        var programmingExercises = getAllExercisesForExamByType(exam, ProgrammingExercise.class);
-        programmingExercises.forEach(exercise -> {
-            try {
-                var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExercise.getTemplateParticipation().getVcsRepositoryUri());
-                log.debug("Finished combination of template commits for programming exercise {}", programmingExercise);
-            }
-            catch (GitAPIException e) {
-                log.error("An error occurred when trying to combine template commits for exam {}.", exam.getId(), e);
-            }
-        });
     }
 
     /**
@@ -1371,5 +1345,58 @@ public class ExamService {
     private interface ExamBonusCalculator {
 
         BonusResultDTO calculateStudentGradesWithBonus(Long studentId, Double bonusToAchievedPoints);
+    }
+
+    /**
+     * Retrieves an {@link ExamCalendarEventDTO} for each {@link Exam} associated to the given courseId.
+     * Each DTO encapsulates the title, visibleDate, startDate, endDate, publishResultsDate, studentReviewStart, studentReviewEnd
+     * and examiner of the respective Exam.
+     * <p>
+     * The method then derives a set of {@link CalendarEventDTO}s from the DTOs. Whether events are included in the result depends
+     * on the visibleDate of the exam represented by the given DTO and whether the logged-in user is a student of the {@link Course})
+     *
+     *
+     * @param courseId      the ID of the course
+     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @return the set of results
+     */
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(long courseId, boolean userIsStudent) {
+        Set<ExamCalendarEventDTO> daos = examRepository.getExamCalendarEventDAOsForCourseId(courseId);
+        return daos.stream().flatMap(dao -> deriveCalendarEventDTOs(dao, userIsStudent).stream()).collect(Collectors.toSet());
+    }
+
+    /**
+     * Derives the following events for an {@link Exam} represented by the given DTO:
+     * <ul>
+     * <li>One event representing the actual working time (starts on start date and ends on end date of the exam, both are always not null)</li>
+     * <li>One event representing the point in them when results are published if not null</li>
+     * <li>Two events representing the start and end of the student review period (only available as a pair and if result publish date is not null)</li>
+     * </ul>
+     *
+     * The events are only derived given that either the exam is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     *
+     * @param dto           the DTO for which to derive the events
+     * @param userIsStudent indicates whether the logged-in user is student of the course associated to the exam
+     * @return the derived events
+     */
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(ExamCalendarEventDTO dto, boolean userIsStudent) {
+        Set<CalendarEventDTO> events = new HashSet<>();
+        boolean userIsCourseStaff = !userIsStudent;
+        if (userIsCourseStaff || dto.visibleDate().isBefore(now())) {
+            events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.START_AND_END_DATE, dto.title(), dto.startDate(), dto.endDate(), null,
+                    dto.examiner()));
+            if (dto.publishResultsDate() != null) {
+                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.PUBLISH_RESULTS_DATE, dto.title(), dto.publishResultsDate(), null, null,
+                        null));
+                if (dto.studentReviewStart() != null) {
+                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_START_DATE, dto.title(), dto.studentReviewStart(), null,
+                            null, null));
+                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_END_DATE, dto.title(), dto.studentReviewEnd(), null,
+                            null, null));
+                }
+            }
+        }
+        return events;
     }
 }

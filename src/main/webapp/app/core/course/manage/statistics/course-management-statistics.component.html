@@ -1,7 +1,7 @@
 <div>
-    <div class="row mb-5">
+    <div *titleBarTitle class="row">
         <div class="d-flex align-items-center">
-            <h2 id="statistics-page-heading" jhiTranslate="statistics.course_statistics_title"></h2>
+            <jhi-course-title-bar-title id="statistics-page-heading" title="statistics.course_statistics_title" />
             <jhi-documentation-button [type]="documentationType" />
         </div>
     </div>
@@ -12,7 +12,6 @@
             [courseId]="courseId"
         />
     }
-    <div class="separator w-100 mb-4"></div>
     <div class="row mb-5">
         <div class="col-md-2"></div>
         <div class="col-md-9 btn-group btn-group-toggle" data-toggle="buttons">

@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Spring Data JPA repository for the Competency entity.
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Repository
 public interface CompetencyRepository extends ArtemisJpaRepository<Competency, Long>, JpaSpecificationExecutor<Competency> {
 
@@ -55,6 +57,13 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             """)
     Optional<Competency> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);
 
+    @Query("""
+            SELECT c
+            FROM Competency c
+            WHERE c.course.id = :courseId
+            """)
+    Set<Competency> findAllByCourseId(@Param("courseId") long courseId);
+
     default Competency findByIdWithLectureUnitsAndExercisesElseThrow(long competencyId) {
         return getValueElseThrow(findByIdWithLectureUnitsAndExercises(competencyId), competencyId);
     }
@@ -66,4 +75,24 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
     long countByCourse(Course course);
 
     List<Competency> findByCourseIdOrderById(long courseId);
+
+    @Query("""
+            SELECT c
+            FROM LearningPath lp
+                JOIN lp.course.competencies c
+            WHERE lp.id = :learningPathId
+            """)
+    Set<Competency> findByLearningPathId(@Param("learningPathId") long learningPathId);
+
+    @Query("""
+            SELECT c
+            FROM LearningPath lp
+                JOIN lp.course.competencies c
+                LEFT JOIN FETCH c.lectureUnitLinks clul
+                LEFT JOIN FETCH clul.lectureUnit
+                LEFT JOIN FETCH c.exerciseLinks cel
+                LEFT JOIN FETCH cel.exercise
+            WHERE lp.id = :learningPathId
+            """)
+    Set<Competency> findByLearningPathIdWithLectureUnitsAndExercises(@Param("learningPathId") long learningPathId);
 }

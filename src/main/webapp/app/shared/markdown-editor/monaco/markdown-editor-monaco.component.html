@@ -165,46 +165,49 @@
                                         >
                                             {{ lecture.title }}
                                         </button>
-                                        @for (unit of lecture.attachmentUnits; track unit.id) {
-                                            <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
-                                                <span>{{ unit.name }}</span>
-                                            </button>
-                                            <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
-                                                <button
-                                                    class="border-bottom ps-1 me-1"
-                                                    mat-menu-item
-                                                    (click)="
-                                                        displayedActions.lecture.executeInCurrentEditor({
-                                                            reference: ReferenceType.ATTACHMENT_UNITS,
-                                                            lecture,
-                                                            attachmentUnit: unit,
-                                                        })
-                                                    "
-                                                    type="button"
-                                                >
-                                                    {{ unit.name }}
+                                        @for (unit of lecture.attachmentVideoUnits; track unit.id) {
+                                            <!-- Only show attachment units with an attachment -->
+                                            @if (unit.attachment && unit.attachment.link) {
+                                                <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
+                                                    <span>{{ unit.name }}</span>
                                                 </button>
-                                                @for (slide of unit.slides; track slide.id; let index = $index) {
+                                                <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
                                                     <button
-                                                        class="ps-1 me-1"
+                                                        class="border-bottom ps-1 me-1"
                                                         mat-menu-item
                                                         (click)="
                                                             displayedActions.lecture.executeInCurrentEditor({
-                                                                reference: ReferenceType.SLIDE,
+                                                                reference: ReferenceType.ATTACHMENT_UNITS,
                                                                 lecture,
-                                                                slide,
-                                                                attachmentUnit: unit,
-                                                                slideIndex: index + 1,
+                                                                attachmentVideoUnit: unit,
                                                             })
                                                         "
                                                         type="button"
                                                     >
-                                                        <span [jhiTranslate]="'artemisApp.markdownEditor.slideWithNumber'" [translateValues]="{ number: index + 1 }"></span>
+                                                        {{ unit.name }}
                                                     </button>
-                                                } @empty {
-                                                    <ng-container [ngTemplateOutlet]="noItemsAvailable" />
-                                                }
-                                            </mat-menu>
+                                                    @for (slide of unit.slides; track slide.id; let index = $index) {
+                                                        <button
+                                                            class="ps-1 me-1"
+                                                            mat-menu-item
+                                                            (click)="
+                                                                displayedActions.lecture.executeInCurrentEditor({
+                                                                    reference: ReferenceType.SLIDE,
+                                                                    lecture,
+                                                                    slide,
+                                                                    attachmentVideoUnit: unit,
+                                                                    slideIndex: index + 1,
+                                                                })
+                                                            "
+                                                            type="button"
+                                                        >
+                                                            <span [jhiTranslate]="'artemisApp.markdownEditor.slideWithNumber'" [translateValues]="{ number: index + 1 }"></span>
+                                                        </button>
+                                                    } @empty {
+                                                        <ng-container [ngTemplateOutlet]="noItemsAvailable" />
+                                                    }
+                                                </mat-menu>
+                                            }
                                         }
                                         @for (attachment of lecture.attachments; track attachment.id) {
                                             <button

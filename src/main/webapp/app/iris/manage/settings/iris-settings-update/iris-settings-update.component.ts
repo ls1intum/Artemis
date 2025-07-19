@@ -1,37 +1,31 @@
-import { Component, DoCheck, Input, OnInit, inject } from '@angular/core';
+import { Component, DoCheck, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { IrisSettings, IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
-import {
-    IrisChatSubSettings,
-    IrisCompetencyGenerationSubSettings,
-    IrisCourseChatSubSettings,
-    IrisFaqIngestionSubSettings,
-    IrisLectureChatSubSettings,
-    IrisLectureIngestionSubSettings,
-    IrisTextExerciseChatSubSettings,
-} from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisCommonSubSettingsUpdateComponent } from './iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { FormsModule } from '@angular/forms';
 import { captureException } from '@sentry/angular';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { IrisEmptySettingsService } from 'app/iris/manage/settings/shared/iris-empty-settings.service';
 
 @Component({
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
     imports: [ButtonComponent, TranslateDirective, IrisCommonSubSettingsUpdateComponent, FormsModule],
 })
-export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCanDeactivate {
+export class IrisSettingsUpdateComponent implements OnInit, OnDestroy, DoCheck, ComponentCanDeactivate {
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
+    private featureToggleService = inject(FeatureToggleService);
+    private irisEmptySettingService = inject(IrisEmptySettingsService);
 
     @Input()
     public settingsType: IrisSettingsType;
@@ -46,6 +40,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
 
     public autoLectureIngestion = false;
     public autoFaqIngestion = false;
+
+    featureToggleSubscription?: Subscription;
+    tutorSuggestionFeatureEnabled = false;
 
     // Status bools
     isLoading = false;
@@ -72,6 +69,13 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
 
     ngOnInit(): void {
         this.loadIrisSettings();
+        this.featureToggleSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorSuggestions).subscribe((active) => {
+            this.tutorSuggestionFeatureEnabled = active;
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.featureToggleSubscription?.unsubscribe();
     }
 
     ngDoCheck(): void {
@@ -95,10 +99,10 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 this.alertService.error('artemisApp.iris.settings.error.noSettings');
             }
             this.irisSettings = settings;
-            this.fillEmptyIrisSubSettings();
+            this.irisSettings = this.irisEmptySettingService.fillEmptyIrisSubSettings(this.irisSettings);
             this.originalIrisSettings = cloneDeep(settings);
-            this.autoLectureIngestion = this.irisSettings?.irisLectureIngestionSettings?.autoIngestOnLectureAttachmentUpload ?? false;
-            this.autoFaqIngestion = this.irisSettings?.irisFaqIngestionSettings?.autoIngestOnFaqCreation ?? false;
+            this.autoLectureIngestion = this.irisSettings?.irisLectureIngestionSettings?.autoIngestOnLectureAttachmentUpload ?? true;
+            this.autoFaqIngestion = this.irisSettings?.irisFaqIngestionSettings?.autoIngestOnFaqCreation ?? true;
             this.isDirty = false;
         });
         this.loadParentIrisSettingsObservable().subscribe((settings) => {
@@ -107,33 +111,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             }
             this.parentIrisSettings = settings;
         });
-    }
-
-    fillEmptyIrisSubSettings(): void {
-        if (!this.irisSettings) {
-            return;
-        }
-        if (!this.irisSettings.irisChatSettings) {
-            this.irisSettings.irisChatSettings = new IrisChatSubSettings();
-        }
-        if (!this.irisSettings.irisTextExerciseChatSettings) {
-            this.irisSettings.irisTextExerciseChatSettings = new IrisTextExerciseChatSubSettings();
-        }
-        if (!this.irisSettings.irisLectureChatSettings) {
-            this.irisSettings.irisLectureChatSettings = new IrisLectureChatSubSettings();
-        }
-        if (!this.irisSettings.irisCourseChatSettings) {
-            this.irisSettings.irisCourseChatSettings = new IrisCourseChatSubSettings();
-        }
-        if (!this.irisSettings.irisLectureIngestionSettings) {
-            this.irisSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
-        }
-        if (!this.irisSettings.irisCompetencyGenerationSettings) {
-            this.irisSettings.irisCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
-        }
-        if (!this.irisSettings.irisFaqIngestionSettings) {
-            this.irisSettings.irisFaqIngestionSettings = new IrisFaqIngestionSubSettings();
-        }
     }
 
     saveIrisSettings(): void {
@@ -149,7 +126,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 this.isSaving = false;
                 this.isDirty = false;
                 this.irisSettings = response.body ?? undefined;
-                this.fillEmptyIrisSubSettings();
+                this.irisSettings = this.irisEmptySettingService.fillEmptyIrisSubSettings(this.irisSettings);
                 this.originalIrisSettings = cloneDeep(this.irisSettings);
                 this.alertService.success('artemisApp.iris.settings.success');
             },

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
  * Contains business logic needed to calculate tutor efforts.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class TutorEffortService {
 

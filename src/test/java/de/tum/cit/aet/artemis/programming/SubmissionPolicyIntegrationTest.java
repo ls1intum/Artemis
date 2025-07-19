@@ -22,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -46,11 +47,11 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        userUtilService.addInstructor("other-instructor-group", TEST_PREFIX + "other-instructor");
+        userUtilService.addInstructor("other-instructor-group", TEST_PREFIX + "other-instructor1");
         userUtilService.addEditor("other-editor-group", TEST_PREFIX + "other-editor");
-        userUtilService.addStudent("other-student-group", TEST_PREFIX + "other-student");
+        userUtilService.addStudent("other-student-group", TEST_PREFIX + "other-student1");
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseId = programmingExercise.getId();
     }
 
@@ -230,7 +231,6 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(20.0), participation1, "commit1");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, "commit2");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, "commit3");
-        mockRepositoryWritePermissionsForStudent(userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2"), programmingExercise, HttpStatus.OK);
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(3).policy(), HttpStatus.OK);
     }
 
@@ -470,7 +470,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         assertThat(numberOfSubmissionsForSubmissionPolicy).isZero();
 
         Submission submission1 = participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("first").type(SubmissionType.MANUAL));
-        participationUtilService.addResultToParticipation(participation, submission1);
+        participationUtilService.addResultToSubmission(participation, submission1);
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isOne();
 
@@ -478,12 +478,12 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isOne();
 
-        participationUtilService.addResultToParticipation(participation, submission2);
+        participationUtilService.addResultToSubmission(participation, submission2);
 
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isEqualTo(2);
 
-        participationUtilService.addResultToParticipation(participation, submission2);
+        participationUtilService.addResultToSubmission(participation, submission2);
         numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isEqualTo(2);
     }

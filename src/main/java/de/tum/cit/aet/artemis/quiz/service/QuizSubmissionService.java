@@ -3,11 +3,16 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +25,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.QuizSubmissionException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -32,10 +38,12 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSubmission> {
 
@@ -57,9 +65,12 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final QuizQuestionProgressService quizQuestionProgressService;
+
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository, SubmissionVersionService submissionVersionService,
             QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService, QuizStatisticService quizStatisticService,
-            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService) {
+            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService,
+            QuizQuestionProgressService quizQuestionProgressService) {
         super(submissionVersionService);
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
@@ -69,6 +80,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         this.quizStatisticService = quizStatisticService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.websocketMessagingService = websocketMessagingService;
+        this.quizQuestionProgressService = quizQuestionProgressService;
     }
 
     /**
@@ -78,18 +90,21 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      * <p>
      * The process includes:
      * <p>
-     * 1. **Updating Submission Properties**: Sets the submission as submitted, marks it as a manual submission,
-     * and records the current date and time as the submission date.
-     * 2. **Calculating Scores**: Computes the scores based on the quiz questions and updates the submission.
-     * 3. **Saving Submission**: Saves the updated submission in the repository.
-     * 4. **Creating Result**: Initializes a new result, associates it with the participation, sets it as unrated
-     * and automatic, and records the current date and time as the completion date.
-     * 5. **Saving Result**: Saves the newly created result in the repository.
-     * 6. **Setting Result-Submission Relation**: Links the result to the submission and recalculates the score.
-     * 7. **Updating Submission with Result**: Adds the result to the submission and saves it again to set the result index column.
-     * 8. **Re-saving Result**: Saves the result again to store the calculated score.
-     * 9. **Fixing Proxy Objects**: Reassigns the participation to the result to avoid proxy issues.
-     * 10. **Recalculating Statistics**: Updates the quiz statistics based on the new result.
+     * <ol>
+     * <li><b>Updating Submission Properties:</b> Sets the submission as submitted, marks it as a manual submission,
+     * and records the current date and time as the submission date.</li>
+     * <li><b>Calculating Scores:</b> Computes the scores based on the quiz questions and updates the submission.</li>
+     * <li><b>Saving Submission:</b> Saves the updated submission in the repository.</li>
+     * <li><b>Creating Result:</b> Initializes a new result, associates it with the participation, sets it as unrated
+     * and automatic, and records the current date and time as the completion date.</li>
+     * <li><b>Saving Result:</b> Saves the newly created result in the repository.</li>
+     * <li><b>Setting Result-Submission Relation:</b> Links the result to the submission and recalculates the score.</li>
+     * <li><b>Updating Submission with Result:</b> Adds the result to the submission and saves it again to set the result index column.</li>
+     * <li><b>Re-saving Result:</b> Saves the result again to store the calculated score.</li>
+     * <li><b>Fixing Proxy Objects:</b> Reassigns the participation to the result to avoid proxy issues.</li>
+     * <li><b>Recalculating Statistics:</b> Updates the quiz statistics based on the new result.</li>
+     * <li><b>Saving Question Progress</b>Updates the question progress based on the result and submission.</li>
+     * </ol>
      *
      * @param quizSubmission The quiz submission to be processed.
      * @param quizExercise   The quiz exercise related to the submission.
@@ -107,7 +122,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
         // create result
-        Result result = new Result().participation(participation);
+        Result result = new Result();
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
@@ -127,11 +142,11 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // save result to store score
         resultRepository.save(result);
 
-        // result.participation.exercise.quizQuestions turn into proxy objects after saving, so we need to set it again to prevent problems later on
-        result.setParticipation(participation);
-
         // add result to statistics
         quizStatisticService.recalculateStatistics(quizExercise);
+
+        // save the question progress
+        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, (StudentParticipation) participation);
 
         log.debug("submit practice quiz finished: {}", quizSubmission);
         return result;
@@ -145,14 +160,18 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     public void calculateAllResults(long quizExerciseId) {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         log.info("Calculating results for quiz {}", quizExercise.getId());
-        studentParticipationRepository.findByExerciseId(quizExercise.getId()).forEach(participation -> {
+        Set<StudentParticipation> participations = studentParticipationRepository.findByExerciseId(quizExercise.getId());
+        associateQuizSubmissionsWithStudentParticipations(participations);
+
+        participations.forEach(participation -> {
             participation.setExercise(quizExercise);
-            Optional<QuizSubmission> quizSubmissionOptional = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst();
+            Optional<Submission> quizSubmissionOptional = participation.getSubmissions().stream().findFirst();
 
             if (quizSubmissionOptional.isEmpty()) {
                 return;
             }
-            QuizSubmission quizSubmission = quizSubmissionOptional.get();
+            QuizSubmission quizSubmission = (QuizSubmission) quizSubmissionOptional.get();
+            quizSubmission.setParticipation(participation);
 
             if (quizSubmission.isSubmitted()) {
                 if (quizSubmission.getType() == null) {
@@ -167,7 +186,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
             participation.setInitializationState(InitializationState.FINISHED);
 
-            Result result = new Result().participation(participation);
+            Result result = new Result();
             result.setRated(true);
             result.setAssessmentType(AssessmentType.AUTOMATIC);
             result.setCompletionDate(quizSubmission.getSubmissionDate());
@@ -179,17 +198,12 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
             studentParticipationRepository.save(participation);
+            quizSubmission.setResults(List.of(result));
 
-            // avoid LazyInitializationException
-            participation.setResults(Set.of(result));
-
-            var course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
             sendQuizResultToUser(quizExerciseId, participation);
-            if (course != null) {
-                // This is required, as sendQuizResultToUser removes the course from the quizExercise
-                // TODO: This should be fixed by using DTOs in the future
-                quizExercise.setCourse(course);
-            }
+
+            // save the question progress
+            quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
         });
         quizStatisticService.recalculateStatistics(quizExercise);
         // notify users via websocket about new results for the statistics, filter out solution information
@@ -197,36 +211,29 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         websocketMessagingService.sendMessage("/topic/statistic/" + quizExercise.getId(), quizExercise);
     }
 
-    private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
-        // TODO: we should convert this into a DTO instead of removing data from the entity
-        var user = participation.getParticipantIdentifier();
-        removeUnnecessaryObjectsBeforeSendingToClient(participation);
-        websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
+    /**
+     * Fetches quiz submissions for the given student participations and associates them with the participations.
+     *
+     * @param participations The set of student participations to associate with quiz submissions.
+     */
+    private void associateQuizSubmissionsWithStudentParticipations(Set<StudentParticipation> participations) {
+        Set<Long> participationIds = participations.stream().map(StudentParticipation::getId).collect(Collectors.toSet());
+
+        List<QuizSubmission> submissions = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationIds(participationIds);
+
+        Map<Long, Set<QuizSubmission>> submissionsByParticipationId = submissions.stream().collect(Collectors.groupingBy(s -> s.getParticipation().getId(), Collectors.toSet()));
+
+        for (StudentParticipation participation : participations) {
+            Set<QuizSubmission> quizSubmissions = submissionsByParticipationId.getOrDefault(participation.getId(), Set.of());
+            Set<Submission> submissionSet = new HashSet<>(quizSubmissions);
+            participation.setSubmissions(submissionSet);
+        }
     }
 
-    // TODO: Use a DTO instead of removing data from the entity
-    @Deprecated
-    private void removeUnnecessaryObjectsBeforeSendingToClient(StudentParticipation participation) {
-        if (participation.getExercise() != null) {
-            var quizExercise = (QuizExercise) participation.getExercise();
-            // we do not need the course and lectures
-            quizExercise.setCourse(null);
-        }
-        // submissions are part of results, so we do not need them twice
-        participation.setSubmissions(null);
-        participation.setParticipant(null);
-        if (participation.getResults() != null && !participation.getResults().isEmpty()) {
-            QuizSubmission quizSubmission = (QuizSubmission) participation.getResults().iterator().next().getSubmission();
-            if (quizSubmission != null && quizSubmission.getSubmittedAnswers() != null) {
-                for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-                    if (submittedAnswer.getQuizQuestion() != null) {
-                        // we do not need all information of the questions again, they are already stored in the exercise
-                        var question = submittedAnswer.getQuizQuestion();
-                        submittedAnswer.setQuizQuestion(question.copyQuestionId());
-                    }
-                }
-            }
-        }
+    private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
+        var user = participation.getParticipantIdentifier();
+        StudentQuizParticipationWithSolutionsDTO participationDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
+        websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participationDTO);
     }
 
     /**
@@ -396,4 +403,5 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;
     }
+
 }

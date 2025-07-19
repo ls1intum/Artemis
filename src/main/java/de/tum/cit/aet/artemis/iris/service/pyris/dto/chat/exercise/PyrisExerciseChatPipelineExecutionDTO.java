@@ -14,6 +14,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisExerciseChatPipelineExecutionDTO(PyrisSubmissionDTO submission, PyrisProgrammingExerciseDTO exercise, PyrisCourseDTO course, List<PyrisMessageDTO> chatHistory,
-        PyrisUserDTO user, PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages) {
+        PyrisUserDTO user, PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages, String customInstructions) {
 
 }

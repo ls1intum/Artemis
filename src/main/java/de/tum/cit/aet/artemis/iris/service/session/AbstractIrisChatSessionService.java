@@ -88,7 +88,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
             if (savedMessage != null) {
                 // generated message is first sent and generated trace is saved
                 var llmTokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
-                    builder.withIrisMessageID(savedMessage.getId()).withUser(session.getUser().getId());
+                    builder.withIrisMessageID(savedMessage.getId()).withUser(session.getUserId());
                     this.setLLMTokenUsageParameters(builder, session);
                     return builder;
                 });
@@ -100,7 +100,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
                 Optional.ofNullable(job.traceId()).flatMap(llmTokenUsageService::findLLMTokenUsageTraceById)
                         .ifPresentOrElse(trace -> llmTokenUsageService.appendRequestsToTrace(statusUpdate.tokens(), trace), () -> {
                             var llmTokenUsage = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> {
-                                builder.withUser(session.getUser().getId());
+                                builder.withUser(session.getUserId());
                                 this.setLLMTokenUsageParameters(builder, session);
                                 return builder;
                             });

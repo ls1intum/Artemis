@@ -8,6 +8,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseCookie;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class JWTCookieService {
 
@@ -62,6 +64,17 @@ public class JWTCookieService {
     public ResponseCookie buildLoginCookie(long duration, ToolTokenType tool) {
         String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), duration, tool);
         return buildJWTCookie(jwt, Duration.of(duration, ChronoUnit.MILLIS));
+    }
+
+    /**
+     * Builds the cookie containing the jwt for a login
+     *
+     * @param rotatedJwtToken        with the updated values
+     * @param durationInMilliseconds of the cookie in milliseconds and the jwt
+     * @return the login {@link ResponseCookie} containing the JWT
+     */
+    public ResponseCookie buildRotatedCookie(String rotatedJwtToken, long durationInMilliseconds) {
+        return buildJWTCookie(rotatedJwtToken, Duration.of(durationInMilliseconds, ChronoUnit.MILLIS));
     }
 
     /**

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 import { TutorialGroupManagementResolve } from 'app/tutorialgroup/manage/service/tutorial-group-management-resolve.service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
@@ -14,7 +14,7 @@ export const courseManagementState: Routes = [
         path: '',
         loadComponent: () => import('app/core/course/manage/course-management/course-management.component').then((m) => m.CourseManagementComponent),
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -23,7 +23,7 @@ export const courseManagementState: Routes = [
         path: 'new',
         loadComponent: () => import('./update/course-update.component').then((m) => m.CourseUpdateComponent),
         data: {
-            authorities: [Authority.ADMIN],
+            authorities: IS_AT_LEAST_ADMIN,
             pageTitle: 'global.generic.create',
         },
         canActivate: [UserRouteAccessService],
@@ -39,7 +39,7 @@ export const courseManagementState: Routes = [
                     course: CourseManagementResolve,
                 },
                 data: {
-                    authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: IS_AT_LEAST_TUTOR,
                     pageTitle: 'artemisApp.course.overview',
                 },
                 canActivate: [UserRouteAccessService],
@@ -48,7 +48,7 @@ export const courseManagementState: Routes = [
                 path: ':courseId/grading-system',
                 loadComponent: () => import('app/assessment/manage/grading-system/grading-system.component').then((m) => m.GradingSystemComponent),
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
                     pageTitle: 'artemisApp.course.gradingSystem',
                 },
                 canActivate: [UserRouteAccessService],
@@ -59,7 +59,7 @@ export const courseManagementState: Routes = [
                 loadComponent: () =>
                     import('app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component').then((m) => m.IrisCourseSettingsUpdateComponent),
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
                     pageTitle: 'artemisApp.iris.settings.title.course',
                 },
                 canActivate: [UserRouteAccessService, IrisGuard],
@@ -80,7 +80,7 @@ export const courseManagementState: Routes = [
                 path: ':courseId/assessment-dashboard/:exerciseId',
                 loadComponent: () => ExerciseAssessmentDashboardComponent,
                 data: {
-                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                    authorities: IS_AT_LEAST_TUTOR,
                     pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -92,7 +92,7 @@ export const courseManagementState: Routes = [
                     course: CourseManagementResolve,
                 },
                 data: {
-                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                    authorities: IS_AT_LEAST_TUTOR,
                     pageTitle: 'artemisApp.assessmentDashboard.home.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -104,7 +104,7 @@ export const courseManagementState: Routes = [
                     course: CourseManagementResolve,
                 },
                 data: {
-                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                    authorities: IS_AT_LEAST_TUTOR,
                     pageTitle: 'artemisApp.instructorDashboard.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -126,7 +126,7 @@ export const courseManagementState: Routes = [
                 loadComponent: () =>
                     import('app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component').then((m) => m.TutorialGroupsChecklistComponent),
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
                     pageTitle: 'artemisApp.pages.checklist.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -138,7 +138,7 @@ export const courseManagementState: Routes = [
                         (m) => m.CreateTutorialGroupsConfigurationComponent,
                     ),
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
                     pageTitle: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -150,7 +150,7 @@ export const courseManagementState: Routes = [
                     course: CourseManagementResolve,
                 },
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
                     pageTitle: 'artemisApp.lti.home.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -163,7 +163,7 @@ export const courseManagementState: Routes = [
                     course: CourseManagementResolve,
                 },
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: IS_AT_LEAST_INSTRUCTOR,
                     pageTitle: 'artemisApp.lti.home.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -179,7 +179,7 @@ export const courseManagementState: Routes = [
                         path: 'exercises',
                         loadComponent: () => import('app/core/course/manage/exercises/course-management-exercises.component').then((m) => m.CourseManagementExercisesComponent),
                         data: {
-                            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_TUTOR,
                             pageTitle: 'artemisApp.course.exercises',
                         },
                         canActivate: [UserRouteAccessService],
@@ -188,7 +188,7 @@ export const courseManagementState: Routes = [
                         path: 'communication',
                         loadComponent: () => import('app/communication/shared/course-conversations/course-conversations.component').then((m) => m.CourseConversationsComponent),
                         data: {
-                            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_TUTOR,
                             pageTitle: 'overview.communication',
                         },
                         canActivate: [UserRouteAccessService],
@@ -197,7 +197,7 @@ export const courseManagementState: Routes = [
                         path: 'course-statistics',
                         loadComponent: () => import('./statistics/course-management-statistics.component').then((m) => m.CourseManagementStatisticsComponent),
                         data: {
-                            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_TUTOR,
                             pageTitle: 'artemisApp.courseStatistics.statistics',
                             breadcrumbLabelVariable: '',
                         },
@@ -207,8 +207,11 @@ export const courseManagementState: Routes = [
                         path: 'settings',
                         loadComponent: () => import('./update/course-update.component').then((m) => m.CourseUpdateComponent),
                         data: {
-                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'overview.settings',
+                        },
+                        resolve: {
+                            course: CourseManagementResolve,
                         },
                         canActivate: [UserRouteAccessService],
                     },
@@ -217,7 +220,7 @@ export const courseManagementState: Routes = [
                         loadComponent: () =>
                             import('app/core/course/manage/course-group-membership/course-group-membership.component').then((m) => m.CourseGroupMembershipComponent),
                         data: {
-                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.userManagement.groups',
                         },
                         canActivate: [UserRouteAccessService],
@@ -226,7 +229,7 @@ export const courseManagementState: Routes = [
                         path: 'ratings',
                         loadComponent: () => import('app/assessment/manage/rating/rating-list/rating-list.component').then((m) => m.RatingListComponent),
                         data: {
-                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.ratingList.pageTitle',
                         },
                         canActivate: [UserRouteAccessService],
@@ -235,7 +238,7 @@ export const courseManagementState: Routes = [
                         path: 'competency-management',
                         loadComponent: () => import('app/atlas/manage/competency-management/competency-management.component').then((m) => m.CompetencyManagementComponent),
                         data: {
-                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.competency.manage.title',
                         },
                         canActivate: [UserRouteAccessService],
@@ -308,7 +311,7 @@ export const courseManagementState: Routes = [
                                 path: 'create',
                                 loadComponent: () => import('app/atlas/manage/create/create-competency.component').then((m) => m.CreateCompetencyComponent),
                                 data: {
-                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
                                     pageTitle: 'artemisApp.competency.create.title',
                                 },
                                 canActivate: [UserRouteAccessService],
@@ -317,7 +320,7 @@ export const courseManagementState: Routes = [
                                 path: ':competencyId/edit',
                                 loadComponent: () => import('app/atlas/manage/edit/edit-competency.component').then((m) => m.EditCompetencyComponent),
                                 data: {
-                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
                                     pageTitle: 'artemisApp.competency.edit.title',
                                 },
                                 canActivate: [UserRouteAccessService],
@@ -326,7 +329,7 @@ export const courseManagementState: Routes = [
                                 path: 'import',
                                 loadComponent: () => import('app/atlas/manage/import/import-competencies.component').then((m) => m.ImportCompetenciesComponent),
                                 data: {
-                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
                                     pageTitle: 'artemisApp.competency.import.title',
                                 },
                                 canActivate: [UserRouteAccessService],
@@ -339,7 +342,7 @@ export const courseManagementState: Routes = [
                                         (m) => m.CourseImportStandardizedCompetenciesComponent,
                                     ),
                                 data: {
-                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
                                     pageTitle: 'artemisApp.competency.import.title',
                                 },
                                 canActivate: [UserRouteAccessService],
@@ -349,7 +352,7 @@ export const courseManagementState: Routes = [
                                 path: 'generate',
                                 loadComponent: () => import('app/atlas/manage/generate-competencies/generate-competencies.component').then((m) => m.GenerateCompetenciesComponent),
                                 data: {
-                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
                                     pageTitle: 'artemisApp.competency.generate.title',
                                 },
                                 canActivate: [UserRouteAccessService, IrisGuard],
@@ -372,7 +375,7 @@ export const courseManagementState: Routes = [
                                 path: 'create',
                                 loadComponent: () => import('app/atlas/manage/create/create-prerequisite.component').then((m) => m.CreatePrerequisiteComponent),
                                 data: {
-                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
                                     pageTitle: 'artemisApp.prerequisite.createPrerequisite.title',
                                 },
                                 canActivate: [UserRouteAccessService],
@@ -381,7 +384,7 @@ export const courseManagementState: Routes = [
                                 path: ':prerequisiteId/edit',
                                 loadComponent: () => import('app/atlas/manage/edit/edit-prerequisite.component').then((m) => m.EditPrerequisiteComponent),
                                 data: {
-                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
                                     pageTitle: 'artemisApp.prerequisite.editPrerequisite.title',
                                 },
                                 canActivate: [UserRouteAccessService],
@@ -390,7 +393,7 @@ export const courseManagementState: Routes = [
                                 path: 'import',
                                 loadComponent: () => import('app/atlas/manage/import/import-prerequisites.component').then((m) => m.ImportPrerequisitesComponent),
                                 data: {
-                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
                                     pageTitle: 'artemisApp.prerequisite.import.title',
                                 },
                                 canActivate: [UserRouteAccessService],
@@ -403,7 +406,7 @@ export const courseManagementState: Routes = [
                                         (m) => m.CourseImportStandardizedPrerequisitesComponent,
                                     ),
                                 data: {
-                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    authorities: IS_AT_LEAST_INSTRUCTOR,
                                     pageTitle: 'artemisApp.prerequisite.import.title',
                                 },
                                 canActivate: [UserRouteAccessService],
@@ -416,7 +419,7 @@ export const courseManagementState: Routes = [
                         loadComponent: () =>
                             import('app/atlas/manage/learning-path-instructor-page/learning-path-instructor-page.component').then((m) => m.LearningPathInstructorPageComponent),
                         data: {
-                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.learningPath.manageLearningPaths.title',
                         },
                         canActivate: [UserRouteAccessService],
@@ -425,7 +428,7 @@ export const courseManagementState: Routes = [
                         path: 'build-queue',
                         loadComponent: () => import('app/buildagent/build-queue/build-queue.component').then((m) => m.BuildQueueComponent),
                         data: {
-                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.buildQueue.title',
                         },
                         canActivate: [UserRouteAccessService, LocalCIGuard],
@@ -440,7 +443,7 @@ export const courseManagementState: Routes = [
                                     course: CourseManagementResolve,
                                 },
                                 data: {
-                                    authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                                    authorities: IS_AT_LEAST_TUTOR,
                                     pageTitle: 'artemisApp.faq.home.title',
                                 },
                                 canActivate: [UserRouteAccessService],
@@ -456,7 +459,7 @@ export const courseManagementState: Routes = [
                                         path: 'new',
                                         loadComponent: () => import('app/communication/faq/faq-update.component').then((m) => m.FaqUpdateComponent),
                                         data: {
-                                            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                                            authorities: IS_AT_LEAST_TUTOR,
                                             pageTitle: 'global.generic.create',
                                         },
                                         canActivate: [UserRouteAccessService],
@@ -471,7 +474,7 @@ export const courseManagementState: Routes = [
                                                 path: 'edit',
                                                 loadComponent: () => import('app/communication/faq/faq-update.component').then((m) => m.FaqUpdateComponent),
                                                 data: {
-                                                    authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                                                    authorities: IS_AT_LEAST_TUTOR,
                                                     pageTitle: 'global.generic.edit',
                                                 },
                                                 canActivate: [UserRouteAccessService],

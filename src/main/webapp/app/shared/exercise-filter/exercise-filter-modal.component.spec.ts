@@ -15,6 +15,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { SidebarCardElement } from 'app/shared/types/sidebar';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const EXERCISE_1 = { categories: [new ExerciseCategory('category1', undefined), new ExerciseCategory('category2', '#1b97ca')], maxPoints: 5, type: ExerciseType.TEXT } as Exercise;
 const EXERCISE_2 = {
@@ -32,19 +33,19 @@ const SIDEBAR_CARD_ELEMENT_1 = {
     exercise: EXERCISE_1,
     type: ExerciseType.TEXT,
     difficulty: DifficultyLevel.HARD,
-    studentParticipation: { results: [{ score: 7.7 } as Result] } as StudentParticipation,
+    studentParticipation: { submissions: [{ results: [{ score: 7.7 } as Result] }] } as StudentParticipation,
 } as SidebarCardElement;
 const SIDEBAR_CARD_ELEMENT_2 = {
     exercise: EXERCISE_2,
     type: ExerciseType.PROGRAMMING,
     difficulty: DifficultyLevel.EASY,
-    studentParticipation: { results: [{ score: 5.0 } as Result] } as StudentParticipation,
+    studentParticipation: { submissions: [{ results: [{ score: 5.0 } as Result] }] } as StudentParticipation,
 } as SidebarCardElement;
 const SIDEBAR_CARD_ELEMENT_3 = {
     exercise: EXERCISE_3,
     type: ExerciseType.PROGRAMMING,
     difficulty: DifficultyLevel.EASY,
-    studentParticipation: { results: [{ score: 82.3 } as Result] } as StudentParticipation,
+    studentParticipation: { submissions: [{ results: [{ score: 82.3 } as Result] }] } as StudentParticipation,
 } as SidebarCardElement;
 
 const SCORE_FILTER: RangeFilter = {
@@ -76,7 +77,7 @@ describe('ExerciseFilterModalComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(FontAwesomeModule)],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(FontAwesomeModule), FaIconComponent],
             declarations: [ExerciseFilterModalComponent, MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(RangeSliderComponent)],
             providers: [
                 MockProvider(NgbActiveModal),

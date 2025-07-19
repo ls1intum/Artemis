@@ -43,7 +43,7 @@ Artemis brings interactive learning to life with instant, individual feedback on
    * **Multiple diagram types**: Artemis supports 7 UML diagram types (e.g. class diagrams) and 4 additional diagrams (e.g. flow charts)
    * **Easy to use**: Students can create models easily using drag and drop, they can explain the models using additional text.
    * **Integrated feedback**: Reviews can provide feedback and points directly next to the model elements.
-6. **[Text exercises](https://docs.artemis.cit.tum.de/user/exercises/textual/)** with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using [Athena](https://github.com/ls1intum/Athena)
+6. **[Text exercises](https://docs.artemis.cit.tum.de/user/exercises/textual/)** with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using [Athena](https://github.com/ls1intum/edutelligence/tree/main/athena)
    * **Integrated feedback**: Reviews can provide feedback and points directly next to the text segments.
    * **Language detection**: Artemis detects the language of the submission and shows the word and character count. 
 7. **[File upload exercises](https://docs.artemis.cit.tum.de/user/exercises/file-upload/)** allow full flexibility to instructors. Students can create any kind of file (e.g. PDF, PNG) and submit it to Artemis when they have completed their work. Artemis allows instructors and tutors to download the files and assess them manually based on structured grading criteria (see below in the section Assessment).
@@ -59,13 +59,24 @@ Artemis brings interactive learning to life with instant, individual feedback on
     * **[Adaptive learning](https://docs.artemis.cit.tum.de/user/adaptive-learning)**: Artemis allows instructors and students to define and track competencies. Students can monitor their progress towards these goals, while instructors can provide tailored feedback. This approach integrates lectures and exercises under overarching learning objectives. 
     * **[Learning analytics](https://docs.artemis.cit.tum.de/user/learning-analytics)**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and competencies. 
     * **[Learning paths](https://docs.artemis.cit.tum.de/user/adaptive-learning/adaptive-learning-student.html#learning-paths)**: Based on the competency model and students' individual progress, Artemis creates learning paths that guide students through the course content.
-13. **[Iris](https://artemis.tum.de/about-iris)**: Artemis integrates Iris, a LLM based virtual assistant that supports students and instructors with common questions and tasks.
+13. **[Iris](https://github.com/ls1intum/edutelligence/tree/main/iris)**: Artemis integrates Iris, a LLM based virtual assistant that supports students and instructors with common questions and tasks.
     * **Questions**: Iris supports students with answering questions about exercises, lectures, and the learning performance instantly.
     * **Pro-active assistance**: Iris can pro-actively communicate with the students, help them with the next steps in their learning experience and motivate them to continue.
-14. **[Athena](https://github.com/ls1intum/Athena)**: Artemis integrates Athena, a machine learning-based tool that supports instructors with the assessment of text, modeling and programming exercises. Athena offers different modules including automatic feedback suggestions based on generate AI. 
+14. **[Athena](https://github.com/ls1intum/edutelligence/tree/main/athena)**: Artemis integrates Athena, a machine learning-based tool that supports instructors with the assessment of text, modeling and programming exercises. Athena offers different modules including automatic feedback suggestions based on generative AI. 
 15. **[Tutorial groups](https://docs.artemis.cit.tum.de/user/tutorialgroups/)**: Artemis supports the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
 16. **[Plagiarism checks](https://docs.artemis.cit.tum.de/user/plagiarism-check/)**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises in courses and exams. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.
 17. **[LTI](https://docs.artemis.cit.tum.de/user/lti)**: Artemis supports the Learning Tools Interoperability (LTI) standard to integrate Artemis into other learning management systems (LMS) such as Moodle and edX.
+
+## EduTelligence Integration
+
+Artemis integrates with the [EduTelligence suite](https://github.com/ls1intum/edutelligence), a comprehensive collection of AI-powered microservices designed to enhance educational technology platforms. EduTelligence provides:
+
+* **Iris** - AI Virtual Tutor powered by Pyris for intelligent student assistance
+* **Athena** - Automated assessment system for text, modeling, and programming exercises
+
+Additional services are available in the EduTelligence suite for advanced deployments. For detailed information about all available services, please refer to the [EduTelligence repository](https://github.com/ls1intum/edutelligence).
+
+**Compatibility**: EduTelligence maintains compatibility with different versions of Artemis. Please refer to the [compatibility matrix](https://github.com/ls1intum/edutelligence#-artemis-compatibility) to ensure you're using compatible versions for optimal integration and functionality.
 
 ## Additional features and aspects
 
@@ -191,7 +202,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.0.8.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.3.0.war
 ```
 
 ## Architecture

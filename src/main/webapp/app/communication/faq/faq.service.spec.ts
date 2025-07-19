@@ -10,6 +10,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { EMPTY, of } from 'rxjs';
 
 describe('Faq Service', () => {
     let httpMock: HttpTestingController;
@@ -226,12 +227,12 @@ describe('Faq Service', () => {
 
             filteredFaq = service.applyFilters(activeFilters, filteredFaq);
             expect(filteredFaq).toBeArrayOfSize(3);
-            expect(filteredFaq).toContainAllValues([faq1, faq11, faq2]);
+            expect(filteredFaq).toIncludeAllMembers([faq1, faq11, faq2]);
 
             activeFilters.add('test');
             filteredFaq = service.applyFilters(activeFilters, filteredFaq);
             expect(filteredFaq).toBeArrayOfSize(2);
-            expect(filteredFaq).toContainAllValues([faq1, faq11]);
+            expect(filteredFaq).toIncludeAllMembers([faq1, faq11]);
         });
 
         it('should convert String into FAQ categories   correctly', async () => {
@@ -271,5 +272,9 @@ describe('Faq Service', () => {
             });
             expect(req.request.method).toBe('POST');
         });
+    });
+    it('should make PUT request to enable FAQ', () => {
+        service.enable(1).subscribe((resp) => expect(resp).toEqual(of(EMPTY)));
+        httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/faqs/enable` });
     });
 });

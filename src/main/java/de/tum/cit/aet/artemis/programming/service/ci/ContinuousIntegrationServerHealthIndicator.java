@@ -6,11 +6,13 @@ import java.util.Optional;
 
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Profile(PROFILE_CORE)
 @Component
+@Lazy
 public class ContinuousIntegrationServerHealthIndicator implements HealthIndicator {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;

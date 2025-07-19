@@ -28,7 +28,7 @@
                     }
                 },
                 "subSettings": {
-                    "chatSettings": "Chat Settings",
+                    "exerciseChatSettings": "Programming Exercise Chat Settings",
                     "textExerciseChatSettings": "Text Exercise Chat Settings",
                     "lectureChatSettings": "Lecture Chat Settings",
                     "courseChatSettings": "Course Chat Settings",
@@ -41,6 +41,7 @@
                         "autoIngest": "Send FAQs To Iris Automatically"
                     },
                     "competencyGenerationSettings": "Competency Generation Settings",
+                    "tutorSuggestionSettings": "Tutor Suggestion Settings",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Monitor submission build failures",
                         "tooltip": "When enabled, Iris will proactively send help messages if a submission build fails."
@@ -78,11 +79,17 @@
                     "enabled": {
                         "on": "Enabled",
                         "off": "Disabled",
+                        "custom": "Custom",
                         "chat": "Iris Chat"
                     },
                     "disabled": {
                         "course": "IRIS is disabled in course IRIS settings",
                         "global": "IRIS is disabled in global IRIS settings"
+                    },
+                    "customInstructions": {
+                        "title": "Custom Instructions",
+                        "description": "Custom instructions to be provided to the AI when generating responses.",
+                        "placeholder": "Enter custom instructions for the AI (max 2048 characters)"
                     }
                 },
                 "title": {
@@ -102,6 +109,10 @@
             },
             "chat": {
                 "helpOffer": "How can I help you today?"
+            },
+            "tutorSuggestion": {
+                "loading": "Loading suggestions...",
+                "noIris": "Iris is currently unavailable."
             },
             "chatBubble": {
                 "seeFull": "See full message"
@@ -127,6 +138,21 @@
                 "pyrisUnavailable": "Iris is currently unavailable.",
                 "pyrisError": "An error occurred while getting processing status from Iris.",
                 "transcriptionIngestionError": "Error while sending transcription"
+            },
+            "controlCenter": {
+                "tooltip": "By toggling you enable or disable ALL Iris features for this course. For a more precise control, please use the Iris settings by clicking on Custom."
+            },
+            "chatHistory": {
+                "title": "Chats",
+                "today": "Today",
+                "yesterday": "Yesterday",
+                "last7Days": "Last 7 Days",
+                "last30Days": "Last 30 Days",
+                "older": "Older",
+                "relatedEntityTooltip": {
+                    "programmingExercise": "This chat is related to a programming exercise.",
+                    "lecture": "This chat is related to a lecture."
+                }
             }
         }
     }

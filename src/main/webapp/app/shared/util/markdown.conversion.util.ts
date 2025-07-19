@@ -38,6 +38,7 @@ const turndownService = new TurndownService();
  * @param extensions to use for markdown parsing
  * @param {string[]} allowedHtmlTags to allow during sanitization
  * @param {string[]} allowedHtmlAttributes to allow during sanitization
+ * @param {boolean} lineBreaks to indicate if line breaks should be added
  * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
  */
 export function htmlForMarkdown(
@@ -45,6 +46,7 @@ export function htmlForMarkdown(
     extensions: PluginSimple[] = [],
     allowedHtmlTags: string[] | undefined = undefined,
     allowedHtmlAttributes: string[] | undefined = undefined,
+    lineBreaks: boolean = false,
 ): string {
     if (!markdownText || markdownText === '') {
         return '';
@@ -53,7 +55,7 @@ export function htmlForMarkdown(
     const markdownIt = MarkdownIt({
         html: true,
         linkify: true,
-        breaks: false, // Avoid line breaks after tasks
+        breaks: lineBreaks, // Avoid line breaks after tasks
     });
     for (const extension of extensions) {
         markdownIt.use(extension);

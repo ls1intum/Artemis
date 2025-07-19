@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Conditional(TextEnabled.class)
+@Lazy
 @Service
 public class TextSubmissionExportService extends SubmissionExportService {
 

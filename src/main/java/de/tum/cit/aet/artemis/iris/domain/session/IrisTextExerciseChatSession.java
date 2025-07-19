@@ -1,10 +1,7 @@
 package de.tum.cit.aet.artemis.iris.domain.session;
 
-import java.util.Optional;
-
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,28 +18,32 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisTextExerciseChatSession extends IrisChatSession {
 
-    @ManyToOne
     @JsonIgnore
-    private TextExercise exercise;
+    private long exerciseId;
 
     public IrisTextExerciseChatSession() {
     }
 
     public IrisTextExerciseChatSession(TextExercise exercise, User user) {
         super(user);
-        this.exercise = exercise;
+        this.exerciseId = exercise.getId();
     }
 
-    public TextExercise getExercise() {
-        return exercise;
+    public long getExerciseId() {
+        return exerciseId;
     }
 
-    public void setExercise(TextExercise exercise) {
-        this.exercise = exercise;
+    public void setExerciseId(long exerciseId) {
+        this.exerciseId = exerciseId;
     }
 
     @Override
-    public String toString() {
-        return "IrisTextExerciseChatSession{" + "user=" + Optional.ofNullable(getUser()).map(User::getLogin).orElse("null") + "," + "exercise=" + exercise + '}';
+    public boolean shouldAcceptExternalLLMUsage() {
+        return true;
+    }
+
+    @Override
+    public IrisChatMode getMode() {
+        return IrisChatMode.TEXT_EXERCISE_CHAT;
     }
 }

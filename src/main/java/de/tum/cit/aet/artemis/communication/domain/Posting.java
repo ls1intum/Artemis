@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.domain;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
@@ -24,7 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
- * A METIS Posting.
+ * Base class for messages {@link Post} and answer messages {@link AnswerPost} in the communication system.
  */
 @MappedSuperclass
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -108,6 +109,7 @@ public abstract class Posting extends DomainObject {
     public abstract void removeReaction(Reaction reaction);
 
     @Transient
+    @Nullable
     public abstract Course getCoursePostingBelongsTo();
 
     public abstract Conversation getConversation();

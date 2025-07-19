@@ -19,9 +19,9 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -33,7 +33,7 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
     private LectureTranscriptionRepository lectureTranscriptionRepository;
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -59,7 +59,7 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
         this.lecture = course.getLectures().stream().findFirst().orElseThrow();
         this.lecture.setTitle("Lecture " + lecture.getId());
         this.lecture = lectureRepository.save(this.lecture);
-        this.lectureUnit = lectureUtilService.createVideoUnit();
+        this.lectureUnit = lectureUtilService.createAttachmentVideoUnit(false);
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(this.lectureUnit));
     }
 

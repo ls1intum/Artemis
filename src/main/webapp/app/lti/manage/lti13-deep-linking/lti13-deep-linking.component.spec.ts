@@ -87,7 +87,7 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies).toHaveBeenCalledWith(course.id);
         expect(component.courseId).toBe(123);
         expect(component.course).toEqual(course);
-        expect(component.exercises).toContainAllValues(course.exercises!);
+        expect(component.exercises).toIncludeAllMembers(course.exercises!);
     }));
 
     it('should alert user when no exercise is selected', () => {

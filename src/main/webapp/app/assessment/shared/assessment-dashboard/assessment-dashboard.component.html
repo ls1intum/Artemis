@@ -1,39 +1,39 @@
-<div class="mx-n1 course-info-bar mt-0">
+<div class="mx-n1 mt-0">
     <div class="row align-items-center justify-content-end">
         <div class="col-12 col-lg-7 general-info">
-            <div class="d-flex align-items-center">
+            <div *titleBarTitle class="d-flex align-items-center">
                 @if (!isExamMode) {
-                    <h2>{{ 'artemisApp.assessmentDashboard.pageHeader' | artemisTranslate }} {{ course?.title }}</h2>
+                    <jhi-course-title-bar-title title="artemisApp.assessmentDashboard.title" />
                 }
                 @if (isExamMode) {
-                    <h2>
+                    <h5 class="mb-0">
                         {{
                             !isTestRun
                                 ? ('artemisApp.assessmentDashboard.pageHeaderExam' | artemisTranslate)
                                 : ('artemisApp.assessmentDashboard.pageHeaderExamTestRun' | artemisTranslate)
                         }}
                         {{ exam?.title }}
-                    </h2>
+                    </h5>
                 }
                 <jhi-documentation-button [type]="documentationType" />
             </div>
         </div>
-        <div class="col-12 col-lg-5">
+        <div *titleBarActions>
             @if (!isExamMode) {
                 <div class="d-flex justify-content-lg-end">
                     @if (course && course.isAtLeastInstructor) {
-                        <a [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md">
+                        <a [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-sm btn-info">
                             <fa-icon [icon]="faTable" />
                             <span jhiTranslate="entity.action.scores"></span>
                         </a>
                     }
                     @if (course?.isAtLeastInstructor) {
-                        <a [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-info btn-md ms-1 me-1">
+                        <a [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-sm btn-info ms-1 me-1">
                             <fa-icon [icon]="faClipboard" /> <span jhiTranslate="artemisApp.course.gradingSystem"></span>
                         </a>
 
                         <jhi-feature-overlay [enabled]="plagiarismEnabled">
-                            <a [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-info btn-md">
+                            <a [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-sm btn-info">
                                 <fa-icon [icon]="faHeartBroken" />
                                 <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
                             </a>

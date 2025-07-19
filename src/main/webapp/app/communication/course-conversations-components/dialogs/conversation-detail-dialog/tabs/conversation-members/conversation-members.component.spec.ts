@@ -42,14 +42,8 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [FormsModule, ReactiveFormsModule],
-                declarations: [
-                    ConversationMembersComponent,
-                    MockPipe(ArtemisTranslatePipe),
-                    MockComponent(FaIconComponent),
-                    MockComponent(ItemCountComponent),
-                    MockDirective(TranslateDirective),
-                ],
+                imports: [FormsModule, ReactiveFormsModule, FaIconComponent],
+                declarations: [ConversationMembersComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ItemCountComponent), MockDirective(TranslateDirective)],
                 providers: [
                     MockProvider(ConversationService),
                     MockProvider(AlertService),

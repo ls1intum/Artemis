@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.profile;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.Set;
 
 import org.hibernate.Hibernate;
@@ -42,7 +43,7 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
 
         Set<CourseLearnerProfileDTO> response = request.getSet("/api/atlas/course-learner-profiles", HttpStatus.OK, CourseLearnerProfileDTO.class);
 
-        Set<CourseLearnerProfile> profiles = courseLearnerProfileRepository.findAllByLogin(STUDENT1_OF_COURSE);
+        Set<CourseLearnerProfile> profiles = courseLearnerProfileRepository.findAllByLoginAndCourseActive(STUDENT1_OF_COURSE, ZonedDateTime.now());
 
         for (CourseLearnerProfile profile : profiles) {
             assertThat(response.iterator().next()).isEqualTo(CourseLearnerProfileDTO.of(profile));
@@ -81,7 +82,7 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void shouldUpdateLearnerProfile() throws Exception {
 
-        CourseLearnerProfile courseLearnerProfile = courseLearnerProfileRepository.findAllByLogin(STUDENT1_OF_COURSE).stream().findAny().get();
+        CourseLearnerProfile courseLearnerProfile = courseLearnerProfileRepository.findAllByLoginAndCourseActive(STUDENT1_OF_COURSE, ZonedDateTime.now()).stream().findAny().get();
         var course = courseLearnerProfile.getCourse();
         CourseLearnerProfileDTO dto = new CourseLearnerProfileDTO(courseLearnerProfile.getId(), course.getId(), course.getTitle(),
                 (courseLearnerProfile.getAimForGradeOrBonus()) % 4 + 1, (courseLearnerProfile.getTimeInvestment()) % 4 + 1,
@@ -91,7 +92,8 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
                 HttpStatus.OK);
 
         assertThat(response).isEqualTo(dto);
-        CourseLearnerProfileDTO dbState = CourseLearnerProfileDTO.of(courseLearnerProfileRepository.findAllByLogin(STUDENT1_OF_COURSE).stream().findAny().get());
+        CourseLearnerProfileDTO dbState = CourseLearnerProfileDTO
+                .of(courseLearnerProfileRepository.findAllByLoginAndCourseActive(STUDENT1_OF_COURSE, ZonedDateTime.now()).stream().findAny().get());
         assertThat(dbState).isEqualTo(dto);
     }
 

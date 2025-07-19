@@ -23,6 +23,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -64,6 +65,7 @@ describe('Course Management Exercises Component', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                CourseTitleBarActionsDirective,
             ],
         })
             .compileComponents()
@@ -86,12 +88,10 @@ describe('Course Management Exercises Component', () => {
         expect(comp.course).toBe(course);
     });
 
-    it('should open search bar on button click', () => {
+    it('should open search bar on toggle search', () => {
         fixture.detectChanges();
-        const button = fixture.debugElement.nativeElement.querySelector('#toggleSearchButton');
-        button.click();
+        comp.toggleSearch();
         fixture.detectChanges();
-
         const searchBar = fixture.debugElement.nativeElement.querySelector('jhi-course-management-exercises-search');
 
         expect(comp.showSearch).toBeTrue();

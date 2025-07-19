@@ -7,33 +7,38 @@ import java.time.ZoneId;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
 /**
  * Service to handle the course chat subsystem of Iris.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
@@ -52,10 +57,12 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private final PyrisPipelineService pyrisPipelineService;
 
+    private final CourseRepository courseRepository;
+
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
             IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             IrisRateLimitService rateLimitService, IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper, CourseRepository courseRepository) {
         super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -64,12 +71,12 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         this.rateLimitService = rateLimitService;
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.pyrisPipelineService = pyrisPipelineService;
+        this.courseRepository = courseRepository;
     }
 
     /**
      * Checks if the user has access to the Iris session.
-     * A user has access if they have access to the exercise and the session belongs to them.
-     * If the user is null, the user is fetched from the database.
+     * A user has access if they have access to the course and the session belongs to them.
      *
      * @param user    The user to check
      * @param session The session to check
@@ -77,8 +84,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     @Override
     public void checkHasAccessTo(User user, IrisCourseChatSession session) {
         user.hasAcceptedExternalLLMUsageElseThrow();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, session.getCourse(), user);
-        if (!Objects.equals(session.getUser(), user)) {
+        var course = courseRepository.findByIdElseThrow(session.getCourseId());
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        if (!Objects.equals(session.getUserId(), user.getId())) {
             throw new AccessForbiddenException("Iris Session", session.getId());
         }
     }
@@ -90,7 +98,8 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     @Override
     public void checkIsFeatureActivatedFor(IrisCourseChatSession session) {
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, session.getCourse());
+        var course = courseRepository.findByIdElseThrow(session.getCourseId());
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
     }
 
     @Override
@@ -111,35 +120,51 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     @Override
     public void requestAndHandleResponse(IrisCourseChatSession session) {
-        var variant = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false).irisChatSettings().selectedVariant();
-        requestAndHandleResponse(session, variant, null);
+        var course = courseRepository.findByIdElseThrow(session.getCourseId());
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCourseChatSettings();
+        if (!settings.enabled()) {
+            throw new ConflictException("Iris is not enabled for this course", "Iris", "irisDisabled");
+        }
+        requestAndHandleResponse(session, settings.selectedVariant(), settings.customInstructions(), null);
     }
 
-    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, Object object) {
+    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, String customInstructions, Object object) {
         var chatSession = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, object);
+        pyrisPipelineService.executeCourseChatPipeline(variant, customInstructions, chatSession, object);
     }
 
     @Override
     protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisCourseChatSession session) {
-        builder.withCourse(session.getCourse().getId());
+        builder.withCourse(session.getCourseId());
     }
 
     /**
-     * Triggers the course chat in response to a new judgement of learning.
-     * If the course chat is not enabled for the course, nothing happens.
+     * Handles the CompetencyJolSetEvent by checking if Iris is activated for the course and if the user has accepted external LLM usage.
+     * If both conditions are met, it retrieves or creates a session and sends the request to the LLM.
      *
-     * @param competencyJol The judgement of learning instance to trigger the course chat for
+     * @param competencyJolSetEvent The event containing the CompetencyJol
      */
-    public void onJudgementOfLearningSet(CompetencyJol competencyJol) {
+    public void handleCompetencyJolSetEvent(CompetencyJolSetEvent competencyJolSetEvent) {
+        var competencyJol = competencyJolSetEvent.getEventObject();
         var course = competencyJol.getCompetency().getCourse();
-        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.COURSE_CHAT, course)) {
+        var user = competencyJol.getUser();
+
+        if (!user.hasAcceptedExternalLLMUsage()) {
             return;
         }
-        var user = competencyJol.getUser();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+
+        var combinedSettings = irisSettingsService.getCombinedIrisSettingsFor(course, false);
+        var settings = combinedSettings.irisCourseChatSettings();
+        if (!settings.enabled() || !IrisSettingsService.isEventEnabledInSettings(combinedSettings, IrisEventType.JOL)) {
+            return;
+        }
+
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
-        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "default", competencyJol));
+
+        var variant = settings.selectedVariant();
+        var customInstructions = settings.customInstructions();
+
+        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, variant, customInstructions, competencyJol));
     }
 
     /**

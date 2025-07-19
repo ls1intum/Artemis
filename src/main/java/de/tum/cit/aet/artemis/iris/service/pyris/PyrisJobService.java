@@ -7,17 +7,19 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
@@ -26,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TranscriptionIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
 /**
  * The PyrisJobService class is responsible for managing Pyris jobs in the Artemis system.
@@ -33,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TranscriptionIngestionWebho
  * The class also handles generating job ID tokens and validating tokens from request headers based ont these tokens.
  * It uses Hazelcast to store the jobs in a distributed map.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class PyrisJobService {
@@ -61,7 +65,7 @@ public class PyrisJobService {
      * Initializes the PyrisJobService by configuring the Hazelcast map for Pyris jobs.
      * Sets the time-to-live for the map entries to the specified jobTimeout value.
      */
-    @PostConstruct
+    @EventListener(FullStartupEvent.class)
     public void init() {
         var mapConfig = hazelcastInstance.getConfig().getMapConfig("pyris-job-map");
         mapConfig.setTimeToLiveSeconds(jobTimeout);
@@ -92,6 +96,21 @@ public class PyrisJobService {
     public String addCourseChatJob(Long courseId, Long sessionId) {
         var token = generateJobIdToken();
         var job = new CourseChatJob(token, courseId, sessionId, null);
+        jobMap.put(token, job);
+        return token;
+    }
+
+    /**
+     * adds a tutor suggestion job to the job map
+     *
+     * @param postId    Id of the post the suggestion is created for
+     * @param courseId  Id of the course the post belongs to
+     * @param sessionId Id of the session the suggestion is created for
+     * @return the token of the job
+     */
+    public String addTutorSuggestionJob(Long postId, Long courseId, Long sessionId) {
+        var token = generateJobIdToken();
+        var job = new TutorSuggestionJob(token, postId, courseId, sessionId, null);
         jobMap.put(token, job);
         return token;
     }

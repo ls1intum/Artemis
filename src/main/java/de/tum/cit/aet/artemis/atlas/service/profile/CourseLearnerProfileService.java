@@ -4,16 +4,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class CourseLearnerProfileService {
 
@@ -35,9 +38,11 @@ public class CourseLearnerProfileService {
      *
      * @param course the course for which the profile is created
      * @param user   the user for which the profile is created
+     * @return Saved CourseLearnerProfile
      */
-    public void createCourseLearnerProfile(Course course, User user) {
+    public CourseLearnerProfile createCourseLearnerProfile(Course course, User user) {
 
+        // Ensure that the user has a learner profile (lazy creation)
         if (user.getLearnerProfile() == null) {
             learnerProfileService.createProfile(user);
         }
@@ -45,10 +50,15 @@ public class CourseLearnerProfileService {
         var courseProfile = new CourseLearnerProfile();
         courseProfile.setCourse(course);
 
+        // Initialize values in the middle of Likert scale
+        courseProfile.setAimForGradeOrBonus(3);
+        courseProfile.setRepetitionIntensity(3);
+        courseProfile.setTimeInvestment(3);
+
         var learnerProfile = learnerProfileRepository.findByUserElseThrow(user);
         courseProfile.setLearnerProfile(learnerProfile);
 
-        courseLearnerProfileRepository.save(courseProfile);
+        return courseLearnerProfileRepository.save(courseProfile);
     }
 
     /**
@@ -59,15 +69,27 @@ public class CourseLearnerProfileService {
      */
     public void createCourseLearnerProfiles(Course course, Set<User> users) {
 
+        // Ensure that all users have a learner profile (lazy creation)
         users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
 
-        Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> {
-            var courseProfile = new CourseLearnerProfile();
+        Set<LearnerProfile> learnerProfiles = learnerProfileRepository.findAllByUserIn(users);
+
+        Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course).orElseGet(() -> {
+
+            CourseLearnerProfile courseProfile = new CourseLearnerProfile();
             courseProfile.setCourse(course);
-            courseProfile.setLearnerProfile(learnerProfileRepository.findByUserElseThrow(user));
+            LearnerProfile learnerProfile = learnerProfiles.stream().filter(profile -> profile.getUser().equals(user)).findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Learner profile for user " + user.getLogin() + " not found"));
+
+            courseProfile.setLearnerProfile(learnerProfile);
+
+            // Initialize values in the middle of Likert scale
+            courseProfile.setAimForGradeOrBonus(3);
+            courseProfile.setRepetitionIntensity(3);
+            courseProfile.setTimeInvestment(3);
 
             return courseProfile;
-        }).collect(Collectors.toSet());
+        })).collect(Collectors.toSet());
 
         courseLearnerProfileRepository.saveAll(courseProfiles);
     }

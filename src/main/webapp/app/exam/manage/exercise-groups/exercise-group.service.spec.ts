@@ -23,7 +23,7 @@ describe('Exercise Group Service', () => {
         service.delete(1, 2, 3, true, false);
         expect(httpClientDeleteSpy).toHaveBeenCalledOnce();
         expect(httpClientDeleteSpy.mock.calls[0]).toHaveLength(2);
-        expect(httpClientDeleteSpy.mock.calls[0][1].params.updates).toContainAllValues([
+        expect(httpClientDeleteSpy.mock.calls[0][1].params.updates).toIncludeAllMembers([
             { op: 's', param: 'deleteStudentReposBuildPlans', value: 'true' },
             { op: 's', param: 'deleteBaseReposBuildPlans', value: 'false' },
         ]);

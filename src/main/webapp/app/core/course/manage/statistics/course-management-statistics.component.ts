@@ -4,19 +4,26 @@ import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/s
 import { Subscription } from 'rxjs';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import { CourseManagementStatisticsDTO } from '../../shared/entities/course-management-statistics-dto';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/average-score-graph/statistics-average-score-graph.component';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 
 @Component({
     selector: 'jhi-course-management-statistics',
     templateUrl: './course-management-statistics.component.html',
     styleUrls: ['./course-management-statistics.component.scss'],
-    imports: [TranslateDirective, DocumentationButtonComponent, StatisticsAverageScoreGraphComponent, StatisticsGraphComponent, ArtemisTranslatePipe],
+    imports: [
+        DocumentationButtonComponent,
+        StatisticsAverageScoreGraphComponent,
+        StatisticsGraphComponent,
+        ArtemisTranslatePipe,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarTitleComponent,
+    ],
 })
 export class CourseManagementStatisticsComponent implements OnInit {
     private service = inject(StatisticsService);

@@ -311,7 +311,7 @@ It relays message between instances:
 
   .. code:: bash
 
-        sudo wget -O /opt/activemq-distribution/activemq.tar.gz https://downloads.apache.org/activemq/activemq-artemis/2.13.0/apache-artemis-2.13.0-bin.tar.gz
+        sudo wget -O /opt/activemq-distribution/activemq.tar.gz https://downloads.apache.org/activemq/activemq-artemis/2.41.0/apache-artemis-2.41.0-bin.tar.gz
 
 3. Extract the downloaded contents
 
@@ -324,7 +324,7 @@ It relays message between instances:
 
   .. code:: bash
 
-        cd /opt/activemq-distribution/apache-artemis-2.13.0/bin
+        cd /opt/activemq-distribution/apache-artemis-2.41.0/bin
 
 5. Create a broker in the /opt/broker/broker1 directory, replace USERNAME and PASSWORD accordingly
 
@@ -528,7 +528,7 @@ For ICL, the run configuration for core nodes need to include the additional pro
 
 ::
 
-        --spring.profiles.active=prod,core,ldap-only,localvc,localci,athena,scheduling,iris,lti
+        --spring.profiles.active=prod,core,ldap,localvc,localci,athena,scheduling,iris,lti
 
 Core nodes do not require further adjustments to the ``application-prod.yml``, as long as you have added the necessary variables as described in the :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
 

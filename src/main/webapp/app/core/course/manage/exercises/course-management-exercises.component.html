@@ -1,19 +1,20 @@
 @if (course) {
-    <div class="row">
-        <div class="col d-flex align-items-center">
-            <h3>
+    <div *titleBarTitle>
+        <div class="d-flex align-items-center">
+            <h5 class="mb-0">
                 <span>
-                    {{ getExerciseCount() }}
                     {{ 'artemisApp.course.exercises' | artemisTranslate }}
+                    ({{ getExerciseCount() }})
                 </span>
-            </h3>
+            </h5>
             <jhi-documentation-button [type]="documentationType" />
         </div>
-        <div class="col text-end align-self-center">
-            <button id="toggleSearchButton" class="btn btn-primary" type="button" (click)="toggleSearch()">
-                {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch | artemisTranslate }}
-            </button>
-        </div>
+    </div>
+
+    <div *titleBarActions>
+        <button id="toggleSearchButton" class="btn btn-primary btn-sm" type="button" (click)="toggleSearch()">
+            {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch | artemisTranslate }}
+        </button>
     </div>
     @if (showSearch) {
         <jhi-course-management-exercises-search (exerciseFilter)="exerciseFilter = $event" />

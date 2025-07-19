@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 /**
  * Service to handle the rewriting subsystem of Iris.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisRewritingService {
@@ -61,12 +63,12 @@ public class IrisRewritingService {
     public void executeRewritingPipeline(User user, Course course, RewritingVariant variant, String toBeRewritten) {
         // @formatter:off
         pyrisPipelineService.executePipeline(
-                "rewriting",
-                variant.toString(),
-                Optional.empty(),
-                pyrisJobService.createTokenForJob(token -> new RewritingJob(token, course.getId(), user.getId())),
-                executionDto -> new PyrisRewritingPipelineExecutionDTO(executionDto, toBeRewritten),
-                stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId()), new PyrisRewritingStatusUpdateDTO(stages, null, null))
+            "rewriting",
+            variant.name().toLowerCase(),
+            Optional.empty(),
+            pyrisJobService.createTokenForJob(token -> new RewritingJob(token, course.getId(), user.getId())),
+            executionDto -> new PyrisRewritingPipelineExecutionDTO(executionDto, toBeRewritten, course.getId()),
+            stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId()), new PyrisRewritingStatusUpdateDTO(stages, null, null, null, null, ""))
         );
         // @formatter:on
     }

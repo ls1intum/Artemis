@@ -1,7 +1,12 @@
 package de.tum.cit.aet.artemis;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.UPLOADS_FILE_PATH_DEFAULT;
+import static de.tum.cit.aet.artemis.core.config.Constants.UPLOADS_FILE_PATH_PROPERTY_NAME;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -16,12 +21,19 @@ import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
+import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
+import de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer;
+import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
@@ -33,6 +45,8 @@ public class ArtemisApp {
     private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);
 
     private final Environment env;
+
+    public static final long appStart = System.nanoTime();
 
     public ArtemisApp(Environment env) {
         this.env = env;
@@ -48,10 +62,10 @@ public class ArtemisApp {
     @PostConstruct
     public void initApplication() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+        if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             log.error("You have misconfigured your application! It should not run with both the 'dev' and 'prod' profiles at the same time.");
         }
-        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_CLOUD)) {
+        if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_CLOUD)) {
             log.error("You have misconfigured your application! It should not run with both the 'dev' and 'cloud' profiles at the same time.");
         }
     }
@@ -66,9 +80,36 @@ public class ArtemisApp {
         DefaultProfileUtil.addDefaultProfile(app);
         var context = app.run(args);
         Environment env = context.getEnvironment();
+        String fileUploadPath = env.getProperty(UPLOADS_FILE_PATH_PROPERTY_NAME);
+        // Set the file upload path for the FilePathConverter, use the default path "uploads" if not specified
+        FilePathConverter.setFileUploadPath(Path.of(fileUploadPath == null ? UPLOADS_FILE_PATH_DEFAULT : fileUploadPath));
         var buildProperties = context.getBean(BuildProperties.class);
         var gitProperties = context.getBean(GitProperties.class);
         logApplicationStartup(env, buildProperties, gitProperties);
+        // only publish the PrintStartupBeansEvent if the development profile is active.
+        // This event is only consumed by the BeanInstantiationTracer. This class prints a dependency graph of the initialized beans in the application context to startupBeans.dot
+        // This is useful for debugging and performance improvements, but should not be enabled in production environments.
+        // startupBeans.dot can be visualized with graphviz, e.g. with http://www.webgraphviz.com/
+        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_DEVELOPMENT))) {
+            context.publishEvent(new PrintStartupBeansEvent());
+        }
+        // Publish the FullStartupEvent to indicate that the application is fully started.
+        // We use this in most of our services that execute logic on startup as we there's no need that they already execute this logic when the ApplicationReadyEvent is published.
+        context.publishEvent(new FullStartupEvent());
+        deferredEagerBeanInitialization(context);
+    }
+
+    /**
+     * Initializes deferred eager beans after the application context is fully initialized.
+     * We explicitly call this method instead of invoking it on ApplicationReadyEvent, because we want to start this process as soon as the run method returns which is after all
+     * logic related to the ApplicationReadyEvent has been executed.
+     * The deferred eager bean initialization is useful to ensure that all beans are initialized before the first request is made.
+     *
+     * @param context the application context
+     */
+    private static void deferredEagerBeanInitialization(ConfigurableApplicationContext context) {
+        DeferredEagerBeanInitializer initializer = context.getBean(DeferredEagerBeanInitializer.class);
+        initializer.initializeDeferredEagerBeans();
     }
 
     private static void logApplicationStartup(Environment env, BuildProperties buildProperties, GitProperties gitProperties) {
@@ -95,15 +136,17 @@ public class ArtemisApp {
 
                 ----------------------------------------------------------
                 \t'{}' is running! Access URLs:
-                \tLocal:      {}://localhost:{}{}
-                \tExternal:   {}://{}:{}{}
-                \tProfiles:   {}
-                \tVersion:    {}
-                \tGit Commit: {}
-                \tGit Branch: {}
+                \tLocal:        {}://localhost:{}{}
+                \tExternal:     {}://{}:{}{}
+                \tProfiles:     {}
+                \tVersion:      {}
+                \tGit Commit:   {}
+                \tGit Branch:   {}
+                \tFull startup: {}
                 ----------------------------------------------------------
 
                 """, env.getProperty("spring.application.name"), protocol, serverPort, contextPath, protocol, hostAddress, serverPort, contextPath,
-                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), version, gitCommitId, gitBranch);
+                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), version, gitCommitId, gitBranch,
+                TimeLogUtil.formatDurationFrom(appStart));
     }
 }

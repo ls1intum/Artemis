@@ -46,7 +46,6 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-            schemas: [],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseGradingComponent);

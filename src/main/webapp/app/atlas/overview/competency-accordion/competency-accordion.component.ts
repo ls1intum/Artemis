@@ -119,7 +119,9 @@ export class CompetencyAccordionComponent implements OnChanges {
         const exerciseIdToMaxScore = Object.fromEntries(
             activeCompetencyExercises.map((exercise) => {
                 const score =
-                    exercise.studentParticipations?.flatMap((participation) => participation.results ?? []).reduce((max, result) => Math.max(max, result.score ?? 0), -1) ?? 0;
+                    exercise.studentParticipations
+                        ?.flatMap((participation) => participation.submissions?.flatMap((submission) => submission.results ?? []) ?? [])
+                        .reduce((max, result) => Math.max(max, result.score ?? 0), -1) ?? 0;
                 return [exercise.id, score] as [number, number];
             }),
         );

@@ -29,7 +29,7 @@ The Android application supports the following features:
 #. Login and register:
     #. Select predefined and custom Artemis servers
     #. New user registration
-    #. Login with password + Saml2
+    #. Login with password + Saml2 + passkey
 #. View your courses:
     #. Register in new courses
     #. View courses you have already registered for
@@ -37,27 +37,26 @@ The Android application supports the following features:
     #. View exercise details and problem statement
     #. View submission feedback
     #. Participate in text exercises (view, edit and submit submissions)
-#. Participate in quizzes:
-    #. Participate in live quizzes
-    #. Practice quizzes
-    #. View quiz results
+#. View lectures and FAQs of your courses:
+    #. View lecture details and learning units
+    #. View and open attachments
+    #. View FAQ details
 #. Communicate with course members:
     #. Create new messages
     #. Write replies
     #. Add emoji reactions
 #. Receive push notifications:
     #. Optionally opt in and out of push notifications
-    #. Choose which notifications you want to receive as push notifications
 
 Installation
 ^^^^^^^^^^^^
 
-The Android application is currently only available in beta state and can be downloaded over `Firebase App Distribution <https://appdistribution.firebase.dev/i/f5dedbb0fc6dc0da>`_. Make sure to follow the steps described by Firebase App Distribution to install the application.
+The Android application is available on the `Google PlayStore <https://play.google.com/store/apps/details?id=de.tum.cit.aet.artemis&hl=gsw>`_.
 
 Server Selection
 ^^^^^^^^^^^^^^^^
 
-After installation, users have to first decide which Artemis server they want to connect to. Per default, the user can choose between the following instances:
+After installation, users can decide which Artemis server they want to connect to. Per default, the user can choose between the following instances:
 
 * TUM: https://artemis.tum.de
 * CodeAbility: https://artemis.codeability.uibk.ac.at
@@ -83,11 +82,6 @@ Users may receive push notifications on their Android clients. When first loggin
 When logged in, users can navigate to the application settings to change their push notification settings:
 
   .. image:: native-applications/android/settings_push.png
-            :width: 300
-
-In this screen, users can enable/disable push notifications for this device and also choose which notification types they want to receive.
-
-  .. image:: native-applications/android/settings_push_detail.png
             :width: 300
 
 Problems

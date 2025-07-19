@@ -11,11 +11,11 @@
 </div>
 @if (irisSettings) {
     <div>
-        <h3 jhiTranslate="artemisApp.iris.settings.subSettings.chatSettings"></h3>
+        <h3 class="mt-2" jhiTranslate="artemisApp.iris.settings.subSettings.exerciseChatSettings"></h3>
         <div>
             <jhi-iris-common-sub-settings-update
-                [subSettings]="irisSettings?.irisChatSettings"
-                [parentSubSettings]="parentIrisSettings?.irisChatSettings"
+                [subSettings]="irisSettings?.irisProgrammingExerciseChatSettings"
+                [parentSubSettings]="parentIrisSettings?.irisProgrammingExerciseChatSettings"
                 [settingsType]="settingsType"
                 [courseId]="courseId"
                 (onChanges)="isDirty = true"
@@ -52,7 +52,6 @@
             <hr class="hr" />
 
             <div>
-                <hr class="hr" />
                 <h3 jhiTranslate="artemisApp.iris.settings.subSettings.lectureChatSettings"></h3>
                 <div>
                     <jhi-iris-common-sub-settings-update
@@ -75,16 +74,14 @@
                 />
                 <br />
 
-                @if (settingsType === COURSE) {
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="autoLectureIngestion" [disabled]="!isAdmin" [(ngModel)]="autoLectureIngestion" />
-                        <label
-                            class="form-check-label"
-                            for="autoLectureIngestion"
-                            jhiTranslate="artemisApp.iris.settings.subSettings.lectureIngestionSettings.autoIngestOnAttachmentUpload"
-                        ></label>
-                    </div>
-                }
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="autoLectureIngestion" [(ngModel)]="autoLectureIngestion" />
+                    <label
+                        class="form-check-label"
+                        for="autoLectureIngestion"
+                        jhiTranslate="artemisApp.iris.settings.subSettings.lectureIngestionSettings.autoIngestOnAttachmentUpload"
+                    ></label>
+                </div>
             </div>
 
             <hr class="hr" />
@@ -98,12 +95,10 @@
                     (onChanges)="isDirty = true"
                 />
                 <br />
-                @if (settingsType === COURSE) {
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="autoFaqIngestion" [disabled]="!isAdmin" [(ngModel)]="autoFaqIngestion" />
-                        <label class="form-check-label" for="autoLectureIngestion" jhiTranslate="artemisApp.iris.settings.subSettings.faqIngestionSettings.autoIngest"></label>
-                    </div>
-                }
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="autoFaqIngestion" [(ngModel)]="autoFaqIngestion" />
+                    <label class="form-check-label" for="autoFaqIngestion" jhiTranslate="artemisApp.iris.settings.subSettings.faqIngestionSettings.autoIngest"></label>
+                </div>
             </div>
         }
         @if (settingsType !== EXERCISE) {
@@ -114,6 +109,19 @@
                 <jhi-iris-common-sub-settings-update
                     [subSettings]="irisSettings?.irisCompetencyGenerationSettings!"
                     [parentSubSettings]="parentIrisSettings?.irisCompetencyGenerationSettings"
+                    [settingsType]="settingsType"
+                    [courseId]="courseId"
+                    (onChanges)="isDirty = true"
+                />
+            </div>
+
+            <hr class="hr" />
+
+            <div [hidden]="!tutorSuggestionFeatureEnabled">
+                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.tutorSuggestionSettings"></h3>
+                <jhi-iris-common-sub-settings-update
+                    [subSettings]="irisSettings?.irisTutorSuggestionSettings!"
+                    [parentSubSettings]="parentIrisSettings?.irisTutorSuggestionSettings"
                     [settingsType]="settingsType"
                     [courseId]="courseId"
                     (onChanges)="isDirty = true"

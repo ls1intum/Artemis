@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +29,6 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 /**
  * Service responsible for initializing the database with specific testdata related to text exercises for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class TextExerciseUtilService {
@@ -102,30 +103,10 @@ public class TextExerciseUtilService {
     private ParticipationTestRepository participationRepository;
 
     @Autowired
-    private ExamUtilService examUtilService;
-
-    @Autowired
     private ParticipationUtilService participationUtilService;
 
     @Autowired
     private UserUtilService userUtilService;
-
-    /**
-     * Creates and saves a TextExercise with feedback suggestions enabled.
-     *
-     * @param count expected size of TextBlock set
-     * @return Set of dummy TextBlocks
-     */
-    public Set<TextBlock> generateTextBlocks(int count) {
-        Set<TextBlock> textBlocks = new HashSet<>();
-        TextBlock textBlock;
-        for (int i = 0; i < count; i++) {
-            textBlock = new TextBlock();
-            textBlock.setText("TextBlock" + i);
-            textBlocks.add(textBlock);
-        }
-        return textBlocks;
-    }
 
     /**
      * Create an example text exercise
@@ -202,6 +183,23 @@ public class TextExerciseUtilService {
     }
 
     /**
+     * Creates and saves a TextExercise with 10 achievable points and 0 bonus points.
+     *
+     * @param course            The Course to which the exercise belongs
+     * @param startDate         The release date of the TextExercise
+     * @param releaseDate       The release date of the TextExercise
+     * @param dueDate           The due date of the TextExercise
+     * @param assessmentDueDate The assessment due date of the TextExercise
+     * @return The created TextExercise
+     */
+    public TextExercise createIndividualTextExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, startDate, dueDate, assessmentDueDate, course);
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(0.0);
+        return exerciseRepository.save(textExercise);
+    }
+
+    /**
      * Creates and saves a TextExercise with 10 achievable points and 0 bonus points for a team.
      *
      * @param course            The Course to which the TextExercise belongs
@@ -242,13 +240,11 @@ public class TextExerciseUtilService {
      *
      * @param textExercise The TextExercise to be renamed
      * @param title        The new title of the TextExercise
-     * @return The updated TextExercise
      */
-    public TextExercise renameTextExercise(TextExercise textExercise, String title) {
+    public void renameTextExercise(TextExercise textExercise, String title) {
         textExercise.setTitle(title);
         textExerciseRepository.save(textExercise);
 
-        return textExercise;
     }
 
     /**
@@ -258,41 +254,6 @@ public class TextExerciseUtilService {
      */
     public Course addCourseWithOneReleasedTextExercise() {
         return addCourseWithOneReleasedTextExercise("Text");
-    }
-
-    /**
-     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise.
-     *
-     * @param title The title of the created TextExercise
-     * @return The created TextExercise
-     */
-    public TextExercise addCourseExamExerciseGroupWithOneTextExercise(String title) {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
-        if (title != null) {
-            textExercise.setTitle(title);
-        }
-        return exerciseRepository.save(textExercise);
-    }
-
-    /**
-     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise.
-     *
-     * @return The created TextExercise
-     */
-    public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
-        return addCourseExamExerciseGroupWithOneTextExercise(null);
-    }
-
-    /**
-     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise. The exam has a review date [now; now + 60min].
-     *
-     * @return The created TextExercise
-     */
-    public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamWithReviewDatesAndCourse(true);
-        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
-        return exerciseRepository.save(textExercise);
     }
 
     /**
@@ -338,11 +299,10 @@ public class TextExerciseUtilService {
         else { // exam exercises do not have a release date
             result.setCompletionDate(ZonedDateTime.now());
         }
-        result = resultRepo.save(result);
         result.setSubmission(submission);
+        result = resultRepo.save(result);
         submission.setParticipation(participation);
         submission.addResult(result);
-        submission.getParticipation().addResult(result);
         submission = textSubmissionRepo.save(submission);
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
@@ -377,11 +337,11 @@ public class TextExerciseUtilService {
         else { // exam exercises do not have a release date
             result.setCompletionDate(ZonedDateTime.now());
         }
-        result = resultRepo.save(result);
+
         result.setSubmission(submission);
+        result = resultRepo.save(result);
         submission.setParticipation(participation);
         submission.addResult(result);
-        submission.getParticipation().addResult(result);
         submission = textSubmissionRepo.save(submission);
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
@@ -509,13 +469,13 @@ public class TextExerciseUtilService {
     }
 
     /**
-     * Creates and saves a TextPlagiarismResult for the given Exercise.
+     * Creates and saves a PlagiarismResult for the given Exercise.
      *
-     * @param exercise The Exercise the TextPlagiarismResult belongs to
-     * @return The created TextPlagiarismResult
+     * @param exercise The Exercise the PlagiarismResult belongs to
+     * @return The created PlagiarismResult
      */
-    public TextPlagiarismResult createTextPlagiarismResultForExercise(Exercise exercise) {
-        TextPlagiarismResult result = new TextPlagiarismResult();
+    public PlagiarismResult createPlagiarismResultForExercise(Exercise exercise) {
+        PlagiarismResult result = new PlagiarismResult();
         result.setExercise(exercise);
         result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         result.setDuration(4);

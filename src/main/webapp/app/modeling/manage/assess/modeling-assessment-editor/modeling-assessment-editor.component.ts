@@ -247,9 +247,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.checkPermissions();
         this.getComplaint();
 
-        if (this.result && this.submission?.participation) {
-            this.submission.participation.results = [this.result];
-            this.result.participation = this.submission.participation;
+        if (this.result && this.submission) {
+            this.submission.results = [this.result];
+            this.result.submission = this.submission;
         }
 
         if (!this.modelingExercise.diagramType) {
@@ -456,7 +456,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
         this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, this.result!.assessmentNote?.note, true).subscribe({
             next: (result: Result) => {
-                result.participation!.results = [result];
                 this.result = result;
 
                 this.alertService.closeAll();
@@ -494,8 +493,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 next: (response) => {
                     assessmentAfterComplaint.onSuccess();
                     this.result = response.body!;
-                    // reconnect
-                    this.result.participation!.results = [this.result];
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
                 },

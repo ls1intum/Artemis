@@ -26,8 +26,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 
 /**
  * A DragItem.
@@ -129,7 +129,7 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         // delete old file if necessary
         try {
             if (pictureFilePath != null) {
-                fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(URI.create(pictureFilePath), FilePathType.DRAG_ITEM), 0);
+                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(pictureFilePath), FilePathType.DRAG_ITEM), 0);
             }
         }
         catch (FilePathParsingException e) {

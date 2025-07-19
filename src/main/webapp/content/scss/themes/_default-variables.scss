@@ -561,6 +561,8 @@ $competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
 // TODO: Use standard colors
 $iris-chat-widget-background: $white;
 $iris-chat-bubble-fade: $white;
+$iris-chat-history-background: var(--gray-100);
+$iris-chat-history-label-color: var(--gray-600);
 $iris-client-chat-background: var(--gray-200);
 $iris-client-chat-input: $white;
 $iris-my-chat-background: #a9dcb5;
@@ -568,6 +570,10 @@ $iris-btn-circle: var(--success);
 $iris-btn-circle-hover: #3eb058;
 $iris-tool-background: var(--gray-200);
 $iris-rate-background: var(--gray-300);
+$iris-chat-header-button-background: var(--gray-200);
+
+//Iris Communication
+$tutor-suggestion-background: $gray-400;
 
 // Image Cropper
 $cropper-overlay-color: transparent;
@@ -578,3 +584,10 @@ $ssh-key-settings-dropdown-buttons: $light;
 $ssh-key-settings-dropdown-buttons-hover: $gray-200;
 $ssh-key-settings-text-color: $black;
 $ssh-key-settings-shadow: rgba(0, 0, 0, 0.2);
+
+// Calendar
+$pastel-cyan: lighten($cyan, 35%);
+$pastel-blue: lighten($blue, 20%);
+$pastel-purple: lighten($purple, 20%);
+$pastel-teal: lighten($teal, 25%);
+$calendar-loading-overlay-background: transparentize($module-bg, 0.8);

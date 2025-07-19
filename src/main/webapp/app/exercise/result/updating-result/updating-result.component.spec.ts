@@ -23,6 +23,7 @@ import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mo
 import { MockComponent } from 'ng-mocks';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { MissingResultInformation } from 'app/exercise/result/result.utils';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('UpdatingResultComponent', () => {
     let comp: UpdatingResultComponent;
@@ -45,7 +46,7 @@ describe('UpdatingResultComponent', () => {
     const ungradedResult1 = { id: 12, rated: false, completionDate: dayjs('2019-06-06T22:25:29.203+02:00') } as Result;
     const ungradedResult2 = { id: 13, rated: false, completionDate: dayjs('2019-06-06T22:32:29.203+02:00') } as Result;
     const results = [gradedResult2, ungradedResult1, gradedResult1, ungradedResult2] as Result[];
-    const initialParticipation = { id: 1, exercise, results, student } as StudentParticipation;
+    const initialParticipation = { id: 1, exercise, submissions: [{ results }], student } as StudentParticipation;
     const newGradedResult = { id: 14, rated: true } as Result;
     const newUngradedResult = { id: 15, rated: false } as Result;
 
@@ -150,10 +151,10 @@ describe('UpdatingResultComponent', () => {
     it('should update result and establish new websocket connection on participation change', () => {
         cleanInitializeGraded();
         const unsubscribeSpy = jest.spyOn(comp.resultSubscription, 'unsubscribe');
-        const newParticipation = { id: 80, exercise, student, results: [{ id: 1, rated: true }] } as any;
+        const newParticipation = { id: 80, exercise, student, submissions: [{ results: [{ id: 1, rated: true }] }] } as Participation;
         cleanInitializeGraded(newParticipation);
         expect(unsubscribeSpy).toHaveBeenNthCalledWith(1);
-        expect(comp.result!.id).toBe(newParticipation.results[0].id);
+        expect(comp.result!.id).toBe(newParticipation.submissions![0].results![0].id);
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(2);
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenNthCalledWith(1, initialParticipation.id, true, undefined);
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenNthCalledWith(2, newParticipation.id, true, undefined);

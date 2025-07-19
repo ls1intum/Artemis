@@ -57,7 +57,6 @@ describe('EditCompetencyComponent', () => {
                     },
                 },
             ],
-            schemas: [],
         }).compileComponents();
 
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {

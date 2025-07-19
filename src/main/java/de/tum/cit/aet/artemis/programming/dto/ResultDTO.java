@@ -67,7 +67,7 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         }
         var feedbackDTOs = filteredFeedback.stream().map(FeedbackDTO::of).toList();
         return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO,
-                ParticipationDTO.of(result.getParticipation()), feedbackDTOs, result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(),
+                ParticipationDTO.of(result.getSubmission().getParticipation()), feedbackDTOs, result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(),
                 result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getCodeIssueCount());
     }
 }

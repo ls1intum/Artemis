@@ -25,6 +25,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('SidebarComponent', () => {
     let component: SidebarComponent;
@@ -39,6 +40,7 @@ describe('SidebarComponent', () => {
                 MockModule(RouterModule),
                 MockDirective(TranslateDirective),
                 MockComponent(ExerciseFilterModalComponent),
+                FaIconComponent,
             ],
             declarations: [
                 SidebarComponent,
@@ -98,11 +100,10 @@ describe('SidebarComponent', () => {
             ungroupedData: [] as SidebarCardElement[],
         };
 
-        const noDataMessageElement = fixture.debugElement.query(By.css('.scrollable-item-content')).nativeElement;
-
+        const noDataMessageElement = fixture.debugElement.query(By.css('.scrollable-item-content'));
         expect(noDataMessageElement).toBeTruthy();
-        // unfortunately the translation key is cut off in debug mode that seems to be used for testing
-        expect(noDataMessageElement.getAttribute('ng-reflect-jhi-translate')).toBe('artemisApp.courseOverview.gene');
+        const directiveInstance = noDataMessageElement.injector.get(TranslateDirective);
+        expect(directiveInstance.jhiTranslate).toBe('artemisApp.courseOverview.general.noDataFound');
     });
 
     it('should give the correct size for exercises', () => {

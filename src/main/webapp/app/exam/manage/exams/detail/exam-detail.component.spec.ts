@@ -49,8 +49,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 class DummyComponent {}
 
 describe('ExamDetailComponent', () => {
-    let examDetailComponentFixture: ComponentFixture<ExamDetailComponent>;
-    let examDetailComponent: ExamDetailComponent;
+    let fixture: ComponentFixture<ExamDetailComponent>;
+    let component: ExamDetailComponent;
     let service: ExamManagementService;
     let router: Router;
 
@@ -75,6 +75,7 @@ describe('ExamDetailComponent', () => {
                 ]),
                 ExerciseDetailDirective,
                 MockComponent(NoDataComponent),
+                FaIconComponent,
             ],
             declarations: [
                 DetailOverviewListComponent,
@@ -82,7 +83,6 @@ describe('ExamDetailComponent', () => {
                 DummyComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 ExamChecklistComponent,
@@ -123,12 +123,11 @@ describe('ExamDetailComponent', () => {
                 MockProvider(ArtemisDurationFromSecondsPipe),
                 { provide: ProfileService, useClass: MockProfileService },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
-                examDetailComponentFixture = TestBed.createComponent(ExamDetailComponent);
-                examDetailComponent = examDetailComponentFixture.componentInstance;
+                fixture = TestBed.createComponent(ExamDetailComponent);
+                component = fixture.componentInstance;
                 service = TestBed.inject(ExamManagementService);
             });
 
@@ -146,7 +145,7 @@ describe('ExamDetailComponent', () => {
         exam.numberOfExamUsers = 3;
         exam.examMaxPoints = 100;
         exam.exerciseGroups = [];
-        examDetailComponent.exam = exam;
+        component.exam = exam;
     });
 
     afterEach(() => {
@@ -154,91 +153,91 @@ describe('ExamDetailComponent', () => {
     });
 
     it('should load exam from route and display it to user', () => {
-        examDetailComponentFixture.detectChanges();
-        expect(examDetailComponent).not.toBeNull();
-        expect(examDetailComponent.examDetailSections).toBeDefined();
-        expect(examDetailComponentFixture.debugElement.nativeElement.innerHTML).toInclude(exam.title!);
+        fixture.detectChanges();
+        expect(component).not.toBeNull();
+        expect(component.examDetailSections).toBeDefined();
+        expect(fixture.debugElement.nativeElement.innerHTML).toInclude(exam.title!);
     });
 
     it('should correctly route to edit subpage', fakeAsync(() => {
         const location = TestBed.inject(Location);
-        examDetailComponentFixture.detectChanges();
-        const editButton = examDetailComponentFixture.debugElement.query(By.css('#editButton')).nativeElement;
+        fixture.detectChanges();
+        const editButton = fixture.debugElement.query(By.css('#editButton')).nativeElement;
         editButton.click();
         discardPeriodicTasks();
-        examDetailComponentFixture.whenStable().then(() => {
+        fixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/edit');
         });
     }));
 
     it('should correctly route to student exams subpage', fakeAsync(() => {
         const location = TestBed.inject(Location);
-        examDetailComponentFixture.detectChanges();
-        const studentExamsButton = examDetailComponentFixture.debugElement.query(By.css('#studentExamsButton')).nativeElement;
+        fixture.detectChanges();
+        const studentExamsButton = fixture.debugElement.query(By.css('#studentExamsButton')).nativeElement;
         studentExamsButton.click();
         discardPeriodicTasks();
-        examDetailComponentFixture.whenStable().then(() => {
+        fixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/student-exams');
         });
     }));
 
     it('should correctly route to dashboard', fakeAsync(() => {
         const location = TestBed.inject(Location);
-        examDetailComponentFixture.detectChanges();
-        const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#assessment-dashboard-button')).nativeElement;
+        fixture.detectChanges();
+        const dashboardButton = fixture.debugElement.query(By.css('#assessment-dashboard-button')).nativeElement;
         dashboardButton.click();
         discardPeriodicTasks();
-        examDetailComponentFixture.whenStable().then(() => {
+        fixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/assessment-dashboard');
         });
     }));
 
     it('should correctly route to exercise groups', fakeAsync(() => {
         const location = TestBed.inject(Location);
-        examDetailComponentFixture.detectChanges();
-        const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#exercises-button-groups')).nativeElement;
+        fixture.detectChanges();
+        const dashboardButton = fixture.debugElement.query(By.css('#exercises-button-groups')).nativeElement;
         dashboardButton.click();
         discardPeriodicTasks();
-        examDetailComponentFixture.whenStable().then(() => {
+        fixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/exercise-groups');
         });
     }));
 
     it('should correctly route to scores', fakeAsync(() => {
         const location = TestBed.inject(Location);
-        examDetailComponentFixture.detectChanges();
-        const scoresButton = examDetailComponentFixture.debugElement.query(By.css('#scores-button')).nativeElement;
+        fixture.detectChanges();
+        const scoresButton = fixture.debugElement.query(By.css('#scores-button')).nativeElement;
         scoresButton.click();
         discardPeriodicTasks();
-        examDetailComponentFixture.whenStable().then(() => {
+        fixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/scores');
         });
     }));
 
     it('should correctly route to students', fakeAsync(() => {
         const location = TestBed.inject(Location);
-        examDetailComponentFixture.detectChanges();
-        const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#students-button')).nativeElement;
+        fixture.detectChanges();
+        const studentsButton = fixture.debugElement.query(By.css('#students-button')).nativeElement;
         studentsButton.click();
         discardPeriodicTasks();
-        examDetailComponentFixture.whenStable().then(() => {
+        fixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/students');
         });
     }));
 
     it('should correctly route to test runs', fakeAsync(() => {
         const location = TestBed.inject(Location);
-        examDetailComponentFixture.detectChanges();
-        const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#testrun-button')).nativeElement;
+        fixture.detectChanges();
+        const studentsButton = fixture.debugElement.query(By.css('#testrun-button')).nativeElement;
         studentsButton.click();
         discardPeriodicTasks();
-        examDetailComponentFixture.whenStable().then(() => {
+        fixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/test-runs');
         });
     }));
 
     it('should return general routes correctly', () => {
-        const route = examDetailComponent.getExamRoutesByIdentifier('edit');
+        const route = component.getExamRoutesByIdentifier('edit');
         expect(JSON.stringify(route)).toEqual(JSON.stringify(['/course-management', exam.course!.id, 'exams', exam.id, 'edit']));
     });
 
@@ -246,25 +245,25 @@ describe('ExamDetailComponent', () => {
         const alertService = TestBed.inject(AlertService);
 
         // GIVEN
-        examDetailComponent.exam = { ...exam, studentExams: [{ id: 1, numberOfExamSessions: 0 }] };
+        component.exam = { ...exam, studentExams: [{ id: 1, numberOfExamSessions: 0 }] };
         const responseFakeReset = { body: exam } as HttpResponse<Exam>;
         jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
         jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
         const alertSpy = jest.spyOn(alertService, 'success').mockImplementation();
 
         // WHEN
-        examDetailComponent.resetExam();
+        component.resetExam();
 
         // THEN
         expect(service.reset).toHaveBeenCalledOnce();
-        expect(examDetailComponent.exam).toEqual(exam);
+        expect(component.exam).toEqual(exam);
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.reset.success');
     });
 
     it('should delete an exam when delete exam is called', () => {
         // GIVEN
-        examDetailComponent.exam = exam;
+        component.exam = exam;
         const responseFakeDelete = {} as HttpResponse<any[]>;
         const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
         jest.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));
@@ -272,7 +271,7 @@ describe('ExamDetailComponent', () => {
         jest.spyOn(router, 'navigate');
 
         // WHEN
-        examDetailComponent.deleteExam(exam.id!);
+        component.deleteExam(exam.id!);
 
         // THEN
         expect(service.delete).toHaveBeenCalledOnce();
@@ -281,7 +280,7 @@ describe('ExamDetailComponent', () => {
 
     it('should call scrollToTopOfPage on component initialization', () => {
         const scrollToTopOfPageSpy = jest.spyOn(Utils, 'scrollToTopOfPage');
-        examDetailComponent.ngOnInit();
+        component.ngOnInit();
         expect(scrollToTopOfPageSpy).toHaveBeenCalled();
         scrollToTopOfPageSpy.mockRestore();
     });

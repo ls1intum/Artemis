@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -61,6 +62,7 @@ import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
+import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
@@ -71,6 +73,8 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 
 @Profile(PROFILE_CORE)
 @Configuration
+// We cannot make this lazy as the client then fails to subscribe to team participation topics
+@Lazy(value = false)
 // See https://stackoverflow.com/a/34337731/3802758
 public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConfiguration {
 
@@ -213,7 +217,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     try {
                         attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
-                        return JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider) != null;
+
+                        JwtWithSource jwtWithSource = JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider);
+                        return jwtWithSource != null;
                     }
                     catch (IllegalArgumentException e) {
                         response.setStatusCode(HttpStatusCode.valueOf(400));

@@ -24,6 +24,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -51,6 +52,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class RequestUtilService {
@@ -169,7 +171,7 @@ public class RequestUtilService {
             return null;
         }
         assertThat(res.getResponse().containsHeader("location")).isTrue();
-        return new URI(res.getResponse().getHeader("location"));
+        return new URI(Objects.requireNonNull(res.getResponse().getHeader("location")));
     }
 
     public URI postForm(String path, Object body, HttpStatus expectedStatus) throws Exception {
@@ -180,7 +182,7 @@ public class RequestUtilService {
         content.setAll(jsonMap);
         MvcResult result = performMvcRequest(MockMvcRequestBuilders.post(new URI(path)).params(content)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
-        return new URI(result.getResponse().getHeader("location"));
+        return new URI(Objects.requireNonNull(result.getResponse().getHeader("location")));
     }
 
     public void postFormWithoutLocation(String path, Object body, HttpStatus expectedStatus) throws Exception {
@@ -217,7 +219,7 @@ public class RequestUtilService {
         restoreSecurityContext();
     }
 
-    public MockHttpServletResponse postWithoutResponseBody(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+    public MockHttpServletResponse postWithoutResponseBody(String path, HttpStatus expectedStatus, @NotNull MultiValueMap<String, String> params) throws Exception {
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.post(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         return res.getResponse();
@@ -410,7 +412,7 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        final var tmpFile = File.createTempFile(res.getResponse().getHeader("filename"), null);
+        final var tmpFile = File.createTempFile(Objects.requireNonNull(res.getResponse().getHeader("filename")), null);
         FileUtils.writeByteArrayToFile(tmpFile, res.getResponse().getContentAsByteArray());
 
         return tmpFile;
@@ -442,7 +444,7 @@ public class RequestUtilService {
      * @throws Exception if the request fails
      */
     public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus,
-            LinkedMultiValueMap<String, String> params) throws Exception {
+            @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
         return putWithMultipartFiles(path, paramValue, paramName, file != null ? List.of(file) : null, responseType, expectedStatus, params);
     }
 
@@ -462,7 +464,7 @@ public class RequestUtilService {
      * @throws Exception if the request fails
      */
     public <T, R> R putWithMultipartFiles(String path, T paramValue, String paramName, List<MockMultipartFile> files, Class<R> responseType, HttpStatus expectedStatus,
-            LinkedMultiValueMap<String, String> params) throws Exception {
+            @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
         MockMultipartHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart(new URI(path)).file(json);
@@ -483,7 +485,8 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
-    public <T, R> R putWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, Map<String, String> expectedResponseHeaders) throws Exception {
+    public <T, R> R putWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable Map<String, String> expectedResponseHeaders)
+            throws Exception {
         return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, new LinkedMultiValueMap<>(), expectedResponseHeaders, false);
     }
 
@@ -495,12 +498,14 @@ public class RequestUtilService {
         return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, new LinkedMultiValueMap<>(), new HashMap<>(), false);
     }
 
-    public <T, R> R putWithResponseBodyAndParams(String path, T body, Class<R> responseType, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+    public <T, R> R putWithResponseBodyAndParams(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @NotNull MultiValueMap<String, String> params)
+            throws Exception {
         return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, params, new HashMap<>(), false);
     }
 
-    public <T, R> R putWithResponseBodyAndParams(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable MultiValueMap<String, String> params,
-            Map<String, String> expectedResponseHeaders, boolean isString) throws Exception {
+    @SuppressWarnings("unchecked")
+    public <T, R> R putWithResponseBodyAndParams(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @NotNull MultiValueMap<String, String> params,
+            @Nullable Map<String, String> expectedResponseHeaders, boolean isString) throws Exception {
         String stringBody;
         if (isString) {
             stringBody = (String) body;
@@ -526,6 +531,7 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(StandardCharsets.UTF_8), responseType);
     }
 
+    @SuppressWarnings("unchecked")
     public <R> R patchWithResponseBody(String path, String body, Class<R> responseType, HttpStatus expectedStatus, MediaType mediaType) throws Exception {
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.patch(new URI(path)).contentType(mediaType).content(body)).andExpect(status().is(expectedStatus.value()))
                 .andReturn();
@@ -621,7 +627,7 @@ public class RequestUtilService {
         return mapper.readValue(stringResponse, responseType);
     }
 
-    public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params) throws Exception {
+    public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, @NotNull MultiValueMap<String, String> params) throws Exception {
         return get(path, expectedStatus, responseType, params, new HttpHeaders());
     }
 
@@ -629,16 +635,17 @@ public class RequestUtilService {
         return getFile(path, expectedStatus, new LinkedMultiValueMap<>());
     }
 
-    public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+    public File getFile(String path, HttpStatus expectedStatus, @NotNull MultiValueMap<String, String> params) throws Exception {
         return getFile(path, expectedStatus, params, null);
     }
 
-    public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params, @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
+    public File getFile(String path, HttpStatus expectedStatus, @NotNull MultiValueMap<String, String> params, @Nullable Map<String, String> expectedResponseHeaders)
+            throws Exception {
         return getFile(path, expectedStatus, params, new HttpHeaders(), expectedResponseHeaders);
     }
 
-    public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params, HttpHeaders headers, @Nullable Map<String, String> expectedResponseHeaders)
-            throws Exception {
+    public File getFile(String path, HttpStatus expectedStatus, @NotNull MultiValueMap<String, String> params, HttpHeaders headers,
+            @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(headers)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
@@ -647,15 +654,16 @@ public class RequestUtilService {
         }
         verifyExpectedResponseHeaders(expectedResponseHeaders, res);
 
-        String tmpDirectory = System.getProperty("java.io.tmpdir");
         var filename = res.getResponse().getHeader("filename");
-        var tmpFile = Files.createFile(Path.of(tmpDirectory, filename));
+        assertThat(filename).isNotNull();
+        var tmpFile = Path.of("./local/server-integration-test/temp", filename);
+        Files.createDirectories(tmpFile.getParent());  // Ensure directory exists
         FileUtils.writeByteArrayToFile(tmpFile.toFile(), res.getResponse().getContentAsByteArray());
         return tmpFile.toFile();
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params, HttpHeaders httpHeaders) throws Exception {
+    public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, @NotNull MultiValueMap<String, String> params, HttpHeaders httpHeaders) throws Exception {
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
@@ -686,7 +694,7 @@ public class RequestUtilService {
         return mapper.readValue(contentAsString, responseType);
     }
 
-    public byte[] getPng(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+    public byte[] getPng(String path, HttpStatus expectedStatus, @NotNull MultiValueMap<String, String> params) throws Exception {
         final var res = performMvcRequest(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         return res.getResponse().getContentAsByteArray();
@@ -700,7 +708,8 @@ public class RequestUtilService {
         return getSet(path, expectedStatus, setElementType, new LinkedMultiValueMap<>());
     }
 
-    public <T> SearchResultPageDTO<T> getSearchResult(String path, HttpStatus expectedStatus, Class<T> searchElementType, MultiValueMap<String, String> params) throws Exception {
+    public <T> SearchResultPageDTO<T> getSearchResult(String path, HttpStatus expectedStatus, Class<T> searchElementType, @NotNull MultiValueMap<String, String> params)
+            throws Exception {
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
@@ -714,7 +723,7 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructParametricType(SearchResultPageDTO.class, searchElementType));
     }
 
-    public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType, MultiValueMap<String, String> params) throws Exception {
+    public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType, @NotNull MultiValueMap<String, String> params) throws Exception {
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
@@ -728,7 +737,7 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
-    public <T> Set<T> getSet(String path, HttpStatus expectedStatus, Class<T> setElementType, MultiValueMap<String, String> params) throws Exception {
+    public <T> Set<T> getSet(String path, HttpStatus expectedStatus, Class<T> setElementType, @NotNull MultiValueMap<String, String> params) throws Exception {
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
@@ -746,7 +755,7 @@ public class RequestUtilService {
         return getMap(path, expectedStatus, keyType, valueType, new LinkedMultiValueMap<>());
     }
 
-    public <K, V> Map<K, V> getMap(String path, HttpStatus expectedStatus, Class<K> keyType, Class<V> valueType, MultiValueMap<String, String> params) throws Exception {
+    public <K, V> Map<K, V> getMap(String path, HttpStatus expectedStatus, Class<K> keyType, Class<V> valueType, @NotNull MultiValueMap<String, String> params) throws Exception {
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
@@ -784,7 +793,7 @@ public class RequestUtilService {
         restoreSecurityContext();
     }
 
-    public void delete(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+    public void delete(String path, HttpStatus expectedStatus, @NotNull MultiValueMap<String, String> params) throws Exception {
         performMvcRequest(MockMvcRequestBuilders.delete(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
     }
@@ -809,7 +818,7 @@ public class RequestUtilService {
      * @return the response as object of the given type or null if the status is not 2xx
      * @throws Exception if the request fails
      */
-    public <T, R> R delete(String path, MultiValueMap<String, String> params, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+    public <T, R> R delete(String path, @NotNull MultiValueMap<String, String> params, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.delete(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).params(params))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
@@ -852,7 +861,7 @@ public class RequestUtilService {
      * @param expectedResponseHeaders a map containing the expected response headers
      * @param res                     the {@link MvcResult} containing the actual response headers
      */
-    private static void verifyExpectedResponseHeaders(Map<String, String> expectedResponseHeaders, MvcResult res) {
+    private static void verifyExpectedResponseHeaders(@Nullable Map<String, String> expectedResponseHeaders, MvcResult res) {
         if (expectedResponseHeaders != null) {
             for (Map.Entry<String, String> responseHeader : expectedResponseHeaders.entrySet()) {
                 assertThat(res.getResponse().getHeaderValues(responseHeader.getKey()).getFirst()).isEqualTo(responseHeader.getValue());

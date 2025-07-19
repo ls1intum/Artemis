@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.shared;
 
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -21,7 +20,6 @@ import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
         "de.tum.cit.aet.artemis.exercise.test_repository", "de.tum.cit.aet.artemis.lecture.test_repository", "de.tum.cit.aet.artemis.lti.test_repository",
         "de.tum.cit.aet.artemis.modeling.test_repository", "de.tum.cit.aet.artemis.programming.test_repository", "de.tum.cit.aet.artemis.quiz.test_repository",
         "de.tum.cit.aet.artemis.text.test_repository", "de.tum.cit.aet.artemis.tutorialgroup.test_repository" }, repositoryBaseClass = RepositoryImpl.class)
-@EnableJpaAuditing(auditorAwareRef = "springSecurityAuditorAware")
 @EnableTransactionManagement
 public class TestRepositoryConfiguration {
 }

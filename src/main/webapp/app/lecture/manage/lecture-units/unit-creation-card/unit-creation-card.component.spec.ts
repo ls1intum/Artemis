@@ -14,16 +14,9 @@ describe('UnitCreationCardComponent', () => {
     let unitCreationCardComponent: UnitCreationCardComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([])],
-            declarations: [
-                UnitCreationCardComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
-                MockComponent(DocumentationButtonComponent),
-                MockDirective(TranslateDirective),
-            ],
+            imports: [RouterModule.forRoot([]), FaIconComponent],
+            declarations: [UnitCreationCardComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent), MockDirective(TranslateDirective)],
             providers: [MockProvider(TranslateService)],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

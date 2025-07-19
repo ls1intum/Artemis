@@ -83,7 +83,7 @@
                     class="small text-truncate me-2"
                     [title]="sidebarItem.title"
                     [class.muted]="sidebarItem.conversation?.isMuted"
-                    [ngClass]="unreadCount() > 0 ? 'fw-bold' : 'fw-normal'"
+                    [ngClass]="unreadCount() > 0 && !sidebarItem.conversation?.isMuted ? 'fw-bold' : 'fw-normal'"
                 >
                     @if (otherUser) {
                         <jhi-profile-picture
@@ -100,14 +100,14 @@
                     } @else if (sidebarItem.icon) {
                         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
                     }
-                    {{ sidebarItem.title }}</span
-                >
+                    {{ sidebarItem.title }}
+                </span>
                 <span>
                     @if (sidebarItem.rightIcon) {
                         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.rightIcon" />
                     }
                 </span>
-                @if (unreadCount() > 0) {
+                @if (unreadCount() > 0 && shouldDisplayUnreadCount()) {
                     <span class="unread-count me-n2">{{ formattedUnreadCount }}</span>
                 }
             </div>

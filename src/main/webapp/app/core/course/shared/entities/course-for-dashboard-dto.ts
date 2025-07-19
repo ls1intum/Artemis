@@ -15,6 +15,7 @@ export class CourseForDashboardDTO {
     participationResults: ParticipationResultDTO[];
 
     courseNotificationCount: number;
+    irisCourseChatEnabled?: boolean;
 }
 
 export class ParticipationResultDTO {

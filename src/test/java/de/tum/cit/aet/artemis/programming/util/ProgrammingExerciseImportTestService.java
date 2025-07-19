@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,6 +14,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 /**
  * Test service for handling programming exercise imports
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseImportTestService {
@@ -117,7 +118,7 @@ public class ProgrammingExerciseImportTestService {
      */
     public int countOccurrencesInZip(ClassPathResource resource, String searchString) throws Exception {
         int occurrenceCount = 0;
-        try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(resource.getFile()))) {
+        try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(resource.getFile().toPath()))) {
             ZipEntry zipEntry;
             while ((zipEntry = zipInputStream.getNextEntry()) != null) {
                 if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".zip")) {

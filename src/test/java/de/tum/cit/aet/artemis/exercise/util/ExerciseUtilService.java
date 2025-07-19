@@ -13,6 +13,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -22,11 +23,9 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
-import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -63,6 +62,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 /**
  * Service responsible for initializing the database with specific testdata related to exercises for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ExerciseUtilService {
@@ -169,7 +169,8 @@ public class ExerciseUtilService {
      * @param clazz  The class (type) of the exercise to look for.
      * @return The first exercise which was found in the course and is of the expected type.
      */
-    public <T extends Exercise> T getFirstExerciseWithType(Course course, Class<T> clazz) {
+    @SuppressWarnings("unchecked")
+    public static <T extends Exercise> T getFirstExerciseWithType(Course course, Class<T> clazz) {
         var exercise = course.getExercises().stream().filter(ex -> !ex.isTeamMode() && ex.getClass().equals(clazz)).findFirst().orElseThrow();
         return (T) exercise;
     }
@@ -182,7 +183,8 @@ public class ExerciseUtilService {
      * @param clazz  The class (type) of the exercise to look for.
      * @return The first exercise which was found in the course and is of the expected type.
      */
-    public <T extends Exercise> T getFirstTeamExerciseWithType(Course course, Class<T> clazz) {
+    @SuppressWarnings("unchecked")
+    public static <T extends Exercise> T getFirstTeamExerciseWithType(Course course, Class<T> clazz) {
         var exercise = course.getExercises().stream().filter(ex -> ex.isTeamMode() && ex.getClass().equals(clazz)).findFirst().orElseThrow();
         return (T) exercise;
     }
@@ -195,7 +197,8 @@ public class ExerciseUtilService {
      * @param clazz The class (type) of the exercise to look for.
      * @return The first exercise which was found in the course and is of the expected type.
      */
-    public <T extends Exercise> T getFirstExerciseWithType(Exam exam, Class<T> clazz) {
+    @SuppressWarnings("unchecked")
+    public static <T extends Exercise> T getFirstExerciseWithType(Exam exam, Class<T> clazz) {
         var exercise = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).filter(ex -> ex.getClass().equals(clazz)).findFirst()
                 .orElseThrow();
         return (T) exercise;
@@ -208,7 +211,8 @@ public class ExerciseUtilService {
      * @param clazz       The class (type) of the exercise to look for.
      * @return The first exercise which was found in the course and is of the expected type.
      */
-    public <T extends Exercise> T getFirstExerciseWithType(StudentExam studentExam, Class<T> clazz) {
+    @SuppressWarnings("unchecked")
+    public static <T extends Exercise> T getFirstExerciseWithType(StudentExam studentExam, Class<T> clazz) {
         var exercise = studentExam.getExercises().stream().filter(ex -> ex.getClass().equals(clazz)).findFirst().orElseThrow();
         return (T) exercise;
     }
@@ -296,7 +300,6 @@ public class ExerciseUtilService {
             Result result = participationUtilService.generateResult(submission, null);
             result.setAssessmentType(AssessmentType.AUTOMATIC);
             submission.addResult(result);
-            participation.addResult(result);
             studentParticipationRepo.save(participation);
             submissionRepository.save(submission);
         });
@@ -316,7 +319,6 @@ public class ExerciseUtilService {
             participation = studentParticipationRepo.findWithEagerResultsById(participation.getId()).orElseThrow();
             Result result = participationUtilService.generateResult(submission, assessor);
             submission.addResult(result);
-            participation.addResult(result);
             studentParticipationRepo.save(participation);
             submissionRepository.save(submission);
         });
@@ -373,7 +375,7 @@ public class ExerciseUtilService {
      * @return The found file upload exercise.
      */
     @NotNull
-    public FileUploadExercise findFileUploadExerciseWithTitle(Collection<Exercise> exercises, String title) {
+    public static FileUploadExercise findFileUploadExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
         if (exercise.isEmpty()) {
             fail("Could not find file upload exercise with title " + title);
@@ -396,7 +398,7 @@ public class ExerciseUtilService {
      * @return The found modeling exercise.
      */
     @NotNull
-    public ModelingExercise findModelingExerciseWithTitle(Collection<Exercise> exercises, String title) {
+    public static ModelingExercise findModelingExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
         if (exercise.isEmpty()) {
             fail("Could not find modeling exercise with title " + title);
@@ -419,7 +421,7 @@ public class ExerciseUtilService {
      * @return The found text exercise.
      */
     @NotNull
-    public TextExercise findTextExerciseWithTitle(Collection<Exercise> exercises, String title) {
+    public static TextExercise findTextExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
         if (exercise.isEmpty()) {
             fail("Could not find text exercise with title " + title);
@@ -442,7 +444,7 @@ public class ExerciseUtilService {
      * @return The found programming exercise.
      */
     @NotNull
-    public ProgrammingExercise findProgrammingExerciseWithTitle(Collection<Exercise> exercises, String title) {
+    public static ProgrammingExercise findProgrammingExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
         if (exercise.isEmpty()) {
             fail("Could not find programming exercise with title " + title);
@@ -489,17 +491,5 @@ public class ExerciseUtilService {
             plagiarismCase.setVerdictPointDeduction(1);
         }
         plagiarismCaseRepository.save(plagiarismCase);
-    }
-
-    /**
-     * Creates a channel and adds it to an exercise.
-     *
-     * @param exercise The exercise to which a channel should be added.
-     * @return The newly created and saved channel.
-     */
-    public Channel addChannelToExercise(Exercise exercise) {
-        Channel channel = ConversationFactory.generateCourseWideChannel(exercise.getCourseViaExerciseGroupOrCourseMember());
-        channel.setExercise(exercise);
-        return channelRepository.save(channel);
     }
 }

@@ -14,8 +14,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Submission, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { LockRepositoryPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -109,13 +108,15 @@ describe('HeaderExercisePageWithDetails', () => {
 
         exercise.assessmentDueDate = dayjs().subtract(1, 'days');
         component.course = { maxComplaintTimeDays: 7 } as Course;
-        participation.results = [{ rated: true, completionDate: dayjs() } as Result];
+        const submission = { results: [{ rated: true, completionDate: dayjs() }] } as ProgrammingSubmission;
+        participation.submissions = [submission];
         component.ngOnInit();
-        expect(component.nextRelevantDate).toEqual(participation.results[0].completionDate?.add(7, 'days'));
+        expect(component.nextRelevantDate).toEqual(participation.submissions![0].results![0].completionDate?.add(7, 'days'));
         expect(component.nextRelevantDateStatusBadge).toBe('bg-success');
 
         participation.submissionCount = 1;
-        participation.results = [{ rated: false } as Result];
+        const submission2 = { results: [{ rated: false }] } as ProgrammingSubmission;
+        participation.submissions = [submission2];
         exercise.assessmentType = AssessmentType.MANUAL;
         exercise.dueDate = dayjs().subtract(3, 'months');
         component.ngOnInit();
@@ -124,9 +125,10 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(component.canComplainLaterOn).toBeTrue();
 
         exercise.assessmentDueDate = dayjs().subtract(2, 'months');
-        participation.results = [{ rated: true, completionDate: dayjs().subtract(1, 'month') } as Result];
+        const submission3 = { results: [{ rated: true, completionDate: dayjs().subtract(1, 'month') }] } as ProgrammingSubmission;
+        participation.submissions = [submission3];
         component.ngOnInit();
-        expect(component.nextRelevantDate).toEqual(participation.results[0].completionDate?.add(7, 'days'));
+        expect(component.nextRelevantDate).toEqual(participation.submissions![0].results![0].completionDate?.add(7, 'days'));
         expect(component.nextRelevantDateStatusBadge).toBe('bg-danger');
         expect(component.canComplainLaterOn).toBeFalse();
     });
@@ -182,25 +184,25 @@ describe('HeaderExercisePageWithDetails', () => {
     });
 
     it.each([
-        [[] as Result[], 0],
-        [[{ submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission }] as Result[], 1],
-        [[{ submission: { type: SubmissionType.INSTRUCTOR, commitHash: 'first' } as ProgrammingSubmission }] as Result[], 0],
+        [[] as Submission[], 0],
+        [[{ type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission] as Submission[], 1],
+        [[{ type: SubmissionType.INSTRUCTOR, commitHash: 'first' } as ProgrammingSubmission] as Submission[], 0],
         [
             [
-                { submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
-                { submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
-            ] as Result[],
+                { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission,
+                { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission,
+            ] as Submission[],
             1,
         ],
         [
             [
-                { submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
-                { submission: { type: SubmissionType.MANUAL, commitHash: 'second' } as ProgrammingSubmission },
-            ] as Result[],
+                { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission,
+                { type: SubmissionType.MANUAL, commitHash: 'second' } as ProgrammingSubmission,
+            ] as Submission[],
             2,
         ],
-    ])('should count number of submissions correctly', (results: Result[], expectedNumber: number) => {
-        participation.results = results;
+    ])('should count number of submissions correctly', (submissions: Submission[], expectedNumber: number) => {
+        participation.submissions = submissions;
         component.studentParticipation = participation;
         component.submissionPolicy = new LockRepositoryPolicy();
         component.submissionPolicy.active = true;

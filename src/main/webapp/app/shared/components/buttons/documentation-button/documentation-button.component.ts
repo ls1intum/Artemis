@@ -37,7 +37,7 @@ export type DocumentationType = keyof typeof DocumentationLinks;
     selector: 'jhi-documentation-button',
     styleUrls: ['./documentation-button.component.scss'],
     template: `
-        <a class="text-primary documentation-button ms-1 mb-1" href="{{ BASE_URL + DocumentationLinks[this.type] }}">
+        <a class="text-primary documentation-button ms-1" href="{{ BASE_URL + DocumentationLinks[this.type] }}" target="_blank" rel="noopener noreferrer">
             <fa-icon [icon]="faCircleInfo" ngbTooltip="{{ getTooltipForType() }}" />
         </a>
     `,

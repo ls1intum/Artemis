@@ -1,0 +1,9 @@
+<div class="segmented-toggle-container">
+    <div class="btn-group w-100">
+        @for (option of options; track option.value) {
+            <div class="btn" [ngClass]="{ 'btn-primary selected': selected === option.value, 'btn-default': selected !== option.value }" (click)="select(option.value)">
+                {{ option.label }}
+            </div>
+        }
+    </div>
+</div>

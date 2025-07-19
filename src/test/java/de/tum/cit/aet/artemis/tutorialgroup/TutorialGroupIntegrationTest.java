@@ -277,7 +277,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void averageAttendanceCalculationTest_lastThreeSessionsWithoutAttendanceData_AverageNull(boolean useSingleEndpoint) throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, null }, null, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, null }, 99, useSingleEndpoint);
     }
 
     @ParameterizedTest
@@ -291,9 +291,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void averageAttendanceCalculationTest_OneSessionOfTheLastThreeHasAttendanceData_AverageIsAttendanceOfSession(boolean useSingleEndpoint) throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, null }, 8, useSingleEndpoint);
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, null }, 8, useSingleEndpoint);
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, 8 }, 8, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, null }, 69, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, null }, 69, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, 8 }, 69, useSingleEndpoint);
 
     }
 
@@ -308,9 +308,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void averageAttendanceCalculationTest_TwoSessionsOfTheLastThreeHaveAttendanceData_AverageIsArithmeticMean(boolean useSingleEndpoint) throws Exception {
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, 5 }, 7, useSingleEndpoint);
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, 5 }, 7, useSingleEndpoint);
-        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, 5, null }, 7, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, 5 }, 37, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, 5 }, 37, useSingleEndpoint);
+        this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, 5, null }, 37, useSingleEndpoint);
 
     }
 
@@ -439,7 +439,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         request.get(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroup.getId()), HttpStatus.NOT_FOUND, TutorialGroup.class);
         assertTutorialGroupChannelDoesNotExist(persistedTutorialGroup);
         persistedTutorialGroup.getRegistrations().forEach(registration -> verify(websocketMessagingService, timeout(2000).times(1))
-                .sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"), (Object) any()));
+                .sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"), any()));
     }
 
     @Test

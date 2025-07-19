@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import {
@@ -9,11 +9,11 @@ import {
     TutorialGroupFreePeriodFormComponent,
     TutorialGroupFreePeriodFormData,
 } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
-import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from 'test/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
+import { generateClickSubmitButton } from 'test/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateModule } from '@ngx-translate/core';
 
 describe('TutorialFreePeriodFormComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodFormComponent>;
@@ -31,35 +31,24 @@ describe('TutorialFreePeriodFormComponent', () => {
     const validReason = 'Holiday';
 
     let clickSubmit: (expectSubmitEvent: boolean) => void;
-    let testFormIsInvalidOnMissingRequiredProperty: (controlName: string) => void;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, OwlDateTimeModule, OwlNativeDateTimeModule],
-            declarations: [
-                TutorialGroupFreePeriodFormComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(TranslateDirective),
-            ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TutorialGroupFreePeriodFormComponent);
-                component = fixture.componentInstance;
-                fixture.detectChanges();
+            imports: [ReactiveFormsModule, FormsModule, OwlDateTimeModule, OwlNativeDateTimeModule, TranslateModule.forRoot()],
+            declarations: [TutorialGroupFreePeriodFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockPipe(ArtemisDatePipe)],
+        }).compileComponents();
 
-                clickSubmit = generateClickSubmitButton(component, fixture, {
-                    startDate: validStartDateBerlin,
-                    endDate: undefined,
-                    startTime: undefined,
-                    endTime: undefined,
-                    reason: validReason,
-                });
+        fixture = TestBed.createComponent(TutorialGroupFreePeriodFormComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
 
-                testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
-            });
+        clickSubmit = generateClickSubmitButton(component, fixture, {
+            startDate: validStartDateBerlin,
+            endDate: undefined,
+            startTime: undefined,
+            endTime: undefined,
+            reason: validReason,
+        });
     });
 
     afterEach(() => {
@@ -111,13 +100,6 @@ describe('TutorialFreePeriodFormComponent', () => {
         clickSubmit(true);
     }));
 
-    it('should block submit when required property is missing', fakeAsync(() => {
-        const requiredControlNames = ['startDate'];
-        for (const controlName of requiredControlNames) {
-            testFormIsInvalidOnMissingRequiredProperty(controlName);
-        }
-    }));
-
     it('should reset unused form values when time frame changes', () => {
         setFormValues(validStartDateBerlin, validEndDateBerlinFreePeriod, undefined, undefined, validReason);
         setTimeFrameAndCheckValues(TimeFrame.Day, validStartDateBerlin, undefined, undefined, undefined);
@@ -167,9 +149,9 @@ describe('TutorialFreePeriodFormComponent', () => {
     ];
 
     test.each(testCases)('%s', ({ expectedTimeFrame, formData }) => {
-        component.isEditMode = true;
-        component.formData = formData;
-        component.ngOnChanges();
+        fixture.componentRef.setInput('isEditMode', true);
+        fixture.componentRef.setInput('formData', formData);
+        fixture.detectChanges();
         expect(component.timeFrameControl).toBe(expectedTimeFrame);
     });
 
@@ -337,6 +319,58 @@ describe('TutorialFreePeriodFormComponent', () => {
         );
     });
 
+    it('should return false if endDate ≤ startDate when timeFrame is Period', () => {
+        const start = dayjs('2021-01-10T00:00:00').tz('Europe/Berlin').toDate();
+        const endBefore = dayjs('2021-01-05T00:00:00').tz('Europe/Berlin').toDate();
+
+        component.form.patchValue({ startDate: start, endDate: endBefore, startTime: undefined, endTime: undefined, reason: validReason });
+        component.setTimeFrame(TimeFrame.Period);
+
+        expect(component.isStartBeforeEnd).toBeFalse();
+    });
+
+    it('should return true if endDate > startDate when timeFrame is Period', () => {
+        const start = dayjs('2021-01-05T00:00:00').tz('Europe/Berlin').toDate();
+        const endAfter = dayjs('2021-01-10T00:00:00').tz('Europe/Berlin').toDate();
+
+        component.form.patchValue({ startDate: start, endDate: endAfter, startTime: undefined, endTime: undefined, reason: validReason });
+        component.setTimeFrame(TimeFrame.Period);
+
+        expect(component.isStartBeforeEnd).toBeTrue();
+    });
+
+    it('should return true if endTime > startTime when timeFrame is PeriodWithinDay', () => {
+        const start = dayjs('2021-01-01T10:00:00').tz('Europe/Berlin').toDate();
+        const end = dayjs('2021-01-01T12:00:00').tz('Europe/Berlin').toDate();
+
+        component.form.patchValue({
+            startDate: validStartDateBerlin,
+            endDate: undefined,
+            startTime: start,
+            endTime: end,
+            reason: validReason,
+        });
+        component.setTimeFrame(TimeFrame.PeriodWithinDay);
+
+        expect(component.isStartBeforeEnd).toBeTrue();
+    });
+
+    it('should return false if endTime ≤ startTime when timeFrame is PeriodWithinDay', () => {
+        const start = dayjs('2021-01-01T12:00:00').tz('Europe/Berlin').toDate();
+        const end = dayjs('2021-01-01T10:00:00').tz('Europe/Berlin').toDate();
+
+        component.form.patchValue({
+            startDate: validStartDateBerlin,
+            endDate: undefined,
+            startTime: start,
+            endTime: end,
+            reason: validReason,
+        });
+        component.setTimeFrame(TimeFrame.PeriodWithinDay);
+
+        expect(component.isStartBeforeEnd).toBeFalse();
+    });
+
     // === helper functions ===
     const setFormValues = (startDate: Date | undefined, endDate: Date | undefined, startTime: Date | undefined, endTime: Date | undefined, reason: string) => {
         component.startDateControl!.setValue(startDate);
@@ -344,14 +378,6 @@ describe('TutorialFreePeriodFormComponent', () => {
         component.startTimeControl!.setValue(startTime);
         component.endTimeControl!.setValue(endTime);
         component.reasonControl!.setValue(reason);
-    };
-
-    const setValidFormValues = () => {
-        component.startDateControl!.setValue(validStartDateBerlin);
-        component.endDateControl!.setValue(undefined);
-        component.startTimeControl!.setValue(undefined);
-        component.endTimeControl!.setValue(undefined);
-        component.reasonControl!.setValue(validReason);
     };
 
     const setTimeFrameAndCheckValues = (timeFrame: TimeFrame, startDate: Date | undefined, endDate: Date | undefined, startTime: Date | undefined, endTime: Date | undefined) => {
@@ -382,9 +408,9 @@ describe('TutorialFreePeriodFormComponent', () => {
     };
 
     function timeFrameTestHelperMethod(expectedTimeFrame: TimeFrame, formData: TutorialGroupFreePeriodFormData): void {
-        component.isEditMode = true;
-        component.formData = formData;
-        component.ngOnChanges();
+        fixture.componentRef.setInput('isEditMode', true);
+        fixture.componentRef.setInput('formData', formData);
+        fixture.detectChanges();
         expect(component.timeFrameControl).toBe(expectedTimeFrame);
     }
 

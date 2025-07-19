@@ -127,10 +127,6 @@ export class TeamParticipationTableComponent implements OnInit {
                 exercise.submission.participation = participation;
 
                 setLatestSubmissionResult(exercise.submission, get(exercise, 'participation.results[0]', undefined));
-                // assign this value so that it can be used later on in the view hierarchy (e.g. when updating a result, i.e. overriding an assessment
-                if (exercise.submission.results) {
-                    getLatestSubmissionResult(exercise.submission)!.participation = participation;
-                }
             }
             return exercise;
         });

@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIEventListenerService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -91,6 +92,9 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
     // Util Services
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    protected ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     // External Util Services
     @Autowired

@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,7 +24,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTO
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.OneToOneChatService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.OneToOneChatAuthorizationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/communication/courses/")
 public class OneToOneChatResource extends ConversationManagementResource {
@@ -48,18 +49,14 @@ public class OneToOneChatResource extends ConversationManagementResource {
 
     private final ConversationService conversationService;
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
-    public OneToOneChatResource(SingleUserNotificationService singleUserNotificationService, OneToOneChatAuthorizationService oneToOneChatAuthorizationService,
-            ConversationDTOService conversationDTOService, UserRepository userRepository, CourseRepository courseRepository, OneToOneChatService oneToOneChatService,
-            ConversationService conversationService) {
+    public OneToOneChatResource(OneToOneChatAuthorizationService oneToOneChatAuthorizationService, ConversationDTOService conversationDTOService, UserRepository userRepository,
+            CourseRepository courseRepository, OneToOneChatService oneToOneChatService, ConversationService conversationService) {
         super(courseRepository);
         this.oneToOneChatAuthorizationService = oneToOneChatAuthorizationService;
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.oneToOneChatService = oneToOneChatService;
         this.conversationService = conversationService;
-        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**

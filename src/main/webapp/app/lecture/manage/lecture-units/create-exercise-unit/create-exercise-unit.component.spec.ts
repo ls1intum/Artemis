@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
@@ -38,13 +38,8 @@ describe('CreateExerciseUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
-                CreateExerciseUnitComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(SortDirective),
-                MockDirective(SortByDirective),
-                MockComponent(FaIconComponent),
-            ],
+            imports: [FaIconComponent],
+            declarations: [CreateExerciseUnitComponent, MockPipe(ArtemisTranslatePipe), MockDirective(SortDirective), MockDirective(SortByDirective)],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
@@ -80,7 +75,6 @@ describe('CreateExerciseUnitComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

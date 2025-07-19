@@ -1,7 +1,7 @@
 <div [id]="'exercise-' + quizExercise?.id" class="position-relative min-h-100 d-flex flex-column">
     @if (quizExercise) {
         <div class="row sticky-top module-bg">
-            <div class="d-flex justify-content-between align-items-center module-bg gap-2" [ngClass]="isManagementView ? 'mt-2' : 'pt-2 mt-n3'">
+            <div class="d-flex justify-content-between align-items-center module-bg gap-2" [ngClass]="'pt-2 mt-n3'">
                 <h5 class="mb-0 d-flex gap-2 align-items-center">
                     {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }}
                     - {{ quizExercise.title }}

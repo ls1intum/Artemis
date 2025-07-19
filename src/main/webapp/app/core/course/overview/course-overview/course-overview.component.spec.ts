@@ -59,6 +59,13 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
+import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
+import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
+import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -146,6 +153,8 @@ describe('CourseOverviewComponent', () => {
     let courseSidebarService: CourseSidebarService;
     let profileService: ProfileService;
     let modalService: NgbModal;
+    let courseNotificationSettingService: CourseNotificationSettingService;
+    let courseNotificationService: CourseNotificationService;
 
     let metisConversationService: MetisConversationService;
 
@@ -153,6 +162,24 @@ describe('CourseOverviewComponent', () => {
         id: 1,
         courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     } as Course;
+
+    const mockCourseId = 123;
+
+    const mockNotificationSettingPresets: CourseNotificationSettingPreset[] = [
+        { typeId: 1, identifier: 'All Notifications', presetMap: { test: { PUSH: true, EMAIL: true, WEBAPP: true } } },
+        { typeId: 2, identifier: 'Important Only', presetMap: { test: { PUSH: true, EMAIL: false, WEBAPP: true } } },
+        { typeId: 3, identifier: 'Minimal', presetMap: { test: { PUSH: false, EMAIL: false, WEBAPP: true } } },
+    ];
+
+    const mockSettingInfo: CourseNotificationSettingInfo = {
+        selectedPreset: 1,
+        notificationTypeChannels: { test: { PUSH: true, EMAIL: true, WEBAPP: true } },
+    };
+
+    const mockNotificationInfo: CourseNotificationInfo = {
+        presets: mockNotificationSettingPresets,
+        notificationTypes: {},
+    };
 
     beforeEach(fakeAsync(() => {
         route = {
@@ -162,7 +189,7 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
+            imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule), FaIconComponent],
             declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -185,6 +212,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(TeamService),
                 MockProvider(WebsocketService),
                 MockProvider(ArtemisServerDateService),
+                MockProvider(CalendarEventService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
                 MockProvider(TutorialGroupsService),
@@ -192,6 +220,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(MetisConversationService),
                 MockProvider(CourseAccessStorageService),
                 MockProvider(NgbModal),
+                MockProvider(CourseNotificationSettingService),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -225,6 +254,8 @@ describe('CourseOverviewComponent', () => {
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
                 jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
+                courseNotificationSettingService = TestBed.inject(CourseNotificationSettingService);
+                courseNotificationService = TestBed.inject(CourseNotificationService);
                 // default for findOneForDashboardStub is to return the course
                 findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
                     of(
@@ -247,6 +278,9 @@ describe('CourseOverviewComponent', () => {
                     activeProfiles: [PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD],
                     testServer: false,
                 } as unknown as ProfileInfo);
+                jest.spyOn(courseNotificationSettingService, 'getSettingInfo').mockReturnValue(of(mockSettingInfo));
+                jest.spyOn(courseNotificationService, 'getInfo').mockReturnValue(of(new HttpResponse({ body: mockNotificationInfo })));
+                jest.spyOn(courseNotificationSettingService, 'setSettingPreset').mockImplementation();
             });
     }));
 
@@ -303,17 +337,27 @@ describe('CourseOverviewComponent', () => {
         expect(sidebarItems[1].title).toContain('Lectures');
     });
 
+    it('should create sidebar items for student if questions are available for practice', () => {
+        component.course.set({ id: 123, lectures: [], exams: [], trainingEnabled: true });
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
+        expect(sidebarItems[0].title).toContain('Exercises');
+        expect(sidebarItems[1].title).toContain('Training');
+        expect(sidebarItems[2].title).toContain('Lectures');
+    });
+
     it('should create competencies and learning path item if competencies or prerequisites are available and learning paths are enabled', () => {
         component.course.set({ id: 123, numberOfPrerequisites: 3, learningPathsEnabled: true });
         component.atlasEnabled = true;
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[2].title).toContain('Competencies');
-        expect(sidebarItems[3].title).toContain('Learning Path');
+        expect(sidebarItems[3].title).toContain('Competencies');
+        expect(sidebarItems[4].title).toContain('Learning Path');
     });
+
     it('should create faq item when faqs are enabled', () => {
         component.course.set({ id: 123, faqEnabled: true });
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[2].title).toContain('FAQs');
+        expect(sidebarItems[3].title).toContain('FAQs');
     });
 
     it('loads conversations when switching to message tab once', async () => {
@@ -332,27 +376,29 @@ describe('CourseOverviewComponent', () => {
         tabs.forEach((tab) => {
             jest.spyOn(router, 'url', 'get').mockReturnValue(baseUrl + '/' + tab);
             component.onSubRouteActivate({ controlConfiguration: undefined });
-
-            expect(metisConversationServiceStub).toHaveBeenCalledOnce();
+            fixture.detectChanges();
         });
+        expect(metisConversationServiceStub).toHaveBeenCalledOnce();
     });
 
     it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
         const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         metisConversationService._hasUnreadMessages$.next(hasNewMessages);
         jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of());
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/communication');
 
         await component.ngOnInit();
 
         route.snapshot.firstChild!.routeConfig!.path = 'exercises';
         component.onSubRouteActivate({ controlConfiguration: undefined });
-
+        fixture.detectChanges();
         expect(component.hasUnreadMessages()).toBe(hasNewMessages);
 
         const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
+            fixture.detectChanges();
 
             expect(spy).toHaveBeenCalledOnce();
         });
@@ -472,9 +518,14 @@ describe('CourseOverviewComponent', () => {
         const subscribeStub = jest.spyOn(findOneForDashboardResponse, 'subscribe');
         findOneForDashboardStub.mockReturnValue(findOneForDashboardResponse);
 
+        // check that calendar events are refreshed
+        const calendarEventService = TestBed.inject(CalendarEventService);
+        const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+
         component.loadCourse(true);
 
         expect(subscribeStub).toHaveBeenCalledOnce();
+        expect(refreshSpy).toHaveBeenCalledOnce();
     });
 
     it('should have visible exams', () => {
@@ -679,13 +730,13 @@ describe('CourseOverviewComponent', () => {
     it('should switch course and navigate to the correct URL', async () => {
         const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
         const navigateSpy = jest.spyOn(router, 'navigate');
-        jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/exercises');
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/dashboard');
 
         component.switchCourse(course2);
         await Promise.resolve();
 
         expect(navigateByUrlSpy).toHaveBeenCalledWith('/', { skipLocationChange: true });
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', course2.id, 'exercises']);
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', course2.id, 'dashboard']);
     });
     describe('determineManageViewLink', () => {
         beforeEach(() => {
@@ -764,4 +815,65 @@ describe('CourseOverviewComponent', () => {
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'course-statistics']);
         });
     });
+
+    it('should initialize course notification values when both settingInfo and info are available', fakeAsync(() => {
+        component.courseId.set(mockCourseId);
+        component.ngOnInit();
+        tick();
+
+        const selectableSettingPresets = (component as any).selectableSettingPresets;
+        const selectedSettingPreset = (component as any).selectedSettingPreset;
+
+        expect(selectableSettingPresets).toBeDefined();
+        expect(selectableSettingPresets).toEqual(mockNotificationSettingPresets);
+        expect(selectedSettingPreset).toBeDefined();
+        expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[0]);
+    }));
+
+    it('should select a new notification preset when presetSelected is called', fakeAsync(() => {
+        const setSettingPresetSpy = jest.spyOn(courseNotificationSettingService, 'setSettingPreset');
+
+        component.ngOnInit();
+        tick();
+
+        component.presetSelected(2);
+
+        const selectedSettingPreset = (component as any).selectedSettingPreset;
+
+        expect(selectedSettingPreset).toBeDefined();
+        expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[1]);
+        expect(setSettingPresetSpy).toHaveBeenCalledWith(1, 2, mockNotificationSettingPresets[0]);
+    }));
+
+    it('should set selectedSettingPreset to undefined when custom settings are selected', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+
+        component.presetSelected(0);
+
+        const selectedSettingPreset = (component as any).selectedSettingPreset;
+
+        expect(selectedSettingPreset).toBeUndefined();
+        expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(1, 0, mockNotificationSettingPresets[0]);
+    }));
+
+    it('should update notification settings when both services return data', fakeAsync(() => {
+        component.courseId.set(mockCourseId);
+        const getSettingInfoSpy = jest.spyOn(courseNotificationSettingService, 'getSettingInfo').mockImplementation(() => {
+            return of(undefined);
+        });
+
+        component.ngOnInit();
+        tick();
+
+        expect((component as any).selectableSettingPresets).toBeUndefined();
+
+        getSettingInfoSpy.mockReturnValue(of(mockSettingInfo));
+
+        (component as any).settingInfo = mockSettingInfo;
+        (component as any).initializeCourseNotificationValues();
+
+        expect((component as any).selectableSettingPresets).toBeDefined();
+        expect((component as any).selectedSettingPreset).toBeDefined();
+    }));
 });

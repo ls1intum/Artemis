@@ -40,6 +40,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('FileUploadAssessmentComponent', () => {
     let comp: FileUploadAssessmentComponent;
@@ -71,7 +72,7 @@ describe('FileUploadAssessmentComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([routes[0]])],
+            imports: [RouterModule.forRoot([routes[0]]), FaIconComponent],
             declarations: [
                 FileUploadAssessmentComponent,
                 MockComponent(UpdatingResultComponent),
@@ -135,7 +136,6 @@ describe('FileUploadAssessmentComponent', () => {
             comp.result = createResult(comp.submission);
             setLatestSubmissionResult(comp.submission, comp.result);
             comp.submission.participation!.submissions = [comp.submission];
-            comp.submission.participation!.results = [comp.submission.latestResult!];
             comp.isAssessor = true;
             comp.assessmentsAreValid = true;
             comp.isLoading = false;
@@ -156,7 +156,6 @@ describe('FileUploadAssessmentComponent', () => {
             comp.result = createResult(comp.submission);
             setLatestSubmissionResult(comp.submission, comp.result);
             comp.submission.participation!.submissions = [comp.submission];
-            comp.submission.participation!.results = [comp.submission.latestResult!];
             comp.isAssessor = true;
             comp.assessmentsAreValid = true;
             comp.isLoading = false;
@@ -406,7 +405,7 @@ describe('FileUploadAssessmentComponent', () => {
 
         expect(comp.isLoading).toBeFalse();
         expect(comp.result).toEqual(changedResult);
-        expect(comp.participation.results![0]).toEqual(changedResult);
+        expect(comp.submission.results![0]).toEqual(changedResult);
     });
 
     describe('onUpdateAssessmentAfterComplaint', () => {
@@ -440,7 +439,7 @@ describe('FileUploadAssessmentComponent', () => {
             comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
             expect(comp.isLoading).toBeFalse();
             expect(comp.result).toEqual(changedResult);
-            expect(comp.participation.results![0]).toEqual(changedResult);
+            expect(comp.submission.results![0]).toEqual(changedResult);
             expect(onSuccessCalled).toBeTrue();
             expect(onErrorCalled).toBeFalse();
         });
@@ -730,7 +729,6 @@ const createResult = (submission: FileUploadSubmission) => {
     result.score = 1;
     result.rated = true;
     result.submission = submission;
-    result.participation = undefined;
     result.assessmentType = AssessmentType.MANUAL;
     result.exampleResult = false;
     result.hasComplaint = false;

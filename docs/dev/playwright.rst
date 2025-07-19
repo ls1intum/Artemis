@@ -312,20 +312,19 @@ Playwright testing best practices
         the page - use ``waitFor()`` function of a locator instead.
 
 
-Artemis Deployment on Bamboo Build Agent
-----------------------------------------
-Every execution of the Playwright test suite requires its own deployment of Artemis.
-The easiest way to accomplish this is to deploy Artemis locally on the build agent, which executes the Playwright tests.
-Using ``docker compose`` we can start a MySQL database and the Artemis server locally on the build agent and
-connect it to the prelive system in the university data center.
+Artemis Deployment on Github Runner
+-----------------------------------
+Every execution of the Playwright test suite requires the Artemis server and client to be deployed and started.
+The easiest way to accomplish this is to deploy Artemis locally on the Github runner, which executes the Playwright tests.
+Using ``docker compose`` the runner can start a MySQL database and the Artemis server (potentially as multi-node deployment) and the client locally.
 
 .. figure:: playwright/playwright_bamboo_deployment_diagram.svg
   :align: center
-  :alt: Artemis Deployment on Bamboo Build Agent for Playwright
+  :alt: Artemis Deployment on Github runner for Playwright
 
-  Artemis Deployment on Bamboo Build Agent for Playwright
+  Artemis Deployment on Github runner for Playwright
 
-In total there are three Docker containers started in the Bamboo build agent:
+In total there are three Docker containers started on the Github runner:
 
 1. MySQL
 
@@ -340,17 +339,14 @@ In total there are three Docker containers started in the Bamboo build agent:
 
   The Docker image for the Artemis container is created from the already existing
   `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/docker/artemis/Dockerfile>`__.
-  When the Bamboo build of the Playwright test suite starts, it retrieves the Artemis executable (.war file)
-  from the `Artemis build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`_.
+  When the build of the Playwright test suite starts, it retrieves the Artemis executable (.war file).
   Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files
   for the Artemis server.
 
   The main configuration of the Artemis server are contained in the
   `Playwright environment configuration files <https://github.com/ls1intum/Artemis/tree/develop/docker/artemis/config>`__.
   However, those files do not contain any security relevant information.
-  Security relevant settings are instead passed to the Docker container via environment variables. This information is
-  accessible to the Bamboo build agent via
-  `Bamboo plan variables <https://confluence.atlassian.com/bamboo/bamboo-variables-289277087.html>`__.
+  Security relevant settings are instead passed to the Docker container via environment variables and GitHub secrets.
 
   The Artemis container is also configured to
   `depend on <https://docs.docker.com/compose/compose-file/compose-file-v2/#depends_on>`__
@@ -374,30 +370,6 @@ In total there are three Docker containers started in the Bamboo build agent:
   Furthermore, the Playwright container depends on the Artemis container and is only started
   once Artemis has been fully booted.
 
-**Bamboo webhook**
-
-The Artemis instance deployed on the build agent is not publicly available to improve the security of this setup.
-However, in order to get the build results for programming exercise submissions Artemis relies on a webhook from Bamboo
-to send POST requests to Artemis.
-To allow this, an extra rule has been added to the firewall allowing only the Bamboo instance in the prelive system
-to connect to the Artemis instance in the build agent.
-
-**Timing**
-
-As mentioned above, we want the Playwright test suite to be executed whenever new commits are pushed to a Git branch.
-This has been achieved by adding the
-`Playwright build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-AEPTMA1132>`__
-as a `child dependency <https://confluence.atlassian.com/bamboo/setting-up-plan-build-dependencies-289276887.html>`__
-to the `Artemis Build build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`__.
-The *Artemis Build* build plan is triggered whenever a new commit has been pushed to a branch.
-
-The Playwright build plan is only triggered after a successful build of the Artemis executable.
-This does imply a delay (about 10 minutes on average) between the push of new commits and the execution
-of the Playwright test suite, since the new Artemis executable first has to be built.
-
-**NOTE:** The Playwright test suite is only automatically executed for internal branches and pull requests
-(requires access to this GitHub repository), **not** for external ones.
-In case you need access rights, please contact the maintainer `Stephan Krusche <https://github.com/krusche>`__.
 
 Maintenance
 -----------

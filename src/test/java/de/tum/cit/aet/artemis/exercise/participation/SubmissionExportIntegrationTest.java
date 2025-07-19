@@ -20,6 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -88,49 +89,52 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
             participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
             participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student3");
 
-            if (exercise instanceof ModelingExercise) {
-                modelingExercise = (ModelingExercise) exercise;
-                try {
-                    modelingSubmission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54727.json",
+            switch (exercise) {
+                case ModelingExercise modelingExercise1 -> {
+                    modelingExercise = modelingExercise1;
+                    try {
+                        modelingSubmission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54727.json",
+                                TEST_PREFIX + "student1");
+                        modelingSubmission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54742.json",
+                                TEST_PREFIX + "student2");
+                        modelingSubmission3 = modelingExerciseUtilService.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54745.json",
+                                TEST_PREFIX + "student3");
+                    }
+                    catch (IOException e) {
+                        fail(e.getMessage(), e);
+                    }
+                }
+                case TextExercise textExercise1 -> {
+                    textExercise = textExercise1;
+
+                    textSubmission1 = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true),
                             TEST_PREFIX + "student1");
-                    modelingSubmission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54742.json",
-                            TEST_PREFIX + "student2");
-                    modelingSubmission3 = modelingExerciseUtilService.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54745.json",
+                    textSubmission2 = textExerciseUtilService.saveTextSubmission(textExercise,
+                            ParticipationFactory.generateTextSubmission("some other text", Language.ENGLISH, true), TEST_PREFIX + "student2");
+                    textSubmission3 = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("a third text", Language.ENGLISH, true),
                             TEST_PREFIX + "student3");
                 }
-                catch (IOException e) {
-                    fail(e.getMessage(), e);
+                case FileUploadExercise uploadExercise -> {
+                    fileUploadExercise = uploadExercise;
+
+                    fileUploadSubmission1 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
+                            ParticipationFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"), TEST_PREFIX + "student1");
+                    fileUploadSubmission2 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
+                            ParticipationFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"), TEST_PREFIX + "student2");
+                    fileUploadSubmission3 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
+                            ParticipationFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"), TEST_PREFIX + "student3");
+
+                    try {
+                        saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission1);
+                        saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission2);
+                        saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission3);
+                    }
+                    catch (IOException e) {
+                        fail("Could not create submission files", e);
+                    }
                 }
-            }
-            else if (exercise instanceof TextExercise) {
-                textExercise = (TextExercise) exercise;
-
-                textSubmission1 = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true),
-                        TEST_PREFIX + "student1");
-                textSubmission2 = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("some other text", Language.ENGLISH, true),
-                        TEST_PREFIX + "student2");
-                textSubmission3 = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("a third text", Language.ENGLISH, true),
-                        TEST_PREFIX + "student3");
-            }
-            else if (exercise instanceof FileUploadExercise) {
-                fileUploadExercise = (FileUploadExercise) exercise;
-
-                fileUploadSubmission1 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
-                        ParticipationFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"), TEST_PREFIX + "student1");
-                fileUploadSubmission2 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
-                        ParticipationFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"), TEST_PREFIX + "student2");
-                fileUploadSubmission3 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
-                        ParticipationFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"), TEST_PREFIX + "student3");
-
-                try {
-                    saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission1);
-                    saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission2);
-                    saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission3);
+                default -> {
                 }
-                catch (IOException e) {
-                    fail("Could not create submission files", e);
-                }
-
             }
         });
 
@@ -143,7 +147,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
 
         String[] parts = submission.getFilePath().split(Pattern.quote(File.separator));
         String fileName = parts[parts.length - 1];
-        File file = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()).resolve(fileName).toFile();
+        File file = FilePathConverter.buildFileUploadSubmissionPath(exercise.getId(), submission.getId()).resolve(fileName).toFile();
 
         File parent = file.getParentFile();
         if (!parent.exists() && !parent.mkdirs()) {
@@ -268,18 +272,20 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     private String getSubmissionFileName(Submission submission) {
-        if (submission instanceof TextSubmission) {
-            return textExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".txt";
-        }
-        else if (submission instanceof ModelingSubmission) {
-            return modelingExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".json";
-        }
-        else if (submission instanceof FileUploadSubmission) {
-            return fileUploadExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".pdf";
-        }
-        else {
-            fail("Unknown submission type");
-            return "";
+        switch (submission) {
+            case TextSubmission ignored -> {
+                return textExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".txt";
+            }
+            case ModelingSubmission ignored -> {
+                return modelingExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".json";
+            }
+            case FileUploadSubmission ignored -> {
+                return fileUploadExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".pdf";
+            }
+            case null, default -> {
+                fail("Unknown submission type");
+                return "";
+            }
         }
     }
 

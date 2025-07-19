@@ -9,35 +9,31 @@ import jakarta.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-
 /**
  * An {@link IrisSettings} implementation for exercise specific settings.
- * Exercise settings are used to override course settings and currently only allow setting the {@link IrisChatSubSettings}.
+ * Exercise settings are used to override course settings and currently only allow setting the {@link IrisProgrammingExerciseChatSubSettings}.
  */
 @Entity
 @DiscriminatorValue("EXERCISE")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisExerciseSettings extends IrisSettings {
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "exercise_id", unique = true, nullable = false)
-    private Exercise exercise;
+    private long exerciseId;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "iris_chat_settings_id")
-    private IrisChatSubSettings irisChatSettings;
+    private IrisProgrammingExerciseChatSubSettings irisProgrammingExerciseChatSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "iris_text_exercise_chat_settings_id")
     private IrisTextExerciseChatSubSettings irisTextExerciseChatSettings;
 
-    public Exercise getExercise() {
-        return exercise;
+    public long getExerciseId() {
+        return exerciseId;
     }
 
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
+    public void setExerciseId(long exerciseId) {
+        this.exerciseId = exerciseId;
     }
 
     @Override
@@ -60,13 +56,13 @@ public class IrisExerciseSettings extends IrisSettings {
     }
 
     @Override
-    public IrisChatSubSettings getIrisChatSettings() {
-        return irisChatSettings;
+    public IrisProgrammingExerciseChatSubSettings getIrisProgrammingExerciseChatSettings() {
+        return irisProgrammingExerciseChatSettings;
     }
 
     @Override
-    public void setIrisChatSettings(IrisChatSubSettings irisChatSettings) {
-        this.irisChatSettings = irisChatSettings;
+    public void setIrisProgrammingExerciseChatSettings(IrisProgrammingExerciseChatSubSettings irisProgrammingExerciseChatSettings) {
+        this.irisProgrammingExerciseChatSettings = irisProgrammingExerciseChatSettings;
     }
 
     @Override
@@ -110,5 +106,16 @@ public class IrisExerciseSettings extends IrisSettings {
     public void setIrisFaqIngestionSettings(IrisFaqIngestionSubSettings irisFaqIngestionSubSettings) {
         // Empty because exercises don't have exercise faq settings
 
+    }
+
+    @Override
+    public IrisTutorSuggestionSubSettings getIrisTutorSuggestionSettings() {
+        // Empty because exercises don't have exercise tutor suggestion settings
+        return null;
+    }
+
+    @Override
+    public void setIrisTutorSuggestionSettings(IrisTutorSuggestionSubSettings irisTutorSuggestionSubSettings) {
+        // Empty because exercises don't have exercise tutor suggestion settings
     }
 }

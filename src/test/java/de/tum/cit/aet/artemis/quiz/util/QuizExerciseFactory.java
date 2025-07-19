@@ -15,7 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseFactory;
@@ -64,6 +64,32 @@ public class QuizExerciseFactory {
         QuizExercise quizExercise = generateQuizExercise(releaseDate, dueDate, quizMode, course);
         addQuestionsToQuizExercise(quizExercise);
 
+        return quizExercise;
+    }
+
+    /**
+     * Creates a synchronized quiz exercise with the given dates and adds it to the course.
+     * The quiz consist of one multiple choice, one drag and drop, and one short answer question.
+     *
+     * @param course      The course the quiz should be added to.
+     * @param releaseDate The release date of the quiz.
+     * @param startTime   The startTime of the batch (synchronized quizzes have exactly one batch in which all participate).
+     * @param duration    The duration of the quiz in seconds.
+     * @return The created quiz.
+     */
+    public static QuizExercise createSynchronizedQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime startTime, int duration) {
+        QuizExercise quizExercise = (QuizExercise) ExerciseFactory.populateExercise(new QuizExercise(), releaseDate, null, null, course);
+        quizExercise.setTitle("Synchronized Quiz");
+        quizExercise.setProblemStatement(null);
+        quizExercise.setGradingInstructions(null);
+        quizExercise.setPresentationScoreEnabled(false);
+        quizExercise.setIsOpenForPractice(false);
+        quizExercise.setAllowedNumberOfAttempts(1);
+        quizExercise.setDuration(duration);
+        quizExercise.setRandomizeQuestionOrder(true);
+        quizExercise.setQuizMode(QuizMode.SYNCHRONIZED);
+        quizExercise.setQuizBatches(Set.of(generateQuizBatch(quizExercise, startTime)));
+        addQuestionsToQuizExercise(quizExercise);
         return quizExercise;
     }
 
@@ -475,7 +501,7 @@ public class QuizExerciseFactory {
         dragItem4.setTempID(generateTempId());
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"),
-                    FilePathService.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());
+                    FilePathConverter.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());
         }
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);

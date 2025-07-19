@@ -173,7 +173,14 @@
                     "editName": "Edit name",
                     "moreInfo": "More info",
                     "createdBy": "Created by",
-                    "createdOn": "Created on"
+                    "createdOn": "Created on",
+                    "notification": "Notification",
+                    "notificationsEnabledDescription": "You will receive notifications for new messages in this channel.",
+                    "notificationsMutedDescription": "You will not receive notifications for new messages in this channel.",
+                    "muteChannel": "Mute Channel",
+                    "notificationsDisabled": "Course-wide notifications are disabled.",
+                    "seeSettingsPrefix": " See",
+                    "seeSettingsLink": "notification settings."
                 }
             },
             "addUsers": {

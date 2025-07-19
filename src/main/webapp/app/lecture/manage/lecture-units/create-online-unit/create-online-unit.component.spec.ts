@@ -66,7 +66,6 @@ describe('CreateOnlineUnitComponent', () => {
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

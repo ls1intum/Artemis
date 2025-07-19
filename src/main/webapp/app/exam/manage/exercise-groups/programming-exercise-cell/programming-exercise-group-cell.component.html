@@ -14,7 +14,7 @@
                         <a href="{{ exercise().templateParticipation?.repositoryUri || '' }}" target="_blank">Template</a>
                     </span>
                 }
-                @if (exercise().templateParticipation?.results?.length) {
+                @if (numberOfResultsOfTemplateParticipation) {
                     <jhi-programming-exercise-instructor-status
                         [participationType]="participationType.TEMPLATE"
                         [participation]="exercise().templateParticipation!"
@@ -28,7 +28,7 @@
                         <a href="{{ exercise().solutionParticipation?.repositoryUri || '' }}" target="_blank">Solution</a>
                     </span>
                 }
-                @if (exercise().solutionParticipation?.results?.length) {
+                @if (numberOfResultsOfSolutionParticipation) {
                     <jhi-programming-exercise-instructor-status
                         [participationType]="participationType.SOLUTION"
                         [participation]="exercise().solutionParticipation!"

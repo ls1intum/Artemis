@@ -100,7 +100,7 @@ artemis:
                 bash:
                     default: "ghcr.io/ls1intum/artemis-bash-docker:v1.0.0"
                 c_plus_plus:
-                    default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.1.1"
+                    default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.1.2"
                 c_sharp:
                     default: "ghcr.io/ls1intum/artemis-csharp-docker:v1.0.1"
                 typescript:
@@ -124,10 +124,10 @@ artemis:
     compatible-versions:
       android:
         min: "2.0.0"
-        recommended: "2.0.0"
+        recommended: "2.1.0"
       ios:
         min: "2.0.0"
-        recommended: "2.0.0"
+        recommended: "2.1.0"
 
 
 
@@ -220,6 +220,7 @@ spring:
             hibernate.jdbc.lob.non_contextual_creation: true
             # limit fetch depth to prevent queries from getting too large because of eager fetching
             hibernate.max_fetch_depth: 2
+            jakarta.persistence.validation.mode: none # disable validation for faster startup
     liquibase:
         contexts: prod
     messages:
@@ -227,7 +228,7 @@ spring:
     main:
         allow-bean-definition-overriding: false
         allow-circular-references: false
-        lazy-initialization: false # cannot set this because of static inject in FilePathService
+        lazy-initialization: true
     task:
         execution:
             thread-name-prefix: artemis-task-
@@ -278,11 +279,15 @@ hazelcast:
             enabled: false
 
 springdoc:
-    api-docs:
-        path: /api-docs
-    swagger-ui:
-        path: /api.html
-        operationsSorter: method
+  api-docs: # Having these endpoints publicly available is a security risk, so we disable them by default
+    path: /api-docs
+    enabled: false
+  swagger-ui:
+    path: api.html
+    operationsSorter: method
+    enabled: false
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
 
 server:
     servlet:
@@ -365,3 +370,10 @@ eureka:
             git-version: ${git.commit.id.describe:}
             git-commit: ${git.commit.id.abbrev:}
             git-branch: ${git.branch:}
+
+# Helios configuration
+# It is enabled and all the values are set by the ansible
+# Refer to the ansible repository https://github.com/ls1intum/artemis-ansible
+helios:
+  status:
+    enabled: false

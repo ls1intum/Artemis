@@ -4,16 +4,19 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisChatWebsocketService {
@@ -22,9 +25,12 @@ public class IrisChatWebsocketService {
 
     private final IrisRateLimitService rateLimitService;
 
-    public IrisChatWebsocketService(IrisWebsocketService websocketService, IrisRateLimitService rateLimitService) {
+    private final UserRepository userRepository;
+
+    public IrisChatWebsocketService(IrisWebsocketService websocketService, IrisRateLimitService rateLimitService, UserRepository userRepository) {
         this.websocketService = websocketService;
         this.rateLimitService = rateLimitService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -39,7 +45,7 @@ public class IrisChatWebsocketService {
      * @param stages      that should be sent over the websocket
      */
     public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages) {
-        var user = session.getUser();
+        var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
         var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, null, null);
@@ -65,7 +71,7 @@ public class IrisChatWebsocketService {
      * @param tokens      token usage and cost send by Pyris
      */
     public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, List<String> suggestions, List<LLMRequest> tokens) {
-        var user = session.getUser();
+        var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
         var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, suggestions, tokens);

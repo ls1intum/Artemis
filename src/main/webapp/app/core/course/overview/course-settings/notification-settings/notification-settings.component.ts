@@ -37,9 +37,6 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
     protected settingInfo?: CourseNotificationSettingInfo;
     protected info?: CourseNotificationInfo;
     protected notificationSpecifications: CourseNotificationSettingSpecification[] = [];
-    protected settingSpecificationsToUpload: CourseNotificationSettingSpecification[] = [];
-    protected putPresetTimeout: NodeJS.Timeout;
-    protected putSpecificationsTimeout: any;
 
     constructor() {
         super();
@@ -55,7 +52,11 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
         this.selectedSettingPreset =
             this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!;
 
-        this.updateSpecificationArrayByNotificationMap(this.settingInfo!.notificationTypeChannels!, false);
+        if (this.settingInfo!.selectedPreset === 0) {
+            this.updateSpecificationArrayByNotificationMap(this.settingInfo!.notificationTypeChannels!, this.settingInfo!.notificationTypeChannels![1] === undefined);
+        } else if (this.settingInfo!.selectedPreset !== 0) {
+            this.updateSpecificationArrayByNotificationMap(this.selectedSettingPreset!.presetMap!, true);
+        }
 
         this.isLoading = false;
     }
@@ -67,19 +68,9 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
      * @param presetTypeId - The ID of the selected preset (0 for custom settings)
      */
     presetSelected(presetTypeId: number) {
-        if (this.putPresetTimeout) {
-            clearTimeout(this.putPresetTimeout);
-        }
-
         this.selectedSettingPreset = presetTypeId === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === presetTypeId)!;
 
-        if (presetTypeId !== 0) {
-            this.updateSpecificationArrayByNotificationMap(this.selectedSettingPreset!.presetMap, true);
-        }
-
-        this.putPresetTimeout = setTimeout(() => {
-            this.courseNotificationSettingService.setSettingPreset(this.courseId, presetTypeId);
-        }, 2000);
+        this.courseNotificationSettingService.setSettingPreset(this.courseId, presetTypeId, this.selectedSettingPreset);
     }
 
     /**
@@ -89,16 +80,9 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
      * @param specification - The notification specification that was changed
      */
     optionChanged(specification: CourseNotificationSettingSpecification) {
-        this.selectedSettingPreset = undefined;
-        this.settingSpecificationsToUpload.push(specification);
+        this.courseNotificationSettingService.setSettingSpecification(this.courseId, specification, this.selectedSettingPreset);
 
-        if (!this.putSpecificationsTimeout) {
-            // To avoid making many server calls we collect the specifications over a timeframe and then upload them.
-            this.putSpecificationsTimeout = setTimeout(() => {
-                this.courseNotificationSettingService.setSettingSpecification(this.courseId, this.settingSpecificationsToUpload);
-                this.putSpecificationsTimeout = undefined;
-            }, 3000);
-        }
+        this.selectedSettingPreset = undefined;
     }
 
     /**
@@ -114,9 +98,9 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
      * Fetches notification settings and info from the server.
      */
     onCourseIdAvailable(): void {
-        this.courseNotificationSettingService.getSettingInfo(this.courseId).subscribe((settingInfo) => {
-            if (settingInfo.body) {
-                this.settingInfo = settingInfo.body;
+        this.courseNotificationSettingService.getSettingInfo(this.courseId, true).subscribe((settingInfo) => {
+            if (settingInfo) {
+                this.settingInfo = settingInfo;
 
                 if (this.info) {
                     this.initializeValues();
@@ -137,14 +121,6 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
 
     ngOnDestroy() {
         super.ngOnDestroy();
-        if (this.putPresetTimeout) {
-            clearTimeout(this.putPresetTimeout);
-            this.courseNotificationSettingService.setSettingPreset(this.courseId, this.selectedSettingPreset?.typeId ?? 0);
-        }
-        if (this.putSpecificationsTimeout) {
-            clearTimeout(this.putSpecificationsTimeout);
-            this.courseNotificationSettingService.setSettingSpecification(this.courseId, this.settingSpecificationsToUpload);
-        }
     }
 
     /**
