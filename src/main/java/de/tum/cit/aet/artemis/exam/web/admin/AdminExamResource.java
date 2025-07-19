@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
@@ -90,7 +91,10 @@ public class AdminExamResource {
      */
     @PostMapping("exam-rooms/upload")
     public ResponseEntity<Set<ExamRoom>> uploadRoomZip(@RequestParam("file") MultipartFile zipFile) {
-        // TODO: Fix logging priorities, and possibly add/remove a few logs
+        // TODO: Change return type to a ExamRoomUploadOverviewDTO
+        // TODO: Use helper functions
+        final long startTime = System.nanoTime();
+        log.info("Starting to parse rooms from {}...", zipFile.getOriginalFilename());
         Set<ExamRoom> examRooms = new HashSet<>();
 
         try (ZipInputStream zis = new ZipInputStream(zipFile.getInputStream())) {
@@ -102,7 +106,7 @@ public class AdminExamResource {
 
                 // validate file type
                 if (entry.isDirectory() || !entryName.endsWith(".json")) {
-                    log.info("Skipping entry: {} because it's not a json file", entryName);
+                    // log.debug("Skipping entry: {} because it's not a json file", entryName);
                     continue;
                 }
 
@@ -110,11 +114,12 @@ public class AdminExamResource {
                 Pattern fileNameExtractorPattern = Pattern.compile("^.*/([^/]+)\\.json$");
                 Matcher fileNameExtractorMatcher = fileNameExtractorPattern.matcher(entryName);
                 if (!fileNameExtractorMatcher.find()) {
-                    log.info("Skipping entry: {} because the filename could not be obtained", entryName);
+                    // Not sure yet if this can ever be the case
+                    log.debug("Skipping entry: {} because the filename could not be obtained", entryName);
                 }
                 String longRoomNumber = fileNameExtractorMatcher.group(1);
 
-                log.debug("Starting entry {}", longRoomNumber);
+                log.debug("Parsinng room {}...", longRoomNumber);
                 String jsonData = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
                 JsonNode jsonRoot = mapper.readTree(jsonData);
 
@@ -125,8 +130,6 @@ public class AdminExamResource {
                 room.setName(jsonRoot.path("name").asText());
                 room.setAlternativeName(jsonRoot.path("shortname").asText(null));
                 room.setBuilding(jsonRoot.path("building").asText());
-                // capacity is not stored directly in the JSON, but needs to be calculated.
-                // TODO: capacity Skipped for now, but will need to be re-visited later
 
                 /* Extract the seats from the rows */
                 List<ExamSeat> seats = new ArrayList<>();
@@ -184,14 +187,29 @@ public class AdminExamResource {
                     layoutStrategy.setRoom(room);
                     switch (layoutType) {
                         case "auto_layout" -> layoutStrategy.setType(LayoutStrategyType.RELATIVE_DISTANCE);
+                        // useable_seats is a common typo in the JSON files
                         case "usable_seats", "useable_seats" -> layoutStrategy.setType(LayoutStrategyType.FIXED_SELECTION);
                         default -> {
                             log.warn("Unknown layout type '{}'", layoutType);
                             continue;
                         }
                     }
-                    ;
                     layoutStrategy.setParametersJson(String.valueOf(layoutDetailNode));
+
+                    // pre-calculate the capacity if it's easy/efficient to do so.
+                    // Right now this is only the case for the fixed_selection
+                    switch (layoutStrategy.getType()) {
+                        case LayoutStrategyType.FIXED_SELECTION -> {
+                            if (!layoutDetailNode.isArray()) {
+                                log.warn("Skipping entry {} because it's a fixed selection, but parameters aren't an array", entryName);
+                            }
+
+                            layoutStrategy.setCapacity(layoutDetailNode.size());
+                        }
+                        case LayoutStrategyType.RELATIVE_DISTANCE -> {
+                            // Here it's not obvious. It may be done/optionally enabled in the future.
+                        }
+                    }
 
                     layouts.add(layoutStrategy);
                 }
@@ -209,6 +227,7 @@ public class AdminExamResource {
 
         examRoomRepository.saveAll(examRooms);
 
+        log.info("Finished parsing rooms in {}", TimeLogUtil.formatDurationFrom(startTime));
         return ResponseEntity.ok(examRooms);
     }
 
