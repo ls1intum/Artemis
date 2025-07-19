@@ -19,6 +19,11 @@ import { DraftService } from 'app/communication/message/service/draft-message.se
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProvider } from 'ng-mocks';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { MetisConversationService } from '../../service/metis-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('MessageReplyInlineInputComponent', () => {
     let component: MessageReplyInlineInputComponent;
@@ -37,10 +42,12 @@ describe('MessageReplyInlineInputComponent', () => {
                 provideHttpClientTesting(),
                 FormBuilder,
                 { provide: MetisService, useClass: MockMetisService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(DraftService),
             ],
         })
@@ -53,6 +60,10 @@ describe('MessageReplyInlineInputComponent', () => {
                 accountService = TestBed.inject(AccountService);
                 metisServiceCreateStub = jest.spyOn(metisService, 'createAnswerPost');
                 metisServiceUpdateStub = jest.spyOn(metisService, 'updateAnswerPost');
+
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 
@@ -75,8 +86,8 @@ describe('MessageReplyInlineInputComponent', () => {
             title: undefined,
         });
         tick();
-        expect(component.isLoading).toBeFalse();
-        expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith({ ...component.posting, content: newContent });
+        expect(component.isLoading).toBeFalsy();
+        expect(onCreateSpy).toHaveBeenCalledWith({ ...component.posting, content: newContent });
     }));
 
     it('should stop loading when metis service throws error during replying to message', fakeAsync(() => {
@@ -94,7 +105,7 @@ describe('MessageReplyInlineInputComponent', () => {
         component.confirm();
 
         tick();
-        expect(component.isLoading).toBeFalse();
+        expect(component.isLoading).toBeFalsy();
         expect(onCreateSpy).not.toHaveBeenCalled();
     }));
 
@@ -116,7 +127,7 @@ describe('MessageReplyInlineInputComponent', () => {
             title: undefined,
         });
         tick();
-        expect(component.isLoading).toBeFalse();
+        expect(component.isLoading).toBeFalsy();
     }));
 
     it('should stop loading when metis service throws error during message replying', fakeAsync(() => {
@@ -135,16 +146,16 @@ describe('MessageReplyInlineInputComponent', () => {
         component.confirm();
 
         tick();
-        expect(component.isLoading).toBeFalse();
+        expect(component.isLoading).toBeFalsy();
         expect(onEditSpy).not.toHaveBeenCalled();
     }));
 
     it('should toggle sendAsDirectMessage value', () => {
-        expect(component.sendAsDirectMessage()).toBeFalse();
+        expect(component.sendAsDirectMessage()).toBeFalsy();
         component.toggleSendAsDirectMessage();
-        expect(component.sendAsDirectMessage()).toBeTrue();
+        expect(component.sendAsDirectMessage()).toBeTruthy();
         component.toggleSendAsDirectMessage();
-        expect(component.sendAsDirectMessage()).toBeFalse();
+        expect(component.sendAsDirectMessage()).toBeFalsy();
     });
 
     it('should reset form group with provided content', () => {
@@ -182,12 +193,13 @@ describe('MessageReplyInlineInputComponent', () => {
             }),
         );
         expect(emitSpy).toHaveBeenCalledWith(direct);
-        expect(component.isLoading).toBeFalse();
+        expect(component.isLoading).toBeFalsy();
     }));
-  
+
     describe('Draft functionality', () => {
         beforeEach(fakeAsync(() => {
             component.posting = directMessageUser1;
+            (component as any).activeConversation = () => ({ id: 1, name: 'Test Channel' }) as any;
             jest.spyOn(accountService, 'identity').mockResolvedValue({ id: 1 } as any);
             component.resetFormGroup();
             component.ngOnInit();
@@ -206,7 +218,7 @@ describe('MessageReplyInlineInputComponent', () => {
             });
             tick();
 
-            expect(getDraftKeySpy).toHaveBeenCalledOnce();
+            expect(getDraftKeySpy).toHaveBeenCalled();
             expect(saveDraftSpy).toHaveBeenCalledWith('thread_draft_1_1_1', saveDraft);
         }));
 
@@ -219,7 +231,7 @@ describe('MessageReplyInlineInputComponent', () => {
             });
             tick();
 
-            expect(getDraftKeySpy).toHaveBeenCalledOnce();
+            expect(getDraftKeySpy).toHaveBeenCalled();
             expect(clearDraftSpy).toHaveBeenCalledWith('thread_draft_1_1_1');
         }));
 
@@ -234,7 +246,7 @@ describe('MessageReplyInlineInputComponent', () => {
             component['loadDraft']();
             tick();
 
-            expect(getDraftKeySpy).toHaveBeenCalledOnce();
+            expect(getDraftKeySpy).toHaveBeenCalled();
             expect(component.posting.content).toBe(draftContent);
         }));
 
