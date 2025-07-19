@@ -22,7 +22,7 @@ jobs:
       - name: Check LOC and number of class dependencies
         run: |
           # Run the analysis and capture output
-          output=$(python analyze_java_code.py \
+          output=$(python supporting_scripts/analyze_java_files.py \
             --max-lines ${{ vars.MAX_LINES || 1000 }} \
             --max-params ${{ vars.MAX_PARAMS || 10 }} \
             ${{ vars.INCLUDE_REPO_DEPS == 'true' && '--include-repo-deps' || '' }})
