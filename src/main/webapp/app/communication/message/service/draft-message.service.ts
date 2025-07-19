@@ -27,18 +27,10 @@ export class DraftService {
         }
 
         const raw = this.localStorageService.retrieve<string>(key);
-
         if (raw) {
             try {
                 const draftData: DraftData = JSON.parse(raw);
-                if (
-                    typeof draftData === 'object' &&
-                    draftData !== null &&
-                    'content' in draftData &&
-                    'timestamp' in draftData &&
-                    typeof draftData.content === 'string' &&
-                    typeof draftData.timestamp === 'number'
-                ) {
+                if (this.isDraftData(draftData)) {
                     // Check expiry
                     if (Date.now() - draftData.timestamp > DRAFT_EXPIRY_MS) {
                         this.clearDraft(key);
@@ -55,6 +47,10 @@ export class DraftService {
                 }
             }
         }
+    }
+
+    private isDraftData(value: any): value is DraftData {
+        return typeof value === 'object' && value !== null && typeof value.content === 'string' && typeof value.timestamp === 'number';
     }
 
     clearDraft(key: string): void {
