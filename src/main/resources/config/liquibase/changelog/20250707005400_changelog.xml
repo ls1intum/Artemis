@@ -8,20 +8,35 @@
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true"/>
             </column>
+            <!-- Columns required from AbstractAuditingEntity - Start -->
+            <column name="created_by" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_by" type="varchar(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_modified_date" type="datetime(3)">
+                <constraints nullable="true"/>
+            </column>
+            <!-- Columns required from AbstractAuditingEntity - End -->
             <column name="long_room_number" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
-            <column name="short_room_number" type="varchar(20)">
+            <column name="short_room_number" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
             <column name="name" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="alternative_name" type="varchar(255)"/>
-            <column name="building" type="varchar(50)">
+            <column name="alternative_name" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="building" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="capacity" type="integer"/>
         </createTable>
 
         <!-- Rollback section -->
@@ -36,7 +51,7 @@
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true"/>
             </column>
-            <column name="label" type="varchar(255)">
+            <column name="label" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
             <column name="seat_condition" type="varchar(50)">
@@ -74,11 +89,14 @@
             <column name="name" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="type" type="varchar(255)">
+            <column name="type" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
-            <!-- default type for compatibility between MySQL and PostgreSQL -->
-            <column name="parameters" type="varchar(4000)">
+            <column name="capacity" type="integer">
+                <constraints nullable="true"/>
+            </column>
+            <!-- default type supposed to work for both MySQL and PostgreSQL -->
+            <column name="parameters" type="json">
                 <constraints nullable="false"/>
             </column>
             <column name="room_id" type="bigint">
@@ -110,20 +128,14 @@
         <rollback>
             <dropTable tableName="layout_strategy"/>
         </rollback>
-
-        <!-- Modify parameter column to json/jsonb for MySQL/PostgreSQL -->
-        <modifySql dbms="mysql">
-            <replace replace="varchar(4000)" with="json"/>
-        </modifySql>
-        <modifySql dbms="postgresql">
-            <replace replace="varchar(4000)" with="jsonb"/>
-        </modifySql>
     </changeSet>
 
-    <!-- Add exam-room-id column to the exam_user table -->
+    <!-- 4. Add exam-room-id column to the exam_user table -->
     <changeSet id="20250707005400-04-add-planned-room-id-to-exam-user" author="röttgermann">
         <addColumn tableName="exam_user">
-            <column name="planned_room_id" type="bigint"/>
+            <column name="planned_room_id" type="bigint">
+                <constraints nullable="true"/>
+            </column>
         </addColumn>
 
         <!-- Unique Constraints -->
