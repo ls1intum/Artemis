@@ -35,6 +35,7 @@ import { DragAndDropQuestionComponent } from '../../shared/questions/drag-and-dr
 import { MultipleChoiceQuestionComponent } from '../../shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestion } from '../../shared/entities/short-answer-question.model';
 import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const now = dayjs();
 const question1: QuizQuestion = {

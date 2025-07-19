@@ -20,6 +20,7 @@ export default tseslint.config(
             '.idea/',
             '.jhipster/',
             'build/',
+            'local/',
             'coverage/',
             'docker/',
             'docs/',

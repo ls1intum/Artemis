@@ -8,13 +8,12 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from 
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseTrainingQuizService } from '../service/course-training-quiz.service';
-import { MockSyncStorage } from 'src/test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { SessionStorageService } from 'ngx-webstorage';
-import { Result } from '../../../exercise/shared/entities/result/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { QuizParticipationService } from '../service/quiz-participation.service';
-import { AlertService } from '../../../shared/service/alert.service';
-import { CourseManagementService } from '../../../core/course/manage/services/course-management.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MultipleChoiceSubmittedAnswer } from '../../shared/entities/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from '../../shared/entities/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from '../../shared/entities/short-answer-submitted-answer.model';
@@ -68,7 +67,7 @@ describe('CourseTrainingQuizComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 {
                     provide: ActivatedRoute,
                     useValue: {
