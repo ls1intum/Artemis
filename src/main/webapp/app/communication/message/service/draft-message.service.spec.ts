@@ -29,7 +29,7 @@ describe('DraftService', () => {
     });
 
     it('should clear draft if content is empty', () => {
-        const clearSpy = jest.spyOn(localStorageService, 'clear');
+        const clearSpy = jest.spyOn(localStorageService, 'remove');
         draftService.clearDraft('key');
         expect(clearSpy).toHaveBeenCalledWith('key');
     });
@@ -49,7 +49,7 @@ describe('DraftService', () => {
         const expiredTimestamp = now - 8 * 24 * 60 * 60 * 1000; // 8 days ago
         const draftData = JSON.stringify({ content: 'expired draft', timestamp: expiredTimestamp });
 
-        const clearSpy = jest.spyOn(localStorageService, 'clear');
+        const clearSpy = jest.spyOn(localStorageService, 'remove');
         jest.spyOn(localStorageService, 'retrieve').mockReturnValue(draftData);
 
         const result = draftService.loadDraft('key');
@@ -62,7 +62,7 @@ describe('DraftService', () => {
         const justOver7DaysAgo = now - SEVEN_DAYS_MS - 1;
         const draftData = JSON.stringify({ content: 'expired draft', timestamp: justOver7DaysAgo });
 
-        const clearSpy = jest.spyOn(localStorageService, 'clear');
+        const clearSpy = jest.spyOn(localStorageService, 'remove');
         jest.spyOn(localStorageService, 'retrieve').mockReturnValue(draftData);
 
         const result = draftService.loadDraft('key');

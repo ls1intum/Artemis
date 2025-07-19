@@ -10,19 +10,19 @@ export class DraftService {
 
     saveDraft(key: string, content: string): void {
         const trimmedContent = content.trim();
-        if (key && key !== '' && content && content.trim()) {
+        if (key && trimmedContent) {
             const draftData: DraftData = {
                 content: trimmedContent,
                 timestamp: Date.now(),
             };
-            this.localStorageService.store(key, JSON.stringify(draftData));
-        } else if (key && key !== '') {
+            this.localStorageService.store<DraftData>(key, draftData);
+        } else if (key) {
             this.clearDraft(key);
         }
     }
 
     loadDraft(key: string): string | undefined {
-        if (!key || key === '') {
+        if (!key) {
             return undefined;
         }
 
@@ -58,7 +58,7 @@ export class DraftService {
     }
 
     clearDraft(key: string): void {
-        if (key && key !== '') {
+        if (key) {
             this.localStorageService.remove(key);
         }
     }
