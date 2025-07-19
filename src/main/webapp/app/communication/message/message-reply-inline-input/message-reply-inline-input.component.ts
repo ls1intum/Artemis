@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -131,7 +131,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     private finalizeCreation(posting: Posting): void {
         this.resetFormGroup('');
         this.isLoading = false;
-      this.clearDraft();
+        this.clearDraft();
         this.onCreate.emit(posting);
     }
 

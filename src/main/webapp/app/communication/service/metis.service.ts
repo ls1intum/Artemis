@@ -1002,7 +1002,6 @@ export class MetisService implements OnDestroy {
         }
     }
 
-
     /**
      * Retrieves a specific post by its ID within a given conversation.
      *
@@ -1032,6 +1031,5 @@ export class MetisService implements OnDestroy {
     enable(courseId: number, withMessaging: boolean): Observable<void> {
         const httpParams = new HttpParams().set('withMessaging', withMessaging);
         return this.http.put<void>('api/communication/courses/' + courseId + '/enable', undefined, { params: httpParams });
-
     }
 }

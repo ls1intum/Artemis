@@ -86,9 +86,6 @@ describe('PostComponent', () => {
         return TestBed.configureTestingModule({
             imports: [NgbTooltip, OverlayModule, MockModule(BrowserAnimationsModule)],
             providers: [
-                
-              (),
-                provideHttpClientTesting(),
                 provideRouter([]),
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: Router, useClass: MockRouter },
