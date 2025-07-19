@@ -1,5 +1,5 @@
 import dayjs, { Dayjs } from 'dayjs/esm';
-import isoWeek from 'dayjs/plugin/isoWeek';
+import isoWeek from 'dayjs/esm/plugin/isoWeek';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChalkboardUser, faCheckDouble, faDiagramProject, faFileArrowUp, faFont, faGraduationCap, faKeyboard, faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
 import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';

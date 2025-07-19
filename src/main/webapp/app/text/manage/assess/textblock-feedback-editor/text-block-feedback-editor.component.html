@@ -5,7 +5,7 @@
     @if (!readOnly) {
         <div class="close">
             @if (canDismiss) {
-                <fa-icon [icon]="faTimes" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()" />
+                <fa-icon [icon]="faTimes" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()" id="dismiss-icon" />
             } @else {
                 <jhi-confirm-icon
                     [initialIcon]="faTimes"
@@ -13,6 +13,7 @@
                     [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
                     [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation' | artemisTranslate"
                     (confirmEvent)="dismiss()"
+                    id="confirm-icon"
                 />
             }
         </div>

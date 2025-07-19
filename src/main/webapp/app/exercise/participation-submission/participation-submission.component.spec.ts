@@ -45,6 +45,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ParticipationSubmissionComponent', () => {
     let comp: ParticipationSubmissionComponent;
@@ -83,7 +84,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [NgxDatatableModule, RouterModule.forRoot([])],
+            imports: [NgxDatatableModule, RouterModule.forRoot([]), FaIconComponent],
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),
