@@ -984,8 +984,8 @@ public class GitService extends AbstractGitService {
      * @return a Repository object representing the newly created bare repository
      * @throws IOException if there is an error accessing the repositories or creating the new commit
      */
-    public Repository copyBareRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
-        log.debug("copy bare repository from {} to {} for source branch {}", sourceRepoUri, targetRepoUri, sourceBranch);
+    public Repository copyBareRepositoryWithoutHistory(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
+        log.debug("copy bare repository without history from {} to {} for source branch {}", sourceRepoUri, targetRepoUri, sourceBranch);
         Repository sourceRepo = getExistingBareRepository(sourceRepoUri, sourceBranch);
 
         logCommits(sourceRepoUri, sourceBranch, sourceRepo);
@@ -1041,6 +1041,21 @@ public class GitService extends AbstractGitService {
         }
     }
 
+    /**
+     * Creates a new bare Git repository at the specified target location, copying all commits
+     * and history from the source repository.
+     * <p>
+     * This method efficiently duplicates the entire commit history from the source to the target
+     * repository by directly transferring Git objects (commits, trees, and blobs) without checking
+     * out any working tree. It is designed for bare repositories, ensuring that the complete
+     * history is preserved in the new repository.
+     *
+     * @param sourceRepoUri the URI of the source bare repository to copy from
+     * @param targetRepoUri the URI where the new bare repository will be created
+     * @param sourceBranch  the name of the branch to copy (e.g., "main" or "master")
+     * @return a Repository object representing the newly created bare repository
+     * @throws IOException if there is an error accessing the repositories or creating the new commit
+     */
     public Repository copyBareRepositoryWithHistory(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
         log.debug("Copying full history from {} to {} for branch {}", sourceRepoUri, targetRepoUri, sourceBranch);
         Repository sourceRepo = getExistingBareRepository(sourceRepoUri, sourceBranch);

@@ -50,8 +50,8 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     @Override
-    public VcsRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
-            Integer attempt) throws VersionControlException {
+    public VcsRepositoryUri copyRepositoryWithoutHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
+            String targetRepositoryName, Integer attempt) throws VersionControlException {
         return copyRepository(sourceProjectKey, sourceRepositoryName, sourceBranch, targetProjectKey, targetRepositoryName, attempt, false);
     }
 
@@ -73,7 +73,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         final var sourceRepoUri = getCloneRepositoryUri(sourceProjectKey, sourceRepositoryName);
         final var targetRepoUri = getCloneRepositoryUri(targetProjectKey, targetRepoSlug);
         try (Repository targetRepo = withHistory ? gitService.copyBareRepositoryWithHistory(sourceRepoUri, targetRepoUri, sourceBranch)
-                : gitService.copyBareRepository(sourceRepoUri, targetRepoUri, sourceBranch)) {
+                : gitService.copyBareRepositoryWithoutHistory(sourceRepoUri, targetRepoUri, sourceBranch)) {
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
         catch (IOException | LargeObjectException ex) {
