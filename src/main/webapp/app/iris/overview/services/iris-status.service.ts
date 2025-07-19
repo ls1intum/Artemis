@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subscription, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, map, shareReplay, startWith, switchMap, takeUntil, timer } from 'rxjs';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Response } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisStatusDTO } from 'app/iris/shared/entities/iris-health.model';
@@ -9,10 +9,10 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { PROFILE_IRIS } from 'app/app.constants';
 
 /**
- * The `IrisHeartbeatService` is responsible for monitoring the health status of Iris.
+ * The `IrisStatusService` is responsible for monitoring the health status of Iris.
  * It periodically sends HTTP requests to check if the system is available.
  * The availability status is distributed to other services.
- * It also manages the current ratelimts.
+ * It also manages the current rate limits.
  */
 @Injectable({ providedIn: 'root' })
 export class IrisStatusService implements OnDestroy {
@@ -20,48 +20,58 @@ export class IrisStatusService implements OnDestroy {
     private httpClient = inject(HttpClient);
     private profileService = inject(ProfileService);
 
-    intervalId: ReturnType<typeof setInterval> | undefined;
-    websocketStatusSubscription: Subscription;
-    disconnected = false;
-
-    active = false;
-    activeSubject = new BehaviorSubject<boolean>(this.active);
-
-    currentRatelimitInfoSubject = new BehaviorSubject<IrisRateLimitInformation>(new IrisRateLimitInformation(0, 0, 0));
+    private disconnected = false;
+    private unSubscribe = new Subject<void>();
+    private ratelimitOverride$ = new BehaviorSubject<IrisRateLimitInformation>(new IrisRateLimitInformation(0, 0, 0));
+    private shouldPoll = this.profileService.isProfileActive(PROFILE_IRIS);
+    private websocketStatusSubscription: Subscription;
 
     /**
      * Creates an instance of IrisHeartbeatService.
-     * @param websocketService The JhiWebsocketService for managing the websocket connection.
-     * @param httpSessionService The IrisHttpChatSessionService for HTTP operations related to sessions.
      */
     constructor() {
-        if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
+        if (!this.shouldPoll) {
             return;
         }
-        this.checkHeartbeat();
-        this.intervalId = setInterval(() => {
-            this.checkHeartbeat();
-        }, 60000);
-
         this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.disconnected = !status.connected && !status.intendedDisconnect && status.wasEverConnectedBefore;
         });
     }
 
+    private statusPoll$: Observable<HttpResponse<IrisStatusDTO>> = this.shouldPoll
+        ? timer(0, 60000).pipe(switchMap(() => (this.disconnected ? EMPTY : this.getIrisStatus())))
+        : EMPTY;
+
+    private activeStatus$: Observable<boolean> = this.statusPoll$.pipe(
+        map((response) => Boolean(response.body?.active)),
+        startWith(false),
+        shareReplay({ refCount: true, bufferSize: 1 }),
+    );
+
+    private ratelimitInfo$: Observable<IrisRateLimitInformation> = this.statusPoll$.pipe(
+        map((response) => response.body?.rateLimitInfo ?? new IrisRateLimitInformation(0, 0, 0)),
+        startWith(new IrisRateLimitInformation(0, 0, 0)),
+        switchMap((polledInfo) =>
+            this.ratelimitOverride$.pipe(
+                map((override) => override ?? polledInfo),
+                takeUntil(this.statusPoll$),
+            ),
+        ),
+        shareReplay({ refCount: true, bufferSize: 1 }),
+    );
+
     /**
      * Returns an Observable of the current Iris availability status.
-     * @return An Observable of the current Iris availability status.
      */
     getActiveStatus(): Observable<boolean> {
-        return this.activeSubject.asObservable();
+        return this.activeStatus$;
     }
 
     /**
      * Returns an Observable of the current Iris ratelimit information.
-     * @return An Observable of the current Iris ratelimit information.
      */
     currentRatelimitInfo(): Observable<IrisRateLimitInformation> {
-        return this.currentRatelimitInfoSubject.asObservable();
+        return this.ratelimitInfo$;
     }
 
     /**
@@ -69,34 +79,15 @@ export class IrisStatusService implements OnDestroy {
      * @param rateLimitInfo The ratelimit information
      */
     handleRateLimitInfo(rateLimitInfo: IrisRateLimitInformation): void {
-        this.currentRatelimitInfoSubject.next(rateLimitInfo);
-    }
-
-    /**
-     * Checks the availability of Iris by sending a heartbeat request.
-     */
-    private checkHeartbeat(): void {
-        if (this.disconnected) return;
-        firstValueFrom(this.getIrisStatus()).then((response: HttpResponse<IrisStatusDTO>) => {
-            if (response.body) {
-                this.active = Boolean(response.body.active);
-
-                if (response.body.rateLimitInfo) {
-                    this.currentRatelimitInfoSubject.next(response.body.rateLimitInfo);
-                }
-            } else {
-                this.active = false;
-            }
-            this.activeSubject.next(this.active);
-        });
+        this.ratelimitOverride$.next(rateLimitInfo);
     }
 
     /**
      * Performs cleanup when the service is destroyed.
-     * Clears the interval and unsubscribes from observables.
      */
     ngOnDestroy(): void {
-        if (this.intervalId !== undefined) clearInterval(this.intervalId);
+        this.unSubscribe.next();
+        this.unSubscribe.complete();
         this.websocketStatusSubscription.unsubscribe();
     }
 
