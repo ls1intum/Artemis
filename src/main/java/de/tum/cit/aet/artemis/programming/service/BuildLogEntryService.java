@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -472,15 +473,12 @@ public class BuildLogEntryService {
      * and the build job ID. The file is expected to be located at:
      * {@code buildLogsPath/<courseShortName>/<exerciseShortName>/<buildJobId>.log}.
      *
-     * @param buildJobId          The unique identifier of the build job whose log file is being checked.
-     * @param programmingExercise The programming exercise associated with the build job, used to
-     *                                retrieve the course and exercise short names.
+     * @param buildJobId The unique identifier of the build job whose log file is being checked.
+     * @param names      A DTO containing the course and exercise short names.
      * @return {@code true} if the log file exists, otherwise {@code false}.
      */
-    public boolean buildJobHasLogFile(String buildJobId, ProgrammingExercise programmingExercise) {
-        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        String exerciseShortName = programmingExercise.getShortName();
-        Path logPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName).resolve(buildJobId + ".log");
+    public boolean buildJobHasLogFile(String buildJobId, ProgrammingExerciseNamesDTO names) {
+        Path logPath = buildLogsPath.resolve(names.courseShortName()).resolve(names.exerciseShortName()).resolve(buildJobId + ".log");
         boolean existsInExerciseFolder = Files.exists(logPath);
         if (existsInExerciseFolder) {
             return true;

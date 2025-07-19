@@ -304,6 +304,10 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Emits the user's ID when their name is clicked.
+     * This can be used to initiate a direct chat.
+     */
     userNameClicked() {
         const memberId = this.conversationMember()?.id;
         if (memberId) {

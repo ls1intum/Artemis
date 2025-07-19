@@ -11,7 +11,7 @@
                     <span class="text-muted" id="build-agent-info">{{ buildAgent.buildAgent?.name }} - {{ buildAgent.buildAgent?.memberAddress }}</span>
                 </div>
                 <div class="ms-3 d-flex justify-content-center gap-2">
-                    @if (buildAgent.status === 'PAUSED') {
+                    @if (buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED') {
                         <button class="btn btn-success" (click)="resumeBuildAgent()">
                             <fa-icon [icon]="faPlay" />
                             <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.buildAgents.resume"></span>
@@ -28,7 +28,7 @@
                 <div>
                     <span class="bold" jhiTranslate="artemisApp.buildAgents.status"></span>
                     <span class="bold">:</span>
-                    <fa-icon [icon]="buildAgent.status === 'PAUSED' ? faPauseCircle : faCircleCheck" />
+                    <fa-icon [icon]="buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED' ? faPauseCircle : faCircleCheck" />
                     <span>{{ buildAgent.status }}</span>
                 </div>
                 <div>
@@ -55,6 +55,14 @@
                     <span class="bold" jhiTranslate="artemisApp.buildAgents.gitRevision"></span>
                     <span class="bold">:</span>
                     <span>{{ buildAgent.buildAgentDetails?.gitRevision }}</span>
+                </div>
+                <div>
+                    <span class="bold" jhiTranslate="artemisApp.buildAgents.consecutiveBuildFailures"></span>
+                    <span>{{ buildAgent.buildAgentDetails?.consecutiveBuildFailures }}</span>
+                </div>
+                <div>
+                    <span class="bold" jhiTranslate="artemisApp.buildAgents.pauseAfterConsecutiveFailures"></span>
+                    <span>{{ buildAgent.pauseAfterConsecutiveBuildFailures }}</span>
                 </div>
             </div>
 
@@ -517,21 +525,8 @@
                 </div>
             }
             @if (finishedBuildJobs) {
-                <div>
-                    <div class="row justify-content-center">
-                        <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
-                    </div>
-                    <div class="row justify-content-center">
-                        <ngb-pagination
-                            (pageChange)="onPageChange($event)"
-                            [collectionSize]="totalItems"
-                            [(page)]="page"
-                            [pageSize]="itemsPerPage"
-                            [maxSize]="5"
-                            [rotate]="true"
-                            [boundaryLinks]="true"
-                        />
-                    </div>
+                <div class="row justify-content-center">
+                    <jhi-slice-navigator [config]="paginationConfig" [hasMoreItems]="hasMore()" [isLoading]="isLoading" (pageChange)="onPageChange($event)" />
                 </div>
             }
         </div>

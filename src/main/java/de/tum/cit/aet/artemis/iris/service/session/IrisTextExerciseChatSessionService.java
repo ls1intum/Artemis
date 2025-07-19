@@ -102,7 +102,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var user = userRepository.findByIdElseThrow(session.getUserId());
         // TODO: Once we can receive client form data through the IrisMessageResource, we should use that instead of fetching the latest submission to get the text
-        var participation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+        var participation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
         var latestSubmission = participation.flatMap(p -> p.getSubmissions().stream().max(Comparator.comparingLong(Submission::getId))).orElse(null);
         String latestSubmissionText;
         if (latestSubmission instanceof TextSubmission textSubmission) {

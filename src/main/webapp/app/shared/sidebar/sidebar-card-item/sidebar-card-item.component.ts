@@ -46,6 +46,7 @@ export class SidebarCardItemComponent implements OnInit, OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
+        // Recompute unread count string if value changes
         if (changes['unreadCount']) {
             this.formattedUnreadCount = this.getFormattedUnreadCount();
         }
@@ -54,6 +55,9 @@ export class SidebarCardItemComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Converts the unread count into a human-friendly string (e.g. '99+' if >99).
+     */
     private getFormattedUnreadCount(): string {
         if (this.unreadCount() > 99) {
             return '99+';
@@ -65,6 +69,10 @@ export class SidebarCardItemComponent implements OnInit, OnChanges {
         this.shouldDisplayUnreadCount.set(!this.sidebarItem.conversation?.isMuted);
     }
 
+    /**
+     * Extracts and stores the "other user" in case the item is a one-to-one chat.
+     * If it's a group chat, sets the group icon explicitly.
+     */
     extractMessageUser(): void {
         if (this.sidebarItem.type === 'oneToOneChat' && (this.sidebarItem.conversation as OneToOneChatDTO)?.members) {
             this.otherUser = (this.sidebarItem.conversation as OneToOneChatDTO).members!.find((user) => !user.isRequestingUser);

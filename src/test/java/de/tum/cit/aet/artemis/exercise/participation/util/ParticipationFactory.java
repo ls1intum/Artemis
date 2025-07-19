@@ -30,8 +30,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.util.GitUtilService;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -39,16 +37,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Factory for creating Participations and related objects.
  */
 public class ParticipationFactory {
-
-    /**
-     * Generates a MockFileRepositoryUri for the given repository.
-     *
-     * @param repository The repository to generate the MockFileRepositoryUri for
-     * @return The generated MockFileRepositoryUri
-     */
-    public static GitUtilService.MockFileRepositoryUri getMockFileRepositoryUri(LocalRepository repository) {
-        return new GitUtilService.MockFileRepositoryUri(repository.originRepoFile);
-    }
 
     /**
      * Generates a TextSubmission with the given arguments.

@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.UploadPack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 
 /**
  * This class configures the JGit Servlet, which is used to receive Git push and fetch requests for local VC.
@@ -20,6 +23,8 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @Lazy
 @Service
 public class ArtemisGitServletService extends GitServlet {
+
+    private static final Logger log = LoggerFactory.getLogger(ArtemisGitServletService.class);
 
     private final LocalVCServletService localVCServletService;
 
@@ -60,10 +65,19 @@ public class ArtemisGitServletService extends GitServlet {
         this.setReceivePackFactory((request, repository) -> {
             ReceivePack receivePack = new ReceivePack(repository);
             // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
-            // the user inside the request is always null here
-            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, (User) request.getAttribute("user")));
+            User user = null;
+            try {
+                String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+                user = localVCServletService.getUserByAuthHeader(authorizationHeader);
+
+            }
+            catch (LocalVCAuthException exception) {
+                log.error("Error while retrieving user from request header: {}", exception.getMessage());
+            }
+
+            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
-            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
+            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, user));
             return receivePack;
         });
 

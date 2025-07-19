@@ -1,8 +1,6 @@
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
@@ -65,7 +63,6 @@ export class ProgrammingExercise extends Exercise {
     public showTestNamesToStudents?: boolean;
     public auxiliaryRepositories?: AuxiliaryRepository[];
     public submissionPolicy?: SubmissionPolicy;
-    public gitDiffReport?: ProgrammingExerciseGitDiffReport;
     public buildConfig?: ProgrammingExerciseBuildConfig;
     public releaseTestsWithExampleSolution?: boolean;
 
@@ -104,7 +101,6 @@ export function resetProgrammingForImport(exercise: ProgrammingExercise) {
     // without dates set, they have to be reset as well
     exercise.releaseTestsWithExampleSolution = false;
     exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
-    exercise.assessmentType = AssessmentType.AUTOMATIC;
 }
 
 /**

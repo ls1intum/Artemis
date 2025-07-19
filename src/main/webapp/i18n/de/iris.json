@@ -141,6 +141,18 @@
             },
             "controlCenter": {
                 "tooltip": "Durch das Umschalten aktivierst oder deaktivierst du ALLE Iris Features für diesen Kurs. Für eine gezieltere Kontrolle nutze bitte die Iris Einstellungen, indem du auf Benutzerdefinierst klickst."
+            },
+            "chatHistory": {
+                "title": "Chats",
+                "today": "Heute",
+                "yesterday": "Gestern",
+                "last7Days": "Letzten 7 Tage",
+                "last30Days": "Letzten 30 Tage",
+                "older": "Älter",
+                "relatedEntityTooltip": {
+                    "programmingExercise": "Diese Konversation bezieht sich auf eine Programmieraufgabe.",
+                    "lecture": "Diese Konversation bezieht sich auf eine Vorlesung."
+                }
             }
         }
     }

@@ -580,7 +580,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
         // solution 100 %
@@ -590,7 +590,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
         verifyStudentScoreCalculations(testParticipations);
@@ -643,7 +643,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, 4, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
         // solution 100 %
@@ -653,7 +653,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, 4, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
         verifyStudentScoreCalculations(testParticipations);
@@ -831,7 +831,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 25D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
         else if (student == 2) {
             // student2 61% % / 75 %
@@ -840,7 +840,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny();
             assertThat(manualResultOptional).isPresent();
             testParticipationResult(manualResultOptional.get(), 86D, 6, AssessmentType.SEMI_AUTOMATIC);
-            assertThat(manualResultOptional).contains(participation.findLatestLegalResult());
+            assertThat(manualResultOptional).contains(participation.findLatestResult());
 
             var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();
             assertThat(automaticResultOptional).isPresent();
@@ -849,21 +849,21 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         else if (student == 3) {
             // student3 no result
             assertThat(results).isNullOrEmpty();
-            assertThat(participation.findLatestLegalResult()).isNull();
+            assertThat(participation.findLatestResult()).isNull();
         }
         else if (student == 4) {
             // student4 100%
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
         else if (student == 5) {
             // student5 Build failed
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, 0, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
     }
 
@@ -1063,7 +1063,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 60D, 24, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).orElseThrow();
@@ -1071,7 +1071,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 71.4, 8, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
         // Also remove max penalty from exercise
@@ -1106,7 +1106,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, 24, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation4.getId()).orElseThrow();
@@ -1114,7 +1114,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 11.9, 12, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
     }
 
@@ -1146,7 +1146,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 79.0, 9, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
         // Remove max penalty from exercise
@@ -1178,7 +1178,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 19.0, 19, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
     }
 
@@ -1228,7 +1228,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, expectedScores[i], expectedFeedbackSize[i], assessmentType);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
     }
 

@@ -270,7 +270,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
         doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(), any());
-
+        doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).copyBareRepository(any(), any(), any());
         // TODO: all parts using programmingExerciseTestService should also be provided for LocalVC+Jenkins
         programmingExerciseTestService.setup(this, versionControlService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
@@ -522,7 +522,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);
-        repo.configureRepos("studentRepo", "studentOriginRepo");
+        repo.configureRepos(localVCRepoPath, "studentRepo", "studentOriginRepo");
         programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, student1.getLogin(), repo);
         mockConnectorRequestsForStartParticipation(programmingExercise, student1.getLogin(), Set.of(student1), true);
 
@@ -614,7 +614,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(2).getExercises().iterator().next();
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);
-        repo.configureRepos("instructorRepo", "instructorOriginRepo");
+        repo.configureRepos(localVCRepoPath, "instructorRepo", "instructorOriginRepo");
         programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, instructor.getLogin(), repo);
         mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getLogin(), Set.of(instructor), true);
 
@@ -1440,7 +1440,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             jenkinsRequestMockProvider.reset();
             jenkinsRequestMockProvider.mockTriggerBuild(programmingExercise.getProjectKey(), ((ProgrammingExerciseStudentParticipation) participation).getBuildPlanId(), false);
             request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
-            Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId());
+            Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
             assertThat(programmingSubmission).isPresent();
             assertSensitiveInformationWasFilteredProgrammingExercise(programmingExercise);
             participation.getSubmissions().add(programmingSubmission.get());
@@ -1911,8 +1911,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 jenkinsRequestMockProvider.reset();
                 jenkinsRequestMockProvider.mockTriggerBuild(programmingExercise.getProjectKey(), ((ProgrammingExerciseStudentParticipation) participation).getBuildPlanId(), false);
                 request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
-                Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
-                        .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId());
+                Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
                 programmingSubmission.ifPresent(submission -> participation.getSubmissions().add(submission));
                 continue;
             }
@@ -2348,7 +2347,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(testRun.getExercises().getFirst().getId(), instructor.getId());
+        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(testRun.getExercises().getFirst().getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
         participationDeletionService.delete(participations.getFirst().getId(), true);
         request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);

@@ -60,7 +60,7 @@
                 >
                     <ng-template let-session>
                         <jhi-tutorial-group-session-row-buttons
-                            [tutorialGroupSession]="session"
+                            [tutorialGroupSession]="session()"
                             [course]="course"
                             [tutorialGroup]="tutorialGroup"
                             (cancelOrActivatePressed)="loadAll()"

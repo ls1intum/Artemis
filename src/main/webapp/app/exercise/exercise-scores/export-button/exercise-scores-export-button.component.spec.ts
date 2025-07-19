@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultService } from 'app/exercise/result/result.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -165,8 +165,8 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip)],
-            declarations: [ExerciseScoresExportButtonComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
+            imports: [MockDirective(NgbTooltip), FaIconComponent],
+            declarations: [ExerciseScoresExportButtonComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(AlertService), { provide: ResultService, useClass: MockResultService }, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

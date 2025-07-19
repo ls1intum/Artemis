@@ -1,15 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
-import { CourseLearnerProfileLevel } from 'app/core/learner-profile/shared/entities/learner-profile-options.model';
 
 describe('SegmentedToggleComponent', () => {
-    let component: SegmentedToggleComponent;
-    let fixture: ComponentFixture<SegmentedToggleComponent>;
+    let component: SegmentedToggleComponent<number>;
+    let fixture: ComponentFixture<SegmentedToggleComponent<number>>;
 
     const mockOptions = [
-        { label: 'Option 1', value: CourseLearnerProfileLevel.LOW },
-        { label: 'Option 2', value: CourseLearnerProfileLevel.MEDIUM },
-        { label: 'Option 3', value: CourseLearnerProfileLevel.HIGH },
+        { label: 'Option 1', value: 1 },
+        { label: 'Option 2', value: 2 },
+        { label: 'Option 3', value: 3 },
     ];
 
     beforeEach(async () => {
@@ -17,7 +16,7 @@ describe('SegmentedToggleComponent', () => {
             imports: [SegmentedToggleComponent],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(SegmentedToggleComponent);
+        fixture = TestBed.createComponent(SegmentedToggleComponent<number>);
         component = fixture.componentInstance;
         component.options = mockOptions;
         fixture.detectChanges();
@@ -29,13 +28,13 @@ describe('SegmentedToggleComponent', () => {
     });
 
     it('should bind selected value correctly', () => {
-        component.selected = CourseLearnerProfileLevel.MEDIUM;
+        component.selected = 2;
         fixture.detectChanges();
-        expect(component.selected).toBe(CourseLearnerProfileLevel.MEDIUM);
+        expect(component.selected).toBe(2);
     });
 
     it('should emit selectedChange event when an option is selected', () => {
-        const selectedValue = CourseLearnerProfileLevel.LOW;
+        const selectedValue = 1;
         const spy = jest.spyOn(component.selectedChange, 'emit');
 
         component.select(selectedValue);
@@ -68,7 +67,7 @@ describe('SegmentedToggleComponent', () => {
 
     it('should apply selected class to the active option', () => {
         component.options = mockOptions;
-        component.selected = CourseLearnerProfileLevel.MEDIUM;
+        component.selected = 2;
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
