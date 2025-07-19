@@ -17,7 +17,7 @@ import {
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, computed, inject, input, signal } from '@angular/core';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
-import { Subscription } from 'rxjs';
+import { Subscription, combineLatest } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -155,11 +155,10 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     stagesSubscription: Subscription;
     errorSubscription: Subscription;
     numNewMessageSubscription: Subscription;
-    rateLimitSubscription: Subscription;
-    activeStatusSubscription: Subscription;
     suggestionsSubscription: Subscription;
     routeSubscription: Subscription;
     chatSessionsSubscription: Subscription;
+    combinedStatusSubscription: Subscription;
 
     private currentRelatedEntityId = signal<number | undefined>(undefined);
     private currentChatMode = signal<ChatServiceMode | undefined>(undefined);
@@ -247,13 +246,13 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             this.numNewMessages = num;
             this.checkUnreadMessageScroll();
         });
-        this.rateLimitSubscription = this.statusService.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
-        this.activeStatusSubscription = this.statusService.getActiveStatus().subscribe((active) => {
+        this.combinedStatusSubscription = combineLatest([this.statusService.getActiveStatus(), this.statusService.currentRatelimitInfo()]).subscribe(([active, rateLimitInfo]) => {
+            this.active = active;
+            this.rateLimitInfo = rateLimitInfo;
             if (!active) {
                 this.isLoading = false;
                 this.resendAnimationActive = false;
             }
-            this.active = active;
         });
         this.suggestionsSubscription = this.chatService.currentSuggestions().subscribe((suggestions) => {
             this.suggestions = suggestions;
@@ -287,11 +286,13 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.stagesSubscription.unsubscribe();
         this.errorSubscription.unsubscribe();
         this.numNewMessageSubscription.unsubscribe();
-        this.rateLimitSubscription.unsubscribe();
-        this.activeStatusSubscription.unsubscribe();
+        this.combinedStatusSubscription.unsubscribe();
         this.suggestionsSubscription.unsubscribe();
         this.routeSubscription?.unsubscribe();
         this.chatSessionsSubscription.unsubscribe();
+        this.sessionIdSubscription.unsubscribe();
+        this.relatedEntityIdSubscription.unsubscribe();
+        this.chatModeSubscription.unsubscribe();
     }
 
     checkIfUserAcceptedExternalLLMUsage(): void {
