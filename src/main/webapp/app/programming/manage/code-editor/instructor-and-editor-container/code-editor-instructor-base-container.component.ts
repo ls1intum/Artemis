@@ -350,23 +350,26 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      */
     generateSolutionRepository() {
         this.loadingState = LOADING_STATE.GENERATING_SOLUTION_REPO;
-        // TODO: Replace with actual API call when backend endpoint is implemented
         this.exerciseService
             .generateSolutionRepository(this.exercise.id!)
             .pipe(
-                catchError(() => throwError(() => new Error('solutionRepositoryCouldNotBeGenerated'))),
+                catchError((error) => {
+                    this.loadingState = LOADING_STATE.CLEAR;
+                    return throwError(() => new Error('solutionRepositoryCouldNotBeGenerated'));
+                }),
                 tap(() => {
                     this.loadingState = LOADING_STATE.CLEAR;
                 }),
             )
             .subscribe({
-                next: () => {
-                    this.loadingState = LOADING_STATE.CLEAR;
-                    // TODO: Add success notification or refresh the repository
+                next: (result: string) => {
+                    this.alertService.success('artemisApp.editor.repoSelect.solutionRepositoryGenerated');
+                    if (this.selectedRepository !== RepositoryType.SOLUTION) {
+                        this.selectSolutionParticipation();
+                    }
                 },
-                error: (err: Error) => {
-                    this.loadingState = LOADING_STATE.CLEAR;
-                    this.onError(err.message);
+                error: () => {
+                    this.alertService.error('artemisApp.editor.errors.solutionRepositoryCouldNotBeGenerated');
                 },
             });
     }

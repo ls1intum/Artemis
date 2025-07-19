@@ -129,6 +129,20 @@ artemis:
         min: "2.0.0"
         recommended: "2.1.0"
 
+    atlas:
+        enabled: true
+    exam:
+        enabled: true
+    plagiarism:
+        enabled: true
+    text:
+        enabled: true
+    tutorialgroup:
+        enabled: true
+    hyperion:
+        enabled: false # Enable Hyperion AI solution generation service
+        url: ${ARTEMIS_HYPERION_URL:http://localhost:8080} # URL of the Hyperion service
+    user-management:
 
 
 management:

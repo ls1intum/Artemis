@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -69,6 +70,12 @@ public class RestTemplateConfiguration {
     @Bean
     @Profile("aeolus | localci")
     public RestTemplate aeolusRestTemplate() {
+        return createRestTemplate();
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "artemis.hyperion.enabled", havingValue = "true")
+    public RestTemplate hyperionRestTemplate() {
         return createRestTemplate();
     }
 

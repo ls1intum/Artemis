@@ -96,6 +96,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
+import de.tum.cit.aet.artemis.programming.service.SolutionGenerationService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
@@ -175,6 +176,8 @@ public class ProgrammingExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final Optional<SolutionGenerationService> solutionGenerationService;
+
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
@@ -186,7 +189,7 @@ public class ProgrammingExerciseResource {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ChannelRepository channelRepository,
             Optional<AthenaApi> athenaApi, Environment environment, RepositoryCheckoutService repositoryCheckoutService, Optional<SlideApi> slideApi,
-            ProgrammingExerciseDeletionService programmingExerciseDeletionService) {
+            ProgrammingExerciseDeletionService programmingExerciseDeletionService, Optional<SolutionGenerationService> solutionGenerationService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
@@ -216,6 +219,7 @@ public class ProgrammingExerciseResource {
         this.repositoryCheckoutService = repositoryCheckoutService;
         this.slideApi = slideApi;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
+        this.solutionGenerationService = solutionGenerationService;
     }
 
     /**
@@ -651,6 +655,46 @@ public class ProgrammingExerciseResource {
                     .headers(HeaderUtil.createAlert(applicationName,
                             "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": " + e,
                             "errorStructureOracleGeneration"))
+                    .body(null);
+        }
+    }
+
+    /**
+     * PUT /programming-exercises/{exerciseId}/generate-solution-repository : Generates a solution repository using AI for the programming exercise
+     *
+     * @param exerciseId The ID of the programming exercise for which the solution repository should be generated
+     * @return The ResponseEntity with status 200 (OK) or with status 400 (Bad Request) if the parameters are invalid
+     */
+    @PutMapping(value = "programming-exercises/{exerciseId}/generate-solution-repository", produces = MediaType.TEXT_PLAIN_VALUE)
+    @EnforceAtLeastInstructor
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<String> generateSolutionRepository(@PathVariable long exerciseId) {
+        log.debug("REST request to generate solution repository for ProgrammingExercise with id: {}", exerciseId);
+
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
+
+        if (!solutionGenerationService.isPresent()) {
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createAlert(applicationName, "Solution generation service is not available. Please enable the Hyperion service.", "solutionGenerationNotAvailable"))
+                    .body(null);
+        }
+
+        try {
+            solutionGenerationService.get().generateSolutionRepository(programmingExercise, user);
+
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentType(MediaType.TEXT_PLAIN);
+            return new ResponseEntity<>("Successfully generated solution repository for the exercise " + programmingExercise.getProjectName(), responseHeaders, HttpStatus.OK);
+
+        }
+        catch (Exception e) {
+            log.error("Error generating solution repository for exercise {}: {}", programmingExercise.getId(), e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .headers(HeaderUtil.createAlert(applicationName,
+                            "An error occurred while generating the solution repository for the exercise " + programmingExercise.getProjectName() + ": " + e.getMessage(),
+                            "errorSolutionRepositoryGeneration"))
                     .body(null);
         }
     }
