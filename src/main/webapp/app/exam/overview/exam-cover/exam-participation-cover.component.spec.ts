@@ -49,11 +49,10 @@ describe('ExamParticipationCoverComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientModule, FormsModule],
+            imports: [HttpClientModule, FormsModule, FaIconComponent],
             declarations: [
                 ExamParticipationCoverComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
                 MockComponent(ExamTimerComponent),
                 MockComponent(ExamGeneralInformationComponent),
                 MockDirective(TranslateDirective),

@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import org.eclipse.jgit.errors.LargeObjectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,6 +52,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
@@ -233,8 +236,19 @@ public class ParticipationResource {
             participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
                     .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart"));
         }
-
-        StudentParticipation participation = participationService.startExercise(exercise, participant, true);
+        StudentParticipation participation = null;
+        try {
+            participation = participationService.startExercise(exercise, participant, true);
+        }
+        catch (Exception e) {
+            if (e instanceof VersionControlException && e.getCause() instanceof LargeObjectException) {
+                throw new InternalServerErrorException("Failed to start exercise because repository contains files that are too large. Please contact your instructor.");
+            }
+            else {
+                log.error("Failed to start exercise participation for exercise {} and user {}", exerciseId, user.getLogin(), e);
+                throw new InternalServerErrorException("Failed to start exercise participation.");
+            }
+        }
 
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();

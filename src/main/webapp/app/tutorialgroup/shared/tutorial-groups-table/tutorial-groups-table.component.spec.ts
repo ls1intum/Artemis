@@ -60,6 +60,7 @@ describe('TutorialGroupTableWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 TutorialGroupsTableComponent,
                 TutorialGroupRowStubComponent,
@@ -67,11 +68,9 @@ describe('TutorialGroupTableWrapperTest', () => {
                 MockExtraColumnComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
-                MockComponent(FaIconComponent),
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockDirective(TranslateDirective),
             ],

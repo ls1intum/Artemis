@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.exception.QuizJoinException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -86,11 +87,11 @@ import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
-import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizMessagingService;
+import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
 import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
@@ -108,7 +109,7 @@ public class QuizExerciseResource {
 
     private static final String ENTITY_NAME = "quizExercise";
 
-    private final QuizQuestionRepository quizQuestionRepository;
+    private final CourseRepository courseRepository;
 
     private final QuizSubmissionService quizSubmissionService;
 
@@ -155,13 +156,15 @@ public class QuizExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final QuizQuestionProgressService quizQuestionsProgressService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService, QuizResultService quizResultService,
-            Optional<CompetencyProgressApi> competencyProgressApi, QuizQuestionRepository quizQuestionRepository) {
+            Optional<CompetencyProgressApi> competencyProgressApi, QuizQuestionProgressService quizQuestionsProgressService, CourseRepository courseRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -183,7 +186,8 @@ public class QuizExerciseResource {
         this.quizSubmissionService = quizSubmissionService;
         this.quizResultService = quizResultService;
         this.competencyProgressApi = competencyProgressApi;
-        this.quizQuestionRepository = quizQuestionRepository;
+        this.quizQuestionsProgressService = quizQuestionsProgressService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -774,9 +778,13 @@ public class QuizExerciseResource {
      */
     @GetMapping("courses/{courseId}/practice/quiz")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<QuizQuestion>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
+    public ResponseEntity<List<QuizQuestion>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
-        Set<QuizQuestion> quizQuestions = quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        List<QuizQuestion> quizQuestions = quizQuestionsProgressService.getQuestionsForSession(courseId, user.getId());
         return ResponseEntity.ok(quizQuestions);
     }
 
@@ -790,5 +798,4 @@ public class QuizExerciseResource {
             quizExercise.setQuizBatches(batches);
         }
     }
-
 }

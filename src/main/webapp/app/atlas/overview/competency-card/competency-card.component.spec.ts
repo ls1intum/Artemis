@@ -17,11 +17,11 @@ describe('CompetencyCardComponent', () => {
     let competencyCardComponent: CompetencyCardComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 CompetencyCardComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
-                MockComponent(FaIconComponent),
                 MockComponent(CompetencyRingsComponent),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockDirective(TranslateDirective),

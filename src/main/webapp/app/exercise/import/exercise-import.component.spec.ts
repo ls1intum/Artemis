@@ -25,6 +25,7 @@ import { of } from 'rxjs';
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ExerciseImportComponent', () => {
     let fixture: ComponentFixture<ExerciseImportComponent>;
@@ -42,7 +43,7 @@ describe('ExerciseImportComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, MockComponent(NgbPagination)],
+            imports: [FaIconComponent, FormsModule, MockComponent(NgbPagination)],
             declarations: [
                 ExerciseImportComponent,
                 MockPipe(ExerciseCourseTitlePipe),
@@ -57,7 +58,7 @@ describe('ExerciseImportComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseImportComponent);
                 comp = fixture.componentInstance;
-                quizExercisePagingService = TestBed.get(QuizExercisePagingService);
+                quizExercisePagingService = TestBed.inject(QuizExercisePagingService);
                 sortService = TestBed.inject(SortService);
                 injector = TestBed.inject(Injector);
                 activeModal = TestBed.inject(NgbActiveModal);
