@@ -42,7 +42,7 @@ export class ScienceSettingsService {
 
     private storeScienceSettings(settings?: ScienceSetting[]): void {
         if (settings) {
-            this.localStorageService.store(SCIENCE_SETTING_LOCAL_STORAGE_KEY, JSON.stringify(settings));
+            this.localStorageService.store(SCIENCE_SETTING_LOCAL_STORAGE_KEY, settings);
         } else {
             this.localStorageService.remove(SCIENCE_SETTING_LOCAL_STORAGE_KEY);
         }
