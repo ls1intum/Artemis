@@ -112,6 +112,17 @@
                         <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo"></span>
                     </button>
                 }
+                @if (selectedRepository === RepositoryType.SOLUTION && exercise.isAtLeastInstructor) {
+                    <button (click)="generateSolutionRepository()" [disabled]="loadingState !== LOADING_STATE.CLEAR" class="btn btn-success me-2">
+                        @if (loadingState !== LOADING_STATE.GENERATING_SOLUTION_REPO) {
+                            <fa-icon [icon]="faRobot" class="text-white me-2" />
+                        }
+                        @if (loadingState === LOADING_STATE.GENERATING_SOLUTION_REPO) {
+                            <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
+                        }
+                        <span jhiTranslate="artemisApp.editor.repoSelect.generateSolutionRepo"></span>
+                    </button>
+                }
                 @if (exercise.studentParticipations && exercise.studentParticipations.length && exercise.isAtLeastInstructor) {
                     <button (click)="deleteAssignmentParticipation()" [disabled]="loadingState !== LOADING_STATE.CLEAR" class="btn btn-danger">
                         @if (loadingState !== LOADING_STATE.DELETING_ASSIGNMENT_REPO && loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO) {

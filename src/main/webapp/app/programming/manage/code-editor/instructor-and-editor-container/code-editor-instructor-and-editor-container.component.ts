@@ -6,7 +6,7 @@ import { UpdatingResultComponent } from 'app/exercise/result/updating-result/upd
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faPlus, faRobot, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -42,6 +42,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     // Icons
     faPlus = faPlus;
+    faRobot = faRobot;
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;

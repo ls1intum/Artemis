@@ -27,6 +27,7 @@ export enum LOADING_STATE {
     FETCHING_FAILED = 'FETCHING_FAILED',
     CREATING_ASSIGNMENT_REPO = 'CREATING_ASSIGNMENT_REPO',
     DELETING_ASSIGNMENT_REPO = 'DELETING_ASSIGNMENT_REPO',
+    GENERATING_SOLUTION_REPO = 'GENERATING_SOLUTION_REPO',
 }
 
 @Component({
@@ -341,6 +342,32 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             )
             .subscribe({
                 error: (err: Error) => this.onError(err.message),
+            });
+    }
+
+    /**
+     * Generate solution repository using AI for this programming exercise.
+     */
+    generateSolutionRepository() {
+        this.loadingState = LOADING_STATE.GENERATING_SOLUTION_REPO;
+        // TODO: Replace with actual API call when backend endpoint is implemented
+        this.exerciseService
+            .generateSolutionRepository(this.exercise.id!)
+            .pipe(
+                catchError(() => throwError(() => new Error('solutionRepositoryCouldNotBeGenerated'))),
+                tap(() => {
+                    this.loadingState = LOADING_STATE.CLEAR;
+                }),
+            )
+            .subscribe({
+                next: () => {
+                    this.loadingState = LOADING_STATE.CLEAR;
+                    // TODO: Add success notification or refresh the repository
+                },
+                error: (err: Error) => {
+                    this.loadingState = LOADING_STATE.CLEAR;
+                    this.onError(err.message);
+                },
             });
     }
 
