@@ -1,7 +1,7 @@
 import { Location } from '@angular/common';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
 import { By } from '@angular/platform-browser';
@@ -35,8 +35,9 @@ describe('CompetencyPopoverComponent', () => {
                     { path: 'courses/:courseId/competencies', component: DummyStatisticsComponent },
                     { path: 'course-management/:courseId/competency-management', component: DummyManagementComponent },
                 ]),
+                FaIconComponent,
             ],
-            declarations: [CompetenciesPopoverComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), DummyStatisticsComponent, DummyManagementComponent],
+            declarations: [CompetenciesPopoverComponent, MockPipe(ArtemisTranslatePipe), DummyStatisticsComponent, DummyManagementComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()

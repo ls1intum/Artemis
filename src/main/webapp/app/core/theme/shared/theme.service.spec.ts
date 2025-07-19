@@ -62,11 +62,11 @@ describe('ThemeService', () => {
     });
 
     it('applies theme changes correctly', () => {
-        TestBed.flushEffects();
+        TestBed.tick();
         expect(documentGetElementMock).toHaveBeenCalledOnce();
 
         service.applyThemePreference(Theme.DARK);
-        TestBed.flushEffects();
+        TestBed.tick();
 
         expect(documentGetElementMock).toHaveBeenCalledTimes(2);
         expect(documentGetElementMock).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
@@ -92,7 +92,7 @@ describe('ThemeService', () => {
         expect(service.currentTheme()).toBe(Theme.DARK);
 
         service.applyThemePreference(Theme.LIGHT);
-        TestBed.flushEffects();
+        TestBed.tick();
 
         expect(documentGetElementMock).toHaveBeenCalledTimes(3);
         expect(documentGetElementMock).toHaveBeenNthCalledWith(3, THEME_OVERRIDE_ID);
@@ -104,7 +104,7 @@ describe('ThemeService', () => {
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue('LIGHT');
 
         service.initialize();
-        TestBed.flushEffects();
+        TestBed.tick();
 
         expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(service.currentTheme()).toBe(Theme.LIGHT);
@@ -124,7 +124,7 @@ describe('ThemeService', () => {
         });
 
         service.initialize();
-        TestBed.flushEffects();
+        TestBed.tick();
         // @ts-ignore
         newElement?.onload();
 
@@ -138,7 +138,7 @@ describe('ThemeService', () => {
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
 
         service.initialize();
-        TestBed.flushEffects();
+        TestBed.tick();
 
         expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenCalledOnce();
@@ -154,7 +154,7 @@ describe('ThemeService', () => {
         const docSpy = jest.spyOn(document, 'getElementById').mockReturnValue(returnedElement as any as HTMLElement);
 
         service.print();
-        TestBed.flushEffects();
+        TestBed.tick();
 
         expect(docSpy).toHaveBeenCalledTimes(2);
         expect(docSpy).toHaveBeenCalledWith(THEME_OVERRIDE_ID);

@@ -74,6 +74,13 @@
     }
 }
 
+.related-entity-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+}
+
 .chat-header {
     display: flex;
     font-weight: bold;
@@ -93,7 +100,7 @@
     }
 }
 
-.header-icon {
+.header-control {
     border: none;
     background: transparent;
     color: var(--secondary);
