@@ -1,6 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
@@ -31,8 +29,6 @@ describe('AppComponent', () => {
             imports: [RouterModule.forRoot([])],
             declarations: [AppComponent, MockComponent(AlertOverlayComponent), MockComponent(PageRibbonComponent)],
             providers: [
-                LocalStorageService,
-                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
                 { provide: ProfileService, useClass: MockProfileService },
