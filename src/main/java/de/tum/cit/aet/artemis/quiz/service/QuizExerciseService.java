@@ -592,10 +592,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         updatedQuiz.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Check if quiz has already started
-        var batches = quizBatchRepository.findAllByQuizExercise(originalQuiz);
+        Set<QuizBatch> batches = quizBatchRepository.findAllByQuizExercise(originalQuiz);
         if (batches.stream().anyMatch(QuizBatch::isStarted)) {
             throw new BadRequestAlertException("The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.", ENTITY_NAME, "quizHasStarted");
         }

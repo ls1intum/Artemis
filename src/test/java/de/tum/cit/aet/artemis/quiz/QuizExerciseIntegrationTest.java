@@ -572,7 +572,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
 
         QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
-        assertThat(updatedQuizExercise).isNull();//
+        assertThat(updatedQuizExercise).isNull();
     }
 
     @Test

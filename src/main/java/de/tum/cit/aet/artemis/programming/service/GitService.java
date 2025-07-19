@@ -109,7 +109,7 @@ public class GitService extends AbstractGitService {
 
     private final ProfileService profileService;
 
-    @Value("${artemis.version-control.local-vcs-repo-path}")
+    @Value("${artemis.version-control.local-vcs-repo-path:#{null}}")
     private Path localVCBasePath;
 
     @Value("${artemis.repo-clone-path}")
