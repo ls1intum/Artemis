@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -54,8 +52,6 @@ describe('AssessmentHeaderComponent', () => {
                     provide: AlertService,
                     useClass: AlertService, // use the real one
                 },
-                SessionStorageService,
-                LocalStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(GradingSystemService, {
                     findGradingScaleForExam: () => {
