@@ -15,7 +15,7 @@ export class JhiLanguageHelper {
     private localeConversionService = inject(LocaleConversionService);
     private titleService = inject(Title);
     private router = inject(Router);
-    private sessionStorage = inject(SessionStorageService);
+    private sessionStorageService = inject(SessionStorageService);
 
     private renderer: Renderer2;
     private _language: BehaviorSubject<string>;
@@ -64,7 +64,7 @@ export class JhiLanguageHelper {
             const languageKey = this.translateService.currentLang;
             this._language.next(languageKey);
             this.localeConversionService.locale = languageKey;
-            this.sessionStorage.store('locale', languageKey);
+            this.sessionStorageService.store('locale', languageKey);
             this.renderer.setAttribute(document.querySelector('html'), 'lang', this.translateService.currentLang);
             this.updateTitle();
         });
