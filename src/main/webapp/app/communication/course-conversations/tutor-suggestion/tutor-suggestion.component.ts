@@ -40,8 +40,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     private statusService = inject(IrisStatusService);
     private featureToggleService = inject(FeatureToggleService);
 
-    irisActive$ = this.statusService.getActiveStatus().pipe(shareReplay(1));
-
+    irisActive$ = this.statusService.getActiveStatus().pipe(shareReplay({ bufferSize: 1, refCount: true }));
     irisIsActive = false;
 
     messagesSubscription: Subscription;
