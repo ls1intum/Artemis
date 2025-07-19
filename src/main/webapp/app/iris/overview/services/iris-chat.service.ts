@@ -10,7 +10,6 @@ import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
-import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -85,9 +84,6 @@ export class IrisChatService implements OnDestroy {
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
     chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
 
-    rateLimitInfo?: IrisRateLimitInformation;
-
-    private rateLimitSubscription: Subscription;
     private acceptSubscription?: Subscription;
     private chatSessionSubscription?: Subscription;
     private chatSessionByIdSubscription?: Subscription;
@@ -106,7 +102,6 @@ export class IrisChatService implements OnDestroy {
     latestStartedSession?: IrisSessionDTO;
 
     protected constructor() {
-        this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
         this.updateCourseId();
     }
 
@@ -154,7 +149,6 @@ export class IrisChatService implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.rateLimitSubscription.unsubscribe();
         this.acceptSubscription?.unsubscribe();
         this.chatSessionSubscription?.unsubscribe();
         this.chatSessionByIdSubscription?.unsubscribe();
@@ -249,8 +243,6 @@ export class IrisChatService implements OnDestroy {
         if (error.status === 403) {
             this.error.next(IrisErrorMessageKey.IRIS_DISABLED);
         } else if (error.status === 429) {
-            const map = new Map<string, any>();
-            map.set('hours', this.rateLimitInfo?.rateLimitTimeframeHours);
             this.error.next(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED);
         } else {
             this.error.next(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
