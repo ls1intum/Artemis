@@ -33,8 +33,10 @@ describe('MessageReplyInlineInputComponent', () => {
     let metisServiceUpdateStub: jest.SpyInstance;
     let draftService: DraftService;
     let accountService: AccountService;
+    let consoleWarnSpy: jest.SpyInstance;
 
     beforeEach(() => {
+        consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
         return TestBed.configureTestingModule({
             declarations: [MessageReplyInlineInputComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
@@ -69,6 +71,7 @@ describe('MessageReplyInlineInputComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        consoleWarnSpy?.mockRestore();
     });
 
     it('should invoke metis service with created message reply', fakeAsync(() => {
