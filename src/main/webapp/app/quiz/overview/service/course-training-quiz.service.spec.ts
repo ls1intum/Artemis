@@ -1,18 +1,18 @@
 import { TestBed } from '@angular/core/testing';
-import { CoursePracticeQuizService } from './course-practice-quiz.service';
+import { CourseTrainingQuizService } from './course-training-quiz.service';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
-describe('CoursePracticeQuizService', () => {
-    let service: CoursePracticeQuizService;
+describe('CourseTrainingQuizService', () => {
+    let service: CourseTrainingQuizService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), CoursePracticeQuizService],
+            providers: [provideHttpClient(), provideHttpClientTesting(), CourseTrainingQuizService],
         });
-        service = TestBed.inject(CoursePracticeQuizService);
+        service = TestBed.inject(CourseTrainingQuizService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 
