@@ -87,8 +87,9 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             )
             FROM BuildJob b
             WHERE b.participationId = :participationId
+                AND b.result.id IS NOT NULL
             """)
-    Set<ResultBuildJob> findBuildJobIdsForParticipationId(@Param("participationId") long participationId);
+    Set<ResultBuildJob> findBuildJobIdsWithResultForParticipationId(@Param("participationId") long participationId);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO(

@@ -34,6 +34,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
+import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -62,7 +64,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
 
     const route = {
-        snapshot: { paramMap: convertToParamMap({ courseId: '1' }) },
+        snapshot: { paramMap: convertToParamMap({ courseId: '1', exerciseId: 1 }) },
         url: {
             pipe: () => ({
                 subscribe: () => {},
@@ -309,5 +311,25 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         comp.saveOnCommandAndS(new KeyboardEvent('cmd+s'));
         expect(saveInstructionsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should have intelligence actions when IRIS is active', () => {
+        const isProfileActiveSpy = jest.spyOn(TestBed.inject(ProfileService), 'isProfileActive').mockReturnValue(true);
+
+        // Komponente erneut erzeugen, damit computed() neu berechnet wird
+        fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
+        comp = fixture.componentInstance;
+
+        // IDs setzen, die in artemisIntelligenceActions verwendet werden
+        comp.courseId = 1;
+        comp.exerciseId = 42;
+
+        fixture.detectChanges();
+
+        const actions = comp.artemisIntelligenceActions();
+        expect(actions).toHaveLength(2);
+        expect(actions[0]).toBeInstanceOf(RewriteAction);
+        expect(actions[1]).toBeInstanceOf(ConsistencyCheckAction);
+        expect(isProfileActiveSpy).toHaveBeenCalledWith('iris');
     });
 });

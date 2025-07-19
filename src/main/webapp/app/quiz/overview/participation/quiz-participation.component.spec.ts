@@ -144,6 +144,7 @@ describe('QuizParticipationComponent', () => {
     describe('live mode', () => {
         beforeEach(waitForAsync(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(FaIconComponent)
                 .keep(MultipleChoiceQuestionComponent)
                 .keep(DragAndDropQuestionComponent)
                 .keep(ShortAnswerQuestionComponent)
@@ -517,6 +518,7 @@ describe('QuizParticipationComponent', () => {
     describe('preview mode', () => {
         beforeEach(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(FaIconComponent)
                 .keep(MultipleChoiceQuestionComponent)
                 .keep(DragAndDropQuestionComponent)
                 .keep(ShortAnswerQuestionComponent)
@@ -598,6 +600,7 @@ describe('QuizParticipationComponent', () => {
     describe('practice mode', () => {
         beforeEach(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(FaIconComponent)
                 .keep(MultipleChoiceQuestionComponent)
                 .keep(DragAndDropQuestionComponent)
                 .keep(ShortAnswerQuestionComponent)
@@ -685,6 +688,7 @@ describe('QuizParticipationComponent', () => {
     describe('solution mode', () => {
         beforeEach(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(FaIconComponent)
                 .keep(MultipleChoiceQuestionComponent)
                 .keep(DragAndDropQuestionComponent)
                 .keep(ShortAnswerQuestionComponent)

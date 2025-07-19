@@ -100,11 +100,10 @@ describe('SidebarComponent', () => {
             ungroupedData: [] as SidebarCardElement[],
         };
 
-        const noDataMessageElement = fixture.debugElement.query(By.css('.scrollable-item-content')).nativeElement;
-
+        const noDataMessageElement = fixture.debugElement.query(By.css('.scrollable-item-content'));
         expect(noDataMessageElement).toBeTruthy();
-        // unfortunately the translation key is cut off in debug mode that seems to be used for testing
-        expect(noDataMessageElement.getAttribute('ng-reflect-jhi-translate')).toBe('artemisApp.courseOverview.gene');
+        const directiveInstance = noDataMessageElement.injector.get(TranslateDirective);
+        expect(directiveInstance.jhiTranslate).toBe('artemisApp.courseOverview.general.noDataFound');
     });
 
     it('should give the correct size for exercises', () => {

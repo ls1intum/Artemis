@@ -231,7 +231,7 @@ describe('CourseArchiveComponent', () => {
             const iconComponent = fixture.debugElement.query(By.css('#icon-test-down')).componentInstance;
 
             expect(iconComponent).not.toBeNull();
-            expect(iconComponent.icon).toBe(component.faArrowUp19);
+            expect(iconComponent.icon()).toBe(component.faArrowUp19);
         }));
 
         it('should find the correct course and call toggle', fakeAsync(() => {

@@ -782,7 +782,7 @@ describe('IrisBaseChatbotComponent', () => {
 
             const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
             expect(relatedEntityButton).not.toBeNull();
-            expect(relatedEntityButton.getAttribute('ng-reflect-router-link')).toContain(expectedLinkFragment);
+            expect(component.relatedEntityRoute()).toBe(expectedLinkFragment);
         };
 
         it('should display correct related entity button when lecture session selected', fakeAsync(() => {

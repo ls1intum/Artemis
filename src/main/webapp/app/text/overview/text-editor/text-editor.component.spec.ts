@@ -1,6 +1,6 @@
-import { input, runInInjectionContext } from '@angular/core';
 import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
@@ -125,7 +125,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should use inputValues if present instead of loading new details', fakeAsync(() => {
-        runInInjectionContext(TestBed, () => {
+        TestBed.runInInjectionContext(() => {
             comp.inputExercise = input<TextExercise>(textExercise);
             comp.inputParticipation = input<StudentParticipation>(participation);
             comp.inputSubmission = input<TextSubmission>({ id: 1, text: 'test' });

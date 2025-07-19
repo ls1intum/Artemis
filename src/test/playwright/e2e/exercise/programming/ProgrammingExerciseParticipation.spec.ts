@@ -54,7 +54,6 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             commitMessage: 'Implemented all tasks',
         },
     ];
-
     for (const { description, programmingLanguage, submission, commitMessage } of testCases) {
         // Skip C tests within Jenkins used by the Postgres setup, since C is currently not supported there
         // See https://github.com/ls1intum/Artemis/issues/6994
@@ -252,6 +251,43 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
                 const commits: ExerciseCommit[] = submissions.map(({ submission }) => ({ message: commitMessage, result: submission.expectedResult }));
                 await programmingExerciseRepository.checkCommitHistory(commits);
             });
+        });
+    });
+
+    test.describe('Instructor Makes a git submission to the student participation', () => {
+        let exercise: ProgrammingExercise;
+        let programmingLanguage = ProgrammingLanguage.JAVA;
+        test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage });
+        });
+
+        test('Makes a git submission through HTTPS', async ({
+            login,
+            navigationBar,
+            courseManagement,
+            courseManagementExercises,
+            programmingExerciseParticipations,
+            programmingExerciseOverview,
+            programmingExerciseSubmissions,
+        }) => {
+            // student submits to create a participation + submission
+            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+            await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, javaAllSuccessfulSubmission, 'student commit');
+            // now instructor commits to the student participation
+            await login(instructor);
+            await navigationBar.openCourseManagement();
+            await courseManagement.openExercisesOfCourse(course.id!);
+            await courseManagementExercises.openExerciseParticipations(exercise.id!);
+            await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, instructor, javaPartiallySuccessfulSubmission, 'instructor commit');
+            // check the submission
+            await navigationBar.openCourseManagement();
+            await courseManagement.openExercisesOfCourse(course.id!);
+            await courseManagementExercises.openExerciseParticipations(exercise.id!);
+            await programmingExerciseParticipations.openStudentParticipationSubmissions(studentOne);
+            // there should be both submissions
+            await programmingExerciseSubmissions.checkInstructorSubmission();
+            await programmingExerciseSubmissions.checkStudentSubmission();
         });
     });
 

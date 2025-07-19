@@ -1,5 +1,4 @@
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -63,6 +62,7 @@ import { CourseNotificationSettingPreset } from 'app/communication/shared/entiti
 import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
 import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -209,6 +209,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(TeamService),
                 MockProvider(WebsocketService),
                 MockProvider(ArtemisServerDateService),
+                MockProvider(CalendarEventService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
                 MockProvider(TutorialGroupsService),
@@ -332,17 +333,27 @@ describe('CourseOverviewComponent', () => {
         expect(sidebarItems[1].title).toContain('Lectures');
     });
 
+    it('should create sidebar items for student if questions are available for practice', () => {
+        component.course.set({ id: 123, lectures: [], exams: [], trainingEnabled: true });
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
+        expect(sidebarItems[0].title).toContain('Exercises');
+        expect(sidebarItems[1].title).toContain('Training');
+        expect(sidebarItems[2].title).toContain('Lectures');
+    });
+
     it('should create competencies and learning path item if competencies or prerequisites are available and learning paths are enabled', () => {
         component.course.set({ id: 123, numberOfPrerequisites: 3, learningPathsEnabled: true });
         component.atlasEnabled = true;
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[2].title).toContain('Competencies');
-        expect(sidebarItems[3].title).toContain('Learning Path');
+        expect(sidebarItems[3].title).toContain('Competencies');
+        expect(sidebarItems[4].title).toContain('Learning Path');
     });
+
     it('should create faq item when faqs are enabled', () => {
         component.course.set({ id: 123, faqEnabled: true });
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[2].title).toContain('FAQs');
+        expect(sidebarItems[3].title).toContain('FAQs');
     });
 
     it('loads conversations when switching to message tab once', async () => {
@@ -503,9 +514,14 @@ describe('CourseOverviewComponent', () => {
         const subscribeStub = jest.spyOn(findOneForDashboardResponse, 'subscribe');
         findOneForDashboardStub.mockReturnValue(findOneForDashboardResponse);
 
+        // check that calendar events are refreshed
+        const calendarEventService = TestBed.inject(CalendarEventService);
+        const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+
         component.loadCourse(true);
 
         expect(subscribeStub).toHaveBeenCalledOnce();
+        expect(refreshSpy).toHaveBeenCalledOnce();
     });
 
     it('should have visible exams', () => {
@@ -856,21 +872,4 @@ describe('CourseOverviewComponent', () => {
         expect((component as any).selectableSettingPresets).toBeDefined();
         expect((component as any).selectedSettingPreset).toBeDefined();
     }));
-
-    it('should only show practice tab on test server or development', () => {
-        component.isTestServer = true;
-        component.isDevelopment = false;
-        const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems.some((item) => item.title.includes('Practice'))).toBeTruthy();
-
-        component.isTestServer = false;
-        component.isDevelopment = true;
-        const sidebarItemsDev = component.getSidebarItems();
-        expect(sidebarItemsDev.some((item) => item.title.includes('Practice'))).toBeTruthy();
-
-        component.isTestServer = false;
-        component.isDevelopment = false;
-        const sidebarItemsProd = component.getSidebarItems();
-        expect(sidebarItemsProd.some((item) => item.title.includes('Practice'))).toBeFalsy();
-    });
 });

@@ -224,6 +224,7 @@ public class ExerciseDeletionService {
         plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exercise.getId()));
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
+        // TODO: recalculateCompetencyProgress = true does not make sense here for exam exercises
         participationDeletionService.deleteAllByExercise(exercise, true);
     }
 }
