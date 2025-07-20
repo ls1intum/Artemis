@@ -96,15 +96,4 @@ export class BuildAgentsService {
             }),
         );
     }
-
-    /**
-     * Adjust the concurrent build capacity of all build agents
-     */
-    adjustAllBuildAgentsCapacity(newSize: number): Observable<void> {
-        return this.http.put<void>(`${this.adminResourceUrl}/agents/concurrent-builds/${newSize}`, null).pipe(
-            catchError((err) => {
-                return throwError(() => new Error(`Failed to adjust all build agents capacity\n${err.message}`));
-            }),
-        );
-    }
 }
