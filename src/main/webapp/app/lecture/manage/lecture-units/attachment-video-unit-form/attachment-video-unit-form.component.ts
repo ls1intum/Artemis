@@ -200,7 +200,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         return this.form.get('urlHelper');
     }
 
-    private checkTumLivePlaylist(originalUrl: string): void {
+    protected checkTumLivePlaylist(originalUrl: string): void {
         const parsedUrl = new URL(originalUrl);
 
         if (parsedUrl.host === 'live.rbg.tum.de') {
