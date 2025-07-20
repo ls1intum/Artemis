@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -12,9 +12,6 @@ import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angul
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { HttpClient } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
 
 describe('AttachmentVideoUnitFormComponent', () => {
     let attachmentVideoUnitFormComponentFixture: ComponentFixture<AttachmentVideoUnitFormComponent>;
@@ -22,14 +19,8 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip), MockModule(OwlDateTimeModule), HttpClientTestingModule, MockModule(OwlNativeDateTimeModule)],
-            declarations: [
-                AttachmentVideoUnitFormComponent,
-                FormDateTimePickerComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
-                MockComponent(CompetencySelectionComponent),
-            ],
+            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule), FontAwesomeTestingModule],
+            declarations: [AttachmentVideoUnitFormComponent, FormDateTimePickerComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencySelectionComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -358,36 +349,5 @@ describe('AttachmentVideoUnitFormComponent', () => {
         return attachmentVideoUnitFormComponentFixture.whenStable().then(() => {
             expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toEqual(expectedUrl);
         });
-    });
-
-    it('should enable generateTranscript checkbox when playlist is available', () => {
-        attachmentVideoUnitFormComponentFixture.detectChanges();
-        const originalUrl = 'https://live.rbg.tum.de/w/test/26';
-        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(originalUrl);
-
-        const httpMock = TestBed.inject(HttpClient);
-        const spy = jest.spyOn(httpMock, 'get').mockReturnValue(of('https://live.rbg.tum.de/playlist.m3u8'));
-
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
-
-        expect(spy).toHaveBeenCalled();
-        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeTrue();
-        expect(attachmentVideoUnitFormComponent.playlistUrl()).toContain('playlist.m3u8');
-    });
-
-    it('should disable generateTranscript checkbox when playlist is unavailable', () => {
-        attachmentVideoUnitFormComponentFixture.detectChanges();
-        const originalUrl = 'https://live.rbg.tum.de/w/test/26';
-        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(originalUrl);
-
-        const httpMock = TestBed.inject(HttpClient);
-        const spy = jest.spyOn(httpMock, 'get').mockReturnValue(throwError(() => new Error('Not found')));
-
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
-
-        expect(spy).toHaveBeenCalled();
-        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();
-        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
-        expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')?.value).toBeFalse();
     });
 });

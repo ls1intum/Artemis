@@ -6,6 +6,7 @@ import { AddExercisePopoverComponent } from 'app/core/course/manage/quick-action
 import { MockComponent } from 'ng-mocks';
 import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-create-button/exercise-create-button.component';
 import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-import-button/exercise-import-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('AddExercisePopoverComponent', () => {
     let component: AddExercisePopoverComponent;
@@ -13,7 +14,7 @@ describe('AddExercisePopoverComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockComponent(ExerciseCreateButtonComponent), MockComponent(ExerciseImportButtonComponent), AddExercisePopoverComponent],
+            imports: [MockComponent(ExerciseCreateButtonComponent), MockComponent(ExerciseImportButtonComponent), AddExercisePopoverComponent, FaIconComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

@@ -24,6 +24,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -55,7 +56,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(DragDropModule), MockDirective(NgbCollapse)],
+            imports: [MockModule(FormsModule), MockModule(DragDropModule), MockDirective(NgbCollapse), FaIconComponent],
             declarations: [
                 ShortAnswerQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
