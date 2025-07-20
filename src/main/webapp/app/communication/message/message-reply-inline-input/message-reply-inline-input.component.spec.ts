@@ -153,14 +153,6 @@ describe('MessageReplyInlineInputComponent', () => {
         expect(onEditSpy).not.toHaveBeenCalled();
     }));
 
-    it('should toggle sendAsDirectMessage value', () => {
-        expect(component.sendAsDirectMessage()).toBeFalsy();
-        component.toggleSendAsDirectMessage();
-        expect(component.sendAsDirectMessage()).toBeTruthy();
-        component.toggleSendAsDirectMessage();
-        expect(component.sendAsDirectMessage()).toBeFalsy();
-    });
-
     it('should reset form group with provided content', () => {
         component.posting = { content: 'old content' } as any;
         component.resetFormGroup('new content');
@@ -168,36 +160,128 @@ describe('MessageReplyInlineInputComponent', () => {
         expect(component.formGroup.get('content')?.value).toBe('new content');
     });
 
-    it('should create a direct‐message post and emit it when sendAsDirectMessage=true', fakeAsync(() => {
-        const conv = { id: 42, title: 'Test Conversation' } as any;
-        component.posting = { id: 1, content: '', post: { id: 99 } as any } as AnswerPost;
-        (component as any).activeConversation = () => conv;
-        component.sendAsDirectMessage.set(true);
+    describe('Direct Message functionality', () => {
+        let conv: any;
+        let answerPost: AnswerPost;
 
-        component.resetFormGroup();
-        component.formGroup.setValue({ content: 'msg' });
+        beforeEach(() => {
+            conv = { id: 42, title: 'Test Conversation', type: 'CHANNEL' } as any;
+            answerPost = { id: 1, content: '', post: { id: 99 } as any } as AnswerPost;
+            component.posting = answerPost;
+            (component as any).activeConversation = () => conv;
+        });
 
-        const answer = { ...component.posting, content: 'msg' } as AnswerPost;
-        jest.spyOn(metisService, 'createAnswerPost').mockReturnValue(of(answer));
+        it('should toggle sendAsDirectMessage value', () => {
+            expect(component.sendAsDirectMessage()).toBeFalsy();
+            component.toggleSendAsDirectMessage();
+            expect(component.sendAsDirectMessage()).toBeTruthy();
+            component.toggleSendAsDirectMessage();
+            expect(component.sendAsDirectMessage()).toBeFalsy();
+        });
 
-        const direct = { content: 'msg', conversation: conv, originalPostId: 99 } as Post;
-        jest.spyOn(metisService, 'createPost').mockReturnValue(of(direct));
+        it('should create a direct‐message post and emit it when sendAsDirectMessage=true', fakeAsync(() => {
+            const conv = { id: 42, title: 'Test Conversation' } as any;
+            component.posting = { id: 1, content: '', post: { id: 99 } as any } as AnswerPost;
+            (component as any).activeConversation = () => conv;
+            component.sendAsDirectMessage.set(true);
 
-        const emitSpy = jest.spyOn(component.onCreate, 'emit');
+            component.resetFormGroup();
+            component.formGroup.setValue({ content: 'msg' });
 
-        component.createPosting();
-        tick();
+            const answer = { ...component.posting, content: 'msg' } as AnswerPost;
+            jest.spyOn(metisService, 'createAnswerPost').mockReturnValue(of(answer));
 
-        expect(metisService.createPost).toHaveBeenCalledWith(
-            expect.objectContaining({
-                content: 'msg',
-                conversation: conv,
-                originalPostId: 99,
-            }),
-        );
-        expect(emitSpy).toHaveBeenCalledWith(direct);
-        expect(component.isLoading).toBeFalsy();
-    }));
+            const direct = { content: 'msg', conversation: conv, originalPostId: 99 } as Post;
+            jest.spyOn(metisService, 'createPost').mockReturnValue(of(direct));
+
+            const emitSpy = jest.spyOn(component.onCreate, 'emit');
+
+            component.createPosting();
+            tick();
+
+            expect(metisService.createPost).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: 'msg',
+                    conversation: conv,
+                    originalPostId: 99,
+                }),
+            );
+            expect(emitSpy).toHaveBeenCalledWith(direct);
+            expect(component.isLoading).toBeFalsy();
+        }));
+
+        it('should create regular answer post when sendAsDirectMessage=false', fakeAsync(() => {
+            component.sendAsDirectMessage.set(false);
+            component.resetFormGroup();
+            component.formGroup.setValue({ content: 'regular reply' });
+
+            const createdAnswer = { ...answerPost, content: 'regular reply' } as AnswerPost;
+            jest.spyOn(metisService, 'createAnswerPost').mockReturnValue(of(createdAnswer));
+            const createPostSpy = jest.spyOn(metisService, 'createPost');
+            const emitSpy = jest.spyOn(component.onCreate, 'emit');
+
+            component.createPosting();
+            tick();
+
+            expect(metisService.createAnswerPost).toHaveBeenCalledWith(answerPost);
+            expect(createPostSpy).not.toHaveBeenCalled();
+            expect(emitSpy).toHaveBeenCalledWith(createdAnswer);
+            expect(component.isLoading).toBeFalsy();
+        }));
+
+        it('should preserve original answer post content when creating direct message', fakeAsync(() => {
+            component.sendAsDirectMessage.set(true);
+            component.resetFormGroup();
+            const originalContent = 'This is a very long message with special characters: @#$%^&*()';
+            component.formGroup.setValue({ content: originalContent });
+
+            const createdAnswer = { ...answerPost, content: originalContent } as AnswerPost;
+            jest.spyOn(metisService, 'createAnswerPost').mockReturnValue(of(createdAnswer));
+
+            const directPost = { content: originalContent, conversation: conv, originalPostId: 99 } as Post;
+            jest.spyOn(metisService, 'createPost').mockReturnValue(of(directPost));
+
+            const emitSpy = jest.spyOn(component.onCreate, 'emit');
+
+            component.createPosting();
+            tick();
+
+            expect(metisService.createPost).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: originalContent,
+                    conversation: conv,
+                    originalPostId: 99,
+                }),
+            );
+            expect(emitSpy).toHaveBeenCalledWith(directPost);
+        }));
+
+        it('should handle empty content in direct message creation', fakeAsync(() => {
+            component.sendAsDirectMessage.set(true);
+            component.resetFormGroup();
+            component.formGroup.setValue({ content: '' });
+
+            const createdAnswer = { ...answerPost, content: '' } as AnswerPost;
+            jest.spyOn(metisService, 'createAnswerPost').mockReturnValue(of(createdAnswer));
+
+            const directPost = { content: '', conversation: conv, originalPostId: 99 } as Post;
+            jest.spyOn(metisService, 'createPost').mockReturnValue(of(directPost));
+
+            const emitSpy = jest.spyOn(component.onCreate, 'emit');
+
+            component.createPosting();
+            tick();
+
+            expect(metisService.createPost).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: '',
+                    conversation: conv,
+                    originalPostId: 99,
+                }),
+            );
+            expect(emitSpy).toHaveBeenCalledWith(directPost);
+        }));
+    });
 
     describe('Draft functionality', () => {
         beforeEach(fakeAsync(() => {
