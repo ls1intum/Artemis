@@ -128,7 +128,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private eventManager = inject(EventManager);
-    private localStorage = inject(LocalStorageService);
+    private localStorageService = inject(LocalStorageService);
     private modalService = inject(NgbModal);
     private profileService = inject(ProfileService);
 
@@ -233,7 +233,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.filters.originFilter = this.initFilter<OriginFilter>(UserStorageKey.ORIGIN, OriginFilter);
         this.filters.registrationNumberFilter = this.initFilter<RegistrationNumberFilter>(UserStorageKey.REGISTRATION_NUMBER, RegistrationNumberFilter);
         this.filters.statusFilter = this.initFilter<StatusFilter>(UserStorageKey.STATUS, StatusFilter);
-        this.filters.noAuthority = !!this.localStorage.retrieve(UserStorageKey.NO_AUTHORITY);
+        this.filters.noAuthority = this.localStorageService.retrieve<boolean>(UserStorageKey.NO_AUTHORITY) ?? false;
     }
 
     /**
@@ -242,7 +242,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param type of filter
      */
     initFilter<E>(key: UserStorageKey, type: Filter): Set<E> {
-        const temp = this.localStorage.retrieve<string>(key);
+        const temp = this.localStorageService.retrieve<string>(key);
         const tempInStorage = temp
             ? temp
                   .split(',')
@@ -262,7 +262,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             filter.add(value);
         }
         if (key) {
-            this.localStorage.store(key, Array.from(filter).join(','));
+            this.localStorageService.store<string>(key, Array.from(filter).join(','));
         }
     }
 
@@ -349,7 +349,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param value new value
      */
     updateNoAuthority(value: boolean) {
-        this.localStorage.store(UserStorageKey.NO_AUTHORITY, value);
+        this.localStorageService.store<boolean>(UserStorageKey.NO_AUTHORITY, value);
         this.filters.noAuthority = value;
     }
 
@@ -358,7 +358,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     deselectAllRoles() {
         this.filters.authorityFilter.clear();
-        this.localStorage.remove(UserStorageKey.AUTHORITY);
+        this.localStorageService.remove(UserStorageKey.AUTHORITY);
         this.updateNoAuthority(false);
     }
 
