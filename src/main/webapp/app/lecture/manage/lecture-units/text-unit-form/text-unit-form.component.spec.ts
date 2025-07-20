@@ -187,8 +187,8 @@ describe('TextUnitFormComponent', () => {
     }));
 
     it('should restore markdown from local storage on init', fakeAsync(() => {
-        const url = '/cached-test';
-        TestBed.inject(Router as any).setUrl(url);
+        const router = TestBed.inject(Router) as MockRouter;
+        router.setUrl('/cached-test');
 
         const cachedMarkdown = 'cached markdown';
         const date = 'Jan 01 2020, 12:00:00';
@@ -204,9 +204,10 @@ describe('TextUnitFormComponent', () => {
 
     it('should persist markdown change to local storage', fakeAsync(() => {
         const url = '/persist-test';
-        TestBed.inject(Router as any).setUrl(url);
+        const router = TestBed.inject(Router) as MockRouter;
+        router.setUrl(url);
 
-        textUnitFormComponentFixture.detectChanges(); // triggers ngOnInit
+        textUnitFormComponentFixture.detectChanges();
         tick();
 
         const markdown = 'new markdown';
@@ -215,7 +216,7 @@ describe('TextUnitFormComponent', () => {
         textUnitFormComponent.onMarkdownChange(markdown);
         tick(500);
 
-        const cached = localStorageService.retrieve<MardownCache>(url);
+        const cached = localStorageService.retrieve<MarkdownCache>(url);
         expect(cached?.markdown).toBe(markdown);
         expect(cached?.date).toBeDefined();
     }));

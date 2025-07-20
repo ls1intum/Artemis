@@ -31,7 +31,7 @@ describe('HomeComponent', () => {
     let accountService: AccountService;
     let modalService: NgbModal;
     let loginService: LoginService;
-    let localStorageService;
+    let localStorageService: LocalStorageService;
 
     let router: MockRouter;
 
