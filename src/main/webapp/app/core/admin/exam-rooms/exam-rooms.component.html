@@ -14,4 +14,24 @@
     @if (uploadError) {
         <div class="error">Upload failed. {{ uploadError }}</div>
     }
+
+    @if (uploadInformation) {
+        <div class="upload-info card">
+            <h3>Upload Summary</h3>
+            <ul>
+                <li><strong>File:</strong> {{ uploadInformation.uploadedFileName }}</li>
+                <li><strong>Duration:</strong> {{ uploadInformation.uploadDuration }}</li>
+                <li><strong>Rooms Uploaded:</strong> {{ uploadInformation.numberOfUploadedRooms }}</li>
+                <li><strong>Seats Uploaded:</strong> {{ uploadInformation.numberOfUploadedSeats }}</li>
+                <li>
+                    <strong>Room Names:</strong>
+                    <ol>
+                        @for (name of uploadInformation.uploadedRoomNames; track name) {
+                            <li>{{ name }}</li>
+                        }
+                    </ol>
+                </li>
+            </ul>
+        </div>
+    }
 </div>

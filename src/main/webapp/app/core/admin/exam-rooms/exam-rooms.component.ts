@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpEvent, HttpEventType } from '@angular/common/http';
+import { ExamRoomUploadInformation } from 'app/core/admin/exam-rooms/exam-rooms.model';
 
 @Component({
     selector: 'app-exam-room-repository',
@@ -7,9 +8,10 @@ import { HttpClient, HttpErrorResponse, HttpEvent, HttpEventType } from '@angula
 })
 export class ExamRoomsComponent {
     selectedFile: File | null = null;
-    uploading = false;
-    uploadSuccess = false;
+    uploading: boolean = false;
+    uploadSuccess: boolean = false;
     uploadError: string | null = null;
+    uploadInformation: ExamRoomUploadInformation | null = null;
 
     constructor(private http: HttpClient) {}
 
@@ -36,6 +38,7 @@ export class ExamRoomsComponent {
         this.uploading = true;
         this.uploadSuccess = false;
         this.uploadError = null;
+        this.uploadInformation = null;
 
         this.http
             .post('/api/exam/admin/exam-rooms/upload', formData, {
@@ -47,6 +50,7 @@ export class ExamRoomsComponent {
                     if (event.type === HttpEventType.Response) {
                         this.uploadSuccess = true;
                         this.selectedFile = null;
+                        this.uploadInformation = event.body;
                     }
                 },
                 error: (error: HttpErrorResponse) => {
