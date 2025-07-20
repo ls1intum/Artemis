@@ -1,22 +1,11 @@
 package de.tum.cit.aet.artemis.exam.web.admin;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,22 +13,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
-import de.tum.cit.aet.artemis.exam.domain.room.ExamSeat;
-import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
-import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategyType;
-import de.tum.cit.aet.artemis.exam.domain.room.SeatCondition;
+import de.tum.cit.aet.artemis.exam.dto.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
+import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
 
 /**
  * REST controller for administrating Exam.
@@ -53,17 +35,22 @@ public class AdminExamResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminExamResource.class);
 
+    private static final String ENTITY_NAME = "examRoom";
+
     private final ExamRepository examRepository;
+
+    private final ExamRoomService examRoomService;
 
     private final ExamRoomRepository examRoomRepository;
 
-    public AdminExamResource(ExamRepository examRepository, ExamRoomRepository examRoomRepository) {
+    public AdminExamResource(ExamRepository examRepository, ExamRoomService examRoomService, ExamRoomRepository examRoomRepository) {
         this.examRepository = examRepository;
+        this.examRoomService = examRoomService;
         this.examRoomRepository = examRoomRepository;
     }
 
     /**
-     * GET /exams/upcoming : Find all current and upcoming exams.
+     * GET /exams/upcoming: Find all current and upcoming exams.
      *
      * @return the ResponseEntity with status 200 (OK) and a list of exams.
      */
@@ -76,7 +63,7 @@ public class AdminExamResource {
     }
 
     /**
-     * POST /api/exam/admin/exam-rooms/upload : Upload a zip file containing room data to be parsed and added to Artemis.
+     * POST /api/exam/admin/exam-rooms/upload: Upload a zip file containing room data to be parsed and added to Artemis.
      *
      * @param zipFile The zip file to be uploaded. It needs to contain the `.json` files containing the room data in
      *                    the following format:
@@ -87,148 +74,18 @@ public class AdminExamResource {
      *                    "building" : short enclosing building name
      *                    "rows" : list of rows
      *                    "layouts" : list of layouts
-     * @return A set of all newly created exam rooms
+     *
+     * @return A DTO containing information about this upload process
      */
     @PostMapping("exam-rooms/upload")
-    public ResponseEntity<Set<ExamRoom>> uploadRoomZip(@RequestParam("file") MultipartFile zipFile) {
-        // TODO: Change return type to a ExamRoomUploadOverviewDTO
-        // TODO: Use helper functions
-        final long startTime = System.nanoTime();
-        log.info("Starting to parse rooms from {}...", zipFile.getOriginalFilename());
-        Set<ExamRoom> examRooms = new HashSet<>();
-
-        try (ZipInputStream zis = new ZipInputStream(zipFile.getInputStream())) {
-            ZipEntry entry;
-            ObjectMapper mapper = new ObjectMapper();
-
-            while ((entry = zis.getNextEntry()) != null) {
-                String entryName = entry.getName();
-
-                // validate file type
-                if (entry.isDirectory() || !entryName.endsWith(".json")) {
-                    // log.debug("Skipping entry: {} because it's not a json file", entryName);
-                    continue;
-                }
-
-                // matches and extracts any non-empty filename - without the path - that ends with '.json'
-                Pattern fileNameExtractorPattern = Pattern.compile("^.*/([^/]+)\\.json$");
-                Matcher fileNameExtractorMatcher = fileNameExtractorPattern.matcher(entryName);
-                if (!fileNameExtractorMatcher.find()) {
-                    // Not sure yet if this can ever be the case
-                    log.debug("Skipping entry: {} because the filename could not be obtained", entryName);
-                }
-                String longRoomNumber = fileNameExtractorMatcher.group(1);
-
-                log.debug("Parsinng room {}...", longRoomNumber);
-                String jsonData = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
-                JsonNode jsonRoot = mapper.readTree(jsonData);
-
-                // Manual mapping of JSON to fields
-                ExamRoom room = new ExamRoom();
-                room.setLongRoomNumber(longRoomNumber);
-                room.setShortRoomNumber(jsonRoot.get("number").asText());
-                room.setName(jsonRoot.path("name").asText());
-                room.setAlternativeName(jsonRoot.path("shortname").asText(null));
-                room.setBuilding(jsonRoot.path("building").asText());
-
-                /* Extract the seats from the rows */
-                List<ExamSeat> seats = new ArrayList<>();
-                JsonNode rowsArray = jsonRoot.path("rows");
-                if (!rowsArray.isArray()) {
-                    log.warn("Skipping entry '{}' because rowsArray is not an array", entryName);
-                    continue;
-                }
-
-                for (JsonNode rowNode : rowsArray) {
-                    JsonNode seatsArray = rowNode.path("seats");
-                    if (!seatsArray.isArray()) {
-                        log.warn("Skipping row '{}' because seatsArray is not an array", entryName);
-                        continue;
-                    }
-
-                    String rowLabel = rowNode.path("label").asText();
-
-                    for (JsonNode seatNode : seatsArray) {
-                        String seatLabel = seatNode.path("label").asText();
-                        String seatName = rowLabel.isEmpty() ? seatLabel : (seatLabel + ", " + rowLabel);
-
-                        ExamSeat seat = new ExamSeat();
-                        seat.setLabel(seatName);
-                        seat.setX(seatNode.path("position").path("x").asDouble());
-                        seat.setY(seatNode.path("position").path("y").asDouble());
-                        seat.setSeatCondition(SeatCondition.SeatConditionFromFlag(seatNode.path("flag").asText()));
-                        seat.setRoom(room);
-                        seats.add(seat);
-                    }
-                }
-
-                room.setSeats(seats);
-                /* Extracting seats - End */
-
-                /* Extract layout strategies */
-                List<LayoutStrategy> layouts = new ArrayList<>();
-                JsonNode layoutsObjectNode = jsonRoot.path("layouts");
-                if (!layoutsObjectNode.isObject()) {
-                    log.warn("Skipping entry '{}' because layouts is not an object", entryName);
-                    continue;
-                }
-
-                // Iterate over all possible room layout names, e.g., "default" or "wide"
-                for (Iterator<String> it = layoutsObjectNode.fieldNames(); it.hasNext();) {
-                    String layoutName = it.next();
-                    JsonNode layoutNode = layoutsObjectNode.path(layoutName);
-
-                    // We assume there's only a single layout type, e.g., "auto_layout" or "usable_seats"
-                    final String layoutType = layoutNode.fieldNames().next();
-                    final JsonNode layoutDetailNode = layoutNode.path(layoutType);
-
-                    LayoutStrategy layoutStrategy = new LayoutStrategy();
-                    layoutStrategy.setName(layoutName);
-                    layoutStrategy.setRoom(room);
-                    switch (layoutType) {
-                        case "auto_layout" -> layoutStrategy.setType(LayoutStrategyType.RELATIVE_DISTANCE);
-                        // useable_seats is a common typo in the JSON files
-                        case "usable_seats", "useable_seats" -> layoutStrategy.setType(LayoutStrategyType.FIXED_SELECTION);
-                        default -> {
-                            log.warn("Unknown layout type '{}'", layoutType);
-                            continue;
-                        }
-                    }
-                    layoutStrategy.setParametersJson(String.valueOf(layoutDetailNode));
-
-                    // pre-calculate the capacity if it's easy/efficient to do so.
-                    // Right now this is only the case for the fixed_selection
-                    switch (layoutStrategy.getType()) {
-                        case LayoutStrategyType.FIXED_SELECTION -> {
-                            if (!layoutDetailNode.isArray()) {
-                                log.warn("Skipping entry {} because it's a fixed selection, but parameters aren't an array", entryName);
-                            }
-
-                            layoutStrategy.setCapacity(layoutDetailNode.size());
-                        }
-                        case LayoutStrategyType.RELATIVE_DISTANCE -> {
-                            // Here it's not obvious. It may be done/optionally enabled in the future.
-                        }
-                    }
-
-                    layouts.add(layoutStrategy);
-                }
-
-                room.setLayoutStrategies(layouts);
-                /* Extract layout strategies - End */
-
-                examRooms.add(room);
-            }
-
-        }
-        catch (IOException | IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Internal error while trying to parse the rooms");
+    public ResponseEntity<ExamRoomUploadInformationDTO> uploadRoomZip(@RequestParam("file") MultipartFile zipFile) {
+        log.debug("REST request to parse rooms from a zip file: {}", zipFile.getOriginalFilename());
+        if (zipFile.isEmpty()) {
+            throw new BadRequestAlertException("The rooms file is empty", ENTITY_NAME, "roomsFileEmpty");
         }
 
-        examRoomRepository.saveAll(examRooms);
-
-        log.info("Finished parsing rooms in {}", TimeLogUtil.formatDurationFrom(startTime));
-        return ResponseEntity.ok(examRooms);
+        var uploadInformationDTO = examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFile);
+        return ResponseEntity.ok(uploadInformationDTO);
     }
 
 }
