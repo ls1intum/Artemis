@@ -26,7 +26,7 @@ describe('ExamParticipationService', () => {
     let exam: Exam;
     let studentExam: StudentExam;
     let quizSubmission: QuizSubmission;
-    let localStorage: LocalStorageService;
+    let localStorageService: LocalStorageService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -34,7 +34,7 @@ describe('ExamParticipationService', () => {
         });
         service = TestBed.inject(ExamParticipationService);
         httpMock = TestBed.inject(HttpTestingController);
-        localStorage = TestBed.inject(LocalStorageService);
+        localStorageService = TestBed.inject(LocalStorageService);
 
         exam = new Exam();
         studentExam = new StudentExam();
@@ -232,8 +232,8 @@ describe('ExamParticipationService', () => {
         const sendToService = Object.assign({ exercises: [] }, studentExam);
         const expected = Object.assign({}, sendToService);
         service.saveStudentExamToLocalStorage(1, 1, sendToService);
-        jest.spyOn(localStorage, 'store').mockImplementation(() => {
-            expect(localStorage.retrieve('artemis_student_exam_1_1')).toBe(expected);
+        jest.spyOn(localStorageService, 'store').mockImplementation(() => {
+            expect(localStorageService.retrieve('artemis_student_exam_1_1')).toBe(expected);
         });
     });
     it('should load StudentExam from localStorage', async () => {
@@ -241,7 +241,7 @@ describe('ExamParticipationService', () => {
         service.saveStudentExamToLocalStorage(1, 1, studentExam);
 
         const stored = Object.assign({}, studentExam);
-        jest.spyOn(localStorage, 'retrieve').mockReturnValue(JSON.stringify(stored));
+        jest.spyOn(localStorageService, 'retrieve').mockReturnValue(JSON.stringify(stored));
 
         service.loadStudentExamWithExercisesForConductionFromLocalStorage(1, 1).subscribe((localExam: StudentExam) => {
             expect(localExam).toEqual(studentExam);

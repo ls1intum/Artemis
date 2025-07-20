@@ -80,7 +80,7 @@ type PagingValue = number | 'all';
 })
 export class DataTableComponent implements OnInit, OnChanges {
     private sortService = inject(SortService);
-    private localStorage = inject(LocalStorageService);
+    private localStorageService = inject(LocalStorageService);
 
     /**
      * @property templateRef Ref to the content child of this component (which is ngx-datatable)
@@ -269,7 +269,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * Get "items per page" setting from local storage. If it does not exist, use the default.
      */
     private getCachedEntitiesPerPage = () => {
-        const cachedValue = this.localStorage.retrieve<string>(this.perPageCacheKey);
+        const cachedValue = this.localStorageService.retrieve<string>(this.perPageCacheKey);
         if (cachedValue) {
             const parsedValue = parseInt(cachedValue, 10) || cachedValue;
             if (this.PAGING_VALUES.includes(parsedValue as any)) {
@@ -291,7 +291,7 @@ export class DataTableComponent implements OnInit, OnChanges {
             this.pagingValue = paging;
             this.isRendering = false;
         }, 500);
-        this.localStorage.store(this.perPageCacheKey, paging.toString());
+        this.localStorageService.store(this.perPageCacheKey, paging.toString());
     };
 
     /**

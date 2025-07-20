@@ -46,7 +46,7 @@ export class FeedbackAnalysisComponent {
     private feedbackAnalysisService = inject(FeedbackAnalysisService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
-    private localStorage = inject(LocalStorageService);
+    private localStorageService = inject(LocalStorageService);
     private router = inject(Router);
 
     readonly page = signal<number>(1);
@@ -107,10 +107,10 @@ export class FeedbackAnalysisComponent {
 
     // TODO: use proper types here, not arrays of any
     private async loadData(): Promise<void> {
-        const savedTasks = this.localStorage.retrieve<[]>(this.FILTER_TASKS_KEY) || [];
-        const savedTestCases = this.localStorage.retrieve<[]>(this.FILTER_TEST_CASES_KEY) || [];
-        const savedOccurrence = this.localStorage.retrieve<[]>(this.FILTER_OCCURRENCE_KEY) || [];
-        const savedErrorCategories = this.localStorage.retrieve<[]>(this.FILTER_ERROR_CATEGORIES_KEY) || [];
+        const savedTasks = this.localStorageService.retrieve<[]>(this.FILTER_TASKS_KEY) || [];
+        const savedTestCases = this.localStorageService.retrieve<[]>(this.FILTER_TEST_CASES_KEY) || [];
+        const savedOccurrence = this.localStorageService.retrieve<[]>(this.FILTER_OCCURRENCE_KEY) || [];
+        const savedErrorCategories = this.localStorageService.retrieve<[]>(this.FILTER_ERROR_CATEGORIES_KEY) || [];
 
         const state = {
             page: this.page(),
@@ -207,10 +207,10 @@ export class FeedbackAnalysisComponent {
     }
 
     async openFilterModal(): Promise<void> {
-        const savedTasks = this.localStorage.retrieve(this.FILTER_TASKS_KEY);
-        const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY);
-        const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY);
-        const savedErrorCategories = this.localStorage.retrieve(this.FILTER_ERROR_CATEGORIES_KEY);
+        const savedTasks = this.localStorageService.retrieve(this.FILTER_TASKS_KEY);
+        const savedTestCases = this.localStorageService.retrieve(this.FILTER_TEST_CASES_KEY);
+        const savedOccurrence = this.localStorageService.retrieve(this.FILTER_OCCURRENCE_KEY);
+        const savedErrorCategories = this.localStorageService.retrieve(this.FILTER_ERROR_CATEGORIES_KEY);
         this.minCount.set(0);
         if (this.groupFeedback()) {
             this.maxCount.set(this.maxCount());

@@ -65,7 +65,7 @@ export class CodeButtonComponent implements OnInit {
     private sshUserSettingsService = inject(SshUserSettingsService);
     private accountService = inject(AccountService);
     private profileService = inject(ProfileService);
-    private localStorage = inject(LocalStorageService);
+    private localStorageService = inject(LocalStorageService);
     private participationService = inject(ParticipationService);
     private ideSettingsService = inject(IdeSettingsService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
@@ -210,7 +210,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     private storeToLocalStorage() {
-        this.localStorage.store('code-button-state', this.selectedAuthenticationMechanism);
+        this.localStorageService.store<RepositoryAuthenticationMethod>('code-button-state', this.selectedAuthenticationMechanism);
     }
 
     public formatTip(translationKey: string, url: string): string {
@@ -222,7 +222,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     onClick() {
-        const storedState = this.localStorage.retrieve<RepositoryAuthenticationMethod>('code-button-state');
+        const storedState = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
         this.selectedAuthenticationMechanism = storedState && this.authenticationMechanisms.includes(storedState) ? storedState : this.authenticationMechanisms[0];
 
         if (this.useSsh) {

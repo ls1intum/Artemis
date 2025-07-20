@@ -12,6 +12,7 @@ import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, S
 import { WeekGroup, WeekGroupingUtil } from 'app/shared/util/week-grouping.util';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { Subject, takeUntil } from 'rxjs';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 @Component({
     selector: 'jhi-sidebar-accordion',
@@ -21,7 +22,8 @@ import { Subject, takeUntil } from 'rxjs';
 })
 export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
     protected readonly Object = Object;
-    private metisConversationService: MetisConversationService = inject(MetisConversationService);
+    private metisConversationService = inject(MetisConversationService);
+    private localStorageService = inject(LocalStorageService);
     private ngUnsubscribe = new Subject<void>();
 
     @Output() onUpdateSidebar = new EventEmitter<void>();
@@ -71,8 +73,10 @@ export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     setStoredCollapseState() {
-        const storedCollapseState: string | null = localStorage.getItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId);
-        if (storedCollapseState) this.collapseState = JSON.parse(storedCollapseState);
+        const storedCollapseState: CollapseState | undefined = this.localStorageService.retrieve<CollapseState>(
+            'sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId,
+        );
+        if (storedCollapseState) this.collapseState = storedCollapseState;
     }
 
     expandAll() {
@@ -115,7 +119,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
 
     toggleGroupCategoryCollapse(groupCategoryKey: string) {
         this.collapseState[groupCategoryKey] = !this.collapseState[groupCategoryKey];
-        localStorage.setItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, JSON.stringify(this.collapseState));
+        this.localStorageService.store<CollapseState>('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, this.collapseState);
     }
 
     getGroupedByWeek(groupKey: string): WeekGroup[] {

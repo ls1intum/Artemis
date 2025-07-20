@@ -16,13 +16,15 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 describe('SidebarAccordionComponent', () => {
     let component: SidebarAccordionComponent;
+    let localStorageService: LocalStorageService;
     let fixture: ComponentFixture<SidebarAccordionComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [MockModule(NgbTooltipModule), MockModule(NgbCollapseModule), MockModule(RouterModule), FaIconComponent],
             declarations: [
                 SidebarAccordionComponent,
@@ -40,11 +42,10 @@ describe('SidebarAccordionComponent', () => {
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         }).compileComponents();
-    });
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(SidebarAccordionComponent);
         component = fixture.componentInstance;
+        localStorageService = TestBed.inject(LocalStorageService);
 
         component.groupedData = {
             current: {
@@ -72,11 +73,17 @@ describe('SidebarAccordionComponent', () => {
     });
 
     it('should toggle collapse state for a group', () => {
+        const storeSpy = jest.spyOn(localStorageService, 'store');
+        const storageKey = `sidebar.accordion.collapseState.${component.storageId}.byCourse.${component.courseId}`;
         const groupKey = 'noDate';
+
         component.toggleGroupCategoryCollapse(groupKey);
+        expect(storeSpy).toHaveBeenCalledWith(storageKey, expect.objectContaining({ [groupKey]: false }));
         expect(component.collapseState[groupKey]).toBeFalse();
+
         component.toggleGroupCategoryCollapse(groupKey);
         expect(component.collapseState[groupKey]).toBeTrue();
+        expect(storeSpy).toHaveBeenCalledWith(storageKey, expect.objectContaining({ [groupKey]: true }));
     });
 
     it('should toggle collapse state when group header is clicked', () => {
