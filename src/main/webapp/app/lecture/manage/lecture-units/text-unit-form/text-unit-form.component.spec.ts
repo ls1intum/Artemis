@@ -187,8 +187,9 @@ describe('TextUnitFormComponent', () => {
     }));
 
     it('should restore markdown from local storage on init', fakeAsync(() => {
-        const router = TestBed.inject(Router) as MockRouter;
-        router.setUrl('/cached-test');
+        const url = '/cached-test';
+        const router = TestBed.inject(Router);
+        router.setUrl(url);
 
         const cachedMarkdown = 'cached markdown';
         const date = 'Jan 01 2020, 12:00:00';
@@ -204,7 +205,7 @@ describe('TextUnitFormComponent', () => {
 
     it('should persist markdown change to local storage', fakeAsync(() => {
         const url = '/persist-test';
-        const router = TestBed.inject(Router) as MockRouter;
+        const router = TestBed.inject(Router);
         router.setUrl(url);
 
         textUnitFormComponentFixture.detectChanges();

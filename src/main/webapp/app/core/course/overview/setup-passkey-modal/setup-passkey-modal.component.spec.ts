@@ -56,7 +56,7 @@ describe('SetupPasskeyModalComponent', () => {
 
         const savedDate = localStorageServiceSpy.mock.calls[0][1];
 
-        const savedDateOnlyWithDay = new Date(savedDate);
+        const savedDateOnlyWithDay = savedDate;
         savedDateOnlyWithDay.setHours(0, 0, 0, 0);
         expect(savedDateOnlyWithDay.getTime()).toBe(expectedDateOnlyWithDayToEnsureTestIsNotFlaky.getTime());
 
