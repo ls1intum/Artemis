@@ -135,3 +135,41 @@ jhi-posting-thread {
     border-radius: 0.25rem;
     background-color: var(--bs-card-bg);
 }
+.new-messages-separator {
+    position: relative;
+    margin: 0.5rem 0;
+    height: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.separator-line {
+    flex-grow: 1;
+    border-top: 1px solid var(--primary);
+    margin-right: 0.5rem;
+}
+
+.new-label {
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: bold;
+    line-height: 1;
+    padding: 0;
+    margin-right: 0.75rem;
+}
+
+.scroll-sticky-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem 0;
+}
+
+.scroll-sticky-button {
+    padding: 6px 14px;
+    border: none;
+    cursor: pointer;
+}

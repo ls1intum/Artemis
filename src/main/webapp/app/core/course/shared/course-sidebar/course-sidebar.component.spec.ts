@@ -107,7 +107,7 @@ describe('CourseSidebarComponent', () => {
                 MockComponent(SecuredImageComponent),
                 MockDirective(NgbDropdown),
                 MockDirective(TranslateDirective),
-                MockComponent(FaIconComponent),
+                FaIconComponent,
                 MockDirective(FeatureToggleHideDirective),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),

@@ -14,6 +14,7 @@ import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configurat
 import { of, throwError } from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('Edit LTI Configuration Component', () => {
     let comp: EditLtiConfigurationComponent;
@@ -44,7 +45,7 @@ describe('Edit LTI Configuration Component', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [NgbNavModule, MockModule(NgbTooltipModule), MockModule(ReactiveFormsModule)],
+            imports: [NgbNavModule, MockModule(NgbTooltipModule), MockModule(ReactiveFormsModule), FaIconComponent],
             declarations: [EditLtiConfigurationComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [
                 MockProvider(LtiConfigurationService),

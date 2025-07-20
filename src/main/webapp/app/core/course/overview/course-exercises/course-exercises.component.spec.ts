@@ -33,6 +33,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -54,7 +55,7 @@ describe('CourseExercisesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, RouterModule.forRoot([]), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
+            imports: [FormsModule, RouterModule.forRoot([]), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective), FaIconComponent],
             declarations: [
                 CourseExercisesComponent,
                 SidebarComponent,
