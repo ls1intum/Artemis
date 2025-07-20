@@ -85,10 +85,11 @@ class AtlasMLServiceTest {
         // Given
         SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description");
 
-        List<String> competencyIds = List.of("comp-001", "comp-002");
+        List<AtlasMLCompetencyDTO> competencies = List.of(new AtlasMLCompetencyDTO("comp-001", "Test Competency 1", "Test Description 1", "U"),
+                new AtlasMLCompetencyDTO("comp-002", "Test Competency 2", "Test Description 2", "Y"));
         AtlasMLCompetencyRelationDTO relation = new AtlasMLCompetencyRelationDTO("comp-001", "comp-002", "ASSUMES");
 
-        SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencyIds, List.of(relation));
+        SuggestCompetencyResponseDTO expectedResponse = new SuggestCompetencyResponseDTO(competencies, List.of(relation));
 
         ResponseEntity<SuggestCompetencyResponseDTO> response = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
 
@@ -102,14 +103,15 @@ class AtlasMLServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.competencies()).hasSize(2);
         assertThat(result.competencyRelations()).hasSize(1);
-        assertThat(result.competencies()).contains("comp-001", "comp-002");
+        assertThat(result.competencies().get(0).id()).isEqualTo("comp-001");
+        assertThat(result.competencies().get(1).id()).isEqualTo("comp-002");
         assertThat(result.competencyRelations().get(0).relationType()).isEqualTo("ASSUMES");
     }
 
     @Test
     void testSaveCompetencies() {
         // Given
-        AtlasMLCompetencyDTO competencyDTO = new AtlasMLCompetencyDTO("comp-001", "Test Competency", "Test Description", "APPLY");
+        AtlasMLCompetencyDTO competencyDTO = new AtlasMLCompetencyDTO("comp-001", "Test Competency", "Test Description", "Y");
         AtlasMLCompetencyRelationDTO relation = new AtlasMLCompetencyRelationDTO("comp-001", "comp-002", "ASSUMES");
 
         SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO("test-id", "test description", List.of(competencyDTO), List.of(relation));

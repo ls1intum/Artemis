@@ -1,6 +1,15 @@
 <div class="d-flex flex-wrap mt-4">
     <h2 [jhiTranslate]="'artemisApp.' + competencyType + '.title'"></h2>
     <div class="ms-auto justify-content-end">
+        @if (competencyType === 'competency') {
+            <button class="btn btn-outline-info btn-sm me-2" (click)="toggleSuggestions()" [disabled]="isLoadingSuggestions">
+                <fa-icon [icon]="faLightbulb" />
+                @if (isLoadingSuggestions) {
+                    <span class="spinner-border spinner-border-sm ms-1" role="status" aria-hidden="true"></span>
+                }
+                <span jhiTranslate="artemisApp.competency.manage.suggestionsButton"></span>
+            </button>
+        }
         <div ngbDropdown class="d-inline">
             <button id="importCompetenciesDropdown" class="btn btn-primary" ngbDropdownToggle>
                 <fa-icon [icon]="faFileImport" />
@@ -30,7 +39,7 @@
     </div>
 </div>
 <div class="container-fluid overflow-auto">
-    @if (courseCompetencies.length) {
+    @if (displayedCompetencies.length) {
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -56,10 +65,19 @@
                 </tr>
             </thead>
             <tbody>
-                @for (competency of courseCompetencies; track competency.id; let i = $index) {
-                    <tr>
+                @for (competency of displayedCompetencies; track competency.id; let i = $index) {
+                    <tr [class.table-info]="competency.isSuggested">
                         <td class="col">
-                            <a [routerLink]="['/courses', courseId, 'competencies', competency.id]">{{ competency.title }}</a>
+                            <div class="d-flex align-items-center">
+                                @if (competency.isSuggested) {
+                                    <fa-icon [icon]="faLightbulb" class="text-warning me-2" [ngbTooltip]="'artemisApp.competency.suggested' | artemisTranslate" container="body" />
+                                }
+                                @if (!competency.isSuggested) {
+                                    <a [routerLink]="['/courses', courseId, 'competencies', competency.id]">{{ competency.title }}</a>
+                                } @else {
+                                    <span>{{ competency.title }}</span>
+                                }
+                            </div>
                         </td>
                         <td class="col markdown-preview" [innerHTML]="competency.description | htmlForMarkdown"></td>
                         <td class="col">
@@ -72,32 +90,59 @@
                             {{ competency.softDueDate | artemisDate }}
                         </td>
                         <td class="d-none col-lg d-lg-table-cell">
-                            <ngb-progressbar
-                                type="primary"
-                                [showValue]="true"
-                                [value]="competency.courseProgress?.numberOfMasteredStudents ?? 0"
-                                [max]="competency.courseProgress?.numberOfStudents ?? 0"
-                            />
+                            @if (!competency.isSuggested) {
+                                <ngb-progressbar
+                                    type="primary"
+                                    [showValue]="true"
+                                    [value]="competency.courseProgress?.numberOfMasteredStudents ?? 0"
+                                    [max]="competency.courseProgress?.numberOfStudents ?? 0"
+                                />
+                            } @else {
+                                <span class="text-muted">-</span>
+                            }
                         </td>
                         <td class="col">
-                            <span [jhiTranslate]="'global.generic.' + (competency.optional ? 'yes' : 'no')"></span>
+                            @if (!competency.isSuggested) {
+                                <span [jhiTranslate]="'global.generic.' + (competency.optional ? 'yes' : 'no')"></span>
+                            } @else {
+                                <span class="text-muted">-</span>
+                            }
                         </td>
                         <td class="col">
                             <div class="d-flex justify-content-end">
-                                <a class="btn btn-sm btn-primary me-1" [routerLink]="['/course-management', courseId, competencyType + '-management', competency.id, 'edit']">
-                                    <fa-icon [icon]="faPencilAlt" />
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
-                                </a>
-                                <button
-                                    jhiDeleteButton
-                                    [entityTitle]="competency.title ?? ''"
-                                    [deleteQuestion]="'artemisApp.' + competencyType + '.competencyCard.delete.question'"
-                                    [deleteConfirmationText]="'artemisApp.' + competencyType + '.competencyCard.delete.typeNameToConfirm'"
-                                    (delete)="deleteCompetency(competency.id!)"
-                                    [dialogError]="dialogError"
-                                >
-                                    <fa-icon [icon]="faTrash" />
-                                </button>
+                                @if (!competency.isSuggested) {
+                                    <a class="btn btn-sm btn-primary me-1" [routerLink]="['/course-management', courseId, competencyType + '-management', competency.id, 'edit']">
+                                        <fa-icon [icon]="faPencilAlt" />
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                    </a>
+                                    <button
+                                        jhiDeleteButton
+                                        [entityTitle]="competency.title ?? ''"
+                                        [deleteQuestion]="'artemisApp.' + competencyType + '.competencyCard.delete.question'"
+                                        [deleteConfirmationText]="'artemisApp.' + competencyType + '.competencyCard.delete.typeNameToConfirm'"
+                                        (delete)="deleteCompetency(competency.id!)"
+                                        [dialogError]="dialogError"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
+                                } @else {
+                                    <button
+                                        class="btn btn-sm btn-success me-1"
+                                        (click)="acceptSuggestedCompetency(competency)"
+                                        [ngbTooltip]="'artemisApp.competency.acceptSuggestion' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="faPlus" />
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.add"></span>
+                                    </button>
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary"
+                                        (click)="dismissSuggestedCompetency(competency)"
+                                        [ngbTooltip]="'artemisApp.competency.dismissSuggestion' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.dismiss"></span>
+                                    </button>
+                                }
                             </div>
                         </td>
                     </tr>
@@ -105,6 +150,13 @@
             </tbody>
         </table>
     } @else {
-        <span [jhiTranslate]="'artemisApp.' + competencyType + '.manage.empty'"></span>
+        @if (showSuggestions && suggestedCompetencies.length === 0 && !isLoadingSuggestions) {
+            <div class="alert alert-info">
+                <fa-icon [icon]="faLightbulb" class="me-2" />
+                <span jhiTranslate="artemisApp.competency.manage.noSuggestions"></span>
+            </div>
+        } @else {
+            <span [jhiTranslate]="'artemisApp.' + competencyType + '.manage.empty'"></span>
+        }
     }
 </div>

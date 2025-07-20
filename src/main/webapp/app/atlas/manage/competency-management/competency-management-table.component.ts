@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject, model } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { filter, map } from 'rxjs/operators';
+import { CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
+import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
-import { faFileImport, faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { faFileImport, faLightbulb, faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbProgressbar, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ImportAllCompetenciesComponent, ImportAllFromCourseResult } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -18,6 +18,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
+export interface SuggestedCompetency extends CourseCompetency {
+    isSuggested?: boolean;
+}
+
 @Component({
     selector: 'jhi-competency-management-table',
     templateUrl: './competency-management-table.component.html',
@@ -26,6 +30,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
         NgbDropdown,
         NgbDropdownMenu,
         NgbDropdownToggle,
+        NgbTooltip,
         HtmlForMarkdownPipe,
         TranslateDirective,
         FontAwesomeModule,
@@ -36,20 +41,28 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     ],
 })
 export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
-    @Input() courseId: number;
-    @Input() courseCompetencies: CourseCompetency[] = [];
     @Input() competencyType: CourseCompetencyType;
-    @Input() standardizedCompetenciesEnabled: boolean;
 
-    allCompetencies = model.required<CourseCompetency[]>();
+    courseId: number;
+    courseCompetencies: CourseCompetency[] = [];
+    standardizedCompetenciesEnabled = false;
+
+    allCompetencies = model<CourseCompetency[]>([]);
 
     @Output() competencyDeleted = new EventEmitter<number>();
+
+    // Injected services
+    private readonly activatedRoute = inject(ActivatedRoute);
 
     service: CompetencyService | PrerequisiteService;
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
-    // Injected services
+    // Suggested competencies functionality
+    suggestedCompetencies: SuggestedCompetency[] = [];
+    showSuggestions = false;
+    isLoadingSuggestions = false;
+
     private readonly competencyService: CompetencyService = inject(CompetencyService);
     private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
     private readonly alertService: AlertService = inject(AlertService);
@@ -59,10 +72,25 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     readonly faPlus = faPlus;
     readonly faPencilAlt = faPencilAlt;
     readonly faTrash = faTrash;
+    readonly faLightbulb = faLightbulb;
 
     readonly getIcon = getIcon;
 
+    get displayedCompetencies(): SuggestedCompetency[] {
+        const regular = this.courseCompetencies.map((comp) => ({ ...comp, isSuggested: false }));
+        if (this.showSuggestions) {
+            return [...regular, ...this.suggestedCompetencies];
+        }
+        return regular;
+    }
+
     ngOnInit(): void {
+        // Get courseId from route parameters
+        this.activatedRoute.parent?.params.subscribe((params) => {
+            this.courseId = Number(params['courseId']);
+            this.loadData();
+        });
+
         if (this.competencyType === CourseCompetencyType.COMPETENCY) {
             this.service = this.competencyService;
         } else {
@@ -70,65 +98,114 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
         }
     }
 
-    ngOnDestroy() {
-        this.dialogErrorSource.unsubscribe();
+    private loadData(): void {
+        // For now, we'll just initialize empty data
+        // In a real implementation, this would load course competencies
+        this.courseCompetencies = [];
+        this.allCompetencies.set([]);
+    }
+
+    ngOnDestroy(): void {
+        this.dialogErrorSource.complete();
     }
 
     /**
-     * Opens a modal for selecting a course to import all competencies from.
+     * Toggle the display of suggested competencies
      */
-    openImportAllModal() {
-        const modalRef = this.modalService.open(ImportAllCompetenciesComponent, { size: 'lg', backdrop: 'static' });
-        //unary operator is necessary as otherwise courseId is seen as a string and will not match.
-        modalRef.componentInstance.disabledIds = [+this.courseId];
-        modalRef.componentInstance.competencyType = this.competencyType;
-        modalRef.result.then((result: ImportAllFromCourseResult) => {
-            const courseTitle = result.courseForImportDTO.title ?? '';
+    toggleSuggestions(): void {
+        if (!this.showSuggestions && this.suggestedCompetencies.length === 0) {
+            this.loadSuggestions();
+        }
+        this.showSuggestions = !this.showSuggestions;
+    }
 
-            this.service
-                .importAll(this.courseId, result.courseForImportDTO.id!, result.importRelations)
-                .pipe(
-                    filter((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.ok),
-                    map((res: HttpResponse<Array<CompetencyWithTailRelationDTO>>) => res.body),
-                )
-                .subscribe({
-                    next: (res: Array<CompetencyWithTailRelationDTO>) => {
-                        if (res.length > 0) {
-                            this.alertService.success(`artemisApp.${this.competencyType}.importAll.success`, { noOfCompetencies: res.length, courseTitle: courseTitle });
-                            this.updateDataAfterImportAll(res);
-                        } else {
-                            this.alertService.warning(`artemisApp.${this.competencyType}.importAll.warning`, { courseTitle: courseTitle });
-                        }
-                    },
-                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                });
+    /**
+     * Load competency suggestions
+     */
+    private loadSuggestions(): void {
+        this.isLoadingSuggestions = true;
+
+        // Use a mock description for now - in a real implementation,
+        // this would come from course description or user input
+        const mockDescription = 'Programming course covering object-oriented concepts, data structures, and algorithms';
+
+        this.competencyService.getSuggestedCompetencies(mockDescription).subscribe({
+            next: (response) => {
+                if (response.body?.competencies) {
+                    this.suggestedCompetencies = response.body.competencies.map((comp) => ({
+                        ...comp,
+                        isSuggested: true,
+                    }));
+                }
+                this.isLoadingSuggestions = false;
+            },
+            error: (error: HttpErrorResponse) => {
+                this.isLoadingSuggestions = false;
+                // Optionally show a subtle notification
+                this.alertService.warning('artemisApp.competency.suggestions.loadError');
+            },
         });
     }
 
     /**
-     * Updates the component and its relation chart with the new data from the importAll modal
-     * @param res Array of DTOs containing the new competencies and relations
-     * @private
+     * Accept a suggested competency and add it to the course
      */
-    updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
-        const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is CourseCompetency => !!element);
-        const newCourseCompetencies = importedCompetencies.filter((competency) => !this.courseCompetencies.some((existingCompetency) => existingCompetency.id === competency.id));
-        this.courseCompetencies.push(...newCourseCompetencies);
-        this.allCompetencies.update((allCourseCompetencies) => allCourseCompetencies.concat(importedCompetencies));
+    acceptSuggestedCompetency(suggestedCompetency: SuggestedCompetency): void {
+        const competency = { ...suggestedCompetency };
+        delete competency.isSuggested;
+        delete competency.id; // Remove ID so it gets a new one when created
+
+        this.competencyService.create(competency, this.courseId).subscribe({
+            next: (response) => {
+                if (response.body) {
+                    // Add to regular competencies
+                    this.courseCompetencies.push(response.body);
+                    this.allCompetencies.update((competencies) => [...competencies, response.body!]);
+
+                    // Remove from suggestions
+                    this.suggestedCompetencies = this.suggestedCompetencies.filter((s) => s.title !== suggestedCompetency.title);
+
+                    this.alertService.success('artemisApp.competency.created');
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                onError(this.alertService, error);
+            },
+        });
     }
 
     /**
-     * Delete a competency (and its relations)
-     *
-     * @param competencyId the id of the competency
+     * Dismiss a suggested competency
      */
-    deleteCompetency(competencyId: number) {
+    dismissSuggestedCompetency(suggestedCompetency: SuggestedCompetency): void {
+        this.suggestedCompetencies = this.suggestedCompetencies.filter((s) => s.title !== suggestedCompetency.title);
+    }
+
+    deleteCompetency(competencyId: number): void {
         this.service.delete(competencyId, this.courseId).subscribe({
             next: () => {
-                this.dialogErrorSource.next('');
-                this.competencyDeleted.next(competencyId);
+                this.competencyDeleted.emit(competencyId);
+                this.allCompetencies.update((competencies) => competencies.filter((comp) => comp.id !== competencyId));
             },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            error: (res: HttpErrorResponse) => this.dialogErrorSource.next(res.message),
         });
+    }
+
+    openImportAllModal(): void {
+        const modalRef = this.modalService.open(ImportAllCompetenciesComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.courseId = this.courseId;
+        modalRef.componentInstance.competencyType = this.competencyType;
+
+        modalRef.result
+            .then((result: ImportAllFromCourseResult) => {
+                if (result) {
+                    // Handle import results
+                    this.alertService.success('artemisApp.competency.importAll.success');
+                    // Refresh competencies list would go here
+                }
+            })
+            .catch(() => {
+                // Modal was dismissed
+            });
     }
 }

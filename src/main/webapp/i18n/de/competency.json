@@ -4,6 +4,12 @@
             "created": "Kompetenz erstellt",
             "deleted": "Kompetenz gelöscht",
             "updated": "Kompetenz bearbeitet",
+            "suggested": "KI-Vorschlag",
+            "acceptSuggestion": "Diesen Kompetenzvorschlag akzeptieren",
+            "dismissSuggestion": "Diesen Kompetenzvorschlag verwerfen",
+            "suggestions": {
+                "loadError": "Kompetenzvorschläge konnten nicht geladen werden. Bitte versuchen Sie es später erneut."
+            },
             "competencyButton": "Kompetenzen",
             "title": "Titel",
             "description": "Beschreibung",
@@ -40,7 +46,9 @@
                 "importStandardizedButton": "Standardisierte Kompetenzen importieren",
                 "createButton": "Kompetenz erstellen",
                 "generateButton": "Kompetenzen generieren",
+                "suggestionsButton": "KI-Vorschläge",
                 "empty": "Es existieren keine Kompetenzen für diesen Kurs",
+                "noSuggestions": "Keine Kompetenzvorschläge gefunden. Versuchen Sie, die Kursbeschreibung zu aktualisieren, um bessere Vorschläge zu erhalten.",
                 "deleteRelationModalTitle": "Löschen bestätigen",
                 "deleteRelationModalText": "Bist du sicher, dass du die Relation zwischen \"{{titleTail}}\" und \"{{titleHead}}\" löschen willst?"
             },
