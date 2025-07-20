@@ -24,6 +24,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { User } from 'app/core/user/user.model';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 describe('HomeComponent', () => {
     let component: HomeComponent;
@@ -31,6 +32,7 @@ describe('HomeComponent', () => {
     let accountService: AccountService;
     let modalService: NgbModal;
     let loginService: LoginService;
+    let localStorageService;
 
     let router: MockRouter;
 
@@ -43,8 +45,6 @@ describe('HomeComponent', () => {
     beforeEach(async () => {
         router = new MockRouter();
         router.setUrl('');
-
-        localStorage.clear();
 
         await TestBed.configureTestingModule({
             imports: [MockRouterLinkDirective, RouterTestingModule, SetupPasskeyModalComponent],
@@ -67,6 +67,8 @@ describe('HomeComponent', () => {
             ],
         }).compileComponents();
 
+        localStorageService = TestBed.inject(LocalStorageService);
+        localStorageService.clear();
         fixture = TestBed.createComponent(HomeComponent);
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService);
@@ -177,7 +179,7 @@ describe('HomeComponent', () => {
             component.isPasskeyEnabled = true;
             const futureDate = new Date();
             futureDate.setDate(futureDate.getDate() + 1);
-            localStorage.setItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, futureDate.toISOString());
+            localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, futureDate);
 
             accountService.userIdentity = { askToSetupPasskey: true } as User;
             const openModalSpy = jest.spyOn(modalService, 'open');
@@ -191,7 +193,7 @@ describe('HomeComponent', () => {
             component.isPasskeyEnabled = true;
             const dateInPast = new Date();
             dateInPast.setDate(dateInPast.getDate() - 10);
-            localStorage.setItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, dateInPast.toISOString());
+            localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, dateInPast);
 
             accountService.userIdentity = { askToSetupPasskey: true } as User;
             const openModalSpy = jest.spyOn(modalService, 'open');

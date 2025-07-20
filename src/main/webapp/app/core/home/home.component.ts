@@ -24,6 +24,7 @@ import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core
 import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 @Component({
     selector: 'jhi-home',
@@ -50,6 +51,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private webauthnService = inject(WebauthnService);
     private webauthnApiService = inject(WebauthnApiService);
     private modalService = inject(NgbModal);
+    private localStorageService = inject(LocalStorageService);
 
     protected usernameTouched = false;
     protected passwordTouched = false;
@@ -99,8 +101,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             return;
         }
 
-        const earliestReminderDate = localStorage.getItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY);
-        const userDisabledReminderForCurrentTimeframe = earliestReminderDate && new Date() < new Date(earliestReminderDate);
+        const earliestReminderDate = this.localStorageService.retrieve<Date>(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY);
+        const userDisabledReminderForCurrentTimeframe = earliestReminderDate && new Date() < earliestReminderDate;
         if (userDisabledReminderForCurrentTimeframe) {
             return;
         }
