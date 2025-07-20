@@ -140,7 +140,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.courseOverviewService.setSidebarCollapseState('exercise', this.isCollapsed);
     }
 
-    getLastSelectedExercise(): string | null {
+    getLastSelectedExercise(): string | undefined {
         return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.exercise.byCourse.' + this.courseId);
     }
 
