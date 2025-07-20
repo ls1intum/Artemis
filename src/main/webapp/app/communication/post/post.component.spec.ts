@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -29,7 +29,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { Router, RouterState, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -638,5 +638,57 @@ describe('PostComponent', () => {
 
         component.removeMarkdown(markdownContent);
         expect(component.newContent).toEqual(expectedOutput);
+    });
+
+    describe('loadOriginalPostContent', () => {
+        let getPostByIdInConversationSpy: jest.SpyInstance;
+        let detectChangesSpy: jest.SpyInstance;
+        let removeMarkdownSpy: jest.SpyInstance;
+
+        beforeEach(() => {
+            getPostByIdInConversationSpy = jest.spyOn(metisService, 'getPostByIdInConversation');
+            detectChangesSpy = jest.spyOn(component.changeDetector, 'detectChanges');
+            removeMarkdownSpy = jest.spyOn(component, 'removeMarkdown');
+        });
+
+        it('should load original post content when postId and conversationId are present', fakeAsync(() => {
+            const originalPost = { id: 123, content: 'Original post content' } as Post;
+            component.posting = { ...post, originalPostId: 123, conversation: { id: 456 } } as Post;
+            getPostByIdInConversationSpy.mockReturnValue(of(originalPost));
+
+            (component as any).loadOriginalPostContent();
+            tick();
+
+            expect(getPostByIdInConversationSpy).toHaveBeenCalledWith(123, 456);
+            expect(component.originalPost).toEqual(originalPost);
+            expect(detectChangesSpy).toHaveBeenCalled();
+            expect(removeMarkdownSpy).toHaveBeenCalledWith('Original post content');
+        }));
+
+        it('should not load original post content when postId is missing', fakeAsync(() => {
+            component.posting = { ...post, originalPostId: undefined, conversation: { id: 456 } } as Post;
+
+            (component as any).loadOriginalPostContent();
+            tick();
+
+            expect(getPostByIdInConversationSpy).not.toHaveBeenCalled();
+            expect(component.originalPost).toBeUndefined();
+            expect(detectChangesSpy).not.toHaveBeenCalled();
+            expect(removeMarkdownSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should handle error when loading original post fails', fakeAsync(() => {
+            const error = new Error('Network error');
+            component.posting = { ...post, originalPostId: 123, conversation: { id: 456 } } as Post;
+            getPostByIdInConversationSpy.mockReturnValue(throwError(() => error));
+
+            (component as any).loadOriginalPostContent();
+            tick();
+
+            expect(getPostByIdInConversationSpy).toHaveBeenCalledWith(123, 456);
+            expect(component.originalPost).toBeUndefined();
+            expect(detectChangesSpy).not.toHaveBeenCalled();
+            expect(removeMarkdownSpy).not.toHaveBeenCalled();
+        }));
     });
 });
