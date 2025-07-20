@@ -43,6 +43,7 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercis
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { signal } from '@angular/core';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -63,9 +64,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
     let alertService: AlertService;
     let profileService: ProfileService;
+    let localStorageService: LocalStorageService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [BrowserAnimationsModule, FaIconComponent, OwlNativeDateTimeModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -88,6 +90,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         programmingExerciseFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
         alertService = TestBed.inject(AlertService);
         profileService = TestBed.inject(ProfileService);
+        localStorageService = TestBed.inject(LocalStorageService);
 
         const programmingLanguageFeature = {
             programmingLanguage: ProgrammingLanguage.JAVA,
@@ -119,41 +122,41 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     describe('initializeEditMode', () => {
         it('should set isSimpleMode to true if localStorage has value "true"', () => {
-            localStorage.setItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, 'true');
+            localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, true);
 
             fixture.detectChanges();
 
             expect(comp.isSimpleMode()).toBeTruthy();
-            expect(localStorage.getItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe('true');
+            expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBeTrue();
         });
 
         it('should set isSimpleMode to false if localStorage has value "false"', () => {
-            localStorage.setItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, 'false');
+            localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, false);
 
             fixture.detectChanges();
 
-            expect(comp.isSimpleMode()).toBeFalsy();
-            expect(localStorage.getItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe('false');
+            expect(comp.isSimpleMode()).toBeFalse();
+            expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBeFalse();
         });
 
         it('should set isSimpleMode to true if not present in local storage', () => {
-            localStorage.removeItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+            localStorageService.remove(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
 
             fixture.detectChanges();
 
-            expect(comp.isSimpleMode()).toBeTruthy();
+            expect(comp.isSimpleMode()).toBeTrue();
         });
     });
 
     it('switchEditMode should toggle isSimpleMode and update local storage', () => {
-        localStorage.setItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, JSON.stringify(true));
+        localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, true);
         fixture.detectChanges();
         expect(comp.isSimpleMode()).toBeTruthy(); // ensure the assumed initial state isSimpleMode = true holds
 
         comp.switchEditMode();
 
         expect(comp.isSimpleMode()).toBeFalsy();
-        expect(localStorage.getItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(JSON.stringify(false));
+        expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBeFalse();
     });
 
     describe('save', () => {
