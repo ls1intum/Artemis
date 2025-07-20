@@ -16,6 +16,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.context.annotation.Conditional;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
@@ -30,16 +31,16 @@ import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 public class ExamRoom extends AbstractAuditingEntity {
 
     /**
-     * The verbose room number.
+     * The room number, e.g. 123.EG.01, or 123.456.78.9
      */
-    @Column(name = "long_room_number", nullable = false, length = 50)
-    private String longRoomNumber;
+    @Column(name = "room_number", nullable = false, length = 50)
+    private String roomNumber;
 
     /**
-     * The short room number.
+     * An alternative room number, if it exists
      */
-    @Column(name = "short_room_number", nullable = false, length = 50)
-    private String shortRoomNumber;
+    @Column(name = "alternative_room_number", nullable = true, length = 50)
+    private String alternativeRoomNumber;
 
     /**
      * The name of the exam room.
@@ -62,7 +63,7 @@ public class ExamRoom extends AbstractAuditingEntity {
     /**
      * All seats of this exam room.
      */
-    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "examRoom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonManagedReference
     private List<ExamSeat> seats = new ArrayList<>();
@@ -70,7 +71,7 @@ public class ExamRoom extends AbstractAuditingEntity {
     /**
      * All layout strategies for this exam room.
      */
-    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "examRoom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonManagedReference
     private List<LayoutStrategy> layoutStrategies = new ArrayList<>();
@@ -82,6 +83,11 @@ public class ExamRoom extends AbstractAuditingEntity {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonManagedReference
     private Set<ExamUser> examRoomUsers = new HashSet<>();
+
+    @OneToMany(mappedBy = "examRoom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonBackReference
+    private Set<ExamRoomAssignment> examRoomAssignments = new HashSet<>();
 
     /* Getters & Setters */
     public String getName() {
@@ -100,20 +106,20 @@ public class ExamRoom extends AbstractAuditingEntity {
         this.alternativeName = alternativeName;
     }
 
-    public String getLongRoomNumber() {
-        return longRoomNumber;
+    public String getRoomNumber() {
+        return roomNumber;
     }
 
-    public void setLongRoomNumber(String longRoomNumber) {
-        this.longRoomNumber = longRoomNumber;
+    public void setRoomNumber(String longRoomNumber) {
+        this.roomNumber = longRoomNumber;
     }
 
-    public String getShortRoomNumber() {
-        return shortRoomNumber;
+    public String getAlternativeRoomNumber() {
+        return alternativeRoomNumber;
     }
 
-    public void setShortRoomNumber(String shortRoomNumber) {
-        this.shortRoomNumber = shortRoomNumber;
+    public void setAlternativeRoomNumber(String shortRoomNumber) {
+        this.alternativeRoomNumber = shortRoomNumber;
     }
 
     public String getBuilding() {
@@ -147,6 +153,15 @@ public class ExamRoom extends AbstractAuditingEntity {
     public void setExamRoomUsers(Set<ExamUser> examRoomUsers) {
         this.examRoomUsers = examRoomUsers;
     }
+
+    public Set<ExamRoomAssignment> getExamRoomAssignments() {
+        return examRoomAssignments;
+    }
+
+    public void setExamRoomAssignments(Set<ExamRoomAssignment> examRoomAssignments) {
+        this.examRoomAssignments = examRoomAssignments;
+    }
+
     /* Getters & Setters End */
 
 }

@@ -24,6 +24,7 @@ import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
+import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomAssignment;
 
 @Entity
 @Table(name = "exam")
@@ -158,6 +160,11 @@ public class Exam extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exam")
     private Set<ExamUser> examUsers = new HashSet<>();
+
+    @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonBackReference
+    private Set<ExamRoomAssignment> examRoomAssignments = new HashSet<>();
 
     @Transient
     private Long numberOfExamUsersTransient;
@@ -413,6 +420,14 @@ public class Exam extends DomainObject {
 
     public void setExamUsers(Set<ExamUser> examUsers) {
         this.examUsers = examUsers;
+    }
+
+    public Set<ExamRoomAssignment> getExamRoomAssignments() {
+        return examRoomAssignments;
+    }
+
+    public void setExamRoomAssignments(Set<ExamRoomAssignment> examRoomAssignments) {
+        this.examRoomAssignments = examRoomAssignments;
     }
 
     public void addExamUser(ExamUser examUser) {

@@ -22,11 +22,11 @@
                 <constraints nullable="true"/>
             </column>
             <!-- Columns required from AbstractAuditingEntity - End -->
-            <column name="long_room_number" type="varchar(50)">
+            <column name="room_number" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
-            <column name="short_room_number" type="varchar(50)">
-                <constraints nullable="false"/>
+            <column name="alternative_room_number" type="varchar(50)">
+                <constraints nullable="true"/>
             </column>
             <column name="name" type="varchar(255)">
                 <constraints nullable="false"/>
@@ -57,7 +57,7 @@
             <column name="seat_condition" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
-            <column name="room_id" type="bigint">
+            <column name="exam_room_id" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_seat_room"
                              referencedTableName="exam_room" referencedColumnNames="id"/>
             </column>
@@ -70,8 +70,8 @@
         </createTable>
 
         <!-- Indexes for the Exam Seat table -->
-        <createIndex indexName="idx_exam_seat_room_id" tableName="exam_seat">
-            <column name="room_id"/>
+        <createIndex indexName="idx_exam_seat_exam_room_id" tableName="exam_seat">
+            <column name="exam_room_id"/>
         </createIndex>
 
         <!-- Rollback section -->
@@ -99,7 +99,7 @@
             <column name="parameters" type="json">
                 <constraints nullable="false"/>
             </column>
-            <column name="room_id" type="bigint">
+            <column name="exam_room_id" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_strategy_room"
                              referencedTableName="exam_room" referencedColumnNames="id"/>
             </column>
@@ -107,12 +107,12 @@
 
         <!-- Unique constraint - ensures no room has the same layout strategy twice -->
         <addUniqueConstraint tableName="layout_strategy"
-                             columnNames="room_id, name"
-                             constraintName="uc_layout_strategy_room_name"/>
+                             columnNames="exam_room_id, name"
+                             constraintName="uc_layout_strategy_exam_room_name"/>
 
         <!-- Indexes for Layout Strategy table -->
-        <createIndex indexName="idx_layout_strategy_room_id" tableName="layout_strategy">
-            <column name="room_id"/>
+        <createIndex indexName="idx_layout_strategy_exam_room_id" tableName="layout_strategy">
+            <column name="exam_room_id"/>
         </createIndex>
         <createIndex indexName="idx_layout_strategy_room_name" tableName="layout_strategy">
             <!--
@@ -120,7 +120,7 @@
              a smart DB would probably automatically create this index anyway to enforce the
              unique constraint, which means this index might be redundant, but it doesn't harm.
             -->
-            <column name="room_id"/>
+            <column name="exam_room_id"/>
             <column name="name"/>
         </createIndex>
 
@@ -130,25 +130,59 @@
         </rollback>
     </changeSet>
 
-    <!-- 4. Add exam-room-id column to the exam_user table -->
+    <!-- 4. Add exam-room-id and exam-seat-id column to the exam_user table -->
     <changeSet id="20250707005400-04-add-planned-room-id-to-exam-user" author="röttgermann">
         <addColumn tableName="exam_user">
             <column name="planned_room_id" type="bigint">
-                <constraints nullable="true"/>
+                <constraints nullable="true" foreignKeyName="fk_exam_user_planned_room"
+                             referencedTableName="exam_room" referencedColumnNames="id"/>
+            </column>
+            <column name="planned_seat_id" type="bigint">
+                <constraints nullable="true" foreignKeyName="fk_exam_user_planned_seat"
+                             referencedTableName="exam_seat" referencedColumnNames="id"/>
             </column>
         </addColumn>
-
-        <!-- Unique Constraints -->
-        <addForeignKeyConstraint baseTableName="exam_user"
-                                 baseColumnNames="planned_room_id"
-                                 constraintName="fk_exam_user_planned_room"
-                                 referencedTableName="exam_room"
-                                 referencedColumnNames="id"/>
 
         <!-- Rollback section -->
         <rollback>
             <dropForeignKeyConstraint baseTableName="exam_user" constraintName="fk_exam_user_planned_room"/>
             <dropColumn tableName="exam_user" columnName="planned_room_id"/>
+        </rollback>
+    </changeSet>
+
+    <!-- 5. Add exam to room assignment table -->
+    <changeSet id="20250707005400-05-add-exam-room-assignment" author="röttgermann">
+        <createTable tableName="exam_room_assignment">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="exam_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_exam_room_assignment_exam"
+                            referencedTableName="exam" referencedColumnNames="id"/>
+            </column>
+            <column name="exam_room_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_exam_room_assignment_room"
+                             referencedTableName="exam_room" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+
+        <!-- Unique constraint to avoid duplicate assignment of the same room to the same exam -->
+        <addUniqueConstraint tableName="exam_room_assignment"
+                             columnNames="exam_id, exam_room_id"
+                             constraintName="uc_exam_room_assignment_exam_room"/>
+
+        <!-- Indexes for Exam Room Assignment table -->
+        <createIndex indexName="idx_exam_room_assignment_exam_id" tableName="exam_room_assignment">
+            <column name="exam_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_exam_room_assignment_exam_room_id" tableName="exam_room_assignment">
+            <column name="exam_room_id"/>
+        </createIndex>
+
+        <!-- Rollback section -->
+        <rollback>
+            <dropTable tableName="exam_room_assignment"/>
         </rollback>
     </changeSet>
 </databaseChangeLog>

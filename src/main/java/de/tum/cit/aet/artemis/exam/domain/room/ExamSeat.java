@@ -39,9 +39,9 @@ public class ExamSeat extends DomainObject {
      * The exam room this seat is located in.
      */
     @ManyToOne
-    @JoinColumn(name = "room_id", nullable = false)
-    @JsonBackReference  // required to solve (de-)serialization issues
-    private ExamRoom room;
+    @JoinColumn(name = "exam_room_id", nullable = false)
+    @JsonBackReference
+    private ExamRoom examRoom;
 
     /**
      * The x-coordinate of the seat in the respective exam room.
@@ -72,12 +72,12 @@ public class ExamSeat extends DomainObject {
         this.seatCondition = seatCondition;
     }
 
-    public ExamRoom getRoom() {
-        return room;
+    public ExamRoom getExamRoom() {
+        return examRoom;
     }
 
-    public void setRoom(ExamRoom room) {
-        this.room = room;
+    public void setExamRoom(ExamRoom room) {
+        this.examRoom = room;
     }
 
     public float getX() {

@@ -46,9 +46,9 @@ public class LayoutStrategy extends DomainObject {
      * The room this layout strategy belongs to. One room may have multiple layout strategies.
      */
     @ManyToOne
-    @JoinColumn(name = "room_id", nullable = false)
-    @JsonBackReference  // required to solve (de-)serialization issues
-    private ExamRoom room;
+    @JoinColumn(name = "exam_room_id", nullable = false)
+    @JsonBackReference
+    private ExamRoom examRoom;
 
     /**
      * The parameters of the layout strategy, i.e., the data that tells the strategy how to distribute the students.
@@ -82,12 +82,12 @@ public class LayoutStrategy extends DomainObject {
         this.capacity = capacity;
     }
 
-    public ExamRoom getRoom() {
-        return room;
+    public ExamRoom getExamRoom() {
+        return examRoom;
     }
 
-    public void setRoom(ExamRoom room) {
-        this.room = room;
+    public void setExamRoom(ExamRoom room) {
+        this.examRoom = room;
     }
 
     public String getParametersJson() {

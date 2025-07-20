@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.domain.room.ExamSeat;
 
 @Entity
 @Table(name = "exam_user")
@@ -33,8 +34,13 @@ public class ExamUser extends AbstractAuditingEntity {
 
     @ManyToOne
     @JoinColumn(name = "planned_room_id", nullable = true)
-    @JsonBackReference  // required to solve (de-)serialization issues
+    @JsonBackReference
     private ExamRoom plannedRoomEntity;
+
+    @ManyToOne
+    @JoinColumn(name = "planned_seat_id", nullable = true)
+    @JsonBackReference
+    private ExamSeat plannedSeatEntity;
 
     @Column(name = "did_check_image")
     private boolean didCheckImage = false;
@@ -102,6 +108,14 @@ public class ExamUser extends AbstractAuditingEntity {
 
     public void setPlannedRoomEntity(ExamRoom plannedRoomEntity) {
         this.plannedRoomEntity = plannedRoomEntity;
+    }
+
+    public ExamSeat getPlannedSeatEntity() {
+        return plannedSeatEntity;
+    }
+
+    public void setPlannedSeatEntity(ExamSeat plannedSeatEntity) {
+        this.plannedSeatEntity = plannedSeatEntity;
     }
 
     public boolean getDidCheckRegistrationNumber() {

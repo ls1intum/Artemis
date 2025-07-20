@@ -105,29 +105,40 @@ public class ExamRoomService {
     }
 
     private static ExamRoom parseExamRoomJsonFile(final String longRoomNumber, final JsonNode jsonRoot) throws IOException {
-        // Manual mapping of JSON to fields
+        /* Extract simple exam room fields */
         ExamRoom room = new ExamRoom();
-        room.setLongRoomNumber(longRoomNumber);
-        room.setShortRoomNumber(jsonRoot.get("number").asText());
-        room.setName(jsonRoot.path("name").asText());
-        room.setAlternativeName(jsonRoot.path("shortname").asText(null));
-        room.setBuilding(jsonRoot.path("building").asText());
+        room.setRoomNumber(longRoomNumber);
+        final String alternativeRoomNumber = jsonRoot.get("number").asText(null);
+        if (!longRoomNumber.equals(alternativeRoomNumber)) {
+            room.setAlternativeRoomNumber(alternativeRoomNumber);
+        }
 
-        // Extract the seats
+        room.setName(jsonRoot.path("name").asText());
+        final String alternativeName = jsonRoot.path("shortname").asText(null);
+        if (!room.getName().equals(alternativeName)) {
+            room.setAlternativeName(alternativeName);
+        }
+
+        room.setBuilding(jsonRoot.path("building").asText());
+        /* Extract simple exam room fields - End */
+
+        /* Extract the seats */
         JsonNode rowsArrayNode = jsonRoot.path("rows");
         List<ExamSeat> seats = parseExamSeats(longRoomNumber, rowsArrayNode, room);
         if (seats == null)
             return null;
 
         room.setSeats(seats);
+        /* Extract the seats - End */
 
-        // Extract the rows
+        /* Extract the layouts */
         JsonNode layoutsObjectNode = jsonRoot.path("layouts");
         List<LayoutStrategy> layouts = parseLayoutStrategies(longRoomNumber, layoutsObjectNode, room);
         if (layouts == null)
             return null;
 
         room.setLayoutStrategies(layouts);
+        /* Extract the layouts - End */
 
         return room;
     }
@@ -151,7 +162,7 @@ public class ExamRoomService {
 
             LayoutStrategy layoutStrategy = new LayoutStrategy();
             layoutStrategy.setName(layoutName);
-            layoutStrategy.setRoom(room);
+            layoutStrategy.setExamRoom(room);
             switch (layoutType) {
                 case "auto_layout" -> layoutStrategy.setType(LayoutStrategyType.RELATIVE_DISTANCE);
                 // useable_seats is a common typo in the JSON files
@@ -209,7 +220,7 @@ public class ExamRoomService {
                 seat.setX(seatNode.path("position").path("x").asDouble());
                 seat.setY(seatNode.path("position").path("y").asDouble());
                 seat.setSeatCondition(SeatCondition.SeatConditionFromFlag(seatNode.path("flag").asText()));
-                seat.setRoom(room);
+                seat.setExamRoom(room);
                 seats.add(seat);
             }
         }
