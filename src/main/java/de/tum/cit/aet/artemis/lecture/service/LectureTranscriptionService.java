@@ -19,6 +19,10 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
+/**
+ * Service for managing lecture transcription jobs.
+ * Communicates with the external Nebula service to poll transcription job status and persist results.
+ */
 @Service
 public class LectureTranscriptionService {
 
@@ -32,10 +36,19 @@ public class LectureTranscriptionService {
 
     private final ObjectMapper objectMapper;
 
+    /**
+     * Creates a new LectureTranscriptionService.
+     *
+     * @param lectureTranscriptionRepository Repository for LectureTranscription entities
+     * @param lectureUnitRepository          Repository for LectureUnit entities
+     * @param restClientBuilder              Spring RestClient builder for HTTP calls
+     * @param objectMapper                   Jackson ObjectMapper for JSON mapping
+     * @param nebulaBaseUrl                  Base URL of the Nebula service
+     * @param nebulaSecretToken              Secret token used to authenticate with Nebula
+     */
     public LectureTranscriptionService(LectureTranscriptionRepository lectureTranscriptionRepository, LectureUnitRepository lectureUnitRepository,
             RestClient.Builder restClientBuilder, ObjectMapper objectMapper, @Value("${artemis.nebula.base-url}") String nebulaBaseUrl,
             @Value("${artemis.nebula.secret-token}") String nebulaSecretToken) {
-
         this.lectureTranscriptionRepository = lectureTranscriptionRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.restClient = restClientBuilder.baseUrl(nebulaBaseUrl).defaultHeader("Authorization", nebulaSecretToken).build();
@@ -43,8 +56,42 @@ public class LectureTranscriptionService {
     }
 
     /**
-     * Saves the final result of a transcription job after Nebula reports completion.
-     * Updates language, segments, and marks status as COMPLETED.
+     * Polls the Nebula service for the current status of a transcription job.
+     * If the transcription is completed, the result is saved.
+     * If it failed, the job is marked as failed.
+     *
+     * @param transcription The LectureTranscription entity to process
+     */
+    public void processTranscription(LectureTranscription transcription) {
+        String jobId = transcription.getJobId();
+        try {
+            Map<String, Object> response = restClient.get().uri("/transcribe/status/" + jobId).retrieve().body(new ParameterizedTypeReference<>() {
+            });
+            String status = (String) response.get("status");
+
+            switch (status) {
+                case "done" -> {
+                    LectureTranscriptionDTO dto = objectMapper.convertValue(response, LectureTranscriptionDTO.class);
+                    saveFinalTranscriptionResult(jobId, dto);
+                    log.info("Transcription completed and saved for jobId={}", jobId);
+                }
+                case "error" -> {
+                    markTranscriptionAsFailed(transcription, (String) response.get("error"));
+                }
+                default -> log.info("Transcription still in progress for jobId={}", jobId);
+            }
+        }
+        catch (Exception e) {
+            log.error("Error while polling transcription job {}: {}", jobId, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Saves the final transcription result in the database once it has been marked as completed by Nebula.
+     *
+     * @param jobId The Nebula job ID
+     * @param dto   The completed transcription result returned from Nebula
+     * @return The updated LectureTranscription entity
      */
     @Transactional
     public LectureTranscription saveFinalTranscriptionResult(String jobId, LectureTranscriptionDTO dto) {
@@ -59,8 +106,25 @@ public class LectureTranscriptionService {
     }
 
     /**
-     * Creates a placeholder transcription in PENDING state, associated with a lecture unit.
-     * Deletes any existing transcription for the same unit before saving.
+     * Marks a transcription job as failed in the database with a given error message.
+     *
+     * @param transcription The transcription entity to update
+     * @param errorMessage  The error message returned by Nebula
+     */
+    @Transactional
+    public void markTranscriptionAsFailed(LectureTranscription transcription, String errorMessage) {
+        transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
+        lectureTranscriptionRepository.save(transcription);
+        log.warn("Transcription failed for jobId={}, reason: {}", transcription.getJobId(), errorMessage);
+    }
+
+    /**
+     * Creates a new empty LectureTranscription entry for a LectureUnit with status PENDING and the given job ID.
+     * If a previous transcription for the unit exists, it is deleted first.
+     *
+     * @param lectureId     ID of the lecture
+     * @param lectureUnitId ID of the lecture unit
+     * @param jobId         The Nebula job ID for this transcription
      */
     @Transactional
     public void createEmptyTranscription(Long lectureId, Long lectureUnitId, String jobId) {
@@ -75,42 +139,12 @@ public class LectureTranscriptionService {
     }
 
     /**
-     * Polls the Nebula API for the status of a transcription job and processes the result.
-     * - If "done", saves the final result
-     * - If "error", marks as FAILED
-     * - If still processing, logs the current state
-     */
-    @Transactional
-    public void processTranscriptionInTransaction(LectureTranscription transcription) {
-        try {
-            String jobId = transcription.getJobId();
-            Map<String, Object> response = restClient.get().uri("/transcribe/status/" + jobId).retrieve().body(new ParameterizedTypeReference<>() {
-            });
-
-            String status = (String) response.get("status");
-
-            if ("done".equals(status)) {
-                LectureTranscriptionDTO dto = objectMapper.convertValue(response, LectureTranscriptionDTO.class);
-                saveFinalTranscriptionResult(jobId, dto);
-                log.info("Transcription completed and saved for jobId={}", jobId);
-            }
-            else if ("error".equals(status)) {
-                transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-                lectureTranscriptionRepository.save(transcription);
-                log.warn("Transcription failed for jobId={}, reason: {}", jobId, response.get("error"));
-            }
-            else {
-                log.info("Transcription still in progress for jobId={}", jobId);
-            }
-        }
-        catch (Exception e) {
-            log.error("Error while polling transcription job {}: {}", transcription.getJobId(), e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Verifies that the lecture unit belongs to the given lecture.
-     * If an existing transcription exists for the unit, it is deleted immediately.
+     * Validates the lecture/lecture unit relationship and deletes any existing transcription for the given lecture unit.
+     *
+     * @param lectureId     ID of the lecture
+     * @param lectureUnitId ID of the lecture unit
+     * @return The validated LectureUnit entity
+     * @throws IllegalArgumentException if the unit does not belong to the lecture
      */
     private LectureUnit validateAndCleanup(Long lectureId, Long lectureUnitId) {
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);

@@ -34,7 +34,7 @@ public class TranscriptionPollingScheduler {
         List<LectureTranscription> pendingTranscriptions = transcriptionRepository.findByTranscriptionStatusAndJobIdIsNotNull(TranscriptionStatus.PENDING);
 
         for (LectureTranscription transcription : pendingTranscriptions) {
-            transcriptionService.processTranscriptionInTransaction(transcription);
+            transcriptionService.processTranscription(transcription);
         }
     }
 }
