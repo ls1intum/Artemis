@@ -18,6 +18,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/shared/types/sidebar';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 
 const TUTORIAL_UNIT_GROUPS: AccordionGroups = {
     registered: { entityData: [] },
@@ -52,6 +53,7 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private cdr = inject(ChangeDetectorRef);
     private courseOverviewService = inject(CourseOverviewService);
+    private sessionStorageService = inject(SessionStorageService);
 
     ngUnsubscribe = new Subject<void>();
 
@@ -166,8 +168,8 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
     }
 
-    getLastSelectedTutorialGroup(): string | null {
-        return sessionStorage.getItem('sidebar.lastSelectedItem.tutorialGroup.byCourse.' + this.courseId);
+    getLastSelectedTutorialGroup(): string | undefined {
+        return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.tutorialGroup.byCourse.' + this.courseId);
     }
 
     private setFreeDays() {

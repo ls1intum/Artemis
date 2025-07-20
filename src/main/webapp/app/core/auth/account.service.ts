@@ -37,7 +37,7 @@ export interface IAccountService {
 @Injectable({ providedIn: 'root' })
 export class AccountService implements IAccountService {
     private readonly translateService = inject(TranslateService);
-    private readonly sessionStorage = inject(SessionStorageService);
+    private readonly sessionStorageService = inject(SessionStorageService);
     private readonly http = inject(HttpClient);
     private readonly websocketService = inject(WebsocketService);
     private readonly featureToggleService = inject(FeatureToggleService);
@@ -155,7 +155,7 @@ export class AccountService implements IAccountService {
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting
-                        const langKey = this.userIdentity.langKey || this.sessionStorage.retrieve<string>('locale');
+                        const langKey = this.userIdentity.langKey || this.sessionStorageService.retrieve<string>('locale');
                         if (langKey) {
                             this.translateService.use(langKey);
                         }

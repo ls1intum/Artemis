@@ -22,6 +22,7 @@ import { SidebarCardDirective } from './directive/sidebar-card.directive';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarItemShowAlways, SidebarTypes } from 'app/shared/types/sidebar';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 
 @Component({
     selector: 'jhi-sidebar',
@@ -47,6 +48,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     private profileService = inject(ProfileService);
     private sidebarEventService = inject(SidebarEventService);
     private modalService = inject(NgbModal);
+    private sessionStorageService = inject(SessionStorageService);
 
     @Output() onSelectConversation = new EventEmitter<number | string>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
@@ -154,7 +156,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     }
 
     storeLastSelectedItem(itemId: number | string) {
-        sessionStorage.setItem('sidebar.lastSelectedItem.' + this.sidebarData.storageId + '.byCourse.' + this.courseId, JSON.stringify(itemId));
+        this.sessionStorageService.store('sidebar.lastSelectedItem.' + this.sidebarData.storageId + '.byCourse.' + this.courseId, itemId);
     }
 
     ngOnDestroy() {

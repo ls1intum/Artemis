@@ -19,6 +19,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
     let route: ActivatedRoute;
     let http: HttpClient;
     let accountService: AccountService;
+    let sessionStorageService: SessionStorageService;
     const mockRouter = {
         navigate: jest.fn(() => Promise.resolve(true)),
     } as unknown as Router;
@@ -28,8 +29,6 @@ describe('Lti13ExerciseLaunchComponent', () => {
         route = {
             snapshot: { queryParamMap: convertToParamMap({ state: 'state', id_token: 'id_token' }) },
         } as ActivatedRoute;
-
-        window.sessionStorage.setItem('state', 'state');
 
         TestBed.configureTestingModule({
             providers: [
@@ -48,13 +47,15 @@ describe('Lti13ExerciseLaunchComponent', () => {
                 fixture = TestBed.createComponent(Lti13ExerciseLaunchComponent);
                 comp = fixture.componentInstance;
                 accountService = TestBed.inject(AccountService);
+                sessionStorageService = TestBed.inject(SessionStorageService);
+                sessionStorageService.store<string>('state', 'state');
             });
 
         http = TestBed.inject(HttpClient);
     });
 
     afterEach(() => {
-        window.sessionStorage.clear();
+        sessionStorageService.clear();
         jest.restoreAllMocks();
         navigateSpy.mockClear();
     });

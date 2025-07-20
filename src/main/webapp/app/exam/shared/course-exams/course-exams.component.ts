@@ -16,6 +16,7 @@ import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
@@ -47,6 +48,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private serverDateService = inject(ArtemisServerDateService);
     private examParticipationService = inject(ExamParticipationService);
     private courseOverviewService = inject(CourseOverviewService);
+    private sessionStorageService = inject(SessionStorageService);
     private router = inject(Router);
 
     courseId: number;
@@ -253,8 +255,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         return groupedExamGroups;
     }
 
-    getLastSelectedExam(): string | null {
-        let lastSelectedExam = sessionStorage.getItem('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId);
+    getLastSelectedExam(): string | undefined {
+        let lastSelectedExam = this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId);
         if (lastSelectedExam && lastSelectedExam.startsWith('"') && lastSelectedExam.endsWith('"')) {
             lastSelectedExam = lastSelectedExam.slice(1, -1);
         }

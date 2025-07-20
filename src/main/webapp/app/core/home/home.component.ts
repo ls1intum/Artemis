@@ -6,7 +6,6 @@ import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { MODULE_FEATURE_PASSKEY, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -25,6 +24,7 @@ import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 
 @Component({
     selector: 'jhi-home',
@@ -42,7 +42,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private activatedRoute = inject(ActivatedRoute);
     private accountService = inject(AccountService);
     private loginService = inject(LoginService);
-    private stateStorageService = inject(StateStorageService);
+    private sessionStorageService = inject(SessionStorageService);
     private renderer = inject(Renderer2);
     private eventManager = inject(EventManager);
     private profileService = inject(ProfileService);
@@ -261,9 +261,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         if (account) {
             // previousState was set in the authExpiredInterceptor before being redirected to the login modal.
             // since login is successful, go to the stored previousState and clear the previousState
-            const redirect = this.stateStorageService.getUrl();
+            const redirect = this.sessionStorageService.retrieve<string>('previousUrl');
             if (redirect && redirect !== '') {
-                this.stateStorageService.storeUrl('');
+                this.sessionStorageService.store('previousUrl', '');
                 this.router.navigateByUrl(redirect);
             } else {
                 this.router.navigate(['courses']);

@@ -13,7 +13,6 @@ import { Mutable } from 'test/helpers/mutable';
 import { mockedActivatedRouteSnapshot } from 'test/helpers/mocks/activated-route/mock-activated-route-snapshot';
 import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -27,7 +26,7 @@ describe('UserRouteAccessService', () => {
     let accountService: AccountService;
     let accountServiceStub: jest.SpyInstance;
 
-    let storageService: StateStorageService;
+    let sessionStorageService: SessionStorageService;
     let router: Router;
 
     let alertServiceStub: jest.SpyInstance;
@@ -52,7 +51,6 @@ describe('UserRouteAccessService', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
-                MockProvider(StateStorageService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -63,7 +61,7 @@ describe('UserRouteAccessService', () => {
                 service = TestBed.inject(UserRouteAccessService);
                 TestBed.createComponent(CourseExerciseDetailsComponent);
                 accountService = TestBed.inject(AccountService);
-                storageService = TestBed.inject(StateStorageService);
+                sessionStorageService = TestBed.inject(SessionStorageService);
                 router = TestBed.inject(Router);
             });
 
@@ -109,7 +107,7 @@ describe('UserRouteAccessService', () => {
 
     it('should return false if it does not have authority', async () => {
         jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(false));
-        const storeSpy = jest.spyOn(storageService, 'storeUrl');
+        const storeSpy = jest.spyOn(sessionStorageService, 'store');
 
         const result = await service.checkLogin([Authority.EDITOR], url);
 
@@ -119,12 +117,12 @@ describe('UserRouteAccessService', () => {
 
     it('should store url if identity is undefined', async () => {
         jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(undefined));
-        const storeSpy = jest.spyOn(storageService, 'storeUrl');
+        const storeSpy = jest.spyOn(sessionStorageService, 'store');
         const navigateMock = jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
 
         await expect(service.checkLogin([Authority.EDITOR], url)).resolves.toBeFalse();
         expect(storeSpy).toHaveBeenCalledOnce();
-        expect(storeSpy).toHaveBeenCalledWith(url);
+        expect(storeSpy).toHaveBeenCalledWith('previousUrl', url);
         expect(navigateMock).toHaveBeenCalledTimes(2);
         expect(navigateMock.mock.calls[0][0]).toEqual(['accessdenied']);
         expect(navigateMock.mock.calls[1][0]).toEqual(['/']);

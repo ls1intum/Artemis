@@ -13,6 +13,7 @@ import { CourseOverviewService } from 'app/core/course/overview/services/course-
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { forkJoin } from 'rxjs';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -52,6 +53,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private courseOverviewService = inject(CourseOverviewService);
     private ltiService = inject(LtiService);
     private exerciseService = inject(ExerciseService);
+    private sessionStorageService = inject(SessionStorageService);
 
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
@@ -139,7 +141,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     getLastSelectedExercise(): string | null {
-        return sessionStorage.getItem('sidebar.lastSelectedItem.exercise.byCourse.' + this.courseId);
+        return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.exercise.byCourse.' + this.courseId);
     }
 
     prepareSidebarData() {

@@ -3,15 +3,15 @@ import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { LoginService } from 'app/core/login/login.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { Router } from '@angular/router';
 import { throwError } from 'rxjs';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 
 describe('AuthExpiredInterceptor', () => {
     let authInterceptor: AuthExpiredInterceptor;
 
     let loginServiceMock: LoginService;
-    let stateStorageServiceMock: StateStorageService;
+    let sessionStorageServiceMock: SessionStorageService;
     let accountServiceMock: AccountService;
 
     const routerMock = {
@@ -26,9 +26,9 @@ describe('AuthExpiredInterceptor', () => {
         loginServiceMock = {
             logout: jest.fn(),
         } as any as LoginService;
-        stateStorageServiceMock = {
-            storeUrl: jest.fn(),
-        } as any as StateStorageService;
+        sessionStorageServiceMock = {
+            store: jest.fn(),
+        } as any as SessionStorageService;
         accountServiceMock = {
             isAuthenticated: jest.fn(),
         } as any as AccountService;
@@ -37,7 +37,7 @@ describe('AuthExpiredInterceptor', () => {
             providers: [
                 AuthExpiredInterceptor,
                 { provide: LoginService, useValue: loginServiceMock },
-                { provide: StateStorageService, useValue: stateStorageServiceMock },
+                { provide: SessionStorageService, useValue: sessionStorageServiceMock },
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: Router, useValue: routerMock },
             ],
@@ -60,7 +60,7 @@ describe('AuthExpiredInterceptor', () => {
 
         expect(isAuthenticatedSpy).toHaveBeenCalledOnce();
         expect(loginServiceMock.logout).toHaveBeenCalledWith(false);
-        expect(stateStorageServiceMock.storeUrl).toHaveBeenCalledWith('https://example.com');
+        expect(sessionStorageServiceMock.store).toHaveBeenCalledWith('previousUrl', 'https://example.com');
     });
 
     it('should ignore if user is not authenticated', () => {
@@ -73,7 +73,7 @@ describe('AuthExpiredInterceptor', () => {
 
         expect(isAuthenticatedSpy).toHaveBeenCalledOnce();
         expect(loginServiceMock.logout).not.toHaveBeenCalled();
-        expect(stateStorageServiceMock.storeUrl).not.toHaveBeenCalled();
+        expect(sessionStorageServiceMock.store).not.toHaveBeenCalled();
     });
 
     it('should ignore if the error is anything other than 401', () => {
@@ -86,6 +86,6 @@ describe('AuthExpiredInterceptor', () => {
 
         expect(isAuthenticatedSpy).not.toHaveBeenCalled();
         expect(loginServiceMock.logout).not.toHaveBeenCalled();
-        expect(stateStorageServiceMock.storeUrl).not.toHaveBeenCalled();
+        expect(sessionStorageServiceMock.store).not.toHaveBeenCalled();
     });
 });

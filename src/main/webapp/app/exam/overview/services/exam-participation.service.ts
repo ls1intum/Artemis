@@ -25,7 +25,7 @@ export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' 
 export class ExamParticipationService {
     private httpClient = inject(HttpClient);
     private localStorageService = inject(LocalStorageService);
-    private sessionStorage = inject(SessionStorageService);
+    private sessionStorageService = inject(SessionStorageService);
 
     public currentlyLoadedStudentExam = new Subject<StudentExam>();
 
@@ -244,7 +244,7 @@ export class ExamParticipationService {
      * @param examSessionToken latest examSessionToken
      */
     public saveExamSessionTokenToSessionStorage(examSessionToken: string): void {
-        this.sessionStorage.store('ExamSessionToken', examSessionToken);
+        this.sessionStorageService.store('ExamSessionToken', examSessionToken);
     }
 
     /**

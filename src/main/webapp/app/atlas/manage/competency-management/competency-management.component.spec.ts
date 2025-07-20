@@ -34,6 +34,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { SessionStorageService } from 'app/shared/storage/session-storage.service';
 
 describe('CompetencyManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
@@ -43,6 +44,7 @@ describe('CompetencyManagementComponent', () => {
     let irisSettingsService: IrisSettingsService;
     let modalService: NgbModal;
     let alertService: AlertService;
+    let sessionStorageService: SessionStorageService;
 
     let getProfileInfoSpy: jest.SpyInstance;
     let getAllForCourseSpy: jest.SpyInstance;
@@ -95,6 +97,7 @@ describe('CompetencyManagementComponent', () => {
         irisSettingsService = TestBed.inject(IrisSettingsService);
         profileService = TestBed.inject(ProfileService);
         alertService = TestBed.inject(AlertService);
+        sessionStorageService = TestBed.inject(SessionStorageService);
 
         const competency: Competency = new Competency();
         competency.id = 1;
@@ -188,7 +191,7 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should open course competency explanation', () => {
-        sessionStorage.setItem('lastTimeVisitedCourseCompetencyExplanation', Date.now().toString());
+        sessionStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
         const openModalSpy = jest.spyOn(modalService, 'open');
         fixture.detectChanges();
 

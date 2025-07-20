@@ -4,7 +4,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -56,7 +55,6 @@ describe('HomeComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(LoginService),
-                MockProvider(StateStorageService),
                 MockProvider(EventManager),
                 MockProvider(AlertService),
                 MockProvider(WebauthnService),

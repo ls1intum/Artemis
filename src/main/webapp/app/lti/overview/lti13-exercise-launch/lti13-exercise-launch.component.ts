@@ -113,7 +113,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         const ltiIdToken = data.ltiIdToken;
         const clientRegistrationId = data.clientRegistrationId;
 
-        window.sessionStorage.removeItem('state');
+        this.sessionStorageService.remove('state');
         this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
 
         if (targetLinkUri) {
@@ -125,7 +125,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     }
 
     handleLtiLaunchError(): void {
-        window.sessionStorage.removeItem('state');
+        this.sessionStorageService.remove('state');
         this.isLaunching = false;
     }
 
@@ -141,8 +141,8 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         }
 
         try {
-            this.sessionStorageService.store('ltiIdToken', ltiIdToken);
-            this.sessionStorageService.store('clientRegistrationId', clientRegistrationId);
+            this.sessionStorageService.store<string>('ltiIdToken', ltiIdToken);
+            this.sessionStorageService.store<string>('clientRegistrationId', clientRegistrationId);
         } catch (error) {
             captureException('Failed to store session data: ' + error);
         }
