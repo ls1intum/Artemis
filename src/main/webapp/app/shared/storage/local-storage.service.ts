@@ -17,8 +17,19 @@ export class LocalStorageService {
      * @returns The parsed value of type T or undefined if not found.
      */
     retrieve<T>(key: string): T | undefined {
-        const value = localStorage.getItem(key) || undefined;
-        return value ? (JSON.parse(value) as T) : undefined;
+        const raw = localStorage.getItem(key) || undefined;
+        if (!raw) return undefined;
+        const value = JSON.parse(raw);
+        const date: Date | undefined = this.parseDate(value);
+        if (date) {
+            return date;
+        }
+        return value as T;
+    }
+
+    private parseDate(value: string): Date | undefined {
+        const parsed = new Date(value);
+        return !isNaN(parsed.getTime()) && value === parsed.toISOString() ? parsed : undefined;
     }
 
     /**
