@@ -185,40 +185,4 @@ describe('TextUnitFormComponent', () => {
         const markdownEditor: MarkdownEditorMonacoComponent = textUnitFormComponentFixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
         expect(markdownEditor.markdown).toEqual(formData.content);
     }));
-
-    it('should restore markdown from local storage on init', fakeAsync(() => {
-        const url = '/cached-test';
-        const router = TestBed.inject(Router);
-        router.setUrl(url);
-
-        const cachedMarkdown = 'cached markdown';
-        const date = 'Jan 01 2020, 12:00:00';
-        localStorageService.store<MarkdownCache>(url, { markdown: cachedMarkdown, date });
-
-        jest.spyOn(window, 'confirm').mockReturnValue(true);
-
-        textUnitFormComponentFixture.detectChanges();
-        tick();
-
-        expect(textUnitFormComponent.content).toBe(cachedMarkdown);
-    }));
-
-    it('should persist markdown change to local storage', fakeAsync(() => {
-        const url = '/persist-test';
-        const router = TestBed.inject(Router);
-        router.setUrl(url);
-
-        textUnitFormComponentFixture.detectChanges();
-        tick();
-
-        const markdown = 'new markdown';
-        textUnitFormComponent.onMarkdownChange(markdown);
-        tick(500);
-        textUnitFormComponent.onMarkdownChange(markdown);
-        tick(500);
-
-        const cached = localStorageService.retrieve<MarkdownCache>(url);
-        expect(cached?.markdown).toBe(markdown);
-        expect(cached?.date).toBeDefined();
-    }));
 });

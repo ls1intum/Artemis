@@ -54,7 +54,7 @@ describe('SetupPasskeyModalComponent', () => {
 
         component.remindMeIn30Days();
 
-        const savedDate = localStorageServiceSpy.mock.calls[0][1];
+        const savedDate = localStorageServiceSpy.mock.calls[0][1] as Date;
 
         const savedDateOnlyWithDay = savedDate;
         savedDateOnlyWithDay.setHours(0, 0, 0, 0);
