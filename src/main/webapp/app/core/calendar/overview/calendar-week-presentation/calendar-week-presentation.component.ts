@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, computed, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, computed, inject, input, signal, viewChild } from '@angular/core';
 import { NgClass, NgStyle } from '@angular/common';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { Dayjs } from 'dayjs/esm';
@@ -17,6 +17,8 @@ import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day
     styleUrl: './calendar-week-presentation.component.scss',
 })
 export class CalendarWeekPresentationComponent implements AfterViewInit {
+    private eventService = inject(CalendarEventService);
+
     firstDayOfCurrentWeek = input.required<Dayjs>();
     selectedEvent = signal<CalendarEvent | undefined>(undefined);
     scrollContainer = viewChild<ElementRef>('scrollContainer');
@@ -29,8 +31,6 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
     private dayToEventAndPositionMap = computed(() => this.computeDayToEventAndPositionMap(this.eventService.eventMap(), this.weekDays()));
     private static readonly PIXELS_PER_REM = 16;
     private static readonly HOUR_SEGMENT_HEIGHT_IN_PIXEL = 3.5 * CalendarWeekPresentationComponent.PIXELS_PER_REM;
-
-    constructor(private eventService: CalendarEventService) {}
 
     ngAfterViewInit(): void {
         const container = this.scrollContainer();

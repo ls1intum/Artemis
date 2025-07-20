@@ -25,6 +25,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
@@ -47,7 +48,7 @@ describe('Exam Import Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule],
+            imports: [FormsModule, FaIconComponent],
             declarations: [
                 ExamImportComponent,
                 ExamExerciseImportComponent,

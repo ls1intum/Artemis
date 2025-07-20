@@ -70,7 +70,14 @@ describe('DiscussionSectionComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule), DiscussionSectionComponent, MockModule(BrowserAnimationsModule)],
+            imports: [
+                MockModule(FormsModule),
+                MockModule(ReactiveFormsModule),
+                MockModule(NgbTooltipModule),
+                DiscussionSectionComponent,
+                MockModule(BrowserAnimationsModule),
+                FaIconComponent,
+            ],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -95,7 +102,7 @@ describe('DiscussionSectionComponent', () => {
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),
                 },
             ],
-            declarations: [InfiniteScrollStubDirective, MockComponent(FaIconComponent), MockComponent(ProfilePictureComponent)],
+            declarations: [InfiniteScrollStubDirective, MockComponent(ProfilePictureComponent)],
         })
             .overrideComponent(DiscussionSectionComponent, {
                 set: {

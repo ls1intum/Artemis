@@ -16,6 +16,7 @@ import { CalendarEventFilterComponent } from 'app/core/calendar/shared/calendar-
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarOverviewComponent } from './calendar-overview.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('CalendarOverviewComponent', () => {
     let component: CalendarOverviewComponent;
@@ -39,7 +40,7 @@ describe('CalendarOverviewComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CalendarOverviewComponent, CalendarWeekPresentationComponent, CalendarMonthPresentationComponent],
+            imports: [CalendarOverviewComponent, CalendarWeekPresentationComponent, CalendarMonthPresentationComponent, FaIconComponent],
             declarations: [
                 MockComponent(CalendarEventDetailPopoverComponent),
                 MockComponent(CalendarDayBadgeComponent),

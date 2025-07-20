@@ -71,9 +71,8 @@ describe(`ArtemisVersionInterceptor`, () => {
     it('should check for an update after 30s if app is not stable', fakeAsync(() => {
         const isStableSubject = new Subject<boolean>();
         const appRef = TestBed.inject(ApplicationRef);
-        (appRef as any).isStable = isStableSubject.asObservable();
+        jest.spyOn(appRef, 'isStable', 'get').mockReturnValue(isStableSubject.asObservable());
         TestBed.inject(ArtemisVersionInterceptor);
-        isStableSubject.next(false);
         expect(checkForUpdateSpy).not.toHaveBeenCalled();
         tick(30000);
         expect(checkForUpdateSpy).toHaveBeenCalledOnce();

@@ -37,7 +37,6 @@ import { CourseNotificationSettingInfo } from 'app/communication/shared/entities
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
@@ -79,7 +78,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private quizExercisesChannel: string;
     private examStartedSubscription: Subscription;
     manageViewLink = signal<string[]>(['']);
-    profileService = inject(ProfileService);
 
     protected selectableSettingPresets: CourseNotificationSettingPreset[];
     protected selectedSettingPreset?: CourseNotificationSettingPreset;
@@ -92,8 +90,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     activatedComponentReference = signal<
         CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
     >(undefined);
-    isTestServer = this.profileService.isTestServer();
-    isDevelopment = this.profileService.isDevelopment();
 
     // Icons
     faTimes = faTimes;
@@ -295,7 +291,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         const currentCourse = this.course();
 
         // Use the service to get sidebar items
-        const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled);
+        const defaultItems = this.sidebarItemService.getStudentDefaultItems(
+            currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled,
+            currentCourse?.trainingEnabled,
+        );
         sidebarItems.push(...defaultItems);
 
         if (currentCourse?.lectures) {
@@ -331,10 +330,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         if (currentCourse?.faqEnabled) {
             const faqItem = this.sidebarItemService.getFaqItem();
             sidebarItems.push(faqItem);
-        }
-
-        if (this.isTestServer || this.isDevelopment) {
-            sidebarItems.push(this.sidebarItemService.getPracticeItem());
         }
 
         sidebarItems.push(this.sidebarItemService.getNotificationSettingsItem());

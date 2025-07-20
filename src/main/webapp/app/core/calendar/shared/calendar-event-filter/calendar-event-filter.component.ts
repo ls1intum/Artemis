@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
@@ -14,17 +14,14 @@ import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calenda
     styleUrl: './calendar-event-filter.component.scss',
 })
 export class CalendarEventFilterComponent {
-    includedOptions;
+    private calendarEventService = inject(CalendarEventService);
 
+    includedOptions = this.calendarEventService.includedEventFilterOptions;
+
+    readonly options = this.calendarEventService.eventFilterOptions;
     readonly utils = utils;
-    readonly options;
     readonly faChevronDown = faChevronDown;
     readonly faXmark = faXmark;
-
-    constructor(private calendarEventService: CalendarEventService) {
-        this.options = calendarEventService.eventFilterOptions;
-        this.includedOptions = calendarEventService.includedEventFilterOptions;
-    }
 
     toggleOption(option: CalendarEventFilterOption) {
         this.calendarEventService.toggleEventFilterOption(option);
