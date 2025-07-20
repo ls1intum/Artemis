@@ -216,7 +216,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         effect(
             function initializeEditMode() {
-                const editModeRetrievedFromLocalStorage = this.localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+                const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
                 if (editModeRetrievedFromLocalStorage !== undefined) {
                     this.isSimpleMode.set(editModeRetrievedFromLocalStorage);
                 } else {

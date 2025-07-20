@@ -20,9 +20,9 @@ export class LocalStorageService {
         const raw = localStorage.getItem(key) || undefined;
         if (!raw) return undefined;
         const value = JSON.parse(raw);
-        const date: Date | undefined = this.parseDate(value);
+        const date = this.parseDate(value);
         if (date) {
-            return date;
+            return date as T;
         }
         return value as T;
     }
