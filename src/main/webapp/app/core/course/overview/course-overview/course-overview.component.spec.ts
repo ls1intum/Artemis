@@ -64,6 +64,7 @@ import { CourseNotificationInfo } from 'app/communication/shared/entities/course
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -284,8 +285,8 @@ describe('CourseOverviewComponent', () => {
     afterEach(() => {
         component.ngOnDestroy();
         jest.restoreAllMocks();
-        localStorage.clear();
-        sessionStorage.clear();
+        TestBed.inject(LocalStorageService).clear();
+        TestBed.inject(SessionStorageService).clear();
     });
 
     it('should call all methods on init', async () => {
