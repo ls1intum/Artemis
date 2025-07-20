@@ -110,23 +110,6 @@ describe('BuildAgentSummaryComponent', () => {
         },
     ];
 
-    const mockBuildAgentsWithPaused: BuildAgentInformation[] = [
-        {
-            id: 1,
-            buildAgent: { name: 'buildagent1', displayName: 'Build Agent 1', memberAddress: 'agent1' },
-            maxNumberOfConcurrentBuildJobs: 2,
-            numberOfCurrentBuildJobs: 0,
-            status: BuildAgentStatus.PAUSED,
-        },
-        {
-            id: 2,
-            buildAgent: { name: 'buildagent2', displayName: 'Build Agent 2', memberAddress: 'agent2' },
-            maxNumberOfConcurrentBuildJobs: 2,
-            numberOfCurrentBuildJobs: 0,
-            status: BuildAgentStatus.SELF_PAUSED,
-        },
-    ];
-
     let alertService: AlertService;
     let alertServiceAddAlertStub: jest.SpyInstance;
     let modalService: NgbModal;
