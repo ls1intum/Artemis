@@ -4,20 +4,20 @@ import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 describe('CourseAccessStorageService', () => {
     let service: CourseAccessStorageService;
-    let localStorage: LocalStorageService;
+    let localStorageService: LocalStorageService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [CourseAccessStorageService],
         });
         service = TestBed.inject(CourseAccessStorageService);
-        localStorage = TestBed.inject(LocalStorageService);
+        localStorageService = TestBed.inject(LocalStorageService);
     });
 
     it('should store accessed course', () => {
         const courseId = 123;
         service.onCourseAccessed(courseId, CourseAccessStorageService.STORAGE_KEY, CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW);
-        const courseAccessMap = localStorage.retrieve('artemis.courseAccess');
+        const courseAccessMap = localStorageService.retrieve<{ [key: number]: number }>(CourseAccessStorageService.STORAGE_KEY);
         expect(courseAccessMap).toHaveProperty(courseId.toString());
     });
 
