@@ -30,11 +30,11 @@ describe('TutorialGroupsChecklistComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 TutorialGroupsChecklistComponent,
                 LoadingIndicatorContainerStubComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
                 MockComponent(ChecklistCheckComponent),
                 MockRouterLinkDirective,
             ],

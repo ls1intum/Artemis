@@ -86,7 +86,7 @@ describe('NavbarComponent', () => {
                 MockComponent(LoadingNotificationComponent),
                 MockComponent(JhiConnectionWarningComponent),
                 MockComponent(SystemNotificationComponent),
-                MockComponent(FaIconComponent),
+                FaIconComponent,
                 MockComponent(ThemeSwitchComponent),
             ],
             providers: [

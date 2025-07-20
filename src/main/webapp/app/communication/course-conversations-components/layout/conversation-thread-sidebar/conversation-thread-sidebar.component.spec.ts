@@ -20,9 +20,9 @@ describe('ConversationThreadSidebarComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 ConversationThreadSidebarComponent,
-                MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(PostComponent),
                 MockComponent(MessageReplyInlineInputComponent),

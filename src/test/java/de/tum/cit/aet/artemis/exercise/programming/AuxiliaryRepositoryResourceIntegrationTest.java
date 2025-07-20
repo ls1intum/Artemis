@@ -561,7 +561,6 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIsClean() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        doReturn(true).when(gitService).isRepositoryCached(any());
         var status = request.get(testRepoBaseUrl + auxiliaryRepository.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(status).isNotNull();
         assertThat(status.repositoryStatus()).isEqualTo(RepositoryStatusDTOType.CLEAN);
