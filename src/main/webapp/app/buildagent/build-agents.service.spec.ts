@@ -195,6 +195,31 @@ describe('BuildAgentsService', () => {
         }
     });
 
+    it('should adjust build agent capacity', () => {
+        service.adjustBuildAgentCapacity('buildAgent1', 5).subscribe();
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/buildAgent1/concurrent-builds/5`);
+        expect(req.request.method).toBe('PUT');
+        req.flush({});
+    });
+
+    it('should handle adjust build agent capacity error', async () => {
+        const errorMessage = 'Failed to adjust build agent capacity buildAgent1';
+
+        const observable = lastValueFrom(service.adjustBuildAgentCapacity('buildAgent1', 5));
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/buildAgent1/concurrent-builds/5`);
+        expect(req.request.method).toBe('PUT');
+        req.flush({ message: errorMessage }, { status: 500, statusText: 'Internal Server Error' });
+
+        try {
+            await observable;
+            throw new Error('expected an error, but got a success');
+        } catch (error) {
+            expect(error.message).toContain(errorMessage);
+        }
+    });
+
     afterEach(() => {
         httpMock.verify(); // Verify that there are no outstanding requests.
     });

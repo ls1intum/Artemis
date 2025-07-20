@@ -38,6 +38,7 @@ describe('BuildAgentDetailsComponent', () => {
         pauseBuildAgent: jest.fn().mockReturnValue(of({})),
         resumeBuildAgent: jest.fn().mockReturnValue(of({})),
         getFinishedBuildJobs: jest.fn().mockReturnValue(of({})),
+        adjustBuildAgentCapacity: jest.fn().mockReturnValue(of({})),
     };
 
     const repositoryInfo: RepositoryInfo = {
@@ -385,5 +386,53 @@ describe('BuildAgentDetailsComponent', () => {
         component.viewBuildLogs('1');
         expect(windowSpy).toHaveBeenCalledOnce();
         expect(windowSpy).toHaveBeenCalledWith('/api/programming/build-log/1', '_blank');
+    });
+
+    it('should handle concurrency change successfully', () => {
+        component.buildAgent = mockBuildAgent;
+        component.newConcurrency = 3;
+
+        component.onConcurrencyChange(3);
+
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).toHaveBeenCalledWith('agent1', 3);
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.SUCCESS,
+            message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjusted',
+        });
+    });
+
+    it('should handle concurrency change error', () => {
+        mockBuildAgentsService.adjustBuildAgentCapacity.mockReturnValue(throwError(() => new Error()));
+        component.buildAgent = mockBuildAgent;
+        component.newConcurrency = 3;
+
+        component.onConcurrencyChange(3);
+
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.DANGER,
+            message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjustFailed',
+        });
+    });
+
+    it('should not adjust capacity when newConcurrency is invalid', () => {
+        component.buildAgent = mockBuildAgent;
+        component.newConcurrency = 0;
+
+        component.onConcurrencyChange(0);
+
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+    });
+
+    it('should not adjust capacity when build agent has no name', () => {
+        component.buildAgent = { ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } };
+        component.newConcurrency = 3;
+
+        component.onConcurrencyChange(3);
+
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.WARNING,
+            message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName',
+        });
     });
 });

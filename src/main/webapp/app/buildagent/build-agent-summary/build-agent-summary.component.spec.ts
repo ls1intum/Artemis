@@ -32,6 +32,7 @@ describe('BuildAgentSummaryComponent', () => {
         pauseAllBuildAgents: jest.fn().mockReturnValue(of({})),
         resumeAllBuildAgents: jest.fn().mockReturnValue(of({})),
         clearDistributedData: jest.fn().mockReturnValue(of({})),
+        adjustBuildAgentCapacity: jest.fn().mockReturnValue(of({})),
     };
 
     const repositoryInfo: RepositoryInfo = {
@@ -108,6 +109,24 @@ describe('BuildAgentSummaryComponent', () => {
             status: BuildAgentStatus.ACTIVE,
         },
     ];
+
+    const mockBuildAgentsWithPaused: BuildAgentInformation[] = [
+        {
+            id: 1,
+            buildAgent: { name: 'buildagent1', displayName: 'Build Agent 1', memberAddress: 'agent1' },
+            maxNumberOfConcurrentBuildJobs: 2,
+            numberOfCurrentBuildJobs: 0,
+            status: BuildAgentStatus.PAUSED,
+        },
+        {
+            id: 2,
+            buildAgent: { name: 'buildagent2', displayName: 'Build Agent 2', memberAddress: 'agent2' },
+            maxNumberOfConcurrentBuildJobs: 2,
+            numberOfCurrentBuildJobs: 0,
+            status: BuildAgentStatus.SELF_PAUSED,
+        },
+    ];
+
     let alertService: AlertService;
     let alertServiceAddAlertStub: jest.SpyInstance;
     let modalService: NgbModal;
@@ -262,5 +281,73 @@ describe('BuildAgentSummaryComponent', () => {
 
         component.displayClearDistributedDataModal();
         expect(openSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle different build agent statuses correctly', () => {
+        const mixedStatusAgents: BuildAgentInformation[] = [
+            {
+                id: 1,
+                buildAgent: { name: 'activeAgent', displayName: 'Active Agent', memberAddress: 'agent1' },
+                maxNumberOfConcurrentBuildJobs: 2,
+                numberOfCurrentBuildJobs: 1,
+                status: BuildAgentStatus.ACTIVE,
+            },
+            {
+                id: 2,
+                buildAgent: { name: 'pausedAgent', displayName: 'Paused Agent', memberAddress: 'agent2' },
+                maxNumberOfConcurrentBuildJobs: 2,
+                numberOfCurrentBuildJobs: 0,
+                status: BuildAgentStatus.PAUSED,
+            },
+            {
+                id: 3,
+                buildAgent: { name: 'selfPausedAgent', displayName: 'Self Paused Agent', memberAddress: 'agent3' },
+                maxNumberOfConcurrentBuildJobs: 2,
+                numberOfCurrentBuildJobs: 0,
+                status: BuildAgentStatus.SELF_PAUSED,
+            },
+            {
+                id: 4,
+                buildAgent: { name: 'idleAgent', displayName: 'Idle Agent', memberAddress: 'agent4' },
+                maxNumberOfConcurrentBuildJobs: 2,
+                numberOfCurrentBuildJobs: 0,
+                status: BuildAgentStatus.IDLE,
+            },
+        ];
+
+        mockWebsocketService.receive.mockReturnValue(of(mixedStatusAgents));
+
+        component.ngOnInit();
+
+        // Only active and idle agents should contribute to build capacity
+        expect(component.buildCapacity).toBe(4);
+        expect(component.currentBuilds).toBe(1);
+    });
+
+    it('should handle concurrency change successfully', () => {
+        component.onConcurrencyChange('buildagent1', 5);
+
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).toHaveBeenCalledWith('buildagent1', 5);
+        expect(component.concurrencyMap['buildagent1']).toBe(5);
+    });
+
+    it('should not adjust capacity when value is invalid', () => {
+        component.onConcurrencyChange('buildagent1', 0);
+
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+        expect(component.concurrencyMap['buildagent1']).toBeUndefined();
+    });
+
+    it('should not adjust capacity when value is NaN', () => {
+        component.onConcurrencyChange('buildagent1', NaN);
+
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+        expect(component.concurrencyMap['buildagent1']).toBeUndefined();
+    });
+
+    it('should update concurrency map when value is valid', () => {
+        component.onConcurrencyChange('buildagent1', 3);
+
+        expect(component.concurrencyMap['buildagent1']).toBe(3);
     });
 });
