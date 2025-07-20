@@ -70,9 +70,23 @@
                     <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError"></div>
                 }
             </div>
+            <div class="form-group mt-3">
+                <label class="font-weight-bold">Upload Lecture Video (.mp4)</label>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary" (click)="videoFileInput.click()"><fa-icon [icon]="faVideo" class="me-1" /> Upload Video</button>
+                    <span class="text-muted">
+                        Selected: <strong>{{ fileName() || 'No video selected' }}</strong>
+                    </span>
+                </div>
+                <input #videoFileInput type="file" class="d-none" accept=".mp4" (change)="onVideoUploadChange($event)" />
+            </div>
+
+            <!-- Release Date -->
             <div class="form-group">
                 <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate" />
             </div>
+
+            <!-- Competency Links -->
             <div class="form-group">
                 <jhi-competency-selection
                     id="competencies"

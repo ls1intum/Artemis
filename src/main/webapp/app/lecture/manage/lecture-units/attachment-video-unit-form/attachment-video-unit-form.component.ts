@@ -2,7 +2,7 @@ import { Component, ElementRef, OnChanges, ViewChild, computed, inject, input, o
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
-import { faArrowLeft, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faQuestionCircle, faTimes, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -13,6 +13,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { HttpClient } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -91,6 +93,8 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faVideo = faVideo;
+    private readonly http = inject(HttpClient);
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
@@ -110,6 +114,9 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     fileInput: ElementRef;
     file: File;
     fileInputTouched = false;
+
+    @ViewChild('videoUploadInput', { static: false }) videoUploadInput: ElementRef;
+    videoFile: File;
 
     fileName = signal<string | undefined>(undefined);
     isFileTooBig = signal<boolean>(false);
@@ -152,11 +159,21 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         // automatically set the name in case it is not yet specified
         if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
             this.form.patchValue({
-                // without extension
                 name: this.file.name.replace(/\.[^/.]+$/, ''),
             });
         }
         this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
+    }
+
+    onVideoUploadChange(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (!input.files?.length) {
+            return;
+        }
+
+        this.videoFile = input.files[0];
+        this.fileName.set(this.videoFile.name);
+        this.isFileTooBig.set(false); // allow large videos
     }
 
     get nameControl() {
@@ -187,13 +204,27 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         return this.form.get('urlHelper');
     }
 
-    submitForm() {
+    async submitForm() {
         const formValue = this.form.value;
         const formProperties: FormProperties = { ...formValue };
         const fileProperties: FileProperties = {
-            file: this.file,
+            file: this.videoFile || this.file,
             fileName: this.fileName(),
         };
+
+        // If a video file was uploaded, call backend API to upload and get video ID
+        if (this.videoFile) {
+            const formData = new FormData();
+            formData.append('file', this.videoFile);
+
+            try {
+                formProperties.videoSource = await lastValueFrom(this.http.post('api/lecture/video/upload', formData, { responseType: 'text' })); // Save the returned videoId into videoSource
+            } catch (error) {
+                // eslint-disable-next-line no-undef
+                console.error('Video upload failed:', error);
+                return;
+            }
+        }
 
         this.formSubmitted.emit({
             formProperties,
