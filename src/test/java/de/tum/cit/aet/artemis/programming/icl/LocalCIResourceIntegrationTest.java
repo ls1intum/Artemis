@@ -473,4 +473,53 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         var queueDurationEstimation = sharedQueueManagementService.getBuildJobEstimatedStartDate(job4.participationId());
         assertThat(queueDurationEstimation).isCloseTo(now.plusSeconds(48), within(1, ChronoUnit.SECONDS));
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testAdjustBuildAgentCapacity_success() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        int newCapacity = 5;
+
+        // The test verifies that the endpoint call doesn't throw an exception
+        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + newCapacity, null, HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testAdjustBuildAgentCapacity_invalidCapacity() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        int invalidCapacity = 0;
+
+        // This should fail due to validation in the service layer
+        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + invalidCapacity, null, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testAdjustBuildAgentCapacity_negativeCapacity() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        int negativeCapacity = -1;
+
+        // This should fail due to validation in the service layer
+        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + negativeCapacity, null, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAdjustBuildAgentCapacity_forbiddenForInstructor() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        int newCapacity = 3;
+
+        // The test verifies that the endpoint call returns a forbidden status
+        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + newCapacity, null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAdjustBuildAgentCapacity_forbiddenForStudent() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        int newCapacity = 3;
+
+        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + newCapacity, null, HttpStatus.FORBIDDEN);
+    }
 }
