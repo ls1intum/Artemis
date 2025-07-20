@@ -415,4 +415,35 @@ describe('AttachmentVideoUnitFormComponent', () => {
             expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toEqual(expectedUrl);
         });
     });
+
+    it('should enable generateTranscript checkbox when playlist is available', () => {
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        const originalUrl = 'https://live.rbg.tum.de/w/test/26';
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(originalUrl);
+
+        const httpMock = TestBed.inject(HttpClient);
+        const spy = jest.spyOn(httpMock, 'get').mockReturnValue(of('https://live.rbg.tum.de/playlist.m3u8'));
+
+        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+
+        expect(spy).toHaveBeenCalled();
+        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.playlistUrl()).toContain('playlist.m3u8');
+    });
+
+    it('should disable generateTranscript checkbox when playlist is unavailable', () => {
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        const originalUrl = 'https://live.rbg.tum.de/w/test/26';
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(originalUrl);
+
+        const httpMock = TestBed.inject(HttpClient);
+        const spy = jest.spyOn(httpMock, 'get').mockReturnValue(throwError(() => new Error('Not found')));
+
+        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+
+        expect(spy).toHaveBeenCalled();
+        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();
+        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
+        expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')?.value).toBeFalse();
+    });
 });
