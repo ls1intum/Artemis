@@ -17,7 +17,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -155,6 +157,9 @@ public class ExamUtilService {
 
     @Autowired
     private FileUploadSubmissionRepository fileUploadSubmissionRepo;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     /**
      * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises.
@@ -708,6 +713,27 @@ public class ExamUtilService {
         quizGroup.addExercise(quiz);
         exerciseRepository.save(quiz);
 
+        return exam;
+    }
+
+    /**
+     * Creates and saves an exam with five exercise groups (0: modelling, 1: text, 2: file upload, 3: quiz, 4: programming)
+     *
+     * @param course The Course to which the Exam should be added
+     * @return The newly created Exam
+     */
+    public Exam addExamWithModellingAndTextAndFileUploadAndQuizAndProgramming(Course course) {
+        Exam exam = addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
+        ExerciseGroup programmingGroup = exam.getExerciseGroups().get(4);
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup);
+        Set<GradingCriterion> gradingCriteria = ProgrammingExerciseFactory.generateGradingCriteria(programmingExercise);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        exerciseRepository.save(programmingExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+
+        programmingGroup.addExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         return exam;
     }
 
