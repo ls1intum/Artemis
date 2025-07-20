@@ -7,11 +7,13 @@ import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyMod
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 describe('SetupPasskeyModalComponent', () => {
     let component: SetupPasskeyModalComponent;
     let fixture: ComponentFixture<SetupPasskeyModalComponent>;
     let activeModal: NgbActiveModal;
+    let localStorageService: LocalStorageService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -30,6 +32,7 @@ describe('SetupPasskeyModalComponent', () => {
         fixture = TestBed.createComponent(SetupPasskeyModalComponent);
         component = fixture.componentInstance;
         activeModal = TestBed.inject(NgbActiveModal);
+        localStorageService = TestBed.inject(LocalStorageService);
         fixture.detectChanges();
     });
 
@@ -42,7 +45,7 @@ describe('SetupPasskeyModalComponent', () => {
     });
 
     it('should set reminder date in localStorage and close the modal', () => {
-        const localStorageSpy = jest.spyOn(localStorage, 'setItem');
+        const localStorageServiceSpy = jest.spyOn(localStorageService, 'store');
         const closeModalSpy = jest.spyOn(activeModal, 'close');
 
         const expectedDateOnlyWithDayToEnsureTestIsNotFlaky = new Date();
@@ -51,13 +54,13 @@ describe('SetupPasskeyModalComponent', () => {
 
         component.remindMeIn30Days();
 
-        const savedDate = new Date(localStorageSpy.mock.calls[0][1]);
+        const savedDate = new Date(localStorageServiceSpy.mock.calls[0][1]);
 
         const savedDateOnlyWithDay = new Date(savedDate);
         savedDateOnlyWithDay.setHours(0, 0, 0, 0);
         expect(savedDateOnlyWithDay.getTime()).toBe(expectedDateOnlyWithDayToEnsureTestIsNotFlaky.getTime());
 
-        expect(localStorageSpy).toHaveBeenCalledWith(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, savedDate.toISOString());
+        expect(localStorageServiceSpy).toHaveBeenCalledWith(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, savedDate);
         expect(closeModalSpy).toHaveBeenCalled();
     });
 });
