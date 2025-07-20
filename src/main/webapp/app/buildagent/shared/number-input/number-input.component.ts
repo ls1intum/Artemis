@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
     selector: 'jhi-number-input',
     templateUrl: './number-input.component.html',
     styleUrl: './number-input.component.scss',
+    standalone: true,
     imports: [FontAwesomeModule, CommonModule],
 })
 export class NumberInputComponent {
