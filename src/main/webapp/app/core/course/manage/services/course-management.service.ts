@@ -29,6 +29,7 @@ import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/ser
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -69,6 +70,7 @@ export class CourseManagementService {
     private tutorialGroupsService = inject(TutorialGroupsService);
     private scoresStorageService = inject(ScoresStorageService);
     private courseNotificationService = inject(CourseNotificationService);
+    private localStorageService = inject(LocalStorageService);
 
     private resourceUrl = 'api/core/courses';
 
@@ -770,11 +772,11 @@ export class CourseManagementService {
     }
 
     getSemesterCollapseStateFromStorage(storageId: string): boolean {
-        const storedCollapseState: string | null = localStorage.getItem('semester.collapseState.' + storageId);
-        return storedCollapseState ? JSON.parse(storedCollapseState) : false;
+        const storedCollapseState = this.localStorageService.retrieve<boolean>('semester.collapseState.' + storageId);
+        return storedCollapseState !== undefined ? storedCollapseState : false;
     }
 
     setSemesterCollapseState(storageId: string, isCollapsed: boolean) {
-        localStorage.setItem('semester.collapseState.' + storageId, JSON.stringify(isCollapsed));
+        this.localStorageService.store<boolean>('semester.collapseState.' + storageId, isCollapsed);
     }
 }

@@ -37,6 +37,7 @@ describe('Course Management Service', () => {
     let httpMock: HttpTestingController;
     let courseStorageService: CourseStorageService;
     let scoresStorageService: ScoresStorageService;
+    let localStorageService: LocalStorageService;
 
     let isAtLeastTutorInCourseSpy: jest.SpyInstance;
     let isAtLeastEditorInCourseSpy: jest.SpyInstance;
@@ -75,6 +76,8 @@ describe('Course Management Service', () => {
         lectureService = TestBed.inject(LectureService);
         courseStorageService = TestBed.inject(CourseStorageService);
         scoresStorageService = TestBed.inject(ScoresStorageService);
+        localStorageService = TestBed.inject(LocalStorageService);
+        localStorageService.clear();
 
         isAtLeastTutorInCourseSpy = jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
         isAtLeastEditorInCourseSpy = jest.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
@@ -541,5 +544,23 @@ describe('Course Management Service', () => {
         expect(res.request.url).toBe(`${resourceUrl}/${courseId}/allowed-complaints?teamMode=true`);
 
         res.flush(expectedCount);
+    });
+
+    describe('Semester collapse state storage', () => {
+        it('should return false if no collapse state is stored', () => {
+            const collapseState = courseManagementService.getSemesterCollapseStateFromStorage('2024');
+            expect(collapseState).toBeFalse();
+        });
+
+        it('should store the collapse state via service method and retrieve it correctly', () => {
+            const storageId = '2026';
+            courseManagementService.setSemesterCollapseState(storageId, false);
+
+            const storedValue = localStorageService.retrieve(`semester.collapseState.${storageId}`);
+            expect(storedValue).toBeFalse();
+
+            const retrieved = courseManagementService.getSemesterCollapseStateFromStorage(storageId);
+            expect(retrieved).toBeFalse();
+        });
     });
 });
