@@ -3,7 +3,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MarkdownCache, TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
+import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
@@ -16,7 +16,6 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
 
 type Store = {
     [key: string]: any;
@@ -24,7 +23,6 @@ type Store = {
 
 describe('TextUnitFormComponent', () => {
     let store: Store = {};
-    let localStorageService: LocalStorageService;
 
     let textUnitFormComponentFixture: ComponentFixture<TextUnitFormComponent>;
     let textUnitFormComponent: TextUnitFormComponent;
@@ -63,7 +61,6 @@ describe('TextUnitFormComponent', () => {
 
         textUnitFormComponentFixture = TestBed.createComponent(TextUnitFormComponent);
         textUnitFormComponent = textUnitFormComponentFixture.componentInstance;
-        localStorageService = TestBed.inject(LocalStorageService);
     });
 
     afterEach(() => {
