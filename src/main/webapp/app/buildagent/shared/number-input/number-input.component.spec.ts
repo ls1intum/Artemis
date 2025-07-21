@@ -11,10 +11,18 @@ describe('NumberInputComponent', () => {
         await TestBed.configureTestingModule({
             imports: [NumberInputComponent, FontAwesomeModule, CommonModule],
         }).compileComponents();
+    });
 
+    beforeEach(() => {
         fixture = TestBed.createComponent(NumberInputComponent);
         component = fixture.componentInstance;
-        component.value = 5;
+
+        // Set up required inputs before detectChanges
+        fixture.componentRef.setInput('value', 5);
+        fixture.componentRef.setInput('minValue', 1);
+        fixture.componentRef.setInput('maxValue', 10);
+        fixture.componentRef.setInput('disabled', false);
+
         fixture.detectChanges();
     });
 
@@ -24,7 +32,7 @@ describe('NumberInputComponent', () => {
 
     it('should increment value when increment is called', () => {
         const valueChangeSpy = jest.spyOn(component.valueChange, 'emit');
-        const initialValue = component.value;
+        const initialValue = component.value();
 
         component.increment();
 
@@ -32,8 +40,7 @@ describe('NumberInputComponent', () => {
     });
 
     it('should not increment when value is at maxValue', () => {
-        component.value = 10;
-        component.maxValue = 10;
+        fixture.componentRef.setInput('value', 10);
         const valueChangeSpy = jest.spyOn(component.valueChange, 'emit');
 
         component.increment();
@@ -42,7 +49,7 @@ describe('NumberInputComponent', () => {
     });
 
     it('should not increment when component is disabled', () => {
-        component.disabled = true;
+        fixture.componentRef.setInput('disabled', true);
         const valueChangeSpy = jest.spyOn(component.valueChange, 'emit');
 
         component.increment();
@@ -52,7 +59,7 @@ describe('NumberInputComponent', () => {
 
     it('should decrement value when decrement is called', () => {
         const valueChangeSpy = jest.spyOn(component.valueChange, 'emit');
-        const initialValue = component.value;
+        const initialValue = component.value();
 
         component.decrement();
 
@@ -60,8 +67,7 @@ describe('NumberInputComponent', () => {
     });
 
     it('should not decrement when value is at minValue', () => {
-        component.value = 1;
-        component.minValue = 1;
+        fixture.componentRef.setInput('value', 1);
         const valueChangeSpy = jest.spyOn(component.valueChange, 'emit');
 
         component.decrement();
@@ -70,7 +76,7 @@ describe('NumberInputComponent', () => {
     });
 
     it('should not decrement when component is disabled', () => {
-        component.disabled = true;
+        fixture.componentRef.setInput('disabled', true);
         const valueChangeSpy = jest.spyOn(component.valueChange, 'emit');
 
         component.decrement();
@@ -106,7 +112,6 @@ describe('NumberInputComponent', () => {
     });
 
     it('should handle input below minValue on blur', () => {
-        component.minValue = 1;
         const valueChangeSpy = jest.spyOn(component.valueChange, 'emit');
         const mockEvent = {
             target: { value: '0' },
@@ -119,7 +124,6 @@ describe('NumberInputComponent', () => {
     });
 
     it('should handle input above maxValue on blur', () => {
-        component.maxValue = 10;
         const valueChangeSpy = jest.spyOn(component.valueChange, 'emit');
         const mockEvent = {
             target: { value: '15' },
@@ -155,7 +159,7 @@ describe('NumberInputComponent', () => {
     });
 
     it('should disable buttons when component is disabled', () => {
-        component.disabled = true;
+        fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
@@ -169,9 +173,7 @@ describe('NumberInputComponent', () => {
     });
 
     it('should disable buttons when at min/max values', () => {
-        component.value = 1;
-        component.minValue = 1;
-        component.maxValue = 10;
+        fixture.componentRef.setInput('value', 1);
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
@@ -181,7 +183,8 @@ describe('NumberInputComponent', () => {
         expect(incrementButton.disabled).toBeFalse();
         expect(decrementButton.disabled).toBeTrue();
 
-        component.value = 10;
+        // Test increment button disabled when at max value
+        fixture.componentRef.setInput('value', 10); // Set to max value
         fixture.detectChanges();
 
         expect(incrementButton.disabled).toBeTrue();

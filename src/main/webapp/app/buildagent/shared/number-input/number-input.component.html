@@ -3,7 +3,15 @@
         <fa-icon [icon]="faChevronDown" />
     </button>
 
-    <input type="number" class="form-control btn-sm number-input-field" [value]="value" [min]="minValue" [max]="maxValue" [disabled]="disabled" (blur)="onInputBlur($event)" />
+    <input
+        type="number"
+        class="form-control btn-sm number-input-field"
+        [value]="value()"
+        [min]="minValue()"
+        [max]="maxValue()"
+        [disabled]="disabled()"
+        (blur)="onInputBlur($event)"
+    />
 
     <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="!canIncrement" (click)="increment()" [attr.aria-label]="'Increase value'">
         <fa-icon [icon]="faChevronUp" />
