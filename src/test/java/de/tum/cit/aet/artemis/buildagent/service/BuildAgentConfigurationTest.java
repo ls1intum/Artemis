@@ -6,6 +6,7 @@ import static org.mockito.Mockito.spy;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,7 +71,7 @@ class BuildAgentConfigurationTest {
         // Initially set to 4
         mockExecutor.setMaximumPoolSize(4);
         mockExecutor.setCorePoolSize(4);
-        ReflectionTestUtils.setField(buildAgentConfiguration, "threadPoolSize", new java.util.concurrent.atomic.AtomicInteger(4));
+        ReflectionTestUtils.setField(buildAgentConfiguration, "threadPoolSize", new AtomicInteger(4));
 
         // Decrease to 2
         boolean result = buildAgentConfiguration.adjustConcurrentBuildSize(2);
@@ -84,7 +85,7 @@ class BuildAgentConfigurationTest {
     @Test
     void testAdjustConcurrentBuildSize_sameSize() {
         // Set to 2 initially
-        ReflectionTestUtils.setField(buildAgentConfiguration, "threadPoolSize", new java.util.concurrent.atomic.AtomicInteger(2));
+        ReflectionTestUtils.setField(buildAgentConfiguration, "threadPoolSize", new AtomicInteger(2));
 
         // Set to same size
         boolean result = buildAgentConfiguration.adjustConcurrentBuildSize(2);
