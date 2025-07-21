@@ -1,37 +1,65 @@
-<div class="upload-container">
-    <h2>Upload Room Data</h2>
-    <input type="file" (change)="onFileSelected($event)" accept=".zip" />
-    <button class="upload-btn" (click)="upload()" [disabled]="!selectedFile">Upload</button>
+<div>
+    <div class="info">
+        @if (overview) {
+            <h3>Exam Room Overview</h3>
+            <p>Rooms: {{ overview.numberOfStoredExamRooms }}</p>
+            <p>Seats: {{ overview.numberOfStoredExamSeats }}</p>
+            <p>Layout Strategies: {{ overview.numberOfStoredLayoutStrategies }}</p>
+            <p>Unique rooms: {{ overview.numberOfUniqueExamRooms }}</p>
+            <p>Unique seats: {{ overview.numberOfUniqueExamSeats }}</p>
+            <p>Unique layout strategies: {{ overview.numberOfUniqueLayoutStrategies }}</p>
+            <p>Distinct Layout Names: {{ overview.distinctLayoutStrategyNames.join(', ') }}</p>
 
-    @if (uploading) {
-        <div class="info">Uploading...</div>
-    }
-
-    @if (uploadSuccess) {
-        <div class="success">Upload successful!</div>
-    }
-
-    @if (uploadError) {
-        <div class="error">Upload failed. {{ uploadError }}</div>
-    }
-
-    @if (uploadInformation) {
-        <div class="upload-info card">
-            <h3>Upload Summary</h3>
+            <h4>Exam Rooms</h4>
+            <button (click)="clearExamRooms()" class="btn-danger">Clear All Exam Rooms</button>
             <ul>
-                <li><strong>File:</strong> {{ uploadInformation.uploadedFileName }}</li>
-                <li><strong>Duration:</strong> {{ uploadInformation.uploadDuration }}</li>
-                <li><strong>Rooms Uploaded:</strong> {{ uploadInformation.numberOfUploadedRooms }}</li>
-                <li><strong>Seats Uploaded:</strong> {{ uploadInformation.numberOfUploadedSeats }}</li>
-                <li>
-                    <strong>Room Names:</strong>
-                    <ol>
-                        @for (name of uploadInformation.uploadedRoomNames; track name) {
-                            <li>{{ name }}</li>
-                        }
-                    </ol>
-                </li>
+                @for (room of overview.examRoomDTOS; track room) {
+                    <li>
+                        {{ room.name }} ({{ room.roomNumber }}) - {{ room.numberOfSeats }} seats
+                        <ul>
+                            @for (strategy of room.layoutStrategies; track strategy) {
+                                <li>{{ strategy.name }}, Type: {{ strategy.type }}, Capacity: {{ strategy.capacity ?? 'N/A' }}</li>
+                            }
+                        </ul>
+                    </li>
+                }
             </ul>
-        </div>
-    }
+        } @else {
+            <p>Error: {{ overviewError }}</p>
+        }
+    </div>
+    <div class="upload-container">
+        <h2>Upload Room Data</h2>
+        <input type="file" (change)="onFileSelected($event)" accept=".zip" />
+        <button class="upload-btn" (click)="upload()" [disabled]="!selectedFile">Upload</button>
+
+        @if (uploading) {
+            <div class="info">Uploading...</div>
+        }
+        @if (uploadSuccess) {
+            <div class="success">Upload successful!</div>
+        }
+        @if (uploadError) {
+            <div class="error">Upload failed. {{ uploadError }}</div>
+        }
+        @if (uploadInformation) {
+            <div class="upload-info card">
+                <h3>Upload Summary</h3>
+                <ul>
+                    <li><strong>File:</strong> {{ uploadInformation.uploadedFileName }}</li>
+                    <li><strong>Duration:</strong> {{ uploadInformation.uploadDuration }}</li>
+                    <li><strong>Rooms Uploaded:</strong> {{ uploadInformation.numberOfUploadedRooms }}</li>
+                    <li><strong>Seats Uploaded:</strong> {{ uploadInformation.numberOfUploadedSeats }}</li>
+                    <li>
+                        <strong>Room Names:</strong>
+                        <ol>
+                            @for (name of uploadInformation.uploadedRoomNames; track name) {
+                                <li>{{ name }}</li>
+                            }
+                        </ol>
+                    </li>
+                </ul>
+            </div>
+        }
+    </div>
 </div>

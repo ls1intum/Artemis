@@ -1,19 +1,25 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpEvent, HttpEventType } from '@angular/common/http';
-import { ExamRoomUploadInformation } from 'app/core/admin/exam-rooms/exam-rooms.model';
+import { ExamRoomAdminOverviewDTO, ExamRoomUploadInformationDTO } from 'app/core/admin/exam-rooms/exam-rooms.model';
 
 @Component({
     selector: 'app-exam-room-repository',
     templateUrl: './exam-rooms.component.html',
 })
-export class ExamRoomsComponent {
+export class ExamRoomsComponent implements OnInit {
     selectedFile: File | null = null;
     uploading: boolean = false;
     uploadSuccess: boolean = false;
     uploadError: string | null = null;
-    uploadInformation: ExamRoomUploadInformation | null = null;
+    uploadInformation: ExamRoomUploadInformationDTO | null = null;
+    overview: ExamRoomAdminOverviewDTO | null = null;
+    overviewError: string | null = null;
 
     constructor(private http: HttpClient) {}
+
+    ngOnInit(): void {
+        this.loadExamRoomOverview();
+    }
 
     onFileSelected(event: Event): void {
         const input = event.target as HTMLInputElement;
@@ -62,5 +68,33 @@ export class ExamRoomsComponent {
                     this.uploading = false;
                 },
             });
+    }
+
+    loadExamRoomOverview(): void {
+        this.http.get<ExamRoomAdminOverviewDTO>('/api/exam/admin/exam-rooms/admin-overview').subscribe({
+            next: (response) => {
+                this.overview = response;
+                this.overviewError = null;
+            },
+            error: (error: HttpErrorResponse) => {
+                this.overview = null;
+                this.overviewError = error.message;
+            },
+        });
+    }
+
+    clearExamRooms(): void {
+        if (!confirm('Are you sure you want to delete ALL exam rooms? This action cannot be undone.')) {
+            return;
+        }
+        this.http.delete('/api/exam/admin/exam-rooms').subscribe({
+            next: () => {
+                alert('All exam rooms deleted.');
+                // Refresh or reset your UI here as needed
+            },
+            error: (err) => {
+                alert('Failed to clear exam rooms: ' + err.message);
+            },
+        });
     }
 }
