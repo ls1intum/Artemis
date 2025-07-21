@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.atlas.web;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MAX_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MIN_PROFILE_VALUE;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -66,8 +68,9 @@ public class LearnerProfileResource {
         User user = userRepository.getUser();
         log.debug("REST request to get or create LearnerProfile of user {}", user.getLogin());
 
-        if (learnerProfileRepository.findByUser(user).isPresent()) {
-            return ResponseEntity.ok(LearnerProfileDTO.of(learnerProfileRepository.findByUserElseThrow(user)));
+        Optional<LearnerProfile> existingProfile = learnerProfileRepository.findByUser(user);
+        if (existingProfile.isPresent()) {
+            return ResponseEntity.ok(LearnerProfileDTO.of(existingProfile.get()));
         }
 
         LearnerProfile profile = new LearnerProfile();
