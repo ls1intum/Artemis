@@ -200,7 +200,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             sendQuizResultToUser(quizExerciseId, participation);
 
             // save the question progress
-            quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation.getStudent().get().getId());
+            User user = participation.getStudent().orElseThrow();
+            quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, user.getId());
         });
         quizStatisticService.recalculateStatistics(quizExercise);
         // notify users via websocket about new results for the statistics, filter out solution information
