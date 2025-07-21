@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +19,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.dto.ExamRoomUploadInformationDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
@@ -86,6 +88,22 @@ public class AdminExamResource {
 
         var uploadInformationDTO = examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFile);
         return ResponseEntity.ok(uploadInformationDTO);
+    }
+
+    @GetMapping("exam-rooms/admin-overview")
+    public ResponseEntity<ExamRoomAdminOverviewDTO> getExamRoomAdminOverview() {
+        log.debug("REST request to get exam room admin overview");
+
+        var examRoomAdminOverviewDTO = examRoomService.getExamRoomAdminOverviewDTO();
+        return ResponseEntity.ok(examRoomAdminOverviewDTO);
+    }
+
+    @DeleteMapping("exam-rooms")
+    public ResponseEntity<Void> deleteAllExamRooms() {
+        log.debug("REST request to delete all exam rooms");
+
+        examRoomService.deleteAllExamRooms();
+        return ResponseEntity.noContent().build();  // HTTP 204 - No Content
     }
 
 }

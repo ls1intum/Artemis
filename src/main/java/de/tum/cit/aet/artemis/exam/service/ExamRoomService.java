@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -33,9 +35,18 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamSeat;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategyType;
 import de.tum.cit.aet.artemis.exam.domain.room.SeatCondition;
-import de.tum.cit.aet.artemis.exam.dto.ExamRoomUploadInformationDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomSeatCountDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUniqueRoomsDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 
+/*
+ * Service implementation for managing exam rooms.
+ * This is decoupled from everything that has to do with exam room assignments.
+ */
 @Conditional(ExamEnabled.class)
 @Lazy
 @Service
@@ -68,10 +79,11 @@ public class ExamRoomService {
                     continue;
                 }
 
-                // extract the filename - remove the folder path if existent
+                // extract the filename - remove the folder path (if existent) and remove the trailing '.json'
                 // Math.max(0, entryName.lastIndexOf('/') + 1); === entryName.lastIndexOf('/') + 1;
                 int longRoomNumberStartIdx = entryName.lastIndexOf('/') + 1;
-                String longRoomNumber = entryName.substring(longRoomNumberStartIdx);
+                int longRoomNumberEndIdx = entryName.lastIndexOf(".json");
+                String longRoomNumber = entryName.substring(longRoomNumberStartIdx, longRoomNumberEndIdx);
 
                 log.debug("Parsing room {}...", longRoomNumber);
                 String jsonData = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
@@ -239,5 +251,31 @@ public class ExamRoomService {
         List<String> roomNames = examRooms.stream().map(ExamRoom::getName).toList();
 
         return new ExamRoomUploadInformationDTO(uploadedFileName, uploadDuration, numberOfUploadedRooms, numberOfUploadedSeats, roomNames);
+    }
+
+    public ExamRoomAdminOverviewDTO getExamRoomAdminOverviewDTO() {
+        final Integer numberOfStoredExamRooms = examRoomRepository.countAllExamRooms();
+        final Integer numberOfStoredExamSeats = examRoomRepository.countAllExamSeats();
+        final Integer numberOfStoredLayoutStrategies = examRoomRepository.countAllLayoutStrategies();
+        final Set<String> distinctLayoutStrategyNames = examRoomRepository.findDistinctLayoutStrategyNames();
+        final ExamRoomUniqueRoomsDTO uniqueRoomsDTO = examRoomRepository.countUniqueRoomsSeatsAndLayoutStrategies();
+
+        // We use the following map to avoid the N+1 problem when retrieving the number of seats per room
+        final Map<Long, Long> examRoomSeatCountMap = examRoomRepository.countSeatsPerRoom().stream()
+                .collect(Collectors.toMap(ExamRoomSeatCountDTO::examRoomId, ExamRoomSeatCountDTO::seatCount));
+
+        final Set<ExamRoomDTO> examRoomDTOS = examRoomRepository.findAllExamRoomsWithEagerLayoutStrategies().stream()
+                .map(examRoom -> new ExamRoomDTO(examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoomSeatCountMap.getOrDefault(examRoom.getId(), 0L),
+                        examRoom.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
+                .collect(Collectors.toSet());
+
+        return new ExamRoomAdminOverviewDTO(numberOfStoredExamRooms, numberOfStoredExamSeats, numberOfStoredLayoutStrategies, uniqueRoomsDTO.numberOfUniqueRooms(),
+                uniqueRoomsDTO.numberOfUniqueSeats(), uniqueRoomsDTO.numberOfUniqueLayoutStrategies(), distinctLayoutStrategyNames, examRoomDTOS);
+    }
+
+    public void deleteAllExamRooms() {
+        final long startTime = System.nanoTime();
+        examRoomRepository.deleteAll();
+        log.debug("Deleting all exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));
     }
 }

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exam.dto;
+package de.tum.cit.aet.artemis.exam.dto.room;
 
 import java.util.List;
 

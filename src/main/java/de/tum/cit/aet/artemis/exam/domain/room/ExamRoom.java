@@ -37,7 +37,7 @@ public class ExamRoom extends AbstractAuditingEntity {
     private String roomNumber;
 
     /**
-     * An alternative room number, if it exists
+     * An alternative room number, if it exists. Used to improve auto-complete.
      */
     @Column(name = "alternative_room_number", nullable = true, length = 50)
     private String alternativeRoomNumber;
@@ -49,7 +49,7 @@ public class ExamRoom extends AbstractAuditingEntity {
     private String name;
 
     /**
-     * An alternative name for the exam room, doesn't need to exist.
+     * An alternative name for the exam room, doesn't need to exist. Used to improve auto-complete.
      */
     @Column(name = "alternative_name", nullable = true, length = 255)
     private String alternativeName;
