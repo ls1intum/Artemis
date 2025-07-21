@@ -27,6 +27,7 @@ import { provideRouter } from '@angular/router';
 import { input } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('StudentExamDetailTableRowComponent', () => {
     let studentExamDetailTableRowComponentFixture: ComponentFixture<StudentExamDetailTableRowComponent>;
@@ -51,7 +52,7 @@ describe('StudentExamDetailTableRowComponent', () => {
         exercise.studentParticipations = [studentParticipation];
 
         return TestBed.configureTestingModule({
-            imports: [NgbModule, NgxDatatableModule, ReactiveFormsModule, TranslateModule.forRoot()],
+            imports: [NgbModule, NgxDatatableModule, ReactiveFormsModule, TranslateModule.forRoot(), FaIconComponent],
             declarations: [StudentExamDetailTableRowComponent, MockComponent(DataTableComponent), MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
             providers: [provideRouter([]), MockProvider(AlertService), MockDirective(TranslateDirective)],
         })

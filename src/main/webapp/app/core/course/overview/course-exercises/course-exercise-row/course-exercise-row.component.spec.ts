@@ -33,6 +33,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
 import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     template: '',
@@ -54,6 +55,7 @@ describe('CourseExerciseRowComponent', () => {
                     { path: 'courses/:courseId/exercises/:exerciseId', component: DummyComponent },
                 ]),
                 NgbModule,
+                FaIconComponent,
             ],
             declarations: [
                 MockComponent(SubmissionResultStatusComponent),
