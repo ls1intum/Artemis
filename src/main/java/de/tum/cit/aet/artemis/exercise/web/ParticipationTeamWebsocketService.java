@@ -33,7 +33,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -77,10 +76,15 @@ public class ParticipationTeamWebsocketService {
 
     private final HazelcastInstance hazelcastInstance;
 
+    // TODO: Follow-Up: move this into a separate service that contains all Hazelcast related data structures
+
+    // always access using the getter to ensure that the map is initialized
     private Map<String, String> destinationTracker;
 
+    // always access using the getter to ensure that the map is initialized
     private Map<String, Instant> lastTypingTracker;
 
+    // always access using the getter to ensure that the map is initialized
     private Map<String, Instant> lastActionTracker;
 
     public ParticipationTeamWebsocketService(WebsocketMessagingService websocketMessagingService, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
@@ -97,16 +101,47 @@ public class ParticipationTeamWebsocketService {
     }
 
     /**
-     * Initialize relevant data from hazelcast
+     * Lazy Init: Returns the destination tracker map which keeps track of the destination that each session is subscribed to.
+     * This is used to send out the list of online team members when a user subscribes or unsubscribes.
+     *
+     * @return the destination tracker map
      */
-    @EventListener(FullStartupEvent.class)
-    public void init() {
-        // participationId-username -> timestamp
-        this.lastTypingTracker = hazelcastInstance.getMap("lastTypingTracker");
-        // participationId-username -> timestamp
-        this.lastActionTracker = hazelcastInstance.getMap("lastActionTracker");
-        // sessionId -> destination
-        this.destinationTracker = hazelcastInstance.getMap("destinationTracker");
+    public Map<String, Instant> getLastTypingTracker() {
+        if (this.lastTypingTracker == null) {
+            this.lastTypingTracker = this.hazelcastInstance.getMap("lastTypingTracker");
+        }
+        return lastTypingTracker;
+    }
+
+    /**
+     * Lazy Init: Returns the last action tracker map which keeps track of the last action date for each user in a participation.
+     * This is used to send out the list of online team members when a user subscribes or unsubscribes.
+     *
+     * @return the last action tracker map
+     */
+    public Map<String, Instant> getLastActionTracker() {
+        if (this.lastActionTracker == null) {
+            this.lastActionTracker = this.hazelcastInstance.getMap("lastActionTracker");
+        }
+        return lastActionTracker;
+    }
+
+    /**
+     * Lazy Init: Returns the destination tracker map which keeps track of the destination that each session is subscribed to.
+     * This is used to send out the list of online team members when a user subscribes or unsubscribes.
+     *
+     * @return the destination tracker map
+     */
+    public Map<String, String> getDestinationTracker() {
+        if (this.destinationTracker == null) {
+            this.destinationTracker = this.hazelcastInstance.getMap("destinationTracker");
+        }
+        return destinationTracker;
+    }
+
+    // only used for testing purposes, could be moved to a test utility class
+    public void clearDestinationTracker() {
+        this.getDestinationTracker().clear();
     }
 
     /**
@@ -121,7 +156,7 @@ public class ParticipationTeamWebsocketService {
     @SubscribeMapping("topic/participations/{participationId}/team")
     public void subscribe(@DestinationVariable Long participationId, StompHeaderAccessor stompHeaderAccessor) {
         final String destination = getDestination(participationId);
-        destinationTracker.put(stompHeaderAccessor.getSessionId(), destination);
+        getDestinationTracker().put(stompHeaderAccessor.getSessionId(), destination);
         sendOnlineTeamStudents(participationId);
     }
 
@@ -144,7 +179,7 @@ public class ParticipationTeamWebsocketService {
      */
     @MessageMapping("topic/participations/{participationId}/team/typing")
     public void startTyping(@DestinationVariable Long participationId, Principal principal) {
-        updateValue(lastTypingTracker, participationId, principal.getName());
+        updateValue(getLastTypingTracker(), participationId, principal.getName());
         sendOnlineTeamStudents(participationId);
     }
 
@@ -226,7 +261,7 @@ public class ParticipationTeamWebsocketService {
 
         if (syncTeammates) {
             // update the last action date for the user and send out list of team members
-            updateValue(lastActionTracker, participationId, principal.getName());
+            updateValue(getLastActionTracker(), participationId, principal.getName());
             sendOnlineTeamStudents(participationId);
 
             SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
@@ -254,7 +289,7 @@ public class ParticipationTeamWebsocketService {
         }
 
         // update the last action date for the user and send out list of team members
-        updateValue(lastActionTracker, participationId, principal.getName());
+        updateValue(getLastActionTracker(), participationId, principal.getName());
         sendOnlineTeamStudents(participationId);
 
         SubmissionPatchPayload payload = new SubmissionPatchPayload(submissionPatch, principal.getName());
@@ -271,7 +306,8 @@ public class ParticipationTeamWebsocketService {
         final String destination = getDestination(participationId);
 
         final List<OnlineTeamStudentDTO> onlineTeamStudents = getSubscriberPrincipals(destination, exceptSessionID).stream()
-                .map(login -> new OnlineTeamStudentDTO(login, getValue(lastTypingTracker, participationId, login), lastActionTracker.get(participationId + "-" + login))).toList();
+                .map(login -> new OnlineTeamStudentDTO(login, getValue(getLastTypingTracker(), participationId, login), getLastActionTracker().get(participationId + "-" + login)))
+                .toList();
 
         websocketMessagingService.sendMessage(destination, onlineTeamStudents);
     }
@@ -302,7 +338,7 @@ public class ParticipationTeamWebsocketService {
 
     /**
      * Since this method is called for any sort of unsubscribe or disconnect event, it first needs to be checked whether this event is relevant at all
-     * for this particular service which is the case if the session id was tracked by the destinationTracker.
+     * for this particular service which is the case if the session id was tracked by the destinationTracker
      * The list of subscribed users - explicitly excluding the session that is about to be destroyed - is send to all subscribers.
      * Note: Since a single user can have multiple sessions for a single destination (e.g. by having two open tabs), the user list might not change at all.
      *
@@ -312,8 +348,8 @@ public class ParticipationTeamWebsocketService {
         // check if Hazelcast is still active, before invoking this
         try {
             if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
-                Optional.ofNullable(destinationTracker.get(sessionId)).ifPresent(destination -> {
-                    destinationTracker.remove(sessionId);
+                Optional.ofNullable(getDestinationTracker().get(sessionId)).ifPresent(destination -> {
+                    getDestinationTracker().remove(sessionId);
                     Long participationId = getParticipationIdFromDestination(destination);
                     sendOnlineTeamStudents(participationId, sessionId);
                 });
@@ -374,14 +410,6 @@ public class ParticipationTeamWebsocketService {
 
     private static String getDestination(String participationId) {
         return getDestination(participationId, "");
-    }
-
-    public Map<String, String> getDestinationTracker() {
-        return destinationTracker;
-    }
-
-    public void clearDestinationTracker() {
-        this.destinationTracker.clear();
     }
 
     private void updateValue(Map<String, Instant> map, long participationId, String username) {
