@@ -216,7 +216,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         const formValue = this.form.value;
         const formProperties: FormProperties = { ...formValue };
 
-        delete formProperties.videoTranscription;
+        formProperties.videoTranscription = undefined;
         const fileProperties: FileProperties = {
             file: this.file,
             fileName: this.fileName(),
