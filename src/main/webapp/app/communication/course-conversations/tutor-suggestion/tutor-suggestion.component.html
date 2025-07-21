@@ -5,6 +5,7 @@
                 <div class="iris-text-content">
                     <div class="iris-logo">
                         <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+                        <span class="fw-semibold">Iris-Suggestion:</span>
                     </div>
                     @for (content of suggestion?.content; track content.id) {
                         <div>
@@ -28,7 +29,9 @@
                     <div class="iris-suggestion-text" jhiTranslate="artemisApp.iris.tutorSuggestion.noIris"></div>
                 }
             }
-            <jhi-iris-base-chatbot [isEmbeddedChat]="true" />
+            <div class="iris-tutor-suggestion-chat-container">
+                <jhi-iris-base-chatbot [isEmbeddedChat]="true" [fullSize]="false" />
+            </div>
         </div>
     </div>
 }

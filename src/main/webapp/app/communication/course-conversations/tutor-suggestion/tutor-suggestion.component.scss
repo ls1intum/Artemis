@@ -22,7 +22,7 @@
 }
 
 .iris-logo {
-    float: left;
+    //float: left;
     margin-right: 15px;
 }
 
@@ -32,32 +32,6 @@
     word-break: break-word;
 }
 
-.chat-field {
-    background-color: var(--iris-client-chat-input);
-    border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) var(--bs-border-radius-lg) var(--bs-border-radius-lg);
-}
-
-.messages {
-    max-height: 150px;
-    overflow-y: auto;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    scrollbar-width: thin;
-    scrollbar-color: var(--bs-border-color) transparent;
-}
-
-.chat-input {
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    background-color: var(--iris-client-chat-input);
-    padding: 5px;
-    flex: 0 1 auto;
-    border-radius: 0 0 var(--bs-border-radius-lg) var(--bs-border-radius-lg);
-}
-
 .timestamp-container {
     text-align: right;
     font-size: 0.75rem;
@@ -65,50 +39,8 @@
     margin-bottom: 2px;
 }
 
-.bubble-left {
-    --r: 13px;
-    --t: 10px;
-    --_d: 0%;
-    border-left: var(--t) solid #0000;
-    background-color: var(--iris-client-chat-background);
-    margin-right: var(--t);
-    place-self: start;
-    max-width: 100%;
-    margin-bottom: 10px;
-    color: var(--bs-body-color);
-    padding: 10px;
-    -webkit-mask:
-        radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
-        conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
-        radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
-}
-
-.bubble-right {
-    --r: 13px;
-    --t: 10px;
-    --_d: 100%;
-    border-right: var(--t) solid #0000;
-    margin-left: var(--t);
-    place-self: end;
-    float: right;
-    background-color: var(--iris-my-chat-background);
-    max-width: 100%;
-    margin-bottom: 10px;
-    color: var(--bs-body-color);
-    padding: 10px;
-    -webkit-mask:
-        radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
-        conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
-        radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
-}
-
-.message-container {
+.iris-tutor-suggestion-chat-container {
+    max-height: 300px;
+    background: #ffffff;
     display: flex;
-    flex-direction: column;
 }
