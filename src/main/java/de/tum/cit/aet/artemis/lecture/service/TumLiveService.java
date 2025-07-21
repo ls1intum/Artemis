@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
@@ -8,6 +10,8 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -16,6 +20,7 @@ import org.springframework.web.client.RestClientException;
 import de.tum.cit.aet.artemis.lecture.dto.TumLivePlaylistDTO;
 
 @Service
+@Profile(PROFILE_CORE)
 public class TumLiveService {
 
     private static final Logger log = LoggerFactory.getLogger(TumLiveService.class);
@@ -24,8 +29,8 @@ public class TumLiveService {
 
     private final RestClient restClient;
 
-    public TumLiveService(RestClient.Builder restClientBuilder) {
-        this.restClient = restClientBuilder.baseUrl("https://tum.live/api/v2").build();
+    public TumLiveService(RestClient.Builder restClientBuilder, @Value("${artemis.tum-live.api-base-url}") String tumLiveApiBaseUrl) {
+        this.restClient = restClientBuilder.baseUrl(tumLiveApiBaseUrl).build();
     }
 
     /**
@@ -70,7 +75,7 @@ public class TumLiveService {
      */
     private StreamInfo extractCourseSlugAndStreamId(String videoUrl) {
         try {
-            String path = new URI(videoUrl).getPath(); // e.g. /w/WiSe24ItP/55921
+            String path = new URI(videoUrl).getPath();
             Matcher matcher = TUM_LIVE_PATTERN.matcher(path);
             if (matcher.find()) {
                 return new StreamInfo(matcher.group(1), matcher.group(2));
