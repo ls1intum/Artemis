@@ -6,7 +6,7 @@ import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 @Injectable({
     providedIn: 'root',
 })
-export class CoursePracticeQuizService {
+export class CourseTrainingQuizService {
     private http = inject(HttpClient);
 
     /**

@@ -34,6 +34,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 describe('LectureUpdateComponent', () => {
@@ -41,7 +42,6 @@ describe('LectureUpdateComponent', () => {
     let lectureUpdateComponentFixture: ComponentFixture<LectureUpdateComponent>;
     let lectureUpdateComponent: LectureUpdateComponent;
     let router: Router;
-    let activatedRoute: ActivatedRoute;
 
     let pastLecture: Lecture;
 
@@ -54,7 +54,7 @@ describe('LectureUpdateComponent', () => {
         pastLecture.endDate = yesterday;
 
         TestBed.configureTestingModule({
-            imports: [FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule)],
+            imports: [FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), FontAwesomeTestingModule],
             declarations: [
                 LectureUpdateComponent,
                 LectureTitleChannelNameComponent,
@@ -77,44 +77,43 @@ describe('LectureUpdateComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        parent: {
-                            data: of({ course: { id: 1 } }),
-                        },
-                        queryParams: of({
-                            params: {},
-                        }),
-                        snapshot: {
-                            paramMap: convertToParamMap({
-                                courseId: '1',
-                            }),
-                        },
-                    },
-                },
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(CalendarEventService),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                lectureUpdateComponentFixture = TestBed.createComponent(LectureUpdateComponent);
-                lectureUpdateComponent = lectureUpdateComponentFixture.componentInstance;
-
-                lectureService = TestBed.inject(LectureService);
-                router = TestBed.get(Router);
-                activatedRoute = TestBed.inject(ActivatedRoute);
-            });
+        });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should create lecture', () => {
+    async function configureActiveRouteMockAndCompileComponents(parentData: any = { course: { id: 1 } }) {
+        const activatedRouteMock = {
+            parent: {
+                data: of(parentData),
+            },
+            queryParams: of({}),
+            snapshot: {
+                paramMap: convertToParamMap({ courseId: '1' }),
+            },
+        };
+
+        TestBed.overrideProvider(ActivatedRoute, { useValue: activatedRouteMock });
+
+        await TestBed.compileComponents();
+
+        lectureUpdateComponentFixture = TestBed.createComponent(LectureUpdateComponent);
+        lectureUpdateComponent = lectureUpdateComponentFixture.componentInstance;
+
+        lectureService = TestBed.inject(LectureService);
+        router = TestBed.inject(Router);
+        TestBed.inject(ActivatedRoute);
+    }
+
+    it('should create lecture', async () => {
+        await configureActiveRouteMockAndCompileComponents();
         lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1' } as Lecture);
 
         const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
@@ -141,8 +140,8 @@ describe('LectureUpdateComponent', () => {
         expect(refreshSpy).toHaveBeenCalledOnce();
     });
 
-    it('should edit a lecture', fakeAsync(() => {
-        activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6 } });
+    it('should edit a lecture', async () => {
+        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6 } });
         const navigateSpy = jest.spyOn(router, 'navigate');
 
         lectureUpdateComponentFixture.detectChanges();
@@ -165,7 +164,6 @@ describe('LectureUpdateComponent', () => {
         const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
 
         lectureUpdateComponent.save();
-        tick();
         lectureUpdateComponentFixture.detectChanges();
 
         const expectedPath = ['course-management', 1, 'lectures', 6];
@@ -174,20 +172,19 @@ describe('LectureUpdateComponent', () => {
         expect(updateSpy).toHaveBeenCalledOnce();
         expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated', channelName: 'test1Updated' });
         expect(refreshSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
-    it('should select process units checkbox', fakeAsync(() => {
+    it('should select process units checkbox', async () => {
+        await configureActiveRouteMockAndCompileComponents();
         lectureUpdateComponent.processUnitMode = false;
         const selectProcessUnit = jest.spyOn(lectureUpdateComponent, 'onSelectProcessUnit');
         lectureUpdateComponent.onSelectProcessUnit();
-        tick();
         expect(selectProcessUnit).toHaveBeenCalledOnce();
         expect(lectureUpdateComponent.processUnitMode).toBeTrue();
-    }));
+    });
 
-    it('should navigate to previous state', fakeAsync(() => {
-        activatedRoute = TestBed.inject(ActivatedRoute);
-        activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6, title: '', course: { id: 1 } } });
+    it('should navigate to previous state', async () => {
+        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6, title: '', course: { id: 1 } } });
 
         lectureUpdateComponent.ngOnInit();
         lectureUpdateComponentFixture.detectChanges();
@@ -195,12 +192,12 @@ describe('LectureUpdateComponent', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         const previousState = jest.spyOn(lectureUpdateComponent, 'previousState');
         lectureUpdateComponent.previousState();
-        tick();
+
         expect(previousState).toHaveBeenCalledOnce();
 
         const expectedPath = ['course-management', '1', 'lectures', '6'];
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
-    }));
+    });
 
     it('should create a lecture and then redirect to unit split', fakeAsync(() => {
         lectureUpdateComponent.file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
@@ -236,7 +233,8 @@ describe('LectureUpdateComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName } });
     }));
 
-    it('should call onFileChange on changed file', () => {
+    it('should call onFileChange on changed file', async () => {
+        await configureActiveRouteMockAndCompileComponents();
         lectureUpdateComponent.processUnitMode = false;
         lectureUpdateComponentFixture.detectChanges();
         expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeFalsy();
@@ -254,9 +252,8 @@ describe('LectureUpdateComponent', () => {
         expect(onFileChangeStub).toHaveBeenCalledOnce();
     });
 
-    it('should set lecture visible date, start date and end date correctly', fakeAsync(() => {
-        activatedRoute = TestBed.inject(ActivatedRoute);
-        activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6 } });
+    it('should set lecture visible date, start date and end date correctly', async () => {
+        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6 } });
 
         lectureUpdateComponentFixture.detectChanges();
         lectureUpdateComponent.lecture.set({ id: 6, title: 'test1Updated' } as Lecture);
@@ -274,7 +271,7 @@ describe('LectureUpdateComponent', () => {
         expect(lectureUpdateComponent.lecture().startDate).toEqual(lectureUpdateComponent.lecture().visibleDate);
 
         lectureUpdateComponentFixture.detectChanges();
-        tick();
+        await lectureUpdateComponentFixture.whenStable();
 
         lectureUpdateComponent.lecture().startDate = undefined;
         lectureUpdateComponent.lecture().endDate = undefined;
@@ -288,7 +285,7 @@ describe('LectureUpdateComponent', () => {
         expect(lectureUpdateComponent.lecture().visibleDate).toBeUndefined();
 
         lectureUpdateComponentFixture.detectChanges();
-        tick();
+        await lectureUpdateComponentFixture.whenStable();
 
         lectureUpdateComponent.lecture().visibleDate = dayjs().year(2022).month(1).date(1);
         lectureUpdateComponent.lecture().startDate = dayjs().year(2022).month(1).date(2);
@@ -308,10 +305,11 @@ describe('LectureUpdateComponent', () => {
         } else {
             throw new Error('startDate and endDate should not be undefined');
         }
-    }));
+    });
 
     describe('isChangeMadeToTitleSection', () => {
-        it('should detect changes made to the title section', () => {
+        it('should detect changes made to the title section', async () => {
+            await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.lecture.set({ title: 'new title', channelName: 'new channel', description: 'new description' } as Lecture);
             lectureUpdateComponent.lectureOnInit = { title: 'old title', channelName: 'old channel', description: 'old description' } as Lecture;
             expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeTrue();
@@ -324,7 +322,8 @@ describe('LectureUpdateComponent', () => {
             expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeFalse();
         });
 
-        it('should handle undefined from description properly', () => {
+        it('should handle undefined from description properly', async () => {
+            await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.lecture.set({ title: 'new title', channelName: 'new channel', description: 'new description' } as Lecture);
             lectureUpdateComponent.lectureOnInit = { title: 'old title', channelName: 'old channel', description: undefined } as Lecture;
             expect(lectureUpdateComponent.isChangeMadeToTitleSection()).toBeTrue();
@@ -339,7 +338,8 @@ describe('LectureUpdateComponent', () => {
     });
 
     describe('isChangeMadeToPeriodSection', () => {
-        it('should detect changes made to the period section', () => {
+        it('should detect changes made to the period section', async () => {
+            await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
             lectureUpdateComponent.lectureOnInit = { visibleDate: dayjs(), startDate: dayjs(), endDate: dayjs() } as Lecture;
             expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeTrue();
@@ -352,7 +352,8 @@ describe('LectureUpdateComponent', () => {
             expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeFalse();
         });
 
-        it('should not consider resetting an undefined date as a change', () => {
+        it('should not consider resetting an undefined date as a change', async () => {
+            await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
             lectureUpdateComponent.lectureOnInit = { visibleDate: undefined, startDate: undefined, endDate: undefined } as Lecture;
             expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBeTrue();
@@ -367,7 +368,8 @@ describe('LectureUpdateComponent', () => {
     });
 
     describe('updateFormStatusBar', () => {
-        it('should update form status bar correctly in edit mode', () => {
+        it('should update form status bar correctly in edit mode', async () => {
+            await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.isEditMode.set(true);
             lectureUpdateComponent.titleSection = signal({
                 titleChannelNameComponent: () => ({
@@ -390,7 +392,8 @@ describe('LectureUpdateComponent', () => {
             ]);
         });
 
-        it('should update form status bar correctly in create mode', () => {
+        it('should update form status bar correctly in create mode', async () => {
+            await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.isEditMode.set(false);
             lectureUpdateComponent.titleSection = signal({
                 titleChannelNameComponent: () => ({
@@ -409,7 +412,8 @@ describe('LectureUpdateComponent', () => {
             ]);
         });
 
-        it('should handle invalid sections correctly', () => {
+        it('should handle invalid sections correctly', async () => {
+            await configureActiveRouteMockAndCompileComponents();
             lectureUpdateComponent.isEditMode.set(true);
             lectureUpdateComponent.titleSection = signal({
                 titleChannelNameComponent: () => ({

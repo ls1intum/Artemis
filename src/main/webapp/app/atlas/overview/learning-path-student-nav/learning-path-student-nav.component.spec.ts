@@ -7,6 +7,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ScienceService } from 'app/shared/science/science.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('LearningPathStudentNavComponent', () => {
     let component: LearningPathNavComponent;
@@ -49,7 +50,7 @@ describe('LearningPathStudentNavComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [LearningPathNavComponent, MockComponent(LearningPathNavOverviewComponent)],
+            imports: [LearningPathNavComponent, MockComponent(LearningPathNavOverviewComponent), FaIconComponent],
             providers: [
                 {
                     provide: TranslateService,
