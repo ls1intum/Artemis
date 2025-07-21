@@ -47,7 +47,7 @@ class LocalCIEventListenerServiceTest extends AbstractProgrammingIntegrationLoca
         buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         BuildAgentDTO buildAgentDTO = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
-        buildAgent = new BuildAgentInformation(buildAgentDTO, 0, 0, new ArrayList<>(List.of()), BuildAgentInformation.BuildAgentStatus.IDLE, null, null, 100);
+        buildAgent = new BuildAgentInformation(buildAgentDTO, 0, 0, new ArrayList<>(List.of()), BuildAgentInformation.BuildAgentStatus.IDLE, null, null, 100, 4);
         buildAgentInformation.put(memberAddress, buildAgent);
     }
 
@@ -63,7 +63,7 @@ class LocalCIEventListenerServiceTest extends AbstractProgrammingIntegrationLoca
         BuildAgentDetailsDTO updatedDetails = new BuildAgentDetailsDTO(0, 0, 0, 0, 0, 0, null, ZonedDateTime.now(), null, consecutiveFailedBuildJobs);
         BuildAgentInformation updatedInfo = new BuildAgentInformation(buildAgent.buildAgent(), buildAgent.maxNumberOfConcurrentBuildJobs(), buildAgent.numberOfCurrentBuildJobs(),
                 buildAgent.runningBuildJobs(), BuildAgentInformation.BuildAgentStatus.SELF_PAUSED, buildAgent.publicSshKey(), updatedDetails,
-                buildAgent.pauseAfterConsecutiveBuildFailures());
+                buildAgent.pauseAfterConsecutiveBuildFailures(), buildAgent.numberOfCores());
 
         buildAgentInformation.put(memberAddress, updatedInfo);
         await().until(() -> buildAgentInformation.get(memberAddress).status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED);
