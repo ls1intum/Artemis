@@ -15,7 +15,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { EMPTY, filter, map, switchMap } from 'rxjs';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
-import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
@@ -38,7 +37,6 @@ export class CourseTrainingQuizComponent {
     private quizService = inject(CourseTrainingQuizService);
 
     currentIndex = signal(0);
-    private quizParticipationService = inject(QuizParticipationService);
     private alertService = inject(AlertService);
     private courseService = inject(CourseManagementService);
 
@@ -184,7 +182,7 @@ export class CourseTrainingQuizComponent {
         }
         this.applySelection();
         this.isSubmitting = true;
-        this.quizParticipationService.submitForTraining(this.submission, exerciseId).subscribe({
+        this.quizService.submitForTraining(this.submission, exerciseId).subscribe({
             next: (response: HttpResponse<Result>) => {
                 if (response.body) {
                     this.onSubmitSuccess(response.body);

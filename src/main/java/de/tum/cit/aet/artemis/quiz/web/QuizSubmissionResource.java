@@ -263,9 +263,7 @@ public class QuizSubmissionResource {
         log.debug("REST request to submit QuizSubmission for training : {}", quizSubmission);
 
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
-
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
         Result result = quizSubmissionService.submitForTraining(quizSubmission, quizExercise, user);
 
         return ResponseEntity.ok(result);
