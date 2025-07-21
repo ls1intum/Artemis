@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -78,13 +80,16 @@ public class ParticipationTeamWebsocketService {
 
     // TODO: Follow-Up: move this into a separate service that contains all Hazelcast related data structures
 
-    // always access using the getter to ensure that the map is initialized
+    /** Always access using the getter to ensure that the map is initialized **/
+    @Nullable
     private Map<String, String> destinationTracker;
 
-    // always access using the getter to ensure that the map is initialized
+    /** Always access using the getter to ensure that the map is initialized **/
+    @Nullable
     private Map<String, Instant> lastTypingTracker;
 
-    // always access using the getter to ensure that the map is initialized
+    /** Always access using the getter to ensure that the map is initialized **/
+    @Nullable
     private Map<String, Instant> lastActionTracker;
 
     public ParticipationTeamWebsocketService(WebsocketMessagingService websocketMessagingService, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
@@ -119,7 +124,7 @@ public class ParticipationTeamWebsocketService {
      *
      * @return the last action tracker map
      */
-    public Map<String, Instant> getLastActionTracker() {
+    private Map<String, Instant> getLastActionTracker() {
         if (this.lastActionTracker == null) {
             this.lastActionTracker = this.hazelcastInstance.getMap("lastActionTracker");
         }
