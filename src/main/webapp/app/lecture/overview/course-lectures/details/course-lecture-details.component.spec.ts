@@ -95,7 +95,7 @@ describe('CourseLectureDetailsComponent', () => {
         const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
 
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse), MockDirective(NgbPopover)],
+            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse), MockDirective(NgbPopover), FaIconComponent],
             declarations: [
                 CourseLectureDetailsComponent,
                 MockComponent(AttachmentVideoUnitComponent),
@@ -113,7 +113,6 @@ describe('CourseLectureDetailsComponent', () => {
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(SidePanelComponent),
-                MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(DiscussionSectionComponent),

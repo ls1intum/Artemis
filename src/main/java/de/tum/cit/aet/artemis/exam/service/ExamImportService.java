@@ -308,7 +308,8 @@ public class ExamImportService {
                     // Fetching the tasks separately, as putting it in the query above leads to Hibernate duplicating the tasks.
                     var templateTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(originalProgrammingExercise.getId());
                     originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
-
+                    Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(originalProgrammingExercise.getId());
+                    originalProgrammingExercise.setGradingCriteria(gradingCriteria);
                     prepareProgrammingExerciseForExamImport((ProgrammingExercise) exerciseToCopy);
                     yield Optional
                             .of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, (ProgrammingExercise) exerciseToCopy, false, false, false));
@@ -352,10 +353,6 @@ public class ExamImportService {
         newExercise.setDueDate(null);
         newExercise.setAssessmentDueDate(null);
         newExercise.setExampleSolutionPublicationDate(null);
-
-        // Fetch grading criterion into exercise. For course exercises, this is performed before sending the exercise to the client.
-        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(newExercise.getId());
-        newExercise.setGradingCriteria(gradingCriteria);
 
         newExercise.forceNewProjectKey();
     }

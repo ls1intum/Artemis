@@ -215,7 +215,7 @@ describe('ModelingSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
+        expect(submitButton.componentInstance.disabled).toBeFalse();
         expect(comp.isActive).toBeTrue();
     });
 
@@ -230,7 +230,7 @@ describe('ModelingSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
+        expect(submitButton.componentInstance.disabled).toBeTrue();
     });
 
     it('should allow to submit after the due date if the initialization date is after the due date and not submitted', () => {
@@ -246,7 +246,7 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.isLate).toBeTrue();
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
+        expect(submitButton.componentInstance.disabled).toBeFalse();
         submission.submitted = true;
     });
 
@@ -260,7 +260,7 @@ describe('ModelingSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
+        expect(submitButton.componentInstance.disabled).toBeTrue();
     });
 
     it('should get inactive as soon as the due date passes the current date', () => {

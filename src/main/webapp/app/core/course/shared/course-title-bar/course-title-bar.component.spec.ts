@@ -141,10 +141,10 @@ describe('CourseTitleBarComponent', () => {
 
         // Verify icon types
         const sidebarIcon = faIconElements[0].componentInstance;
-        expect(sidebarIcon.icon).toBe(facSidebar);
+        expect(sidebarIcon.icon()).toBe(facSidebar);
 
         const chevronIcon = faIconElements[1].componentInstance;
-        expect(chevronIcon.icon).toBe(faChevronRight);
+        expect(chevronIcon.icon()).toBe(faChevronRight);
     });
 
     it('should have the correct styling classes on the title bar', () => {

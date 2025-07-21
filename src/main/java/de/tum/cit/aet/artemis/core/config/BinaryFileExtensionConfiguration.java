@@ -28,7 +28,7 @@ public class BinaryFileExtensionConfiguration {
             ".jar", ".class", ".war", ".ear",
 
             // Compiled Python files
-            ".pyc", ".pyo", ".pyd",
+            ".pyc", ".pyo", ".pyd", ".npy",
 
             // Compiled C/C++/.NET/Go files
             ".o", ".so", ".a", ".dylib", ".lib", ".dll", ".exp", ".pdb",

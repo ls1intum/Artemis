@@ -37,6 +37,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -64,7 +65,7 @@ describe('ExampleTextSubmissionComponent', () => {
             },
         } as any;
         TestBed.configureTestingModule({
-            imports: [FormsModule],
+            imports: [FormsModule, FaIconComponent],
             declarations: [
                 MockDirective(TranslateDirective),
                 ExampleTextSubmissionComponent,
