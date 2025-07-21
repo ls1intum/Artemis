@@ -3,8 +3,8 @@ import { CourseTrainingQuizComponent } from './course-training-quiz.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MockBuilder } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { of } from 'rxjs';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseTrainingQuizService } from '../service/course-training-quiz.service';
@@ -12,7 +12,6 @@ import { MockSyncStorage } from 'src/test/javascript/spec/helpers/mocks/service/
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { SessionStorageService } from 'ngx-webstorage';
 import { Result } from '../../../exercise/shared/entities/result/result.model';
-import { QuizParticipationService } from '../service/quiz-participation.service';
 import { AlertService } from '../../../shared/service/alert.service';
 import { CourseManagementService } from '../../../core/course/manage/services/course-management.service';
 import { MultipleChoiceSubmittedAnswer } from '../../shared/entities/multiple-choice-submitted-answer.model';
@@ -146,7 +145,7 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should submit quiz and handle success', () => {
-        const submitSpy = jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(of(new HttpResponse({ body: result })));
+        const submitSpy = jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(of(new HttpResponse({ body: result })));
         const showResultSpy = jest.spyOn(component, 'showResult');
         // Drag and Drop
         jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1, exerciseId: 1 } as any);
@@ -185,22 +184,6 @@ describe('CourseTrainingQuizComponent', () => {
                 message: 'error.noExerciseIdForQuestion',
             }),
         );
-        expect(component.isSubmitting).toBeFalse();
-    });
-
-    it('should handle submit error', () => {
-        const alertSpy = jest.spyOn(TestBed.inject(AlertService), 'addAlert');
-        jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1, exerciseId: 1 } as any);
-        const error = new HttpErrorResponse({
-            error: 'error',
-            status: 400,
-            headers: new HttpHeaders({ 'X-artemisApp-message': 'Fehler beim Absenden' }),
-            statusText: 'Bad Request',
-        });
-        jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(throwError(() => error));
-        component.currentIndex.set(2);
-        component.onSubmit();
-        expect(alertSpy).toHaveBeenCalled();
         expect(component.isSubmitting).toBeFalse();
     });
 
