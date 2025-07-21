@@ -11,6 +11,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { By } from '@angular/platform-browser';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('KnowledgeAreaEditComponent', () => {
     let componentFixture: ComponentFixture<KnowledgeAreaEditComponent>;
@@ -36,7 +37,7 @@ describe('KnowledgeAreaEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule],
+            imports: [ReactiveFormsModule, FaIconComponent],
             declarations: [
                 KnowledgeAreaEditComponent,
                 MockComponent(ButtonComponent),

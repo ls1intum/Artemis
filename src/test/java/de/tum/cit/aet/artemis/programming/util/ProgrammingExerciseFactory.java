@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Value;
 
@@ -17,12 +18,15 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -60,6 +64,23 @@ public class ProgrammingExerciseFactory {
      */
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
         return generateProgrammingExercise(releaseDate, dueDate, course, ProgrammingLanguage.JAVA);
+    }
+
+    /**
+     * Generates a programming exercise for the given course. Configures only exercise's schedule, no other properties.
+     *
+     * @param releaseDate       The release date of the exercise.
+     * @param startDate         The start date of the exercise.
+     * @param dueDate           The due date of the exercise.
+     * @param assessmentDueDate The assessment due date of the exercise.
+     * @param course            The course of the exercise.
+     * @return The newly generated programming exercise.
+     */
+    public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
+            Course course) {
+        var programmingExercise = (ProgrammingExercise) ExerciseFactory.populateExercise(new ProgrammingExercise(), releaseDate, dueDate, assessmentDueDate, course);
+        programmingExercise.setStartDate(startDate);
+        return programmingExercise;
     }
 
     /**
@@ -216,9 +237,30 @@ public class ProgrammingExerciseFactory {
         toBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(template.getBuildAndTestStudentSubmissionsAfterDueDate());
         toBeImported.generateAndSetProjectKey();
         toBeImported.setPlagiarismDetectionConfig(template.getPlagiarismDetectionConfig());
-
+        toBeImported.setGradingCriteria(template.getGradingCriteria());
         toBeImported.setBuildConfig(buildConfig);
         return toBeImported;
+    }
+
+    public static @NotNull Set<GradingCriterion> generateGradingCriteria(Exercise exercise) {
+        Set<GradingCriterion> criteria = new HashSet<>();
+        GradingCriterion toBeImportedCriterion = new GradingCriterion();
+        toBeImportedCriterion.setTitle("criterionTitle");
+        Set<GradingInstruction> instructions = new HashSet<>();
+        GradingInstruction toBeImportedInstruction = new GradingInstruction();
+        toBeImportedInstruction.setInstructionDescription("instructionDescription");
+        toBeImportedInstruction.setGradingScale("gradingScale");
+        toBeImportedInstruction.setFeedback("feedback");
+        toBeImportedInstruction.setUsageCount(0);
+        toBeImportedInstruction.setCredits(0.0);
+        toBeImportedInstruction.setGradingCriterion(toBeImportedCriterion);
+        instructions.add(toBeImportedInstruction);
+        toBeImportedCriterion.setStructuredGradingInstructions(instructions);
+        criteria.add(toBeImportedCriterion);
+        criteria.forEach(criterion -> {
+            criterion.setExercise(exercise);
+        });
+        return criteria;
     }
 
     /**

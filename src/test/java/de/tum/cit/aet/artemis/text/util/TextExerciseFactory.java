@@ -39,6 +39,23 @@ public class TextExerciseFactory {
     }
 
     /**
+     * Generates a TextExercise for a Course.
+     *
+     * @param startDate         The release date of the TextExercise
+     * @param releaseDate       The release date of the TextExercise
+     * @param dueDate           The due date of the TextExercise
+     * @param assessmentDueDate The assessment due date of the TextExercise
+     * @param course            The Course to which the TextExercise belongs
+     * @return The generated TextExercise
+     */
+    public static TextExercise generateTextExercise(ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
+        var textExercise = (TextExercise) ExerciseFactory.populateExercise(new TextExercise(), releaseDate, dueDate, assessmentDueDate, course);
+        textExercise.setStartDate(startDate);
+        textExercise.setExampleSolution("This is my example solution");
+        return textExercise;
+    }
+
+    /**
      * Generates a TextExercise for an Exam.
      *
      * @param exerciseGroup The ExerciseGroup to which the TextExercise belongs

@@ -15,6 +15,7 @@ import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-obser
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 type Store = {
     [key: string]: any;
@@ -40,7 +41,7 @@ describe('TextUnitFormComponent', () => {
         });
 
         await TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
+            imports: [ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule), FontAwesomeTestingModule],
             declarations: [
                 TextUnitFormComponent,
                 MockComponent(MarkdownEditorMonacoComponent),

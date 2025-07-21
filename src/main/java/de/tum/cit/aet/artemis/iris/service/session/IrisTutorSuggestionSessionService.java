@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris.service.session;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -24,7 +23,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
@@ -43,8 +41,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
@@ -96,7 +92,8 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
             PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, PyrisDTOService pyrisDTOService, PostRepository postRepository, UserRepository userRepository) {
-        super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
+        super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisChatWebsocketService,
+                llmTokenUsageService);
         this.irisSessionRepository = irisSessionRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.rateLimitService = rateLimitService;
@@ -209,22 +206,6 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     public void checkIsFeatureActivatedFor(IrisTutorSuggestionSession irisSession) {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, post.getCoursePostingBelongsTo());
-    }
-
-    private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
-        List<ProgrammingExerciseStudentParticipation> participations;
-        if (exercise.isTeamMode()) {
-            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionByExerciseIdAndStudentLoginInTeam(exercise.getId(), user.getLogin());
-        }
-        else {
-            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
-        }
-
-        if (participations.isEmpty()) {
-            return Optional.empty();
-        }
-        return participations.getLast().getSubmissions().stream().max(Submission::compareTo)
-                .flatMap(sub -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(sub.getId()));
     }
 
     /**

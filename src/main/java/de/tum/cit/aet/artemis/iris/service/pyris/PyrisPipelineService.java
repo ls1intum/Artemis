@@ -265,15 +265,15 @@ public class PyrisPipelineService {
                 var user = userRepository.findByIdElseThrow(session.getUserId());
                 return new PyrisTutorSuggestionPipelineExecutionDTO(
                     new PyrisCourseDTO(course),
-                new PyrisPostDTO(post),
-                pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
+                    new PyrisPostDTO(post),
+                    pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                     new PyrisUserDTO(user),
-                executionDto.settings(),
-                executionDto.initialStages(),
-                textExerciseDTOOptional,
-                submissionDTO,
-                exerciseDTO,
-                lectureIdOptional
+                    executionDto.settings(),
+                    executionDto.initialStages(),
+                    textExerciseDTOOptional,
+                    submissionDTO,
+                    exerciseDTO,
+                    lectureIdOptional
                 );
             },
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)

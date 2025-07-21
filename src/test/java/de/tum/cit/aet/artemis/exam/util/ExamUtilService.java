@@ -17,7 +17,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -155,6 +157,9 @@ public class ExamUtilService {
 
     @Autowired
     private FileUploadSubmissionRepository fileUploadSubmissionRepo;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     /**
      * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises.
@@ -551,6 +556,34 @@ public class ExamUtilService {
     }
 
     /**
+     * Creates and saves an Exam without ExerciseGroups and Exercises.
+     *
+     * @param course                 The Course to which the Exam should be added
+     * @param visibleDate            The visible date of the Exam
+     * @param startDate              The start date of the Exam
+     * @param endDate                The end date of the Exam
+     * @param publishResultsDate     The results publication date of the Exam
+     * @param studentReviewStartDate The date on which the student review starts
+     * @param studentReviewEndDate   The date on which the student review ends
+     * @return The newly created Exam
+     */
+    public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime publishResultsDate,
+            ZonedDateTime studentReviewStartDate, ZonedDateTime studentReviewEndDate, String examiner) {
+        Exam exam = ExamFactory.generateExam(course);
+        exam.setVisibleDate(visibleDate);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        exam.setPublishResultsDate(publishResultsDate);
+        exam.setExamStudentReviewStart(studentReviewStartDate);
+        exam.setExamStudentReviewEnd(studentReviewEndDate);
+        exam.setWorkingTime(exam.getDuration());
+        exam.setGracePeriod(180);
+        exam.setExaminer(examiner);
+        exam = examRepository.save(exam);
+        return exam;
+    }
+
+    /**
      * Creates and saves a Channel for the given Exam.
      *
      * @param exam        The Exam for which the Channel should be created
@@ -680,6 +713,27 @@ public class ExamUtilService {
         quizGroup.addExercise(quiz);
         exerciseRepository.save(quiz);
 
+        return exam;
+    }
+
+    /**
+     * Creates and saves an exam with five exercise groups (0: modelling, 1: text, 2: file upload, 3: quiz, 4: programming)
+     *
+     * @param course The Course to which the Exam should be added
+     * @return The newly created Exam
+     */
+    public Exam addExamWithModellingAndTextAndFileUploadAndQuizAndProgramming(Course course) {
+        Exam exam = addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
+        ExerciseGroup programmingGroup = exam.getExerciseGroups().get(4);
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup);
+        Set<GradingCriterion> gradingCriteria = ProgrammingExerciseFactory.generateGradingCriteria(programmingExercise);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        exerciseRepository.save(programmingExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+
+        programmingGroup.addExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         return exam;
     }
 

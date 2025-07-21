@@ -213,10 +213,7 @@
             "structureTestOracleWarning": "This action extracts all structural tests from the test repository and saves them in the test.json file. ATTENTION: All uncommitted changes from the online editor will be lost!",
             "checkPlagiarism": "Plagiarism",
             "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
-            "combineTemplateCommitsWarning": "This action combines all commits in the template repository into one commit. ATTENTION: All uncommitted changes from the online editor will be lost!",
-            "combineTemplateCommitsError": "Template repository commits could not be combined.",
             "repositoryFilesError": "Repository files could not be retrieved.",
-            "combineTemplateCommitsSuccess": "Template repository commits have been successfully combined.",
             "editable": {
                 "unsaved": "Unsaved.",
                 "unsavedTooltip": "There are unsaved changes in the problem statement.",
@@ -737,7 +734,9 @@
             },
             "artemisIntelligence": {
                 "consistencyCheckAlert": {
-                    "title": "Consistency Check Result"
+                    "title": "Consistency Check Result",
+                    "improvement": "Suggestion for improvement",
+                    "inconsistencies": "Please review the FAQ for inconsistencies and adjust it accordingly to ensure clarity and coherence."
                 }
             }
         },

@@ -29,7 +29,8 @@ describe('SavedPostsComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            declarations: [SavedPostsComponent, MockDirective(TranslateDirective), MockComponent(FaIconComponent), MockComponent(PostingSummaryComponent)],
+            imports: [FaIconComponent],
+            declarations: [SavedPostsComponent, MockDirective(TranslateDirective), MockComponent(PostingSummaryComponent)],
             providers: [{ provide: SavedPostService, useValue: mockSavedPostService }],
         }).compileComponents();
 

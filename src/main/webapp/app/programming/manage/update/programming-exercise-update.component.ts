@@ -54,6 +54,7 @@ import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
 import { FileService } from 'app/shared/service/file.service';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -91,6 +92,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly aeolusService = inject(AeolusService);
+    private readonly calendarEventService = inject(CalendarEventService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -785,6 +787,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
+        this.calendarEventService.refresh();
     }
 
     private onSaveError(error: HttpErrorResponse) {

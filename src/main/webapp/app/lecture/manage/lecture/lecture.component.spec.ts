@@ -27,6 +27,7 @@ import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachm
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -104,6 +105,7 @@ describe('Lecture', () => {
         } as unknown as ProfileInfo;
 
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 LectureComponent,
                 MockPipe(ArtemisTranslatePipe),
