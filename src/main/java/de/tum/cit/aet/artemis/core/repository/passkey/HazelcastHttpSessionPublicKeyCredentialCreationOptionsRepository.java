@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.repository.passkey;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -11,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialCreationOptions;
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.stereotype.Repository;
@@ -20,7 +21,6 @@ import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
 
 /**
@@ -58,6 +58,7 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
     /** Name of the Hazelcast map used for credential creation options */
     private static final String MAP_NAME = "http-session-public-key-credential-creation-options-map";
 
+    @Nullable
     private IMap<String, PublicKeyCredentialCreationOptionsDTO> creationOptionsMap;
 
     /**
@@ -72,13 +73,19 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
     /**
      * Initializes the Hazelcast map with a TTL of 5 minutes for credential creation options.
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void init() {
-        int registrationOptionsTimeToLive = 300; // 5 minutes
+        int registrationOptionsTimeToLive = 60 * 5; // 5 minutes
 
         MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
         mapConfig.setTimeToLiveSeconds(registrationOptionsTimeToLive);
-        creationOptionsMap = hazelcastInstance.getMap(MAP_NAME);
+    }
+
+    private IMap<String, PublicKeyCredentialCreationOptionsDTO> getCreationOptionsMap() {
+        if (this.creationOptionsMap == null) {
+            this.creationOptionsMap = hazelcastInstance.getMap(MAP_NAME);
+        }
+        return this.creationOptionsMap;
     }
 
     /**
@@ -108,10 +115,10 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
         }
 
         if (options != null) {
-            creationOptionsMap.put(userId, PublicKeyCredentialCreationOptionsDTO.publicKeyCredentialCreationOptionsToDTO(options));
+            getCreationOptionsMap().put(userId, PublicKeyCredentialCreationOptionsDTO.publicKeyCredentialCreationOptionsToDTO(options));
         }
         else {
-            creationOptionsMap.remove(session.getId());
+            getCreationOptionsMap().remove(session.getId());
         }
     }
 
@@ -129,7 +136,7 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
             return null;
         }
 
-        PublicKeyCredentialCreationOptionsDTO creationOptions = creationOptionsMap.get(userId);
+        PublicKeyCredentialCreationOptionsDTO creationOptions = getCreationOptionsMap().get(userId);
         if (creationOptions == null) {
             log.warn("No cached PublicKeyCredentialCreationOptions found for user '{}'", userId);
             return null;
