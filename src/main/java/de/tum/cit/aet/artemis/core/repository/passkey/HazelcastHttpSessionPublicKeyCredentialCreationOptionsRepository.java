@@ -81,6 +81,12 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
         mapConfig.setTimeToLiveSeconds(registrationOptionsTimeToLive);
     }
 
+    /**
+     * Lazy init: Retrieves the Hazelcast map that stores the public key credential creation options.
+     * If the map is not initialized, it initializes it.
+     *
+     * @return The map of public key credential creation options.
+     */
     private IMap<String, PublicKeyCredentialCreationOptionsDTO> getCreationOptionsMap() {
         if (this.creationOptionsMap == null) {
             this.creationOptionsMap = hazelcastInstance.getMap(MAP_NAME);
