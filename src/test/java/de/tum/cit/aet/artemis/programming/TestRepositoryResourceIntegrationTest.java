@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
@@ -83,9 +84,10 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         var testRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(testRepo.workingCopyGitRepoFile, localVCRepoPath));
         programmingExercise.setTestRepositoryUri(testRepoUri.toString());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri,
-                false);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri),
+                eq(true), anyBoolean());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri),
+                eq(false), anyBoolean());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri),
                 eq(true), any());

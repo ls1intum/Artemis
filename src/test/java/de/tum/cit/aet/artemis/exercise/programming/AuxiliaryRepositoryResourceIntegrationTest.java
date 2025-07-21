@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
@@ -125,9 +126,9 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         auxiliaryRepository = programmingExercise.getAuxiliaryRepositories().getFirst();
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localAuxiliaryRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(auxRepoUri, true);
+                .getOrCheckoutRepository(eq(auxRepoUri), eq(true), anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localAuxiliaryRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(auxRepoUri, false);
+                .getOrCheckoutRepository(eq(auxRepoUri), eq(false), anyBoolean());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localAuxiliaryRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(auxRepoUri), eq(true), any());
@@ -165,7 +166,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFilesAsInstructor_checkoutConflict() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        doThrow(new WrongRepositoryStateException("conflict")).when(gitService).getOrCheckoutRepository(auxRepoUri, true);
+        doThrow(new WrongRepositoryStateException("conflict")).when(gitService).getOrCheckoutRepository(eq(auxRepoUri), eq(true), anyBoolean());
 
         request.getMap(testRepoBaseUrl + auxiliaryRepository.getId() + "/files", HttpStatus.CONFLICT, String.class, FileType.class);
     }
@@ -425,7 +426,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveFiles_conflict() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        doThrow(new WrongRepositoryStateException("conflict")).when(gitService).getOrCheckoutRepository(auxRepoUri, true);
+        doThrow(new WrongRepositoryStateException("conflict")).when(gitService).getOrCheckoutRepository(eq(auxRepoUri), eq(true), anyBoolean());
 
         request.put(testRepoBaseUrl + auxiliaryRepository.getId() + "/files?commit=true", List.of(), HttpStatus.CONFLICT);
     }
@@ -434,7 +435,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveFiles_serviceUnavailable() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        doThrow(new TransportException("unavailable")).when(gitService).getOrCheckoutRepository(auxRepoUri, true);
+        doThrow(new TransportException("unavailable")).when(gitService).getOrCheckoutRepository(eq(auxRepoUri), eq(true), anyBoolean());
 
         request.put(testRepoBaseUrl + auxiliaryRepository.getId() + "/files?commit=true", List.of(), HttpStatus.SERVICE_UNAVAILABLE);
     }
