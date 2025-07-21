@@ -106,8 +106,8 @@ public class ParticipationTeamWebsocketService {
     }
 
     /**
-     * Lazy Init: Returns the destination tracker map which keeps track of the destination that each session is subscribed to.
-     * This is used to send out the list of online team members when a user subscribes or unsubscribes.
+     * Lazy Init: Returns the last typing tracker map which keeps track of the last typing date for each user in a participation.
+     * This is used to determine which team members are currently typing.
      *
      * @return the destination tracker map
      */
