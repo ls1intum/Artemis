@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
@@ -290,6 +291,14 @@ public class AdminBuildJobQueueResource {
     @PutMapping("agents/{agentName}/concurrent-builds/{newSize}")
     public ResponseEntity<Void> adjustBuildAgentCapacity(@PathVariable String agentName, @PathVariable int newSize) {
         log.debug("REST request to adjust concurrent build size of agent {} to {}", agentName, newSize);
+
+        if (agentName == null || agentName.trim().isEmpty()) {
+            throw new BadRequestAlertException("Agent name cannot be null or empty", "agentName", "agentNameInvalid");
+        }
+        if (newSize <= 0) {
+            throw new BadRequestAlertException("Concurrent build size must be positive", "newSize", "invalidConcurrentSize");
+        }
+
         localCIBuildJobQueueService.adjustBuildAgentCapacity(agentName, newSize);
         return ResponseEntity.noContent().build();
     }
