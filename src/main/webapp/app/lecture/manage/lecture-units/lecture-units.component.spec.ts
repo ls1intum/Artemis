@@ -19,7 +19,7 @@ import { OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit
 import { AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit, LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
@@ -723,17 +723,21 @@ describe('LectureUpdateUnitsComponent', () => {
         attachmentVideoUnit.id = 1;
         attachmentVideoUnit.attachment = attachment;
 
+        const transcript: LectureTranscriptionDTO = {
+            lectureUnitId: 1,
+            language: 'en',
+            segments: [],
+        };
+
         jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-        const getTranscriptionSpy = jest
-            .spyOn(lectureTranscriptionService, 'getTranscription')
-            .mockReturnValue(of({ id: 1, videoUnitId: 1, language: 'en', content: 'test' } as any));
+        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(transcript));
 
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
             expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-            expect(wizardUnitComponent.currentlyProcessedAttachmentVideoUnit?.transcriptionProperties?.content).toBe('test');
+            expect(wizardUnitComponent.currentlyProcessedAttachmentVideoUnit?.transcriptionProperties).toBe(transcript);
         });
     }));
 
@@ -780,8 +784,10 @@ describe('LectureUpdateUnitsComponent', () => {
                 fileName: 'lorem ipsum',
             },
             transcriptionProperties: {
-                language: 'en',
-                content: 'test transcription',
+                videoTranscription: JSON.stringify({
+                    language: 'en',
+                    content: 'test transcription',
+                }),
             },
         };
 
@@ -793,7 +799,7 @@ describe('LectureUpdateUnitsComponent', () => {
             status: 201,
         });
         const createAttachmentVideoUnitStub = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
-        const createTranscriptionStub = jest.spyOn(lectureTranscriptionService, 'createTranscription').mockReturnValue(of(new HttpResponse({ status: 201 })));
+        const createTranscriptionStub = jest.spyOn(lectureTranscriptionService, 'createTranscription').mockReturnValue(of(true));
 
         wizardUnitComponentFixture.detectChanges();
         tick();

@@ -183,7 +183,11 @@ describe('CreateAttachmentVideoUnitComponent', () => {
 
         createAttachmentVideoUnitComponentFixture.whenStable().then(() => {
             expect(createAttachmentVideoUnitStub).toHaveBeenCalledOnce();
-            expect(createTranscriptionStub).toHaveBeenCalledWith(1, attachmentVideoUnit.id, JSON.parse(attachmentVideoUnitFormData.transcriptionProperties?.videoTranscription!));
+            expect(createTranscriptionStub).toHaveBeenCalledWith(
+                1,
+                attachmentVideoUnit.id,
+                JSON.parse(attachmentVideoUnitFormData.transcriptionProperties?.videoTranscription ?? ''),
+            );
         });
     }));
 });

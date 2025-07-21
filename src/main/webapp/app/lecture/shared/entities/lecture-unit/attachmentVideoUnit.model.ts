@@ -7,6 +7,7 @@ export class AttachmentVideoUnit extends LectureUnit {
     public attachment?: Attachment;
     public slides?: Slide[];
     public videoSource?: string;
+    public transcriptionProperties?: LectureTranscriptionDTO;
     public pyrisIngestionState?: IngestionState;
 
     constructor() {
