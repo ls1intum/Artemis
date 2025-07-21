@@ -17,6 +17,7 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
+import org.checkerframework.checker.units.qual.C;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.GitCommand;
@@ -143,12 +144,13 @@ public abstract class AbstractGitService {
      * @param remoteRepositoryUri The URI of the remote repository, not null.
      * @param defaultBranch       The name of the default branch to be checked out, not null.
      * @param isBare              Whether the repository is a bare repository (without working directory)
+     * @param writeAccess         Whether we write to the repository or not. If true, we set the git Repo config for better performance.
      * @return The configured Repository instance.
      * @throws IOException             If an I/O error occurs during repository initialization or configuration.
      * @throws InvalidRefNameException If the provided default branch name is invalid.
      */
     @NotNull
-    public static Repository linkRepositoryForExistingGit(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare)
+    public static Repository linkRepositoryForExistingGit(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare, boolean writeAccess)
             throws IOException, InvalidRefNameException {
         // Open the repository from the filesystem
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
@@ -164,27 +166,33 @@ public abstract class AbstractGitService {
 
         try (Repository repository = new Repository(builder, localPath, remoteRepositoryUri)) {
             // Read JavaDoc for more information
-            StoredConfig gitRepoConfig = repository.getConfig();
-            gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
-            gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_RECEIVE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOGC, false);
-
-            // disable symlinks to avoid security issues such as remote code execution
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
-            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
-            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
-
-            // Important for new / empty repositories so the default branch is set correctly.
-            RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
-            refUpdate.setForceUpdate(true);
-            refUpdate.link("refs/heads/" + defaultBranch);
-
-            gitRepoConfig.save();
+            if (writeAccess) {
+                setRepoConfig(defaultBranch, repository);
+            }
 
             return repository;
         }
+    }
+
+    private static void setRepoConfig(String defaultBranch, Repository repository) throws IOException {
+        StoredConfig gitRepoConfig = repository.getConfig();
+        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
+        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_RECEIVE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOGC, false);
+
+        // disable symlinks to avoid security issues such as remote code execution
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
+        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
+        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
+
+        // Important for new / empty repositories so the default branch is set correctly.
+        RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
+        refUpdate.setForceUpdate(true);
+        refUpdate.link("refs/heads/" + defaultBranch);
+
+        gitRepoConfig.save();
     }
 
     /**
@@ -215,7 +223,7 @@ public abstract class AbstractGitService {
     protected static Repository openCheckedOutRepositoryFromFileSystem(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch)
             throws IOException, InvalidRefNameException {
 
-        return linkRepositoryForExistingGit(localPath, remoteRepositoryUri, defaultBranch, false);
+        return linkRepositoryForExistingGit(localPath, remoteRepositoryUri, defaultBranch, false, false);
     }
 
     /**
