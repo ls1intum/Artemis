@@ -12,6 +12,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     let comp: StructuredGradingInstructionsAssessmentLayoutComponent;
@@ -19,7 +20,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
+            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse), FaIconComponent],
             declarations: [
                 StructuredGradingInstructionsAssessmentLayoutComponent,
                 MockComponent(HelpIconComponent),

@@ -127,12 +127,6 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.version-control.password}")
     protected String gitPassword;
 
-    // TODO: clean up properly in multi node environments
-    private final Map<Path, Repository> cachedRepositories = new ConcurrentHashMap<>();
-
-    // TODO: clean up when exercise or participation is deleted
-    private final Map<Path, Repository> cachedBareRepositories = new ConcurrentHashMap<>();
-
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
     private final ZipFileService zipFileService;
@@ -459,22 +453,6 @@ public class GitService extends AbstractGitService {
         }
     }
 
-    /**
-     * Checks whether the repository is cached.
-     * This method does only support repositories that use the repoClonePath which is set in the application-artemis.yml file!
-     *
-     * @param repositoryUri the url of the repository
-     * @return returns true if the repository is already cached
-     */
-    public boolean isRepositoryCached(VcsRepositoryUri repositoryUri) {
-        Path localPath = getLocalPathOfRepo(repoClonePath, repositoryUri);
-        if (localPath == null) {
-            return false;
-        }
-        // Check if the repository is already cached in the server's session.
-        return cachedRepositories.containsKey(localPath);
-    }
-
     public Path getDefaultLocalPathOfRepo(VcsRepositoryUri targetUrl) {
         return getLocalPathOfRepo(repoClonePath, targetUrl);
     }
@@ -498,8 +476,7 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Get an existing git repository that is checked out on the server. Returns immediately null if the localPath does not exist. Will first try to retrieve a cached repository
-     * from cachedRepositories. Side effect: This method caches retrieved repositories in a HashMap, so continuous retrievals can be avoided (reduces load).
+     * Get an existing git repository that is checked out on the server. Returns immediately null if the localPath does not exist.
      *
      * @param localPath           to git repo on server.
      * @param remoteRepositoryUri the remote repository uri for the git repository, will be added to the Repository object for later use, can be null
@@ -510,8 +487,7 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Get an existing git repository that is checked out on the server. Returns immediately null if the localPath does not exist. Will first try to retrieve a cached repository
-     * from cachedRepositories. Side effect: This method caches retrieved repositories in a HashMap, so continuous retrievals can be avoided (reduces load).
+     * Get an existing git repository that is checked out on the server. Returns immediately null if the localPath does not exist.
      *
      * @param localPath           to git repo on server.
      * @param remoteRepositoryUri the remote repository uri for the git repository, will be added to the Repository object for later use, can be null
@@ -520,24 +496,11 @@ public class GitService extends AbstractGitService {
      */
     public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri, String defaultBranch) {
         try {
-            // Check if there is a folder with the provided path of the git repository.
             if (!Files.exists(localPath)) {
-                // In this case we should remove the repository if cached, because it can't exist anymore.
-                cachedRepositories.remove(localPath);
                 return null;
             }
-
-            // Check if the repository is already cached in the server's session.
-            Repository cachedRepository = cachedRepositories.get(localPath);
-            if (cachedRepository != null) {
-                return cachedRepository;
-            }
-            // Else try to retrieve the git repository from our server. It could e.g. be the case that the folder is there, but there is no .git folder in it!
-            Repository repository = linkRepositoryForExistingGit(localPath, remoteRepositoryUri, defaultBranch, false);
-
-            // Cache the JGit repository object for later use: avoids the expensive re-opening of local repositories
-            cachedRepositories.put(localPath, repository);
-            return repository;
+            // Try to retrieve the git repository from our server.
+            return linkRepositoryForExistingGit(localPath, remoteRepositoryUri, defaultBranch, false);
         }
         catch (IOException | InvalidRefNameException ex) {
             log.warn("Cannot get existing checkout out repository by local path: {}", ex.getMessage());
@@ -970,15 +933,8 @@ public class GitService extends AbstractGitService {
     public Repository getBareRepository(VcsRepositoryUri repositoryUri, String branch) {
         var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
         var localPath = localRepoUri.getLocalRepositoryPath(localVCBasePath);
-        // Check if the repository is already cached in the server's session.
-        Repository cachedRepository = cachedBareRepositories.get(localPath);
-        if (cachedRepository != null) {
-            return cachedRepository;
-        }
         try {
-            var repository = linkRepositoryForExistingGit(localPath, repositoryUri, branch, true);
-            cachedBareRepositories.put(localPath, repository);
-            return repository;
+            return linkRepositoryForExistingGit(localPath, repositoryUri, branch, true);
         }
         catch (IOException | InvalidRefNameException e) {
             log.error("Could not create the bare repository with uri {}", repositoryUri, e);
@@ -999,15 +955,8 @@ public class GitService extends AbstractGitService {
     public Repository getExistingBareRepository(VcsRepositoryUri repositoryUri, String branch) {
         var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
         var localPath = localRepoUri.getLocalRepositoryPath(localVCBasePath);
-        // Check if the repository is already cached in the server's session.
-        Repository cachedRepository = cachedBareRepositories.get(localPath);
-        if (cachedRepository != null) {
-            return cachedRepository;
-        }
         try {
-            var repository = getExistingBareRepository(localPath, repositoryUri, branch);
-            cachedBareRepositories.put(localPath, repository);
-            return repository;
+            return getExistingBareRepository(localPath, repositoryUri, branch);
         }
         catch (IOException | InvalidRefNameException e) {
             log.error("Could not create the bare repository with uri {}", repositoryUri, e);
@@ -1189,9 +1138,6 @@ public class GitService extends AbstractGitService {
      * Returns all files and directories within the working copy of the given repository in a map, excluding symbolic links.
      * This method performs a file scan and filters out symbolic links.
      * It only supports checked-out repositories (not bare ones)
-     * <p>
-     * Note: This method does not handle changes to the repository content between invocations. If files change
-     * after the initial caching, the cache does not automatically refresh, which may lead to stale data.
      *
      * @param repo         The repository to scan for files and directories.
      * @param omitBinaries do not include binaries to reduce payload size
@@ -1234,21 +1180,15 @@ public class GitService extends AbstractGitService {
      */
     @NotNull
     public Collection<File> getFiles(Repository repo) {
-        // Check if list of files is already cached
-        if (repo.getFiles() == null) {
-            FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-            Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), filter, filter);
-            Collection<File> files = new ArrayList<>();
+        FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
+        Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), filter, filter);
+        Collection<File> files = new ArrayList<>();
 
-            while (itr.hasNext()) {
-                files.add(new File(itr.next(), repo));
-            }
-
-            // Cache the list of files
-            // Avoid expensive rescanning
-            repo.setFiles(files);
+        while (itr.hasNext()) {
+            files.add(new File(itr.next(), repo));
         }
-        return repo.getFiles();
+
+        return files;
     }
 
     /**
@@ -1292,7 +1232,6 @@ public class GitService extends AbstractGitService {
      */
     @Override
     public void deleteLocalRepository(Repository repository) throws IOException {
-        cachedRepositories.remove(repository.getLocalPath());
         super.deleteLocalRepository(repository);
     }
 
@@ -1470,10 +1409,5 @@ public class GitService extends AbstractGitService {
             var commitInfo = CommitInfoDTO.of(commit);
             commitInfos.add(commitInfo);
         });
-    }
-
-    public void clearCachedRepositories() {
-        cachedRepositories.clear();
-        cachedBareRepositories.clear();
     }
 }

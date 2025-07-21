@@ -22,6 +22,7 @@ import { StandardizedCompetencyFilterComponent } from 'app/atlas/shared/standard
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('CourseImportStandardizedPrerequisitesComponent', () => {
     let componentFixture: ComponentFixture<CourseImportStandardizedPrerequisitesComponent>;
@@ -33,7 +34,13 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CourseImportStandardizedPrerequisitesComponent, StandardizedCompetencyFilterComponent, StandardizedCompetencyDetailComponent, KnowledgeAreaTreeComponent],
+            imports: [
+                CourseImportStandardizedPrerequisitesComponent,
+                StandardizedCompetencyFilterComponent,
+                StandardizedCompetencyDetailComponent,
+                KnowledgeAreaTreeComponent,
+                FaIconComponent,
+            ],
             declarations: [
                 StandardizedCompetencyFilterStubComponent,
                 StandardizedCompetencyDetailStubComponent,

@@ -6,6 +6,7 @@ import { DataExportRequestButtonDirective } from 'app/core/legal/data-export/con
 import { DataExportConfirmationDialogService } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-test-component',
@@ -21,19 +22,19 @@ describe('DataExportRequestButtonDirective', () => {
     let translateService: TranslateService;
     let translateSpy: jest.SpyInstance;
 
-    beforeEach(() =>
-        TestBed.configureTestingModule({
-            imports: [TestComponent],
+    beforeEach(() => {
+        const mockModalService = {
+            open: jest.fn().mockReturnValue({
+                result: Promise.resolve(),
+                componentInstance: {},
+            }),
+        };
+
+        return TestBed.configureTestingModule({
+            imports: [TestComponent, FaIconComponent],
             providers: [
-                {
-                    provide: TranslateService,
-                    useClass: MockTranslateService,
-                },
-                // if we don't provide the NgbModal, the dialogError subscriptions are undefined.
-                {
-                    provide: NgbModal,
-                    useValue: null,
-                },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: NgbModal, useValue: mockModalService },
             ],
         })
             .compileComponents()
@@ -43,8 +44,8 @@ describe('DataExportRequestButtonDirective', () => {
                 dataExportConfirmationDialogService = TestBed.inject(DataExportConfirmationDialogService);
                 translateService = TestBed.inject(TranslateService);
                 translateSpy = jest.spyOn(translateService, 'instant');
-            }),
-    );
+            });
+    });
 
     afterEach(() => {
         jest.restoreAllMocks();

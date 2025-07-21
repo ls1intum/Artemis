@@ -14,7 +14,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 
 describe('PrivacyComponent', () => {
     let component: PrivacyComponent;
@@ -33,7 +33,7 @@ describe('PrivacyComponent', () => {
                 },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: AccountService, useClass: MockAccountService },
-                provideHttpClient(),
+                provideHttpClient(withFetch()),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(PrivacyComponent);

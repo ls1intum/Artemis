@@ -56,7 +56,7 @@ describe('ExerciseSaveButtonComponent', () => {
         fixture.detectChanges();
 
         const icon = fixture.debugElement.query(By.directive(FaIconComponent));
-        expect(icon.componentInstance.icon).toBe(facSaveSuccess);
+        expect(icon.componentInstance.icon()).toBe(facSaveSuccess);
     });
 
     it('should display faFloppyDisk icon if submission is not synced and submitted', () => {
@@ -64,7 +64,7 @@ describe('ExerciseSaveButtonComponent', () => {
         fixture.detectChanges();
 
         const icon = fixture.debugElement.query(By.directive(FaIconComponent));
-        expect(icon.componentInstance.icon).toBe(faFloppyDisk);
+        expect(icon.componentInstance.icon()).toBe(faFloppyDisk);
     });
 
     it('should call onSave when the button is clicked and submission is not synced', () => {

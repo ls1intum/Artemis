@@ -35,6 +35,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
     template: '',
@@ -115,6 +116,7 @@ describe('ExamUpdateComponent', () => {
                     }),
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: ProfileService, useClass: MockProfileService },
+                    MockProvider(CalendarEventService),
                 ],
             }).compileComponents();
 
@@ -209,6 +211,9 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should update', fakeAsync(() => {
+            const calendarEventService = TestBed.inject(CalendarEventService);
+            const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+
             const navigateSpy = jest.spyOn(router, 'navigate');
             fixture.detectChanges();
 
@@ -229,6 +234,7 @@ describe('ExamUpdateComponent', () => {
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(component.isSaving).toBeFalse();
+            expect(refreshSpy).toHaveBeenCalledOnce();
         }));
 
         it('should calculate the working time for real exams correctly', () => {
