@@ -167,6 +167,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: exampleVideoUrl,
                 urlHelper: null,
+                generateTranscript: false,
             },
             fileProperties: {
                 file: fakeFile,
@@ -308,6 +309,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: exampleVideoUrl,
                 urlHelper: null,
+                generateTranscript: false,
             },
             fileProperties: {
                 file: undefined,
@@ -366,6 +368,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: '',
                 urlHelper: null,
+                generateTranscript: false,
             },
             fileProperties: {
                 file: fakeFile,
