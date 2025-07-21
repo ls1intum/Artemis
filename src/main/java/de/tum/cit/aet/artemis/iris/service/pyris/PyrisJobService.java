@@ -78,11 +78,11 @@ public class PyrisJobService {
      *
      * @return the IMap containing Pyris jobs
      */
-    public IMap<String, PyrisJob> getPyrisJobMap() {
+    private IMap<String, PyrisJob> getPyrisJobMap() {
         if (this.jobMap == null) {
             this.jobMap = this.hazelcastInstance.getMap("pyris-job-map");
         }
-        return jobMap;
+        return this.jobMap;
     }
 
     /**
