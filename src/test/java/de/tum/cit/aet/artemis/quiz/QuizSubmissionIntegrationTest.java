@@ -869,4 +869,31 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
         }
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSubmitForTraining_shouldReturnResultAndSetSubmissionProperties() throws Exception {
+        // Setup: QuizExercise und User anlegen
+        Course course = courseUtilService.createCourse();
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(60);
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        // QuizSubmission mit Antworten erstellen
+        QuizSubmission quizSubmission = new QuizSubmission();
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(question));
+        }
+
+        // REST-Call: Training-Submission abschicken
+        Result result = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/training", quizSubmission, Result.class, HttpStatus.OK);
+
+        // Assertions: Ergebnis und Submission prüfen
+        assertThat(result).isNotNull();
+        assertThat(result.getSubmission()).isInstanceOf(QuizSubmission.class);
+        QuizSubmission returnedSubmission = (QuizSubmission) result.getSubmission();
+        assertThat(returnedSubmission.isSubmitted()).isTrue();
+        assertThat(returnedSubmission.getSubmissionDate()).isNotNull();
+        assertThat(returnedSubmission.getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
+    }
 }
