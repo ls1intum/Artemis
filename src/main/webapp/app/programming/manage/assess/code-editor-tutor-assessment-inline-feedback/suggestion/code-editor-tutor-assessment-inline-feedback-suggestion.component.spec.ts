@@ -8,6 +8,7 @@ import { MockComponent } from 'ng-mocks';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent', () => {
     let component: CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent;
@@ -15,6 +16,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent, MockComponent(FeedbackSuggestionBadgeComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();

@@ -15,6 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.domain.GraphType;
 import de.tum.cit.aet.artemis.core.domain.PersistentAuditEvent;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
@@ -183,7 +184,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
     private PersistentAuditEvent setupPersistentEvent(String principal, ZonedDateTime date) {
         PersistentAuditEvent persistentEvent = new PersistentAuditEvent();
         persistentEvent.setPrincipal(principal);
-        persistentEvent.setAuditEventType("AUTHENTICATION_SUCCESS");
+        persistentEvent.setAuditEventType(AuditEventConstants.AUTHENTICATION_SUCCESS);
         persistentEvent.setAuditEventDate(Instant.from(date));
 
         return persistentEvent;

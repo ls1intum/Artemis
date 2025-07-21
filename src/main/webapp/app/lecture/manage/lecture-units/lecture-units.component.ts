@@ -21,7 +21,6 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
-
 import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { LectureTranscriptionService } from '../services/lecture-transcription.service';

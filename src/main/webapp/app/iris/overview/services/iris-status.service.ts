@@ -16,6 +16,7 @@ import { PROFILE_IRIS } from 'app/app.constants';
  */
 @Injectable({ providedIn: 'root' })
 export class IrisStatusService implements OnDestroy {
+    private readonly HEARTBEAT_INTERVAL_MS = 60 * 1000 * 5; // 5 minutes
     private websocketService = inject(WebsocketService);
     private httpClient = inject(HttpClient);
     private profileService = inject(ProfileService);
@@ -41,7 +42,7 @@ export class IrisStatusService implements OnDestroy {
         this.checkHeartbeat();
         this.intervalId = setInterval(() => {
             this.checkHeartbeat();
-        }, 60000);
+        }, this.HEARTBEAT_INTERVAL_MS);
 
         this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.disconnected = !status.connected && !status.intendedDisconnect && status.wasEverConnectedBefore;

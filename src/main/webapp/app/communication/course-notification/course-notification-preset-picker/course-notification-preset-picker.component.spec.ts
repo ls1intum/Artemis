@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
@@ -33,7 +33,7 @@ describe('CourseNotificationPresetPickerComponent', () => {
             imports: [
                 CourseNotificationPresetPickerComponent,
                 MockDirective(TranslateDirective),
-                MockComponent(FaIconComponent),
+                FaIconComponent,
                 MockDirective(NgbDropdown),
                 MockDirective(NgbDropdownToggle),
                 MockDirective(NgbDropdownMenu),
