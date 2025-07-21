@@ -17,62 +17,18 @@
                         {{ getTimestamp(suggestion.sentAt) }}
                     </div>
                 </div>
-                <jhi-chat-status-bar [stages]="stages" />
             } @else {
                 @if (irisIsActive) {
                     @if (error) {
                         <div class="iris-suggestion-text">
                             {{ error }}
                         </div>
-                    } @else {
-                        <div class="iris-suggestion-text">Loading suggestion...</div>
                     }
-                    <jhi-chat-status-bar [stages]="stages" />
                 } @else {
                     <div class="iris-suggestion-text" jhiTranslate="artemisApp.iris.tutorSuggestion.noIris"></div>
                 }
             }
-            <div class="chat-field">
-                <div class="messages" #messagesElement>
-                    @for (message of messages; track message) {
-                        <div class="message-container">
-                            @if (message.sender === IrisSender.USER) {
-                                @if (message.content[0].type === IrisMessageContentType.TEXT) {
-                                    <div class="bubble-right">
-                                        @for (line of (message.content[0] | as: IrisTextMessageContent).textContent.split('\n'); track line) {
-                                            <div [innerHTML]="line"></div>
-                                        }
-                                    </div>
-                                }
-                            } @else if (message.sender === IrisSender.LLM) {
-                                @if (message.content[0].type === IrisMessageContentType.TEXT) {
-                                    <div class="bubble-left">
-                                        @for (line of (message.content[0] | as: IrisTextMessageContent).textContent.split('\n'); track line) {
-                                            <div [innerHTML]="line"></div>
-                                        }
-                                    </div>
-                                }
-                            }
-                        </div>
-                    }
-                </div>
-                <div class="chat-input">
-                    <textarea
-                        [(ngModel)]="newMessageTextContent"
-                        rows="1"
-                        class="form-control"
-                        (ngModelChange)="onModelChange()"
-                        (input)="onInput()"
-                        (paste)="onPaste()"
-                        type="text"
-                        [disabled]="!suggestion"
-                        (keydown)="handleKey($event)"
-                        placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
-                        #messageTextarea
-                    ></textarea>
-                    <jhi-button id="irisSendButton" (onClick)="sendMessageToIris()" [btnType]="ButtonType.SUCCESS_OUTLINE" [icon]="faPaperPlane" [disabled]="!suggestion" />
-                </div>
-            </div>
+            <jhi-iris-base-chatbot [isEmbeddedChat]="true" />
         </div>
     </div>
 }

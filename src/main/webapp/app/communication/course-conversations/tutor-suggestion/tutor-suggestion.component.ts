@@ -10,7 +10,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
-import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -18,11 +17,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -32,7 +31,7 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/butto
     selector: 'jhi-tutor-suggestion',
     templateUrl: './tutor-suggestion.component.html',
     styleUrl: './tutor-suggestion.component.scss',
-    imports: [IrisLogoComponent, AsPipe, ChatStatusBarComponent, ArtemisTranslatePipe, FormsModule, ButtonComponent, TranslateDirective],
+    imports: [IrisLogoComponent, AsPipe, FormsModule, TranslateDirective, IrisBaseChatbotComponent],
 })
 export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly IrisLogoSize = IrisLogoSize;
