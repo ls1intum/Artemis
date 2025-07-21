@@ -1,33 +1,4 @@
 <div>
-    <div class="info">
-        @if (overview) {
-            <h3>Exam Room Overview</h3>
-            <p>Rooms: {{ overview.numberOfStoredExamRooms }}</p>
-            <p>Seats: {{ overview.numberOfStoredExamSeats }}</p>
-            <p>Layout Strategies: {{ overview.numberOfStoredLayoutStrategies }}</p>
-            <p>Unique rooms: {{ overview.numberOfUniqueExamRooms }}</p>
-            <p>Unique seats: {{ overview.numberOfUniqueExamSeats }}</p>
-            <p>Unique layout strategies: {{ overview.numberOfUniqueLayoutStrategies }}</p>
-            <p>Distinct Layout Names: {{ overview.distinctLayoutStrategyNames.join(', ') }}</p>
-
-            <h4>Exam Rooms</h4>
-            <button (click)="clearExamRooms()" class="btn-danger">Clear All Exam Rooms</button>
-            <ul>
-                @for (room of overview.examRoomDTOS; track room) {
-                    <li>
-                        {{ room.name }} ({{ room.roomNumber }}) - {{ room.numberOfSeats }} seats
-                        <ul>
-                            @for (strategy of room.layoutStrategies; track strategy) {
-                                <li>{{ strategy.name }}, Type: {{ strategy.type }}, Capacity: {{ strategy.capacity ?? 'N/A' }}</li>
-                            }
-                        </ul>
-                    </li>
-                }
-            </ul>
-        } @else {
-            <p>Error: {{ overviewError }}</p>
-        }
-    </div>
     <div class="upload-container">
         <h2>Upload Room Data</h2>
         <input type="file" (change)="onFileSelected($event)" accept=".zip" />
@@ -60,6 +31,36 @@
                     </li>
                 </ul>
             </div>
+        }
+    </div>
+    <br />
+    <div class="info">
+        @if (overview) {
+            <h3>Exam Room Overview</h3>
+            <p>Rooms: {{ overview.numberOfStoredExamRooms }}</p>
+            <p>Seats: {{ overview.numberOfStoredExamSeats }}</p>
+            <p>Layout Strategies: {{ overview.numberOfStoredLayoutStrategies }}</p>
+            <p>Unique rooms: {{ overview.numberOfUniqueExamRooms }}</p>
+            <p>Unique seats: {{ overview.numberOfUniqueExamSeats }}</p>
+            <p>Unique layout strategies: {{ overview.numberOfUniqueLayoutStrategies }}</p>
+            <p>Distinct Layout Names: {{ overview.distinctLayoutStrategyNames.join(', ') }}</p>
+
+            <h4>Exam Rooms</h4>
+            <button (click)="clearExamRooms()" class="btn-danger">Clear All Exam Rooms</button>
+            <ul>
+                @for (room of overview.examRoomDTOS; track room) {
+                    <li>
+                        {{ room.name }} ({{ room.roomNumber }}) - {{ room.numberOfSeats }} seats
+                        <ul>
+                            @for (strategy of room.layoutStrategies; track strategy) {
+                                <li>{{ strategy.name }}, Type: {{ strategy.type }}, Capacity: {{ strategy.capacity ?? 'N/A' }}</li>
+                            }
+                        </ul>
+                    </li>
+                }
+            </ul>
+        } @else {
+            <p>Error: {{ overviewError }}</p>
         }
     </div>
 </div>

@@ -10,8 +10,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
-import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomSeatCountDTO;
-import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUniqueRoomsDTO;
 
 /**
  * Spring Data JPA repository for the {@link de.tum.cit.aet.artemis.exam.domain.room.ExamRoom} entity.
@@ -46,9 +44,6 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
     @Query("SELECT COUNT(*) FROM ExamRoom")
     Integer countAllExamRooms();
 
-    @Query("SELECT COUNT(*) FROM ExamSeat")
-    Integer countAllExamSeats();
-
     @Query("SELECT COUNT(*) FROM LayoutStrategy")
     Integer countAllLayoutStrategies();
 
@@ -63,40 +58,23 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
     Set<ExamRoom> findAllExamRoomsWithEagerLayoutStrategies();
 
     @Query("""
-            SELECT NEW de.tum.cit.aet.artemis.exam.dto.room.ExamRoomSeatCountDTO(
-                er.id,
-                COUNT(seat)
-            )
-            FROM ExamRoom er
-            LEFT JOIN er.seats seat
-            GROUP BY er.id
-            """)
-    Set<ExamRoomSeatCountDTO> countSeatsPerRoom();
-
-    @Query("""
-            WITH latestRoomsRoomNumberNameAndCreatedDate AS (
+            WITH latestRooms AS (
                 SELECT
                     roomNumber AS roomNumber,
                     name AS name,
-                    MAX(createdDate) AS createdDate
+                    MAX(createdDate) AS maxCreatedDate
                 FROM ExamRoom
                 GROUP BY roomNumber, name
-            ),
-            latestRooms AS (
-                SELECT er.id AS id
-                FROM ExamRoom er
-                JOIN latestRoomsRoomNumberNameAndCreatedDate roomNumberNameCreated
-                    ON er.roomNumber = roomNumberNameCreated.roomNumber
-                    AND er.name = roomNumberNameCreated.name
-                    AND er.createdDate = roomNumberNameCreated.createdDate
             )
-            SELECT NEW de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUniqueRoomsDTO(
-                COUNT(*),
-                (SELECT COUNT(*) FROM ExamSeat seat WHERE seat.examRoom.id IN (SELECT id FROM latestRooms)),
-                (SELECT COUNT(*) FROM LayoutStrategy ls WHERE ls.examRoom.id IN (SELECT id FROM latestRooms))
-            )
-            FROM latestRooms
+            SELECT er
+            FROM ExamRoom er
+            JOIN latestRooms lr
+                ON er.roomNumber = lr.roomNumber
+                AND er.name = lr.name
+                AND er.createdDate = lr.maxCreatedDate
+            LEFT JOIN FETCH er.layoutStrategies
+            ORDER BY er.roomNumber, er.name
             """)
-    ExamRoomUniqueRoomsDTO countUniqueRoomsSeatsAndLayoutStrategies();
+    Set<ExamRoom> findAllLatestUniqueRoomsWithEagerLayoutStrategies();
 
 }

@@ -37,6 +37,10 @@
             <column name="building" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
+            <!-- default type supposed to work for both MySQL and PostgreSQL -->
+            <column name="exam_seats" type="json">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
 
         <!-- Rollback section -->
@@ -45,43 +49,8 @@
         </rollback>
     </changeSet>
 
-    <!-- 2. Add Exam Seat Table -->
-    <changeSet id="20250707005400-02-add-exam-seat" author="röttgermann">
-        <createTable tableName="exam_seat">
-            <column name="id" type="bigint" autoIncrement="true">
-                <constraints primaryKey="true"/>
-            </column>
-            <column name="label" type="varchar(50)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="seat_condition" type="varchar(50)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="exam_room_id" type="bigint">
-                <constraints nullable="false" foreignKeyName="fk_seat_room"
-                             referencedTableName="exam_room" referencedColumnNames="id"/>
-            </column>
-            <column name="x_position" type="float">
-                <constraints nullable="false"/>
-            </column>
-            <column name="y_position" type="float">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-
-        <!-- Indexes for the Exam Seat table -->
-        <createIndex indexName="idx_exam_seat_exam_room_id" tableName="exam_seat">
-            <column name="exam_room_id"/>
-        </createIndex>
-
-        <!-- Rollback section -->
-        <rollback>
-            <dropTable tableName="exam_seat"/>
-        </rollback>
-    </changeSet>
-
-    <!-- 3. Add Layout Strategy table -->
-    <changeSet id="20250707005400-03-add-layout-strategy" author="röttgermann">
+    <!-- 2. Add Layout Strategy table -->
+    <changeSet id="20250707005400-02-add-layout-strategy" author="röttgermann">
         <createTable tableName="layout_strategy">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true"/>
@@ -130,16 +99,12 @@
         </rollback>
     </changeSet>
 
-    <!-- 4. Add exam-room-id and exam-seat-id column to the exam_user table -->
-    <changeSet id="20250707005400-04-add-planned-room-id-to-exam-user" author="röttgermann">
+    <!-- 3. Add exam-room-id and exam-seat-id column to the exam_user table -->
+    <changeSet id="20250707005400-03-add-planned-room-id-to-exam-user" author="röttgermann">
         <addColumn tableName="exam_user">
             <column name="planned_room_id" type="bigint">
                 <constraints nullable="true" foreignKeyName="fk_exam_user_planned_room"
                              referencedTableName="exam_room" referencedColumnNames="id"/>
-            </column>
-            <column name="planned_seat_id" type="bigint">
-                <constraints nullable="true" foreignKeyName="fk_exam_user_planned_seat"
-                             referencedTableName="exam_seat" referencedColumnNames="id"/>
             </column>
         </addColumn>
 
@@ -150,8 +115,8 @@
         </rollback>
     </changeSet>
 
-    <!-- 5. Add exam to room assignment table -->
-    <changeSet id="20250707005400-05-add-exam-room-assignment" author="röttgermann">
+    <!-- 4. Add exam to room assignment table -->
+    <changeSet id="20250707005400-04-add-exam-room-assignment" author="röttgermann">
         <createTable tableName="exam_room_assignment">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true"/>

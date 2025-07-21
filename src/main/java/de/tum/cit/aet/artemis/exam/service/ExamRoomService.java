@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -38,7 +37,6 @@ import de.tum.cit.aet.artemis.exam.domain.room.SeatCondition;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
-import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomSeatCountDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUniqueRoomsDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
@@ -245,6 +243,7 @@ public class ExamRoomService {
         String uploadedFileName = zipFile.getOriginalFilename();
         PeriodFormatter formatter = new PeriodFormatterBuilder().appendDays().appendSuffix("d ").appendHours().appendSuffix("h ").appendMinutes().appendSuffix("m ").appendSeconds()
                 .appendSuffix("s ").appendMillis().appendSuffix("ms").toFormatter();
+
         String uploadDuration = formatter.print(Period.millis((int) Duration.ofNanos(startTimeDTO - startTime).toMillis()).normalizedStandard());
         Integer numberOfUploadedRooms = examRooms.size();
         Integer numberOfUploadedSeats = examRooms.stream().mapToInt(room -> room.getSeats().size()).sum();
@@ -255,17 +254,13 @@ public class ExamRoomService {
 
     public ExamRoomAdminOverviewDTO getExamRoomAdminOverviewDTO() {
         final Integer numberOfStoredExamRooms = examRoomRepository.countAllExamRooms();
-        final Integer numberOfStoredExamSeats = examRoomRepository.countAllExamSeats();
+        final Integer numberOfStoredExamSeats = this.countAllExamSeats();
         final Integer numberOfStoredLayoutStrategies = examRoomRepository.countAllLayoutStrategies();
         final Set<String> distinctLayoutStrategyNames = examRoomRepository.findDistinctLayoutStrategyNames();
-        final ExamRoomUniqueRoomsDTO uniqueRoomsDTO = examRoomRepository.countUniqueRoomsSeatsAndLayoutStrategies();
-
-        // We use the following map to avoid the N+1 problem when retrieving the number of seats per room
-        final Map<Long, Long> examRoomSeatCountMap = examRoomRepository.countSeatsPerRoom().stream()
-                .collect(Collectors.toMap(ExamRoomSeatCountDTO::examRoomId, ExamRoomSeatCountDTO::seatCount));
+        final ExamRoomUniqueRoomsDTO uniqueRoomsDTO = this.countUniqueRoomsSeatsAndLayoutStrategies();
 
         final Set<ExamRoomDTO> examRoomDTOS = examRoomRepository.findAllExamRoomsWithEagerLayoutStrategies().stream()
-                .map(examRoom -> new ExamRoomDTO(examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoomSeatCountMap.getOrDefault(examRoom.getId(), 0L),
+                .map(examRoom -> new ExamRoomDTO(examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
                         examRoom.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .collect(Collectors.toSet());
 
@@ -278,4 +273,19 @@ public class ExamRoomService {
         examRoomRepository.deleteAll();
         log.debug("Deleting all exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));
     }
+
+    public int countAllExamSeats() {
+        return examRoomRepository.findAll().stream().mapToInt(er -> er.getSeats().size()).sum();
+    }
+
+    public ExamRoomUniqueRoomsDTO countUniqueRoomsSeatsAndLayoutStrategies() {
+        Set<ExamRoom> latestUniqueRooms = examRoomRepository.findAllLatestUniqueRoomsWithEagerLayoutStrategies();
+
+        int uniqueSeats = latestUniqueRooms.stream().mapToInt(room -> room.getSeats().size()).sum();
+
+        int uniqueLayoutStrategies = latestUniqueRooms.stream().mapToInt(room -> room.getLayoutStrategies().size()).sum();
+
+        return new ExamRoomUniqueRoomsDTO(latestUniqueRooms.size(), uniqueSeats, uniqueLayoutStrategies);
+    }
+
 }

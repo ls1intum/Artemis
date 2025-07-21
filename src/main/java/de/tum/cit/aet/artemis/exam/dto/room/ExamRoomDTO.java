@@ -10,7 +10,7 @@ public record ExamRoomDTO(
     String roomNumber,
     String name,
     String building,
-    Long numberOfSeats,
+    Integer numberOfSeats,
     Set<ExamRoomLayoutStrategyDTO> layoutStrategies
 ) {
 }

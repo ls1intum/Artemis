@@ -10,9 +10,9 @@ public record ExamRoomAdminOverviewDTO(
     Integer numberOfStoredExamRooms,
     Integer numberOfStoredExamSeats,
     Integer numberOfStoredLayoutStrategies,
-    Number numberOfUniqueExamRooms,
-    Number numberOfUniqueExamSeats,
-    Number numberOfUniqueLayoutStrategies,
+    Integer numberOfUniqueExamRooms,
+    Integer numberOfUniqueExamSeats,
+    Integer numberOfUniqueLayoutStrategies,
     Set<String> distinctLayoutStrategyNames,
     Set<ExamRoomDTO> examRoomDTOS
 ) {

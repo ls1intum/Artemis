@@ -1,58 +1,46 @@
 package de.tum.cit.aet.artemis.exam.domain.room;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import org.springframework.context.annotation.Conditional;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 
 @Conditional(ExamEnabled.class)
-@Entity
-@Table(name = "exam_seat")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamSeat extends DomainObject {
 
     /**
      * The name of the seat. This is usually a combination of the row and column name.
      */
-    @Column(name = "label", nullable = false, length = 50)
     private String label; // For example, "A1", "4", or "{row},{column}"
 
     /**
      * The condition of the seat.
      */
-    @Enumerated(EnumType.STRING)  // for human readability in the DB
-    @Column(name = "seat_condition", nullable = false, length = 50)
+    @Enumerated(EnumType.STRING)  // for human readability
     private SeatCondition seatCondition = SeatCondition.USABLE;
 
     /**
      * The exam room this seat is located in.
      */
-    @ManyToOne
-    @JoinColumn(name = "exam_room_id", nullable = false)
-    @JsonBackReference
+    @Transient
     private ExamRoom examRoom;
 
     /**
      * The x-coordinate of the seat in the respective exam room.
      */
-    @Column(name = "x_position", nullable = false)
     private float x;
 
     /**
      * The y-coordinate of the seat in the respective exam room
      */
-    @Column(name = "y_position", nullable = false)
     private float y;
 
     /* Getters & Setters */
@@ -88,6 +76,7 @@ public class ExamSeat extends DomainObject {
         this.x = x;
     }
 
+    @JsonIgnore
     public void setX(double x) {
         this.x = (float) x;
     }
@@ -100,6 +89,7 @@ public class ExamSeat extends DomainObject {
         this.y = y;
     }
 
+    @JsonIgnore
     public void setY(double y) {
         this.y = (float) y;
     }

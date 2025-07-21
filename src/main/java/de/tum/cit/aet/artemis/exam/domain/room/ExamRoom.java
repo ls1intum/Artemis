@@ -14,6 +14,8 @@ import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.context.annotation.Conditional;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -63,9 +65,8 @@ public class ExamRoom extends AbstractAuditingEntity {
     /**
      * All seats of this exam room.
      */
-    @OneToMany(mappedBy = "examRoom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonManagedReference
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "exam_seats", columnDefinition = "json", nullable = false)
     private List<ExamSeat> seats = new ArrayList<>();
 
     /**
