@@ -188,6 +188,7 @@ export class CourseTrainingQuizComponent {
                     this.onSubmitSuccess(response.body);
                 }
             },
+            error: () => this.onSubmitError(),
         });
     }
 
@@ -199,6 +200,18 @@ export class CourseTrainingQuizComponent {
         this.showResult(result);
     }
 
+    /**
+     * Callback function for handling error when submitting
+     */
+    onSubmitError() {
+        const errorMessage = 'Submitting the quiz question was not possible';
+        this.alertService.addAlert({
+            type: AlertType.DANGER,
+            message: errorMessage,
+            disableTranslation: true,
+        });
+        this.isSubmitting = false;
+    }
     /**
      * applies the data from the model to the UI (reverse of applySelection):
      *

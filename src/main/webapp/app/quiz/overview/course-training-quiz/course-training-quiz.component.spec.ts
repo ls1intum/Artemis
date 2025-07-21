@@ -3,8 +3,8 @@ import { CourseTrainingQuizComponent } from './course-training-quiz.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MockBuilder } from 'ng-mocks';
-import { of } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseTrainingQuizService } from '../service/course-training-quiz.service';
@@ -184,6 +184,21 @@ describe('CourseTrainingQuizComponent', () => {
                 message: 'error.noExerciseIdForQuestion',
             }),
         );
+        expect(component.isSubmitting).toBeFalse();
+    });
+
+    it('should handle submit error', () => {
+        const alertSpy = jest.spyOn(TestBed.inject(AlertService), 'addAlert');
+        jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1, exerciseId: 1 } as any);
+        const error = new HttpErrorResponse({
+            error: 'error',
+            status: 400,
+            statusText: 'Bad Request',
+        });
+        jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(throwError(() => error));
+        component.currentIndex.set(2);
+        component.onSubmit();
+        expect(alertSpy).toHaveBeenCalled();
         expect(component.isSubmitting).toBeFalse();
     });
 
