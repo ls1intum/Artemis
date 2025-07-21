@@ -40,11 +40,4 @@ export class QuizParticipationService {
             .post<QuizSubmission>(`api/quiz/exercises/${exerciseId}/submissions/live`, copy, { observe: 'response', params: { submit } })
             .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));
     }
-
-    submitForTraining(quizSubmission: QuizSubmission, exerciseId: number): Observable<ResultResponseType> {
-        const copy = this.submissionService.convert(quizSubmission);
-        return this.http
-            .post<Result>(`api/quiz/exercises/${exerciseId}/submissions/training`, copy, { observe: 'response' })
-            .pipe(map((res: ResultResponseType) => this.submissionService.convertResponse(res)));
-    }
 }
