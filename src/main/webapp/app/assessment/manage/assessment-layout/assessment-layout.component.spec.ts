@@ -16,6 +16,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('AssessmentLayoutComponent', () => {
     let component: AssessmentLayoutComponent;
@@ -23,7 +24,7 @@ describe('AssessmentLayoutComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), MockComponent(ComplaintsForTutorComponent)],
+            imports: [MockModule(NgbTooltipModule), MockComponent(ComplaintsForTutorComponent), FaIconComponent],
             declarations: [
                 AssessmentLayoutComponent,
                 AssessmentHeaderComponent,
