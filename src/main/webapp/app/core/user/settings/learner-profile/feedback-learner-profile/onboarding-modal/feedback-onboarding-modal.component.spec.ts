@@ -8,6 +8,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 
 class MockActiveModal {
     close = jest.fn();
@@ -26,7 +27,7 @@ describe('FeedbackOnboardingModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FeedbackOnboardingModalComponent],
+            imports: [FeedbackOnboardingModalComponent, TranslateModule.forRoot()],
             providers: [
                 MockProvider(LearnerProfileApiService),
                 { provide: NgbActiveModal, useClass: MockActiveModal },
@@ -50,7 +51,7 @@ describe('FeedbackOnboardingModalComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
-        expect(component.selected).toEqual([null, null, null]);
+        expect(component.selected).toEqual([null, null]);
         expect(component.step).toBe(0);
     });
 
@@ -59,11 +60,7 @@ describe('FeedbackOnboardingModalComponent', () => {
         component.next();
         expect(component.step).toBe(1);
         component.next();
-        expect(component.step).toBe(2);
-        component.next();
-        expect(component.step).toBe(2); // should not exceed max
-        component.back();
-        expect(component.step).toBe(1);
+        expect(component.step).toBe(1); // should not exceed max
         component.back();
         expect(component.step).toBe(0);
         component.back();
@@ -89,13 +86,13 @@ describe('FeedbackOnboardingModalComponent', () => {
     describe('finish', () => {
         it('should POST new profile if profileMissing is true', async () => {
             component.profileMissing = true;
-            component.selected = [0, 1, null];
+            component.selected = [0, 1];
             const postSpy = jest.spyOn(learnerProfileApiService, 'postLearnerProfile').mockResolvedValue(new LearnerProfileDTO({}));
             const emitSpy = jest.spyOn(component.onboardingCompleted, 'emit');
             await component.finish();
             expect(postSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    feedbackDetail: 2,
+                    feedbackDetail: 1,
                     feedbackFormality: 3,
                     hasSetupFeedbackPreferences: true,
                 }),
@@ -111,7 +108,7 @@ describe('FeedbackOnboardingModalComponent', () => {
 
         it('should PUT updated profile if profileMissing is false', async () => {
             component.profileMissing = false;
-            component.selected = [1, null, 0];
+            component.selected = [1, 0];
             const getSpy = jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(new LearnerProfileDTO({ id: 42 }));
             const putSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(new LearnerProfileDTO({}));
             const emitSpy = jest.spyOn(component.onboardingCompleted, 'emit');
@@ -120,8 +117,8 @@ describe('FeedbackOnboardingModalComponent', () => {
             expect(putSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
                     id: 42,
-                    feedbackDetail: 2,
-                    feedbackFormality: 3,
+                    feedbackDetail: 3,
+                    feedbackFormality: 1,
                     hasSetupFeedbackPreferences: true,
                 }),
             );
@@ -136,7 +133,7 @@ describe('FeedbackOnboardingModalComponent', () => {
 
         it('should handle error and close modal', async () => {
             component.profileMissing = true;
-            component.selected = [null, null, null];
+            component.selected = [null, null];
             const error = new HttpErrorResponse({ error: 'fail', status: 500 });
             jest.spyOn(learnerProfileApiService, 'postLearnerProfile').mockRejectedValue(error);
             const emitSpy = jest.spyOn(component.onboardingCompleted, 'emit');
@@ -151,7 +148,7 @@ describe('FeedbackOnboardingModalComponent', () => {
 
         it('should handle non-HTTP error and close modal', async () => {
             component.profileMissing = true;
-            component.selected = [null, null, null];
+            component.selected = [null, null];
             jest.spyOn(learnerProfileApiService, 'postLearnerProfile').mockRejectedValue(new Error('fail'));
             const emitSpy = jest.spyOn(component.onboardingCompleted, 'emit');
             await component.finish();

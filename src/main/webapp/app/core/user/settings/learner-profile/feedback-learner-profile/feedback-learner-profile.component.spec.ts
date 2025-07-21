@@ -245,8 +245,8 @@ describe('FeedbackLearnerProfileComponent', () => {
         await fixture.whenStable();
 
         // Assert - Should set default values since DTO constructor converts undefined to DEFAULT_VALUE
-        expect(component.feedbackDetail()).toBeUndefined();
-        expect(component.feedbackFormality()).toBeUndefined();
+        expect(component.feedbackDetail()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+        expect(component.feedbackFormality()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
     });
 
     it('should handle non-HTTP error during profile update', async () => {
@@ -523,8 +523,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             await fixture.whenStable();
 
             // Assert - Should set default values since DTO constructor converts undefined to DEFAULT_VALUE
-            expect(component.feedbackDetail()).toBeUndefined();
-            expect(component.feedbackFormality()).toBeUndefined();
+            expect(component.feedbackDetail()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackFormality()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
         });
 
         it('should test handleError method with HttpErrorResponse through API failure', async () => {
@@ -615,8 +615,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             await fixture.whenStable();
 
             // Assert - Should set default values since DTO constructor converts null to DEFAULT_VALUE
-            expect(component.feedbackDetail()).toBeUndefined();
-            expect(component.feedbackFormality()).toBeUndefined();
+            expect(component.feedbackDetail()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackFormality()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
         });
 
         it('should handle profile with zero values', async () => {
@@ -634,8 +634,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             await fixture.whenStable();
 
             // Assert - Should set default values since DTO constructor converts out-of-range values (0 < MIN_VALUE) to DEFAULT_VALUE
-            expect(component.feedbackDetail()).toBe(0);
-            expect(component.feedbackFormality()).toBe(0);
+            expect(component.feedbackDetail()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackFormality()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
         });
 
         it('should handle profile with maximum values', async () => {
@@ -653,8 +653,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             await fixture.whenStable();
 
             // Assert
-            expect(component.feedbackDetail()).toBe(5);
-            expect(component.feedbackFormality()).toBe(5);
+            expect(component.feedbackDetail()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackFormality()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
         });
 
         it('should test onToggleChange with undefined profile', async () => {
