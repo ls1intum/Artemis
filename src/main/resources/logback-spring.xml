@@ -103,6 +103,7 @@
     <logger name="de.tum.cit.aet.artemis.core.service.ScheduleService" level="INFO"/>
     <logger name="de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService" level="INFO"/>
     <logger name="de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService" level="INFO"/>
+    <logger name="de.tum.cit.aet.artemis.communication.service.CourseNotificationRegistryService" level="INFO"/>
 
 
     <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
