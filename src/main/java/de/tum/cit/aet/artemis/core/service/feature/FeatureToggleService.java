@@ -10,10 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -57,31 +55,6 @@ public class FeatureToggleService {
     }
 
     /**
-     * Initialize relevant data from hazelcast
-     */
-    @EventListener(ApplicationReadyEvent.class)
-    public void init() {
-        // The map will automatically be distributed between all instances by Hazelcast.
-        features = hazelcastInstance.getMap("features");
-
-        // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except the Science API and TutorSuggestions) are enabled once the system starts up
-        for (Feature feature : Feature.values()) {
-            if (!getFeaturesMap().containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions) {
-                getFeaturesMap().put(feature, true);
-            }
-        }
-        // init science feature from config
-        if (!getFeaturesMap().containsKey(Feature.Science)) {
-            getFeaturesMap().put(Feature.Science, scienceEnabledOnStart);
-        }
-
-        if (!getFeaturesMap().containsKey(Feature.TutorSuggestions)) {
-            getFeaturesMap().put(Feature.TutorSuggestions, false);
-        }
-    }
-
-    /**
      * Lazy init: Retrieves the Hazelcast map that stores features
      * If the map is not initialized, it initializes it.
      *
@@ -89,10 +62,34 @@ public class FeatureToggleService {
      */
     private Map<Feature, Boolean> getFeaturesMap() {
         if (this.features == null) {
-            this.features = hazelcastInstance.getMap("features");
+            initFeatures();
         }
         return this.features;
-    };
+    }
+
+    /**
+     * Initialize relevant data from hazelcast
+     */
+    private void initFeatures() {
+        // The map will automatically be distributed between all instances by Hazelcast.
+        features = hazelcastInstance.getMap("features");
+
+        // Features that are neither enabled nor disabled should be enabled by default
+        // This ensures that all features (except the Science API and TutorSuggestions) are enabled once the system starts up
+        for (Feature feature : Feature.values()) {
+            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions) {
+                features.put(feature, true);
+            }
+        }
+        // init science feature from config
+        if (!features.containsKey(Feature.Science)) {
+            features.put(Feature.Science, scienceEnabledOnStart);
+        }
+
+        if (!features.containsKey(Feature.TutorSuggestions)) {
+            features.put(Feature.TutorSuggestions, false);
+        }
+    }
 
     /**
      * Enables the given feature. Also notifies all clients by sending a message via the websocket.
