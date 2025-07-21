@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -42,6 +43,7 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
 
     private final HazelcastInstance hazelcastInstance;
 
+    @Nullable
     private Map<String, OAuth2AuthorizationRequest> store;
 
     /**
