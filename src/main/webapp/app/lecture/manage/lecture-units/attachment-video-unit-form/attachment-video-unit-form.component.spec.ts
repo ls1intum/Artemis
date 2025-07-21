@@ -115,11 +115,13 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: exampleVideoUrl,
                 urlHelper: null,
+                generateTranscript: false,
             },
             fileProperties: {
                 file: fakeFile,
                 fileName: exampleFileName,
             },
+            playlistUrl: undefined,
         });
 
         submitFormSpy.mockRestore();
@@ -253,11 +255,13 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: exampleVideoUrl,
                 urlHelper: null,
+                generateTranscript: false,
             },
             fileProperties: {
                 file: undefined,
                 fileName: undefined,
             },
+            playlistUrl: undefined,
         });
 
         submitFormSpy.mockRestore();
@@ -308,11 +312,13 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: '',
                 urlHelper: null,
+                generateTranscript: false,
             },
             fileProperties: {
                 file: fakeFile,
                 fileName: exampleFileName,
             },
+            playlistUrl: undefined,
         });
 
         submitFormSpy.mockRestore();
