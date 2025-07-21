@@ -22,7 +22,7 @@ public interface ExamRoomAssignmentRepository extends ArtemisJpaRepository<ExamR
 
     List<ExamRoomAssignment> findByExam_Id(@NonNull Long examId);
 
-    List<ExamRoomAssignment> findByExam_Room_Id(@NonNull Long examRoomId);
+    List<ExamRoomAssignment> findByExamRoom_Id(@NonNull Long examRoomId);
 
-    Optional<ExamRoomAssignment> findByExam_IdAndExam_Room_Id(@NonNull Long examId, @NonNull Long examRoomId);
+    Optional<ExamRoomAssignment> findByExam_IdAndExamRoom_Id(@NonNull Long examId, @NonNull Long examRoomId);
 }
