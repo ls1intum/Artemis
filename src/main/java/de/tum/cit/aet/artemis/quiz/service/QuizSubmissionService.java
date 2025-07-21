@@ -401,25 +401,24 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         return savedQuizSubmission;
     }
 
+    /**
+     * Submits a quiz question for training mode, calculates scores and creates a result.
+     *
+     * @param quizSubmission the quiz submission to be submitted for training
+     * @param quizExercise   the quiz exercise associated with the submission
+     * @param user           the user who is submitting the quiz
+     * @return result the result of the quiz submission
+     */
     public Result submitForTraining(QuizSubmission quizSubmission, QuizExercise quizExercise, User user) {
         // update submission properties
         quizSubmission.setSubmitted(true);
-        quizSubmission.setType(SubmissionType.MANUAL);
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
         // calculate scores
         quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
 
         // create result
         Result result = new Result();
-        result.setRated(false);
-        result.setAssessmentType(AssessmentType.AUTOMATIC);
-        result.setCompletionDate(ZonedDateTime.now());
-
-        // setup result - submission relation
         result.setSubmission(quizSubmission);
-        // calculate score and update result accordingly
-        result.evaluateQuizSubmission(quizExercise);
-        quizSubmission.addResult(result);
 
         // save the question progress
         quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, user.getId());
@@ -427,5 +426,4 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         log.debug("submit training quiz finished: {}", quizSubmission);
         return result;
     }
-
 }

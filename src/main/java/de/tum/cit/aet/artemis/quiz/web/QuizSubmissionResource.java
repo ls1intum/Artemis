@@ -257,6 +257,13 @@ public class QuizSubmissionResource {
         return ResponseEntity.ok(updatedQuizSubmission);
     }
 
+    /**
+     * POST /exercises/:exerciseId/submissions/training : Submit a new quizSubmission for training mode.
+     *
+     * @param exerciseId     the id of the exercise associated with the quiz submission
+     * @param quizSubmission the quiz submission to submit
+     * @return the ResponseEntity with status 200 (OK) and the Result as its body
+     */
     @PostMapping("exercises/{exerciseId}/submissions/training")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<Result> submitForTraining(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
