@@ -116,7 +116,7 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
         return authorizationRequest;
     }
 
-    public Map<String, OAuth2AuthorizationRequest> getStore() {
+    private Map<String, OAuth2AuthorizationRequest> getStore() {
         if (this.store == null) {
             this.store = hazelcastInstance.getMap("ltiStateAuthorizationRequestStore");
         }
