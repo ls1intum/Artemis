@@ -1,4 +1,4 @@
-import { Component, Signal, computed, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -18,19 +18,15 @@ import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/ca
     styleUrls: ['./calendar-month-presentation.component.scss'],
 })
 export class CalendarMonthPresentationComponent {
+    private popover?: NgbPopover;
+
     firstDayOfCurrentMonth = input.required<Dayjs>();
     selectedEvent = signal<CalendarEvent | undefined>(undefined);
 
     readonly utils = utils;
     readonly CalendarEventType = CalendarEventType;
     readonly weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
-    readonly eventMap: Signal<Map<string, CalendarEvent[]>>;
-
-    private popover?: NgbPopover;
-
-    constructor(private eventService: CalendarEventService) {
-        this.eventMap = this.eventService.eventMap;
-    }
+    readonly eventMap = inject(CalendarEventService).eventMap;
 
     getEventsOf(day: Dayjs): CalendarEvent[] {
         const key = day.format('YYYY-MM-DD');

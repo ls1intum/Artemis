@@ -18,6 +18,7 @@ import { TeamStudentSearchComponent } from 'app/exercise/team/team-student-searc
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('TeamUpdateDialogComponent', () => {
     let comp: TeamUpdateDialogComponent;
@@ -27,7 +28,7 @@ describe('TeamUpdateDialogComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [FormsModule],
+            imports: [FormsModule, FaIconComponent],
             declarations: [
                 TeamUpdateDialogComponent,
                 MockPipe(ArtemisTranslatePipe),

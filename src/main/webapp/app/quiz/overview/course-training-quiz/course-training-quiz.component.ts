@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { CoursePracticeQuizService } from 'app/quiz/overview/service/course-practice-quiz.service';
+import { CourseTrainingQuizService } from 'app/quiz/overview/service/course-training-quiz.service';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -25,9 +25,9 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 @Component({
     selector: 'jhi-course-practice-quiz',
     imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent],
-    templateUrl: './course-practice-quiz.component.html',
+    templateUrl: './course-training-quiz.component.html',
 })
-export class CoursePracticeQuizComponent {
+export class CourseTrainingQuizComponent {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
@@ -35,7 +35,7 @@ export class CoursePracticeQuizComponent {
 
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private quizService = inject(CoursePracticeQuizService);
+    private quizService = inject(CourseTrainingQuizService);
 
     currentIndex = signal(0);
     private quizParticipationService = inject(QuizParticipationService);
@@ -99,10 +99,7 @@ export class CoursePracticeQuizComponent {
      * increments the current question index or navigates to the course practice page if the last question is reached
      */
     nextQuestion(): void {
-        this.submitted = false;
-        if (this.isLastQuestion()) {
-            this.navigateToPractice();
-        } else {
+        if (this.currentIndex() < this.questions().length - 1) {
             this.currentIndex.set(this.currentIndex() + 1);
             const question = this.currentQuestion();
             if (question) {
@@ -117,6 +114,7 @@ export class CoursePracticeQuizComponent {
      */
     initQuestion(question: QuizQuestion): void {
         this.showingResult = false;
+        this.submitted = false;
         this.submission = new QuizSubmission();
         if (question) {
             switch (question.type) {
@@ -263,7 +261,7 @@ export class CoursePracticeQuizComponent {
     /**
      * navigates to the course practice page
      */
-    navigateToPractice(): void {
-        this.router.navigate(['courses', this.courseId(), 'practice']);
+    navigateToTraining(): void {
+        this.router.navigate(['courses', this.courseId(), 'training']);
     }
 }
