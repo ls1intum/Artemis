@@ -13,7 +13,12 @@
                 <div class="ms-3 d-flex justify-content-center gap-2 align-items-center">
                     <div class="d-flex align-items-center ms-3">
                         <label class="form-label mb-0 me-2" jhiTranslate="artemisApp.buildAgents.concurrencyLabel"></label>
-                        <jhi-number-input [value]="buildAgent.maxNumberOfConcurrentBuildJobs || 1" [minValue]="1" (valueChange)="onConcurrencyChange($event)" />
+                        <jhi-number-input
+                            [value]="buildAgent.maxNumberOfConcurrentBuildJobs || 1"
+                            [minValue]="1"
+                            [disabled]="buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED'"
+                            (valueChange)="onConcurrencyChange($event)"
+                        />
                     </div>
                     @if (buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED') {
                         <button class="btn btn-success" (click)="resumeBuildAgent()">

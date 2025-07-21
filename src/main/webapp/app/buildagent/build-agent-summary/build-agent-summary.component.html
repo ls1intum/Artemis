@@ -94,6 +94,7 @@
                                 <jhi-number-input
                                     [value]="concurrencyMap[row.buildAgent?.name] || value"
                                     [minValue]="1"
+                                    [disabled]="row.status === 'PAUSED' || row.status === 'SELF_PAUSED'"
                                     (valueChange)="onConcurrencyChange(row.buildAgent?.name, $event)"
                                 />
                             </div>

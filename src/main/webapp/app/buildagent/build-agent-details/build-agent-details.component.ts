@@ -284,6 +284,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     }
 
     onConcurrencyChange(newValue: number) {
+        if (this.buildAgent.status === 'PAUSED' || this.buildAgent.status === 'SELF_PAUSED') {
+            return;
+        }
         this.newConcurrency = newValue;
         this.adjustBuildAgentCapacity();
     }

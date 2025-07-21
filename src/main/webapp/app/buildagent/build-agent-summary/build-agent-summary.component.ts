@@ -189,6 +189,11 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
             return;
         }
 
+        const buildAgent = this.buildAgents.find((agent) => agent.buildAgent?.name === agentName);
+        if (buildAgent && (buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED')) {
+            return;
+        }
+
         this.buildAgentsService.adjustBuildAgentCapacity(agentName, newCapacity).subscribe({
             next: () => {
                 this.load();
@@ -208,6 +213,12 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
     onConcurrencyChange(agentName: string, newValue: number) {
         if (isNaN(newValue) || newValue < 1) {
+            return;
+        }
+
+        // Find the build agent to check its status
+        const buildAgent = this.buildAgents.find((agent) => agent.buildAgent?.name === agentName);
+        if (buildAgent && (buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED')) {
             return;
         }
 
