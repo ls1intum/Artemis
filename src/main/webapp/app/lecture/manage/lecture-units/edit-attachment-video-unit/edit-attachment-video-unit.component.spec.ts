@@ -245,7 +245,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         fixture.detectChanges();
 
         expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-        expect(component.formData()?.transcriptionProperties?.videoTranscription).toBe(JSON.stringify(transcription));
+        expect(component.formData?.transcriptionProperties?.videoTranscription).toBe(JSON.stringify(transcription));
     });
 
     it('should not fetch transcription when user is not admin', () => {
