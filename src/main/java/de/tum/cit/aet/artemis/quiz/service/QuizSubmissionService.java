@@ -145,9 +145,6 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // add result to statistics
         quizStatisticService.recalculateStatistics(quizExercise);
 
-        // save the question progress
-        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, (StudentParticipation) participation);
-
         log.debug("submit practice quiz finished: {}", quizSubmission);
         return result;
     }
@@ -203,7 +200,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             sendQuizResultToUser(quizExerciseId, participation);
 
             // save the question progress
-            quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
+            quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation.getStudent().get().getId());
         });
         quizStatisticService.recalculateStatistics(quizExercise);
         // notify users via websocket about new results for the statistics, filter out solution information
@@ -402,6 +399,33 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         var savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;
+    }
+
+    public Result submitForTraining(QuizSubmission quizSubmission, QuizExercise quizExercise, User user) {
+        // update submission properties
+        quizSubmission.setSubmitted(true);
+        quizSubmission.setType(SubmissionType.MANUAL);
+        quizSubmission.setSubmissionDate(ZonedDateTime.now());
+        // calculate scores
+        quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
+
+        // create result
+        Result result = new Result();
+        result.setRated(false);
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setCompletionDate(ZonedDateTime.now());
+
+        // setup result - submission relation
+        result.setSubmission(quizSubmission);
+        // calculate score and update result accordingly
+        result.evaluateQuizSubmission(quizExercise);
+        quizSubmission.addResult(result);
+
+        // save the question progress
+        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, user.getId());
+
+        log.debug("submit training quiz finished: {}", quizSubmission);
+        return result;
     }
 
 }

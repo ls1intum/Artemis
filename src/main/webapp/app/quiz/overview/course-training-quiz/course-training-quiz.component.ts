@@ -184,7 +184,7 @@ export class CourseTrainingQuizComponent {
         }
         this.applySelection();
         this.isSubmitting = true;
-        this.quizParticipationService.submitForPractice(this.submission, exerciseId).subscribe({
+        this.quizParticipationService.submitForTraining(this.submission, exerciseId).subscribe({
             next: (response: HttpResponse<Result>) => {
                 if (response.body) {
                     this.onSubmitSuccess(response.body);

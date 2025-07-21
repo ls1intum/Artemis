@@ -256,4 +256,49 @@ public class QuizSubmissionResource {
         log.info("submitQuizForExam took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(updatedQuizSubmission);
     }
+
+    @PostMapping("exercises/{exerciseId}/submissions/training")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<Result> submitForTraining(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
+        log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
+
+        // recreate pointers back to submission in each submitted answer
+        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+            submittedAnswer.setSubmission(quizSubmission);
+        }
+
+        if (quizSubmission.getId() != null) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idExists", "A new quizSubmission cannot already have an ID.")).body(null);
+        }
+
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAllowedToSeeCourseExercise(quizExercise, user)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
+        }
+
+        // Note that exam quiz exercises do not have an end date, so we need to check in that order
+        if (!Boolean.TRUE.equals(quizExercise.isIsOpenForPractice()) || !quizExercise.isQuizEnded()) {
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotOpenForPractice", "The exercise is not open for practice or hasn't ended yet."))
+                    .body(null);
+        }
+
+        // update and save submission
+        Result result = quizSubmissionService.submitForTraining(quizSubmission, quizExercise, user);
+
+        // remove some redundant or unnecessary data that is not needed on client side
+        for (SubmittedAnswer answer : quizSubmission.getSubmittedAnswers()) {
+            answer.getQuizQuestion().setQuizQuestionStatistic(null);
+        }
+
+        quizExercise.setQuizPointStatistic(null);
+
+        quizExercise.setCourse(null);
+        // return result with quizSubmission, participation and quiz exercise (including the solution)
+        return ResponseEntity.ok(result);
+    }
 }
