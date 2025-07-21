@@ -13,6 +13,25 @@
         <renameColumn tableName="learner_profile" oldColumnName="feedback_brief_detailed" newColumnName="feedback_detail" columnDataType="int"/>
         <dropColumn tableName="learner_profile" columnName="feedback_alternative_standard"/>
 
+        <rollback>
+            <dropColumn tableName="learner_profile"
+                        columnName="has_setup_feedback_preferences"/>
+
+            <renameColumn tableName="learner_profile"
+                          oldColumnName="feedback_formality"
+                          newColumnName="feedback_followup_summary"
+                          columnDataType="int"/>
+
+            <renameColumn tableName="learner_profile"
+                          oldColumnName="feedback_detail"
+                          newColumnName="feedback_brief_detailed"
+                          columnDataType="int"/>
+
+            <addColumn tableName="learner_profile">
+                <column name="feedback_alternative_standard"
+                        type="int"/>
+            </addColumn>
+        </rollback>
     </changeSet>
 
 </databaseChangeLog> 

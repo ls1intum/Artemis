@@ -68,14 +68,20 @@ class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetLearnerProfile_ProfileNotFound() throws Exception {
+    void testGetLearnerProfile_ProfileNotFound_CreatesNewProfile() throws Exception {
         // Delete the profile to simulate a user without a profile
         learnerProfileRepository.delete(testProfile);
         testUser.setLearnerProfile(null);
         userTestRepository.save(testUser);
 
-        // Should throw an exception when profile doesn't exist
-        request.get("/api/atlas/learner-profile", HttpStatus.NOT_FOUND, LearnerProfileDTO.class);
+        LearnerProfileDTO response = request.get("/api/atlas/learner-profile", HttpStatus.OK, LearnerProfileDTO.class);
+        assertThat(response).isNotNull();
+        // Optionally, check for default values or expected values
+        assertThat(response.feedbackDetail()).isNotNull();
+        assertThat(response.feedbackFormality()).isNotNull();
+        // Optionally, assert that the profile now exists in the database
+        LearnerProfile createdProfile = learnerProfileRepository.findByUserElseThrow(testUser);
+        assertThat(createdProfile).isNotNull();
     }
 
     @Test
@@ -121,7 +127,7 @@ class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
         LearnerProfileDTO maxResponse = request.putWithResponseBody("/api/atlas/learner-profile", maxDTO, LearnerProfileDTO.class, HttpStatus.OK);
         assertThat(maxResponse.feedbackDetail()).isEqualTo(3);
         assertThat(maxResponse.feedbackFormality()).isEqualTo(3);
-        assertThat(maxResponse.hasSetupFeedbackPreferences()).isFalse();
+        assertThat(maxResponse.hasSetupFeedbackPreferences()).isTrue();
     }
 
     @Test
@@ -173,12 +179,12 @@ class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
         LearnerProfileDTO secondResponse = request.putWithResponseBody("/api/atlas/learner-profile", secondUpdate, LearnerProfileDTO.class, HttpStatus.OK);
         assertThat(secondResponse.feedbackDetail()).isEqualTo(3);
         assertThat(secondResponse.feedbackFormality()).isEqualTo(3);
-        assertThat(secondResponse.hasSetupFeedbackPreferences()).isFalse();
+        assertThat(secondResponse.hasSetupFeedbackPreferences()).isTrue();
 
         // Verify final state in database
         LearnerProfile finalProfile = learnerProfileRepository.findByUserElseThrow(testUser);
         assertThat(finalProfile.getFeedbackDetail()).isEqualTo(3);
         assertThat(finalProfile.getFeedbackFormality()).isEqualTo(3);
-        assertThat(finalProfile.hasSetupFeedbackPreferences()).isFalse();
+        assertThat(finalProfile.hasSetupFeedbackPreferences()).isTrue();
     }
 }

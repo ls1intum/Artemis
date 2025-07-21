@@ -20,7 +20,7 @@ public record LearnerProfileDTO(long id, int feedbackDetail, int feedbackFormali
         if (learnerProfile == null) {
             return null;
         }
-        return new LearnerProfileDTO(learnerProfile.getId(), learnerProfile.getFeedbackDetail(), learnerProfile.getFeedbackFormality(),
+        return new LearnerProfileDTO(learnerProfile.getId(), clamp(learnerProfile.getFeedbackDetail()), clamp(learnerProfile.getFeedbackFormality()),
                 learnerProfile.hasSetupFeedbackPreferences());
     }
 

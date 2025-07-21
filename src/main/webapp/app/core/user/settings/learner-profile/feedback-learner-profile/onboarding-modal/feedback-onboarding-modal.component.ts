@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { FEEDBACK_EXAMPLES } from 'app/core/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-examples';
@@ -18,8 +18,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [CommonModule, TextResultComponent, TranslateDirective],
 })
 export class FeedbackOnboardingModalComponent {
-    @Input() profileMissing = false;
-    @Output() onboardingCompleted = new EventEmitter<void>();
+    profileMissing = signal(false);
+    onboardingCompleted = signal<void | undefined>(undefined);
     step = 0;
     readonly totalSteps = 2;
     selected: (number | null)[] = [null, null];
@@ -57,7 +57,7 @@ export class FeedbackOnboardingModalComponent {
                 feedbackFormality: this.selected[1] === 0 ? 1 : this.selected[1] === 1 ? 3 : 2,
                 hasSetupFeedbackPreferences: true,
             });
-            if (this.profileMissing) {
+            if (this.profileMissing()) {
                 await this.learnerProfileApiService.postLearnerProfile(newProfile);
             } else {
                 const profile = await this.learnerProfileApiService.getLearnerProfileForCurrentUser();
@@ -69,7 +69,7 @@ export class FeedbackOnboardingModalComponent {
                 type: AlertType.SUCCESS,
                 message: 'artemisApp.learnerProfile.feedbackLearnerProfile.profileSaved',
             });
-            this.onboardingCompleted.emit();
+            this.onboardingCompleted.set(undefined);
             this.activeModal.close();
         } catch (error) {
             this.handleError(error);

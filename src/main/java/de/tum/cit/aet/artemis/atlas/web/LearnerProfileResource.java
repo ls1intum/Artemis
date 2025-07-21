@@ -57,8 +57,7 @@ public class LearnerProfileResource {
     }
 
     /**
-     * GET learner-profile : get the {@link LearnerProfile} of the current user.
-     * If no profile exists for the current user, a BadRequestAlertException is thrown.
+     * GET learner-profile : get the {@link LearnerProfile} of the current user if it exists, otherwise create a new profile.
      *
      * @return A ResponseEntity with a status matching the validity of the request containing the profile.
      */
@@ -82,7 +81,7 @@ public class LearnerProfileResource {
         user.setLearnerProfile(profile);
         userRepository.save(user);
 
-        LearnerProfile persistedProfile = learnerProfileRepository.findByUser(user).orElseThrow();
+        LearnerProfile persistedProfile = learnerProfileRepository.findByUserElseThrow(user);
         return ResponseEntity.ok(LearnerProfileDTO.of(persistedProfile));
     }
 
@@ -142,7 +141,7 @@ public class LearnerProfileResource {
         user.setLearnerProfile(profile);
         userRepository.save(user);
 
-        LearnerProfile persistedProfile = learnerProfileRepository.findByUser(user).orElseThrow();
+        LearnerProfile persistedProfile = learnerProfileRepository.findByUserElseThrow(user);
         return ResponseEntity.ok(LearnerProfileDTO.of(persistedProfile));
     }
 }
