@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MockBuilder } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseTrainingQuizService } from '../service/course-training-quiz.service';
@@ -193,6 +193,7 @@ describe('CourseTrainingQuizComponent', () => {
         const error = new HttpErrorResponse({
             error: 'error',
             status: 400,
+            headers: new HttpHeaders({ 'X-artemisApp-message': 'Fehler beim Absenden' }),
             statusText: 'Bad Request',
         });
         jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(throwError(() => error));

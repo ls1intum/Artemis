@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { CourseTrainingQuizService } from 'app/quiz/overview/service/course-training-quiz.service';
@@ -188,7 +188,7 @@ export class CourseTrainingQuizComponent {
                     this.onSubmitSuccess(response.body);
                 }
             },
-            error: () => this.onSubmitError(),
+            error: (error: HttpErrorResponse) => this.onSubmitError(error),
         });
     }
 
@@ -203,8 +203,8 @@ export class CourseTrainingQuizComponent {
     /**
      * Callback function for handling error when submitting
      */
-    onSubmitError() {
-        const errorMessage = 'Submitting the quiz question was not possible';
+    onSubmitError(error: HttpErrorResponse) {
+        const errorMessage = 'Submitting the quiz was not possible. ' + (error.headers?.get('X-artemisApp-message') || error.message);
         this.alertService.addAlert({
             type: AlertType.DANGER,
             message: errorMessage,

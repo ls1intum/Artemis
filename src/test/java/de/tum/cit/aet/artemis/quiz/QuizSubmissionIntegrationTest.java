@@ -873,27 +873,29 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining_shouldReturnResultAndSetSubmissionProperties() throws Exception {
-        // Setup: QuizExercise und User anlegen
+        // Setup: Create a course and a quiz exercise
         Course course = courseUtilService.createCourse();
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.setDuration(60);
         quizExercise = quizExerciseService.save(quizExercise);
 
-        // QuizSubmission mit Antworten erstellen
+        // Create a quiz submission with answers
         QuizSubmission quizSubmission = new QuizSubmission();
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
             quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(question));
         }
 
-        // REST-Call: Training-Submission abschicken
+        // REST API Call: Submit the quiz for training
         Result result = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/training", quizSubmission, Result.class, HttpStatus.OK);
 
-        // Assertions: Ergebnis und Submission prüfen
         assertThat(result).isNotNull();
         assertThat(result.getSubmission()).isInstanceOf(QuizSubmission.class);
         QuizSubmission returnedSubmission = (QuizSubmission) result.getSubmission();
         assertThat(returnedSubmission.isSubmitted()).isTrue();
         assertThat(returnedSubmission.getSubmissionDate()).isNotNull();
         assertThat(returnedSubmission.getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
+
+        assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
+        assertThat(participationRepository.findByExerciseId(quizExercise.getId())).isEmpty();
     }
 }
