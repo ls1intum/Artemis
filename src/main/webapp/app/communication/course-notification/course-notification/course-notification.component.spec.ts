@@ -45,8 +45,8 @@ describe('CourseNotificationComponent', () => {
         } as unknown as CourseNotificationService;
 
         await TestBed.configureTestingModule({
-            imports: [NoopAnimationsModule, CommonModule],
-            declarations: [CourseNotificationComponent, MockComponent(FaIconComponent), MockComponent(ProfilePictureComponent), MockDirective(TranslateDirective)],
+            imports: [NoopAnimationsModule, CommonModule, FaIconComponent],
+            declarations: [CourseNotificationComponent, MockComponent(ProfilePictureComponent), MockDirective(TranslateDirective)],
             providers: [{ provide: CourseNotificationService, useValue: courseNotificationService }],
         }).compileComponents();
 

@@ -4,6 +4,7 @@ import { MockBuilder, MockProvider } from 'ng-mocks';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
     let fixture: ComponentFixture<ReEvaluateMultipleChoiceQuestionComponent>;
@@ -13,7 +14,7 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
     const answerBackup = { id: 1, text: 'backup' } as AnswerOption;
 
     beforeEach(async () => {
-        await MockBuilder(ReEvaluateMultipleChoiceQuestionComponent).provide(MockProvider(TranslateService));
+        await MockBuilder(ReEvaluateMultipleChoiceQuestionComponent).keep(FaIconComponent).provide(MockProvider(TranslateService));
 
         fixture = TestBed.createComponent(ReEvaluateMultipleChoiceQuestionComponent);
         component = fixture.componentInstance;

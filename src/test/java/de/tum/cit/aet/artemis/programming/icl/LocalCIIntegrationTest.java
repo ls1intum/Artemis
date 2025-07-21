@@ -645,7 +645,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
             BuildJob buildJob = buildJobRepository.findBuildJobByResult(result).orElseThrow();
 
-            Set<ResultBuildJob> resultBuildJobSet = buildJobRepository.findBuildJobIdsForParticipationId(studentParticipation.getId());
+            Set<ResultBuildJob> resultBuildJobSet = buildJobRepository.findBuildJobIdsWithResultForParticipationId(studentParticipation.getId());
 
             assertThat(resultBuildJobSet).hasSize(1);
             assertThat(resultBuildJobSet.iterator().next().buildJobId()).isEqualTo(buildJob.getBuildJobId());

@@ -48,6 +48,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -147,6 +148,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         } as unknown as ActivatedRoute;
 
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 TextSubmissionAssessmentComponent,
                 TextAssessmentAreaComponent,

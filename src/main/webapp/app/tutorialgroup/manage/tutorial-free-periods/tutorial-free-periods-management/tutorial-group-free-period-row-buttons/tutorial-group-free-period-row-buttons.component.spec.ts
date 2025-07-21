@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
@@ -30,10 +30,10 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 TutorialGroupFreePeriodRowButtonsComponent,
                 MockPipe(ArtemisDatePipe),
-                MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),

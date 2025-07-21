@@ -25,13 +25,20 @@ describe('DeleteDialogDirective', () => {
     let translateService: TranslateService;
     let translateSpy: jest.SpyInstance;
 
+    const mockNgbModal = {
+        open: jest.fn().mockReturnValue({
+            result: Promise.resolve(), // or whatever you expect
+            componentInstance: {},
+        }),
+    };
+
     beforeEach(() =>
         TestBed.configureTestingModule({
             imports: [TestComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 // if we don't provide the NgbModal, the dialogError subscriptions are undefined.
-                { provide: NgbModal, useValue: null },
+                { provide: NgbModal, useValue: mockNgbModal },
             ],
         })
             .compileComponents()
