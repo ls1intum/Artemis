@@ -32,7 +32,7 @@ describe('PlagiarismCaseReviewComponent', () => {
     });
 
     it('should initialize with default values', () => {
-        expect(component.forStudent).toBeTrue();
+        expect(component.forStudent()).toBeTrue();
         expect(component.splitControlSubject).toBeInstanceOf(Subject);
     });
 
