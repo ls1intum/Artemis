@@ -2181,7 +2181,7 @@ public class ProgrammingExerciseTestService {
         var participantRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(studentTeamRepo));
         final var teamLocalPath = studentTeamRepo.workingCopyGitRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
-        doThrow(new IOException("Checkout got interrupted!")).when(gitService).copyBareRepository(any(), any(), anyString());
+        doThrow(new IOException("Checkout got interrupted!")).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), anyString());
 
         // the local repo should exist before startExercise()
         assertThat(teamLocalPath).exists();
@@ -2219,7 +2219,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void configureRepository_testBadRequestError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
-        doThrow(new IOException()).when(gitService).copyBareRepository(any(), any(), anyString());
+        doThrow(new IOException()).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), anyString());
 
         // Start participation
         assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))

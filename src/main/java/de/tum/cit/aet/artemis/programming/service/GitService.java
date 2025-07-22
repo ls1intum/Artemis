@@ -13,15 +13,19 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -992,29 +996,11 @@ public class GitService extends AbstractGitService {
      * @return a Repository object representing the newly created bare repository
      * @throws IOException if there is an error accessing the repositories or creating the new commit
      */
-    public Repository copyBareRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
-        log.debug("copy bare repository from {} to {} for source branch {}", sourceRepoUri, targetRepoUri, sourceBranch);
+    public Repository copyBareRepositoryWithoutHistory(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
+        log.debug("copy bare repository without history from {} to {} for source branch {}", sourceRepoUri, targetRepoUri, sourceBranch);
         Repository sourceRepo = getExistingBareRepository(sourceRepoUri, sourceBranch);
 
-        if (log.isDebugEnabled()) {
-            // Log how many commits the source repository has
-            try (RevWalk walk = new RevWalk(sourceRepo)) {
-                ObjectId debugCommitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
-                if (debugCommitId == null) {
-                    log.error("Source repo [{}] has no head commit in branch [{}]", sourceRepoUri, sourceBranch);
-                }
-                RevCommit headCommit = walk.parseCommit(debugCommitId);
-                walk.markStart(headCommit);
-                int commitCount = 0;
-                for (RevCommit ignored : walk) {
-                    commitCount++;
-                }
-                log.debug("Source repository {} has {} commits", sourceRepoUri, commitCount);
-                if (commitCount == 0) {
-                    log.error("Source repository {} is empty, no commits to copy. This operation will fail", sourceRepoUri);
-                }
-            }
-        }
+        logCommits(sourceRepoUri, sourceBranch, sourceRepo);
 
         // Initialize new bare repository
         var localTargetRepoUri = new LocalVCRepositoryUri(targetRepoUri.toString());
@@ -1063,6 +1049,111 @@ public class GitService extends AbstractGitService {
             refUpdate.setForceUpdate(true);
             refUpdate.update();
             return getBareRepository(targetRepoUri, true);
+        }
+    }
+
+    /**
+     * Creates a new bare Git repository at the specified target location, copying all commits
+     * and history from the source repository.
+     * <p>
+     * This method efficiently duplicates the entire commit history from the source to the target
+     * repository by directly transferring Git objects (commits, trees, and blobs) without checking
+     * out any working tree. It is designed for bare repositories, ensuring that the complete
+     * history is preserved in the new repository.
+     *
+     * @param sourceRepoUri the URI of the source bare repository to copy from
+     * @param targetRepoUri the URI where the new bare repository will be created
+     * @param sourceBranch  the name of the branch to copy (e.g., "main" or "master")
+     * @return a Repository object representing the newly created bare repository
+     * @throws IOException if there is an error accessing the repositories or creating the new commit
+     */
+    public Repository copyBareRepositoryWithHistory(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
+        log.debug("Copying full history from {} to {} for branch {}", sourceRepoUri, targetRepoUri, sourceBranch);
+        Repository sourceRepo = getExistingBareRepository(sourceRepoUri, sourceBranch);
+
+        logCommits(sourceRepoUri, sourceBranch, sourceRepo);
+
+        // Resolve the HEAD commit of the branch
+        ObjectId headCommitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
+        if (headCommitId == null) {
+            throw new IOException("Source branch " + sourceBranch + " not found in " + sourceRepoUri);
+        }
+
+        // Create new bare repository
+        var localTargetRepoUri = new LocalVCRepositoryUri(targetRepoUri.toString());
+        var localTargetPath = localTargetRepoUri.getLocalRepositoryPath(localVCBasePath);
+        try (org.eclipse.jgit.lib.Repository targetRepo = FileRepositoryBuilder.create(localTargetPath.toFile())) {
+            targetRepo.create(true); // bare = true
+
+            try (ObjectInserter inserter = targetRepo.newObjectInserter(); RevWalk revWalk = new RevWalk(sourceRepo)) {
+
+                Set<ObjectId> copiedObjects = new HashSet<>();
+                Deque<ObjectId> toProcess = new ArrayDeque<>();
+                toProcess.add(headCommitId);
+
+                while (!toProcess.isEmpty()) {
+                    ObjectId current = toProcess.poll();
+                    if (!copiedObjects.add(current)) {
+                        continue; // already processed
+                    }
+
+                    ObjectLoader loader = sourceRepo.open(current);
+                    inserter.insert(loader.getType(), loader.getSize(), loader.openStream());
+
+                    // If this is a commit, enqueue parents and tree
+                    if (loader.getType() == Constants.OBJ_COMMIT) {
+                        RevCommit commit = revWalk.parseCommit(current);
+                        toProcess.add(commit.getTree().getId());
+                        for (RevCommit parent : commit.getParents()) {
+                            toProcess.add(parent.getId());
+                        }
+                    }
+
+                    // If this is a tree, enqueue its entries (subtrees and blobs)
+                    if (loader.getType() == Constants.OBJ_TREE) {
+                        try (TreeWalk treeWalk = new TreeWalk(sourceRepo)) {
+                            treeWalk.addTree(current);
+                            treeWalk.setRecursive(false);
+                            while (treeWalk.next()) {
+                                toProcess.add(treeWalk.getObjectId(0));
+                            }
+                        }
+                    }
+                }
+
+                inserter.flush();
+
+                // Update target HEAD ref
+                RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
+                refUpdate.setNewObjectId(headCommitId);
+                refUpdate.setForceUpdate(true);
+                RefUpdate.Result result = refUpdate.update();
+                log.debug("RefUpdate result: {}", result);
+            }
+
+            return getBareRepository(targetRepoUri);
+        }
+    }
+
+    private static void logCommits(VcsRepositoryUri sourceRepoUri, String sourceBranch, Repository sourceRepo) throws IOException {
+        if (log.isDebugEnabled()) {
+            // Log how many commits the source repository has
+            try (RevWalk walk = new RevWalk(sourceRepo)) {
+                ObjectId debugCommitId = sourceRepo.resolve("refs/heads/" + sourceBranch + "^{commit}");
+                if (debugCommitId == null) {
+                    log.error("Source repo [{}] has no head commit in branch [{}]", sourceRepoUri, sourceBranch);
+                }
+                RevCommit headCommit = walk.parseCommit(debugCommitId);
+                walk.markStart(headCommit);
+                int commitCount = 0;
+                for (RevCommit ignored : walk) {
+                    commitCount++;
+                }
+                log.debug("Source repository {} has {} commits", sourceRepoUri, commitCount);
+                if (commitCount == 0) {
+                    log.error("Source repository {} is empty, no commits to copy. This operation will fail", sourceRepoUri);
+                }
+            }
         }
     }
 
