@@ -7,7 +7,7 @@
             "courseToImport": "Kurs in den die Aufgabe importiert werden soll",
             "noExercisesFound": "Keine importierten Aufgaben gefunden?",
             "exerciseToImport": "Bitte die zu importierende Aufgabe auswählen",
-            "loginAsInstructor": "Bitte melden dich als Instruktor an!",
+            "loginAsInstructorOrEditor": "Bitte melden dich als Instruktor oder Editor an!",
             "error": {
                 "loadingStatus": "Sharing Profile ist nicht aktiv!",
                 "statusError": "Status der Sharing Platform kann nicht identifiziert werden",

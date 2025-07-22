@@ -50,7 +50,7 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     void validateApiKey_withNullKey_shouldReturnFalse() {
-        assertThat(sharingConnectorService.validate(null)).isFalse();
+        assertThat(sharingConnectorService.validateApiKey(null)).isFalse();
     }
 
     @Test
@@ -60,20 +60,20 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
          */
         String hugeKey = "huge" + "0123456789".repeat(50);
 
-        assertThat(sharingConnectorService.validate(hugeKey)).isFalse();
+        assertThat(sharingConnectorService.validateApiKey(hugeKey)).isFalse();
     }
 
     @Test
     void validateApiKey_withValidKey_shouldReturnTrue() {
-        assertThat(sharingConnectorService.validate(sharingApiKey)).isTrue();
-        assertThat(sharingConnectorService.validate("Bearer " + sharingApiKey)).isTrue();
+        assertThat(sharingConnectorService.validateApiKey(sharingApiKey)).isTrue();
+        assertThat(sharingConnectorService.validateApiKey("Bearer " + sharingApiKey)).isTrue();
     }
 
     @Test
     void validateApiKey_withFakeKey_shouldReturnFalse() {
         String fakeKey = "x1234123123sdfsdfxx";
-        assertThat(sharingConnectorService.validate(fakeKey)).isFalse();
-        assertThat(sharingConnectorService.validate("Bearer " + fakeKey)).isFalse();
+        assertThat(sharingConnectorService.validateApiKey(fakeKey)).isFalse();
+        assertThat(sharingConnectorService.validateApiKey("Bearer " + fakeKey)).isFalse();
     }
 
 }

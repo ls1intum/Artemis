@@ -23,7 +23,8 @@ import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
-import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
+import { ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
@@ -64,7 +65,7 @@ jest.mock('app/programming/shared/utils/diff.utils', () => ({
 }));
 
 /*
- * just use a separate file for sharing aspects, could be merged into programming-exercise-detail.component.spec.ts if stabilized.
+ *  separate test spec file for sharing aspects of the programming details component. Could be merged into programming-exercise-detail.component.spec.ts on the long run.
  */
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;

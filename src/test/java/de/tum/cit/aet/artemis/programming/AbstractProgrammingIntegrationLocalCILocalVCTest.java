@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
+import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -87,6 +88,8 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
     @Autowired
     protected StaticCodeAnalysisService staticCodeAnalysisService;
 
+    // @MockitoBean
+    // protected ProgrammingLanguageFeatureService programmingLanguageFeatureService;
     // External Services
 
     // Util Services
@@ -111,4 +114,12 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
 
     @Autowired
     protected ParticipationUtilService participationUtilService;
+
+    @AfterEach
+    @Override
+    protected void resetSpyBeans() {
+        // Mockito.reset(programmingLanguageFeatureService);
+        super.resetSpyBeans();
+    }
+
 }

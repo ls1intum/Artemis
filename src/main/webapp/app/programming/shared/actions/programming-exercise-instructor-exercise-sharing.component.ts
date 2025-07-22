@@ -10,7 +10,7 @@ import { AlertService } from 'app/shared/service/alert.service';
     selector: 'jhi-programming-exercise-instructor-exercise-sharing',
     template: `
         <jhi-button
-            [disabled]="!exerciseId"
+            [disabled]="!exerciseId()"
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"

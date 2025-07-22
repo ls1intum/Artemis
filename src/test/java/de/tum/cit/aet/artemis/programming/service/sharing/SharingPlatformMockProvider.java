@@ -51,9 +51,6 @@ public class SharingPlatformMockProvider {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public SharingPlatformMockProvider() {
-    }
-
     /**
      * Simulates a connection request from the Sharing Platform to Artemis.
      * This method sends a request to the Artemis sharing configuration endpoint with

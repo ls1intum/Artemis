@@ -110,6 +110,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private consistencyCheckService = inject(ConsistencyCheckService);
     private irisSettingsService = inject(IrisSettingsService);
     private aeolusService = inject(AeolusService);
+    private sharingService = inject(ProgrammingExerciseSharingService);
 
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
@@ -179,8 +180,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private lastUpdateTime = 0;
     private readonly UPDATE_DEBOUNCE_MS = 1000;
-
-    constructor(private sharingService: ProgrammingExerciseSharingService) {}
 
     ngOnInit() {
         this.isBuildPlanEditable = this.profileService.isProfileActive('jenkins');
