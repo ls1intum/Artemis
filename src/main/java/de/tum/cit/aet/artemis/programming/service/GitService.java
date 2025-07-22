@@ -199,18 +199,6 @@ public class GitService extends AbstractGitService {
      * Saves the local repo in the default path.
      *
      * @param participation Participation the remote repository belongs to.
-     * @return the repository if it could be checked out
-     * @throws GitAPIException if the repository could not be checked out.
-     */
-    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation) throws GitAPIException {
-        return getOrCheckoutRepository(participation, repoClonePath);
-    }
-
-    /**
-     * Get the local repository for a given participation. If the local repo does not exist yet, it will be checked out.
-     * Saves the local repo in the default path.
-     *
-     * @param participation Participation the remote repository belongs to.
      * @param targetPath    path where the repo is located on disk
      * @return the repository if it could be checked out
      * @throws GitAPIException if the repository could not be checked out.
@@ -332,31 +320,19 @@ public class GitService extends AbstractGitService {
         return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, defaultBranch);
     }
 
-    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUri repoUri, VcsRepositoryUri targetUri, boolean pullOnGet)
-            throws GitAPIException, GitException, InvalidPathException {
-        Path localPath = getDefaultLocalPathOfRepo(targetUri);
-        return getOrCheckoutRepository(repoUri, targetUri, localPath, pullOnGet);
-    }
-
-    public Repository getOrCheckoutRepositoryWithLocalPath(VcsRepositoryUri repoUri, Path localPath, boolean pullOnGet) throws GitAPIException, GitException, InvalidPathException {
-        return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet);
-    }
-
     /**
      * Get the local repository for a given remote repository URI. If the local repo does not exist yet, it will be checked out.
      *
-     * @param sourceRepoUri The source remote repository.
-     * @param targetRepoUri The target remote repository.
-     * @param localPath     The local path to clone the repository to.
-     * @param pullOnGet     Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @param repoUri   The source and target remote repository.
+     * @param localPath The local path to clone the repository to.
+     * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @return the repository if it could be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    private Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet)
-            throws GitAPIException, GitException, InvalidPathException {
-        return getOrCheckoutRepository(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch);
+    public Repository getOrCheckoutRepositoryWithLocalPath(VcsRepositoryUri repoUri, Path localPath, boolean pullOnGet) throws GitAPIException, GitException, InvalidPathException {
+        return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, defaultBranch);
     }
 
     /**
