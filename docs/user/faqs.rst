@@ -17,7 +17,7 @@ Before using the FAQ feature, a configuration step is required. Please ensure th
 
 .. raw:: html
 
-   <iframe src="https://live.rbg.tum.de/w/artemisintro/61395?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+   <iframe src="https://live.rbg.tum.de/w/artemisintro/61395?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
        Watch this video on TUM-Live.
    </iframe>
 
@@ -52,18 +52,17 @@ Tutors can propose new FAQs and edit those that are still in the Proposed state,
 
 .. raw:: html
 
-   <iframe src="https://live.rbg.tum.de/w/artemisintro/61396?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+   <iframe src="https://live.rbg.tum.de/w/artemisintro/61396?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
        Watch this video on TUM-Live.
    </iframe>
 
-**Instructors** can edit or delete any FAQ. They can approve FAQs that are in the *Proposed* state, changing their status to *Accepted*.
+Instructors can edit or delete any FAQ. They can approve FAQs that are in the *Proposed* state, changing their status to *Accepted*.
 
   .. raw:: html
 
-     <iframe src="https://live.rbg.tum.de/w/artemisintro/61397?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+     <iframe src="https://live.rbg.tum.de/w/artemisintro/61397?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
          Watch this video on TUM-Live.
      </iframe>
-
 
 Creating FAQs
 ^^^^^^^^^^^^^
@@ -85,10 +84,9 @@ The following video shows how to enable IRIS in your course:
 
   .. raw:: html
 
-     <iframe src="https://live.rbg.tum.de/w/artemisintro/61403?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+     <iframe src="https://live.rbg.tum.de/w/artemisintro/61403?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
          Watch this video on TUM-Live.
      </iframe>
-
 
 When IRIS is enabled, you can use an integrated feature to automatically refine your FAQs.
 With just one click, IRIS checks your FAQ answers for grammar issues and unclear phrasing.
@@ -97,7 +95,7 @@ In addition, a **consistency check** is performed to ensure that the answer alig
 
   .. raw:: html
 
-     <iframe src="https://live.rbg.tum.de/w/artemisintro/61398?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+     <iframe src="https://live.rbg.tum.de/w/artemisintro/61398?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
          Watch this video on TUM-Live.
      </iframe>
 
