@@ -249,8 +249,6 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
 
         ProgrammingExercise exercise = getAndTestExerciseDetails(sharingInfo);
 
-        validateProblemStatement(sharingInfo);
-
         SharingSetupInfo setupInfo = new SharingSetupInfo(exercise, course1, sharingInfo);
 
         // last step: do Exercise Import
@@ -302,17 +300,6 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
 
         final ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(basketURI)).andExpect(method(HttpMethod.GET));
         responseActions.andRespond(MockRestResponseCreators.withSuccess(zippedBytes, MediaType.APPLICATION_OCTET_STREAM));
-    }
-
-    private void validateProblemStatement(SharingInfoDTO sharingInfo) throws Exception, JsonProcessingException, UnsupportedEncodingException {
-        // get Problem Statement
-        MvcResult resultPS = requestUtilService
-                .performMvcRequest(post("/api/programming/sharing/import/basket/problem-statement").contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON))
-                .andExpect(content().contentType(MediaType.TEXT_PLAIN)).andExpect(status().isOk()).andReturn();
-        // Zip file is cached, no extra request to sharing platform required!
-        String contentPS = resultPS.getResponse().getContentAsString();
-        assertThat(contentPS).startsWith("# Simpler IO Test");
     }
 
     private ProgrammingExercise getAndTestExerciseDetails(SharingInfoDTO sharingInfo) throws Exception, JsonProcessingException, UnsupportedEncodingException {
@@ -388,16 +375,6 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         SharingInfoDTO sharingInfo = new SharingInfoDTO("Some Basket Token", TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN, "Invalid Checksum", 0);
 
         requestUtilService.performMvcRequest(post("/api/programming/sharing/import/basket/exercise-details").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importProblemStatementWrongChecksum() throws Exception {
-
-        SharingInfoDTO sharingInfo = new SharingInfoDTO("SomeBasketToken", TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN, "Invalid Checksum", 0);
-
-        requestUtilService.performMvcRequest(post("/api/programming/sharing/import/basket/problem-statement").contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
     }
 

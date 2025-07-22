@@ -34,6 +34,8 @@ import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 @Lazy
 public class SharingConnectorService {
 
+    public static final int HEALTH_HISTORY_LIMIT = 10;
+
     /**
      * just to signal a missing/inconsistent sharing configuration to the sharing connector service.
      */
@@ -95,8 +97,6 @@ public class SharingConnectorService {
         }
 
     }
-
-    public static final int HEALTH_HISTORY_LIMIT = 10;
 
     private final HealthStatusWithHistory lastHealthStati = new HealthStatusWithHistory();
 
@@ -233,7 +233,7 @@ public class SharingConnectorService {
 
             return false;
         }
-        Pattern p = Pattern.compile("Bearer\\s(.+)");
+        Pattern p = Pattern.compile("Bearer\\s+(.+)$");
         Matcher m = p.matcher(apiKey);
         if (m.matches()) {
             apiKey = m.group(1);
@@ -278,10 +278,12 @@ public class SharingConnectorService {
                 boolean success = Boolean.TRUE.equals(restTemplate.getForObject(reInitUrlWithApiKey, Boolean.class));
                 if (!success) {
                     log.warn("The request for connector reinitialization from Sharing Platform was not successful");
+                    lastHealthStati.add(new HealthStatus("The request for connector reinitialization from Sharing Platform was not successful."));
                 }
             }
             catch (Exception e) {
                 log.warn("Failed to request reinitialization from Sharing Platform", e);
+                lastHealthStati.add(new HealthStatus("The request for connector reinitialization from Sharing Platform was not successful: " + e.getMessage()));
             }
         }
     }

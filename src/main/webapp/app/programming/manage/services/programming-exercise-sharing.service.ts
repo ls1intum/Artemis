@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { map } from 'rxjs/operators';
@@ -36,14 +36,6 @@ export class ProgrammingExerciseSharingService {
                 observe: 'response',
             })
             .pipe(map((response: HttpResponse<ShoppingBasket>) => response.body!));
-    }
-
-    /**
-     * loads the problem statment via the server
-     */
-    loadProblemStatementForExercises(sharingInfo: SharingInfo): Observable<string> {
-        const headers = new HttpHeaders();
-        return this.http.post<string>(this.resourceUrlBasket + 'problem-statement', sharingInfo, { headers, responseType: 'text' as 'json' });
     }
 
     loadDetailsForExercises(sharingInfo: SharingInfo): Observable<ProgrammingExercise> {
