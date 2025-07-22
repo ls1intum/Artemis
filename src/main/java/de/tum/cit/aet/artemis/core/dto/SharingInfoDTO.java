@@ -13,29 +13,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SharingInfoDTO(
 
-        /**
-         * the (random) basket Token
-         */
         String basketToken,
 
-        /**
-         * the callback URL for the basket request
-         */
         String returnURL,
 
-        /**
-         * the base URL for the basket request
-         */
         String apiBaseURL,
 
-        /**
-         * the base URL for the basket request
-         */
         String checksum,
 
-        /**
-         * the index of the request exercise
-         */
         int exercisePosition) {
 
     @Override

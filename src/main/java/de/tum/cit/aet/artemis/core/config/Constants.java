@@ -371,11 +371,6 @@ public final class Constants {
     public static final String PROFILE_THEIA = "theia";
 
     /**
-     * the docker profile
-     */
-    public static final String PROFILE_DOCKER = "docker";
-
-    /**
      * the sharing profile
      */
     public static final String PROFILE_SHARING = "sharing";

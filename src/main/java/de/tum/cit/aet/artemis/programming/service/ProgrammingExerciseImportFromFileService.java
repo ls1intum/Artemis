@@ -43,9 +43,6 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
-/**
- * Service to read programming exercises from a zip file.
- */
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
