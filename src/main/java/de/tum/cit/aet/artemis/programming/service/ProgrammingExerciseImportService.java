@@ -112,14 +112,15 @@ public class ProgrammingExerciseImportService {
         String sourceBranch = programmingExerciseRepository.findBranchByExerciseId(templateExercise.getId());
 
         // TODO: in case one of those operations fail, we should do error handling and revert all previous operations
-        versionControl.copyRepository(sourceProjectKey, templateRepoName, sourceBranch, targetProjectKey, RepositoryType.TEMPLATE.getName(), null);
-        versionControl.copyRepository(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName(), null);
-        versionControl.copyRepository(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName(), null);
+        versionControl.copyRepositoryWithHistory(sourceProjectKey, templateRepoName, sourceBranch, targetProjectKey, RepositoryType.TEMPLATE.getName(), null);
+        versionControl.copyRepositoryWithHistory(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName(), null);
+        versionControl.copyRepositoryWithHistory(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName(), null);
 
         List<AuxiliaryRepository> auxRepos = templateExercise.getAuxiliaryRepositories();
         for (int i = 0; i < auxRepos.size(); i++) {
             AuxiliaryRepository auxRepo = auxRepos.get(i);
-            var repoUri = versionControl.copyRepository(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName(), null).toString();
+            var repoUri = versionControl.copyRepositoryWithHistory(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName(), null)
+                    .toString();
             AuxiliaryRepository newAuxRepo = newExercise.getAuxiliaryRepositories().get(i);
             newAuxRepo.setRepositoryUri(repoUri);
             auxiliaryRepositoryRepository.save(newAuxRepo);
