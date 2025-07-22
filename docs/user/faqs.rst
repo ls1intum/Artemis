@@ -79,7 +79,18 @@ The question is shown as a heading, and the answer is presented as a formatted p
 Additional IRIS Features: Automatic FAQ Rewriting
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When **IRIS** is enabled, you can use an integrated feature to automatically refine your FAQs.
+**Prerequisite:** You need to set up a working **IRIS** instance in your Artemis application.
+You can find a guide on how to do this in the :doc:`IRIS setup guide <../admin/setup/iris>`.
+The following video shows how to enable IRIS in your course:
+
+  .. raw:: html
+
+     <iframe src="https://live.rbg.tum.de/w/artemisintro/61403?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+         Watch this video on TUM-Live.
+     </iframe>
+
+
+When IRIS is enabled, you can use an integrated feature to automatically refine your FAQs.
 With just one click, IRIS checks your FAQ answers for grammar issues and unclear phrasing.
 It analyzes the text, suggests improvements, and automatically updates the answer field with a more polished version to save you time and ensure high-quality responses.
 In addition, a **consistency check** is performed to ensure that the answer aligns with existing FAQs.
