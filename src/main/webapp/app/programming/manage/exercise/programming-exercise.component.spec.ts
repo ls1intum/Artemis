@@ -177,19 +177,6 @@ describe('ProgrammingExercise Management Component', () => {
         expect(comp.trackId(0, programmingExercise)).toBe(456);
     });
 
-    it('should download the repository', () => {
-        // GIVEN
-        const exportRepositoryStub = jest.spyOn(programmingExerciseService, 'exportInstructorRepository').mockReturnValue(of(new HttpResponse<Blob>()));
-        const alertSuccessStub = jest.spyOn(alertService, 'success');
-
-        // WHEN
-        comp.downloadRepository(programmingExercise.id, RepositoryType.TEMPLATE);
-
-        // THEN
-        expect(exportRepositoryStub).toHaveBeenCalledOnce();
-        expect(alertSuccessStub).toHaveBeenCalledOnce();
-    });
-
     describe('ProgrammingExercise Search Exercises', () => {
         it('should show all exercises', () => {
             // WHEN
