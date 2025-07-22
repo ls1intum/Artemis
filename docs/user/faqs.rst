@@ -17,9 +17,10 @@ Before using the FAQ feature, a configuration step is required. Please ensure th
 
 .. raw:: html
 
-   <iframe src="https://live.rbg.tum.de/w/artemisintro/61388?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+   <iframe src="https://live.rbg.tum.de/w/artemisintro/61395?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
        Watch this video on TUM-Live.
    </iframe>
+
 
 FAQ Management
 -------------------------
@@ -50,7 +51,7 @@ Tutors can propose new FAQs and edit those that are still in the Proposed state,
 
 .. raw:: html
 
-   <iframe src="https://live.rbg.tum.de/w/artemisintro/61385?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+   <iframe src="https://live.rbg.tum.de/w/artemisintro/61396?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
        Watch this video on TUM-Live.
    </iframe>
 
@@ -58,7 +59,7 @@ Tutors can propose new FAQs and edit those that are still in the Proposed state,
 
   .. raw:: html
 
-     <iframe src="https://live.rbg.tum.de/w/artemisintro/61386?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+     <iframe src="https://live.rbg.tum.de/w/artemisintro/61397?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
          Watch this video on TUM-Live.
      </iframe>
 
@@ -83,7 +84,7 @@ In addition, a **consistency check** is performed to ensure that the answer alig
 
   .. raw:: html
 
-     <iframe src="https://live.rbg.tum.de/w/artemisintro/61390?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+     <iframe src="https://live.rbg.tum.de/w/artemisintro/61398?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
          Watch this video on TUM-Live.
      </iframe>
 
