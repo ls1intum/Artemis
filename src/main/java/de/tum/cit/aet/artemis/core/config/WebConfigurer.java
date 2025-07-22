@@ -98,6 +98,12 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     private void setLocationForStaticAssets(WebServerFactory server) {
         if (server instanceof ConfigurableServletWebServerFactory servletWebServer) {
             String prefixPath = resolvePathPrefix();
+            boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
+            String INVALID_PREFIX_ON_WINDOWS = "/";
+            boolean isInvalidPrefixOnWindows = prefixPath.startsWith(INVALID_PREFIX_ON_WINDOWS);
+            if (isWindows && isInvalidPrefixOnWindows) {
+                prefixPath = prefixPath.substring(INVALID_PREFIX_ON_WINDOWS.length());
+            }
             Path root = Path.of(prefixPath + "build/resources/main/static/");
             if (Files.exists(root) && Files.isDirectory(root)) {
                 servletWebServer.setDocumentRoot(root.toFile());

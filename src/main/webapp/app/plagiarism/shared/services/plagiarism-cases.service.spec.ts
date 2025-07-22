@@ -171,4 +171,72 @@ describe('Plagiarism Cases Service', () => {
             tick();
         }),
     );
+    it('should get plagiarism cases for an exam (instructor)', fakeAsync(() => {
+        const mockCases = [plagiarismCase1, plagiarismCase2];
+        service
+            .getExamPlagiarismCasesForInstructor(1, 42)
+            .pipe(take(1))
+            .subscribe((res) => {
+                expect(res.body).toEqual(mockCases);
+            });
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: 'api/plagiarism/courses/1/exams/42/plagiarism-cases/for-instructor',
+        });
+        req.flush(mockCases);
+        tick();
+    }));
+
+    it('should return a map of PlagiarismCaseInfo objects for student', fakeAsync(() => {
+        const fakeResponse = {
+            1: {},
+            2: {},
+        };
+        service
+            .getPlagiarismCaseInfosForStudent(7, [1, 2])
+            .pipe(take(1))
+            .subscribe((resp) => {
+                expect(resp.body).toEqual(fakeResponse);
+            });
+        const req = httpMock.expectOne(
+            (r) => r.method === 'GET' && r.url === 'api/plagiarism/courses/7/plagiarism-cases' && r.params.getAll('exerciseId')!.sort().join(',') === '1,2',
+        );
+        req.flush(fakeResponse);
+        tick();
+    }));
+
+    it('should call DELETE with deleteAll=false by default', fakeAsync(() => {
+        service.cleanUpPlagiarism(5, 99).pipe(take(1)).subscribe();
+        const req = httpMock.expectOne(
+            (r) => r.method === 'DELETE' && r.url === 'api/plagiarism/exercises/5/plagiarism-results/99/plagiarism-comparisons' && r.params.get('deleteAll') === 'false',
+        );
+        req.flush({});
+        tick();
+    }));
+
+    it('should PUT status update payload correctly', fakeAsync(() => {
+        service.updatePlagiarismComparisonStatus(2, 3, PlagiarismStatus.DENIED).pipe(take(1)).subscribe();
+        const req = httpMock.expectOne(
+            (r) => r.method === 'PUT' && r.url === 'api/plagiarism/courses/2/plagiarism-comparisons/3/status' && r.body.status === PlagiarismStatus.DENIED,
+        );
+        req.flush(null);
+        tick();
+    }));
+
+    it('should handle error when saving verdict', fakeAsync(() => {
+        const errorResponse = { status: 400, statusText: 'Bad Request' };
+        service
+            .saveVerdict(1, 1, { verdict: PlagiarismVerdict.WARNING })
+            .pipe(take(1))
+            .subscribe({
+                next: () => {
+                    throw new Error('expected an error');
+                },
+                error: (error) => expect(error.status).toBe(400),
+            });
+
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush('Invalid data', errorResponse);
+        tick();
+    }));
 });

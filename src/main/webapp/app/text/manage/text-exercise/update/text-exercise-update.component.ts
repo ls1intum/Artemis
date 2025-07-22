@@ -46,6 +46,7 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -88,6 +89,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     private readonly eventManager = inject(EventManager);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly profileService = inject(ProfileService);
+    private readonly calendarEventService = inject(CalendarEventService);
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Text';
@@ -100,9 +102,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
     @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
     @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
-
+    exerciseUpdatePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
     exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
-    @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent: TeamConfigFormGroupComponent;
 
     examCourseId?: number;
@@ -125,8 +126,13 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
-    plagiarismSubscription?: Subscription;
     teamSubscription?: Subscription;
+
+    constructor() {
+        effect(() => {
+            this.updateFormSectionsOnIsValidChange();
+        });
+    }
 
     get editType(): EditType {
         if (this.isImport) {
@@ -136,25 +142,18 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         return this.textExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
     }
 
-    constructor() {
-        effect(() => {
-            this.updateFormSectionsOnIsValidChange();
-        });
-    }
-
     /**
      * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
      */
     private updateFormSectionsOnIsValidChange() {
         this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // trigger the effect
-
+        this.exerciseUpdatePlagiarismComponent()?.isFormValid();
         this.calculateFormSectionStatus();
     }
 
     ngAfterViewInit() {
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.plagiarismSubscription = this.exerciseUpdatePlagiarismComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
         this.teamSubscription = this.teamConfigFormGroupComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
     }
 
@@ -229,7 +228,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     ngOnDestroy() {
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
-        this.plagiarismSubscription?.unsubscribe();
         this.teamSubscription?.unsubscribe();
     }
 
@@ -253,7 +251,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                         this.points.valid &&
                             this.bonusPoints.valid &&
                             (this.isExamMode ||
-                                (this.exerciseUpdatePlagiarismComponent?.formValid &&
+                                (this.exerciseUpdatePlagiarismComponent()?.isFormValid() &&
                                     !this.textExercise.startDateError &&
                                     !this.textExercise.dueDateError &&
                                     !this.textExercise.assessmentDueDateError &&
@@ -323,6 +321,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.isSaving = false;
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
+        this.calendarEventService.refresh();
     }
 
     private onSaveError(errorRes: HttpErrorResponse) {

@@ -14,15 +14,43 @@ on:
     - created
 
 jobs:
+  check-python-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yq
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y yq
+
+      - name: Extract Python version from docs/.readthedocs.yaml
+        id: extract_read_the_docs_version
+        run: |
+          read_the_docs_version=$(cat docs/.readthedocs.yaml | yq '.build.tools.python' | tr -d '"')
+          echo "read_the_docs_version=$read_the_docs_version" >> $GITHUB_OUTPUT
+
+      - name: Extract Python version from workflow file
+        id: extract_workflow_version
+        run: |
+          workflow_version=$(cat .github/workflows/docs.yml | yq '.jobs.docs.steps[] | select(.uses == "actions/setup-python@v5") | .with."python-version"' | tr -d '"')
+          echo "workflow_version=$workflow_version" >> $GITHUB_OUTPUT
+      - name: Validate Python versions match
+        run: |
+          if [ "${{ steps.extract_read_the_docs_version.outputs.read_the_docs_version }}" != "${{ steps.extract_workflow_version.outputs.workflow_version }}" ]; then
+            echo "Error: Python version mismatch: docs/.readthedocs.yaml (${{ steps.extract_read_the_docs_version.outputs.read_the_docs_version }}) vs workflow (${{ steps.extract_workflow_version.outputs.workflow_version }})"
+            exit 1
+          fi
+
 
   docs:
+    needs: check-python-version
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
         # keep in sync with Python version in docs/.readthedocs.yaml
-        python-version: "3.10"
+        python-version: "3.13"
     - name: Build documentation
       run: |
         cd docs

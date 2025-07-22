@@ -31,6 +31,7 @@ import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -42,6 +43,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
+import { signal } from '@angular/core';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -77,6 +80,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                MockProvider(CalendarEventService),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
@@ -156,12 +160,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('save', () => {
-        it('should call update service on save for existing entity', fakeAsync(() => {
+        it('should call update service on save and refresh calendar events for existing entity', fakeAsync(() => {
             // GIVEN
             const entity = new ProgrammingExercise(new Course(), undefined);
             entity.id = 123;
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             jest.spyOn(programmingExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+            const calendarEventService = TestBed.inject(CalendarEventService);
+            const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
@@ -172,9 +178,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             // THEN
             expect(programmingExerciseService.update).toHaveBeenCalledWith(entity, {});
             expect(comp.isSaving).toBeFalse();
+            expect(refreshSpy).toHaveBeenCalledOnce();
         }));
 
-        it('should call create service on save for new entity', fakeAsync(() => {
+        it('should call create service on save and refresh calendar events for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
@@ -188,6 +195,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     }),
                 ),
             );
+            const calendarEventService = TestBed.inject(CalendarEventService);
+            const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
@@ -198,6 +207,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             // THEN
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
             expect(comp.isSaving).toBeFalse();
+            expect(refreshSpy).toHaveBeenCalledOnce();
         }));
 
         it('should trim the exercise title before saving', fakeAsync(() => {
@@ -1197,13 +1207,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             formValidChanges: new Subject(),
             formValid: true,
         } as ProgrammingExerciseGradingComponent;
-        comp.exercisePlagiarismComponent = {
-            formValidChanges: new Subject(),
-            formValid: true,
-        } as ExerciseUpdatePlagiarismComponent;
+
+        (comp as any).exercisePlagiarismComponent = signal<ExerciseUpdatePlagiarismComponent>({
+            isFormValid: signal<boolean>(true),
+        } as unknown as ExerciseUpdatePlagiarismComponent).asReadonly();
 
         comp.ngAfterViewInit();
-        expect(comp.inputFieldSubscriptions).toHaveLength(5);
+        // we migrate from subscriptions to signals eventually
+        expect(comp.inputFieldSubscriptions).toHaveLength(4);
         comp.calculateFormStatusSections();
 
         for (const section of comp.formStatusSections()) {
@@ -1218,9 +1229,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         comp.exerciseLanguageComponent.formValidChanges.next(false);
         comp.exerciseGradingComponent.formValidChanges.next(false);
         comp.exerciseDifficultyComponent.teamConfigComponent.formValidChanges.next(false);
-        comp.exercisePlagiarismComponent.formValidChanges.next(false);
 
-        expect(calculateFormValidSectionsSpy).toHaveBeenCalledTimes(6);
+        expect(calculateFormValidSectionsSpy).toHaveBeenCalledTimes(5);
 
         comp.programmingExercise.allowOfflineIde = false;
         comp.programmingExercise.allowOnlineEditor = false;

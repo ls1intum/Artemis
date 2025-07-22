@@ -50,6 +50,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected readonly search = new Subject<void>();
     protected readonly sort = new Subject<void>();
 
+    // eslint-disable-next-line @angular-eslint/prefer-inject
     protected constructor(protected pagingService?: PagingService<T>) {}
 
     get page(): number {

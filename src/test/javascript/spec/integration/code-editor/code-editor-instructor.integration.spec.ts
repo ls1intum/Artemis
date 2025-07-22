@@ -69,6 +69,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('CodeEditorInstructorIntegration', () => {
     let comp: CodeEditorInstructorAndEditorContainerComponent;
@@ -98,7 +99,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), MockModule(NgbTooltipModule)],
+            imports: [TranslateModule.forRoot(), MockModule(NgbTooltipModule), FaIconComponent],
             declarations: [
                 CodeEditorInstructorAndEditorContainerComponent,
                 CodeEditorContainerComponent,

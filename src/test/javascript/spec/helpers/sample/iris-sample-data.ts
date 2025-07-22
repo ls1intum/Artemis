@@ -7,6 +7,7 @@ import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/sha
 import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
+import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 
 const map = new Map<string, any>();
 map.set('model', 'gpt-4');
@@ -64,12 +65,18 @@ export const mockConversation = {
     id: 1,
     exercise: irisExercise,
     messages: [mockClientMessage, mockServerMessage],
+    chatMode: ChatServiceMode.COURSE,
+    entityId: 1,
+    creationDate: new Date(),
 } as IrisSession;
 
 export const mockConversationWithNoMessages = {
     id: 1,
     exercise: irisExercise,
     messages: [],
+    chatMode: ChatServiceMode.COURSE,
+    entityId: 1,
+    creationDate: new Date(),
 } as IrisSession;
 
 export const mockServerSessionHttpResponse = {

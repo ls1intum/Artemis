@@ -45,4 +45,9 @@ public class IrisTutorSuggestionSession extends IrisChatSession {
     public boolean shouldAcceptExternalLLMUsage() {
         return false;
     }
+
+    @Override
+    public IrisChatMode getMode() {
+        return IrisChatMode.TUTOR_SUGGESTION;
+    }
 }

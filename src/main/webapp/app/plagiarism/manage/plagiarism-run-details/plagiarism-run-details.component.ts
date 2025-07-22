@@ -1,6 +1,5 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, inject, input, output } from '@angular/core';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 import { Range, round } from 'app/shared/util/utils';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
@@ -12,6 +11,7 @@ import { DatePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
+import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 
 interface SimilarityRangeComparisonStateDTO {
     confirmed: number;
@@ -31,12 +31,12 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
     /**
      * Result of the automated plagiarism detection
      */
-    @Input() plagiarismResult?: PlagiarismResult;
+    readonly plagiarismResult = input<PlagiarismResult>();
     /**
      * Statistics for the automated plagiarism detection result
      */
-    @Input() plagiarismResultStats?: PlagiarismResultStats;
-    @Output() similaritySelected: EventEmitter<Range> = new EventEmitter<Range>();
+    readonly plagiarismResultStats = input<PlagiarismResultStats>();
+    readonly similaritySelected = output<Range>();
 
     yScaleMax = 5;
     totalDetectedPlagiarisms: number;

@@ -23,12 +23,13 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockProvider } from 'ng-mocks';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { ActivatedRouteSnapshot } from '@angular/router';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -48,6 +49,7 @@ describe('TextExercise Management Update Component', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                MockProvider(CalendarEventService),
             ],
         }).compileComponents();
 
@@ -68,12 +70,14 @@ describe('TextExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('should call update service on save for existing entity', fakeAsync(() => {
+            it('should call update service and refresh calendar events on save for existing entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
                 const entity = { ...textExercise };
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+                const calendarEventService = TestBed.inject(CalendarEventService);
+                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
 
                 // WHEN
                 comp.save();
@@ -82,6 +86,7 @@ describe('TextExercise Management Update Component', () => {
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(entity, {});
                 expect(comp.isSaving).toBeFalse();
+                expect(refreshSpy).toHaveBeenCalledOnce();
             }));
 
             it('should error during save', fakeAsync(() => {
@@ -111,12 +116,14 @@ describe('TextExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('should call create service on save for new entity', fakeAsync(() => {
+            it('should call create service and refresh calendar events on save for new entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
                 const entity = { ...textExercise };
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+                const calendarEventService = TestBed.inject(CalendarEventService);
+                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
 
                 // WHEN
                 comp.save();
@@ -125,6 +132,7 @@ describe('TextExercise Management Update Component', () => {
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(entity);
                 expect(comp.isSaving).toBeFalse();
+                expect(refreshSpy).toHaveBeenCalledOnce();
             }));
         });
 
@@ -218,10 +226,7 @@ describe('TextExercise Management Update Component', () => {
         it('should calculate valid sections', () => {
             const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
-            comp.exerciseUpdatePlagiarismComponent = {
-                formValidChanges: new Subject(),
-                formValid: true,
-            } as ExerciseUpdatePlagiarismComponent;
+            comp.exerciseUpdatePlagiarismComponent()?.isFormValid.set(true);
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
@@ -230,13 +235,15 @@ describe('TextExercise Management Update Component', () => {
             comp.ngAfterViewInit();
 
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(true);
+
             fixture.detectChanges();
-            expect(calculateValidSpy).toHaveBeenCalledOnce();
+
+            expect(calculateValidSpy).toHaveBeenCalledTimes(2);
             expect(comp.formSectionStatus).toBeDefined();
             expect(comp.formSectionStatus[0].valid).toBeTrue();
 
             comp.validateDate();
-            expect(calculateValidSpy).toHaveBeenCalledTimes(2);
+            expect(calculateValidSpy).toHaveBeenCalledTimes(3);
 
             comp.ngOnDestroy();
         });
