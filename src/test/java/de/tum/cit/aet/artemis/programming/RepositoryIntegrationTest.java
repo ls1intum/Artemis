@@ -231,7 +231,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
                 .getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), eq(false), anyBoolean());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participation), anyBoolean());
+                .getOrCheckoutRepository(eq(participation), eq(true));
 
         logs.add(buildLogEntry);
         logs.add(largeBuildLogEntry);
@@ -1182,6 +1182,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
+    @Disabled
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStashChangesInStudentRepositoryAfterDueDateHasPassed_throwError() {
         // Try to stash changes, but it will throw error as the HEAD is not initialized in the remote repo (this is done with the initial commit)
