@@ -875,8 +875,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     void testSubmitForTraining_shouldReturnResultAndSetSubmissionProperties() throws Exception {
         // Setup: Create a course and a quiz exercise
         Course course = courseUtilService.createCourse();
-        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
         quizExercise.setDuration(60);
+        quizExercise.setIsOpenForPractice(true);
         quizExercise = quizExerciseService.save(quizExercise);
 
         // Create a quiz submission with answers
