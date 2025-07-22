@@ -10,7 +10,6 @@ import {
 } from 'app/core/admin/user-management/user-management.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
