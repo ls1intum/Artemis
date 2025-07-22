@@ -263,6 +263,17 @@ public class Course extends DomainObject {
     @Transient
     private Long numberOfPrerequisitesTransient;
 
+    @Transient
+    private boolean trainingEnabledTransient;
+
+    public boolean isTrainingEnabled() {
+        return trainingEnabledTransient;
+    }
+
+    public void setTrainingEnabled(boolean trainingEnabled) {
+        this.trainingEnabledTransient = trainingEnabled;
+    }
+
     public Long getNumberOfLectures() {
         return numberOfLecturesTransient;
     }

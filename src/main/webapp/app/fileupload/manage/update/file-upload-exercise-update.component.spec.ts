@@ -25,11 +25,12 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 describe('FileUploadExerciseUpdateComponent', () => {
     let comp: FileUploadExerciseUpdateComponent;
@@ -50,6 +51,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                 MockComponent(FormDateTimePickerComponent),
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                MockProvider(CalendarEventService),
             ],
         }).compileComponents();
 
@@ -70,12 +72,15 @@ describe('FileUploadExerciseUpdateComponent', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('should call create service on save for new entity', fakeAsync(() => {
+            it('should call create service and refresh calendar on save for new entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
                 const entity = { ...fileUploadExercise };
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+
+                const calendarEventService = TestBed.inject(CalendarEventService);
+                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
 
                 // WHEN
                 comp.save();
@@ -83,6 +88,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(entity);
+                expect(refreshSpy).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
             }));
         });
@@ -99,11 +105,14 @@ describe('FileUploadExerciseUpdateComponent', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('should call update service on save for existing entity', fakeAsync(() => {
+            it('should call update service and refresh calendar on save for existing entity', fakeAsync(() => {
                 // GIVEN
                 const entity = { ...fileUploadExercise };
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
                 comp.ngOnInit();
+
+                const calendarEventService = TestBed.inject(CalendarEventService);
+                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
 
                 // WHEN
                 comp.save();
@@ -111,6 +120,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(entity, {});
+                expect(refreshSpy).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
             }));
         });
