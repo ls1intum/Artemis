@@ -47,7 +47,8 @@ describe('CourseTrainingQuizService', () => {
             expect(res.body!.score).toBe(10);
         });
 
-        const req = httpMock.expectOne({ method: 'POST', url: `api/quiz/exercises/${exerciseId}/submissions/training` });
+        const req = httpMock.expectOne(`api/quiz/exercises/${exerciseId}/submissions/training`);
+        expect(req.request.method).toBe('POST');
         req.flush(mockResult);
         tick();
     }));

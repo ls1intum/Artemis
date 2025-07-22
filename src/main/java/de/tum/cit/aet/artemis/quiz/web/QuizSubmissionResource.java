@@ -269,10 +269,6 @@ public class QuizSubmissionResource {
     public ResponseEntity<Result> submitForTraining(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for training : {}", quizSubmission);
 
-        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-            submittedAnswer.setSubmission(quizSubmission);
-        }
-
         if (quizSubmission.getId() != null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idExists", "A new quizSubmission cannot already have an ID.")).body(null);
@@ -290,6 +286,10 @@ public class QuizSubmissionResource {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotOpenForPractice", "The question is not open for practice yet."))
                     .body(null);
+        }
+
+        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+            submittedAnswer.setSubmission(quizSubmission);
         }
 
         Result result = quizSubmissionService.submitForTraining(quizSubmission, quizExercise, user);

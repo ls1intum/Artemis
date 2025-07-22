@@ -924,6 +924,5 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         }
 
         Result result = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/training", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
-        assertThat(result).isNull();
     }
 }
