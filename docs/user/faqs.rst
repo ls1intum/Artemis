@@ -43,7 +43,8 @@ Each FAQ is displayed in a table row with five main columns:
 1. **Title** – the question itself.
 2. **Answer** – the corresponding response.
 3. **Status** – shows whether the FAQ is published, proposed, etc.
-4. **Actions** – contains buttons to interact with the FAQ (e.g., edit or delete).
+4. **Categories** – the topic or category to which the FAQ belongs, helping to organize and filter questions.
+5. **Actions** – contains buttons to interact with the FAQ (e.g., edit or delete).
 
 The number of visible action buttons depends on the user’s role:
 
@@ -55,7 +56,7 @@ Tutors can propose new FAQs and edit those that are still in the Proposed state,
        Watch this video on TUM-Live.
    </iframe>
 
-- **Instructors** can edit or delete any FAQ. They can approve FAQs that are in the *Proposed* state, changing their status to *Accepted*.
+**Instructors** can edit or delete any FAQ. They can approve FAQs that are in the *Proposed* state, changing their status to *Accepted*.
 
   .. raw:: html
 
@@ -72,6 +73,7 @@ The question is shown as a heading, and the answer is presented as a formatted p
 
 - The **title** is entered in a plain text field.
 - The **answer** supports the full Markdown editor used in Artemis.
+- The **categories** field allows instructors to assign the FAQ to one or two topics, which helps students find relevant questions more easily.
 
 
 Additional IRIS Features: Automatic FAQ Rewriting
