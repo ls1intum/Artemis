@@ -17,7 +17,6 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
-import org.checkerframework.checker.units.qual.C;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.GitCommand;
