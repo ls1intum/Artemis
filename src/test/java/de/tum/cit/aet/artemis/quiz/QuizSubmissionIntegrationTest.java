@@ -899,4 +899,31 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
         assertThat(participationRepository.findByExerciseId(quizExercise.getId())).isEmpty();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testQuizSubmitTraining_badRequest_submissionId() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
+        var quizSubmission = new QuizSubmission();
+        quizSubmission.setId(1L);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/training", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSubmitForTraining_badRequest_notOpenForPracticeOrNotEnded() throws Exception {
+        Course course = courseUtilService.createCourse();
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(60);
+        quizExercise.setIsOpenForPractice(false);
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        QuizSubmission quizSubmission = new QuizSubmission();
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(question));
+        }
+
+        Result result = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/training", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+        assertThat(result).isNull();
+    }
 }
