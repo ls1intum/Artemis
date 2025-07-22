@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.servlet.ServletException;
+
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.UploadPack;
@@ -9,10 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 
@@ -47,9 +48,10 @@ public class ArtemisGitServletService extends GitServlet {
      * <p>
      * <a href="https://git-scm.com/docs/git-upload-pack">https://git-scm.com/docs/git-upload-pack</a>
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     @Override
-    public void init() {
+    public void init() throws ServletException {
+        super.init();
         this.setRepositoryResolver((request, name) -> {
             // request – the current request, may be used to inspect session state including cookies or user authentication.
             // name – name of the repository, as parsed out of the URL (everything after /git/).
