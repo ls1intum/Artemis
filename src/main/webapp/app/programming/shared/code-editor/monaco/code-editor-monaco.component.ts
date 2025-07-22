@@ -438,7 +438,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * Loads annotations from local storage
      */
     loadAnnotations() {
-        return JSON.parse(this.localStorageService.retrieve('annotations-' + this.sessionId) || '{}');
+        return JSON.parse(this.localStorageService.retrieve<string>('annotations-' + this.sessionId) || '{}');
     }
 
     setBuildAnnotations(buildAnnotations: Annotation[]): void {
