@@ -32,7 +32,7 @@ import {
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_TEXT, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -88,6 +88,7 @@ export class ExerciseGroupsComponent implements OnInit {
     latestIndividualEndDate?: dayjs.Dayjs;
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
 
+    jenkinsEnabled = false;
     localCIEnabled = true;
     textExerciseEnabled = false;
     disabledExerciseTypes: string[] = [];
@@ -123,6 +124,7 @@ export class ExerciseGroupsComponent implements OnInit {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
+        this.jenkinsEnabled = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
         this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
         if (!this.textExerciseEnabled) {
