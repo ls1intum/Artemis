@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Health indicator that shows the status of the sharing platform connector.
+ * Health indicator that shows the status of the Sharing Platform connector.
  */
 @Component
 @Profile("sharing")
@@ -31,7 +31,7 @@ public class SharingHealthIndicator implements HealthIndicator {
     }
 
     /**
-     * Returns the main health status (up/down or unknown if config request from sharing platform is too long ago), together
+     * Returns the main health status (up/down or unknown if config request from Sharing Platform is too long ago), together
      * with a list of the 10 most recent log events for the sharing connector.
      */
     @Override

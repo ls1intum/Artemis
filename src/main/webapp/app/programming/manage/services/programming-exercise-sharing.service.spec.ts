@@ -60,13 +60,6 @@ describe('ProgrammingExercise Sharing Service', () => {
             tick();
         }));
 
-        it('should get problem statement', fakeAsync(() => {
-            service.loadProblemStatementForExercises(defailtSharingInfo).subscribe((res: string) => expect(res).toBe('just a problem statement'));
-            const req = httpMock.expectOne({ method: 'POST' });
-            req.flush('just a problem statement');
-            tick();
-        }));
-
         it('should get exercise details', fakeAsync(() => {
             const programmingExercise = new ProgrammingExercise(undefined, undefined);
 

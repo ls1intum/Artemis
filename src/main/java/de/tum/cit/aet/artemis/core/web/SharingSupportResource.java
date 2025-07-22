@@ -30,34 +30,20 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorServic
 @Lazy
 public class SharingSupportResource {
 
-    /**
-     * the logger
-     */
     private static final Logger log = LoggerFactory.getLogger(SharingSupportResource.class);
 
-    /**
-     * the sharing configuration resource path for sharing config request
-     */
     private static final String SHARINGCONFIG_RESOURCE_PATH = "config";
 
-    /**
-     * the sharing configuration resource path for rest request, iff sharing profile is enabled
-     */
     public static final String SHARINGCONFIG_RESOURCE_IS_ENABLED = SHARINGCONFIG_RESOURCE_PATH + "/is-enabled";
 
-    /**
-     * the sharing plugin service
-     */
     private final SharingConnectorService sharingConnectorService;
 
-    /**
-     * @param sharingConnectorService the sharing connector service
-     */
     public SharingSupportResource(SharingConnectorService sharingConnectorService) {
         this.sharingConnectorService = sharingConnectorService;
     }
 
     /**
+     * GET api/core/sharing/config
      * Returns Sharing Plugin configuration to be used in context with Artemis.
      * This configuration is requested by the sharing platform in general every 10 minutes.
      * It is secured by the common secret api key token transferred by Authorization header.
@@ -90,9 +76,11 @@ public class SharingSupportResource {
     }
 
     /**
-     * Return a boolean value representing the current state of Sharing
+     * GET api/core/sharing/config/is-enabled
+     * Return a boolean value representing the current profile state of Sharing
      *
-     * @return Status 200 if a Sharing ApiBaseUrl is present, Status 503 otherwise
+     * @return Status 200 if a Sharing ApiBaseUrl is present, in case that sharing is not enabled Http-Status 503 is signalled, because
+     *         this resource is not available!
      */
     @GetMapping(SHARINGCONFIG_RESOURCE_IS_ENABLED)
     public ResponseEntity<Boolean> isSharingEnabled() {
