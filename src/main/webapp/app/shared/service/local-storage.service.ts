@@ -18,7 +18,7 @@ export class LocalStorageService {
      * @returns The parsed value of type T or undefined if not found.
      */
     retrieve<T>(key: string): T | undefined {
-        const value = sessionStorage.getItem(key) || undefined;
+        const value = localStorage.getItem(key) || undefined;
         return value ? (JSON.parse(value) as T) : undefined;
     }
 
