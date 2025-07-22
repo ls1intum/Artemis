@@ -200,7 +200,7 @@
                                     <th>
                                         <span jhiTranslate="artemisApp.exercise.shortName"></span>
                                     </th>
-                                    @if (jenkinsEnabled) {
+                                    @if (!localCIEnabled) {
                                         <th>
                                             <span jhiTranslate="artemisApp.programmingExercise.buildplans"></span>
                                         </th>
@@ -297,7 +297,7 @@
                                                 <jhi-programming-exercise-group-cell [exercise]="exercise" [displayShortName]="true" />
                                             }
                                         </td>
-                                        @if (jenkinsEnabled) {
+                                        @if (!localCIEnabled) {
                                             <td class="align-middle">
                                                 @if (exercise.type === exerciseType.PROGRAMMING) {
                                                     <jhi-programming-exercise-group-cell [exercise]="exercise" [displayTemplateUrls]="true" />
