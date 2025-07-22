@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
@@ -108,9 +107,9 @@ public class ProgrammingUtilTestService {
         var templateRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(templateRepo.workingCopyGitRepoFile, localVCRepoPath));
         exercise.setTemplateRepositoryUri(templateRepoUri.toString());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(templateRepoUri, true, anyBoolean());
+                .getOrCheckoutRepository(eq(templateRepoUri), eq(true), anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(templateRepoUri, false, anyBoolean());
+                .getOrCheckoutRepository(eq(templateRepoUri), eq(false), anyBoolean());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(templateRepoUri), eq(true), anyString(), anyBoolean());
@@ -201,15 +200,14 @@ public class ProgrammingUtilTestService {
                 .getOrCheckoutRepository(participationRepoUri, false, true);
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participationRepoUri), eq(true), any());
+                .getOrCheckoutRepository(eq(participationRepoUri), eq(true), anyString(), anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participationRepoUri), eq(false), any());
+                .getOrCheckoutRepository(eq(participationRepoUri), eq(false), anyString(), anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(),
-                anyBoolean());
+                anyBoolean(), anyBoolean());
 
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(exercise, login, participationRepo.workingCopyGitRepoFile.toURI());
-        doReturn(linkRepositoryForExistingGit(eq(participationRepo.remoteBareGitRepoFile.toPath()), isNull(), eq("main"), eq(true), anyBoolean())).when(gitService)
-                .getBareRepository(any(), anyBoolean());
+        doReturn(linkRepositoryForExistingGit(participationRepo.remoteBareGitRepoFile.toPath(), null, "main", true, true)).when(gitService).getBareRepository(any(), anyBoolean());
         var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.getFirst().getId().getName(), SubmissionType.MANUAL);
         participation = programmingExerciseStudentParticipationRepository
                 .findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), Collections.singletonList(participation.getId())).getFirst();
