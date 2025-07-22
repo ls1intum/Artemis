@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/cor
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Subject, of } from 'rxjs';
 import { UserManagementUpdateComponent } from 'app/core/admin/user-management/update/user-management-update.component';
 import { User } from 'app/core/user/user.model';
@@ -24,7 +24,7 @@ import * as Sentry from '@sentry/angular';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 // Preliminary mock before import to prevent errors
 jest.mock('@sentry/angular', () => {
     const originalModule = jest.requireActual('@sentry/angular');

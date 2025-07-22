@@ -9,8 +9,8 @@ import {
     UserStorageKey,
 } from 'app/core/admin/user-management/user-management.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -60,10 +60,8 @@ describe('User Management Component', () => {
                     useValue: route,
                 },
                 { provide: AccountService, useClass: MockAccountService },
-
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: Router, useClass: MockRouter },
-                SessionStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
                 {
                     provide: ActivatedRoute,

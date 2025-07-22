@@ -36,7 +36,7 @@ import { CourseAccessStorageService } from '../services/course-access-storage.se
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 /**
  * Base class that contains common functionality for course container components.

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { HttpResponse } from '@angular/common/http';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Observable, ReplaySubject } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';

@@ -22,7 +22,6 @@ describe('ScienceService', () => {
             providers: [
                 { provide: HttpClient, useClass: MockHttpService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
             ],

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { LearnerProfileComponent } from './learner-profile.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

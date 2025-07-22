@@ -8,8 +8,8 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { Feedback, FeedbackCorrectionErrorType } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';

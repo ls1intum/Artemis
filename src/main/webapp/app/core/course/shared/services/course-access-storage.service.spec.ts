@@ -1,6 +1,6 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('CourseAccessStorageService', () => {
     let service: CourseAccessStorageService;

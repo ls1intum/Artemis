@@ -41,8 +41,8 @@ describe('LocalStorageService', () => {
     it('should store and retrieve a Date object correctly', () => {
         const value = new Date();
         service.store<Date>(testKey, value);
-        const retrieved = service.retrieve<Date>(testKey);
-        expect(retrieved instanceof Date).toBeTrue();
+        const retrieved = service.retrieveDate(testKey);
+        expect(retrieved).toBeDefined();
         expect(retrieved?.toISOString()).toBe(value.toISOString());
     });
 

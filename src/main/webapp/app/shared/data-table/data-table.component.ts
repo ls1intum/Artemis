@@ -13,7 +13,7 @@ import {
     ViewEncapsulation,
     inject,
 } from '@angular/core';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@siemens/ngx-datatable';

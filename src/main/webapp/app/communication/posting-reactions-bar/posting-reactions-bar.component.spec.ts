@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { MetisService } from 'app/communication/service/metis.service';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
@@ -87,7 +87,6 @@ describe('PostingReactionsBarComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
-
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         })

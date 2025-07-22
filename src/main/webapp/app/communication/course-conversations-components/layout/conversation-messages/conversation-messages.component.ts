@@ -47,7 +47,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
 import { canCreateNewMessageInConversation } from 'app/communication/conversations/conversation-permissions.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 interface PostGroup {
     author: User | undefined;

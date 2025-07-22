@@ -35,8 +35,8 @@ import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';

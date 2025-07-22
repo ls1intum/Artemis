@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { By } from '@angular/platform-browser';
 import { SimpleChange } from '@angular/core';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash-es';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -9,7 +9,7 @@ import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-route
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { DoughnutChartComponent } from 'app/exercise/statistics/doughnut-chart/doughnut-chart.component';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('ExerciseDetailStatisticsComponent', () => {
     let fixture: ComponentFixture<ExerciseDetailStatisticsComponent>;

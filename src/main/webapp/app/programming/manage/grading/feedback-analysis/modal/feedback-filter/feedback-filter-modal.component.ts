@@ -4,7 +4,7 @@ import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.compo
 import { FeedbackAnalysisService } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 export interface FilterData {
     tasks: string[];

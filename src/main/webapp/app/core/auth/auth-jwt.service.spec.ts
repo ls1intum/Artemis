@@ -2,8 +2,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { provideHttpClient } from '@angular/common/http';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 describe('AuthServerProvider', () => {
     let service: AuthServerProvider;
@@ -19,7 +19,7 @@ describe('AuthServerProvider', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), SessionStorageService],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {

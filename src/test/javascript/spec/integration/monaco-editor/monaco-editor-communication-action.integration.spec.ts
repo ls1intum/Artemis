@@ -54,7 +54,6 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
-
                 MockProvider(LectureService),
                 MockProvider(CourseManagementService),
                 MockProvider(ChannelService),

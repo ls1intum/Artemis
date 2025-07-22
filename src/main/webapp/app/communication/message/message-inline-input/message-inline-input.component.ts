@@ -12,7 +12,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { DraftService } from 'app/communication/message/service/draft-message.service';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Subscription } from 'rxjs';
 
 @Component({

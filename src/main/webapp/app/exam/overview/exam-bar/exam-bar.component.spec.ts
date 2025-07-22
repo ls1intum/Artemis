@@ -8,8 +8,8 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';

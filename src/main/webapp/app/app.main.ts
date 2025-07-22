@@ -3,7 +3,7 @@ import { appConfig } from 'app/app.config';
 import { MonacoConfig } from 'app/core/config/monaco.config';
 import { ProdConfig } from 'app/core/config/prod.config';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { AppComponent } from './app.component';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import isMobile from 'ismobilejs-es5';

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of } from 'rxjs';
 import { LtiCoursesComponent } from 'app/lti/manage/lti13-select-course/lti13-select-course.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';

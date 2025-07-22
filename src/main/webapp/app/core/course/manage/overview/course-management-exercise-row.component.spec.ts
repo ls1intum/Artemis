@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -38,7 +38,7 @@ describe('CourseManagementExerciseRowComponent', () => {
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTimeAgoPipe),
             ],
-            providers: [LocalStorageService, SessionStorageService, MockProvider(TranslateService), { provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
+            providers: [LocalStorageService, MockProvider(TranslateService), { provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
         })
             .compileComponents()
             .then(() => {

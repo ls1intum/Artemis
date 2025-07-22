@@ -12,7 +12,7 @@ import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, S
 import { WeekGroup, WeekGroupingUtil } from 'app/shared/util/week-grouping.util';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { Subject, takeUntil } from 'rxjs';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 @Component({
     selector: 'jhi-sidebar-accordion',

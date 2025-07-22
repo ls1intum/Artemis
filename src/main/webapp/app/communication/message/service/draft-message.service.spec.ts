@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { DraftService } from './draft-message.service';
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;

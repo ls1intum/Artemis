@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextExamSummaryComponent } from 'app/exam/overview/summary/exercises/text-exam-summary/text-exam-summary.component';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';

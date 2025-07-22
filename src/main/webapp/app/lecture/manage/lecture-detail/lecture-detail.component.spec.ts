@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { of, throwError } from 'rxjs';
@@ -55,7 +55,6 @@ describe('LectureDetailComponent', () => {
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 MockProvider(SessionStorageService),
                 { provide: TranslateService, useClass: MockTranslateService },
-
                 { provide: ProfileService, useClass: MockProfileService },
             ],
         })

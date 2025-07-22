@@ -15,8 +15,8 @@ import { Organization } from 'app/core/shared/entities/organization.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -556,7 +556,7 @@ describe('Course Management Service', () => {
             const storageId = '2026';
             courseManagementService.setSemesterCollapseState(storageId, false);
 
-            const storedValue = localStorageService.retrieve(`semester.collapseState.${storageId}`);
+            const storedValue = localStorageService.retrieve<boolean>(`semester.collapseState.${storageId}`);
             expect(storedValue).toBeFalse();
 
             const retrieved = courseManagementService.getSemesterCollapseStateFromStorage(storageId);

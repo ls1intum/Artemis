@@ -13,7 +13,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockBuilder } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -34,7 +34,7 @@ import { ShortAnswerQuestionComponent } from '../../shared/questions/short-answe
 import { DragAndDropQuestionComponent } from '../../shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { MultipleChoiceQuestionComponent } from '../../shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestion } from '../../shared/entities/short-answer-question.model';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const now = dayjs();

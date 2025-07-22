@@ -20,7 +20,7 @@ import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCat
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },

@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('FeedbackFilterModalComponent', () => {
     let fixture: ComponentFixture<FeedbackFilterModalComponent>;

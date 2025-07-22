@@ -5,7 +5,7 @@ import { tap } from 'rxjs/operators';
 import { LoginService } from 'app/core/login/login.service';
 import { Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 @Injectable()
 export class AuthExpiredInterceptor implements HttpInterceptor {

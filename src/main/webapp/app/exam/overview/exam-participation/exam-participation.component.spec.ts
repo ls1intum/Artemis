@@ -122,7 +122,6 @@ describe('ExamParticipationComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: WebsocketService, useClass: MockWebsocketService },
-
                 {
                     provide: ActivatedRoute,
                     useValue: setupActivatedRouteMock(),

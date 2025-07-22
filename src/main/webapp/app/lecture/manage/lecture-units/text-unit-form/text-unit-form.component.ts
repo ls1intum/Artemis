@@ -14,7 +14,7 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 export interface TextUnitFormData {
     name?: string;
@@ -25,7 +25,7 @@ export interface TextUnitFormData {
 
 export type MarkdownCache = {
     markdown: string;
-    date: string; // formatted date string
+    date: string;
 };
 
 @Component({

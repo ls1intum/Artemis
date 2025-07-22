@@ -5,7 +5,7 @@ import { LoginService } from 'app/core/login/login.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Router } from '@angular/router';
 import { throwError } from 'rxjs';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 describe('AuthExpiredInterceptor', () => {
     let authInterceptor: AuthExpiredInterceptor;

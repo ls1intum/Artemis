@@ -117,7 +117,6 @@ describe('ExamDetailComponent', () => {
                 MockProvider(AlertService),
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
-
                 MockProvider(ArtemisDurationFromSecondsPipe),
                 { provide: ProfileService, useClass: MockProfileService },
             ],

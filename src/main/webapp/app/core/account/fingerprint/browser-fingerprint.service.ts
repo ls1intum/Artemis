@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { LocalStorageService } from 'app/shared/storage/local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { BehaviorSubject } from 'rxjs';
 import FingerprintJS, { GetResult } from '@fingerprintjs/fingerprintjs';
 import { v4 as uuid } from 'uuid';

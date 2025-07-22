@@ -3,7 +3,7 @@ import { CourseLearnerProfileComponent } from 'app/core/user/settings/learner-pr
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { LearnerProfileApiService } from 'app/core/user/settings/learner-profile/learner-profile-api.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseLearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/course-learner-profile-dto.model';

@@ -70,7 +70,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
-
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

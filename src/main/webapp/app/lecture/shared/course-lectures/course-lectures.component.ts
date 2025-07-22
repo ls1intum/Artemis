@@ -12,7 +12,7 @@ import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, Sideba
 import { LtiService } from 'app/shared/service/lti.service';
 import { forkJoin } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { SessionStorageService } from 'app/shared/storage/session-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
