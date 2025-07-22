@@ -145,6 +145,12 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // add result to statistics
         quizStatisticService.recalculateStatistics(quizExercise);
 
+        // save the question progress
+        if (participation instanceof StudentParticipation studentParticipation) {
+            User user = studentParticipation.getStudent().orElseThrow();
+            quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, user.getId());
+        }
+
         log.debug("submit practice quiz finished: {}", quizSubmission);
         return result;
     }
