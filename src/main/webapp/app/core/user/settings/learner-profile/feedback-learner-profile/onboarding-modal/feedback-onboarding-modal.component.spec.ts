@@ -7,7 +7,6 @@ import { LearnerProfileDTO } from '../../dto/learner-profile-dto.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
-import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 
 class MockActiveModal {
@@ -84,35 +83,7 @@ describe('FeedbackOnboardingModalComponent', () => {
     });
 
     describe('finish', () => {
-        it('should POST new profile if profileMissing is true', async () => {
-            component.profileMissing.set(true);
-            component.selected = [0, 1];
-            const postSpy = jest.spyOn(learnerProfileApiService, 'postLearnerProfile').mockResolvedValue(
-                new LearnerProfileDTO({
-                    feedbackDetail: 1,
-                    feedbackFormality: 3,
-                    hasSetupFeedbackPreferences: true,
-                }),
-            );
-            await component.finish();
-            expect(postSpy).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    feedbackDetail: 1,
-                    feedbackFormality: 3,
-                    hasSetupFeedbackPreferences: true,
-                }),
-            );
-            expect(alertService.closeAll).toHaveBeenCalled();
-            expect(alertService.addAlert).toHaveBeenCalledWith({
-                type: AlertType.SUCCESS,
-                message: 'artemisApp.learnerProfile.feedbackLearnerProfile.profileSaved',
-            });
-            expect(component.onboardingCompleted()).toBeUndefined();
-            expect(activeModal.close).toHaveBeenCalled();
-        });
-
-        it('should PUT updated profile if profileMissing is false', async () => {
-            component.profileMissing.set(false);
+        it('should PUT updated profile', async () => {
             component.selected = [1, 0];
             const getSpy = jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(new LearnerProfileDTO({ id: 42 }));
             const putSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(new LearnerProfileDTO({}));
@@ -135,24 +106,9 @@ describe('FeedbackOnboardingModalComponent', () => {
             expect(activeModal.close).toHaveBeenCalled();
         });
 
-        it('should handle error and close modal', async () => {
-            component.profileMissing.set(true);
-            component.selected = [null, null];
-            const error = new HttpErrorResponse({ error: 'fail', status: 500 });
-            jest.spyOn(learnerProfileApiService, 'postLearnerProfile').mockRejectedValue(error);
-            await component.finish();
-            expect(alertService.addAlert).toHaveBeenCalledWith({
-                type: AlertType.DANGER,
-                message: error.message,
-            });
-            expect(component.onboardingCompleted()).toBeUndefined();
-            expect(activeModal.close).toHaveBeenCalled();
-        });
-
         it('should handle non-HTTP error and close modal', async () => {
-            component.profileMissing.set(true);
             component.selected = [null, null];
-            jest.spyOn(learnerProfileApiService, 'postLearnerProfile').mockRejectedValue(new Error('fail'));
+            jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(new Error('fail'));
             await component.finish();
             expect(alertService.addAlert).toHaveBeenCalledWith({
                 type: AlertType.DANGER,

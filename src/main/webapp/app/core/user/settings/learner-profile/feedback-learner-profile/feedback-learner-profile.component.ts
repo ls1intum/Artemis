@@ -32,12 +32,8 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     /** Flag indicating whether the profile editing is disabled */
     disabled = true;
 
-    /** Flag indicating whether the profile is missing */
-    profileMissing = false;
-
     openOnboardingModal() {
         const modalRef = this.modalService.open(FeedbackOnboardingModalComponent, { size: 'lg' });
-        modalRef.componentInstance.profileMissing.set(this.profileMissing);
         modalRef.result.then(() => {
             this.loadProfile();
         });
@@ -45,7 +41,7 @@ export class FeedbackLearnerProfileComponent implements OnInit {
 
     get isProfileSetup(): boolean {
         const profile = this.learnerProfile();
-        return !this.profileMissing && !!profile && !!profile.hasSetupFeedbackPreferences;
+        return !!profile && !!profile.hasSetupFeedbackPreferences;
     }
 
     /**
@@ -82,11 +78,9 @@ export class FeedbackLearnerProfileComponent implements OnInit {
             const profile = await this.learnerProfileAPIService.getLearnerProfileForCurrentUser();
             this.learnerProfile.set(profile);
             this.disabled = false;
-            this.profileMissing = false;
             this.updateProfileValues(profile);
         } catch (error) {
             if (error instanceof HttpErrorResponse && error.status === 404) {
-                this.profileMissing = true;
                 this.disabled = true;
                 this.learnerProfile.set(undefined);
             } else {

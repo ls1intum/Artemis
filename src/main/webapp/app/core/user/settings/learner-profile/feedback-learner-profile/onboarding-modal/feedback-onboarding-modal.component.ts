@@ -18,7 +18,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [CommonModule, TextResultComponent, TranslateDirective],
 })
 export class FeedbackOnboardingModalComponent {
-    profileMissing = signal(false);
     onboardingCompleted = signal<undefined>(undefined);
     step = 0;
     readonly totalSteps = 2;
@@ -89,13 +88,9 @@ export class FeedbackOnboardingModalComponent {
                 feedbackFormality: this.mapSelectionToFeedbackValue(this.selected[1]),
                 hasSetupFeedbackPreferences: true,
             });
-            if (this.profileMissing()) {
-                await this.learnerProfileApiService.postLearnerProfile(newProfile);
-            } else {
-                const profile = await this.learnerProfileApiService.getLearnerProfileForCurrentUser();
-                newProfile.id = profile.id;
-                await this.learnerProfileApiService.putUpdatedLearnerProfile(newProfile);
-            }
+            const profile = await this.learnerProfileApiService.getLearnerProfileForCurrentUser();
+            newProfile.id = profile.id;
+            await this.learnerProfileApiService.putUpdatedLearnerProfile(newProfile);
             this.alertService.closeAll();
             this.alertService.addAlert({
                 type: AlertType.SUCCESS,

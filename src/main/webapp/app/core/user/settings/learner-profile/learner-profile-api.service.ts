@@ -20,8 +20,4 @@ export class LearnerProfileApiService extends BaseApiHttpService {
     putUpdatedLearnerProfile(learnerProfile: LearnerProfileDTO): Promise<LearnerProfileDTO> {
         return this.put<LearnerProfileDTO>(`atlas/learner-profile`, learnerProfile);
     }
-
-    postLearnerProfile(learnerProfile: LearnerProfileDTO): Promise<LearnerProfileDTO> {
-        return this.post<LearnerProfileDTO>('atlas/learner-profile', learnerProfile);
-    }
 }
