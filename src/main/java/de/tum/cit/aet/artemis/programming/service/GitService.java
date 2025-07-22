@@ -375,6 +375,7 @@ public class GitService extends AbstractGitService {
      * @param localPath     The local path to clone the repository to.
      * @param pullOnGet     Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @param defaultBranch The default branch of the target repository
+     * @param writeAccess   whether we want to write to the repository
      * @return the repository if it could be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
