@@ -951,7 +951,7 @@ public class ParticipationUtilService {
     public void mockCreationOfExerciseParticipation(String templateRepoName, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
             throws URISyntaxException {
         var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
+        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
                 any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
@@ -966,7 +966,8 @@ public class ParticipationUtilService {
     public void mockCreationOfExerciseParticipation(VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
             throws URISyntaxException {
         var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(), any(String.class), any(String.class), any(String.class), any(Integer.class));
+        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), any(), any(String.class), any(String.class), any(String.class),
+                any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
 
