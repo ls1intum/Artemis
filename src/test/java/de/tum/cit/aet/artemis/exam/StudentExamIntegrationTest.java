@@ -268,7 +268,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         studentExamRepository.save(studentExamForTestExam2);
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
+        doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean(), anyBoolean());
         doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(), any(), anyBoolean());
         doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), any());
         // TODO: all parts using programmingExerciseTestService should also be provided for LocalVC+Jenkins

@@ -1131,7 +1131,7 @@ public class GitService extends AbstractGitService {
                 log.debug("RefUpdate result: {}", result);
             }
 
-            return getBareRepository(targetRepoUri);
+            return getBareRepository(targetRepoUri, true);
         }
     }
 

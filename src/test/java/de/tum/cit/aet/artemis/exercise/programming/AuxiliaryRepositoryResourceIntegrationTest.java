@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
@@ -131,9 +132,9 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
                 .getOrCheckoutRepository(eq(auxRepoUri), eq(false), anyBoolean());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localAuxiliaryRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(auxRepoUri), eq(true), any());
+                .getOrCheckoutRepository(eq(auxRepoUri), eq(true), anyString(), anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localAuxiliaryRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(auxRepoUri), eq(false), any());
+                .getOrCheckoutRepository(eq(auxRepoUri), eq(false), anyString(), anyBoolean());
     }
 
     @AfterEach
@@ -215,7 +216,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         params.add("file", "newFile");
 
         Repository mockRepository = mock(Repository.class);
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true), anyBoolean());
         doReturn(localAuxiliaryRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
         doReturn(false).when(mockRepository).isValidFile(any());
         request.postWithoutResponseBody(testRepoBaseUrl + auxiliaryRepository.getId() + "/file", HttpStatus.BAD_REQUEST, params);
@@ -264,7 +265,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         doReturn(Optional.of(localAuxiliaryRepo.workingCopyGitRepoFile)).when(gitService).getFileByName(any(), eq(fileMove.currentFilePath()));
 
         Repository mockRepository = mock(Repository.class);
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true), anyBoolean());
         doReturn(localAuxiliaryRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
         doReturn(false).when(mockRepository).isValidFile(argThat(file -> file.getName().contains(currentLocalFileName)));
         request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/rename-file", fileMove, HttpStatus.BAD_REQUEST, null);
@@ -327,7 +328,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         doReturn(Optional.of(localAuxiliaryRepo.workingCopyGitRepoFile)).when(gitService).getFileByName(any(), eq(currentLocalFileName));
 
         Repository mockRepository = mock(Repository.class);
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true), anyBoolean());
         doReturn(localAuxiliaryRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
         doReturn(false).when(mockRepository).isValidFile(argThat(file -> file.getName().contains(currentLocalFileName)));
 
@@ -348,7 +349,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         doReturn(false).when(mockFile).isFile();
 
         Repository mockRepository = mock(Repository.class);
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true), anyBoolean());
         doReturn(localAuxiliaryRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
         doReturn(true).when(mockRepository).isValidFile(argThat(file -> file.getName().contains(currentLocalFileName)));
 
