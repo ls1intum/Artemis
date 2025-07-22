@@ -34,13 +34,15 @@ import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 @Lazy
 public class SharingConnectorService {
 
+    public static final int HEALTH_HISTORY_LIMIT = 10;
+
     /**
      * just to signal a missing/inconsistent sharing configuration to the sharing connector service.
      */
     public static final String UNKNOWN_INSTALLATION_NAME = "unknown installation name";
 
     /**
-     * just a maximum check length for validation limiting
+     * a maximum check length for validation limiting
      */
     private static final int MAX_API_KEY_LENGTH = 200;
 
@@ -64,7 +66,7 @@ public class SharingConnectorService {
     }
 
     /**
-     * holds the current status and the last connect
+     * holds the current status and the last connection timestamp
      */
     public static class HealthStatusWithHistory extends ArrayList<HealthStatus> {
 
@@ -96,31 +98,23 @@ public class SharingConnectorService {
 
     }
 
-    public static final int HEALTH_HISTORY_LIMIT = 10;
-
     private final HealthStatusWithHistory lastHealthStati = new HealthStatusWithHistory();
 
     private static final Logger log = LoggerFactory.getLogger(SharingConnectorService.class);
 
     /**
-     * Base url for callbacks
+     * Base url for callbacks to Sharing Platform
      */
     private URL sharingApiBaseUrl = null;
 
     /**
-     * installation name for Sharing Platform
+     * installation name forwarded in config for Sharing Platform
      */
     private String installationName = null;
 
-    /**
-     * the shared secret api key
-     */
     @Value("${artemis.sharing.apikey:#{null}}")
     private String sharingApiKey;
 
-    /**
-     * the action name for the sharing platform
-     */
     @Value("${artemis.sharing.actionname:Export to Artemis@somewhere}")
     private String actionName;
 
@@ -134,7 +128,7 @@ public class SharingConnectorService {
     private final TaskScheduler taskScheduler;
 
     /**
-     * installation name for Sharing Platform
+     * installation name used to differentiate in Sharing Platform
      *
      * @return the name of this artemis installation (as shown in Sharing Platform)
      */
@@ -152,59 +146,34 @@ public class SharingConnectorService {
         this.taskScheduler = taskScheduler;
     }
 
-    /**
-     * Used to set the Sharing ApiBaseUrl to a new one
-     *
-     * @param sharingApiBaseUrl the new url
-     */
     public void setSharingApiBaseUrl(URL sharingApiBaseUrl) {
         this.sharingApiBaseUrl = sharingApiBaseUrl;
     }
 
-    /**
-     * Get the Sharing ApiBaseUrl if any, else Null
-     *
-     * @return SharingApiBaseUrl or Null
-     */
     public URL getSharingApiBaseUrlOrNull() {
         return sharingApiBaseUrl;
     }
 
-    /**
-     * Used to set Sharing ApiKey to a new one
-     *
-     * @param sharingApiKey the new ApiKey
-     */
     public void setSharingApiKey(String sharingApiKey) {
         this.sharingApiKey = sharingApiKey;
     }
 
-    /**
-     * Get Sharing ApiKey if any has been set, else Null
-     *
-     * @return SharingApiKey or null
-     */
     public String getSharingApiKeyOrNull() {
         return sharingApiKey;
     }
 
-    /**
-     * Method used to check if a Sharing ApiBaseUrl is present
-     *
-     * @return true if sharing api base url is present
-     */
     public boolean isSharingApiBaseUrlPresent() {
         return sharingApiBaseUrl != null;
     }
 
     /**
-     * Returns a sharing plugin configuration.
+     * Returns the configuration forwarded to sharing plugin.
      *
      * @param apiBaseUrl       the base url of the sharing application api (for callbacks)
      * @param installationName an optional descriptive name of the sharing application
      * @return the sharing plugin config
      */
-    public SharingPluginConfig getPluginConfig(URL apiBaseUrl, Optional<String> installationName) {
+    public SharingPluginConfig getPluginConfig(URL apiBaseUrl, @SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> installationName) {
         this.sharingApiBaseUrl = apiBaseUrl;
         try {
             this.installationName = installationName.or(() -> Optional.ofNullable(System.getenv("HOSTNAME"))).orElse(InetAddress.getLocalHost().getCanonicalHostName());
@@ -220,20 +189,14 @@ public class SharingConnectorService {
         return new SharingPluginConfig("Artemis Sharing Connector", new SharingPluginConfig.Action[] { action });
     }
 
-    /**
-     * Method used to validate the given authorizaion apiKey from Sharing
-     *
-     * @param apiKey the Key to validate
-     * @return true if valid, false otherwise
-     */
-    public boolean validate(String apiKey) {
+    public boolean validateApiKey(String apiKey) {
         if (apiKey == null || apiKey.length() > MAX_API_KEY_LENGTH) {
             // this is just in case, somebody tries an attack
             lastHealthStati.add(new HealthStatus("Failed api Key validation"));
 
             return false;
         }
-        Pattern p = Pattern.compile("Bearer\\s(.+)");
+        Pattern p = Pattern.compile("Bearer\\s+(\\S+)$");
         Matcher m = p.matcher(apiKey);
         if (m.matches()) {
             apiKey = m.group(1);
@@ -247,7 +210,8 @@ public class SharingConnectorService {
     }
 
     /**
-     * At (spring) application startup, we request a reinitialization of the sharing platform .
+     * At (spring) full application startup, we request a reinitialization: i.e. we query the Sharing Platform to send a
+     * new config request immediately, not waiting for the next scheduled request.
      * It starts a background thread in order not to block application startup.
      */
     @EventListener(FullStartupEvent.class)
@@ -256,8 +220,8 @@ public class SharingConnectorService {
     }
 
     /**
-     * shuts down the service.
-     * currently just for test purposes
+     * Shuts down the service.
+     * Currently just for test purposes
      */
     void shutDown() {
         sharingApiBaseUrl = null;
@@ -278,10 +242,12 @@ public class SharingConnectorService {
                 boolean success = Boolean.TRUE.equals(restTemplate.getForObject(reInitUrlWithApiKey, Boolean.class));
                 if (!success) {
                     log.warn("The request for connector reinitialization from Sharing Platform was not successful");
+                    lastHealthStati.add(new HealthStatus("The request for connector reinitialization from Sharing Platform was not successful."));
                 }
             }
             catch (Exception e) {
                 log.warn("Failed to request reinitialization from Sharing Platform", e);
+                lastHealthStati.add(new HealthStatus("The request for connector reinitialization from Sharing Platform was not successful: " + e.getMessage()));
             }
         }
     }

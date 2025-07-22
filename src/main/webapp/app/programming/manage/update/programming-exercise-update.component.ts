@@ -949,30 +949,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
-        if (!this.isImportFromSharing) {
-            this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
-                next: (file) => {
-                    this.programmingExercise.problemStatement = file;
-                    this.problemStatementLoaded = true;
-                },
-                error: () => {
-                    this.programmingExercise.problemStatement = '';
-                    this.problemStatementLoaded = true;
-                },
-            });
-        } else {
-            this.programmingExerciseSharingService.loadProblemStatementForExercises(this.sharingInfo).subscribe({
-                next: (statement: string) => {
-                    this.programmingExercise.problemStatement = statement;
-                    this.problemStatementLoaded = true;
-                },
-                error: () => {
-                    this.alertService.error('Failed to load problem statement from the sharing platform.');
-                    this.programmingExercise.problemStatement = '';
-                    this.problemStatementLoaded = true;
-                },
-            });
-        }
+        this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
+            next: (file) => {
+                this.programmingExercise.problemStatement = file;
+                this.problemStatementLoaded = true;
+            },
+            error: () => {
+                this.programmingExercise.problemStatement = '';
+                this.problemStatementLoaded = true;
+            },
+        });
     }
 
     /**

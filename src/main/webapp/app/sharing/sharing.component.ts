@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -34,7 +34,8 @@ export class SharingComponent implements OnInit {
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     reverseSorting: boolean = false;
-    sortColumn: string;
+    sortColumn = 'id';
+
     shoppingBasket: ShoppingBasket;
     /**
      * holder for all data needed to import the exercise
@@ -49,17 +50,13 @@ export class SharingComponent implements OnInit {
     faPlus = faPlus;
     faSort = faSort;
 
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private userRouteAccessService: UserRouteAccessService,
-        private courseService: CourseManagementService,
-        private sortService: SortService,
-        private programmingExerciseSharingService: ProgrammingExerciseSharingService,
-        private alertService: AlertService,
-    ) {
-        this.sortColumn = 'id';
-    }
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private userRouteAccessService = inject(UserRouteAccessService);
+    private courseService = inject(CourseManagementService);
+    private sortService = inject(SortService);
+    private programmingExerciseSharingService = inject(ProgrammingExerciseSharingService);
+    private alertService = inject(AlertService);
 
     getBasketTokenExpiryDate(): Date {
         if (this.shoppingBasket?.tokenValidUntil) {
