@@ -37,8 +37,8 @@ export class FeedbackLearnerProfileComponent implements OnInit {
 
     openOnboardingModal() {
         const modalRef = this.modalService.open(FeedbackOnboardingModalComponent, { size: 'lg' });
-        modalRef.componentInstance.profileMissing = this.profileMissing;
-        modalRef.componentInstance.onboardingCompleted.subscribe(() => {
+        modalRef.componentInstance.profileMissing.set(this.profileMissing);
+        modalRef.result.then(() => {
             this.loadProfile();
         });
     }

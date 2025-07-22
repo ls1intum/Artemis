@@ -19,7 +19,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 })
 export class FeedbackOnboardingModalComponent {
     profileMissing = signal(false);
-    onboardingCompleted = signal<void | undefined>(undefined);
+    onboardingCompleted = signal<undefined>(undefined);
     step = 0;
     readonly totalSteps = 2;
     selected: (number | null)[] = [null, null];
@@ -30,16 +30,29 @@ export class FeedbackOnboardingModalComponent {
     private alertService = inject(AlertService);
     protected translateService = inject(TranslateService);
 
+    /**
+     * Navigates to the next step in the onboarding process.
+     */
     next() {
         if (this.step < this.totalSteps - 1) {
             this.step++;
         }
     }
+
+    /**
+     * Navigates to the previous step in the onboarding process.
+     */
     back() {
         if (this.step > 0) {
             this.step--;
         }
     }
+
+    /**
+     * Selects a choice for a given step.
+     * @param step - The step to select a choice for
+     * @param choice - The choice to select
+     */
     select(step: number, choice: number) {
         if (this.selected[step] === choice) {
             this.selected[step] = null;
@@ -47,14 +60,33 @@ export class FeedbackOnboardingModalComponent {
             this.selected[step] = choice;
         }
     }
+
+    /**
+     * Closes the modal.
+     */
     close() {
         this.activeModal.close();
     }
+
+    /**
+     * Maps selection index to feedback value
+     * @param selection - The selected option index (0 or 1)
+     * @returns 1 for first option, 3 for second option, 2 as default
+     */
+    private mapSelectionToFeedbackValue(selection: number | null): number {
+        if (selection === 0) return 1;
+        if (selection === 1) return 3;
+        return 2;
+    }
+
+    /**
+     * Finishes the onboarding process.
+     */
     async finish() {
         try {
             const newProfile = new LearnerProfileDTO({
-                feedbackDetail: this.selected[0] === 0 ? 1 : this.selected[0] === 1 ? 3 : 2,
-                feedbackFormality: this.selected[1] === 0 ? 1 : this.selected[1] === 1 ? 3 : 2,
+                feedbackDetail: this.mapSelectionToFeedbackValue(this.selected[0]),
+                feedbackFormality: this.mapSelectionToFeedbackValue(this.selected[1]),
                 hasSetupFeedbackPreferences: true,
             });
             if (this.profileMissing()) {
