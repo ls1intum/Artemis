@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromF
 @Lazy
 public class ProgrammingExerciseImportFromSharingService {
 
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportFromSharingService.class);
 
     private final ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService;

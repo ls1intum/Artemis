@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -238,30 +237,6 @@ public class ExerciseSharingService {
             }
         }
         return url;
-    }
-
-    /**
-     * Retrieves the Problem-Statement file from a Sharing basket
-     *
-     * @param sharingInfo of the basket to extract the problem statement from
-     * @return The content of the Problem-Statement file
-     */
-    public String getProblemStatementFromBasket(SharingInfoDTO sharingInfo) {
-        Pattern pattern = Pattern.compile("^(Problem-Statement|exercise).*\\.md$", Pattern.CASE_INSENSITIVE);
-
-        try {
-            Optional<String> entryFromBasket = this.getEntryFromBasket(pattern, sharingInfo);
-            if (entryFromBasket.isEmpty()) {
-                throw new NotFoundException("Could not retrieve problem statement from imported exercise");
-            }
-            String problemStatement = entryFromBasket.get();
-            // The Basket comes from the sharing platform, however the problem statement comes from a git repository.
-            // A malicious user could manipulate the problem statement, and insert malicious code.
-            return Objects.requireNonNullElse(org.springframework.web.util.HtmlUtils.htmlEscape(problemStatement), "No Problem Statement found!");
-        }
-        catch (Exception e) {
-            throw new NotFoundException("Could not retrieve problem statement from imported exercise", e);
-        }
     }
 
     /**

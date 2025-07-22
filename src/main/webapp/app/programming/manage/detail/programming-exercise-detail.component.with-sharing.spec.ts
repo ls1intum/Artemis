@@ -64,7 +64,7 @@ jest.mock('app/programming/shared/utils/diff.utils', () => ({
 }));
 
 /*
- * just use a separate file for sharing aspects, could be merged into programming-exercise-detail.component.spec.ts if stabilized.
+ *  separate test spec file for sharing aspects of the programming details component. Could be merged into programming-exercise-detail.component.spec.ts on the long run.
  */
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;

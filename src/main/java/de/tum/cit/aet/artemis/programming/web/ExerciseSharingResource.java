@@ -146,22 +146,6 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET api/programming/sharing/import/basket/problem-statement get the problem statement of the exercise defined in sharingInfo.
-     *
-     * @param sharingInfo the sharing info (with exercise position in the basket)
-     * @return the ResponseEntity with status 200 (OK) and with body the problem statement, or with status 404 (Not Found)
-     */
-    @PostMapping("import/basket/problem-statement")
-    @EnforceAtLeastEditor
-    public ResponseEntity<String> getProblemStatement(@RequestBody SharingInfoDTO sharingInfo) {
-        if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKeyOrNull())) {
-            return ResponseEntity.badRequest().build();
-        }
-        String problemStatement = this.exerciseSharingService.getProblemStatementFromBasket(sharingInfo);
-        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(problemStatement);
-    }
-
-    /**
      * GET api/programming/sharing/import/basket/exercise-details: get exercise details of the exercise defined in sharingInfo.
      *
      * @param sharingInfo the sharing info (with exercise position in the basket)
