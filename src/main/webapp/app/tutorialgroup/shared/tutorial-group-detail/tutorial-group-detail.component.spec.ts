@@ -55,7 +55,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([])],
+            imports: [RouterModule.forRoot([]), FaIconComponent],
             declarations: [
                 TutorialGroupDetailComponent,
                 MockWrapperComponent,
@@ -63,7 +63,6 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 MockComponent(IconCardComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(RemoveSecondsPipe),
-                MockComponent(FaIconComponent),
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockDirective(TranslateDirective),
                 MockComponent(ProfilePictureComponent),
@@ -108,11 +107,10 @@ describe('TutorialGroupDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([])],
+            imports: [RouterModule.forRoot([]), FaIconComponent],
             declarations: [
                 TutorialGroupDetailComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
                 MockComponent(IconCardComponent),
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockPipe(RemoveSecondsPipe),
