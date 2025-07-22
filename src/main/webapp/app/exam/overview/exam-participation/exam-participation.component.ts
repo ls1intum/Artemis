@@ -448,6 +448,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (this.testExam) {
                         this.examParticipationService.resetExamLayout();
                         this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'test-exam', this.studentExam.id]);
+                        this.examParticipationService.setShouldUpdateTestExams(true);
                     }
 
                     this.examSummaryButtonTimer = setInterval(() => {
