@@ -17,7 +17,7 @@ Before using the FAQ feature, a configuration step is required. Please ensure th
 
 .. raw:: html
 
-   <iframe src="https://live.rbg.tum.de/w/artemisintro/45966?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+   <iframe src="https://live.rbg.tum.de/w/artemisintro/61388?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
        Watch this video on TUM-Live.
    </iframe>
 
@@ -50,7 +50,7 @@ Tutors can propose new FAQs and edit those that are still in the Proposed state,
 
 .. raw:: html
 
-   <iframe src="https://live.rbg.tum.de/w/artemisintro/45966?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+   <iframe src="https://live.rbg.tum.de/w/artemisintro/61385?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
        Watch this video on TUM-Live.
    </iframe>
 
@@ -58,7 +58,7 @@ Tutors can propose new FAQs and edit those that are still in the Proposed state,
 
   .. raw:: html
 
-     <iframe src="https://live.rbg.tum.de/w/artemisintro/45966?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+     <iframe src="https://live.rbg.tum.de/w/artemisintro/61386?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
          Watch this video on TUM-Live.
      </iframe>
 
@@ -74,18 +74,16 @@ The question is shown as a heading, and the answer is presented as a formatted p
 
 
 Additional IRIS Features: Automatic FAQ Rewriting
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When **IRIS** is enabled, you can use an integrated feature to automatically refine your FAQs.
 With just one click, IRIS checks your FAQ answers for grammar issues and unclear phrasing.
-
-It analyzes the text, suggests improvements, and automatically updates the answer field with a more polished version — saving you time and ensuring high-quality responses.
-
+It analyzes the text, suggests improvements, and automatically updates the answer field with a more polished version to save you time and ensure high-quality responses.
 In addition, a **consistency check** is performed to ensure that the answer aligns with existing FAQs.
 
   .. raw:: html
 
-     <iframe src="https://live.rbg.tum.de/w/artemisintro/45966?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+     <iframe src="https://live.rbg.tum.de/w/artemisintro/61387?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
          Watch this video on TUM-Live.
      </iframe>
 
