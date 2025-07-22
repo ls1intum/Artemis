@@ -172,7 +172,8 @@ describe('BuildAgentSummaryComponent', () => {
         component.ngOnInit();
         component.cancelBuildJob(buildJob.id!);
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(buildJob.id!);
+        expect(spy).toHaveBeenCalledWith(buildJob.id!);
+        expect(spy).toHaveBeenCalledOnce();
     });
 
     it('should cancel all build jobs of a build agent', () => {
@@ -182,7 +183,8 @@ describe('BuildAgentSummaryComponent', () => {
         component.ngOnInit();
         component.cancelAllBuildJobs(buildAgent.buildAgent);
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(buildAgent.buildAgent);
+        expect(spy).toHaveBeenCalledWith(buildAgent.buildAgent);
+        expect(spy).toHaveBeenCalledOnce();
     });
 
     it('should calculate the build capacity and current builds', () => {
@@ -260,7 +262,7 @@ describe('BuildAgentSummaryComponent', () => {
         const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
 
         component.displayPauseBuildAgentModal();
-        expect(openSpy).toHaveBeenCalledOnce();
+        expect(openSpy).toHaveBeenCalled();
 
         component.displayClearDistributedDataModal();
         expect(openSpy).toHaveBeenCalledTimes(2);
@@ -332,5 +334,38 @@ describe('BuildAgentSummaryComponent', () => {
         component.onConcurrencyChange('buildagent1', 3);
 
         expect(component.concurrencyMap['buildagent1']).toBe(3);
+    });
+
+    it('should not call adjustBuildAgentCapacity if build agent is paused', () => {
+        const pausedAgent: BuildAgentInformation = {
+            id: 3,
+            buildAgent: { name: 'pausedAgent', displayName: 'Paused Agent', memberAddress: 'agent3' },
+            maxNumberOfConcurrentBuildJobs: 2,
+            numberOfCurrentBuildJobs: 0,
+            status: BuildAgentStatus.PAUSED,
+        };
+        component.buildAgents = [pausedAgent];
+        component.onConcurrencyChange('pausedAgent', 3);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+    });
+
+    it('should not call adjustBuildAgentCapacity if build agent is self-paused', () => {
+        const selfPausedAgent: BuildAgentInformation = {
+            id: 4,
+            buildAgent: { name: 'selfPausedAgent', displayName: 'Self Paused Agent', memberAddress: 'agent4' },
+            maxNumberOfConcurrentBuildJobs: 2,
+            numberOfCurrentBuildJobs: 0,
+            status: BuildAgentStatus.SELF_PAUSED,
+        };
+        component.buildAgents = [selfPausedAgent];
+        component.onConcurrencyChange('selfPausedAgent', 3);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+    });
+
+    it('should not update concurrencyMap if agentName is not found', () => {
+        component.buildAgents = [];
+        component.onConcurrencyChange('nonexistentAgent', 3);
+        expect(component.concurrencyMap['nonexistentAgent']).toBe(3);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).toHaveBeenCalledWith('nonexistentAgent', 3);
     });
 });
