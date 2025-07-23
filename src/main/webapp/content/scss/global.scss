@@ -803,10 +803,10 @@ Course Info Bar
     }
 
     /**
-     * Adds extra space below the last item in ordered and unordered lists
-     * within markdown previews. This ensures that when a list is followed
-     * by another block element (such as a paragraph), there is additional
-     * vertical separation for improved readability.
+     * Adds extra space below ordered and unordered lists
+     * within markdown previews. The margin is applied to the end of the list,
+     * ensuring vertical separation when a list is followed by another
+     * block element (such as a paragraph) for improved readability.
      *
      * Example (Markdown):
      * 
@@ -814,8 +814,8 @@ Course Info Bar
      * - Second item
      * More text after the list.
      */
-    ol > li:last-child,
-    ul > li:last-child {
+    ol,
+    ul {
         margin-bottom: 0.75em;
     }
 }
