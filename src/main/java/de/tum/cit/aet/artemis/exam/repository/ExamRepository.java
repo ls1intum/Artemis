@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -543,4 +544,24 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE exam.course.id = :courseId
             """)
     Set<ExamCalendarEventDTO> getExamCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO(
+                exam.title,
+                exam.id,
+                exam.moduleNumber,
+                exam.startDate,
+                se.workingTime,
+                exam.examMaxPoints
+            )
+            FROM Exam exam
+            JOIN exam.studentExams se
+            WHERE exam.course.id       = :courseId
+              AND se.user.id            = :studentId
+              AND exam.testExam         = FALSE
+              AND exam.visibleDate     <= :now
+            """)
+
+    Set<ExamSidebarDataDTO> findSidebarDataForRealStudentExamsByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now, @Param("studentId") long studentId);
+
 }
