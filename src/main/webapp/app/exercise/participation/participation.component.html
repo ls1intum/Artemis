@@ -349,11 +349,6 @@
                                         deleteQuestion="artemisApp.participation.delete.question"
                                         (delete)="deleteParticipation(value.id, $event)"
                                         [dialogError]="dialogError"
-                                        [additionalChecks]="
-                                            exercise.type === ExerciseType.PROGRAMMING
-                                                ? { deleteBuildPlan: 'artemisApp.participation.deleteBuildPlan', deleteRepository: 'artemisApp.participation.deleteRepository' }
-                                                : undefined
-                                        "
                                     >
                                         <fa-icon [icon]="faTrash" />
                                     </button>
