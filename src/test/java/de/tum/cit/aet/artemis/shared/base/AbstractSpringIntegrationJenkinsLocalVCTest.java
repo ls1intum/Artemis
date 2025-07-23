@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
@@ -95,6 +96,9 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     @MockitoSpyBean
     protected GroupNotificationScheduleService groupNotificationScheduleService;
+
+    @MockitoSpyBean
+    protected ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     protected Path localVCRepoPath;

@@ -33,6 +33,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -92,7 +93,7 @@ describe('CoursesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }])],
+            imports: [RouterModule.forRoot([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }]), FaIconComponent],
             declarations: [
                 CoursesComponent,
                 MockDirective(MockHasAnyAuthorityDirective),

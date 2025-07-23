@@ -283,4 +283,12 @@ public class QuizQuestionProgressService {
         }
     }
 
+    /**
+     *
+     * @param courseId The id of the course for which the questions are to be checked
+     * @return true if there are questions availble for training, false otherwise
+     */
+    public boolean questionsAvailableForTraining(Long courseId) {
+        return quizQuestionRepository.areQuizQuestionsAvailableForPractice(courseId);
+    }
 }

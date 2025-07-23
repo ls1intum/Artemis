@@ -45,7 +45,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
     searchFailed = false;
     searchNoResults = false;
     isTransitioning = false;
-    rowClass: string | undefined = undefined;
+    rowClass: string;
 
     // Icons
     faUserSlash = faUserSlash;
@@ -224,7 +224,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
      */
     flashRowClass = (className: string) => {
         this.rowClass = className;
-        setTimeout(() => (this.rowClass = undefined));
+        setTimeout(() => (this.rowClass = ''));
     };
 
     /**

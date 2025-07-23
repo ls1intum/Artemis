@@ -64,6 +64,7 @@ import { CourseNotificationService } from 'app/communication/course-notification
 import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
 import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
 import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 const endDate1 = dayjs().add(1, 'days');
@@ -188,7 +189,7 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
+            imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule), FaIconComponent],
             declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -334,6 +335,15 @@ describe('CourseOverviewComponent', () => {
         expect(sidebarItems.length).toBeGreaterThan(0);
         expect(sidebarItems[0].title).toContain('Exercises');
         expect(sidebarItems[1].title).toContain('Lectures');
+    });
+
+    it('should create sidebar items for student if questions are available for practice', () => {
+        component.course.set({ id: 123, lectures: [], exams: [], trainingEnabled: true });
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
+        expect(sidebarItems[0].title).toContain('Exercises');
+        expect(sidebarItems[1].title).toContain('Training');
+        expect(sidebarItems[2].title).toContain('Lectures');
     });
 
     it('should create competencies and learning path item if competencies or prerequisites are available and learning paths are enabled', () => {
@@ -866,21 +876,4 @@ describe('CourseOverviewComponent', () => {
         expect((component as any).selectableSettingPresets).toBeDefined();
         expect((component as any).selectedSettingPreset).toBeDefined();
     }));
-
-    it('should only show practice tab on test server or development', () => {
-        component.isTestServer = true;
-        component.isDevelopment = false;
-        const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems.some((item) => item.title.includes('Practice'))).toBeTruthy();
-
-        component.isTestServer = false;
-        component.isDevelopment = true;
-        const sidebarItemsDev = component.getSidebarItems();
-        expect(sidebarItemsDev.some((item) => item.title.includes('Practice'))).toBeTruthy();
-
-        component.isTestServer = false;
-        component.isDevelopment = false;
-        const sidebarItemsProd = component.getSidebarItems();
-        expect(sidebarItemsProd.some((item) => item.title.includes('Practice'))).toBeFalsy();
-    });
 });

@@ -65,6 +65,7 @@ import { TutorParticipationService } from 'app/assessment/shared/assessment-dash
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/language-table-cell/language-table-cell.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
@@ -206,7 +207,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             }),
         },
     } as any as ActivatedRoute;
-    const imports = [RouterModule.forRoot([]), ExerciseAssessmentDashboardComponent];
+    const imports = [RouterModule.forRoot([]), ExerciseAssessmentDashboardComponent, FaIconComponent];
 
     const declarations = [
         MockComponent(TutorLeaderboardComponent),
