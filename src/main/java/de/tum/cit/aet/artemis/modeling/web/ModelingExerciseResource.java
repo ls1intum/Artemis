@@ -29,6 +29,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.athena.domain.AthenaModuleMode;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -114,12 +116,14 @@ public class ModelingExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final Optional<AthenaApi> athenaApi;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
-            Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi) {
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AthenaApi> athenaApi) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -137,6 +141,7 @@ public class ModelingExerciseResource {
         this.channelRepository = channelRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
+        this.athenaApi = athenaApi;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -168,6 +173,11 @@ public class ModelingExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(modelingExercise);
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(modelingExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
+                () -> modelingExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(modelingExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+                () -> modelingExercise.setPreliminaryFeedbackModule(null));
 
         ModelingExercise result = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
 
@@ -230,6 +240,15 @@ public class ModelingExerciseResource {
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
+
+        // Check that only allowed athena modules are used
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(modelingExerciseBeforeUpdate);
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(modelingExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
+                () -> modelingExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(modelingExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+                () -> modelingExercise.setPreliminaryFeedbackModule(null));
+        // Changing Athena module after the due date has passed is not allowed
+        athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(modelingExerciseBeforeUpdate, modelingExercise, ENTITY_NAME));
 
         channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
 
@@ -344,6 +363,23 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
+
+        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions or preliminary feedback for the imported exercise
+        // If Athena is disabled and the service is not present, we also disable the corresponding functionality
+        try {
+            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(),
+                    AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME), () -> importedExercise.setFeedbackSuggestionModule(null));
+        }
+        catch (BadRequestAlertException e) {
+            importedExercise.setFeedbackSuggestionModule(null);
+        }
+        try {
+            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(),
+                    AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME), () -> importedExercise.setPreliminaryFeedbackModule(null));
+        }
+        catch (BadRequestAlertException e) {
+            importedExercise.setPreliminaryFeedbackModule(null);
+        }
 
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
         modelingExerciseRepository.save(newModelingExercise);

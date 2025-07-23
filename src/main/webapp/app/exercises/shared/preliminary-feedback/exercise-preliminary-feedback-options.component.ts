@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnChanges, OnInit, SimpleChanges, input } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ActivatedRoute } from '@angular/router';
@@ -32,11 +32,9 @@ export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnCh
     initialAthenaModule?: string;
     showDropdownList: boolean = false;
 
-    constructor(
-        private athenaService: AthenaService,
-        private activatedRoute: ActivatedRoute,
-        private cdr: ChangeDetectorRef,
-    ) {}
+    private readonly athenaService = inject(AthenaService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly cdr = inject(ChangeDetectorRef);
 
     ngOnInit(): void {
         const courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
