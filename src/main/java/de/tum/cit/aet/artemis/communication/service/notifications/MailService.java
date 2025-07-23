@@ -16,8 +16,9 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import de.tum.cit.aet.artemis.communication.dto.MailTemplateDTO;
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * Service for preparing and sending emails.
@@ -61,99 +62,88 @@ public class MailService {
     }
 
     /**
-     * Sends a predefined mail based on a template
-     *
-     * @param user         The receiver of the mail
-     * @param templateName The name of the template
-     * @param titleKey     The key mapping the title for the subject of the mail
+     * Sends predefined mail based on a template
      */
-    public void sendEmailFromTemplate(User user, String templateName, String titleKey) {
-        Locale locale = Locale.forLanguageTag(user.getLangKey());
-        Context context = createBaseContext(user, locale);
-        prepareTemplateAndSendEmail(user, templateName, titleKey, context);
+    public void sendEmailFromTemplate(MailTemplateDTO mailTemplateDTO) {
+        Context context = createBaseContext(mailTemplateDTO.userDTO());
+        prepareTemplateAndSendEmail(mailTemplateDTO, context);
+    }
+
+    private void prepareTemplateAndSendEmail(MailTemplateDTO mailTemplateDTO, Context context) {
+        String content = templateEngine.process(mailTemplateDTO.templateName(), context);
+        String subject = messageSource.getMessage(mailTemplateDTO.titleKey(), null, context.getLocale());
+        mailSendingService.sendEmail(mailTemplateDTO.userDTO(), subject, content, false, true);
+    }
+
+    private void prepareTemplateAndSendEmailWithArgumentInSubject(MailTemplateDTO mailTemplateDTO, String argument, Context context) {
+        String content = templateEngine.process(mailTemplateDTO.templateName(), context);
+        String subject = messageSource.getMessage(mailTemplateDTO.titleKey(), new Object[] { argument }, context.getLocale());
+        mailSendingService.sendEmail(mailTemplateDTO.userDTO(), subject, content, false, true);
+    }
+
+    private Context createBaseContext(MailUserDTO userDTO) {
+        Locale locale = Locale.forLanguageTag(userDTO.languageKey());
+        Context context = new Context(locale);
+        context.setVariable(USER, userDTO);
+        context.setVariable(BASE_URL, artemisServerUrl);
+        return context;
+    }
+
+    public void sendActivationEmail(MailUserDTO userDTO) {
+        log.debug("Sending activation email to '{}'", userDTO.email());
+        MailTemplateDTO mailTemplateDTO = new MailTemplateDTO("mail/activationEmail", "email.activation.title", userDTO);
+        sendEmailFromTemplate(mailTemplateDTO);
+    }
+
+    public void sendPasswordResetMail(MailUserDTO userDTO) {
+        log.debug("Sending password reset email to '{}'", userDTO.email());
+        MailTemplateDTO mailTemplateDTO = new MailTemplateDTO("mail/passwordResetEmail", "email.reset.title", userDTO);
+        sendEmailFromTemplate(mailTemplateDTO);
+    }
+
+    public void sendSAML2SetPasswordMail(MailUserDTO userDTO) {
+        log.debug("Sending SAML2 set password email to '{}'", userDTO.email());
+        MailTemplateDTO mailTemplateDTO = new MailTemplateDTO("mail/samlSetPasswordEmail", "email.saml.title", userDTO);
+        sendEmailFromTemplate(mailTemplateDTO);
     }
 
     /**
      * Sends an email to a user (the internal admin user) about a failed data export creation.
      *
-     * @param admin        the admin user
-     * @param templateName the name of the email template
-     * @param titleKey     the subject of the email
-     * @param dataExport   the data export that failed
-     * @param reason       the exception that caused the data export to fail
+     * @param adminDTO   the admin user
+     * @param dataExport the data export that failed
+     * @param reason     the exception that caused the data export to fail
      */
-    public void sendDataExportFailedEmailForAdmin(User admin, String templateName, String titleKey, DataExport dataExport, Exception reason) {
-        Locale locale = Locale.forLanguageTag(admin.getLangKey());
-        Context context = createBaseContext(admin, locale);
+    public void sendDataExportFailedEmailToAdmin(MailUserDTO adminDTO, DataExport dataExport, Exception reason) {
+        log.debug("Sending data export failed email to admin email address '{}'", adminDTO.email());
+        MailTemplateDTO mailTemplateDTO = new MailTemplateDTO("mail/dataExportFailedAdminEmail", "email.dataExportFailedAdmin.title", adminDTO);
+        Context context = createBaseContext(adminDTO);
         context.setVariable(DATA_EXPORT, dataExport);
         context.setVariable(REASON, reason.getMessage());
-        prepareTemplateAndSendEmailWithArgumentInSubject(admin, templateName, titleKey, dataExport.getUser().getLogin(), context);
+        prepareTemplateAndSendEmailWithArgumentInSubject(mailTemplateDTO, dataExport.getUser().getLogin(), context);
     }
 
-    public void sendSuccessfulDataExportsEmailToAdmin(User admin, String templateName, String titleKey, Set<DataExport> dataExports) {
-        Locale locale = Locale.forLanguageTag(admin.getLangKey());
-        Context context = createBaseContext(admin, locale);
+    public void sendSuccessfulDataExportsEmailToAdmin(MailUserDTO adminDTO, Set<DataExport> dataExports) {
+        log.debug("Sending successful creation of data exports email to admin email address '{}'", adminDTO.email());
+        MailTemplateDTO mailTemplateDTO = new MailTemplateDTO("mail/successfulDataExportsAdminEmail", "email.successfulDataExportCreationsAdmin.title", adminDTO);
+        Context context = createBaseContext(adminDTO);
         context.setVariable(DATA_EXPORTS, dataExports);
-        prepareTemplateAndSendEmail(admin, templateName, titleKey, context);
-    }
-
-    private void prepareTemplateAndSendEmail(User admin, String templateName, String titleKey, Context context) {
-        String content = templateEngine.process(templateName, context);
-        String subject = messageSource.getMessage(titleKey, null, context.getLocale());
-        mailSendingService.sendEmail(admin, subject, content, false, true);
-    }
-
-    private void prepareTemplateAndSendEmailWithArgumentInSubject(User admin, String templateName, String titleKey, String argument, Context context) {
-        String content = templateEngine.process(templateName, context);
-        String subject = messageSource.getMessage(titleKey, new Object[] { argument }, context.getLocale());
-        mailSendingService.sendEmail(admin, subject, content, false, true);
-    }
-
-    private Context createBaseContext(User admin, Locale locale) {
-        Context context = new Context(locale);
-        context.setVariable(USER, admin);
-        context.setVariable(BASE_URL, artemisServerUrl);
-        return context;
-    }
-
-    public void sendActivationEmail(User user) {
-        log.debug("Sending activation email to '{}'", user.getEmail());
-        sendEmailFromTemplate(user, "mail/activationEmail", "email.activation.title");
-    }
-
-    public void sendPasswordResetMail(User user) {
-        log.debug("Sending password reset email to '{}'", user.getEmail());
-        sendEmailFromTemplate(user, "mail/passwordResetEmail", "email.reset.title");
-    }
-
-    public void sendSAML2SetPasswordMail(User user) {
-        log.debug("Sending SAML2 set password email to '{}'", user.getEmail());
-        sendEmailFromTemplate(user, "mail/samlSetPasswordEmail", "email.saml.title");
-    }
-
-    public void sendDataExportFailedEmailToAdmin(User admin, DataExport dataExport, Exception reason) {
-        log.debug("Sending data export failed email to admin email address '{}'", admin.getEmail());
-        sendDataExportFailedEmailForAdmin(admin, "mail/dataExportFailedAdminEmail", "email.dataExportFailedAdmin.title", dataExport, reason);
-    }
-
-    public void sendSuccessfulDataExportsEmailToAdmin(User admin, Set<DataExport> dataExports) {
-        log.debug("Sending successful creation of data exports email to admin email address '{}'", admin.getEmail());
-        sendSuccessfulDataExportsEmailToAdmin(admin, "mail/successfulDataExportsAdminEmail", "email.successfulDataExportCreationsAdmin.title", dataExports);
+        prepareTemplateAndSendEmail(mailTemplateDTO, context);
     }
 
     /**
      * Sends an email to admin users about a build agent paused itself.
      *
-     * @param admin                    the admin user to notify
+     * @param adminDTO                 the admin user to notify
      * @param buildAgentName           the name of the build agent that was paused
      * @param consecutiveBuildFailures the number of consecutive build failures on the build agent
      */
-    public void sendBuildAgentSelfPausedEmailToAdmin(User admin, String buildAgentName, int consecutiveBuildFailures) {
-        log.debug("Sending build agent self paused email to admin email address '{}'", admin.getEmail());
-        Locale locale = Locale.forLanguageTag(admin.getLangKey());
-        Context context = createBaseContext(admin, locale);
+    public void sendBuildAgentSelfPausedEmailToAdmin(MailUserDTO adminDTO, String buildAgentName, int consecutiveBuildFailures) {
+        log.debug("Sending build agent self paused email to admin email address '{}'", adminDTO.email());
+        Context context = createBaseContext(adminDTO);
         context.setVariable(BUILD_AGENT_NAME, buildAgentName);
         context.setVariable(CONSECUTIVE_BUILD_FAILURES, consecutiveBuildFailures);
-        prepareTemplateAndSendEmail(admin, "mail/buildAgentSelfPausedEmail", "email.buildAgent.SelfPaused.title", context);
+        MailTemplateDTO mailTemplateDTO = new MailTemplateDTO("mail/buildAgentSelfPausedEmail", "email.buildAgent.SelfPaused.title", adminDTO);
+        prepareTemplateAndSendEmail(mailTemplateDTO, context);
     }
 }

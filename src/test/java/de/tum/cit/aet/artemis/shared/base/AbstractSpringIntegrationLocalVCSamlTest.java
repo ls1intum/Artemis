@@ -28,6 +28,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
@@ -62,7 +63,7 @@ public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractA
     public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked) {
         // saml2-specific mocks
         doReturn(null).when(relyingPartyRegistrationRepository).findByRegistrationId(anyString());
-        doNothing().when(mailService).sendSAML2SetPasswordMail(any(User.class));
+        doNothing().when(mailService).sendSAML2SetPasswordMail(any(MailUserDTO.class));
     }
 
     @Override

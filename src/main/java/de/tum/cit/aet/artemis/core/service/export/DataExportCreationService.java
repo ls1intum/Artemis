@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
@@ -163,7 +164,7 @@ public class DataExportCreationService {
             log.warn("No internal admin user found. Cannot send email to admin about data export failure.");
             return;
         }
-        mailService.sendDataExportFailedEmailToAdmin(admin.get(), dataExport, exception);
+        mailService.sendDataExportFailedEmailToAdmin(new MailUserDTO(admin.get()), dataExport, exception);
     }
 
     /**

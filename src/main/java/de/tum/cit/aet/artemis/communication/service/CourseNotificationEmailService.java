@@ -25,6 +25,7 @@ import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomReferenceRendererService;
@@ -144,7 +145,7 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
                 return;
             }
 
-            mailSendingService.sendEmailSync(recipient, subject, content, false, true);
+            mailSendingService.sendEmailSync(new MailUserDTO(recipient), subject, content, false, true);
         });
     }
 

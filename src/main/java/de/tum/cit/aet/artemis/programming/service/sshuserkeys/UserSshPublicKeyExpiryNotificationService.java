@@ -18,6 +18,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -94,7 +95,8 @@ public class UserSshPublicKeyExpiryNotificationService {
                 contextVariables.put("expiryDate", "-");
             }
 
-            mailSendingService.buildAndSendSync(recipient, "email.notification.sshKeyExpiry.sshKeysHasExpiredWarning", "mail/notification/sshKeyHasExpiredEmail", contextVariables);
+            mailSendingService.buildAndSendSync(new MailUserDTO(recipient), "email.notification.sshKeyExpiry.sshKeysHasExpiredWarning", "mail/notification/sshKeyHasExpiredEmail",
+                    contextVariables);
         }
     }
 }

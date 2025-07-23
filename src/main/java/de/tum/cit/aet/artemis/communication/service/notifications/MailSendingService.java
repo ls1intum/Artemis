@@ -26,7 +26,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import tech.jhipster.config.JHipsterProperties;
 
@@ -72,7 +72,7 @@ public class MailSendingService {
      * @param isHtml      Whether the mail should support HTML tags
      */
     @Async
-    public void sendEmail(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
+    public void sendEmail(MailUserDTO recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
         executeSend(recipient, subject, content, isMultipart, isHtml);
     }
 
@@ -85,7 +85,7 @@ public class MailSendingService {
      * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
      * @param isHtml      Whether the mail should support HTML tags
      */
-    public void sendEmailSync(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
+    public void sendEmailSync(MailUserDTO recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
         executeSend(recipient, subject, content, isMultipart, isHtml);
     }
 
@@ -97,7 +97,7 @@ public class MailSendingService {
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
      */
-    public void buildAndSendSync(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
+    public void buildAndSendSync(MailUserDTO recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
         buildAndSend(recipient, subjectKey, contentTemplate, additionalContextVariables);
     }
 
@@ -110,7 +110,7 @@ public class MailSendingService {
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
      */
     @Async
-    public void buildAndSendAsync(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
+    public void buildAndSendAsync(MailUserDTO recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
         buildAndSend(recipient, subjectKey, contentTemplate, additionalContextVariables);
     }
 
@@ -122,8 +122,8 @@ public class MailSendingService {
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
      */
-    private void buildAndSend(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
-        String localeKey = recipient.getLangKey();
+    private void buildAndSend(MailUserDTO recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
+        String localeKey = recipient.languageKey();
         if (localeKey == null) {
             localeKey = "en";
         }
@@ -157,7 +157,7 @@ public class MailSendingService {
      * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
      * @param isHtml      Whether the mail should support HTML tags
      */
-    private void executeSend(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
+    private void executeSend(MailUserDTO recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
         // NOTE: comment this out if you want to send / test emails in development mode
         if (profileService.isDevActive()) {
             log.debug("Skipping sending email in development mode");
@@ -165,11 +165,11 @@ public class MailSendingService {
         }
         log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
 
-        // Prepare message using a Spring helper
+        // Prepare the message using a Spring helper
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         try {
             MimeMessageHelper message = new MimeMessageHelper(mimeMessage, isMultipart, StandardCharsets.UTF_8.name());
-            message.setTo(recipient.getEmail());
+            message.setTo(recipient.email());
             message.setFrom(jHipsterProperties.getMail().getFrom());
             message.setSubject(subject);
             message.setText(content, isHtml);

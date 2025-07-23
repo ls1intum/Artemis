@@ -39,6 +39,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomReferenceRendererService;
@@ -91,7 +92,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("en")));
             verify(templateEngine).process(eq("mail/course_notification/ANNOUNCEMENT"), contextCaptor.capture());
-            verify(mailSendingService).sendEmailSync(eq(recipient), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(new MailUserDTO(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
 
             Context capturedContext = contextCaptor.getValue();
             assertThat(capturedContext.getVariable("serverUrl")).isEqualTo(serverUrl);
@@ -117,8 +118,8 @@ class CourseNotificationEmailServiceTest {
             verify(messageSource, times(1)).getMessage(eq("email.courseNotification.ASSIGNMENT_RELEASED.title"), any(), eq(Locale.forLanguageTag("en")));
             verify(messageSource, times(1)).getMessage(eq("email.courseNotification.ASSIGNMENT_RELEASED.title"), any(), eq(Locale.forLanguageTag("de")));
             verify(templateEngine, times(2)).process(eq("mail/course_notification/ASSIGNMENT_RELEASED"), any(Context.class));
-            verify(mailSendingService).sendEmailSync(eq(englishUser), anyString(), anyString(), eq(false), eq(true));
-            verify(mailSendingService).sendEmailSync(eq(germanUser), anyString(), anyString(), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(new MailUserDTO(englishUser)), anyString(), anyString(), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(new MailUserDTO(germanUser)), anyString(), anyString(), eq(false), eq(true));
         });
     }
 
@@ -186,8 +187,8 @@ class CourseNotificationEmailServiceTest {
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("en")));
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("de")));
             verify(templateEngine).process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class));
-            verify(mailSendingService, never()).sendEmailSync(eq(user1), anyString(), anyString(), anyBoolean(), anyBoolean());
-            verify(mailSendingService).sendEmailSync(eq(user2), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
+            verify(mailSendingService, never()).sendEmailSync(eq(new MailUserDTO(user1)), anyString(), anyString(), anyBoolean(), anyBoolean());
+            verify(mailSendingService).sendEmailSync(eq(new MailUserDTO(user2)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
         });
     }
 
@@ -236,7 +237,7 @@ class CourseNotificationEmailServiceTest {
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq(expectedLocalePrefix), any(), any(Locale.class));
             verify(templateEngine).process(eq(expectedTemplatePath), any(Context.class));
-            verify(mailSendingService).sendEmailSync(eq(recipient), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
+            verify(mailSendingService).sendEmailSync(eq(new MailUserDTO(recipient)), eq("Test Subject"), eq("Test Content"), eq(false), eq(true));
         });
     }
 

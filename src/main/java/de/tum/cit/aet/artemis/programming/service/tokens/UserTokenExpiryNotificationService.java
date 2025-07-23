@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -50,7 +51,7 @@ public class UserTokenExpiryNotificationService {
     }
 
     /**
-     * Notifies the users at the day of VCS access token expiry
+     * Notifies the users on the day of VCS access token expiry
      */
     public void notifyOnExpiredToken() {
         notifyUsersForKeyExpiryWindow(now().minusDays(1), now(), this::notifyUserAboutExpiredVcsAccessToken);
@@ -69,13 +70,14 @@ public class UserTokenExpiryNotificationService {
     }
 
     /**
-     * Notify user about the expiration of the VCS access token
+     * Notify the user about the expiration of the VCS access token
      *
      * @param recipient the user to whose account the VCS access token was added
      */
     private void notifyUserAboutExpiredVcsAccessToken(User recipient) {
         if (globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.VCS_TOKEN_EXPIRED)) {
-            mailSendingService.buildAndSendSync(recipient, "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail", new HashMap<>());
+            mailSendingService.buildAndSendSync(new MailUserDTO(recipient), "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail",
+                    new HashMap<>());
         }
     }
 }

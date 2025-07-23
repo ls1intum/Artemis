@@ -17,6 +17,7 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter;
 
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -64,7 +65,7 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
             User recipient = userRepository.getUser();
 
             if (globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.NEW_PASSKEY_ADDED)) {
-                mailSendingService.buildAndSendAsync(recipient, "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
+                mailSendingService.buildAndSendAsync(new MailUserDTO(recipient), "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
             }
         }
     }
