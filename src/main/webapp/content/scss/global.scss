@@ -801,6 +801,12 @@ Course Info Bar
         margin-bottom: 0 !important;
         display: inline;
     }
+
+    ol > li::after,
+    ul > li::after {
+        content: '';
+        display: inline-block;
+    }
 }
 
 /* Make PlantUML outputs responsive */
