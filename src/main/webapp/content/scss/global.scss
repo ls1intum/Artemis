@@ -802,13 +802,18 @@ Course Info Bar
         display: inline;
     }
 
-    // Adds extra space below the last item in ordered and unordered lists in markdown preview
-    // Example:
-    // <ul>
-    //   <li>First item</li>
-    //   <li>Second item</li> <!-- This item will have extra space below -->
-    // </ul>
-    // More text after the list will be further separated from the list due to the extra space.
+    /**
+     * Adds extra space below the last item in ordered and unordered lists
+     * within markdown previews. This ensures that when a list is followed
+     * by another block element (such as a paragraph), there is additional
+     * vertical separation for improved readability.
+     *
+     * Example (Markdown):
+     * 
+     * - First item
+     * - Second item
+     * More text after the list.
+     */
     ol > li:last-child,
     ul > li:last-child {
         margin-bottom: 0.75em;
