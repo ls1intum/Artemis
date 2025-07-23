@@ -1,0 +1,48 @@
+<div class="frame" (touchstart)="onTouchStart($event)" (touchmove)="onTouchMove($event)" (touchend)="onTouchEnd()">
+    <div
+        class="mobile-month-section-swiping-content"
+        [ngStyle]="{
+            transform: onSwipeMonthTransform,
+            transition: transitionEnabled ? transition : 'none',
+        }"
+    >
+        @for (firstDayOfMonth of firstDaysOfVisibleMonths; track utils.identify(firstDayOfMonth)) {
+            <calendar-mobile-month-section
+                [firstDayOfMonth]="firstDayOfMonth"
+                [isDayAndWeekSelected]="isDayAndWeekSelected()"
+                (selectDay)="selectDay($event)"
+                (unselectDay)="unselectDay()"
+            />
+        }
+    </div>
+    @if (isDayAndWeekSelected()) {
+        <div class="mobile-week-section-frame">
+            <div
+                class="mobile-week-section-swiping-content"
+                [ngStyle]="{
+                    transform: onSwipeWeekTransform,
+                    transition: transitionEnabled ? transition : 'none',
+                }"
+            >
+                @for (firstDayOfWeek of firstDaysOfVisibleWeeks; track utils.identify(firstDayOfWeek)) {
+                    <div class="mobile-week-section">
+                        @for (day of utils.getWeekOf(firstDayOfWeek); track utils.identify(day)) {
+                            <calendar-day-badge [day]="day" [minimalTodayIndication]="true" [isSelectedDay]="isSelected(day)" />
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+        <div
+            class="mobile-day-section-swiping-content"
+            [ngStyle]="{
+                transform: onSwipeDayTransform,
+                transition: transitionEnabled ? transition : 'none',
+            }"
+        >
+            @for (day of visibleDays; track utils.identify(day)) {
+                <div class="mobile-day-section"></div>
+            }
+        </div>
+    }
+</div>

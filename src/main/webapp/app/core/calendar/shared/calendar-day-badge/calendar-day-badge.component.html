@@ -1,8 +1,10 @@
 <div
     class="day-badge"
     [ngClass]="{
-        today: isToday(),
-        other: !isToday(),
+        'today-normal': isToday() && !minimalTodayIndication(),
+        'today-minimal': isToday() && minimalTodayIndication(),
+        'not-today': !isToday(),
+        'selected-day': isSelectedDay(),
     }"
 >
     {{ dayNumber }}

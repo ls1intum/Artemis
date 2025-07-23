@@ -10,11 +10,20 @@
     text-align: center;
 }
 
-.day-badge.today {
+.day-badge.today-normal {
     background-color: var(--primary);
     color: var(--white);
 }
 
-.day-badge.other {
+.day-badge.today-minimal {
     background-color: var(--body-bg);
+    color: var(--primary);
+}
+
+.day-badge.not-today {
+    background-color: var(--body-bg);
+}
+
+.day-badge.selected-day {
+    background-color: #c1c4c6;
 }

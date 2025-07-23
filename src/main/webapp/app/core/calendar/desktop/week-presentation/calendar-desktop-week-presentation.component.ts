@@ -11,12 +11,12 @@ import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/ca
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 
 @Component({
-    selector: 'calendar-desktop-week',
+    selector: 'calendar-desktop-week-presentation',
     imports: [CalendarDayBadgeComponent, ArtemisTranslatePipe, NgbPopover, NgStyle, NgClass, CalendarEventDetailPopoverComponent],
-    templateUrl: './calendar-week-presentation.component.html',
-    styleUrl: './calendar-week-presentation.component.scss',
+    templateUrl: './calendar-desktop-week-presentation.component.html',
+    styleUrl: './calendar-desktop-week-presentation.component.scss',
 })
-export class CalendarWeekPresentationComponent implements AfterViewInit {
+export class CalendarDesktopWeekPresentationComponent implements AfterViewInit {
     private eventService = inject(CalendarEventService);
 
     firstDayOfCurrentWeek = input.required<Dayjs>();
@@ -30,12 +30,12 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
     private popover?: NgbPopover;
     private dayToEventAndPositionMap = computed(() => this.computeDayToEventAndPositionMap(this.eventService.eventMap(), this.weekDays()));
     private static readonly PIXELS_PER_REM = 16;
-    private static readonly HOUR_SEGMENT_HEIGHT_IN_PIXEL = 3.5 * CalendarWeekPresentationComponent.PIXELS_PER_REM;
+    private static readonly HOUR_SEGMENT_HEIGHT_IN_PIXEL = 3.5 * CalendarDesktopWeekPresentationComponent.PIXELS_PER_REM;
 
     ngAfterViewInit(): void {
         const container = this.scrollContainer();
         if (container) {
-            container.nativeElement.scrollTop = 7.5 * CalendarWeekPresentationComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
+            container.nativeElement.scrollTop = 7.5 * CalendarDesktopWeekPresentationComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
         }
     }
 
@@ -105,7 +105,7 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
     }
 
     private calculatePositionsForEventGroup(group: CalendarEvent[]): CalendarEventAndPosition[] {
-        const pixelsPerMinute = CalendarWeekPresentationComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL / 60;
+        const pixelsPerMinute = CalendarDesktopWeekPresentationComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL / 60;
 
         const widthAndLeftOffsetFunction = this.getWidthAndLeftOffsetFunction(group.length);
 

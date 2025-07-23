@@ -1,0 +1,50 @@
+<div class="month-section">
+    <div class="header" [ngClass]="{ 'no-week-selected': !isDayAndWeekSelected }">
+        <div class="title-close-button-row">
+            <div class="header-spacer">
+                @if (isDayAndWeekSelected()) {
+                    <button type="button" class="btn-close" (click)="unselectDay.emit()"></button>
+                }
+            </div>
+            <div class="month-title">{{ firstDayOfMonth().format('MMMM YYYY') }}</div>
+            <div class="header-spacer"></div>
+        </div>
+        <div class="day-name-row">
+            @for (dayNameKey of utils.getWeekDayNameKeys(); track dayNameKey) {
+                <div class="weekday-label" jhiTranslate="{{ dayNameKey }}"></div>
+            }
+        </div>
+    </div>
+    <div class="weeks-section">
+        @for (week of utils.getWeeksOfMonthFor(firstDayOfMonth()); track utils.identify(week)) {
+            @if (!isDayAndWeekSelected()) {
+                <div class="week-row">
+                    @for (day of week; track utils.identify(day)) {
+                        @if (utils.areDaysInSameMonth(day, firstDayOfMonth())) {
+                            <div class="day" (click)="selectDay.emit(day)">
+                                <calendar-day-badge [day]="day" />
+                                <div class="event-stack">
+                                    @if (getEventsOfDay(day).length > 3) {
+                                        <div class="event"></div>
+                                        <div class="event"></div>
+                                        <div class="ellipsis">
+                                            <span class="dot"></span>
+                                            <span class="dot"></span>
+                                            <span class="dot"></span>
+                                        </div>
+                                    } @else {
+                                        @for (event of getEventsOfDay(day); track event.id) {
+                                            <div class="event"></div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        } @else {
+                            <div class="day-placeholder"></div>
+                        }
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>

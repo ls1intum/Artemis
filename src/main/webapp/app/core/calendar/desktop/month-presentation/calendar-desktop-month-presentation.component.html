@@ -9,7 +9,7 @@
             @for (day of week; track utils.identify(day)) {
                 <div class="day-cell">
                     @if (utils.areDaysInSameMonth(day, firstDayOfCurrentMonth())) {
-                        <day-badge [day]="day" />
+                        <calendar-day-badge [day]="day" />
                         @let events = getEventsOf(day);
                         @if (events.length > 3) {
                             @for (event of utils.limitToLengthTwo(events); track event.id) {

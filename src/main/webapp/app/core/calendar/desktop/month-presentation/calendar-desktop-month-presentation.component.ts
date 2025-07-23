@@ -12,12 +12,12 @@ import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 
 @Component({
-    selector: 'calendar-desktop-month',
+    selector: 'calendar-desktop-month-presentation',
     imports: [NgClass, NgTemplateOutlet, NgbPopover, FaIconComponent, ArtemisTranslatePipe, TranslateDirective, CalendarDayBadgeComponent, CalendarEventDetailPopoverComponent],
-    templateUrl: './calendar-month-presentation.component.html',
-    styleUrls: ['./calendar-month-presentation.component.scss'],
+    templateUrl: './calendar-desktop-month-presentation.component.html',
+    styleUrls: ['./calendar-desktop-month-presentation.component.scss'],
 })
-export class CalendarMonthPresentationComponent {
+export class CalendarDesktopMonthPresentationComponent {
     private popover?: NgbPopover;
 
     firstDayOfCurrentMonth = input.required<Dayjs>();

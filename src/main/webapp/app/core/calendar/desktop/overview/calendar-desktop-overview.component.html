@@ -39,9 +39,9 @@
 
     <div class="calendar-presentation-container">
         @if (presentation() === 'month') {
-            <calendar-desktop-month [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" />
+            <calendar-desktop-month-presentation [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" />
         } @else {
-            <calendar-desktop-week [firstDayOfCurrentWeek]="firstDayOfCurrentWeek()" />
+            <calendar-desktop-week-presentation [firstDayOfCurrentWeek]="firstDayOfCurrentWeek()" />
         }
         @if (isLoading()) {
             <div class="loading-overlay">

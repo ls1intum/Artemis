@@ -1,0 +1,107 @@
+.month-section {
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+
+    .header {
+        display: flex;
+        flex-direction: column;
+
+        .title-close-button-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 12px 8px;
+
+            .header-spacer {
+                width: calc(100% / 7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .btn-close {
+                width: 16px;
+                height: 16px;
+                padding: 0;
+            }
+
+            .month-title {
+                flex: 1;
+                font-size: 16px;
+                font-weight: 800;
+                text-align: center;
+            }
+        }
+
+        .day-name-row {
+            display: flex;
+            padding: 0px 12px 12px;
+            border-bottom: 1px solid var(--border-color);
+
+            .weekday-label {
+                flex: 1;
+                font-size: 14px;
+                font-weight: 500;
+                text-align: center;
+            }
+        }
+    }
+
+    .weeks-section {
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s ease;
+
+        .week-row {
+            display: flex;
+            padding: 12px;
+            transition: all 0.3s ease;
+
+            .day {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+            }
+
+            .event-stack {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                height: 26px;
+            }
+
+            .event {
+                height: 6px;
+                width: 44px;
+                border-radius: 4px;
+                background-color: var(--body-bg);
+            }
+
+            .ellipsis {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 3px;
+                height: 6px;
+            }
+
+            .ellipsis .dot {
+                width: 4px;
+                height: 4px;
+                border-radius: 50%;
+                background-color: var(--black);
+            }
+
+            .day-placeholder {
+                flex: 1;
+            }
+        }
+
+        .week-row:not(:last-child) {
+            border-bottom: 1px solid var(--border-color);
+        }
+    }
+}
