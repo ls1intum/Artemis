@@ -65,19 +65,24 @@
         }
     </div>
     @if (quizExercise.isAtLeastInstructor) {
+        @if (isDetailPage) {
+            <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
+                <button
+                    jhiDeleteButton
+                    [entityTitle]="quizExercise.title || ''"
+                    [actionType]="ActionType.Reset"
+                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                    (delete)="resetQuizExercise()"
+                    [dialogError]="dialogError$"
+                    deleteQuestion="artemisApp.quizExercise.reset.question"
+                    class="mb-1"
+                >
+                    <fa-icon [icon]="faUndo" />
+                </button>
+            </div>
+        }
+
         <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
-            <button
-                jhiDeleteButton
-                [entityTitle]="quizExercise.title || ''"
-                [actionType]="ActionType.Reset"
-                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                (delete)="resetQuizExercise()"
-                [dialogError]="dialogError$"
-                deleteQuestion="artemisApp.quizExercise.reset.question"
-                class="mb-1"
-            >
-                <fa-icon [icon]="faUndo" />
-            </button>
             <button
                 jhiDeleteButton
                 [entityTitle]="quizExercise.title || ''"
