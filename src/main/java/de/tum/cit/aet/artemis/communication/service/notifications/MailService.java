@@ -63,6 +63,8 @@ public class MailService {
 
     /**
      * Sends predefined mail based on a template
+     *
+     * @param mailTemplateDTO the template containing the user and the template name
      */
     public void sendEmailFromTemplate(MailTemplateDTO mailTemplateDTO) {
         Context context = createBaseContext(mailTemplateDTO.userDTO());
@@ -108,7 +110,8 @@ public class MailService {
     }
 
     /**
-     * Sends an email to a user (the internal admin user) about a failed data export creation.
+     * Sends an email to a user (the internal admin user) about a failed data export
+     * creation.
      *
      * @param adminDTO   the admin user
      * @param dataExport the data export that failed
@@ -123,6 +126,12 @@ public class MailService {
         prepareTemplateAndSendEmailWithArgumentInSubject(mailTemplateDTO, dataExport.getUser().getLogin(), context);
     }
 
+    /**
+     * Sends an email to admin users about successful data export creations.
+     *
+     * @param adminDTO    the admin user to notify
+     * @param dataExports the set of data exports
+     */
     public void sendSuccessfulDataExportsEmailToAdmin(MailUserDTO adminDTO, Set<DataExport> dataExports) {
         log.debug("Sending successful creation of data exports email to admin email address '{}'", adminDTO.email());
         MailTemplateDTO mailTemplateDTO = new MailTemplateDTO("mail/successfulDataExportsAdminEmail", "email.successfulDataExportCreationsAdmin.title", adminDTO);
@@ -136,7 +145,8 @@ public class MailService {
      *
      * @param adminDTO                 the admin user to notify
      * @param buildAgentName           the name of the build agent that was paused
-     * @param consecutiveBuildFailures the number of consecutive build failures on the build agent
+     * @param consecutiveBuildFailures the number of consecutive build failures on
+     *                                     the build agent
      */
     public void sendBuildAgentSelfPausedEmailToAdmin(MailUserDTO adminDTO, String buildAgentName, int consecutiveBuildFailures) {
         log.debug("Sending build agent self paused email to admin email address '{}'", adminDTO.email());
