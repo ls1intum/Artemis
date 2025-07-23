@@ -251,8 +251,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         VcsRepositoryUri assignmentUri = exercise.getRepositoryURL(repositoryType);
         VcsRepositoryUri testUri = exercise.getRepositoryURL(RepositoryType.TESTS);
-        Repository assignmentRepository = gitService.getOrCheckoutRepository(assignmentUri, true);
-        Repository testRepository = gitService.getOrCheckoutRepository(testUri, true);
+        Repository assignmentRepository = gitService.getOrCheckoutRepository(assignmentUri, true, true);
+        Repository testRepository = gitService.getOrCheckoutRepository(testUri, true, true);
         moveAssignmentSourcesOf(assignmentRepository.getLocalPath(), testRepository.getLocalPath());
         int exitCode;
         if (projectType != null && projectType.isGradle()) {
