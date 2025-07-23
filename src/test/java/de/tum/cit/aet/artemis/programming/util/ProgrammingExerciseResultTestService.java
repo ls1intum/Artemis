@@ -170,7 +170,7 @@ public class ProgrammingExerciseResultTestService {
                 .addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, userPrefix + "student2");
         var localRepoFile = Files.createTempDirectory("repo").toFile();
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean(), anyBoolean());
     }
 
     public void setupProgrammingExerciseForExam(boolean isExamOver) {

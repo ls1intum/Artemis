@@ -206,7 +206,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     private void setUpProgrammingExerciseMocks() {
-        doReturn(new VcsRepositoryUri()).when(versionControlService).copyRepository(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt());
+        doReturn(new VcsRepositoryUri()).when(versionControlService).copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt());
         doReturn("fake-build-plan-id").when(continuousIntegrationService).copyBuildPlan(any(), anyString(), any(), anyString(), anyString(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(ProgrammingExerciseParticipation.class));
     }
