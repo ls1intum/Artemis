@@ -802,6 +802,13 @@ Course Info Bar
         display: inline;
     }
 
+    // Adds extra space below the last item in ordered and unordered lists in markdown preview
+    // Example:
+    // <ul>
+    //   <li>First item</li>
+    //   <li>Second item</li> <!-- This item will have extra space below -->
+    // </ul>
+    // More text after the list will be further separated from the list due to the extra space.
     ol > li:last-child,
     ul > li:last-child {
         margin-bottom: 0.75em;
