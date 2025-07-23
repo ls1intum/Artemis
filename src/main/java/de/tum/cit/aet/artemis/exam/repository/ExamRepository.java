@@ -556,12 +556,11 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             )
             FROM Exam exam
             JOIN exam.studentExams se
-            WHERE exam.course.id       = :courseId
-              AND se.user.id            = :studentId
-              AND exam.testExam         = FALSE
-              AND exam.visibleDate     <= :now
+            WHERE exam.course.id = :courseId
+              AND se.user.id  = :studentId
+              AND exam.testExam  = FALSE
+              AND exam.visibleDate <= :now
             """)
 
     Set<ExamSidebarDataDTO> findSidebarDataForRealStudentExamsByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now, @Param("studentId") long studentId);
-
 }
