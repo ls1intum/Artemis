@@ -1946,7 +1946,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private void setupMocks() {
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(anyString(), anyString());
-        doReturn(new VcsRepositoryUri()).when(versionControlService).copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), isNull());
+        doReturn(new VcsRepositoryUri()).when(versionControlService).copyRepositoryWithHistory(anyString(), anyString(), anyString(), anyString(), anyString(), isNull());
         doNothing().when(continuousIntegrationService).createProjectForExercise(any(ProgrammingExercise.class));
         doReturn("build plan").when(continuousIntegrationService).copyBuildPlan(any(ProgrammingExercise.class), anyString(), any(ProgrammingExercise.class), anyString(),
                 anyString(), anyBoolean());

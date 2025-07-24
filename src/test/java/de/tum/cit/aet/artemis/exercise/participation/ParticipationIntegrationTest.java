@@ -223,7 +223,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course = courseRepository.save(course);
 
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
-        doReturn(null).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
+        doReturn(null).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean(), anyBoolean());
 
         doNothing().when(continuousIntegrationService).configureBuildPlan(any());
 

@@ -13,26 +13,10 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
-import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import {
-    faBook,
-    faCheckDouble,
-    faDownload,
-    faFileSignature,
-    faListAlt,
-    faPencilAlt,
-    faPlus,
-    faSort,
-    faTable,
-    faTrash,
-    faUndo,
-    faUsers,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
-import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
+import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { FormsModule } from '@angular/forms';
@@ -41,7 +25,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { ProgrammingExerciseGradingDirtyWarningComponent } from '../grading/warning/programming-exercise-grading-dirty-warning.component';
-import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/reset/button/programming-exercise-reset-button.directive';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
@@ -66,7 +49,6 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
         FaIconComponent,
         RouterLink,
         ProgrammingExerciseGradingDirtyWarningComponent,
-        ProgrammingExerciseInstructorStatusComponent,
         ExerciseCategoriesComponent,
         FeatureToggleLinkDirective,
         ProgrammingExerciseResetButtonDirective,
@@ -92,8 +74,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     filteredProgrammingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
     FeatureToggle = FeatureToggle;
-    solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
-    templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
     localCIEnabled = true;
     onlineIdeEnabled = false;
     numberOfResultsOfSolutionParticipation = 0;
@@ -106,7 +86,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faSort = faSort;
     faPlus = faPlus;
     faDownload = faDownload;
-    faUndo = faUndo;
     faBook = faBook;
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
@@ -238,23 +217,5 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     checkConsistencies() {
         const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.exercisesToCheck = this.selectedExercises;
-    }
-
-    /**
-     * Downloads the instructor repository.
-     * For the local VCS, linking to an external site displaying the repository does not work.
-     * Instead, the repository is downloaded.
-     *
-     * @param programmingExerciseId
-     * @param repositoryType
-     */
-    downloadRepository(programmingExerciseId: number | undefined, repositoryType: RepositoryType) {
-        if (programmingExerciseId) {
-            // Repository type cannot be 'AUXILIARY' as auxiliary repositories are currently not supported for the local VCS.
-            this.programmingExerciseService.exportInstructorRepository(programmingExerciseId, repositoryType, undefined).subscribe((response: HttpResponse<Blob>) => {
-                downloadZipFileFromResponse(response);
-                this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
-            });
-        }
     }
 }
