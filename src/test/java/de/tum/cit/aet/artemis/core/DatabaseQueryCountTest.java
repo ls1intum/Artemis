@@ -13,11 +13,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CoursesForDashboardDTO;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
-import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
@@ -31,12 +29,6 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private LectureUtilService lectureUtilService;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     private static final int NUMBER_OF_TUTORS = 1;
 
@@ -62,7 +54,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             var userCourses = request.get("/api/core/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
-        }).hasBeenCalledTimes(12);
+        }).hasBeenCalledTimes(8);
         // 1 DB call to get the user from the DB
         // 1 DB call to get all active courses
         // 1 DB call to load all exercises
