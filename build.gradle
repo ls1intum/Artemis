@@ -299,7 +299,8 @@ dependencies {
     implementation "org.hibernate.orm:hibernate-envers:${hibernate_version}"
 
     // Required for jdbc connection pooling to databases
-    implementation "com.zaxxer:HikariCP:6.3.2"
+    // NOTE: cannot upgrade to 6.3.2 because of an issue: NoSuchMethodException error that is thrown when setting a metric registry
+    implementation "com.zaxxer:HikariCP:6.3.0"
 
     // Required for several dependencies
     implementation "org.apache.commons:commons-text:${commons_text_version}"
