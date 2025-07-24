@@ -32,14 +32,6 @@
             },
             "reset": {
                 "pleaseSelectOperations": "Bitte wähle die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
-                "deleteBuildPlans": {
-                    "title": "Lösche Build Pläne der Studierenden (auf {{ ciPlatform }}).",
-                    "info": "Die Build-Pläne werden automatisch neu erstellt, sobald Studierende erneut abgeben."
-                },
-                "deleteRepositories": {
-                    "title": "Lösche Repositories der Studierenden (auf {{ vcPlatform }}).",
-                    "warning": "Archivierung der Übung vor Aktivierung dieser Option wird empfohlen."
-                },
                 "deleteParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
                 "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfe sorgfältig, ob dies die gewünschte Aktion ist, bevor du den Vorgang fortsetzt.",
                 "recreateBuildPlans": "Erstelle Build Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe alle vorherigen Änderungen.",
@@ -507,8 +499,6 @@
                 "assessmentDueDate": "Einreichungsfrist der Bewertung",
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
                 "notSet": "nicht gesetzt",
-                "allowFeedbackRequests": "Automatische nicht bewertete Feedbackanfragen/manuelle Feedbackanfragen erlauben",
-                "allowFeedbackRequestsTooltip": "Studierende können vor der Einreichungsfrist um Feedback bitten. Die Anfragen werden von Athena bearbeitet oder, falls Athena nicht erreicht werden kann, können Studierende manuelle Feedbackanfragen stellen.",
                 "manualFeedbackRequests": "Anfragen nach manuellem Feedback",
                 "manualFeedbackRequestsTooltip": "Studierende können manuelle Korrekturen vor der Einreichungsfrist anfragen, um Feedback zu erhalten.",
                 "feedbackRequestsEnabled": "Korrekturanfragen sind möglich",

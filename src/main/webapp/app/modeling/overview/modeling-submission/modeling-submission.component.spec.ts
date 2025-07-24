@@ -44,6 +44,7 @@ import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { fakeAsync, tick } from '@angular/core/testing';
 
 describe('ModelingSubmissionComponent', () => {
     let comp: ModelingSubmissionComponent;
@@ -827,5 +828,99 @@ describe('ModelingSubmissionComponent', () => {
             expect(result?.id).toBe(expectedSortedResults[index].id);
             expect(result?.completionDate?.isSame(expectedSortedResults[index].completionDate)).toBeTrue();
         });
+    });
+
+    it('should call create service for a new submission and show success alert', fakeAsync(() => {
+        createModelingSubmissionComponent();
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        modelingExercise.id = 1;
+        comp.modelingExercise = modelingExercise;
+        comp.modelingExerciseHeader = modelingExercise;
+
+        const submissionToCreate = { ...submission, id: undefined, model: '{"elements": [{"id": 1}]}' };
+        comp.submission = submissionToCreate;
+        comp.isLate = false;
+
+        const createSpy = jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: submission })));
+        const alertSuccessSpy = jest.spyOn(alertService, 'success');
+
+        comp.submit();
+        tick();
+
+        expect(createSpy).toHaveBeenCalledOnce();
+        expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.submitSuccessful');
+        expect(comp.isSaving).toBeFalse();
+    }));
+
+    it('should call update service for an existing submission and show warning for being late', fakeAsync(() => {
+        createModelingSubmissionComponent();
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        modelingExercise.id = 1;
+        comp.modelingExercise = modelingExercise;
+        comp.modelingExerciseHeader = modelingExercise;
+
+        const submissionToUpdate = { ...submission, id: 20, model: '{"elements": [{"id": 1}]}' };
+        comp.submission = submissionToUpdate;
+        comp.isLate = true;
+
+        const updateSpy = jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
+        const alertWarningSpy = jest.spyOn(alertService, 'warning');
+
+        comp.submit();
+        tick();
+
+        expect(updateSpy).toHaveBeenCalledOnce();
+        expect(alertWarningSpy).toHaveBeenCalledWith('entity.action.submitDueDateMissedAlert');
+        expect(comp.isSaving).toBeFalse();
+    }));
+
+    it('should handle server error on submit and show an error alert', fakeAsync(() => {
+        createModelingSubmissionComponent();
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        modelingExercise.id = 1;
+        comp.modelingExercise = modelingExercise;
+        comp.modelingExerciseHeader = modelingExercise;
+
+        const submissionToCreate = { ...submission, id: undefined, model: '{"elements": [{"id": 1}]}' };
+        comp.submission = submissionToCreate;
+
+        const createSpy = jest.spyOn(service, 'create').mockReturnValue(throwError(() => ({ status: 500 })));
+        const alertErrorSpy = jest.spyOn(alertService, 'error');
+
+        comp.submit();
+        tick();
+
+        expect(createSpy).toHaveBeenCalledOnce();
+        expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.error');
+        expect(comp.isSaving).toBeFalse();
+    }));
+
+    it('should prevent unload and return a message if there are unsaved changes', () => {
+        createModelingSubmissionComponent();
+        const translateService = TestBed.inject(TranslateService);
+
+        jest.spyOn(comp, 'canDeactivate').mockReturnValue(false);
+        const translateSpy = jest.spyOn(translateService, 'instant').mockReturnValue('pendingChanges');
+
+        const mockEvent = { preventDefault: jest.fn() } as any as BeforeUnloadEvent;
+        const result = comp.unloadNotification(mockEvent);
+
+        expect(comp.canDeactivate).toHaveBeenCalledOnce();
+        expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
+        expect(translateSpy).toHaveBeenCalledWith('pendingChanges');
+        expect(result).toBe('pendingChanges');
+    });
+
+    it('should allow unload if there are no unsaved changes', () => {
+        createModelingSubmissionComponent();
+
+        jest.spyOn(comp, 'canDeactivate').mockReturnValue(true);
+        const mockEvent = { preventDefault: jest.fn() } as any as BeforeUnloadEvent;
+
+        const result = comp.unloadNotification(mockEvent);
+
+        expect(comp.canDeactivate).toHaveBeenCalledOnce();
+        expect(mockEvent.preventDefault).not.toHaveBeenCalled();
+        expect(result).toBeTrue();
     });
 });

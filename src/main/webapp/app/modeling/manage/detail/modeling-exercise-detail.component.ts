@@ -125,6 +125,8 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
                     ...defaultGradingDetails,
                     { type: DetailType.Text, title: 'artemisApp.modelingExercise.diagramType', data: { text: exercise.diagramType } },
                     ...gradingInstructionsCriteriaDetails,
+                    { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackSuggestions', data: { boolean: !!exercise.feedbackSuggestionModule } },
+                    { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackRequests', data: { boolean: !!exercise.preliminaryFeedbackModule } },
                 ],
             },
         ];
