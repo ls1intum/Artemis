@@ -25,10 +25,12 @@ public record SharingInfoDTO(
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
+        }
         SharingInfoDTO that = (SharingInfoDTO) o;
         return exercisePosition == that.exercisePosition && Objects.equals(basketToken, that.basketToken) && Objects.equals(returnURL, that.returnURL)
                 && Objects.equals(apiBaseURL, that.apiBaseURL);

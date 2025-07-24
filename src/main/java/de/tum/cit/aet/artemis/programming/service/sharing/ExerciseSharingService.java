@@ -167,48 +167,51 @@ public class ExerciseSharingService {
     /**
      * simple loading cache for pathes to zip-files with 1 hour timeout.
      */
-    private final LoadingCache<Pair<SharingInfoDTO, Integer>, Path> repositoryCache = CacheBuilder.newBuilder().maximumSize(100).expireAfterAccess(1, TimeUnit.HOURS)
-            .removalListener(notification -> {
-                Path outdatedBasketZipfile = (Path) notification.getValue();
-                if (outdatedBasketZipfile != null) {
-                    boolean deleted = false;
-                    try {
-                        deleted = Files.deleteIfExists(outdatedBasketZipfile);
-                    }
-                    catch (IOException e) {
-                        log.info("Cannot delete {}", outdatedBasketZipfile, e);
-                    }
-                    if (!deleted) {
-                        log.info("Cannot delete {}", outdatedBasketZipfile);
-                    }
+    private final LoadingCache<Pair<SharingInfoDTO, Integer>, Path> repositoryCache;
+
+    {
+        repositoryCache = CacheBuilder.newBuilder().maximumSize(100).expireAfterAccess(1, TimeUnit.HOURS).removalListener(notification -> {
+            Path outdatedBasketZipfile = (Path) notification.getValue();
+            if (outdatedBasketZipfile != null) {
+                boolean deleted = false;
+                try {
+                    deleted = Files.deleteIfExists(outdatedBasketZipfile);
                 }
-            }).build(new CacheLoader<>() {
-
-                @Override
-                public Path load(Pair<SharingInfoDTO, Integer> sharingInfoAndPos) throws SharingException {
-                    SharingInfoDTO sharingInfo = sharingInfoAndPos.getLeft();
-                    int itemPosition = sharingInfoAndPos.getRight();
-                    try {
-                        String exercisesZipUrl = correctLocalHostInDocker(sharingInfo.apiBaseURL()) + "/basket/{basketToken}/repository/" + itemPosition + "?format={format}";
-                        Resource zipInputResource = restTemplate.getForObject(exercisesZipUrl, Resource.class,
-                                Map.of("basketToken", sharingInfo.basketToken(), "format", "artemis"));
-                        if (zipInputResource == null) {
-                            throw new SharingException("Could not retrieve basket item resource");
-                        }
-                        Path basketFilePath = Files.createTempFile("basketStore", ".zip");
-                        try (InputStream zipInput = zipInputResource.getInputStream(); FileOutputStream fos = new FileOutputStream(basketFilePath.toFile())) {
-                            FileCopyUtils.copy(zipInput, fos);
-                        }
-
-                        return basketFilePath;
-                    }
-                    catch (IOException e) {
-                        log.warn("Cannot load sharing Info", e);
-                        throw new SharingException("Cannot load sharing Info", e);
-                    }
-
+                catch (IOException e) {
+                    log.info("Cannot delete {}", outdatedBasketZipfile, e);
                 }
-            });
+                if (!deleted) {
+                    log.info("Cannot delete {}", outdatedBasketZipfile);
+                }
+            }
+        }).build(new CacheLoader<>() {
+
+            @SuppressWarnings("NullableProblems")
+            @Override
+            public Path load(Pair<SharingInfoDTO, Integer> sharingInfoAndPos) throws SharingException {
+                SharingInfoDTO sharingInfo = sharingInfoAndPos.getLeft();
+                int itemPosition = sharingInfoAndPos.getRight();
+                try {
+                    String exercisesZipUrl = correctLocalHostInDocker(sharingInfo.apiBaseURL()) + "/basket/{basketToken}/repository/" + itemPosition + "?format={format}";
+                    Resource zipInputResource = restTemplate.getForObject(exercisesZipUrl, Resource.class, Map.of("basketToken", sharingInfo.basketToken(), "format", "artemis"));
+                    if (zipInputResource == null) {
+                        throw new SharingException("Could not retrieve basket item resource");
+                    }
+                    Path basketFilePath = Files.createTempFile("basketStore", ".zip");
+                    try (InputStream zipInput = zipInputResource.getInputStream(); FileOutputStream fos = new FileOutputStream(basketFilePath.toFile())) {
+                        FileCopyUtils.copy(zipInput, fos);
+                    }
+
+                    return basketFilePath;
+                }
+                catch (IOException e) {
+                    log.warn("Cannot load sharing Info", e);
+                    throw new SharingException("Cannot load sharing Info", e);
+                }
+
+            }
+        });
+    }
 
     /**
      * Access to the repository cache. For test purpose only!
@@ -399,8 +402,9 @@ public class ExerciseSharingService {
     public boolean validate(String base64token, String sec) {
         // we have to take care that the base64 encoded token may contain a + sign, which may be converted to a space
         // not sure whether this may be an effect of our testing environment
-        if (isInvalidToken(base64token) || StringUtils.isEmpty(sec))
+        if (isInvalidToken(base64token) || StringUtils.isEmpty(sec)) {
             return false;
+        }
         String sanitizedSec = sec.replace(' ', '+');
         String computedHMAC = createHMAC(base64token);
         return MessageDigest.isEqual(computedHMAC.getBytes(StandardCharsets.UTF_8), sanitizedSec.getBytes(StandardCharsets.UTF_8));

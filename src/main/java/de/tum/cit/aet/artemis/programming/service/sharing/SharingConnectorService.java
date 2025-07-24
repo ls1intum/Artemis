@@ -173,7 +173,7 @@ public class SharingConnectorService {
      * @param installationName an optional descriptive name of the sharing application
      * @return the sharing plugin config
      */
-    public SharingPluginConfig getPluginConfig(URL apiBaseUrl, Optional<String> installationName) {
+    public SharingPluginConfig getPluginConfig(URL apiBaseUrl, @SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> installationName) {
         this.sharingApiBaseUrl = apiBaseUrl;
         try {
             this.installationName = installationName.or(() -> Optional.ofNullable(System.getenv("HOSTNAME"))).orElse(InetAddress.getLocalHost().getCanonicalHostName());
@@ -189,7 +189,11 @@ public class SharingConnectorService {
         return new SharingPluginConfig("Artemis Sharing Connector", new SharingPluginConfig.Action[] { action });
     }
 
-    public boolean validate(String apiKey) {
+    /**
+     * validates the api key
+     *
+     */
+    public boolean validateApiKey(String apiKey) {
         if (apiKey == null || apiKey.length() > MAX_API_KEY_LENGTH) {
             // this is just in case, somebody tries an attack
             lastHealthStati.add(new HealthStatus("Failed api Key validation"));
