@@ -192,6 +192,9 @@ public class SharingConnectorService {
     /**
      * validates the api key
      *
+     * @param apiKey the apiKey to check (or a complete Authentication Header "Bearer ..."
+     * @return true if the api kay has the correct format and coincides with the shared key
+     *
      */
     public boolean validateApiKey(String apiKey) {
         if (apiKey == null || apiKey.length() > MAX_API_KEY_LENGTH) {
