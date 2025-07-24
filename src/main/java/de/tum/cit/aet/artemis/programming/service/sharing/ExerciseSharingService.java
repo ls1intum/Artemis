@@ -115,7 +115,7 @@ public class ExerciseSharingService {
     }
 
     /**
-     * loads the shopping basket info from the sharing platform with the given basket token.
+     * Loads the shopping basket info from the sharing platform with the given basket token.
      * The shopping basket contains info about the requesting user, a list of exercises (currently only one is supported), and a token
      * that allows the retrieval of the contained exercises.
      * For details see {@link ShoppingBasket}.
@@ -144,16 +144,17 @@ public class ExerciseSharingService {
     }
 
     /**
-     * return an exercise from the basket (as a zip file)
+     * returns a single exercise from the basket (as a zip file)
      *
      * @param sharingInfo  the sharing info
      * @param itemPosition the item position
-     * @return an zip stream
+     * @return the exercise as a a zip stream
      * @throws SharingException if exercise cannot be loaded
      */
     public Optional<SharingMultipartZipFile> getBasketItem(SharingInfoDTO sharingInfo, int itemPosition) throws SharingException {
         try {
             Path cachedZipFile = repositoryCache.get(Pair.of(sharingInfo, itemPosition));
+            // Ensure proper resource management - SharingMultipartZipFile should handle stream closing
             SharingMultipartZipFile zipFileItem = new SharingMultipartZipFile(getBasketFileName(sharingInfo.basketToken(), itemPosition), Files.newInputStream(cachedZipFile));
             return Optional.of(zipFileItem);
         }
@@ -210,7 +211,7 @@ public class ExerciseSharingService {
             });
 
     /**
-     * access to the repository cache. For test purpose only
+     * Access to the repository cache. For test purpose only!
      *
      * @return repository cache
      */
@@ -231,7 +232,7 @@ public class ExerciseSharingService {
      * @return a url, that points to host.docker.internal if previously directed to localhost.
      */
     private String correctLocalHostInDocker(String url) {
-        if (profileService.isDockerActive()) {
+        if (profileService.isProfileActive("docker")) {
             if (url.contains("//localhost")) {
                 return url.replace("//localhost", "//host.docker.internal");
             }
@@ -240,7 +241,7 @@ public class ExerciseSharingService {
     }
 
     /**
-     * Retrieves the Exercise-Details file from a Sharing basket.
+     * Retrieves the Exercise-Details file from a Sharing basket, parses it, and returns it as an ProgrammingExercise-Object.
      *
      * @param sharingInfo of the basket to extract the problem statement from
      * @return The content of the Exercise-Details file
@@ -262,7 +263,7 @@ public class ExerciseSharingService {
     }
 
     /**
-     * Retrieves an entry from a given Sharing basket, basing on the given RegEx.
+     * Retrieves an entry from a given Sharing basket, selected by a RegEx and returns the content as a String.
      * If nothing is found, null is returned.
      *
      * @param matchingPattern RegEx matching the entry to return.
@@ -309,7 +310,7 @@ public class ExerciseSharingService {
 
     /**
      * Creates Zip file for exercise and returns a URL pointing to Sharing
-     * with a callback URL addressing the generated Zip file for download
+     * with a callback URL addressing the generated Zip file for download via the Sharing Platform
      *
      * @param exerciseId the ID of the exercise to export
      * @return URL to sharing with a callback URL to the generated zip file
@@ -360,7 +361,7 @@ public class ExerciseSharingService {
     }
 
     /**
-     * just to secure token for integrity.
+     * an HMAC just to secure token for integrity against tampering.
      *
      * @param base64token the token (already base64 encoded
      * @return returns HMAC-Hash

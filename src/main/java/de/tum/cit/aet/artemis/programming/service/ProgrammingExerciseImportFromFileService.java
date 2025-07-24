@@ -42,9 +42,6 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
-/**
- * Service to read programming exercises from a zip file.
- */
 @Profile(PROFILE_CORE)
 @Lazy
 @Service

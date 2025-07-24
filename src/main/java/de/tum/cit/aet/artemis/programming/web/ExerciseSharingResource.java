@@ -52,7 +52,7 @@ import tech.jhipster.web.util.ResponseUtil;
 public class ExerciseSharingResource {
 
     /*
-     * Customized FileInputStream to delete and therefore clean up the returned files
+     * Customized FileInputStream to clean up the basic file after closing.
      */
     private static class AutoDeletingFileInputStream extends FileInputStream {
 
@@ -79,9 +79,6 @@ public class ExerciseSharingResource {
         }
     }
 
-    /**
-     * a sharing configuration resource path for sharing config export request
-     */
     public static final String SHARING_EXPORT_RESOURCE_PATH = "export";
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseSharingResource.class);
@@ -92,13 +89,6 @@ public class ExerciseSharingResource {
 
     private final ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService;
 
-    /**
-     * constructor for spring
-     *
-     * @param exerciseSharingService                      the sharing service
-     * @param sharingConnectorService                     the sharing connector service
-     * @param programmingExerciseImportFromSharingService programming exercise import from sharing service
-     */
     public ExerciseSharingResource(ExerciseSharingService exerciseSharingService, SharingConnectorService sharingConnectorService,
             ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService) {
         this.exerciseSharingService = exerciseSharingService;

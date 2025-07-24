@@ -234,9 +234,9 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTORNAME + "1", roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTORNAME, roles = "INSTRUCTOR")
     void importExerciseCompleteProcess() throws Exception {
-        userUtilService.addInstructor("Sharing", INSTRUCTORNAME); // unfortunately this utility extends the username by "1"
+        userUtilService.addInstructor("Sharing", INSTRUCTORNAME);
 
         String basketToken = importBasket();
 
@@ -284,7 +284,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
                         post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON).content(setupInfoJsonString).accept(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
 
-        // finally cleanup the cache
+        // finally, cleanup the cache
         exerciseSharingService.getRepositoryCache().asMap().forEach((key, value) -> {
             exerciseSharingService.getRepositoryCache().invalidate(key);
         });

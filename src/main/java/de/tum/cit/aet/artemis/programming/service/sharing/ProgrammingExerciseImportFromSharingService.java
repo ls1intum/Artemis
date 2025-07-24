@@ -17,9 +17,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
 
-/**
- * Service for importing programming exercises from the sharing service.
- */
 @Service
 @Profile(Constants.PROFILE_SHARING)
 @Lazy
@@ -42,8 +39,8 @@ public class ProgrammingExerciseImportFromSharingService {
     }
 
     /**
-     * Imports a programming exercise from the Sharing platform.
-     * It reuses the implementation of ProgrammingExerciseImportFromFileService for importing the exercise from a Zip file.
+     * Imports a programming exercise from the Sharing Platform.
+     * This method reuses the implementation of ProgrammingExerciseImportFromFileService for importing the exercise from a Zip file.
      *
      * @param sharingSetupInfo Containing sharing and exercise data needed for the import
      * @return The imported ProgrammingExercise
