@@ -578,7 +578,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     }
 
     /**
-     * Revokes the access by setting all exercises that currently utilize a restricted module to null.
+     * Revokes the access by setting all exercises that currently utilize a restricted feedback suggestion module to null.
      *
      * @param courseId                           The course for which the access should be revoked
      * @param restrictedFeedbackSuggestionModule Collection of restricted modules
@@ -593,6 +593,23 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
             @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
+
+    /**
+     * Revokes the access by setting all exercises that currently utilize a restricted preliminary feedback module to null.
+     *
+     * @param courseId                            The course for which the access should be revoked
+     * @param restrictedPreliminaryFeedbackModule Collection of restricted modules
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Exercise e
+            SET e.preliminaryFeedbackModule = NULL
+            WHERE e.course.id = :courseId
+                  AND e.preliminaryFeedbackModule IN :restrictedPreliminaryFeedbackModule
+            """)
+    void revokeAccessToRestrictedPreliminaryFeedbackModulesByCourseId(@Param("courseId") Long courseId,
+            @Param("restrictedPreliminaryFeedbackModule") Collection<String> restrictedPreliminaryFeedbackModule);
 
     /**
      * For an explanation, see {@link ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}

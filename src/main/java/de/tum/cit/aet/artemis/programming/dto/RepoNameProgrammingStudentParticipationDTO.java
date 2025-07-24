@@ -56,8 +56,9 @@ public record RepoNameProgrammingStudentParticipationDTO(long id, ZonedDateTime 
             return Optional.ofNullable(exercise)
                     .map(e -> new RepoNameProgrammingExerciseDTO(e.getId(), e.getProblemStatement(), e.getTitle(), e.getShortName(), e.getReleaseDate(), e.getStartDate(),
                             e.getDueDate(), e.getAssessmentDueDate(), e.getMaxPoints(), e.getBonusPoints(), e.getAssessmentType(), e.getAllowComplaintsForAutomaticAssessments(),
-                            e.getAllowFeedbackRequests(), e.getDifficulty(), e.getMode(), e.getIncludedInOverallScore(), e.getExerciseType(), e.getExampleSolutionPublicationDate(),
-                            RepoNameCourseDTO.of(e.getCourseViaExerciseGroupOrCourseMember()), e.getProjectKey(), e.getProgrammingLanguage(), e.getShowTestNamesToStudents()))
+                            e.getAllowManualFeedbackRequests(), e.getDifficulty(), e.getMode(), e.getIncludedInOverallScore(), e.getExerciseType(),
+                            e.getExampleSolutionPublicationDate(), RepoNameCourseDTO.of(e.getCourseViaExerciseGroupOrCourseMember()), e.getProjectKey(), e.getProgrammingLanguage(),
+                            e.getShowTestNamesToStudents()))
                     .orElse(null);
         }
     }

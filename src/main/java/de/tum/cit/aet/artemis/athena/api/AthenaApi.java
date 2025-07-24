@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.athena.domain.AthenaModuleMode;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaScheduleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSelectionService;
@@ -46,8 +47,8 @@ public class AthenaApi extends AbstractAthenaApi {
         return athenaSubmissionSelectionService.getProposedSubmissionId(exercise, submissionIds);
     }
 
-    public void checkHasAccessToAthenaModule(Exercise exercise, Course course, String entityName) throws BadRequestAlertException {
-        athenaModuleService.checkHasAccessToAthenaModule(exercise, course, entityName);
+    public void checkHasAccessToAthenaModule(Exercise exercise, Course course, AthenaModuleMode athenaModuleMode, String entityName) throws BadRequestAlertException {
+        athenaModuleService.checkHasAccessToAthenaModule(exercise, course, athenaModuleMode, entityName);
     }
 
     public void checkValidAthenaModuleChange(Exercise originalExercise, Exercise updatedExercise, String entityName) throws BadRequestAlertException {
@@ -55,6 +56,6 @@ public class AthenaApi extends AbstractAthenaApi {
     }
 
     public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
-        athenaModuleService.revokeAccessToRestrictedFeedbackSuggestionModules(course);
+        athenaModuleService.revokeAccessToRestrictedFeedbackModules(course);
     }
 }

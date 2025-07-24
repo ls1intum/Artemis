@@ -32,14 +32,6 @@
             },
             "reset": {
                 "pleaseSelectOperations": "Please select the operations you want to perform on <strong>{{ title }}</strong>:",
-                "deleteBuildPlans": {
-                    "title": "Delete student build plans (on {{ ciPlatform }}).",
-                    "info": "The build plans will be automatically recreated when students submit again."
-                },
-                "deleteRepositories": {
-                    "title": "Delete student repositories (on {{ vcPlatform }}).",
-                    "warning": "Before you activate this option, we recommend that you archive the repositories and build plans first."
-                },
                 "deleteParticipationsSubmissionsAndResults": "Delete all student participations, submissions and results (on Artemis).",
                 "artefactsWarning": "Deleting student participations, submissions, and results without removing the associated repositories and build plans may lead to undeleted artifacts on {{ vcPlatform }} and {{ ciPlatform }}. Please carefully review if this is the desired action before proceeding.",
                 "recreateBuildPlans": "Recreate the exercise build plans (BASE and SOLUTION) again from the latest exercise template, overwriting any previous changes.",
@@ -507,8 +499,6 @@
                 "assessmentDueDate": "Assessment Due Date",
                 "assessmentDueDateTooltip": "The due date for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
                 "notSet": "not set",
-                "allowFeedbackRequests": "Allow automatic non graded feedback requests/manual feedback requests",
-                "allowFeedbackRequestsTooltip": "Students can request feedback before the due date. The requests will be processed by Athena, or, if Athena cannot be reached, students can send manual feedback requests.",
                 "manualFeedbackRequests": "Manual feedback requests",
                 "manualFeedbackRequestsTooltip": "Students can request manual feedback before the due date to receive feedback.",
                 "feedbackRequestsEnabled": "Feedback requests are enabled.",
