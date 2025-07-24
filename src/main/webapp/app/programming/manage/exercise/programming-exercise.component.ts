@@ -16,21 +16,7 @@ import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage
 import { AlertService } from 'app/shared/service/alert.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import {
-    faBook,
-    faCheckDouble,
-    faDownload,
-    faFileSignature,
-    faListAlt,
-    faPencilAlt,
-    faPlus,
-    faSort,
-    faTable,
-    faTrash,
-    faUndo,
-    faUsers,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { FormsModule } from '@angular/forms';
@@ -100,7 +86,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faSort = faSort;
     faPlus = faPlus;
     faDownload = faDownload;
-    faUndo = faUndo;
     faBook = faBook;
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
