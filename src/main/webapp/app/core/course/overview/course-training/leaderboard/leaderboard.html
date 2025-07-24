@@ -1,0 +1,23 @@
+<div class="table-frame">
+    <table class="leaderboard-table">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>League</th>
+                <th>Student</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Leaderboard Rows -->
+            @for (entry of leaderboard(); track entry.rank) {
+                <tr>
+                    <td>{{ entry.rank }}</td>
+                    <td>{{ entry.league }}</td>
+                    <td>{{ entry.student }}</td>
+                    <td>{{ entry.score }}</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

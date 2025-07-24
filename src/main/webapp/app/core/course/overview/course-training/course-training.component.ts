@@ -3,10 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { EMPTY } from 'rxjs';
+import { Leaderboard } from 'app/core/course/overview/course-training/leaderboard/leaderboard';
 
 @Component({
     selector: 'jhi-course-practice',
-    imports: [ButtonComponent],
+    imports: [ButtonComponent, Leaderboard, Leaderboard],
     templateUrl: './course-training.component.html',
 })
 export class CourseTrainingComponent {

@@ -1,0 +1,29 @@
+.table-frame {
+    border: 1px solid #d1d5db;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+    display: inline-block;
+}
+
+.leaderboard-table {
+    border-collapse: collapse;
+    margin: 0;
+
+    th,
+    td {
+        padding: 12px 16px;
+        border: none;
+        white-space: nowrap;
+        border-bottom: 1px solid #d1d5db;
+    }
+
+    thead th {
+        background-color: #f9fafb;
+    }
+
+    tbody tr:last-child td {
+        border-bottom: none;
+    }
+}

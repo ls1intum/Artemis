@@ -32,12 +32,17 @@ public class QuizQuestionProgressService {
 
     private final QuizQuestionRepository quizQuestionRepository;
 
-    public QuizQuestionProgressService(QuizQuestionProgressRepository quizQuestionProgressRepository, QuizQuestionRepository quizQuestionRepository) {
+    private final QuizTrainingLeaderboardService quizTrainingLeaderboardService;
+
+    public QuizQuestionProgressService(QuizQuestionProgressRepository quizQuestionProgressRepository, QuizQuestionRepository quizQuestionRepository,
+            QuizTrainingLeaderboardService quizTrainingLeaderboardService) {
         this.quizQuestionProgressRepository = quizQuestionProgressRepository;
         this.quizQuestionRepository = quizQuestionRepository;
+        this.quizTrainingLeaderboardService = quizTrainingLeaderboardService;
     }
 
     /**
+     *
      * Fetch the necessary data for the quiz question progress from the quiz exercise and submission
      * Set the progress data for each answered question
      *
