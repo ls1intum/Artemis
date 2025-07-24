@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
@@ -29,7 +30,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
@@ -292,15 +292,13 @@ public class AdminBuildJobQueueResource {
     public ResponseEntity<Void> adjustBuildAgentCapacity(@PathVariable String agentName, @PathVariable int newSize) {
         log.debug("REST request to adjust concurrent build size of agent {} to {}", agentName, newSize);
 
-        if (agentName == null || agentName.trim().isEmpty()) {
-            throw new BadRequestAlertException("Agent name cannot be null or empty", "agentName", "agentNameInvalid");
+        try {
+            localCIBuildJobQueueService.adjustBuildAgentCapacity(agentName, newSize);
+            return ResponseEntity.noContent().build();
         }
-        if (newSize <= 0) {
-            throw new BadRequestAlertException("Concurrent build size must be at least 1", "newSize", "invalidConcurrentSize");
+        catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
-
-        localCIBuildJobQueueService.adjustBuildAgentCapacity(agentName, newSize);
-        return ResponseEntity.noContent().build();
     }
 
     /**

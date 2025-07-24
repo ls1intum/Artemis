@@ -26,6 +26,7 @@ class BuildAgentConfigurationTest {
         buildAgentConfiguration = spy(new BuildAgentConfiguration(new ProgrammingLanguageConfiguration()));
         mockExecutor = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
         ReflectionTestUtils.setField(buildAgentConfiguration, "buildExecutor", mockExecutor);
+        ReflectionTestUtils.setField(buildAgentConfiguration, "concurrentBuildsMaximum", 4);
     }
 
     @Test

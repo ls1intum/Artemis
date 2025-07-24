@@ -16,7 +16,7 @@
                         <jhi-number-input
                             [value]="buildAgent.maxNumberOfConcurrentBuildJobs || 1"
                             [minValue]="1"
-                            [maxValue]="buildAgent.numberOfCores || 8"
+                            [maxValue]="buildAgent.maxConcurrentBuildsAllowed"
                             [disabled]="buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED'"
                             (valueChange)="onConcurrencyChange($event)"
                         />

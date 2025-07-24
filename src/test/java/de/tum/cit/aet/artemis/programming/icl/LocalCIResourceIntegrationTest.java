@@ -109,7 +109,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
         job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
         job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
-        agent1 = new BuildAgentInformation(buildAgent, 2, 1, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, null, null,
+        agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentInformation.BuildAgentStatus.ACTIVE, null, null,
                 buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs(), 4);
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", buildAgent, 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
@@ -467,7 +467,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         queuedJobs.put(job5);
 
         agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentInformation.BuildAgentStatus.ACTIVE, null, null,
-                buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs(), 4);
+                buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs(), 8);
         buildAgentInformation.put(buildAgent.memberAddress(), agent1);
 
         var queueDurationEstimation = sharedQueueManagementService.getBuildJobEstimatedStartDate(job4.participationId());
@@ -478,7 +478,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testAdjustBuildAgentCapacity_success() throws Exception {
         String agentName = agent1.buildAgent().name();
-        int newCapacity = 5;
+        int newCapacity = 3;
 
         // The test verifies that the endpoint call doesn't throw an exception
         request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + newCapacity, null, HttpStatus.NO_CONTENT);
@@ -491,7 +491,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         int invalidCapacity = 0;
 
         // This should fail due to validation in the service layer
-        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + invalidCapacity, null, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + invalidCapacity, null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -501,7 +501,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         int negativeCapacity = -1;
 
         // This should fail due to validation in the service layer
-        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + negativeCapacity, null, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + negativeCapacity, null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -512,6 +512,16 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
         // The test verifies that the endpoint call returns a forbidden status
         request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + newCapacity, null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testAdjustBuildAgentCapacity_exceedsMaximum() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        int exceedsMaxCapacity = 20; // This should exceed the configured maximum of 8
+
+        // This should fail due to validation against the maximum value
+        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + exceedsMaxCapacity, null, HttpStatus.BAD_REQUEST);
     }
 
     @Test

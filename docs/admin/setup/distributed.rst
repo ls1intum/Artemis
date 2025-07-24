@@ -606,7 +606,9 @@ These credentials are used to clone repositories via HTTPS. You must also add th
             continuous-integration:
                 docker-connection-uri: unix:///var/run/docker.sock
                 specify-concurrent-builds: true                     # Set to false, if the number of concurrent build jobs should be chosen automatically based on system resources
-                concurrent-build-size: 1                            # If previous value is true: Set to desired value but keep available system resources in mind
+                concurrent-builds:                                  # Configuration for concurrent build jobs
+                    default: 1                                      # Default number of concurrent builds when specify-concurrent-builds is false
+                    maximum: 8                                      # Maximum number of concurrent builds allowed (enforced on server and client side). If not provided, uses number of CPU cores.
                 asynchronous: true
                 build-container-prefix: local-ci-
                 image-cleanup:

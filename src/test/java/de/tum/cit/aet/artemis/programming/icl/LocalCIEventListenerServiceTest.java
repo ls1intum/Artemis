@@ -63,7 +63,7 @@ class LocalCIEventListenerServiceTest extends AbstractProgrammingIntegrationLoca
         BuildAgentDetailsDTO updatedDetails = new BuildAgentDetailsDTO(0, 0, 0, 0, 0, 0, null, ZonedDateTime.now(), null, consecutiveFailedBuildJobs);
         BuildAgentInformation updatedInfo = new BuildAgentInformation(buildAgent.buildAgent(), buildAgent.maxNumberOfConcurrentBuildJobs(), buildAgent.numberOfCurrentBuildJobs(),
                 buildAgent.runningBuildJobs(), BuildAgentInformation.BuildAgentStatus.SELF_PAUSED, buildAgent.publicSshKey(), updatedDetails,
-                buildAgent.pauseAfterConsecutiveBuildFailures(), buildAgent.numberOfCores());
+                buildAgent.pauseAfterConsecutiveBuildFailures(), buildAgent.maxConcurrentBuildsAllowed());
 
         buildAgentInformation.put(memberAddress, updatedInfo);
         await().until(() -> buildAgentInformation.get(memberAddress).status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED);

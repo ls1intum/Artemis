@@ -114,6 +114,11 @@ artemis:
                 dart:
                     default: "ghcr.io/ls1intum/artemis-dart-docker:v1.1.0"
 
+        # Configuration for concurrent build jobs
+        concurrent-builds:
+            default: 1 # Default number of concurrent builds when specify-concurrent-builds is false
+            maximum: 0 # Maximum number of concurrent builds allowed. If 0 or not provided, uses number of CPU cores.
+
         # The following properties are used to configure the Artemis build agent.
         # The build agent is responsible for executing the buildJob to test student submissions.
         build-agent:

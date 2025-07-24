@@ -94,7 +94,7 @@
                                 <jhi-number-input
                                     [value]="concurrencyMap[row.buildAgent?.name] || value"
                                     [minValue]="1"
-                                    [maxValue]="row.numberOfCores || 8"
+                                    [maxValue]="row.maxConcurrentBuildsAllowed"
                                     [disabled]="row.status === 'PAUSED' || row.status === 'SELF_PAUSED'"
                                     (valueChange)="onConcurrencyChange(row.buildAgent?.name, $event)"
                                 />

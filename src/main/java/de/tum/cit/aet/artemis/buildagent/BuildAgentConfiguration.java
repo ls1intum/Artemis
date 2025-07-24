@@ -57,8 +57,11 @@ public class BuildAgentConfiguration {
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
 
-    @Value("${artemis.continuous-integration.concurrent-build-size:1}")
-    int concurrentBuildSize;
+    @Value("${artemis.continuous-integration.concurrent-builds.default:1}")
+    int concurrentBuildsDefault;
+
+    @Value("${artemis.continuous-integration.concurrent-builds.maximum:0}")
+    int concurrentBuildsMaximum;
 
     @Value("${artemis.continuous-integration.specify-concurrent-builds:false}")
     boolean specifyConcurrentBuilds;
@@ -74,6 +77,9 @@ public class BuildAgentConfiguration {
     public void onApplicationReady() {
         buildExecutor = createBuildExecutor();
         dockerClient = createDockerClient();
+        if (concurrentBuildsMaximum <= 0) {
+            concurrentBuildsMaximum = Runtime.getRuntime().availableProcessors();
+        }
     }
 
     public ThreadPoolExecutor getBuildExecutor() {
@@ -92,6 +98,10 @@ public class BuildAgentConfiguration {
         return pauseAfterConsecutiveFailedJobs;
     }
 
+    public int getConcurrentBuildsMaximum() {
+        return concurrentBuildsMaximum;
+    }
+
     /**
      * Dynamically adjusts the thread pool size for concurrent build jobs.
      *
@@ -101,6 +111,11 @@ public class BuildAgentConfiguration {
     public boolean adjustConcurrentBuildSize(int newConcurrentBuildSize) {
         if (newConcurrentBuildSize <= 0) {
             log.error("Invalid concurrent build size: {}. Must be greater than 0.", newConcurrentBuildSize);
+            return false;
+        }
+
+        if (newConcurrentBuildSize > concurrentBuildsMaximum) {
+            log.error("Invalid concurrent build size: {}. Must not exceed maximum of {}.", newConcurrentBuildSize, concurrentBuildsMaximum);
             return false;
         }
 
@@ -191,7 +206,7 @@ public class BuildAgentConfiguration {
         // Use preserved size if available, otherwise calculate
         int poolSize = threadPoolSize.get();
         if (poolSize == 0) {
-            poolSize = specifyConcurrentBuilds ? concurrentBuildSize : Math.max(1, (Runtime.getRuntime().availableProcessors() - 2) / 2);
+            poolSize = specifyConcurrentBuilds ? concurrentBuildsDefault : Math.max(1, (Runtime.getRuntime().availableProcessors() - 2) / 2);
             threadPoolSize.set(poolSize);
         }
 

@@ -24,8 +24,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
@@ -113,9 +115,39 @@ public class SharedQueueManagementService {
     }
 
     public void adjustBuildAgentCapacity(String agentName, int newCapacity) {
-        if (newCapacity <= 0)
-            throw new IllegalArgumentException("New capacity must be greater than 0");
-        distributedDataAccessService.getAdjustBuildAgentCapacityTopic().publish(new BuildAgentCapacityAdjustmentDTO(agentName, newCapacity));
+        try {
+            if (newCapacity <= 0) {
+                throw new IllegalArgumentException("Concurrent build size must be at least 1");
+            }
+
+            if (agentName == null || agentName.trim().isEmpty()) {
+                throw new IllegalArgumentException("Agent name cannot be null or empty");
+            }
+
+            BuildAgentInformation targetAgent = getBuildAgentByName(agentName);
+
+            if (newCapacity > targetAgent.maxConcurrentBuildsAllowed()) {
+                throw new IllegalArgumentException("Concurrent build size must not exceed maximum of " + targetAgent.maxConcurrentBuildsAllowed());
+            }
+
+            distributedDataAccessService.getAdjustBuildAgentCapacityTopic().publish(new BuildAgentCapacityAdjustmentDTO(agentName, newCapacity));
+        }
+        catch (IllegalArgumentException e) {
+            throw e;
+        }
+        catch (Exception e) {
+            log.error("Error adjusting build agent capacity for agent {} to {}", agentName, newCapacity, e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to adjust build agent capacity");
+        }
+    }
+
+    /**
+     * Gets the build agent information by name from the distributed data.
+     */
+    private BuildAgentInformation getBuildAgentByName(String agentName) {
+        List<BuildAgentInformation> buildAgents = distributedDataAccessService.getBuildAgentInformation();
+        return buildAgents.stream().filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Build agent '" + agentName + "' not found"));
     }
 
     /**

@@ -7,10 +7,11 @@ artemis:
     continuous-integration:
         # The Docker connection URI to be used by docker-java to connect to the system's Docker installation. Use "unix:///var/run/docker.sock" for Unix based systems and "tcp://localhost:2375" for Windows systems.
         docker-connection-uri: unix:///var/run/docker.sock
-        # Set this to true if you want to specify the number of build that can run concurrently on this node. If false, the number will be determined based on system resources.
-        specify-concurrent-builds: false
-        # The number of builds that can run concurrently on this node.
-        concurrent-build-size: 1
+        specify-concurrent-builds: false # Set this to true if you want to specify the number of build that can run concurrently on this node. If false, the number will be determined based on system resources.
+        # Configuration for concurrent build jobs
+        concurrent-builds:
+            default: 1 # Default number of concurrent builds when specify-concurrent-builds is false
+            maximum: 0 # Maximum number of concurrent builds allowed. If 0 or not provided, uses number of CPU cores.
         # If true, the CI jobs will be executed asynchronously. If false, the CI jobs will be executed synchronously (e.g. for debugging and tests).
         asynchronous: true
         # The maximum number of seconds that a CI job is allowed to run. If the job exceeds this time, it will be terminated.

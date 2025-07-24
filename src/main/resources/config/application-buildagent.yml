@@ -31,8 +31,11 @@ artemis:
         build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc. This config must be set for build agents and localvc. You can also use an ssh key
     continuous-integration:
         docker-connection-uri: unix:///var/run/docker.sock
-        specify-concurrent-builds: false # If true, you can specify the number of build that can run concurrently on this node (concurrent-build-size). If false, the number will be determined based on system resources.
-        concurrent-build-size: 1 # The number of builds that can run concurrently on this node.
+        specify-concurrent-builds: false # If true, you can specify the number of build that can run concurrently on this node (concurrent-builds.default). If false, the number will be determined based on system resources.
+        # Configuration for concurrent build jobs
+        concurrent-builds:
+            default: 1 # Default number of concurrent builds when specify-concurrent-builds is false
+            maximum: 0 # Maximum number of concurrent builds allowed. If 0 or not provided, uses number of CPU cores.
         asynchronous: true # If true, the CI jobs will be executed asynchronously. If false, the CI jobs will be executed synchronously (e.g. for debugging and tests).
         build-container-prefix: local-ci- # The prefix that is used for the Docker containers that are created by the local CI system.
         proxies:
