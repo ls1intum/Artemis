@@ -25,7 +25,6 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Subject, of } from 'rxjs';
-import { PROFILE_ATHENA } from 'app/app.constants';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockCourseExerciseService } from 'test/helpers/mocks/service/mock-course-exercise.service';
@@ -512,56 +511,4 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             }
         }),
     );
-
-    it('should display the request feedback button for text exercises when Athena is enabled and before due date', () => {
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue({ activeProfiles: [PROFILE_ATHENA] } as ProfileInfo);
-
-        const exercise = { type: ExerciseType.TEXT } as ProgrammingExercise;
-        exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
-        comp.exercise = exercise;
-        comp.examMode = false;
-        comp.beforeDueDate = true;
-        comp.updateParticipations();
-
-        fixture.detectChanges();
-
-        const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
-        expect(feedbackButton).not.toBeNull();
-    });
-
-    it('should display the request feedback button for modeling exercises when Athena is enabled and before due date', () => {
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue({ activeProfiles: [PROFILE_ATHENA] } as ProfileInfo);
-
-        const exercise = { type: ExerciseType.MODELING } as ProgrammingExercise;
-        exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
-        comp.exercise = exercise;
-        comp.examMode = false;
-        comp.beforeDueDate = true;
-        comp.updateParticipations();
-
-        fixture.detectChanges();
-
-        const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
-        expect(feedbackButton).not.toBeNull();
-    });
-
-    it('should display the request feedback button for programming exercises with graded participation', () => {
-        const exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
-        exercise.studentParticipations = [
-            {
-                initializationState: InitializationState.INITIALIZED,
-                repositoryUri: 'https://clone-me.git',
-            } as ProgrammingExerciseStudentParticipation,
-        ];
-        comp.exercise = exercise;
-        comp.examMode = false;
-        comp.updateParticipations();
-
-        fixture.detectChanges();
-
-        const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
-        expect(feedbackButton).not.toBeNull();
-    });
 });

@@ -1,4 +1,4 @@
-import { AfterViewChecked, ChangeDetectorRef, Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -10,18 +10,16 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgStyle } from '@angular/common';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
-import { AthenaModuleMode } from 'app/assessment/shared/entities/athena.model';
 
 @Component({
     selector: 'jhi-exercise-feedback-suggestion-options',
     templateUrl: './exercise-feedback-suggestion-options.component.html',
     imports: [TranslateDirective, NgStyle, HelpIconComponent, FormsModule],
 })
-export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges, AfterViewChecked {
+export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges {
     private athenaService = inject(AthenaService);
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
-    private cdr = inject(ChangeDetectorRef);
 
     @Input() exercise: Exercise;
     @Input() dueDate?: dayjs.Dayjs;
@@ -36,14 +34,12 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     modulesAvailable: boolean;
     availableAthenaModules: string[];
     initialAthenaModule?: string;
-    showDropdownList = false;
 
     ngOnInit(): void {
         const courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
-        this.athenaService.getAvailableModules(courseId, this.exercise, AthenaModuleMode.FEEDBACK_SUGGESTIONS).subscribe((modules) => {
+        this.athenaService.getAvailableModules(courseId, this.exercise).subscribe((modules) => {
             this.availableAthenaModules = modules;
             this.modulesAvailable = modules.length > 0;
-            this.cdr.detectChanges();
         });
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         this.initialAthenaModule = this.exercise.feedbackSuggestionModule;
@@ -54,12 +50,6 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
             if (this.inputControlsDisabled()) {
                 this.exercise.feedbackSuggestionModule = this.initialAthenaModule;
             }
-        }
-    }
-
-    ngAfterViewChecked() {
-        if (this.inputControlsDisabled()) {
-            this.showDropdownList = false;
         }
     }
 
@@ -85,12 +75,20 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     }
 
     toggleFeedbackSuggestions(event: any) {
-        this.showDropdownList = event.target.checked;
         if (event.target.checked) {
             this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
-            this.exercise.allowManualFeedbackRequests = false;
         } else {
+            this.exercise.allowFeedbackRequests = false;
             this.exercise.feedbackSuggestionModule = undefined;
+        }
+    }
+
+    toggleFeedbackRequests(event: any) {
+        if (event.target.checked) {
+            this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
+            this.exercise.allowFeedbackRequests = true;
+        } else {
+            this.exercise.allowFeedbackRequests = false;
         }
     }
 

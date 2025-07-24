@@ -10,8 +10,6 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
-import { HttpParams } from '@angular/common/http';
-import { AthenaModuleMode } from 'app/assessment/shared/entities/athena.model';
 
 @Injectable({ providedIn: 'root' })
 export class AthenaService {
@@ -21,31 +19,18 @@ export class AthenaService {
     public resourceUrl = 'api/athena';
 
     /**
-     * Determine if the Athena service is available based on whether the corresponding profile is active
-     */
-    public isEnabled(): boolean {
-        return this.profileService.isProfileActive(PROFILE_ATHENA);
-    }
-
-    /**
      * Fetches all available modules for a course and exercise.
      *
      * @param courseId The id of the course for which the feedback suggestion modules should be fetched
      * @param exercise The exercise for which the feedback suggestion modules should be fetched
-     * @param athenaModuleMode Optional parameter that specifies which feedback mode the athena modules should support
      */
-    public getAvailableModules(courseId: number, exercise: Exercise, athenaModuleMode?: AthenaModuleMode): Observable<string[]> {
+    public getAvailableModules(courseId: number, exercise: Exercise): Observable<string[]> {
         if (!this.profileService.isProfileActive(PROFILE_ATHENA)) {
             return of([] as string[]);
         }
 
-        let params = new HttpParams();
-        if (athenaModuleMode) {
-            params = params.set('athenaModuleMode', athenaModuleMode);
-        }
-
         return this.http
-            .get<string[]>(`${this.resourceUrl}/courses/${courseId}/${exercise.type}-exercises/available-modules`, { params, observe: 'response' })
+            .get<string[]>(`${this.resourceUrl}/courses/${courseId}/${exercise.type}-exercises/available-modules`, { observe: 'response' })
             .pipe(switchMap((res: HttpResponse<string[]>) => of(res.body!)));
     }
 
