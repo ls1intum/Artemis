@@ -10,7 +10,7 @@
             <column name="preliminary_feedback_module" valueComputed="feedback_suggestion_module"/>
         </update>
         <update tableName="exercise">
-            <column name="allow_manual_feedback_requests" value="false"/>
+            <column name="allow_manual_feedback_requests" valueBoolean="false"/>
             <where>feedback_suggestion_module IS NOT NULL</where>
         </update>
     </changeSet>
