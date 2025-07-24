@@ -68,7 +68,7 @@ public class ArtemisGitServletService extends GitServlet {
 
         this.setReceivePackFactory((request, repository) -> {
             ReceivePack receivePack = new ReceivePack(repository);
-            // we only need to set the PreReceiveHook and PostReceiveHook for authorized POST requests, as only these trigge onPreReceive or onPostReceive.
+            // we only need to set the PreReceiveHook and PostReceiveHook for authorized POST requests, as only these trigger onPreReceive or onPostReceive.
             // Before that, 2 GET requests to /info/refs?service=git-receive-pack are used to retrieve the refs and do not trigger the hooks.
             if (request.getMethod().equals(HttpMethod.POST.name()) && request.getHeader(HttpHeaders.AUTHORIZATION) != null) {
                 try {
