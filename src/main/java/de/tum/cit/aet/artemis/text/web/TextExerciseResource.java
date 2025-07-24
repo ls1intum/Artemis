@@ -37,9 +37,9 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.athena.domain.AthenaModuleMode;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -138,8 +138,6 @@ public class TextExerciseResource {
 
     private final ParticipationRepository participationRepository;
 
-    private final ResultRepository resultRepository;
-
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     private final GroupNotificationScheduleService groupNotificationScheduleService;
@@ -169,12 +167,12 @@ public class TextExerciseResource {
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, Optional<PlagiarismResultApi> plagiarismResultApi, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, ResultRepository resultRepository, TextExerciseImportService textExerciseImportService,
-            TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
-            GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
-            InstanceMessageSendService instanceMessageSendService, Optional<PlagiarismDetectionApi> plagiarismDetectionApi, CourseRepository courseRepository,
-            ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<IrisSettingsApi> irisSettingsApi, Optional<ExamAccessApi> examAccessApi, Optional<SlideApi> slideApi) {
+            ParticipationRepository participationRepository, TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService,
+            ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
+            TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService,
+            Optional<PlagiarismDetectionApi> plagiarismDetectionApi, CourseRepository courseRepository, ChannelService channelService, ChannelRepository channelRepository,
+            Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<ExamAccessApi> examAccessApi,
+            Optional<SlideApi> slideApi) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultApi = plagiarismResultApi;
@@ -186,7 +184,6 @@ public class TextExerciseResource {
         this.authCheckService = authCheckService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationRepository = participationRepository;
-        this.resultRepository = resultRepository;
         this.textExerciseImportService = textExerciseImportService;
         this.textSubmissionExportService = textSubmissionExportService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
@@ -235,7 +232,10 @@ public class TextExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         // Check that only allowed athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
+                () -> textExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+                () -> textExercise.setPreliminaryFeedbackModule(null));
 
         TextExercise result = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
 
@@ -289,7 +289,10 @@ public class TextExerciseResource {
 
         // Check that only allowed athena modules are used
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExerciseBeforeUpdate);
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
+                () -> textExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+                () -> textExercise.setPreliminaryFeedbackModule(null));
         // Changing Athena module after the due date has passed is not allowed
         athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(textExerciseBeforeUpdate, textExercise, ENTITY_NAME));
 
@@ -532,14 +535,21 @@ public class TextExerciseResource {
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
 
-        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions for the imported exercise
-        // If Athena is disabled and the service is not present, we also disable feedback suggestions
+        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions or preliminary feedback for the imported exercise
+        // If Athena is disabled and the service is not present, we also disable the corresponding functionality
         try {
-            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), ENTITY_NAME),
-                    () -> importedExercise.setFeedbackSuggestionModule(null));
+            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(),
+                    AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME), () -> importedExercise.setFeedbackSuggestionModule(null));
         }
         catch (BadRequestAlertException e) {
             importedExercise.setFeedbackSuggestionModule(null);
+        }
+        try {
+            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(),
+                    AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME), () -> importedExercise.setPreliminaryFeedbackModule(null));
+        }
+        catch (BadRequestAlertException e) {
+            importedExercise.setPreliminaryFeedbackModule(null);
         }
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
