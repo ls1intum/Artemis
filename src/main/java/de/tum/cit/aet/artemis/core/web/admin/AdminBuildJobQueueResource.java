@@ -296,7 +296,7 @@ public class AdminBuildJobQueueResource {
             throw new BadRequestAlertException("Agent name cannot be null or empty", "agentName", "agentNameInvalid");
         }
         if (newSize <= 0) {
-            throw new BadRequestAlertException("Concurrent build size must be positive", "newSize", "invalidConcurrentSize");
+            throw new BadRequestAlertException("Concurrent build size must be at least 1", "newSize", "invalidConcurrentSize");
         }
 
         localCIBuildJobQueueService.adjustBuildAgentCapacity(agentName, newSize);
