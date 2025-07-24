@@ -71,8 +71,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
 
         comp.programmingExercise.id = exerciseId;
         comp.programmingExerciseResetOptions = {
-            deleteBuildPlans: true,
-            deleteRepositories: true,
             deleteParticipationsSubmissionsAndResults: true,
             recreateBuildPlans: true,
         };
@@ -98,8 +96,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         it('should not be called when there is an error in the reset response', fakeAsync(() => {
             const errorResponse = throwError({ status: 500 });
             comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: false,
-                deleteRepositories: false,
                 deleteParticipationsSubmissionsAndResults: true,
                 recreateBuildPlans: false,
             };
@@ -120,8 +116,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
             comp.confirmText = 'Programming Exercise';
             comp.resetInProgress = false;
             comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: false,
-                deleteRepositories: false,
                 deleteParticipationsSubmissionsAndResults: true,
                 recreateBuildPlans: false,
             };
@@ -155,8 +149,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
     describe('hasSelectedOptions', () => {
         it('should return false when all options are set to false', () => {
             comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: false,
-                deleteRepositories: false,
                 deleteParticipationsSubmissionsAndResults: false,
                 recreateBuildPlans: false,
             };
@@ -170,8 +162,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
             ${'recreateBuildPlans'}
         `('should return true when $option is set to true', ({ option }) => {
             comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: false,
-                deleteRepositories: false,
                 deleteParticipationsSubmissionsAndResults: false,
                 recreateBuildPlans: false,
             };
