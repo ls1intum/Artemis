@@ -189,6 +189,7 @@ describe('CourseExamsComponent', () => {
     });
 
     // TODO fix the entire update flow when an exam becomes visible and update it again.
+    // eslint-disable-next-line jest/no-disabled-tests
     it.skip('should correctly update new exams', () => {
         const expectedMap = new Map<number, boolean>();
         expectedMap.set(visibleTestExam1.id!, false);
