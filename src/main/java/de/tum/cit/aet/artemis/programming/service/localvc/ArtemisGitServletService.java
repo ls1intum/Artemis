@@ -53,7 +53,7 @@ public class ArtemisGitServletService extends GitServlet {
      * </ol>
      * </p>
      * <p>
-     * For a git pull / clone request the following HTTP requests are sent:
+     * For a git pull / clone the following HTTP requests are sent:
      * <ol>
      * <li>GET /info/refs?service=git-upload-pack (without Authentication header)</li>
      * <li>GET /info/refs?service=git-upload-pack (with Authentication header)</li>
