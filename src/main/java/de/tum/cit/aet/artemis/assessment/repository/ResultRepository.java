@@ -300,7 +300,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     @Query("""
-            SELECT r
+            SELECT COUNT(r.id)
             FROM StudentParticipation p
                 JOIN p.submissions s
                 JOIN s.results r
@@ -310,7 +310,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.completionDate IS NULL
                 AND r.assessor.id <> :tutorId
             """)
-    List<Result> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("tutorId") long tutorId);
+    List<Long> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("tutorId") long tutorId);
 
     /**
      * count the number of finished assessments of an exam with given examId
@@ -472,24 +472,18 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return an array of the number of assessments for the exercise for a given correction round
      */
     default DueDateStat[] countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds, User tutor) {
-        if (exercise.isExamExercise()) {
-            DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
+        if (!exercise.isExamExercise()) {
+            return null;
+        }
+        DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
 
-            // numberOfCorrectionRounds can be 0 for test exams
-            if (numberOfCorrectionRounds == 0) {
-                return correctionRoundsDataStats;
-            }
-
-            var resultsLockedByOtherTutors = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(exercise.getId(), tutor.getId());
-
-            correctionRoundsDataStats[0] = new DueDateStat(resultsLockedByOtherTutors.stream().filter(result -> result.isRated() == null).count(), 0L);
-            // so far the number of correctionRounds is limited to 2
-            if (numberOfCorrectionRounds == 2) {
-                correctionRoundsDataStats[1] = new DueDateStat(resultsLockedByOtherTutors.stream().filter(result -> result.isRated() != null).count(), 0L);
-            }
+        // numberOfCorrectionRounds can be 0 for test exams
+        if (numberOfCorrectionRounds == 0) {
             return correctionRoundsDataStats;
         }
-        return null;
+
+        List<Long> resultsCountLockedByOtherTutors = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(exercise.getId(), tutor.getId());
+        return convertDatabaseResponseToDueDateStats(resultsCountLockedByOtherTutors, numberOfCorrectionRounds);
     }
 
     /**
