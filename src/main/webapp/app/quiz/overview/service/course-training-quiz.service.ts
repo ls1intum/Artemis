@@ -3,16 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/QuizTrainingAnswer';
-
-export interface SubmittedAnswerAfterEvaluationDTO {
-    id?: number;
-    scoreInPoints?: number;
-    quizQuestion?: QuizQuestion;
-    // Die spezifischen Antworttypen (durch @JsonUnwrapped werden sie direkt eingebettet)
-    selectedOptions?: any[];
-    mappings?: any[];
-    submittedTexts?: any[];
-}
+import { SubmittedAnswerAfterEvaluationDTO } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluationDTO';
 
 @Injectable({
     providedIn: 'root',

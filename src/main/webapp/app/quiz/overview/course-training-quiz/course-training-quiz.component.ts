@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { CourseTrainingQuizService, SubmittedAnswerAfterEvaluationDTO } from 'app/quiz/overview/service/course-training-quiz.service';
+import { CourseTrainingQuizService } from 'app/quiz/overview/service/course-training-quiz.service';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -19,6 +19,7 @@ import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answe
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/QuizTrainingAnswer';
+import { SubmittedAnswerAfterEvaluationDTO } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluationDTO';
 
 @Component({
     selector: 'jhi-course-practice-quiz',

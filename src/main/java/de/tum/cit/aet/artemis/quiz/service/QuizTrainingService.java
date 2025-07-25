@@ -38,29 +38,21 @@ public class QuizTrainingService {
      * @param quizQuestionId  the id of the quiz question being submitted
      * @param user            the user who is submitting the quiz
      * @param submittedAnswer the answer submitted by the user
+     * @return a DTO containing the submitted answer after the evaluation
      */
     public SubmittedAnswerAfterEvaluationDTO submitForTraining(Long courseId, Long quizQuestionId, User user, QuizTrainingAnswerDTO submittedAnswer) {
-        log.info("Received DTO: {}", submittedAnswer);
-        // Get the quiz question
         QuizQuestion quizQuestion = quizQuestionRepository.findByIdElseThrow(quizQuestionId);
-        log.info("Found quiz question: {}", quizQuestion.getId());
-
         SubmittedAnswer answer = submittedAnswer.getSubmittedAnswer();
+
         if (answer == null) {
-            log.error("No submitted answer found in DTO");
             throw new IllegalArgumentException("No submitted answer provided");
         }
-        log.info("Processing answer of type: {}", answer.getClass().getSimpleName());
 
         double score = quizQuestion.scoreForAnswer(answer);
-        log.info("Calculated score: {}", score);
 
         answer.setScoreInPoints(score);
         answer.setQuizQuestion(quizQuestion);
 
-        SubmittedAnswerAfterEvaluationDTO result = SubmittedAnswerAfterEvaluationDTO.of(answer);
-        log.info("Created result DTO: {}", result);
-
-        return result;
+        return SubmittedAnswerAfterEvaluationDTO.of(answer);
     }
 }

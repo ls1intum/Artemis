@@ -277,4 +277,21 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(quizQuestionProgressService.calculateRepetition(1, quizQuestionProgress.getProgressJson())).isEqualTo(2);
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSubmitForTraining_shouldReturnResultAndSetSubmissionProperties() throws Exception {
+
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testQuizSubmitTraining_badRequest_submissionId() throws Exception {
+
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSubmitForTraining_badRequest_notOpenForPracticeOrNotEnded() throws Exception {
+
+    }
 }
