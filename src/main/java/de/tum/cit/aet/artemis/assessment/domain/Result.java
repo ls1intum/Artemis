@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -83,6 +84,8 @@ public class Result extends DomainObject implements Comparable<Result> {
      * For all other exercises (modeling, programming, etc.) - results are rated=true when students submit before the due date (or when the due date is null), multiple results can
      * be rated=true, then the result with the last completionDate counts towards the total score of a student - results are rated=false when students submit after the due date
      */
+    // TODO: we should change this to a primitive boolean in the future with default value false
+    @Nullable
     @Column(name = "rated")
     private Boolean rated;
 
@@ -209,16 +212,16 @@ public class Result extends DomainObject implements Comparable<Result> {
         setScore(totalPoints / maxPoints * 100, course);
     }
 
-    public Boolean isRated() {
-        return rated;
+    public boolean isRated() {
+        return Boolean.TRUE.equals(this.rated);
     }
 
-    public Result rated(Boolean rated) {
+    public Result rated(boolean rated) {
         this.rated = rated;
         return this;
     }
 
-    public void setRated(Boolean rated) {
+    public void setRated(boolean rated) {
         this.rated = rated;
     }
 
