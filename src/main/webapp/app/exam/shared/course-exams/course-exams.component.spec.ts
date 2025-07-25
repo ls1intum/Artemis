@@ -33,7 +33,6 @@ describe('CourseExamsComponent', () => {
     let courseStorageService: CourseStorageService;
     let courseOverviewService: CourseOverviewService;
     let examParticipationService: ExamParticipationService;
-    let subscribeToCourseUpdates: jest.SpyInstance;
     const router = new MockRouter();
 
     const visibleRealExam1 = {
@@ -138,7 +137,6 @@ describe('CourseExamsComponent', () => {
                 courseStorageService = TestBed.inject(CourseStorageService);
                 examParticipationService = TestBed.inject(ExamParticipationService);
                 courseOverviewService = TestBed.inject(CourseOverviewService);
-                subscribeToCourseUpdates = jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of());
                 (examParticipationService as any).examIsStarted$ = of(false);
                 jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
                     exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam],
