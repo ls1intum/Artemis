@@ -299,6 +299,12 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
+    /**
+     * Counts the number of locked assessments for an exam exercise by other tutors.
+     *
+     * @return a list that contains the count of locked assessments for each studentParticipation of the exercise
+     */
+
     @Query("""
             SELECT COUNT(r.id)
             FROM StudentParticipation p
@@ -309,6 +315,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND s.submitted = TRUE
                 AND r.completionDate IS NULL
                 AND r.assessor.id <> :tutorId
+            GROUP BY p.id
             """)
     List<Long> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("tutorId") long tutorId);
 
