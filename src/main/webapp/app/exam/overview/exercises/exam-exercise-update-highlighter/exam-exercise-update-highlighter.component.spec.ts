@@ -50,14 +50,14 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
     it('should highlight differences', () => {
         const result =
             '<p><del class="diffmod">problem</del><ins class="diffmod">new</ins> <del class="diffmod">statement</del><ins class="diffmod">updated</ins> <del class="diffmod">with errors</del><ins class="diffmod">ProblemStatement</ins></p>';
-        expect(result).toEqual(component.updatedProblemStatementWithHighlightedDifferencesHTML);
+        expect((component.updatedProblemStatementWithHighlightedDifferencesHTML as any).changingThisBreaksApplicationSecurity).toEqual(result);
     });
 
     it('should display different problem statement after toggle method is called', () => {
         const mouseEvent = new MouseEvent('click');
         const stopPropagationSpy = jest.spyOn(mouseEvent, 'stopPropagation');
         const problemStatementBeforeClick = htmlForMarkdown(component.exercise().problemStatement);
-        expect(problemStatementBeforeClick).toEqual(component.updatedProblemStatementHTML);
+        expect((component.updatedProblemStatementHTML as any).changingThisBreaksApplicationSecurity).toEqual(problemStatementBeforeClick);
 
         component.toggleHighlightedProblemStatement(mouseEvent);
 
