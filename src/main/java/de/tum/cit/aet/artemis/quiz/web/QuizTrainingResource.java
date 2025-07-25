@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -95,8 +96,9 @@ public class QuizTrainingResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        ZonedDateTime answeredAt = ZonedDateTime.now();
 
-        SubmittedAnswerAfterEvaluationDTO result = quizTrainingService.submitForTraining(courseId, quizQuestionId, user, submittedAnswer);
+        SubmittedAnswerAfterEvaluationDTO result = quizTrainingService.submitForTraining(quizQuestionId, user.getId(), submittedAnswer, answeredAt);
 
         return ResponseEntity.ok(result);
     }

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
+import static org.springframework.http.HttpStatus.OK;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -11,16 +12,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -29,10 +31,14 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
+import de.tum.cit.aet.artemis.quiz.dto.QuizTrainingAnswerDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
+import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -55,6 +61,12 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Autowired
     private CourseTestRepository courseTestRepository;
 
+    @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
+
+    @Autowired
+    private QuizExerciseService quizExerciseService;
+
     private QuizQuestionProgress quizQuestionProgress;
 
     private QuizQuestion quizQuestion;
@@ -63,25 +75,14 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     private Long quizQuestionId;
 
-    StudentParticipation participation;
+    private static final String TEST_PREFIX = "quizprogress";
 
     @BeforeEach
     void setUp() {
-        String login = "testuser";
-        Optional<User> existingUser = userTestRepository.findOneByLogin(login);
-        User user;
-        if (existingUser.isPresent()) {
-            user = existingUser.get();
-        }
-        else {
-            user = new User();
-            user.setLogin(login);
-            userTestRepository.save(user);
-        }
-        userId = user.getId();
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
 
-        participation = new StudentParticipation();
-        participation.setParticipant(user);
+        User user = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        userId = user.getId();
 
         quizQuestion = new MultipleChoiceQuestion();
         quizQuestion = quizQuestionRepository.save(quizQuestion);
@@ -104,8 +105,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizQuestionProgressRepository.save(quizQuestionProgress);
     }
 
-    @WithMockUser(username = "testuser")
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRetrieveProgressFromResultAndSubmissionAndSave() {
         // Create and save a quiz exercise
         QuizExercise quizExercise = new QuizExercise();
@@ -176,8 +177,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(loaded).isPresent();
     }
 
-    @WithMockUser(username = "testuser")
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuestionsForSession() {
         Course course = new Course();
         course.setId(1L);
@@ -278,20 +279,59 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void testSubmitForTraining_shouldReturnResultAndSetSubmissionProperties() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSubmitForTraining() throws Exception {
+        Course course = courseUtilService.createCourse();
 
+        MultipleChoiceQuestion mcQuestion = new MultipleChoiceQuestion();
+        mcQuestion.setTitle("Test Question");
+        mcQuestion.setPoints(1.0);
+        mcQuestion.setScoringType(ScoringType.ALL_OR_NOTHING);
+        mcQuestion = quizQuestionRepository.save(mcQuestion);
+
+        MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
+        submittedAnswer.setQuizQuestion(mcQuestion);
+        QuizTrainingAnswerDTO trainingAnswerDTO = new QuizTrainingAnswerDTO(submittedAnswer);
+
+        SubmittedAnswerAfterEvaluationDTO result = request.postWithResponseBody("/api/quiz/courses/" + course.getId() + "/training/" + mcQuestion.getId() + "/quiz",
+                trainingAnswerDTO, SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.OK);
+
+        assertThat(result).isNotNull();
+        assertThat(result.multipleChoiceSubmittedAnswer()).isNotNull();
+        assertThat(result.scoreInPoints()).isNotNull();
+
+        Optional<QuizQuestionProgress> savedProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, mcQuestion.getId());
+
+        assertThat(savedProgress).isPresent();
+        assertThat(savedProgress.get().getUserId()).isEqualTo(userId);
+        assertThat(savedProgress.get().getQuizQuestionId()).isEqualTo(mcQuestion.getId());
+        assertThat(savedProgress.get().getLastAnsweredAt()).isNotNull();
+
+        QuizQuestionProgressData data = savedProgress.get().getProgressJson();
+        assertThat(data.getLastScore()).isEqualTo(1.0);
+        assertThat(data.getSessionCount()).isEqualTo(1);
+        assertThat(data.getAttempts().size()).isEqualTo(1);
+        assertThat(data.getAttempts().getFirst().getScore()).isEqualTo(1.0);
+        assertThat(data.getRepetition()).isEqualTo(1);
+        assertThat(data.getEasinessFactor()).isEqualTo(2.6);
+        assertThat(data.getInterval()).isEqualTo(1);
+        assertThat(data.getPriority()).isEqualTo(2);
+        assertThat(data.getBox()).isEqualTo(1);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testQuizSubmitTraining_badRequest_submissionId() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetQuizQuestionsForPractice() throws Exception {
 
-    }
+        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
+        quizExercise.setIsOpenForPractice(true);
+        quizExerciseService.save(quizExercise);
 
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void testSubmitForTraining_badRequest_notOpenForPracticeOrNotEnded() throws Exception {
+        List<QuizQuestion> quizQuestions = request.getList("/api/quiz/courses/" + course.getId() + "/training/quiz", OK, QuizQuestion.class);
 
+        Assertions.assertThat(quizQuestions).isNotNull();
+        Assertions.assertThat(quizQuestions).hasSameSizeAs(quizExercise.getQuizQuestions());
+        Assertions.assertThat(quizQuestions).containsAll(quizExercise.getQuizQuestions());
     }
 }

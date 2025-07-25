@@ -114,7 +114,7 @@ public class QuizQuestionProgressService {
         int prevInterval = 1;
         int prevSessionCount = 0;
 
-        if (existingProgress != null) {
+        if (existingProgress != null && existingProgress.getProgressJson() != null) {
             QuizQuestionProgressData prevData = existingProgress.getProgressJson();
             prevEasinessFactor = prevData.getEasinessFactor();
             prevInterval = prevData.getInterval();
@@ -289,4 +289,19 @@ public class QuizQuestionProgressService {
     public boolean questionsAvailableForTraining(Long courseId) {
         return quizQuestionRepository.areQuizQuestionsAvailableForPractice(courseId);
     }
+
+    public void saveProgressFromTraining(QuizQuestion question, Long userId, SubmittedAnswer answer, ZonedDateTime answeredAt) {
+        QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
+        QuizQuestionProgressData data = existingProgress.getProgressJson() != null ? existingProgress.getProgressJson() : new QuizQuestionProgressData();
+
+        existingProgress.setLastAnsweredAt(answeredAt);
+        existingProgress.setQuizQuestionId(question.getId());
+        existingProgress.setUserId(userId);
+        double score = answer.getScoreInPoints() / question.getPoints();
+        updateProgressWithNewAttempt(data, score, answeredAt);
+        updateProgressCalculations(data, score, existingProgress);
+        existingProgress.setProgressJson(data);
+        quizQuestionProgressRepository.save(existingProgress);
+    }
+
 }
