@@ -91,10 +91,11 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             quizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceTemplate] });
         });
 
-        test('Export quiz exercise questions', async ({ page, login, navigationBar, courseManagement, courseManagementExercises }) => {
+        test('Export quiz exercise questions', async ({ page, login, navigationBar, courseManagement, courseManagementExercises, quizExerciseOverview }) => {
             await login(admin, '/');
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
+            await courseManagementExercises.openQuizExerciseDetailsPage(quizExercise.id!);
             const downloadPromise = new Promise<void>((resolve, reject) => {
                 page.on('download', async (download) => {
                     const fileName = download.suggestedFilename();
@@ -109,8 +110,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
 
                 setTimeout(() => reject('Quiz questions export did not happen within the expected time frame'), 10000);
             });
-
-            await courseManagementExercises.exportQuizExercise(quizExercise.id!);
+            await quizExerciseOverview.exportQuizExercise();
             await expect(downloadPromise).resolves.toBeUndefined();
         });
     });

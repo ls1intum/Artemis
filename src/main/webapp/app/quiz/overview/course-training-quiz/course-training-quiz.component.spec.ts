@@ -12,7 +12,6 @@ import { MockSyncStorage } from 'src/test/javascript/spec/helpers/mocks/service/
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { SessionStorageService } from 'ngx-webstorage';
 import { Result } from '../../../exercise/shared/entities/result/result.model';
-import { QuizParticipationService } from '../service/quiz-participation.service';
 import { AlertService } from '../../../shared/service/alert.service';
 import { CourseManagementService } from '../../../core/course/manage/services/course-management.service';
 import { MultipleChoiceSubmittedAnswer } from '../../shared/entities/multiple-choice-submitted-answer.model';
@@ -146,7 +145,7 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should submit quiz and handle success', () => {
-        const submitSpy = jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(of(new HttpResponse({ body: result })));
+        const submitSpy = jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(of(new HttpResponse({ body: result })));
         const showResultSpy = jest.spyOn(component, 'showResult');
         // Drag and Drop
         jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1, exerciseId: 1 } as any);
@@ -197,7 +196,7 @@ describe('CourseTrainingQuizComponent', () => {
             headers: new HttpHeaders({ 'X-artemisApp-message': 'Fehler beim Absenden' }),
             statusText: 'Bad Request',
         });
-        jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(throwError(() => error));
+        jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(throwError(() => error));
         component.currentIndex.set(2);
         component.onSubmit();
         expect(alertSpy).toHaveBeenCalled();

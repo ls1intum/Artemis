@@ -211,11 +211,12 @@ public class GitService extends AbstractGitService {
      * Saves the local repo in the default path.
      *
      * @param participation Participation the remote repository belongs to.
+     * @param writeAccess   whether we want to write to the repository
      * @return the repository if it could be checked out
      * @throws GitAPIException if the repository could not be checked out.
      */
-    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation) throws GitAPIException {
-        return getOrCheckoutRepository(participation, repoClonePath);
+    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, boolean writeAccess) throws GitAPIException {
+        return getOrCheckoutRepository(participation, repoClonePath, writeAccess);
     }
 
     /**
@@ -224,13 +225,14 @@ public class GitService extends AbstractGitService {
      *
      * @param participation Participation the remote repository belongs to.
      * @param targetPath    path where the repo is located on disk
+     * @param writeAccess   whether we want to write to the repository
      * @return the repository if it could be checked out
      * @throws GitAPIException if the repository could not be checked out.
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, Path targetPath) throws GitAPIException, GitException {
+    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, Path targetPath, boolean writeAccess) throws GitAPIException, GitException {
         var repoUri = participation.getVcsRepositoryUri();
-        Repository repository = getOrCheckoutRepositoryWithTargetPath(repoUri, targetPath, true);
+        Repository repository = getOrCheckoutRepositoryWithTargetPath(repoUri, targetPath, true, writeAccess);
         repository.setParticipation(participation);
         return repository;
     }
@@ -261,7 +263,7 @@ public class GitService extends AbstractGitService {
         }
         Path localPath = targetPath.resolve(updatedRepoFolderName);
 
-        Repository repository = getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, true);
+        Repository repository = getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, true, false);
         repository.setParticipation(participation);
 
         return repository;
@@ -271,28 +273,31 @@ public class GitService extends AbstractGitService {
      * Get the local repository for a given remote repository URI. If the local repo does not exist yet, it will be checked out.
      * Saves the repo in the default path
      *
-     * @param repoUri   The remote repository.
-     * @param pullOnGet Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @param repoUri     The remote repository.
+     * @param pullOnGet   Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @param writeAccess Whether we want to write to the repository
      * @return the repository if it could be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, boolean pullOnGet) throws GitAPIException {
-        return getOrCheckoutRepositoryWithTargetPath(repoUri, repoClonePath, pullOnGet);
+    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
+        return getOrCheckoutRepositoryWithTargetPath(repoUri, repoClonePath, pullOnGet, writeAccess);
     }
 
     /**
      * Get the local repository for a given remote repository URI. If the local repo does not exist yet, it will be checked out.
      *
-     * @param repoUri    The remote repository.
-     * @param targetPath path where the repo is located on disk
-     * @param pullOnGet  Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @param repoUri     The remote repository.
+     * @param targetPath  path where the repo is located on disk
+     * @param pullOnGet   Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @param writeAccess whether we want to write to the repository
      * @return the repository if it could be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepositoryWithTargetPath(VcsRepositoryUri repoUri, Path targetPath, boolean pullOnGet) throws GitAPIException, GitException {
+    public Repository getOrCheckoutRepositoryWithTargetPath(VcsRepositoryUri repoUri, Path targetPath, boolean pullOnGet, boolean writeAccess)
+            throws GitAPIException, GitException {
         Path localPath = getLocalPathOfRepo(targetPath, repoUri);
-        return getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, pullOnGet);
+        return getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, pullOnGet, writeAccess);
     }
 
     /**
@@ -325,7 +330,7 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the repository could not be checked out
      */
     public Repository checkoutRepositoryAtCommit(VcsRepositoryUri vcsRepositoryUri, String commitHash, boolean pullOnGet) throws GitAPIException {
-        var repository = getOrCheckoutRepository(vcsRepositoryUri, pullOnGet);
+        var repository = getOrCheckoutRepository(vcsRepositoryUri, pullOnGet, false);
         return checkoutRepositoryAtCommit(repository, commitHash);
     }
 
@@ -335,23 +340,25 @@ public class GitService extends AbstractGitService {
      * @param repoUri       The remote repository.
      * @param pullOnGet     Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @param defaultBranch The default branch of the target repository.
+     * @param writeAccess   whether we want to write to the repository
      * @return the repository if it could be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, boolean pullOnGet, String defaultBranch) throws GitAPIException, GitException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, boolean pullOnGet, String defaultBranch, boolean writeAccess) throws GitAPIException, GitException {
         Path localPath = getLocalPathOfRepo(repoClonePath, repoUri);
-        return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, defaultBranch);
+        return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, defaultBranch, writeAccess);
     }
 
-    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUri repoUri, VcsRepositoryUri targetUri, boolean pullOnGet)
+    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUri repoUri, VcsRepositoryUri targetUri, boolean pullOnGet, boolean writeAccess)
             throws GitAPIException, GitException, InvalidPathException {
         Path localPath = getDefaultLocalPathOfRepo(targetUri);
-        return getOrCheckoutRepository(repoUri, targetUri, localPath, pullOnGet);
+        return getOrCheckoutRepository(repoUri, targetUri, localPath, pullOnGet, writeAccess);
     }
 
-    public Repository getOrCheckoutRepositoryWithLocalPath(VcsRepositoryUri repoUri, Path localPath, boolean pullOnGet) throws GitAPIException, GitException, InvalidPathException {
-        return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet);
+    public Repository getOrCheckoutRepositoryWithLocalPath(VcsRepositoryUri repoUri, Path localPath, boolean pullOnGet, boolean writeAccess)
+            throws GitAPIException, GitException, InvalidPathException {
+        return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, writeAccess);
     }
 
     /**
@@ -361,14 +368,15 @@ public class GitService extends AbstractGitService {
      * @param targetRepoUri The target remote repository.
      * @param localPath     The local path to clone the repository to.
      * @param pullOnGet     Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @param writeAccess   Whether we want to write to the repository
      * @return the repository if it could be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    private Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet)
+    private Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, boolean writeAccess)
             throws GitAPIException, GitException, InvalidPathException {
-        return getOrCheckoutRepository(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch);
+        return getOrCheckoutRepository(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch, writeAccess);
     }
 
     /**
@@ -379,16 +387,17 @@ public class GitService extends AbstractGitService {
      * @param localPath     The local path to clone the repository to.
      * @param pullOnGet     Pull from the remote on the checked out repository, if it does not need to be cloned.
      * @param defaultBranch The default branch of the target repository
+     * @param writeAccess   whether we want to write to the repository
      * @return the repository if it could be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch)
-            throws GitAPIException, GitException, InvalidPathException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
+            boolean writeAccess) throws GitAPIException, GitException, InvalidPathException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUri differs from the targetRepoUri, we attempt to clone the source repo into the target directory
-        Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch);
+        Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch, writeAccess);
 
         // Note: in case the actual git repository in the file system is corrupt (e.g. by accident), we will get an exception here
         // the exception will then delete the folder, so that the next attempt would be successful.
@@ -435,7 +444,7 @@ public class GitService extends AbstractGitService {
                 // make sure that cloneInProgress is released
                 cloneInProgressOperations.remove(localPath);
             }
-            return getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch);
+            return getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch, writeAccess);
         }
     }
 
@@ -499,7 +508,7 @@ public class GitService extends AbstractGitService {
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
     public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri) {
-        return getExistingCheckedOutRepositoryByLocalPath(localPath, remoteRepositoryUri, defaultBranch);
+        return getExistingCheckedOutRepositoryByLocalPath(localPath, remoteRepositoryUri, defaultBranch, false);
     }
 
     /**
@@ -508,15 +517,17 @@ public class GitService extends AbstractGitService {
      * @param localPath           to git repo on server.
      * @param remoteRepositoryUri the remote repository uri for the git repository, will be added to the Repository object for later use, can be null
      * @param defaultBranch       the name of the branch that should be used as default branch
+     * @param writeAccess         whether the repository should be opened with write access
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri, String defaultBranch) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri, String defaultBranch,
+            boolean writeAccess) {
         try {
             if (!Files.exists(localPath)) {
                 return null;
             }
             // Try to retrieve the git repository from our server.
-            return linkRepositoryForExistingGit(localPath, remoteRepositoryUri, defaultBranch, false);
+            return linkRepositoryForExistingGit(localPath, remoteRepositoryUri, defaultBranch, false, writeAccess);
         }
         catch (IOException | InvalidRefNameException ex) {
             log.warn("Cannot get existing checkout out repository by local path: {}", ex.getMessage());
@@ -924,12 +935,13 @@ public class GitService extends AbstractGitService {
      * It uses the default branch, also see {@link #getBareRepository(VcsRepositoryUri, String)} for more details.
      *
      * @param repositoryUri The URI of the remote VCS repository, not null.
+     * @param writeAccess   Whether we write to the repository or not. If true, the git config will be set.
      * @return The initialized bare Repository instance.
      * @throws GitException If the repository cannot be created due to I/O errors or invalid reference names.
      */
     @NotNull
-    public Repository getBareRepository(VcsRepositoryUri repositoryUri) {
-        return getBareRepository(repositoryUri, defaultBranch);
+    public Repository getBareRepository(VcsRepositoryUri repositoryUri, boolean writeAccess) {
+        return getBareRepository(repositoryUri, defaultBranch, writeAccess);
     }
 
     /**
@@ -943,14 +955,15 @@ public class GitService extends AbstractGitService {
      *
      * @param repositoryUri The URI of the remote VCS repository, not null.
      * @param branch        The branch to be used for the bare repository, typically the default branch.
+     * @param writeAccess   Whether we write to the repository or not. If true, the git config will be set.
      * @return The initialized bare Repository instance.
      * @throws GitException If the repository cannot be created due to I/O errors or invalid reference names.
      */
-    public Repository getBareRepository(VcsRepositoryUri repositoryUri, String branch) {
+    public Repository getBareRepository(VcsRepositoryUri repositoryUri, String branch, boolean writeAccess) {
         var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
         var localPath = localRepoUri.getLocalRepositoryPath(localVCBasePath);
         try {
-            return linkRepositoryForExistingGit(localPath, repositoryUri, branch, true);
+            return linkRepositoryForExistingGit(localPath, repositoryUri, branch, true, writeAccess);
         }
         catch (IOException | InvalidRefNameException e) {
             log.error("Could not create the bare repository with uri {}", repositoryUri, e);
@@ -1048,8 +1061,7 @@ public class GitService extends AbstractGitService {
             refUpdate.setNewObjectId(newCommitId);
             refUpdate.setForceUpdate(true);
             refUpdate.update();
-
-            return getBareRepository(targetRepoUri);
+            return getBareRepository(targetRepoUri, true);
         }
     }
 
@@ -1132,7 +1144,7 @@ public class GitService extends AbstractGitService {
                 log.debug("RefUpdate result: {}", result);
             }
 
-            return getBareRepository(targetRepoUri);
+            return getBareRepository(targetRepoUri, true);
         }
     }
 
@@ -1347,7 +1359,7 @@ public class GitService extends AbstractGitService {
         try {
             if (repoUri != null && repositoryAlreadyExists(repoUri)) {
                 // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
-                Repository repo = getOrCheckoutRepository(repoUri, false);
+                Repository repo = getOrCheckoutRepository(repoUri, false, false);
                 deleteLocalRepository(repo);
             }
         }
@@ -1525,13 +1537,13 @@ public class GitService extends AbstractGitService {
 
         if (profileService.isLocalVCActive()) {
             log.debug("Using local VCS for getting commit info on repo {}", vcsRepositoryUri);
-            try (var repo = getBareRepository(vcsRepositoryUri); var git = new Git(repo)) {
+            try (var repo = getBareRepository(vcsRepositoryUri, false); var git = new Git(repo)) {
                 getCommitInfo(git, commitInfos);
             }
         }
         else {
             log.debug("Checking out repo {} to get commit info", vcsRepositoryUri);
-            try (var repo = getOrCheckoutRepository(vcsRepositoryUri, true); var git = new Git(repo)) {
+            try (var repo = getOrCheckoutRepository(vcsRepositoryUri, true, false); var git = new Git(repo)) {
                 getCommitInfo(git, commitInfos);
             }
         }
@@ -1559,7 +1571,7 @@ public class GitService extends AbstractGitService {
      */
     public InputStreamResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
         // Get the bare repository
-        Repository repository = getBareRepository(repositoryUri);
+        Repository repository = getBareRepository(repositoryUri, false);
 
         try (Git git = new Git(repository)) {
             // Create a ByteArrayOutputStream to hold the archive data
@@ -1656,7 +1668,7 @@ public class GitService extends AbstractGitService {
     public InputStreamResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
         log.debug("Exporting repository with full history to memory using JGit archive: {}", repositoryUri);
 
-        Repository repository = getBareRepository(repositoryUri);
+        Repository repository = getBareRepository(repositoryUri, false);
         String branch = determineDefaultBranch(repository);
 
         if (branch == null) {
@@ -1768,7 +1780,7 @@ public class GitService extends AbstractGitService {
      * @throws IOException     if IO operations fail
      */
     public InputStreamResource exportRepositoryBundle(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
-        Repository repository = getBareRepository(repositoryUri);
+        Repository repository = getBareRepository(repositoryUri, false);
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             BundleWriter bundleWriter = new BundleWriter(repository);
