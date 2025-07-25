@@ -173,7 +173,7 @@ export class CourseTrainingQuizComponent {
         if (!questionId) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
-                message: 'error.noExerciseIdForQuestion',
+                message: 'No questionId found',
             });
             this.isSubmitting = false;
             return;
