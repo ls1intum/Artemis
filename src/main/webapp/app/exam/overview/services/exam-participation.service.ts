@@ -37,6 +37,8 @@ export class ExamParticipationService {
 
     private examEndViewSubject = new BehaviorSubject<boolean>(false);
     endViewDisplayed$ = this.examEndViewSubject.asObservable();
+    private shouldUpdateTestExams = new BehaviorSubject<boolean>(false);
+    shouldUpdateTestExamsObservable = this.shouldUpdateTestExams.asObservable();
 
     public getResourceURL(courseId: number, examId: number): string {
         return `api/exam/courses/${courseId}/exams/${examId}`;
@@ -343,6 +345,9 @@ export class ExamParticipationService {
 
     setEndView(isEndView: boolean) {
         this.examEndViewSubject.next(isEndView);
+    }
+    setShouldUpdateTestExams(shouldUpdate: boolean) {
+        this.shouldUpdateTestExams.next(shouldUpdate);
     }
 
     setExamLayout(isExamStarted: boolean = true, isTestRun: boolean = false) {

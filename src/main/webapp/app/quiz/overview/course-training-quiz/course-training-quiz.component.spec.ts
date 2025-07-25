@@ -145,7 +145,7 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should submit quiz and handle success', () => {
-        const submitSpy = jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(of(new HttpResponse({ body: result })));
+        const submitSpy = jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(of(new HttpResponse({ body: result })));
         const showResultSpy = jest.spyOn(component, 'showResult');
         // Drag and Drop
         jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1, exerciseId: 1 } as any);
@@ -196,7 +196,7 @@ describe('CourseTrainingQuizComponent', () => {
             headers: new HttpHeaders({ 'X-artemisApp-message': 'Fehler beim Absenden' }),
             statusText: 'Bad Request',
         });
-        jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(throwError(() => error));
+        jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(throwError(() => error));
         component.currentIndex.set(2);
         component.onSubmit();
         expect(alertSpy).toHaveBeenCalled();
