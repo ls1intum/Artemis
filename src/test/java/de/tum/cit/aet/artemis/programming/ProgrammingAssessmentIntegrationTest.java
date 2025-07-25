@@ -564,6 +564,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var longText = "abc".repeat(5000);
         manualLongFeedback.setDetailText(longText);
         var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0);
+        result.setRated(true);
         result = resultRepository.save(result);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -583,7 +584,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var manualLongFeedback = new Feedback().credits(0.0).type(FeedbackType.MANUAL_UNREFERENCED);
         var longText = "abc".repeat(5000);
         manualLongFeedback.setDetailText(longText);
-        var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0);
+        var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0).rated(true);
         result = resultRepository.save(result);
 
         var newLongText = "def".repeat(5000);
@@ -1016,6 +1017,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         Result result = programmingExerciseStudentParticipation.getSubmissions().stream().findFirst().orElseThrow().getFirstResult();
         assertThat(result).isNotNull();
         result.setScore(100D);
+        result.setRated(true);
         resultRepository.save(result);
 
         var params = new LinkedMultiValueMap<String, String>();
