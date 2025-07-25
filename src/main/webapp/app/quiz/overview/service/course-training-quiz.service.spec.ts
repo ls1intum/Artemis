@@ -6,6 +6,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { QuizTrainingAnswer } from '../course-training-quiz/QuizTrainingAnswer';
+import { SubmittedAnswerAfterEvaluationDTO } from '../course-training-quiz/SubmittedAnswerAfterEvaluationDTO';
 
 describe('CourseTrainingQuizService', () => {
     let service: CourseTrainingQuizService;
@@ -39,7 +40,8 @@ describe('CourseTrainingQuizService', () => {
 
     it('should submit submission for training', fakeAsync(() => {
         const mockTrainingAnswer = new QuizTrainingAnswer();
-        mockTrainingAnswer.scoreInPoints = 10;
+        const mockAnswer = new SubmittedAnswerAfterEvaluationDTO();
+        mockAnswer.scoreInPoints = 10;
 
         service.submitForTraining(mockTrainingAnswer, questionId, courseId).subscribe((res) => {
             expect(res.body!.scoreInPoints).toBe(10);
@@ -47,7 +49,7 @@ describe('CourseTrainingQuizService', () => {
 
         const req = httpMock.expectOne(`api/quiz/courses/${courseId}/training/${questionId}/quiz`);
         expect(req.request.method).toBe('POST');
-        req.flush(mockTrainingAnswer);
+        req.flush(mockAnswer);
         tick();
     }));
 });

@@ -11,13 +11,13 @@ import { CourseTrainingQuizService } from '../service/course-training-quiz.servi
 import { MockSyncStorage } from 'src/test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { SessionStorageService } from 'ngx-webstorage';
-import { Result } from '../../../exercise/shared/entities/result/result.model';
 import { AlertService } from '../../../shared/service/alert.service';
 import { CourseManagementService } from '../../../core/course/manage/services/course-management.service';
 import { MockInstance } from 'ng-mocks';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { signal } from '@angular/core';
+import { SubmittedAnswerAfterEvaluationDTO } from './SubmittedAnswerAfterEvaluationDTO';
 
 const question1: QuizQuestion = {
     id: 1,
@@ -46,7 +46,7 @@ const question3: QuizQuestion = {
 
 const course = { id: 1, title: 'Test Course' };
 
-const result: Result = { id: 1, submission: { submittedAnswers: [{ scoreInPoints: 2 }] } as any };
+const answer: SubmittedAnswerAfterEvaluationDTO = { selectedOptions: [{ scoreInPoints: 2 }] };
 
 describe('CourseTrainingQuizComponent', () => {
     MockInstance.scope();
@@ -141,7 +141,7 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should submit quiz and handle success', () => {
-        const submitSpy = jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(of(new HttpResponse({ body: result })));
+        const submitSpy = jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(of(new HttpResponse({ body: answer })));
         const showResultSpy = jest.spyOn(component, 'applyEvaluatedAnswer');
         // Drag and Drop
         jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1, exerciseId: 1 } as any);
@@ -150,7 +150,7 @@ describe('CourseTrainingQuizComponent', () => {
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(component.isSubmitting).toBeFalse();
         expect(component.submitted).toBeTrue();
-        expect(showResultSpy).toHaveBeenCalledWith(result);
+        expect(showResultSpy).toHaveBeenCalledWith(answer);
         jest.clearAllMocks();
         // Multiple Choice
         jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question2, exerciseId: 2 } as any);
@@ -159,7 +159,7 @@ describe('CourseTrainingQuizComponent', () => {
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(component.isSubmitting).toBeFalse();
         expect(component.submitted).toBeTrue();
-        expect(showResultSpy).toHaveBeenCalledWith(result);
+        expect(showResultSpy).toHaveBeenCalledWith(answer);
         jest.clearAllMocks();
         // Short Answer
         jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question3, exerciseId: 3 } as any);
@@ -168,7 +168,7 @@ describe('CourseTrainingQuizComponent', () => {
         expect(submitSpy).toHaveBeenCalledOnce();
         expect(component.isSubmitting).toBeFalse();
         expect(component.submitted).toBeTrue();
-        expect(showResultSpy).toHaveBeenCalledWith(result);
+        expect(showResultSpy).toHaveBeenCalledWith(answer);
     });
 
     it('should show a warning if no exerciseId is present', () => {

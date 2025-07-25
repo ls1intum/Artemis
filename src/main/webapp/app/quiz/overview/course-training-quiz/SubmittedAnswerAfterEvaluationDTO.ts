@@ -1,4 +1,4 @@
-export interface SubmittedAnswerAfterEvaluationDTO {
+export class SubmittedAnswerAfterEvaluationDTO {
     scoreInPoints?: number;
     selectedOptions?: any[];
     mappings?: any[];
