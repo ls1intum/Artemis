@@ -212,6 +212,11 @@ public class Result extends DomainObject implements Comparable<Result> {
         setScore(totalPoints / maxPoints * 100, course);
     }
 
+    /**
+     * Checks whether the result is rated.
+     *
+     * @return true if the result is rated. If rated is null, it returns false.
+     */
     public boolean isRated() {
         return Boolean.TRUE.equals(this.rated);
     }
