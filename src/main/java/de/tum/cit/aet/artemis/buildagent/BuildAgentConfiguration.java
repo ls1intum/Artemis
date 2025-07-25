@@ -108,7 +108,7 @@ public class BuildAgentConfiguration {
      * @param newConcurrentBuildSize the new number of concurrent builds
      * @return true if the adjustment was successful, false otherwise
      */
-    public boolean adjustConcurrentBuildSize(int newConcurrentBuildSize) {
+    public synchronized boolean adjustConcurrentBuildSize(int newConcurrentBuildSize) {
         if (newConcurrentBuildSize <= 0) {
             log.error("Invalid concurrent build size: {}. Must be greater than 0.", newConcurrentBuildSize);
             return false;
