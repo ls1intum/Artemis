@@ -11,7 +11,6 @@ import { CourseTrainingQuizService } from '../service/course-training-quiz.servi
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { QuizParticipationService } from '../service/quiz-participation.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MultipleChoiceSubmittedAnswer } from '../../shared/entities/multiple-choice-submitted-answer.model';
