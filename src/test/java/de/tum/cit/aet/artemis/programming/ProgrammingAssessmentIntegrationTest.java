@@ -280,7 +280,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(response.getSubmission()).isNotNull();
         assertThat(response.getSubmission().getParticipation()).isEqualTo(manualResult.getSubmission().getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
-        assertThat(response.isRated()).isEqualTo(Boolean.TRUE);
+        assertThat(response.isRated()).isTrue();
         var now = ZonedDateTime.now();
         assertThat(response.getCompletionDate()).isBetween(now.minusSeconds(1), now.plusSeconds(1));
 
