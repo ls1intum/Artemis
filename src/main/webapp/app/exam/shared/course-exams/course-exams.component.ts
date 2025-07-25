@@ -56,7 +56,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private studentExamTestExamUpdateSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
     private studentExams: StudentExam[];
-    private studentExamsForRealExams = new Map<number, StudentExam>();
+    studentExamsForRealExams = new Map<number, StudentExam>();
     public expandAttemptsMap = new Map<number, boolean>();
     public realExamsOfCourse: Exam[] = [];
     public testExamsOfCourse: Exam[] = [];
