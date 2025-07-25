@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
@@ -44,6 +45,22 @@ public class ArtemisGitServletService extends GitServlet {
      * Initialize the ArtemisGitServlet by setting the repository resolver and adding filters for fetch and push requests.
      * Sets the pre/post receive/upload hooks.
      * <p>
+     * For a git push the following HTTP requests are sent:
+     * <ol>
+     * <li>GET /info/refs?service=git-receive-pack (without Authentication header)</li>
+     * <li>GET /info/refs?service=git-receive-pack (without Authentication header)</li>
+     * <li>POST /git-receive-pack (with Authentication header)</li>
+     * </ol>
+     * </p>
+     * <p>
+     * For a git pull / clone request the following HTTP requests are sent:
+     * <ol>
+     * <li>GET /info/refs?service=git-upload-pack (without Authentication header)</li>
+     * <li>GET /info/refs?service=git-upload-pack (with Authentication header)</li>
+     * <li>POST /git-upload-pack (with Authentication header)</li>
+     * </ol>
+     * </p>
+     * <p>
      * For general information on the different hooks and git packs see the git documentation:
      * <p>
      * <a href="https://git-scm.com/docs/git-receive-pack">https://git-scm.com/docs/git-receive-pack</a>
@@ -69,8 +86,7 @@ public class ArtemisGitServletService extends GitServlet {
         this.setReceivePackFactory((request, repository) -> {
             ReceivePack receivePack = new ReceivePack(repository);
             // we only need to set the PreReceiveHook and PostReceiveHook for authorized POST requests, as only these trigger onPreReceive or onPostReceive.
-            // Before that, 2 GET requests to /info/refs?service=git-receive-pack are used to retrieve the refs and do not trigger the hooks.
-            if (request.getMethod().equals(HttpMethod.POST.name()) && request.getHeader(HttpHeaders.AUTHORIZATION) != null) {
+            if (isAuthorizedPostRequest(request)) {
                 try {
                     String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
                     User user = localVCServletService.getUserByAuthHeader(authorizationHeader);
@@ -88,11 +104,22 @@ public class ArtemisGitServletService extends GitServlet {
 
         this.setUploadPackFactory((request, repository) -> {
             UploadPack uploadPack = new UploadPack(repository);
-
-            // Add the custom pre-upload hook, to distinguish between clone and pull operations
-            uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(localVCServletService, request));
+            // we only need to set the LocalVCFetchPreUploadHook for authorized POST requests, as only these trigger onBeginNegotiateRound
+            if (isAuthorizedPostRequest(request)) {
+                // Add the custom pre-upload hook, to distinguish between clone and pull operations
+                uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(localVCServletService, request));
+            }
             return uploadPack;
         });
     }
 
+    /**
+     * Checks if the request is an authorized POST request.
+     *
+     * @param request the HTTP request
+     * @return true if the request is a POST request with an Authorization header, false otherwise
+     */
+    private static boolean isAuthorizedPostRequest(HttpServletRequest request) {
+        return request.getMethod().equals(HttpMethod.POST.name()) && request.getHeader(HttpHeaders.AUTHORIZATION) != null;
+    }
 }
