@@ -290,6 +290,14 @@ public class QuizQuestionProgressService {
         return quizQuestionRepository.areQuizQuestionsAvailableForPractice(courseId);
     }
 
+    /**
+     * saves the progress of a quiz question in the training mode
+     *
+     * @param question   The quiz question for which the progress is to be saved
+     * @param userId     The id of the user
+     * @param answer     The submitted answer for the question
+     * @param answeredAt The time when the question was answered
+     */
     public void saveProgressFromTraining(QuizQuestion question, Long userId, SubmittedAnswer answer, ZonedDateTime answeredAt) {
         QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
         QuizQuestionProgressData data = existingProgress.getProgressJson() != null ? existingProgress.getProgressJson() : new QuizQuestionProgressData();
