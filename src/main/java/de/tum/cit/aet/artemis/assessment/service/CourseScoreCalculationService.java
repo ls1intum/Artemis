@@ -419,7 +419,7 @@ public class CourseScoreCalculationService {
 
         var resultsList = new ArrayList<>(resultsSet);
 
-        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null).toList();
+        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> result.isRated() && result.getCompletionDate() != null).toList();
 
         if (ratedResultsWithCompletionDate.isEmpty()) {
             return emptyResult;
