@@ -2,28 +2,21 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
-import { MockDirective } from 'ng-mocks';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
+import { of } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { By } from '@angular/platform-browser';
-import { ProfileInfo } from '../../core/layouts/profiles/profile-info.model';
 
 describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     let component: ExerciseFeedbackSuggestionOptionsComponent;
     let fixture: ComponentFixture<ExerciseFeedbackSuggestionOptionsComponent>;
     let athenaService: AthenaService;
     let profileService: ProfileService;
-    let getProfileInfoSub: jest.SpyInstance;
     const pastDueDate = dayjs().subtract(1, 'hour');
     const futureDueDate = dayjs().add(1, 'hour');
 
@@ -31,9 +24,10 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } },
-                MockDirective(TranslateDirective),
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ProfileService, useClass: MockProfileService },
+                {
+                    provide: ProfileService,
+                    useClass: MockProfileService,
+                },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -43,7 +37,10 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         component = fixture.componentInstance;
         athenaService = TestBed.inject(AthenaService);
         profileService = TestBed.inject(ProfileService);
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
     });
 
     it('should initialize with available modules', async () => {
@@ -109,14 +106,10 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         component.availableAthenaModules = ['Module1', 'Module2'];
         component.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
 
-        expect(component.showDropdownList).toBeFalse();
-
         const event = { target: { checked: true } };
         component.toggleFeedbackSuggestions(event);
 
         expect(component.exercise.feedbackSuggestionModule).toBe('Module1');
-        expect(component.showDropdownList).toBeTrue();
-        expect(component.exercise.allowManualFeedbackRequests).toBeFalse();
 
         event.target.checked = false;
         component.toggleFeedbackSuggestions(event);
@@ -124,44 +117,18 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         expect(component.exercise.feedbackSuggestionModule).toBeUndefined();
     });
 
-    it('should toggle feedback requests and set the module for programming exercises', () => {
+    it('should toggle feedback requests and set the module for text exercises', () => {
         component.availableAthenaModules = ['Module1', 'Module2'];
-        jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of(component.availableAthenaModules));
-        component.exercise = { type: ExerciseType.PROGRAMMING, dueDate: futureDueDate, assessmentType: AssessmentType.SEMI_AUTOMATIC } as Exercise;
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue({ activeProfiles: [PROFILE_ATHENA] } as ProfileInfo);
-        fixture.detectChanges();
+        component.exercise = { type: ExerciseType.TEXT } as Exercise;
 
-        // assume a module is chosen, hence, the controls are active
         const event = { target: { checked: true } };
-        component.toggleFeedbackSuggestions(event);
+        component.toggleFeedbackRequests(event); // for students
 
-        expect(component.inputControlsDisabled()).toBeFalse();
-        expect(component.showDropdownList).toBeTrue();
+        expect(component.exercise.feedbackSuggestionModule).toBe('Module1');
 
-        // change assessment type
-        component.exercise.assessmentType = AssessmentType.AUTOMATIC;
-        fixture.detectChanges();
+        event.target.checked = false;
+        component.toggleFeedbackSuggestions(event); // for tutors, should disable both
 
-        // now, the input is unchecked and the controls are disabled
-        expect(component.inputControlsDisabled()).toBeTrue();
-        expect(component.showDropdownList).toBeFalse();
-
-        let checkbox = fixture.debugElement.query(By.css('#feedbackSuggestionsEnabledCheck'));
-        expect(checkbox.nativeElement.disabled).toBeTrue();
-
-        // Now, change the assessment type back to semi automatic
-        component.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        component.exercise.feedbackSuggestionModule = undefined; // will be reset by parent component
-
-        fixture.detectChanges();
-
-        // the controls are enabled, but not checked
-        expect(component.inputControlsDisabled()).toBeFalse();
-        expect(component.showDropdownList).toBeFalse();
-
-        checkbox = fixture.debugElement.query(By.css('#feedbackSuggestionsEnabledCheck'));
-        expect(checkbox.nativeElement.disabled).toBeFalse();
-        expect(checkbox.nativeElement.checked).toBeFalse();
+        expect(component.exercise.feedbackSuggestionModule).toBeUndefined();
     });
 });

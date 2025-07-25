@@ -71,8 +71,9 @@ public class ArtemisGitServletService extends GitServlet {
             User user = null;
             try {
                 String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-                user = localVCServletService.getUserByAuthHeader(authorizationHeader);
-
+                if (authorizationHeader != null) {
+                    user = localVCServletService.getUserByAuthHeader(authorizationHeader);
+                }
             }
             catch (LocalVCAuthException exception) {
                 log.error("Error while retrieving user from request header: {}", exception.getMessage());

@@ -67,15 +67,11 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
-        if (this.athenaEnabled) {
-            this.requestFeedbackEnabled = !!this.exercise().preliminaryFeedbackModule;
-        } else {
-            this.requestFeedbackEnabled = this.exercise().allowManualFeedbackRequests ?? false;
-        }
         this.isExamExercise = isExamExercise(this.exercise());
         if (this.isExamExercise || !this.exercise().id) {
             return;
         }
+        this.requestFeedbackEnabled = this.exercise().allowFeedbackRequests ?? false;
         this.updateParticipation();
         this.setUserAcceptedExternalLLMUsage();
     }

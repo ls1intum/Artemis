@@ -18,8 +18,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { UserService } from 'app/core/user/shared/user.service';
-import { MockUserService } from 'test/helpers/mocks/service/mock-user.service';
 
 describe('RequestFeedbackButtonComponent', () => {
     let component: RequestFeedbackButtonComponent;
@@ -29,8 +27,6 @@ describe('RequestFeedbackButtonComponent', () => {
     let alertService: AlertService;
     let courseExerciseService: CourseExerciseService;
     let exerciseService: ExerciseService;
-    let userService: UserService;
-    let accountService: AccountService;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -39,7 +35,6 @@ describe('RequestFeedbackButtonComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: UserService, useClass: MockUserService },
                 provideHttpClient(),
             ],
         })
@@ -52,8 +47,6 @@ describe('RequestFeedbackButtonComponent', () => {
                 exerciseService = TestBed.inject(ExerciseService);
                 profileService = TestBed.inject(ProfileService);
                 alertService = TestBed.inject(AlertService);
-                userService = TestBed.inject(UserService);
-                accountService = TestBed.inject(AccountService);
             });
     });
 
@@ -71,16 +64,13 @@ describe('RequestFeedbackButtonComponent', () => {
         fixture.detectChanges();
     }
 
-    function createBaseExercise(type: ExerciseType, isExam = false, participation?: StudentParticipation, preliminaryModule?: string): Exercise {
-        if (!preliminaryModule) {
-            preliminaryModule = 'module';
-        }
+    function createBaseExercise(type: ExerciseType, isExam = false, participation?: StudentParticipation): Exercise {
         return {
             id: 1,
             type,
             course: isExam ? undefined : {},
             studentParticipations: participation ? [participation] : undefined,
-            preliminaryFeedbackModule: preliminaryModule,
+            allowFeedbackRequests: true,
         } as Exercise;
     }
 
@@ -278,47 +268,5 @@ describe('RequestFeedbackButtonComponent', () => {
 
         expect(modalSpy).not.toHaveBeenCalled();
         expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id);
-    }));
-
-    it('should display the button when Athena is disabled and it is not an exam exercise and manual feedback requests are enabled', fakeAsync(() => {
-        setAthenaEnabled(false);
-        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, allowManualFeedbackRequests: true } as Exercise; // course undefined means exam exercise
-        fixture.componentRef.setInput('exercise', exercise);
-        mockExerciseDetails(exercise);
-
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
-
-        const button = debugElement.query(By.css('a'));
-        expect(button).not.toBeNull();
-    }));
-
-    it('should accept external LLM usage and proceed with feedback request', fakeAsync(() => {
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-        setupComponentInputs(exercise, true, false);
-        fixture.componentRef.setInput('hasAthenaResultForLatestSubmission', false);
-        fixture.componentRef.setInput('pendingChanges', false);
-        component.hasUserAcceptedExternalLLMUsage = false;
-
-        const acceptSpy = jest.spyOn(userService, 'updateExternalLLMUsageConsent').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
-        const setAcceptedSpy = jest.spyOn(accountService, 'setUserAcceptedExternalLLMUsage');
-        const requestFeedbackSpy = jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
-        const mockModal = {
-            close: jest.fn(),
-        };
-
-        initAndTick();
-
-        component.acceptExternalLLMUsage(mockModal);
-        tick();
-
-        expect(acceptSpy).toHaveBeenCalledWith(true);
-        expect(component.hasUserAcceptedExternalLLMUsage).toBeTrue();
-        expect(setAcceptedSpy).toHaveBeenCalled();
-        expect(mockModal.close).toHaveBeenCalled();
-        expect(requestFeedbackSpy).toHaveBeenCalledWith(exercise.id);
     }));
 });
