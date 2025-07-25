@@ -477,8 +477,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         }
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
 
-        // numberOfCorrectionRounds can be 0 for test exams
-        if (numberOfCorrectionRounds == 0) {
+        boolean testExamNumberOfCorrectionRounds = numberOfCorrectionRounds == 0;
+        if (testExamNumberOfCorrectionRounds) {
             return correctionRoundsDataStats;
         }
 
