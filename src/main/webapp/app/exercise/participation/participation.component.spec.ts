@@ -288,7 +288,7 @@ describe('ParticipationComponent', () => {
 
         const deleteStub = jest.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse()));
 
-        component.deleteParticipation(1, {});
+        component.deleteParticipation(1);
         tick();
 
         expect(deleteStub).toHaveBeenCalledOnce();

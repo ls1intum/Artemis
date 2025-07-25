@@ -4,47 +4,6 @@
             {{ exercise().shortName || '' }}
         </div>
     }
-    @if (displayRepositoryUri()) {
-        <div>
-            <div>
-                @if (exercise().templateParticipation?.repositoryUri) {
-                    <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
-                                            the links/clone-buttons are disabled--->
-                    <span>
-                        <a href="{{ exercise().templateParticipation?.repositoryUri || '' }}" target="_blank">Template</a>
-                    </span>
-                }
-                @if (numberOfResultsOfTemplateParticipation) {
-                    <jhi-programming-exercise-instructor-status
-                        [participationType]="participationType.TEMPLATE"
-                        [participation]="exercise().templateParticipation!"
-                        [exercise]="exercise()"
-                    />
-                }
-            </div>
-            <div>
-                @if (exercise().solutionParticipation?.repositoryUri) {
-                    <span>
-                        <a href="{{ exercise().solutionParticipation?.repositoryUri || '' }}" target="_blank">Solution</a>
-                    </span>
-                }
-                @if (numberOfResultsOfSolutionParticipation) {
-                    <jhi-programming-exercise-instructor-status
-                        [participationType]="participationType.SOLUTION"
-                        [participation]="exercise().solutionParticipation!"
-                        [exercise]="exercise()"
-                    />
-                }
-            </div>
-            <div>
-                @if (exercise().testRepositoryUri) {
-                    <span>
-                        <a href="{{ exercise().testRepositoryUri }}" target="_blank">Test</a>
-                    </span>
-                }
-            </div>
-        </div>
-    }
     @if (displayTemplateUrls()) {
         <div>
             @if (exercise().templateParticipation?.buildPlanId) {

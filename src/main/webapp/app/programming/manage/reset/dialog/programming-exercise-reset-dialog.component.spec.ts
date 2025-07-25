@@ -97,6 +97,12 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
 
         it('should not be called when there is an error in the reset response', fakeAsync(() => {
             const errorResponse = throwError({ status: 500 });
+            comp.programmingExerciseResetOptions = {
+                deleteBuildPlans: false,
+                deleteRepositories: false,
+                deleteParticipationsSubmissionsAndResults: true,
+                recreateBuildPlans: false,
+            };
             jest.spyOn(programmingExerciseService, 'reset').mockReturnValue(errorResponse);
             jest.spyOn(comp, 'handleResetResponse').mockImplementation();
 
@@ -114,9 +120,9 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
             comp.confirmText = 'Programming Exercise';
             comp.resetInProgress = false;
             comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: true,
+                deleteBuildPlans: false,
                 deleteRepositories: false,
-                deleteParticipationsSubmissionsAndResults: false,
+                deleteParticipationsSubmissionsAndResults: true,
                 recreateBuildPlans: false,
             };
         });
@@ -136,7 +142,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         });
 
         it('should return false when confirmation text is filled correctly, but no option is selected', () => {
-            comp.programmingExerciseResetOptions.deleteBuildPlans = false;
+            comp.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults = false;
             expect(comp.canSubmit).toBeFalse();
         });
 
@@ -160,8 +166,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
 
         it.each`
             option
-            ${'deleteBuildPlans'}
-            ${'deleteRepositories'}
             ${'deleteParticipationsSubmissionsAndResults'}
             ${'recreateBuildPlans'}
         `('should return true when $option is set to true', ({ option }) => {

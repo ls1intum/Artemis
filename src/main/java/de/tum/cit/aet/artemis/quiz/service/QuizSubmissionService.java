@@ -146,7 +146,10 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         quizStatisticService.recalculateStatistics(quizExercise);
 
         // save the question progress
-        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, (StudentParticipation) participation);
+        if (participation instanceof StudentParticipation studentParticipation) {
+            User user = studentParticipation.getStudent().orElseThrow();
+            quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, user.getId());
+        }
 
         log.debug("submit practice quiz finished: {}", quizSubmission);
         return result;
@@ -203,7 +206,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             sendQuizResultToUser(quizExerciseId, participation);
 
             // save the question progress
-            quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, participation);
+            User user = participation.getStudent().orElseThrow();
+            quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, user.getId());
         });
         quizStatisticService.recalculateStatistics(quizExercise);
         // notify users via websocket about new results for the statistics, filter out solution information
@@ -404,4 +408,29 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         return savedQuizSubmission;
     }
 
+    /**
+     * Submits a quiz question for training mode, calculates scores and creates a result.
+     *
+     * @param quizSubmission the quiz submission to be submitted for training
+     * @param quizExercise   the quiz exercise associated with the submission
+     * @param user           the user who is submitting the quiz
+     * @return result the result of the quiz submission
+     */
+    public Result submitForTraining(QuizSubmission quizSubmission, QuizExercise quizExercise, User user) {
+        // update submission properties
+        quizSubmission.setSubmitted(true);
+        quizSubmission.setSubmissionDate(ZonedDateTime.now());
+        // calculate scores
+        quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
+
+        // create result
+        Result result = new Result();
+        result.setSubmission(quizSubmission);
+
+        // save the question progress
+        quizQuestionProgressService.retrieveProgressFromResultAndSubmission(quizExercise, quizSubmission, user.getId());
+
+        log.debug("submit training quiz finished: {}", quizSubmission);
+        return result;
+    }
 }

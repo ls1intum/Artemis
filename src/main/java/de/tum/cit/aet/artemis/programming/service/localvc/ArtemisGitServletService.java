@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -69,9 +70,10 @@ public class ArtemisGitServletService extends GitServlet {
             // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
             User user = null;
             try {
-                String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
-                user = localVCServletService.getUserByAuthHeader(authorizationHeader);
-
+                String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+                if (authorizationHeader != null) {
+                    user = localVCServletService.getUserByAuthHeader(authorizationHeader);
+                }
             }
             catch (LocalVCAuthException exception) {
                 log.error("Error while retrieving user from request header: {}", exception.getMessage());

@@ -308,7 +308,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         createPlagiarismData(userLogin, programmingExercise, modelingExercises);
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation.getVcsRepositoryUri()), any(Path.class), anyBoolean());
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
         return course1;
     }
 
@@ -358,7 +358,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         feedback.setText("feedback");
         participationUtilService.addFeedbackToResult(feedback, submission.getFirstResult());
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean());
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean(), anyBoolean());
         return exam;
     }
 

@@ -73,15 +73,6 @@ describe('Programming Exercise Group Cell Component', () => {
         expect(div.nativeElement.textContent).toContain(exercise.shortName);
     });
 
-    it('should display respository url', () => {
-        fixture.componentRef.setInput('displayRepositoryUri', true);
-        fixture.detectChanges();
-        const span = fixture.debugElement.query(By.css('a'));
-        expect(span).toBeDefined();
-        expect(span.nativeElement.textContent).toBe('Template');
-        expect(span.nativeElement.href).toBe(exercise.templateParticipation!.repositoryUri);
-    });
-
     it('should display editor mode flags', () => {
         fixture.componentRef.setInput('displayEditorMode', true);
         fixture.detectChanges();

@@ -17,50 +17,6 @@
                                 <input
                                     class="form-check-input"
                                     type="checkbox"
-                                    name="deleteBuildPlans"
-                                    [(ngModel)]="this.programmingExerciseResetOptions.deleteBuildPlans"
-                                    (ngModelChange)="
-                                        this.programmingExerciseResetOptions.deleteRepositories =
-                                            this.programmingExerciseResetOptions.deleteBuildPlans && this.programmingExerciseResetOptions.deleteRepositories
-                                    "
-                                />
-                                <span jhiTranslate="artemisApp.programmingExercise.reset.deleteBuildPlans.title" [translateValues]="{ ciPlatform: continuousIntegrationName }">
-                                    Delete student build plans (on {{ continuousIntegrationName }})
-                                </span>
-                            </label>
-                        </div>
-                    </li>
-                }
-                @if (programmingExercise.isAtLeastInstructor && this.programmingExerciseResetOptions.deleteBuildPlans && !this.programmingExerciseResetOptions.deleteRepositories) {
-                    <div class="alert alert-info my-2">
-                        <span jhiTranslate="artemisApp.programmingExercise.reset.deleteBuildPlans.info"></span>
-                    </div>
-                }
-                @if (programmingExercise.isAtLeastInstructor) {
-                    <li>
-                        <div class="checkbox">
-                            <label class="control-label">
-                                <input
-                                    class="form-check-input"
-                                    type="checkbox"
-                                    name="deleteRepositories"
-                                    [(ngModel)]="this.programmingExerciseResetOptions.deleteRepositories"
-                                    (ngModelChange)="this.programmingExerciseResetOptions.deleteBuildPlans = !!$event || this.programmingExerciseResetOptions.deleteBuildPlans"
-                                />
-                                <span jhiTranslate="artemisApp.programmingExercise.reset.deleteRepositories.title" [translateValues]="{ vcPlatform: versionControlName }">
-                                    Delete student repositories (on {{ versionControlName }}).
-                                </span>
-                            </label>
-                        </div>
-                    </li>
-                }
-                @if (programmingExercise.isAtLeastInstructor) {
-                    <li>
-                        <div class="checkbox">
-                            <label class="control-label">
-                                <input
-                                    class="form-check-input"
-                                    type="checkbox"
                                     name="deleteParticipationsSubmissionsAndResults"
                                     [(ngModel)]="this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults"
                                 />
@@ -68,22 +24,6 @@
                             </label>
                         </div>
                     </li>
-                }
-                @if (
-                    programmingExercise.isAtLeastInstructor &&
-                    !this.programmingExerciseResetOptions.deleteRepositories &&
-                    this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults
-                ) {
-                    <div class="alert alert-warning my-2">
-                        <span
-                            jhiTranslate="artemisApp.programmingExercise.reset.artefactsWarning"
-                            [translateValues]="{ vcPlatform: versionControlName, ciPlatform: continuousIntegrationName }"
-                        >
-                            Deleting student participations, submissions, and results without removing the associated repositories and build plans may lead to undeleted artifacts
-                            on
-                            {{ versionControlName }} and {{ continuousIntegrationName }}. Please carefully review if this is the desired action before proceeding.
-                        </span>
-                    </div>
                 }
                 @if (programmingExercise.isAtLeastEditor) {
                     <li>

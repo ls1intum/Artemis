@@ -16,9 +16,6 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
@@ -42,7 +39,6 @@ describe('ProgrammingExercise Management Component', () => {
     let courseExerciseService: CourseExerciseService;
     let programmingExerciseService: ProgrammingExerciseService;
     let modalService: NgbModal;
-    let alertService: AlertService;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -54,7 +50,6 @@ describe('ProgrammingExercise Management Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: AlertService, useClass: MockAlertService },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(EventManager),
                 provideHttpClient(),
@@ -69,7 +64,6 @@ describe('ProgrammingExercise Management Component', () => {
         courseExerciseService = TestBed.inject(CourseExerciseService);
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         modalService = TestBed.inject(NgbModal);
-        alertService = TestBed.inject(AlertService);
 
         comp.programmingExercises = [programmingExercise, programmingExercise2, programmingExercise3];
     });
@@ -175,19 +169,6 @@ describe('ProgrammingExercise Management Component', () => {
 
     it('should return exercise id', () => {
         expect(comp.trackId(0, programmingExercise)).toBe(456);
-    });
-
-    it('should download the repository', () => {
-        // GIVEN
-        const exportRepositoryStub = jest.spyOn(programmingExerciseService, 'exportInstructorRepository').mockReturnValue(of(new HttpResponse<Blob>()));
-        const alertSuccessStub = jest.spyOn(alertService, 'success');
-
-        // WHEN
-        comp.downloadRepository(programmingExercise.id, RepositoryType.TEMPLATE);
-
-        // THEN
-        expect(exportRepositoryStub).toHaveBeenCalledOnce();
-        expect(alertSuccessStub).toHaveBeenCalledOnce();
     });
 
     describe('ProgrammingExercise Search Exercises', () => {

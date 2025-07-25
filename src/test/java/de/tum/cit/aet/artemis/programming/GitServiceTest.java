@@ -81,7 +81,7 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
         var repoUri = gitUtilService.getRepoUriByType(GitUtilService.REPOS.REMOTE);
         gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
         gitUtilService.reinitializeLocalRepository();
-        try (var repo = gitService.getOrCheckoutRepository(repoUri, true)) {
+        try (var repo = gitService.getOrCheckoutRepository(repoUri, true, false)) {
             assertThat(repo).isNotNull();
             assertThat(repo.getRemoteRepositoryUri()).isEqualTo(repoUri);
             assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
@@ -236,7 +236,7 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
-        Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUri(), defaultBranchArtemis);
+        Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUri(), defaultBranchArtemis, true);
 
         assertThat(repo.getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranchArtemis, ConfigConstants.CONFIG_REMOTE_SECTION)).isEqualTo("origin");
         assertThat(repo.getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranchArtemis, ConfigConstants.CONFIG_MERGE_SECTION))

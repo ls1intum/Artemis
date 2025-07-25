@@ -388,9 +388,9 @@ public class ProgrammingExerciseCreationUpdateService {
      */
     public boolean generateStructureOracleFile(VcsRepositoryUri solutionRepoUri, VcsRepositoryUri exerciseRepoUri, VcsRepositoryUri testRepoUri, String testsPath, User user)
             throws IOException, GitAPIException {
-        Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoUri, true);
-        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoUri, true);
-        Repository testRepository = gitService.getOrCheckoutRepository(testRepoUri, true);
+        Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoUri, true, true);
+        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoUri, true, true);
+        Repository testRepository = gitService.getOrCheckoutRepository(testRepoUri, true, true);
 
         gitService.resetToOriginHead(solutionRepository);
         gitService.pullIgnoreConflicts(solutionRepository);

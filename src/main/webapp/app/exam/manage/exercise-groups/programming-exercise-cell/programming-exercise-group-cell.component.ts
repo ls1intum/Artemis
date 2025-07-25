@@ -27,7 +27,6 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
     onlineIdeEnabled = false;
 
     displayShortName = input(false);
-    displayRepositoryUri = input(false);
     displayTemplateUrls = input(false);
     displayEditorMode = input(false);
     exercise = input.required<ProgrammingExercise>();

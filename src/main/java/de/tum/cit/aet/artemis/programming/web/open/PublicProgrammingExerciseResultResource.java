@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -87,7 +88,7 @@ public class PublicProgrammingExerciseResultResource {
      */
     @PostMapping("programming-exercises/new-result")
     @EnforceNothing
-    public ResponseEntity<Void> processNewProgrammingExerciseResult(@RequestHeader("Authorization") String authorizationToken, @RequestBody Object requestBody) {
+    public ResponseEntity<Void> processNewProgrammingExerciseResult(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationToken, @RequestBody Object requestBody) {
         log.debug("Received new programming exercise result from Jenkins");
         if (!matches(authorizationToken)) {
             log.info("Cancelling request with invalid authorizationToken {}", authorizationToken);

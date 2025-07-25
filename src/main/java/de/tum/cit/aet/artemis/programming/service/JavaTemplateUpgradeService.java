@@ -100,7 +100,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         try {
             String templatePomDir = repositoryType == RepositoryType.TESTS ? "test/maven/projectTemplate" : repositoryType.getName();
             Resource[] templatePoms = getTemplateResources(exercise, templatePomDir + "/**/" + POM_FILE);
-            Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURL(repositoryType), true);
+            Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURL(repositoryType), true, true);
             List<File> repositoryPoms = gitService.getFiles(repository).stream().filter(file -> Objects.equals(file.getName(), POM_FILE)).toList();
 
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place

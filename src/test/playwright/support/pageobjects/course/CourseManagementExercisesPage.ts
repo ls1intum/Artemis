@@ -112,10 +112,6 @@ export class CourseManagementExercisesPage {
         await this.page.locator('#import-quiz-exercise').click();
     }
 
-    async exportQuizExercise(exerciseID: number) {
-        await this.getExercise(exerciseID).locator('button', { hasText: 'Export' }).click();
-    }
-
     async clickImportExercise(exerciseID: number) {
         await this.page.locator(`.exercise-${exerciseID}`).locator('.import').click();
     }
@@ -138,6 +134,10 @@ export class CourseManagementExercisesPage {
 
     async openExerciseParticipations(exerciseId: number) {
         await this.getExercise(exerciseId).locator('.btn', { hasText: 'Participations' }).click();
+    }
+
+    async openQuizExerciseDetailsPage(exerciseId: number) {
+        await Promise.all([this.page.waitForURL(`/course-management/*/quiz-exercises/${exerciseId}`), this.page.locator(`#exercise-id-${exerciseId} a`).click()]);
     }
 
     getModelingExerciseTitle(exerciseID: number) {

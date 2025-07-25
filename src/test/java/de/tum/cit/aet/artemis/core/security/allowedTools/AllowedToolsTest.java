@@ -14,8 +14,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -37,7 +37,7 @@ class AllowedToolsTest extends AbstractSpringIntegrationIndependentTest {
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
 
         String jwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, ToolTokenType.SCORPIO);
-        Cookie cookie = new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt);
+        Cookie cookie = new Cookie(Constants.JWT_COOKIE_NAME, jwt);
 
         request.performMvcRequest(get("/api/core/test/testAllowedToolTokenScorpio").cookie(cookie)).andExpect(status().isOk());
     }
@@ -49,7 +49,7 @@ class AllowedToolsTest extends AbstractSpringIntegrationIndependentTest {
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
 
         String jwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, null);
-        Cookie cookie = new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt);
+        Cookie cookie = new Cookie(Constants.JWT_COOKIE_NAME, jwt);
 
         request.performMvcRequest(get("/api/core/test/testAllowedToolTokenScorpio").cookie(cookie)).andExpect(status().isOk());
     }
@@ -61,7 +61,7 @@ class AllowedToolsTest extends AbstractSpringIntegrationIndependentTest {
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
 
         String jwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, ToolTokenType.SCORPIO);
-        Cookie cookie = new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt);
+        Cookie cookie = new Cookie(Constants.JWT_COOKIE_NAME, jwt);
 
         request.performMvcRequest(get("/api/core/test/testNoAllowedToolToken").cookie(cookie)).andExpect(status().isForbidden());
     }

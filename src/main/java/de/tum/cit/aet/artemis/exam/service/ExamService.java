@@ -254,7 +254,7 @@ public class ExamService {
         if (latestSubmission.isPresent()) {
             var lastSubmission = latestSubmission.get();
             if (isStudentAllowedToSeeResult || isAtLeastInstructor) {
-                Result latestResult = lastSubmission.getLatestResult();
+                Result latestResult = lastSubmission.getLatestCompletedResult();
                 if (latestResult != null) {
                     latestResult.setSubmission(lastSubmission);
                     latestResult.filterSensitiveInformation();

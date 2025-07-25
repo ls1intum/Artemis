@@ -74,6 +74,11 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
             return;
         }
 
+        if (this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults) {
+            this.programmingExerciseResetOptions.deleteBuildPlans = true;
+            this.programmingExerciseResetOptions.deleteRepositories = true;
+        }
+
         this.resetInProgress = true;
         this.programmingExerciseService.reset(this.programmingExercise.id, this.programmingExerciseResetOptions).subscribe({
             next: this.handleResetResponse,
@@ -105,11 +110,6 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
      * @returns {boolean} true if at least one reset option is selected, false otherwise
      */
     get hasSelectedOptions(): boolean {
-        return (
-            this.programmingExerciseResetOptions.deleteBuildPlans ||
-            this.programmingExerciseResetOptions.deleteRepositories ||
-            this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults ||
-            this.programmingExerciseResetOptions.recreateBuildPlans
-        );
+        return this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults || this.programmingExerciseResetOptions.recreateBuildPlans;
     }
 }

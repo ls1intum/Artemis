@@ -55,7 +55,7 @@ const moduleThresholds = {
     },
     exam: {
         statements: 91.30,
-        branches:   78.12,
+        branches:   77.82,
         functions:  83.66,
         lines:      91.53,
     },

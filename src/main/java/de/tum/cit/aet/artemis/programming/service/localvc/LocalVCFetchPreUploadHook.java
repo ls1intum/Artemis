@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.PreUploadHook;
 import org.eclipse.jgit.transport.UploadPack;
+import org.springframework.http.HttpHeaders;
 
 public class LocalVCFetchPreUploadHook implements PreUploadHook {
 
@@ -21,7 +22,7 @@ public class LocalVCFetchPreUploadHook implements PreUploadHook {
 
     @Override
     public void onBeginNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int clientOffered) {
-        String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, authorizationHeader, clientOffered);
     }
 
