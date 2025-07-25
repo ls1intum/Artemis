@@ -120,6 +120,6 @@ public class ArtemisGitServletService extends GitServlet {
      * @return true if the request is a POST request with an Authorization header, false otherwise
      */
     private static boolean isAuthorizedPostRequest(HttpServletRequest request) {
-        return request.getMethod().equals(HttpMethod.POST.name()) && request.getHeader(HttpHeaders.AUTHORIZATION) != null;
+        return HttpMethod.POST.name().equals(request.getMethod()) && request.getHeader(HttpHeaders.AUTHORIZATION) != null;
     }
 }
