@@ -100,6 +100,7 @@ describe('BuildAgentSummaryComponent', () => {
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 2,
             status: BuildAgentStatus.ACTIVE,
+            maxConcurrentBuildsAllowed: 2,
         },
         {
             id: 2,
@@ -107,6 +108,7 @@ describe('BuildAgentSummaryComponent', () => {
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 2,
             status: BuildAgentStatus.ACTIVE,
+            maxConcurrentBuildsAllowed: 2,
         },
     ];
 
@@ -276,6 +278,7 @@ describe('BuildAgentSummaryComponent', () => {
                 maxNumberOfConcurrentBuildJobs: 2,
                 numberOfCurrentBuildJobs: 1,
                 status: BuildAgentStatus.ACTIVE,
+                maxConcurrentBuildsAllowed: 2,
             },
             {
                 id: 2,
@@ -283,6 +286,7 @@ describe('BuildAgentSummaryComponent', () => {
                 maxNumberOfConcurrentBuildJobs: 2,
                 numberOfCurrentBuildJobs: 0,
                 status: BuildAgentStatus.PAUSED,
+                maxConcurrentBuildsAllowed: 2,
             },
             {
                 id: 3,
@@ -290,6 +294,7 @@ describe('BuildAgentSummaryComponent', () => {
                 maxNumberOfConcurrentBuildJobs: 2,
                 numberOfCurrentBuildJobs: 0,
                 status: BuildAgentStatus.SELF_PAUSED,
+                maxConcurrentBuildsAllowed: 2,
             },
             {
                 id: 4,
@@ -297,6 +302,7 @@ describe('BuildAgentSummaryComponent', () => {
                 maxNumberOfConcurrentBuildJobs: 2,
                 numberOfCurrentBuildJobs: 0,
                 status: BuildAgentStatus.IDLE,
+                maxConcurrentBuildsAllowed: 2,
             },
         ];
 
@@ -343,6 +349,7 @@ describe('BuildAgentSummaryComponent', () => {
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 0,
             status: BuildAgentStatus.PAUSED,
+            maxConcurrentBuildsAllowed: 2,
         };
         component.buildAgents = [pausedAgent];
         component.onConcurrencyChange('pausedAgent', 3);
@@ -356,6 +363,7 @@ describe('BuildAgentSummaryComponent', () => {
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 0,
             status: BuildAgentStatus.SELF_PAUSED,
+            maxConcurrentBuildsAllowed: 2,
         };
         component.buildAgents = [selfPausedAgent];
         component.onConcurrencyChange('selfPausedAgent', 3);

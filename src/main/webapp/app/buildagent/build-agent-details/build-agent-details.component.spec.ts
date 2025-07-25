@@ -105,6 +105,7 @@ describe('BuildAgentDetailsComponent', () => {
         maxNumberOfConcurrentBuildJobs: 2,
         numberOfCurrentBuildJobs: 2,
         status: BuildAgentStatus.ACTIVE,
+        maxConcurrentBuildsAllowed: 2,
     };
 
     const request = {
