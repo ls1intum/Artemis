@@ -64,12 +64,12 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws GitAPIException {
+    Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
         final var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, user, "test");
         final var repoUri = exercise.getVcsTestRepositoryUri();
-        return gitService.getOrCheckoutRepository(repoUri, pullOnGet);
+        return gitService.getOrCheckoutRepository(repoUri, pullOnGet, writeAccess);
     }
 
     @Override
@@ -190,7 +190,7 @@ public class TestRepositoryResource extends RepositoryResource {
         Repository repository;
         try {
             repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithGroupsAndAuthorities(principal.getName()), "test");
-            repository = gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true);
+            repository = gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true, true);
         }
         catch (AccessForbiddenException e) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");

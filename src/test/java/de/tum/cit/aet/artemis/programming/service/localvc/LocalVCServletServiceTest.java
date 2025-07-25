@@ -23,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -187,7 +188,7 @@ class LocalVCServletServiceTest {
     @Test
     void testResolveAuthenticationMechanismFromSessionOrRequest_withRequestAndMissingHeader() throws Exception {
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER)).thenReturn(null);
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(null);
 
         AuthenticationContext.Request context = new AuthenticationContext.Request(request);
 
@@ -205,7 +206,7 @@ class LocalVCServletServiceTest {
     void testResolveAuthenticationMechanismFromSessionOrRequest_withRequestAndValidHeader() throws Exception {
         HttpServletRequest request = mock(HttpServletRequest.class);
         String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString("user:password".getBytes());
-        when(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER)).thenReturn(authHeader);
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authHeader);
 
         AuthenticationContext.Request context = new AuthenticationContext.Request(request);
 
@@ -225,7 +226,7 @@ class LocalVCServletServiceTest {
         // Create a valid token with the correct prefix and length (50 characters total)
         String token = "vcpat-" + "a".repeat(44); // 6 + 44 = 50 characters total
         String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("user:" + token).getBytes());
-        when(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER)).thenReturn(authHeader);
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authHeader);
 
         testUser.setVcsAccessToken(token);
 
