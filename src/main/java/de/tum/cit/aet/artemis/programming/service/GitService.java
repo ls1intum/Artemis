@@ -1547,11 +1547,6 @@ public class GitService extends AbstractGitService {
         });
     }
 
-    public void clearCachedRepositories() {
-        cachedRepositories.clear();
-        cachedBareRepositories.clear();
-    }
-
     /**
      * Exports a repository snapshot directly to memory without creating temporary files.
      * This method uses JGit's ArchiveCommand to create a zip archive of the repository's HEAD state.

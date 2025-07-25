@@ -31,16 +31,17 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -125,18 +126,19 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = java.nio.file.Files.createTempDirectory("testOriginRepo");
-        localRepo.configureRepos("testLocalRepo", originRepoPath);
+        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        templateParticipation
+                .setRepositoryUri(new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, originRepoPath)).getURI().toString());
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
         // Mock the getBareRepository call to return a proper repository
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-snapshot/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);
@@ -207,19 +209,20 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = java.nio.file.Files.createTempDirectory("testOriginRepo");
-        localRepo.configureRepos("testLocalRepo", originRepoPath);
+        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        templateParticipation
+                .setRepositoryUri(new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, originRepoPath)).getURI().toString());
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
         // Mock the getBareRepository and getOrCheckoutRepository calls
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(), any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(), any());
 
         byte[] result = request.get(
                 "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-with-full-history/" + RepositoryType.TEMPLATE.name(), HttpStatus.OK,
@@ -315,18 +318,19 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = java.nio.file.Files.createTempDirectory("testOriginRepo");
-        localRepo.configureRepos("testLocalRepo", originRepoPath);
+        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        templateParticipation
+                .setRepositoryUri(new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, originRepoPath)).getURI().toString());
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
         // Mock the getBareRepository call to return a proper repository
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-bundle/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);
@@ -356,7 +360,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = java.nio.file.Files.createTempDirectory("testOriginRepo");
-        localRepo.configureRepos("testLocalRepo", originRepoPath);
+        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         // Add multiple commits to create history
         createAndCommitFile(localRepo, "file1.txt", "Initial content", "Initial commit");
@@ -366,13 +370,14 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        templateParticipation
+                .setRepositoryUri(new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, originRepoPath)).getURI().toString());
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
         // Mock the getBareRepository call to return a proper repository
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-bundle/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);
@@ -403,20 +408,21 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = Files.createTempDirectory("testOriginRepo");
-        localRepo.configureRepos("testLocalRepo", originRepoPath);
+        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         createTestRepositoryContent(localRepo);
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        templateParticipation
+                .setRepositoryUri(new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, originRepoPath)).getURI().toString());
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(), any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(), any());
 
         var snapshotStats = testEndpointWithWarmup("Repository Snapshot",
                 "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-snapshot/" + RepositoryType.TEMPLATE.name(),
@@ -526,9 +532,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
     }
 
     private void createAndCommitFile(LocalRepository localRepository, String filename, String content, String commitMessage) throws Exception {
-        var file = Path.of(localRepository.localRepoFile.toPath().toString(), filename);
+        var file = Path.of(localRepository.workingCopyGitRepoFile.toPath().toString(), filename);
         FileUtils.writeStringToFile(file.toFile(), content, "UTF-8");
-        localRepository.localGit.add().addFilepattern(filename).call();
-        GitService.commit(localRepository.localGit).setMessage(commitMessage).call();
+        localRepository.workingCopyGitRepo.add().addFilepattern(filename).call();
+        GitService.commit(localRepository.workingCopyGitRepo).setMessage(commitMessage).call();
     }
 }
