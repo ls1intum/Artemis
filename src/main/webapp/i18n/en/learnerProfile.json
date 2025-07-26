@@ -33,14 +33,14 @@
                 "title": "Feedback Learner Profile",
                 "description": "Here, you are able to view and update your preferences regarding your feedback learner profile. These settings are used to then personalize the automated feedback you get after submitting your exercise.",
                 "feedbackDetail": {
-                    "label": "Delivery of Feedback",
+                    "label": "Level of Detail",
                     "description": "Choose whether you prefer brief and straight to the point feedback or detailed feedback with explanations and examples.",
                     "brief": "Brief",
                     "neutral": "Neutral",
                     "detailed": "Detailed"
                 },
                 "feedbackFormality": {
-                    "label": "Tone of Feedback",
+                    "label": "Style of Feedback",
                     "description": "Choose whether you prefer formal and professional feedback or friendly and approachable feedback.",
                     "formal": "Formal",
                     "neutral": "Neutral",

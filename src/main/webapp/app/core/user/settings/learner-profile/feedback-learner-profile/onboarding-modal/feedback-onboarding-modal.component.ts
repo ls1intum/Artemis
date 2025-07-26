@@ -9,6 +9,7 @@ import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 
 @Component({
     selector: 'jhi-feedback-onboarding-modal',
@@ -28,6 +29,7 @@ export class FeedbackOnboardingModalComponent {
     private learnerProfileApiService = inject(LearnerProfileApiService);
     private alertService = inject(AlertService);
     protected translateService = inject(TranslateService);
+    protected themeService = inject(ThemeService);
 
     /**
      * Navigates to the next step in the onboarding process.

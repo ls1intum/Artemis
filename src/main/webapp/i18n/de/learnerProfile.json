@@ -33,14 +33,14 @@
                 "title": "Feedback-Lernprofil",
                 "description": "Hier kannst du dein Feedback-Lernprofil einsehen und aktualisieren. Diese Einstellungen werden verwendet, um deine Feedback-Erfahrung zu personalisieren.",
                 "feedbackDetail": {
-                    "label": "Lieferung des Feedbacks",
+                    "label": "Detailgrad des Feedbacks",
                     "description": "Wähle, ob du kurzes und direkt auf den Punkt oder detailliertes Feedback mit Erklärungen und Beispielen bevorzugst.",
                     "brief": "Kurz",
                     "neutral": "Neutral",
                     "detailed": "Detailliert"
                 },
                 "feedbackFormality": {
-                    "label": "Tone des Feedbacks",
+                    "label": "Stil des Feedbacks",
                     "description": "Wähle, ob du formelles und professionelles oder freundliches und zugängliches Feedback bevorzugst.",
                     "formal": "Formell",
                     "neutral": "Neutral",
@@ -53,7 +53,7 @@
                 "replayOnboardingButton": "Onboarding wiederholen"
             },
             "onboardingModal": {
-                "title": "Welches Feedback fühlt sich besser an?",
+                "title": "Welches Feedback gefällt dir besser?",
                 "subtitle": "Schau dir diese beiden Beispiele an und wähle das aus, das du lieber bekommen würdest",
                 "briefFeedback": {
                     "title": "Kurzes Feedback",
