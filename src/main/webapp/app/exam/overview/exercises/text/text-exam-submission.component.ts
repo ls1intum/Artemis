@@ -9,7 +9,8 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
@@ -39,6 +40,7 @@ import { onTextEditorTab } from 'app/shared/util/text.utils';
 export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private textService = inject(TextEditorService);
     private stringCountService = inject(StringCountService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
 
     exerciseType = ExerciseType.TEXT;
 
@@ -53,7 +55,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     // answer represents the view state
     answer: string;
-    problemStatementHtml: string;
+    problemStatementHtml: SafeHtml;
     private textEditorInput = new Subject<string>();
 
     // Icons
@@ -64,7 +66,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     ngOnInit(): void {
         // show submission answers in UI
-        this.problemStatementHtml = htmlForMarkdown(this.exercise()?.problemStatement);
+        this.problemStatementHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement);
         this.updateViewFromSubmission();
     }
 
@@ -76,7 +78,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         return this.exercise();
     }
 
-    updateProblemStatement(newProblemStatementHtml: string): void {
+    updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
         this.problemStatementHtml = newProblemStatementHtml;
         this.changeDetectorReference.detectChanges();
     }
