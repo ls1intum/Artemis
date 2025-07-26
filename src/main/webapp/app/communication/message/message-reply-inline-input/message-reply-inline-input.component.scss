@@ -13,4 +13,26 @@
     .ng-invalid {
         border: none;
     }
+
+    .message-checkbox {
+        input[type='checkbox']:disabled + label {
+            color: var(--bs-gray-500) !important;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        input[type='checkbox']:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        &.disabled-checkbox {
+            opacity: 0.6;
+
+            label {
+                color: var(--bs-gray-500) !important;
+                cursor: not-allowed;
+            }
+        }
+    }
 }

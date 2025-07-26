@@ -15,6 +15,7 @@ import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { DraftService } from 'app/communication/message/service/draft-message.service';
 import { Subscription } from 'rxjs';
+import { canCreateNewMessageInConversation } from 'app/communication/conversations/conversation-permissions.utils';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
@@ -43,11 +44,40 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
 
     sendAsDirectMessage = signal<boolean>(false);
 
+    /**
+     * Returns true if the user can send as direct message in the current conversation
+     */
+    get canSendAsDirectMessage(): boolean {
+        const conversation = this.activeConversation();
+        if (!conversation) {
+            return false;
+        }
+
+        // If it's a channel and it's an announcement channel, disable the checkbox
+        if (conversation.type === 'channel') {
+            const channel = conversation as ChannelDTO;
+            if (channel.isAnnouncementChannel) {
+                return false;
+            }
+        }
+
+        return canCreateNewMessageInConversation(conversation as ChannelDTO);
+    }
+
     ngOnInit(): void {
         super.ngOnInit();
         this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
         void this.loadCurrentUser();
         this.channelName = (this.activeConversation() as ChannelDTO).name;
+
+        // If it's an announcement channel, ensure the checkbox is unchecked
+        if (this.activeConversation()?.type === 'channel') {
+            const channel = this.activeConversation() as ChannelDTO;
+            if (channel.isAnnouncementChannel) {
+                this.sendAsDirectMessage.set(false);
+            }
+        }
+
         this.cdr.detectChanges();
     }
 
@@ -64,6 +94,16 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
 
         super.ngOnChanges();
         this.loadDraft();
+
+        // Check if conversation changed and update checkbox state for announcement channels
+        if (changes && changes['activeConversation']) {
+            if (this.activeConversation()?.type === 'channel') {
+                const channel = this.activeConversation() as ChannelDTO;
+                if (channel.isAnnouncementChannel) {
+                    this.sendAsDirectMessage.set(false);
+                }
+            }
+        }
     }
 
     private async loadCurrentUser(): Promise<void> {
@@ -75,6 +115,10 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     }
 
     toggleSendAsDirectMessage(): void {
+        // Don't allow toggling if it's an announcement channel
+        if (!this.canSendAsDirectMessage) {
+            return;
+        }
         this.sendAsDirectMessage.set(!this.sendAsDirectMessage());
     }
 
@@ -130,8 +174,8 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
 
     private finalizeCreation(posting: Posting): void {
         this.resetFormGroup('');
-        this.isLoading = false;
         this.clearDraft();
+        this.isLoading = false;
         this.onCreate.emit(posting);
     }
 
