@@ -88,14 +88,14 @@ public class PyrisJobService {
 
     public String addExerciseChatJob(Long courseId, Long exerciseId, Long sessionId) {
         var token = generateJobIdToken();
-        var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId, null);
+        var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId, null, null, null);
         jobMap.put(token, job);
         return token;
     }
 
-    public String addCourseChatJob(Long courseId, Long sessionId) {
+    public String addCourseChatJob(Long courseId, Long sessionId, Long userMessageId) {
         var token = generateJobIdToken();
-        var job = new CourseChatJob(token, courseId, sessionId, null);
+        var job = new CourseChatJob(token, courseId, sessionId, null, userMessageId, null);
         jobMap.put(token, job);
         return token;
     }
@@ -110,7 +110,7 @@ public class PyrisJobService {
      */
     public String addTutorSuggestionJob(Long postId, Long courseId, Long sessionId) {
         var token = generateJobIdToken();
-        var job = new TutorSuggestionJob(token, postId, courseId, sessionId, null);
+        var job = new TutorSuggestionJob(token, postId, courseId, sessionId, null, null, null);
         jobMap.put(token, job);
         return token;
     }
