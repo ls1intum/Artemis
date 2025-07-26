@@ -11,8 +11,8 @@
             <column name="job_id" type="VARCHAR(255)">
                 <constraints nullable="true" unique="true"/>
             </column>
-            <column name="transcription_status" type="VARCHAR(50)" defaultValue="PENDING">
-                <constraints nullable="false"/>
+            <column name="transcription_status" type="ENUM('PENDING','PROCESSING','COMPLETED','FAILED')" defaultValue="PENDING">
+            <constraints nullable="false"/>
             </column>
         </addColumn>
     </changeSet>
