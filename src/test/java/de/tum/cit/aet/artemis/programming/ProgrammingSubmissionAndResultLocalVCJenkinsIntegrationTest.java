@@ -213,7 +213,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
+        httpHeaders.add(HttpHeaders.AUTHORIZATION, ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
         request.postWithoutLocation("/api/programming/public/programming-exercises/new-result", alteredObj, status, httpHeaders);
     }
 

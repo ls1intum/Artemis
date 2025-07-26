@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -249,7 +250,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
                 Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
         dockerClientTestService.mockTestResults(dockerClient, ALL_SUCCEED_TEST_RESULTS_PATH, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(solutionParticipation);
+                .getOrCheckoutRepository(eq(solutionParticipation), anyBoolean());
 
         localVCLocalCITestService.testPushSuccessful(solutionRepository.workingCopyGitRepo, instructor1Login, projectKey1, solutionRepositorySlug);
 
@@ -281,7 +282,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
                 Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
         dockerClientTestService.mockTestResults(dockerClient, ALL_FAIL_TEST_RESULTS_PATH, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(templateParticipation);
+                .getOrCheckoutRepository(eq(templateParticipation), anyBoolean());
 
         localVCLocalCITestService.testPushSuccessful(templateRepository.workingCopyGitRepo, instructor1Login, projectKey1, templateRepositorySlug);
 
