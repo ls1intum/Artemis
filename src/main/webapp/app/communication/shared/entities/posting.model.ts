@@ -38,4 +38,5 @@ export abstract class Posting implements BaseEntity {
     public hasForwardedMessages?: boolean = false;
     public isConsecutive?: boolean = false;
     public conversation?: Conversation;
+    public linkedPostingId?: number;
 }

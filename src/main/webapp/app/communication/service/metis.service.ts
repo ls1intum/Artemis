@@ -297,6 +297,12 @@ export class MetisService implements OnDestroy {
                     updatedPost.answers = [...(this.cachedPosts[indexToUpdate].answers ?? [])];
                     updatedPost.authorRole = this.cachedPosts[indexToUpdate].authorRole;
                     this.cachedPosts[indexToUpdate] = updatedPost;
+
+                    // If this is a directed message, also update the linked answer post content
+                    if (updatedPost.originalPostId) {
+                        this.synchronizeLinkedAnswerPost(updatedPost);
+                    }
+
                     this.posts$.next(this.cachedPosts);
                     this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                 }
@@ -320,6 +326,12 @@ export class MetisService implements OnDestroy {
                         updatedAnswerPost.post = { ...this.cachedPosts[indexOfCachedPost], answers: [], reactions: [] };
                         updatedAnswerPost.authorRole = this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer].authorRole;
                         this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer] = updatedAnswerPost;
+
+                        // If this answer post has a linked directed message, also update its content
+                        if (updatedAnswerPost.linkedPostingId) {
+                            this.synchronizeLinkedDirectedMessage(updatedAnswerPost);
+                        }
+
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
@@ -377,13 +389,18 @@ export class MetisService implements OnDestroy {
             .delete(this.courseId, post)
             .pipe(
                 tap(() => {
+                    // Remove the deleted post from cache
                     const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.id);
-                    // Delete the cached post if it still exists (might be already deleted due to WebSocket message)
                     if (indexToUpdate > -1) {
                         this.cachedPosts.splice(indexToUpdate, 1);
-                        this.posts$.next(this.cachedPosts);
-                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
+
+                    // Also remove any directed messages that were linked to this post
+                    // (These are automatically deleted in the database due to CASCADE, but we need to update the cache)
+                    this.cachedPosts = this.cachedPosts.filter((cachedPost) => cachedPost.originalPostId !== post.id);
+
+                    this.posts$.next(this.cachedPosts);
+                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                 }),
             )
             .subscribe();
@@ -394,6 +411,16 @@ export class MetisService implements OnDestroy {
      * @param {AnswerPost} answerPost to be deleted
      */
     deleteAnswerPost(answerPost: AnswerPost): void {
+        // If this answer post has a linked posting, delete the linked posting first
+        if (answerPost.linkedPostingId) {
+            // Find the linked posting in cache
+            const linkedPost = this.findPostById(answerPost.linkedPostingId);
+            if (linkedPost) {
+                // Delete the linked posting first
+                this.deletePost(linkedPost);
+            }
+        }
+
         this.answerPostService
             .delete(this.courseId, answerPost)
             .pipe(
@@ -1003,6 +1030,15 @@ export class MetisService implements OnDestroy {
     }
 
     /**
+     * Finds a post by its ID in the cached posts.
+     * @param postId The ID of the post to find.
+     * @returns The found post or undefined if not found.
+     */
+    private findPostById(postId: number): Post | undefined {
+        return this.cachedPosts.find((post) => post.id === postId);
+    }
+
+    /**
      * Retrieves a specific post by its ID within a given conversation.
      *
      * First checks if the post is already available in the cached posts.
@@ -1031,5 +1067,57 @@ export class MetisService implements OnDestroy {
     enable(courseId: number, withMessaging: boolean): Observable<void> {
         const httpParams = new HttpParams().set('withMessaging', withMessaging);
         return this.http.put<void>('api/communication/courses/' + courseId + '/enable', undefined, { params: httpParams });
+    }
+
+    /**
+     * Synchronizes the content of a linked answer post when a directed message is updated
+     * @param directedPost The directed post that was updated
+     */
+    private synchronizeLinkedAnswerPost(directedPost: Post): void {
+        // Find the linked answer post in the cache
+        const linkedAnswerPost = this.findLinkedAnswerPost(directedPost.originalPostId!);
+        if (linkedAnswerPost && linkedAnswerPost.content !== directedPost.content) {
+            // Update the answer post content to match the directed post
+            linkedAnswerPost.content = directedPost.content;
+            linkedAnswerPost.updatedDate = dayjs();
+
+            // Update the cache
+            const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === linkedAnswerPost.post?.id);
+            if (indexOfCachedPost > -1) {
+                const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === linkedAnswerPost.id) ?? -1;
+                if (indexOfAnswer > -1) {
+                    this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer] = linkedAnswerPost;
+                }
+            }
+        }
+    }
+
+    /**
+     * Synchronizes the content of a linked directed message when an answer post is updated
+     * @param answerPost The answer post that was updated
+     */
+    private synchronizeLinkedDirectedMessage(answerPost: AnswerPost): void {
+        // Find the linked directed message in the cache
+        const linkedDirectedMessage = this.cachedPosts.find((post) => post.id === answerPost.linkedPostingId);
+        if (linkedDirectedMessage && linkedDirectedMessage.content !== answerPost.content) {
+            // Update the directed message content to match the answer post
+            linkedDirectedMessage.content = answerPost.content;
+            linkedDirectedMessage.updatedDate = dayjs();
+        }
+    }
+
+    /**
+     * Finds a linked answer post by its ID
+     * @param answerPostId The ID of the answer post to find
+     * @returns The found answer post or undefined if not found
+     */
+    private findLinkedAnswerPost(answerPostId: number): AnswerPost | undefined {
+        for (const cachedPost of this.cachedPosts) {
+            const answerPost = cachedPost.answers?.find((answer) => answer.id === answerPostId);
+            if (answerPost) {
+                return answerPost;
+            }
+        }
+        return undefined;
     }
 }

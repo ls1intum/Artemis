@@ -162,13 +162,41 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
                 if (this.sendAsDirectMessage()) {
                     const newPost = this.mapAnswerPostToPost(createdAnswerPost);
                     this.metisService.createPost(newPost).subscribe({
-                        next: () => this.finalizeCreation(newPost),
-                        error: () => (this.isLoading = false),
+                        next: (createdPost: Post) => {
+                            // Update the answer post with the linked posting ID
+                            createdAnswerPost.linkedPostingId = createdPost.id;
+                            // Ensure the answer post has the conversation property for proper endpoint routing
+                            if (createdAnswerPost.post && this.activeConversation()) {
+                                createdAnswerPost.post.conversation = { id: this.activeConversation()!.id } as any;
+                            }
+                            this.metisService.updateAnswerPost(createdAnswerPost).subscribe({
+                                next: (updatedAnswerPost: AnswerPost) => {
+                                    // eslint-disable-next-line no-undef
+                                    console.log('Answer post updated with linked posting ID:', updatedAnswerPost.linkedPostingId);
+                                    this.finalizeCreation(createdPost);
+                                },
+                                error: (error) => {
+                                    // eslint-disable-next-line no-undef
+                                    console.error('Failed to update answer post with linked posting ID:', error);
+                                    this.isLoading = false;
+                                },
+                            });
+                        },
+                        error: (error) => {
+                            // eslint-disable-next-line no-undef
+                            console.error('Failed to create directed post:', error);
+                            this.isLoading = false;
+                        },
                     });
+                } else {
+                    this.finalizeCreation(createdAnswerPost);
                 }
-                this.finalizeCreation(createdAnswerPost);
             },
-            error: () => (this.isLoading = false),
+            error: (error) => {
+                // eslint-disable-next-line no-undef
+                console.error('Failed to create answer post:', error);
+                this.isLoading = false;
+            },
         });
     }
 

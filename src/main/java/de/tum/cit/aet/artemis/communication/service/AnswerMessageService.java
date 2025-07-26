@@ -192,8 +192,17 @@ public class AnswerMessageService extends PostingService {
         else {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
             mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
-            existingAnswerMessage.setContent(answerMessage.content());
-            existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
+
+            // Only update content and updatedDate if content actually changed
+            if (!Objects.equals(existingAnswerMessage.getContent(), answerMessage.content())) {
+                existingAnswerMessage.setContent(answerMessage.content());
+                existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
+            }
+
+            // Update linked posting ID if provided (this doesn't count as content edit)
+            if (answerMessage.linkedPostingId() != null) {
+                existingAnswerMessage.setLinkedPostingId(answerMessage.linkedPostingId());
+            }
         }
 
         updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
