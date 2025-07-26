@@ -54,18 +54,18 @@
 </div>
 <div class="modal-footer feedback-onboarding-footer">
     <div class="footer-left">
-        <button type="button" class="btn btn-secondary" (click)="back()" [disabled]="step === 0" jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.back"></button>
+        <jhi-button [btnType]="ButtonType.SECONDARY" [title]="'artemisApp.learnerProfile.onboardingModal.buttons.back'" [disabled]="step === 0" (onClick)="back()" />
     </div>
     <div class="footer-right">
         @if (step < totalSteps - 1) {
             @if (selected[step] === null) {
-                <button type="button" class="btn btn-outline-secondary" (click)="next()" jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.skip"></button>
+                <jhi-button [btnType]="ButtonType.SECONDARY" [title]="'artemisApp.learnerProfile.onboardingModal.buttons.skip'" (onClick)="next()" />
             } @else {
-                <button type="button" class="btn btn-primary" (click)="next()" jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.next"></button>
+                <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.learnerProfile.onboardingModal.buttons.next'" (onClick)="next()" />
             }
         }
         @if (step === totalSteps - 1) {
-            <button type="button" class="btn btn-success" (click)="finish()" jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.finish"></button>
+            <jhi-button [btnType]="ButtonType.SUCCESS" [title]="'artemisApp.learnerProfile.onboardingModal.buttons.finish'" (onClick)="finish()" />
         }
     </div>
 </div>

@@ -10,13 +10,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-feedback-onboarding-modal',
     standalone: true,
     templateUrl: './feedback-onboarding-modal.component.html',
     styleUrls: ['./feedback-onboarding-modal.component.scss'],
-    imports: [CommonModule, TextResultComponent, TranslateDirective],
+    imports: [CommonModule, TextResultComponent, TranslateDirective, ButtonComponent],
 })
 export class FeedbackOnboardingModalComponent {
     onboardingCompleted = signal<undefined>(undefined);
@@ -30,6 +31,10 @@ export class FeedbackOnboardingModalComponent {
     private alertService = inject(AlertService);
     protected translateService = inject(TranslateService);
     protected themeService = inject(ThemeService);
+
+    // Button types and sizes for template
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 
     /**
      * Navigates to the next step in the onboarding process.

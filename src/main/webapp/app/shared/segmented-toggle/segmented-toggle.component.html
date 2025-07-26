@@ -1,9 +1,12 @@
 <div class="segmented-toggle-container">
     <div class="btn-group w-100">
         @for (option of options; track option.value) {
-            <div class="btn" [ngClass]="{ 'btn-primary selected': selected === option.value, 'btn-default': selected !== option.value }" (click)="select(option.value)">
-                {{ option.label }}
-            </div>
+            <jhi-button
+                [btnType]="selected === option.value ? ButtonType.PRIMARY : ButtonType.SECONDARY"
+                [title]="option.label"
+                (onClick)="select(option.value)"
+                [ngClass]="{ selected: selected === option.value }"
+            />
         }
     </div>
 </div>

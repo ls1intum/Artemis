@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/core/user/settings/learner-profile/learner-profile-api.service';
@@ -29,6 +29,12 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     /** Signal containing the learner profile for the current user */
     public readonly learnerProfile = signal<LearnerProfileDTO | undefined>(undefined);
 
+    /** Computed signal indicating whether the profile is set up */
+    public readonly isProfileSetup = computed(() => {
+        const profile = this.learnerProfile();
+        return !!profile && !!profile.hasSetupFeedbackPreferences;
+    });
+
     /** Flag indicating whether the profile editing is disabled */
     disabled = true;
 
@@ -37,11 +43,6 @@ export class FeedbackLearnerProfileComponent implements OnInit {
         modalRef.result.then(() => {
             this.loadProfile();
         });
-    }
-
-    get isProfileSetup(): boolean {
-        const profile = this.learnerProfile();
-        return !!profile && !!profile.hasSetupFeedbackPreferences;
     }
 
     /**
