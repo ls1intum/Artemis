@@ -6,7 +6,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { QuizTrainingAnswer } from '../course-training-quiz/QuizTrainingAnswer';
-import { SubmittedAnswerAfterEvaluationDTO } from '../course-training-quiz/SubmittedAnswerAfterEvaluationDTO';
+import { SubmittedAnswerAfterEvaluation } from '../course-training-quiz/SubmittedAnswerAfterEvaluation';
 
 describe('CourseTrainingQuizService', () => {
     let service: CourseTrainingQuizService;
@@ -40,7 +40,7 @@ describe('CourseTrainingQuizService', () => {
 
     it('should submit submission for training', fakeAsync(() => {
         const mockTrainingAnswer = new QuizTrainingAnswer();
-        const mockAnswer = new SubmittedAnswerAfterEvaluationDTO();
+        const mockAnswer = new SubmittedAnswerAfterEvaluation();
         mockAnswer.scoreInPoints = 10;
 
         service.submitForTraining(mockTrainingAnswer, questionId, courseId).subscribe((res) => {

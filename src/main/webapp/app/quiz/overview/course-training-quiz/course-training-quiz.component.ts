@@ -19,7 +19,7 @@ import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answe
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/QuizTrainingAnswer';
-import { SubmittedAnswerAfterEvaluationDTO } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluationDTO';
+import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluation';
 
 @Component({
     selector: 'jhi-course-practice-quiz',
@@ -64,7 +64,6 @@ export class CourseTrainingQuizComponent {
     course = computed(() => this.courseSignal());
 
     trainingAnswer = new QuizTrainingAnswer();
-    isSubmitting = false;
     showingResult = false;
     submitted = false;
     questionScores: number = 0;
@@ -129,7 +128,7 @@ export class CourseTrainingQuizComponent {
     }
 
     /**
-     * applies the current selection to the submission object
+     * applies the current selection to the trainingAnswer object
      */
     applySelection() {
         this.trainingAnswer.submittedAnswer = undefined;
@@ -176,13 +175,11 @@ export class CourseTrainingQuizComponent {
                 type: AlertType.WARNING,
                 message: 'No questionId found',
             });
-            this.isSubmitting = false;
             return;
         }
         this.applySelection();
-        this.isSubmitting = true;
         this.quizService.submitForTraining(this.trainingAnswer, questionId, this.courseId()).subscribe({
-            next: (response: HttpResponse<SubmittedAnswerAfterEvaluationDTO>) => {
+            next: (response: HttpResponse<SubmittedAnswerAfterEvaluation>) => {
                 if (response.body) {
                     this.onSubmitSuccess(response.body);
                 }
@@ -191,8 +188,7 @@ export class CourseTrainingQuizComponent {
         });
     }
 
-    onSubmitSuccess(evaluatedAnswer: SubmittedAnswerAfterEvaluationDTO) {
-        this.isSubmitting = false;
+    onSubmitSuccess(evaluatedAnswer: SubmittedAnswerAfterEvaluation) {
         this.submitted = true;
         this.showingResult = true;
 
@@ -206,19 +202,18 @@ export class CourseTrainingQuizComponent {
      * Callback function for handling error when submitting
      */
     onSubmitError(error: HttpErrorResponse) {
-        const errorMessage = 'Submitting the quiz was not possible. ' + (error.headers?.get('X-artemisApp-message') || error.message);
+        const errorMessage = 'Submitting the quiz was not possible. ' + error.message;
         this.alertService.addAlert({
             type: AlertType.DANGER,
             message: errorMessage,
             disableTranslation: true,
         });
-        this.isSubmitting = false;
     }
 
     /**
-     * Wendet die evaluierte Antwort auf die UI an
+     * Applies the evaluated answer to the current question
      */
-    applyEvaluatedAnswer(evaluatedAnswer: SubmittedAnswerAfterEvaluationDTO) {
+    applyEvaluatedAnswer(evaluatedAnswer: SubmittedAnswerAfterEvaluation) {
         const question = this.currentQuestion();
         if (!question) return;
 

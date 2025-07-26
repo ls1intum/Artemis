@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/QuizTrainingAnswer';
-import { SubmittedAnswerAfterEvaluationDTO } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluationDTO';
+import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluation';
 
 @Injectable({
     providedIn: 'root',
@@ -19,7 +19,7 @@ export class CourseTrainingQuizService {
         return this.http.get<QuizQuestion[]>(`api/quiz/courses/${courseId}/training/quiz`);
     }
 
-    submitForTraining(answer: QuizTrainingAnswer, questionId: number, courseId: number): Observable<HttpResponse<SubmittedAnswerAfterEvaluationDTO>> {
-        return this.http.post<SubmittedAnswerAfterEvaluationDTO>(`api/quiz/courses/${courseId}/training/${questionId}/quiz`, answer, { observe: 'response' });
+    submitForTraining(answer: QuizTrainingAnswer, questionId: number, courseId: number): Observable<HttpResponse<SubmittedAnswerAfterEvaluation>> {
+        return this.http.post<SubmittedAnswerAfterEvaluation>(`api/quiz/courses/${courseId}/training/${questionId}/quiz`, answer, { observe: 'response' });
     }
 }

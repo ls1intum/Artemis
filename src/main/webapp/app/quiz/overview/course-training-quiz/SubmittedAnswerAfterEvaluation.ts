@@ -1,4 +1,4 @@
-export class SubmittedAnswerAfterEvaluationDTO {
+export class SubmittedAnswerAfterEvaluation {
     scoreInPoints?: number;
     selectedOptions?: any[];
     mappings?: any[];

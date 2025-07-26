@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MockBuilder } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseTrainingQuizService } from '../service/course-training-quiz.service';
@@ -17,7 +17,7 @@ import { MockInstance } from 'ng-mocks';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { signal } from '@angular/core';
-import { SubmittedAnswerAfterEvaluationDTO } from './SubmittedAnswerAfterEvaluationDTO';
+import { SubmittedAnswerAfterEvaluation } from './SubmittedAnswerAfterEvaluation';
 
 const question1: QuizQuestion = {
     id: 1,
@@ -46,7 +46,7 @@ const question3: QuizQuestion = {
 
 const course = { id: 1, title: 'Test Course' };
 
-const answer: SubmittedAnswerAfterEvaluationDTO = { selectedOptions: [{ scoreInPoints: 2 }] };
+const answer: SubmittedAnswerAfterEvaluation = { selectedOptions: [{ scoreInPoints: 2 }] };
 
 describe('CourseTrainingQuizComponent', () => {
     MockInstance.scope();
@@ -148,7 +148,6 @@ describe('CourseTrainingQuizComponent', () => {
         component.currentIndex.set(0);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(component.isSubmitting).toBeFalse();
         expect(component.submitted).toBeTrue();
         expect(showResultSpy).toHaveBeenCalledWith(answer);
         jest.clearAllMocks();
@@ -157,7 +156,6 @@ describe('CourseTrainingQuizComponent', () => {
         component.currentIndex.set(1);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(component.isSubmitting).toBeFalse();
         expect(component.submitted).toBeTrue();
         expect(showResultSpy).toHaveBeenCalledWith(answer);
         jest.clearAllMocks();
@@ -166,12 +164,11 @@ describe('CourseTrainingQuizComponent', () => {
         component.currentIndex.set(2);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(component.isSubmitting).toBeFalse();
         expect(component.submitted).toBeTrue();
         expect(showResultSpy).toHaveBeenCalledWith(answer);
     });
 
-    it('should show a warning if no exerciseId is present', () => {
+    it('should show a warning if no questionId is present', () => {
         const alertSpy = jest.spyOn(TestBed.inject(AlertService), 'addAlert');
         jest.spyOn(component, 'currentQuestion').mockReturnValue({ id: null } as any);
         component.onSubmit();
@@ -180,23 +177,20 @@ describe('CourseTrainingQuizComponent', () => {
                 message: 'No questionId found',
             }),
         );
-        expect(component.isSubmitting).toBeFalse();
     });
 
     it('should handle submit error', () => {
         const alertSpy = jest.spyOn(TestBed.inject(AlertService), 'addAlert');
-        jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1, exerciseId: 1 } as any);
+        jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1 } as any);
         const error = new HttpErrorResponse({
             error: 'error',
             status: 400,
-            headers: new HttpHeaders({ 'X-artemisApp-message': 'Fehler beim Absenden' }),
             statusText: 'Bad Request',
         });
         jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(throwError(() => error));
         component.currentIndex.set(2);
         component.onSubmit();
         expect(alertSpy).toHaveBeenCalled();
-        expect(component.isSubmitting).toBeFalse();
     });
 
     it('should navigate to practice', () => {
