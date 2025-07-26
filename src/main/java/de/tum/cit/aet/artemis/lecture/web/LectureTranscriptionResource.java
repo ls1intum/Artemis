@@ -250,7 +250,7 @@ public class LectureTranscriptionResource {
      * @return {@code 200 OK} with the playlist URL if available,
      *         or {@code 404 Not Found} if no playlist could be retrieved.
      */
-    @GetMapping("/video-utils/get-tum-live-playlist")
+    @GetMapping("video-utils/tum-live-playlist")
     public ResponseEntity<String> getTumLivePlaylist(@RequestParam String url) {
         log.info("Received request to fetch playlist for TUM Live URL: {}", url);
 

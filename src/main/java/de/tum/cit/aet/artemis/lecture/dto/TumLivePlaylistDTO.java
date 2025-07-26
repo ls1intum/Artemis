@@ -1,20 +1,11 @@
 package de.tum.cit.aet.artemis.lecture.dto;
 
-import java.util.Map;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class TumLivePlaylistDTO {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record TumLivePlaylistDTO(@JsonProperty("stream") Stream stream) {
 
-    private final String playlistUrl;
-
-    @JsonCreator
-    public TumLivePlaylistDTO(@JsonProperty("stream") Map<String, Object> stream) {
-        this.playlistUrl = stream != null && stream.get("playlistUrl") instanceof String url ? url : null;
-    }
-
-    public String getPlaylistUrl() {
-        return playlistUrl;
+    public record Stream(@JsonProperty("playlistUrl") String playlistUrl) {
     }
 }

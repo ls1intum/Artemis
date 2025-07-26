@@ -54,9 +54,8 @@ public class TumLiveService {
                     .body(new ParameterizedTypeReference<>() {
                     });
 
-            if (response.getPlaylistUrl() != null) {
-                log.info("Retrieved playlist URL for stream {}: {}", info.streamId(), response.getPlaylistUrl());
-                return Optional.of(response.getPlaylistUrl());
+            if (response.stream() != null && response.stream().playlistUrl() != null) {
+                return Optional.of(response.stream().playlistUrl());
             }
             else {
                 log.warn("No 'playlistUrl' found in API response for stream {}", info.streamId());

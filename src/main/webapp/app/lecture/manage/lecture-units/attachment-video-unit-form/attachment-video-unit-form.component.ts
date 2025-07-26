@@ -205,7 +205,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
         if (parsedUrl.host === 'live.rbg.tum.de') {
             this.http
-                .get('api/lecture/video-utils/get-tum-live-playlist', {
+                .get('api/lecture/video-utils/tum-live-playlist', {
                     params: { url: originalUrl },
                     responseType: 'text',
                 })
