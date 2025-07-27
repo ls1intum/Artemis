@@ -10,10 +10,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.transaction.Transactional;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.AnswerPostDAO;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
@@ -64,12 +67,17 @@ public class AnswerMessageService extends PostingService {
 
     private final PostRepository postRepository;
 
+    // Create, Update, Delete: Use the DAO for efficient entity manager persistence logic.
+    // Finders, Batch Operations, and Access Control: Use the repository for convenience and readability.
+    private final AnswerPostDAO answerPostDAO;
+
     @SuppressWarnings("PMD.ExcessiveParameterList")
     public AnswerMessageService(SingleUserNotificationService singleUserNotificationService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
             UserRepository userRepository, AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository,
             ConversationService conversationService, ExerciseRepository exerciseRepository, SavedPostRepository savedPostRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, CourseNotificationService courseNotificationService) {
+            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, CourseNotificationService courseNotificationService,
+            AnswerPostDAO answerPostDAO) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -78,6 +86,7 @@ public class AnswerMessageService extends PostingService {
         this.singleUserNotificationService = singleUserNotificationService;
         this.postRepository = postRepository;
         this.courseNotificationService = courseNotificationService;
+        this.answerPostDAO = answerPostDAO;
     }
 
     /**
@@ -89,6 +98,7 @@ public class AnswerMessageService extends PostingService {
      * @param answerMessage answer message to create
      * @return created answer message that was persisted
      */
+    @Transactional
     public AnswerPost createAnswerMessage(Long courseId, CreateAnswerPostDTO answerMessage) {
         final User author = this.userRepository.getUserWithGroupsAndAuthorities();
 
@@ -115,7 +125,10 @@ public class AnswerMessageService extends PostingService {
         newAnswerMessage.setAuthor(author);
         // on creation of an answer message, we set the resolves_post field to false per default since this feature is not used for messages
         newAnswerMessage.setResolvesPost(false);
-        AnswerPost savedAnswerMessage = answerPostRepository.save(newAnswerMessage);
+
+        // Use DAO to persist the answer post
+        AnswerPost savedAnswerMessage = answerPostDAO.create(author.getId(), post.getId(), answerMessage.content(), false);
+
         savedAnswerMessage.getPost().setConversation(conversation);
         setAuthorRoleForPosting(savedAnswerMessage, course);
 
@@ -163,6 +176,7 @@ public class AnswerMessageService extends PostingService {
      * @param answerMessage   answer message to update
      * @return updated answer message that was persisted
      */
+    @Transactional
     public AnswerPost updateAnswerMessage(Long courseId, Long answerMessageId, UpdatePostingDTO answerMessage) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -184,6 +198,8 @@ public class AnswerMessageService extends PostingService {
         if (existingAnswerMessage.doesResolvePost() != answerMessage.resolvesPost()) {
             // check if requesting user is allowed to mark this answer message as resolving, i.e. if user is author or original message or at least tutor
             mayMarkAnswerMessageAsResolvingElseThrow(existingAnswerMessage, user, course);
+            // Update via DAO
+            answerPostDAO.update(answerMessageId, answerMessage.content(), answerMessage.resolvesPost());
             existingAnswerMessage.setResolvesPost(answerMessage.resolvesPost());
             // sets the message as resolved if there exists any resolving answer
             existingAnswerMessage.getPost().setResolved(existingAnswerMessage.getPost().getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
@@ -192,6 +208,7 @@ public class AnswerMessageService extends PostingService {
         else {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
             mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
+            answerPostDAO.update(answerMessageId, answerMessage.content(), null);
             existingAnswerMessage.setContent(answerMessage.content());
             existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
         }
@@ -224,6 +241,7 @@ public class AnswerMessageService extends PostingService {
      * @param courseId        id of the course the answer message belongs to
      * @param answerMessageId id of the answer message to delete
      */
+    @Transactional
     public void deleteAnswerMessageById(Long courseId, Long answerMessageId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -240,8 +258,9 @@ public class AnswerMessageService extends PostingService {
         // update on the message properties
         conversationMessageRepository.save(updatedMessage);
 
-        // delete
-        answerPostRepository.deleteById(answerMessageId);
+        // Delete the answer via DAO
+        answerPostDAO.delete(answerMessageId);
+
         preparePostForBroadcast(updatedMessage);
 
         // Delete all connected saved posts
