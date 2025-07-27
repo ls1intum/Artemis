@@ -37,7 +37,10 @@ public class TumLiveService {
 
     /**
      * Given a TUM Live public video URL, extracts courseSlug and streamId,
-     * fetches the playlist URL from the TUM Live API.
+     * then fetches the playlist URL from the TUM Live API.
+     *
+     * @param videoUrl the public TUM Live video URL to resolve
+     * @return an optional playlist URL if found from the TUM Live API, or empty if not found or the URL is invalid
      */
     public Optional<String> getTumLivePlaylistLink(String videoUrl) {
         if (!videoUrl.contains("tum.live") && !videoUrl.contains("rbg.tum.de")) {
