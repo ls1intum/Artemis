@@ -11,9 +11,9 @@ import { CourseTrainingQuizService } from '../service/course-training-quiz.servi
 import { MockSyncStorage } from 'src/test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { SessionStorageService } from 'ngx-webstorage';
-import { Result } from '../../../exercise/shared/entities/result/result.model';
-import { AlertService } from '../../../shared/service/alert.service';
-import { CourseManagementService } from '../../../core/course/manage/services/course-management.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AlertService } from 'app/shared/service/alert.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MultipleChoiceSubmittedAnswer } from '../../shared/entities/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from '../../shared/entities/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from '../../shared/entities/short-answer-submitted-answer.model';
