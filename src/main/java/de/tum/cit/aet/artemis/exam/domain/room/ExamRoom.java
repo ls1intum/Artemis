@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 
 @Conditional(ExamEnabled.class)
 @Entity
@@ -67,7 +68,7 @@ public class ExamRoom extends AbstractAuditingEntity {
      */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "exam_seats", columnDefinition = "json", nullable = false)
-    private List<ExamSeat> seats = new ArrayList<>();
+    private List<ExamSeatDTO> seats = new ArrayList<>();
 
     /**
      * All layout strategies for this exam room.
@@ -131,11 +132,11 @@ public class ExamRoom extends AbstractAuditingEntity {
         this.building = building;
     }
 
-    public List<ExamSeat> getSeats() {
+    public List<ExamSeatDTO> getSeats() {
         return seats;
     }
 
-    public void setSeats(List<ExamSeat> seats) {
+    public void setSeats(List<ExamSeatDTO> seats) {
         this.seats = seats;
     }
 

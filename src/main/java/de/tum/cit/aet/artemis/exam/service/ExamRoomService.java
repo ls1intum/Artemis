@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
-import de.tum.cit.aet.artemis.exam.domain.room.ExamSeat;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategyType;
 import de.tum.cit.aet.artemis.exam.domain.room.SeatCondition;
@@ -39,7 +38,10 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUniqueRoomsDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamRoomAssignmentRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
+import de.tum.cit.aet.artemis.exam.repository.LayoutStrategyRepository;
 
 /*
  * Service implementation for managing exam rooms.
@@ -54,8 +56,14 @@ public class ExamRoomService {
 
     private final ExamRoomRepository examRoomRepository;
 
-    public ExamRoomService(ExamRoomRepository examRoomRepository) {
+    private final LayoutStrategyRepository layoutStrategyRepository;
+
+    private final ExamRoomAssignmentRepository examRoomAssignmentRepository;
+
+    public ExamRoomService(ExamRoomRepository examRoomRepository, LayoutStrategyRepository layoutStrategyRepository, ExamRoomAssignmentRepository examRoomAssignmentRepository) {
         this.examRoomRepository = examRoomRepository;
+        this.layoutStrategyRepository = layoutStrategyRepository;
+        this.examRoomAssignmentRepository = examRoomAssignmentRepository;
     }
 
     public ExamRoomUploadInformationDTO parseAndStoreExamRoomDataFromZipFile(MultipartFile zipFile) {
@@ -134,7 +142,7 @@ public class ExamRoomService {
 
         /* Extract the seats */
         JsonNode rowsArrayNode = jsonRoot.path("rows");
-        List<ExamSeat> seats = parseExamSeats(longRoomNumber, rowsArrayNode, room);
+        List<ExamSeatDTO> seats = parseExamSeats(longRoomNumber, rowsArrayNode, room);
         if (seats == null)
             return null;
 
@@ -205,8 +213,8 @@ public class ExamRoomService {
         return layouts;
     }
 
-    private static List<ExamSeat> parseExamSeats(String longRoomNumber, JsonNode rowsArrayNode, ExamRoom room) {
-        List<ExamSeat> seats = new ArrayList<>();
+    private static List<ExamSeatDTO> parseExamSeats(String longRoomNumber, JsonNode rowsArrayNode, ExamRoom room) {
+        List<ExamSeatDTO> seats = new ArrayList<>();
         if (!rowsArrayNode.isArray()) {
             log.warn("Skipping room {} because the rows are incorrectly stored", longRoomNumber);
             return null;
@@ -225,12 +233,11 @@ public class ExamRoomService {
                 String seatLabel = seatNode.path("label").asText();
                 String seatName = rowLabel.isEmpty() ? seatLabel : (seatLabel + ", " + rowLabel);
 
-                ExamSeat seat = new ExamSeat();
+                ExamSeatDTO seat = new ExamSeatDTO();
                 seat.setLabel(seatName);
                 seat.setX(seatNode.path("position").path("x").asDouble());
                 seat.setY(seatNode.path("position").path("y").asDouble());
                 seat.setSeatCondition(SeatCondition.SeatConditionFromFlag(seatNode.path("flag").asText()));
-                seat.setExamRoom(room);
                 seats.add(seat);
             }
         }
@@ -270,7 +277,12 @@ public class ExamRoomService {
 
     public void deleteAllExamRooms() {
         final long startTime = System.nanoTime();
-        examRoomRepository.deleteAll();
+
+        // deleting everything in batch is more efficient
+        examRoomAssignmentRepository.deleteAllInBatch();
+        layoutStrategyRepository.deleteAllInBatch();
+        examRoomRepository.deleteAllInBatch();
+
         log.debug("Deleting all exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));
     }
 
@@ -280,12 +292,19 @@ public class ExamRoomService {
 
     public ExamRoomUniqueRoomsDTO countUniqueRoomsSeatsAndLayoutStrategies() {
         Set<ExamRoom> latestUniqueRooms = examRoomRepository.findAllLatestUniqueRoomsWithEagerLayoutStrategies();
-
         int uniqueSeats = latestUniqueRooms.stream().mapToInt(room -> room.getSeats().size()).sum();
-
         int uniqueLayoutStrategies = latestUniqueRooms.stream().mapToInt(room -> room.getLayoutStrategies().size()).sum();
 
         return new ExamRoomUniqueRoomsDTO(latestUniqueRooms.size(), uniqueSeats, uniqueLayoutStrategies);
+    }
+
+    public void deleteAllOutdatedAndUnusedExamRooms() {
+        final long startTime = System.nanoTime();
+
+        Set<Long> outdatedAndUnusedExamRoomIds = examRoomRepository.findAllIdsOfOutdatedAndUnusedExamRooms();
+        examRoomRepository.deleteAllById(outdatedAndUnusedExamRoomIds);
+
+        log.debug("Deleting all unused and outdated exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));
     }
 
 }

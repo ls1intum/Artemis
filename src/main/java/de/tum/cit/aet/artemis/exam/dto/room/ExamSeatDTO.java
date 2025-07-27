@@ -1,20 +1,16 @@
-package de.tum.cit.aet.artemis.exam.domain.room;
-
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Transient;
+package de.tum.cit.aet.artemis.exam.dto.room;
 
 import org.springframework.context.annotation.Conditional;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
+import de.tum.cit.aet.artemis.exam.domain.room.SeatCondition;
 
 @Conditional(ExamEnabled.class)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ExamSeat extends DomainObject {
+public class ExamSeatDTO {
 
     /**
      * The name of the seat. This is usually a combination of the row and column name.
@@ -24,14 +20,7 @@ public class ExamSeat extends DomainObject {
     /**
      * The condition of the seat.
      */
-    @Enumerated(EnumType.STRING)  // for human readability
     private SeatCondition seatCondition = SeatCondition.USABLE;
-
-    /**
-     * The exam room this seat is located in.
-     */
-    @Transient
-    private ExamRoom examRoom;
 
     /**
      * The x-coordinate of the seat in the respective exam room.
@@ -58,14 +47,6 @@ public class ExamSeat extends DomainObject {
 
     public void setSeatCondition(SeatCondition seatCondition) {
         this.seatCondition = seatCondition;
-    }
-
-    public ExamRoom getExamRoom() {
-        return examRoom;
-    }
-
-    public void setExamRoom(ExamRoom room) {
-        this.examRoom = room;
     }
 
     public float getX() {

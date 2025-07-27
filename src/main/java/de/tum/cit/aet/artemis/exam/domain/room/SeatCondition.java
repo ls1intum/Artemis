@@ -2,12 +2,15 @@ package de.tum.cit.aet.artemis.exam.domain.room;
 
 import org.springframework.context.annotation.Conditional;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 
 /**
  * Enum representing the conditions of a seat, i.e., if it's usable, broken, wheelchair-accessible, etc.
  */
 @Conditional(ExamEnabled.class)
+@JsonFormat(shape = JsonFormat.Shape.STRING)
 public enum SeatCondition {
 
     USABLE, NO_TABLE, DEFECT, WHEELCHAIR;

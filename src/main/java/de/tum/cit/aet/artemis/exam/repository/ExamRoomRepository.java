@@ -19,28 +19,6 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 @Repository
 public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long> {
 
-    @Query("""
-            WITH latestRooms AS (
-                SELECT
-                    roomNumber AS roomNumber,
-                    alternativeRoomNumber AS alternativeRoomNumber,
-                    name AS name,
-                    alternativeName AS alternativeName,
-                    MAX(createdDate) AS latestCreatedDate
-                FROM ExamRoom
-                GROUP BY roomNumber, name
-                HAVING COUNT(*) > 1
-            )
-            SELECT examRoom
-            FROM ExamRoom examRoom
-            JOIN latestRooms latestRoom
-                ON examRoom.roomNumber = latestRoom.roomNumber
-                AND examRoom.name = latestRoom.name
-                AND examRoom.createdDate < latestRoom.latestCreatedDate
-            ORDER BY examRoom.roomNumber, examRoom.name, examRoom.createdDate DESC
-            """)
-    Set<ExamRoom> findAllOutdatedExamRooms();
-
     @Query("SELECT COUNT(*) FROM ExamRoom")
     Integer countAllExamRooms();
 
@@ -77,4 +55,45 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             """)
     Set<ExamRoom> findAllLatestUniqueRoomsWithEagerLayoutStrategies();
 
+    @Query("""
+            WITH latestRooms AS (
+                SELECT
+                    roomNumber AS roomNumber,
+                    name AS name,
+                    MAX(createdDate) AS maxCreatedDate
+                FROM ExamRoom
+                GROUP BY roomNumber, name
+                HAVING COUNT(*) > 1
+            )
+            SELECT examRoom.id
+            FROM ExamRoom examRoom
+            JOIN latestRooms latestRoom
+                ON examRoom.roomNumber = latestRoom.roomNumber
+                AND examRoom.name = latestRoom.name
+                AND examRoom.createdDate < latestRoom.maxCreatedDate
+            """)
+    Set<Long> findAllIdsOfOutdatedExamRooms();
+
+    @Query("""
+            WITH latestRooms AS (
+                SELECT
+                    roomNumber AS roomNumber,
+                    name AS name,
+                    MAX(createdDate) AS maxCreatedDate
+                FROM ExamRoom
+                GROUP BY roomNumber, name
+                HAVING COUNT(*) > 1
+            ), usedRoomsIds AS (
+                SELECT DISTINCT examRoomAssignment.examRoom.id AS id
+                FROM ExamRoomAssignment examRoomAssignment
+            )
+            SELECT examRoom.id
+            FROM ExamRoom examRoom
+            JOIN latestRooms latestRoom
+                ON examRoom.roomNumber = latestRoom.roomNumber
+                AND examRoom.name = latestRoom.name
+                AND examRoom.createdDate < latestRoom.maxCreatedDate
+            WHERE examRoom.id NOT IN usedRoomsIds
+            """)
+    Set<Long> findAllIdsOfOutdatedAndUnusedExamRooms();
 }
