@@ -199,7 +199,7 @@ public class ConversationService {
 
         var conversationIds = conversationsOfUser.stream().map(Conversation::getId).toList();
         var userConversationInfos = conversationRepository.getUserInformationForConversations(conversationIds, requestingUser.getId()).stream()
-                .collect(Collectors.toMap(UserConversationInfo::getConversationId, Function.identity()));
+                .collect(Collectors.toMap(UserConversationInfo::conversationId, Function.identity()));
         var generalConversationInfos = conversationRepository.getGeneralInformationForConversations(conversationIds).stream()
                 .collect(Collectors.toMap(GeneralConversationInfo::conversationId, Function.identity()));
 

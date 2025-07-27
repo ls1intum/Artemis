@@ -161,7 +161,7 @@ public class ConversationDTOService {
         this.fillGeneralConversationDtoFields(channelDTO, requestingUser, channelSummary);
 
         // channel-DTO specific fields
-        var participantOptional = Optional.ofNullable(channelSummary.userConversationInfo().getConversationParticipantSettingsView());
+        var participantOptional = Optional.ofNullable(channelSummary.userConversationInfo().conversationParticipantSettingsView());
         channelDTO.setIsChannelModerator(participantOptional.map(ConversationParticipantSettingsView::isModerator).orElse(false));
 
         channelDTO.setIsMember(channelAuthorizationService.isMember(channel, participantOptional));
@@ -312,7 +312,7 @@ public class ConversationDTOService {
     }
 
     private void fillGeneralConversationDtoFields(ConversationDTO conversationDTO, User requestingUser, ConversationSummary conversationSummary) {
-        var participantOptional = Optional.ofNullable(conversationSummary.userConversationInfo().getConversationParticipantSettingsView());
+        var participantOptional = Optional.ofNullable(conversationSummary.userConversationInfo().conversationParticipantSettingsView());
 
         conversationDTO.setIsMember(participantOptional.isPresent());
         conversationDTO.setIsFavorite(participantOptional.map(ConversationParticipantSettingsView::isFavorite).orElse(false));
@@ -321,8 +321,8 @@ public class ConversationDTOService {
 
         participantOptional.ifPresent(participant -> conversationDTO.setLastReadDate(participant.lastRead()));
 
-        conversationDTO.setUnreadMessagesCount(conversationSummary.userConversationInfo().getUnreadMessagesCount());
-        conversationDTO.setNumberOfMembers(conversationSummary.generalConversationInfo().getNumberOfParticipants());
+        conversationDTO.setUnreadMessagesCount(conversationSummary.userConversationInfo().unreadMessagesCount());
+        conversationDTO.setNumberOfMembers(conversationSummary.generalConversationInfo().numberOfParticipants());
 
         setDTOCreatorProperty(requestingUser, conversationSummary.conversation(), conversationDTO);
     }
