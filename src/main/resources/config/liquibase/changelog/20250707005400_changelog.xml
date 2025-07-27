@@ -99,24 +99,8 @@
         </rollback>
     </changeSet>
 
-    <!-- 3. Add exam-room-id and exam-seat-id column to the exam_user table -->
-    <changeSet id="20250707005400-03-add-planned-room-id-to-exam-user" author="röttgermann">
-        <addColumn tableName="exam_user">
-            <column name="planned_room_id" type="bigint">
-                <constraints nullable="true" foreignKeyName="fk_exam_user_planned_room"
-                             referencedTableName="exam_room" referencedColumnNames="id"/>
-            </column>
-        </addColumn>
-
-        <!-- Rollback section -->
-        <rollback>
-            <dropForeignKeyConstraint baseTableName="exam_user" constraintName="fk_exam_user_planned_room"/>
-            <dropColumn tableName="exam_user" columnName="planned_room_id"/>
-        </rollback>
-    </changeSet>
-
-    <!-- 4. Add exam to room assignment table -->
-    <changeSet id="20250707005400-04-add-exam-room-assignment" author="röttgermann">
+    <!-- 3. Add exam to room assignment table -->
+    <changeSet id="20250707005400-03-add-exam-room-assignment" author="röttgermann">
         <createTable tableName="exam_room_assignment">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true"/>
