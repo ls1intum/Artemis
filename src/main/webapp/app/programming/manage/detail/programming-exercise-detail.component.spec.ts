@@ -362,7 +362,17 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     it('should error on generate structure oracle', () => {
         const alertSpy = jest.spyOn(alertService, 'addAlert');
-        jest.spyOn(exerciseService, 'generateStructureOracle').mockReturnValue(throwError(() => new Error({ headers: { get: () => 'error' } })));
+        jest.spyOn(exerciseService, 'generateStructureOracle').mockReturnValue(
+            throwError(
+                () =>
+                    new HttpErrorResponse({
+                        status: 500,
+                        error: { message: 'Some erro occured' },
+                        headers: { get: () => 'error' },
+                    }),
+            ),
+        );
+        comp.programmingExercise = mockProgrammingExercise;
         comp.programmingExercise = mockProgrammingExercise;
         comp.generateStructureOracle();
         expect(alertSpy).toHaveBeenCalledWith({
