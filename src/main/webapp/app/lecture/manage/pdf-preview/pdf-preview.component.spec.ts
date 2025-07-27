@@ -107,7 +107,7 @@ describe('PdfPreviewComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [PdfPreviewComponent, HttpClientModule],
+            imports: [PdfPreviewComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: routeMock },
                 { provide: AttachmentService, useValue: attachmentServiceMock },

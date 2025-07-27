@@ -65,7 +65,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [PdfPreviewThumbnailGridComponent, HttpClientModule],
+            imports: [PdfPreviewThumbnailGridComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: { data: of({}) } },
                 { provide: AlertService, useValue: alertServiceMock },
