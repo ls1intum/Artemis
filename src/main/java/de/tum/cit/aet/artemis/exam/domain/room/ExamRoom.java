@@ -24,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
-import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 
 @Conditional(ExamEnabled.class)
@@ -77,14 +76,6 @@ public class ExamRoom extends AbstractAuditingEntity {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonManagedReference
     private List<LayoutStrategy> layoutStrategies = new ArrayList<>();
-
-    /**
-     * All exam users that sit in this room for any exam.
-     */
-    @OneToMany(mappedBy = "plannedRoomEntity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonManagedReference
-    private Set<ExamUser> examRoomUsers = new HashSet<>();
 
     @OneToMany(mappedBy = "examRoom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -146,14 +137,6 @@ public class ExamRoom extends AbstractAuditingEntity {
 
     public void setLayoutStrategies(List<LayoutStrategy> layoutStrategies) {
         this.layoutStrategies = layoutStrategies;
-    }
-
-    public Set<ExamUser> getExamRoomUsers() {
-        return examRoomUsers;
-    }
-
-    public void setExamRoomUsers(Set<ExamUser> examRoomUsers) {
-        this.examRoomUsers = examRoomUsers;
     }
 
     public Set<ExamRoomAssignment> getExamRoomAssignments() {
