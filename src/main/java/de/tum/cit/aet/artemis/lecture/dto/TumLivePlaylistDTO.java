@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TumLivePlaylistDTO(@JsonProperty("stream") Stream stream) {
+public record TumLivePlaylistDTO(@JsonProperty("stream") StreamDTO stream) {
 
-    public record Stream(@JsonProperty("playlistUrl") String playlistUrl) {
+    public record StreamDTO(@JsonProperty("playlistUrl") String playlistUrl) {
     }
 }

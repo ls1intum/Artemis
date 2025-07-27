@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +15,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 
 @Lazy
 @Component
+@Profile(PROFILE_CORE)
 public class TranscriptionPollingScheduler {
 
     private final LectureTranscriptionRepository transcriptionRepository;
