@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
+import de.tum.cit.aet.artemis.communication.dto.ReactionDTO;
 import de.tum.cit.aet.artemis.communication.service.ReactionService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
@@ -46,15 +47,17 @@ public class ReactionResource {
      *
      * @param courseId id of the course the posting that is reacted on belongs to
      * @param reaction reaction to create
-     * @return ResponseEntity with status 201 (Created) containing the created reaction in the response body,
-     *         or with status 400 (Bad Request) if the checks on user, course or posting validity fail
+     * @return a 201 (Created) with the created ReactionDTO in the body,
+     *         or 200 (OK) if an identical reaction was already present,
+     *         or 400 (Bad Request) if validation of the DTO, courseId or postingId fails
      */
     @PostMapping("courses/{courseId}/postings/reactions")
     @EnforceAtLeastStudent
-    public ResponseEntity<Reaction> createReaction(@PathVariable Long courseId, @Valid @RequestBody Reaction reaction) throws URISyntaxException {
+    public ResponseEntity<ReactionDTO> createReaction(@PathVariable Long courseId, @Valid @RequestBody Reaction reaction) throws URISyntaxException {
         try {
             Reaction createdReaction = reactionService.createReaction(courseId, reaction);
-            return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/postings/reactions/" + createdReaction.getId())).body(createdReaction);
+            URI location = new URI("/api/communication/courses/" + courseId + "/postings/reactions/" + createdReaction.getId());
+            return ResponseEntity.created(location).body(new ReactionDTO(createdReaction));
         }
         catch (DataIntegrityViolationException ex) {
             // this error can occur when multiple reactions are created at the exact same time, we log it, but doe not send it to the client
