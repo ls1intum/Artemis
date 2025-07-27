@@ -1,4 +1,4 @@
-import { StorageService } from 'ngx-webstorage/lib/core/interfaces/storageService';
+import { StorageService } from 'ngx-webstorage';
 import { Observable } from 'rxjs';
 
 export class MockSyncStorage implements StorageService {
