@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaRepository<PlagiarismComparison<?>, Long> {
+public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaRepository<PlagiarismComparison, Long> {
 
     @Modifying
     @Transactional // ok because of delete

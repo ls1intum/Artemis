@@ -273,4 +273,28 @@ describe('FaqComponent', () => {
         expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(faqComponent.courseId);
         expect(faqComponent.faqIngestionEnabled).toBeTrue();
     });
+
+    it('should call faq service to enable faq', () => {
+        const enableFaqSpy = jest.spyOn(faqService, 'enable').mockReturnValue(of(new HttpResponse<void>()));
+        faqComponentFixture.detectChanges();
+        faqComponent.enableFaq();
+        expect(enableFaqSpy).toHaveBeenCalledExactlyOnceWith(courseId);
+        expect(faqComponent.course.faqEnabled).toBeTrue();
+    });
+
+    it('should set dialog error source when error while enabling faq', () => {
+        const errorResponse = new HttpErrorResponse({
+            error: 'Test error',
+            status: 500,
+            statusText: 'Server Error',
+        });
+        const enableSpy = jest.spyOn(faqService, 'enable').mockReturnValue(throwError(() => errorResponse));
+        let dialogErrorMessage: string | undefined;
+        faqComponent.dialogError$.subscribe((msg) => (dialogErrorMessage = msg));
+        faqComponentFixture.detectChanges();
+        faqComponent.enableFaq();
+        expect(enableSpy).toHaveBeenCalledExactlyOnceWith(courseId);
+        expect(faqComponent.course.faqEnabled).toBeFalsy();
+        expect(dialogErrorMessage).toBe('Http failure response for (unknown url): 500 Server Error');
+    });
 });

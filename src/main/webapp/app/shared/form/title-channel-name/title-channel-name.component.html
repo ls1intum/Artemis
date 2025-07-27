@@ -1,19 +1,19 @@
 <div>
     @if (!this.isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.title) {
         <div class="form-group">
-            @if (!hideTitleLabel) {
-                <label [class]="'form-control-label' + (emphasizeLabels ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.title" for="field_title"></label>
+            @if (!hideTitleLabel()) {
+                <label [class]="'form-control-label' + (emphasizeLabels() ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.title" for="field_title"></label>
             }
             <input
                 #field_title="ngModel"
                 required
-                [minlength]="minTitleLength"
-                [pattern]="titlePattern"
+                [minlength]="minTitleLength() ?? null"
+                [pattern]="titlePattern() ?? ''"
                 type="text"
                 class="form-control"
                 name="title"
                 id="field_title"
-                [ngModel]="title"
+                [ngModel]="title()"
                 (ngModelChange)="updateTitle($event)"
                 notIncludedIn
                 [disallowedValues]="alreadyUsedTitles()"
@@ -26,9 +26,11 @@
     @if (isChannelFieldDisplayed()) {
         <div class="form-group">
             <div>
-                <label [class]="'form-control-label' + (emphasizeLabels ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.channelName" for="field_channel_name"
-                    >Channel Name</label
-                >
+                <label
+                    [class]="'form-control-label' + (emphasizeLabels() ? ' emphasized-label' : '')"
+                    jhiTranslate="artemisApp.lecture.channelName"
+                    for="field_channel_name"
+                ></label>
                 <jhi-help-icon text="artemisApp.programmingExercise.channelNameTooltip" />
             </div>
             <input
@@ -38,7 +40,7 @@
                 class="form-control"
                 name="channelName"
                 id="field_channel_name"
-                [ngModel]="channelName"
+                [ngModel]="channelName()"
                 (ngModelChange)="formatChannelName($event)"
                 maxlength="30"
             />

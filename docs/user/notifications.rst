@@ -23,6 +23,14 @@ All notifications you receive (whether through web, push, or email) are accessib
 
 |notification-general|
 
+This video provides an overview of how to interact with notifications in the web client.
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/61337?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Email Notifications
 ^^^^^^^^^^^^^^^^^^^
 
@@ -53,6 +61,14 @@ These settings can be configured at the course level:
 For convenience, Artemis provides preset configurations that you can apply with a single click.
 
 |notification-settings|
+
+This video demonstrates how to update notification settings within the web client.
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/61335?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
 
 Notification Types
 ^^^^^^^^^^^^^^^^^^

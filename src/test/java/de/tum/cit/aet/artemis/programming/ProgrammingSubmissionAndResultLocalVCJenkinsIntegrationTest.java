@@ -48,12 +48,12 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
 
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow();
 
         participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
 
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow();
     }
 
     @AfterEach
@@ -213,7 +213,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
+        httpHeaders.add(HttpHeaders.AUTHORIZATION, ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
         request.postWithoutLocation("/api/programming/public/programming-exercises/new-result", alteredObj, status, httpHeaders);
     }
 

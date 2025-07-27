@@ -7,6 +7,7 @@
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
+            "externalLLMUsage": "External LLM Usage",
             "accountInformation": "Account Information",
             "learnerProfile": "Learner Profile",
             "notificationSettings": "Notifications",
@@ -18,6 +19,10 @@
                 "description": "Choose the IDEs you want to use for opening programming exercises.",
                 "default": "Default",
                 "jetbrainsHelp": "To use JetBrains IDEs, please install the JetBrains Toolbox."
+            },
+            "externalLLMUsageSettingsPage": {
+                "accepted": "You have accepted the usage of external LLMs on {{acceptedDate}}.",
+                "declined": "You have not accepted the usage of external LLMs."
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",
@@ -132,6 +137,7 @@
                 "sshKey": "Public SSH Key"
             },
             "categories": {
+                "externalLLMUsage": "External LLM Usage Settings",
                 "NOTIFICATION_SETTINGS": "Notification Settings",
                 "SCIENCE_SETTINGS": "Science Settings",
                 "SSH_SETTINGS": "SSH Settings",

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, OnChanges, OnInit, Output, inject, input } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { OWL_DATE_TIME_FORMATS, OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -45,18 +45,17 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     private fb = inject(FormBuilder);
     protected readonly DateTimePickerType = DateTimePickerType;
 
-    @Input()
-    formData: TutorialGroupFreePeriodFormData = {
+    readonly formData = input<TutorialGroupFreePeriodFormData>({
         startDate: undefined,
         endDate: undefined,
         startTime: undefined,
         endTime: undefined,
         reason: undefined,
-    };
+    });
 
-    @Input() isEditMode = false;
+    readonly isEditMode = input(false);
 
-    @Input() timeZone: string;
+    readonly timeZone = input<string>();
 
     @Output() formSubmitted: EventEmitter<TutorialGroupFreePeriodFormData> = new EventEmitter<TutorialGroupFreePeriodFormData>();
 
@@ -177,9 +176,10 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     ngOnChanges() {
         this.initializeForm();
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
-            this.setFirstTimeFrameInEditMode(this.formData);
+        const formData = this.formData();
+        if (this.isEditMode() && formData) {
+            this.setFormValues(formData);
+            this.setFirstTimeFrameInEditMode(formData);
         }
     }
 

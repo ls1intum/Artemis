@@ -32,14 +32,15 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
+import { MockSyncStorage } from 'src/test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -156,6 +157,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
+                MockProvider(CalendarEventService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -1010,13 +1012,16 @@ describe('QuizExerciseUpdateComponent', () => {
             let quizExerciseServiceUpdateStub: jest.SpyInstance;
             let quizExerciseServiceImportStub: jest.SpyInstance;
             let exerciseSanitizeSpy: jest.SpyInstance;
+            let refreshSpy: jest.SpyInstance;
+
             const saveQuizWithPendingChangesCache = () => {
                 comp.cacheValidation();
                 comp.pendingChangesCache = true;
                 if (comp.courseId) {
                     const childFixture = TestBed.createComponent(QuizQuestionListEditComponent);
-                    comp.quizQuestionListEditComponent = childFixture.componentInstance;
-                    jest.spyOn(comp.quizQuestionListEditComponent, 'parseAllQuestions').mockImplementation();
+                    (comp as any).quizQuestionListEditComponent = () => childFixture.componentInstance;
+                    jest.spyOn(comp, 'quizQuestionListEditComponent').mockReturnValue(childFixture.componentInstance);
+                    jest.spyOn(comp.quizQuestionListEditComponent(), 'parseAllQuestions').mockImplementation();
                 }
                 comp.save();
             };
@@ -1040,6 +1045,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 quizExerciseServiceImportStub = jest.spyOn(quizExerciseService, 'import');
                 quizExerciseServiceImportStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+                const calendarEventService = TestBed.inject(CalendarEventService);
+                refreshSpy = jest.spyOn(calendarEventService, 'refresh');
                 exerciseSanitizeSpy = jest.spyOn(Exercise, 'sanitize');
             });
 
@@ -1054,6 +1061,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(quizExerciseServiceCreateStub).toHaveBeenCalledOnce();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
+                expect(refreshSpy).toHaveBeenCalled();
             });
 
             it('should call not update if testruns exist in exam mode', () => {
@@ -1064,6 +1072,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
+                expect(refreshSpy).not.toHaveBeenCalled();
             });
 
             it('should update if valid and quiz exercise has id', () => {
@@ -1072,6 +1081,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise.id, comp.quizExercise, new Map<string, Blob>(), {});
                 expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
+                expect(refreshSpy).toHaveBeenCalled();
             });
 
             it('should import if valid and quiz exercise has id and flag', () => {
@@ -1081,6 +1091,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceImportStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise, new Map<string, Blob>());
+                expect(refreshSpy).toHaveBeenCalled();
             });
 
             it('should not save if not valid', () => {
@@ -1091,6 +1102,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
+                expect(refreshSpy).not.toHaveBeenCalled();
             });
 
             it('should call update with notification text if there is one', () => {
@@ -1100,6 +1112,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
                 expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise.id, comp.quizExercise, new Map<string, Blob>(), { notificationText: 'test' });
                 expect(quizExerciseServiceImportStub).not.toHaveBeenCalled();
+                expect(refreshSpy).toHaveBeenCalled();
             });
 
             it('should call alert service if response has no body on create', () => {

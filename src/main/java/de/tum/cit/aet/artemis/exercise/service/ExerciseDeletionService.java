@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.text.api.TextApi;
@@ -50,7 +50,7 @@ public class ExerciseDeletionService {
 
     private final ParticipationDeletionService participationDeletionService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseDeletionService programmingExerciseDeletionService;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -77,13 +77,13 @@ public class ExerciseDeletionService {
     private final Optional<IrisSettingsApi> irisSettingsApi;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
-            ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, TutorParticipationRepository tutorParticipationRepository,
-            ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi, Optional<LectureUnitApi> lectureUnitApi,
-            Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelRepository channelRepository, ChannelService channelService,
-            Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi) {
+            ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
+            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
+            Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelRepository channelRepository,
+            ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseDeletionService = programmingExerciseDeletionService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.quizExerciseService = quizExerciseService;
@@ -187,7 +187,7 @@ public class ExerciseDeletionService {
 
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
-            programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);
+            programmingExerciseDeletionService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
             // fetch the exercise again to allow Hibernate to delete it properly
@@ -195,10 +195,7 @@ public class ExerciseDeletionService {
             exerciseRepository.delete(exercise);
         }
 
-        if (competencyProgressApi.isPresent()) {
-            var api = competencyProgressApi.get();
-            competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(api::updateProgressByCompetencyAsync);
-        }
+        competencyProgressApi.ifPresent(api -> competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(api::updateProgressByCompetencyAsync));
     }
 
     /**
@@ -227,6 +224,7 @@ public class ExerciseDeletionService {
         plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exercise.getId()));
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
+        // TODO: recalculateCompetencyProgress = true does not make sense here for exam exercises
         participationDeletionService.deleteAllByExercise(exercise, true);
     }
 }

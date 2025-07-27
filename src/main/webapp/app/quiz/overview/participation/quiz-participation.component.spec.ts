@@ -17,21 +17,26 @@ import dayjs from 'dayjs/esm';
 import { MockBuilder } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockLocalStorageService } from 'src/test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockSyncStorage } from 'src/test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { MockWebsocketService } from 'src/test/javascript/spec/helpers/mocks/service/mock-websocket.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { ShortAnswerQuestionComponent } from '../../shared/questions/short-answer-question/short-answer-question.component';
+import { DragAndDropQuestionComponent } from '../../shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { MultipleChoiceQuestionComponent } from '../../shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { ShortAnswerQuestion } from '../../shared/entities/short-answer-question.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const now = dayjs();
 const question1: QuizQuestion = {
@@ -51,13 +56,17 @@ const question2: MultipleChoiceQuestion = {
     exportQuiz: false,
     randomizeOrder: true,
 };
-const question3: QuizQuestion = {
+const question3: ShortAnswerQuestion = {
     id: 3,
     type: QuizQuestionType.SHORT_ANSWER,
     points: 3,
     invalid: false,
     exportQuiz: false,
     randomizeOrder: true,
+    text: 'Short answer question text',
+    matchLetterCase: false,
+    similarityValue: 0,
+    spots: [],
 };
 
 let quizExercise: QuizExercise;
@@ -137,6 +146,10 @@ describe('QuizParticipationComponent', () => {
     describe('live mode', () => {
         beforeEach(waitForAsync(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(FaIconComponent)
+                .keep(MultipleChoiceQuestionComponent)
+                .keep(DragAndDropQuestionComponent)
+                .keep(ShortAnswerQuestionComponent)
                 .keep(QuizExerciseService)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
@@ -507,6 +520,10 @@ describe('QuizParticipationComponent', () => {
     describe('preview mode', () => {
         beforeEach(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(FaIconComponent)
+                .keep(MultipleChoiceQuestionComponent)
+                .keep(DragAndDropQuestionComponent)
+                .keep(ShortAnswerQuestionComponent)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
                 .keep(ArtemisQuizService)
@@ -585,6 +602,10 @@ describe('QuizParticipationComponent', () => {
     describe('practice mode', () => {
         beforeEach(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(FaIconComponent)
+                .keep(MultipleChoiceQuestionComponent)
+                .keep(DragAndDropQuestionComponent)
+                .keep(ShortAnswerQuestionComponent)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
                 .keep(ArtemisQuizService)
@@ -669,6 +690,10 @@ describe('QuizParticipationComponent', () => {
     describe('solution mode', () => {
         beforeEach(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(FaIconComponent)
+                .keep(MultipleChoiceQuestionComponent)
+                .keep(DragAndDropQuestionComponent)
+                .keep(ShortAnswerQuestionComponent)
                 .keep(ButtonComponent)
                 .keep(QuizParticipationService)
                 .keep(ArtemisQuizService)

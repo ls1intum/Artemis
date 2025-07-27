@@ -15,49 +15,42 @@ import java.util.stream.Stream;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorColumn;
-import jakarta.persistence.DiscriminatorType;
-import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.jplag.JPlagResult;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 
 /**
  * Base result of any automatic plagiarism detection.
  */
 @Entity
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
-@DiscriminatorValue("PR")
 @Table(name = "plagiarism_result")
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-// Annotation necessary to distinguish between concrete implementations of PlagiarismResults when deserializing from JSON
-// @formatter:off
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = TextPlagiarismResult.class, name = "text")
-})
-// @formatter:on
-public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> extends AbstractAuditingEntity {
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class PlagiarismResult extends AbstractAuditingEntity {
+
+    private static final int ORIGINAL_SIZE = 100;
+
+    private static final int REDUCED_SIZE = 10;
 
     /**
      * List of detected comparisons whose similarity is above the specified threshold.
      */
-    @OneToMany(mappedBy = "plagiarismResult", cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = PlagiarismComparison.class)
-    protected Set<PlagiarismComparison<E>> comparisons = new HashSet<>();
+    @OneToMany(mappedBy = "plagiarismResult", cascade = CascadeType.ALL, orphanRemoval = true)
+    protected Set<PlagiarismComparison> comparisons = new HashSet<>();
 
     /**
      * Duration of the plagiarism detection run in milliseconds.
@@ -85,11 +78,11 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
     @ElementCollection(fetch = FetchType.EAGER)
     protected Map<Integer, Integer> similarityDistribution;
 
-    public Set<PlagiarismComparison<E>> getComparisons() {
+    public Set<PlagiarismComparison> getComparisons() {
         return comparisons;
     }
 
-    public void setComparisons(Set<PlagiarismComparison<E>> comparisons) {
+    public void setComparisons(Set<PlagiarismComparison> comparisons) {
         this.comparisons = comparisons;
     }
 
@@ -137,12 +130,39 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
      */
     public void sortAndLimit(int size) {
         // we have to use an intermediate variable here, otherwise the compiler complaints due to generics and type erasing
-        Stream<PlagiarismComparison<E>> stream = getComparisons().stream().sorted(reverseOrder()).limit(size);
+        Stream<PlagiarismComparison> stream = getComparisons().stream().sorted(reverseOrder()).limit(size);
         this.comparisons = stream.collect(Collectors.toSet());
     }
 
     @Override
     public String toString() {
         return "PlagiarismResult{" + "comparisons=" + comparisons + ", duration=" + duration + ", similarityDistribution=" + similarityDistribution + '}';
+    }
+
+    /**
+     * converts the given JPlagResult into a PlagiarismResult, only uses the 500 most interesting comparisons based on the highest similarity
+     *
+     * @param result   the JPlagResult contains comparisons
+     * @param exercise the exercise to which the result should belong, either Text or Programming
+     */
+    public void convertJPlagResult(JPlagResult result, Exercise exercise) {
+        // sort and limit the number of comparisons to 500
+        var comparisons = result.getComparisons(500);
+        // only convert those 500 comparisons to save memory and cpu power
+        for (var jPlagComparison : comparisons) {
+            var comparison = PlagiarismComparison.fromJPlagComparison(jPlagComparison, exercise, result.getOptions().submissionDirectories().iterator().next());
+            comparison.setPlagiarismResult(this);
+            this.comparisons.add(comparison);
+        }
+        this.duration = result.getDuration();
+
+        // Convert JPlag Similarity Distribution from int[100] to int[10]
+        int[] tenthPercentileSimilarityDistribution = new int[REDUCED_SIZE];
+        for (int i = 0; i < ORIGINAL_SIZE; i++) {
+            tenthPercentileSimilarityDistribution[i / REDUCED_SIZE] += result.getSimilarityDistribution()[i];
+        }
+
+        this.setSimilarityDistribution(tenthPercentileSimilarityDistribution);
+        this.setExercise(exercise);
     }
 }

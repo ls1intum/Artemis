@@ -20,6 +20,7 @@ import { PrivacyStatement } from 'app/core/shared/entities/privacy-statement.mod
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('LegalDocumentUpdateComponent', () => {
     let component: LegalDocumentUpdateComponent;
@@ -30,7 +31,7 @@ describe('LegalDocumentUpdateComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip), FaIconComponent],
             declarations: [
                 LegalDocumentUpdateComponent,
                 MockComponent(UnsavedChangesWarningComponent),

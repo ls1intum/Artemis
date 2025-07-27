@@ -44,17 +44,15 @@ public final class Constants {
 
     /**
      * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
-     * Submissions after the grace period exceeded will be flagged as illegal.
+     * Submissions after the grace period exceeded will be unrated.
      * <p>
-     * This is needed because locking programming exercise repositories might take up to 60 seconds,
-     * especially for exercises with many participants.
      * If the student was able to successfully push their solution, this solution should still be graded, even if
-     * the push was a few seconds late.
+     * the processing of the push was up to 1s late.
      * <p>
-     * Have a look at isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User, ProgrammingSubmission) in
-     * de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService
+     * Have a look at setRatedIfNotAfterDueDate(Participation participation, ZonedDateTime submissionDate) in
+     * de.tum.cit.aet.artemis.assessment.domain.Result.
      */
-    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 60;
+    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
 
     public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
 
@@ -362,6 +360,11 @@ public final class Constants {
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
 
     /**
+     * Profile combination for one primary node, where LTI AND scheduling is active
+     */
+    public static final String PROFILE_LTI_AND_SCHEDULING = PROFILE_LTI + " & " + PROFILE_SCHEDULING;
+
+    /**
      * The name of the Spring profile used for Theia as an external online IDE.
      */
     public static final String PROFILE_THEIA = "theia";
@@ -492,6 +495,10 @@ public final class Constants {
     public static final String ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH = "${studentWorkingDirectoryNoSlash}";
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
+
+    public static final String JWT_COOKIE_NAME = "jwt";
+
+    public static final String BEARER_PREFIX = "Bearer ";
 
     private Constants() {
     }

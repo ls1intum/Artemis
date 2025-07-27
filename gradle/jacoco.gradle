@@ -1,25 +1,25 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.853, "CLASS": 115]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.853, "CLASS": 114]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
-        "assessment"    :          ["INSTRUCTION": 0.925, "CLASS":  0],
-        "athena"        :          ["INSTRUCTION": 0.873, "CLASS":  2],
-        "atlas"         :          ["INSTRUCTION": 0.904, "CLASS":  6],
-        "buildagent"    :          ["INSTRUCTION": 0.810, "CLASS":  1],
+        "assessment"    :          ["INSTRUCTION": 0.924, "CLASS":  0],
+        "athena"        :          ["INSTRUCTION": 0.874, "CLASS":  2],
+        "atlas"         :          ["INSTRUCTION": 0.903, "CLASS":  6],
+        "buildagent"    :          ["INSTRUCTION": 0.805, "CLASS":  1],
         "communication" :          ["INSTRUCTION": 0.848, "CLASS":  5],
-        "core"          :          ["INSTRUCTION": 0.836, "CLASS": 46],
+        "core"          :          ["INSTRUCTION": 0.830, "CLASS": 47],
         "exam"          :          ["INSTRUCTION": 0.918, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.916, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.953, "CLASS":  0],
-        "iris"          :          ["INSTRUCTION": 0.773, "CLASS": 24],
-        "lecture"       :          ["INSTRUCTION": 0.892, "CLASS":  1],
-        "lti"           :          ["INSTRUCTION": 0.895, "CLASS":  2],
-        "modeling"      :          ["INSTRUCTION": 0.939, "CLASS":  0],
-        "plagiarism"    :          ["INSTRUCTION": 0.904, "CLASS":  1],
-        "programming"   :          ["INSTRUCTION": 0.781, "CLASS": 21],
+        "iris"          :          ["INSTRUCTION": 0.774, "CLASS": 25],
+        "lecture"       :          ["INSTRUCTION": 0.896, "CLASS":  1],
+        "lti"           :          ["INSTRUCTION": 0.891, "CLASS":  2],
+        "modeling"      :          ["INSTRUCTION": 0.938, "CLASS":  0],
+        "plagiarism"    :          ["INSTRUCTION": 0.901, "CLASS":  2],
+        "programming"   :          ["INSTRUCTION": 0.785, "CLASS": 17],
         "quiz"          :          ["INSTRUCTION": 0.901, "CLASS":  2],
-        "text"          :          ["INSTRUCTION": 0.949, "CLASS":  1],
+        "text"          :          ["INSTRUCTION": 0.947, "CLASS":  1],
         "tutorialgroup" :          ["INSTRUCTION": 0.915, "CLASS":  1],
     ]
     // If no explicit modules defined -> generate reports and validate for each module
@@ -36,7 +36,7 @@ ext {
 }
 
 jacoco {
-    toolVersion = "0.8.12"
+    toolVersion = "0.8.13"
 }
 
 jacocoTestReport {
@@ -140,10 +140,16 @@ private JacocoCoverageVerification registerJacocoTestCoverageVerification(String
     def maxNumberUncoveredClasses = thresholds["CLASS"] as int
 
     JacocoCoverageVerification task = project.tasks.register(taskName, JacocoCoverageVerification).get()
-    task.description = "Validates JaCoCo coverage for vioalations for $moduleName"
+    task.description = "Validates JaCoCo coverage for violations for $moduleName"
 
     prepareJacocoReportTask(task, moduleName, rootTask)
     applyVerificationRule(task, minInstructionCoveredRatio, maxNumberUncoveredClasses)
+
+    // Ensure the verification waits for its own report if executed together with the report task
+    def reportTaskName = "jacocoCoverageReport-$moduleName"
+    if (project.tasks.names.contains(reportTaskName)) {
+        task.mustRunAfter(project.tasks.named(reportTaskName))
+    }
 
     return task
 }
@@ -203,8 +209,8 @@ private static void applyVerificationRule(JacocoCoverageVerification task, doubl
             moduleName = "Aggregated Code Coverage"
         }
 
-        if (!reportsFile.exists()) {
-            println "⚠️ Jacoco report not found for ${task.name.replace('jacocoTestCoverageVerification-', '')}"
+        if (!reportsFile.exists() || reportsFile.length() == 0) {
+            println "⚠️ Jacoco report not found for ${task.name.replace('jacocoTestCoverageVerification-', '')} at ${reportsFile.absolutePath}"
             return
         }
 

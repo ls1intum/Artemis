@@ -44,6 +44,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { FileService } from 'app/shared/service/file.service';
+import { InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -62,7 +63,8 @@ describe('CourseLectureDetailsComponent', () => {
     MockInstance(DiscussionSectionComponent, 'postCreateEditModal', signal(new ElementRef(document.createElement('div'))));
 
     beforeEach(async () => {
-        const releaseDate = dayjs('18-03-2020', 'DD-MM-YYYY');
+        const releaseDate = dayjs('18-03-2020 13:30', 'DD-MM-YYYY HH:mm');
+        const endDate = dayjs('18-03-2020 15:30', 'DD-MM-YYYY HH:mm');
 
         course = new Course();
         course.id = 456;
@@ -71,6 +73,7 @@ describe('CourseLectureDetailsComponent', () => {
         lecture = new Lecture();
         lecture.id = 1;
         lecture.startDate = releaseDate;
+        lecture.endDate = endDate;
         lecture.description = 'Test description';
         lecture.title = 'Test lecture';
         lecture.course = course;
@@ -92,7 +95,7 @@ describe('CourseLectureDetailsComponent', () => {
         const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
 
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse), MockDirective(NgbPopover)],
+            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse), MockDirective(NgbPopover), FaIconComponent],
             declarations: [
                 CourseLectureDetailsComponent,
                 MockComponent(AttachmentVideoUnitComponent),
@@ -110,10 +113,10 @@ describe('CourseLectureDetailsComponent', () => {
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(SidePanelComponent),
-                MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(DiscussionSectionComponent),
+                MockComponent(InformationBoxComponent),
             ],
             providers: [
                 provideHttpClient(),
@@ -165,6 +168,13 @@ describe('CourseLectureDetailsComponent', () => {
         expect(courseLecturesDetailsComponent).not.toBeNull();
         courseLecturesDetailsComponent.ngOnDestroy();
     });
+
+    it('should render information boxes for lecture start/end date', fakeAsync(() => {
+        fixture.detectChanges();
+
+        const boxes = debugElement.queryAll(By.css('jhi-information-box'));
+        expect(boxes).toHaveLength(2);
+    }));
 
     it('should display all three lecture units: 2 attachment video units and 1 text unit', fakeAsync(() => {
         fixture.detectChanges();

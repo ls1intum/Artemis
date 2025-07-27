@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -266,15 +267,13 @@ public class CourseScoreCalculationService {
         // Get participation results (used in course-statistics.component).
         Set<ParticipationResultDTO> participationResults = new HashSet<>();
         for (StudentParticipation studentParticipation : gradedStudentParticipations) {
-            if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
-                Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
-                var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());
-                participationResults.add(participationResult);
-                // this line is an important workaround. It prevents that the whole tree
-                // "result -> participation -> exercise -> course -> exercises -> studentParticipations -> submissions -> results" is sent again to the client which is useless
-                // TODO: in the future, we need a better solution to prevent this
-                studentParticipation.setExercise(null);
-            }
+            Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
+            var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());
+            participationResults.add(participationResult);
+            // this line is an important workaround. It prevents that the whole tree
+            // "result -> participation -> exercise -> course -> exercises -> studentParticipations -> submissions -> results" is sent again to the client which is useless
+            // TODO: in the future, we need a better solution to prevent this
+            studentParticipation.setExercise(null);
         }
 
         return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
@@ -403,24 +402,24 @@ public class CourseScoreCalculationService {
      * @param dueDate       the due date of the exercise.
      * @return the result that should be used for the score calculation.
      */
-    // TODO: This connection between participations and results will not be used in the future. This should be refactored to take the latest rated result from the submissions.
     public Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
         if (participation == null) {
             return null;
         }
-        var resultsSet = participation.getResults();
+        Set<Result> resultsSet = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull))
+                .collect(Collectors.toSet());
 
         Result emptyResult = new Result();
         // TODO: Check if you can just instantiate Result.score with 0.0.
         emptyResult.setScore(0.0);
 
-        if (resultsSet == null || resultsSet.isEmpty()) {
+        if (resultsSet.isEmpty()) {
             return emptyResult;
         }
 
         var resultsList = new ArrayList<>(resultsSet);
 
-        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> Boolean.TRUE.equals(result.isRated() && result.getCompletionDate() != null)).toList();
+        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null).toList();
 
         if (ratedResultsWithCompletionDate.isEmpty()) {
             return emptyResult;

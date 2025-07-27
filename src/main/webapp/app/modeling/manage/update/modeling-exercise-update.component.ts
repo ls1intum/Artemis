@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -44,6 +44,7 @@ import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/cour
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -74,21 +75,23 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
-    private alertService = inject(AlertService);
-    private modelingExerciseService = inject(ModelingExerciseService);
-    private modalService = inject(NgbModal);
-    private popupService = inject(ExerciseUpdateWarningService);
-    private courseService = inject(CourseManagementService);
-    private exerciseService = inject(ExerciseService);
-    private exerciseGroupService = inject(ExerciseGroupService);
-    private eventManager = inject(EventManager);
-    private activatedRoute = inject(ActivatedRoute);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private changeDetectorRef = inject(ChangeDetectorRef);
+    private readonly alertService = inject(AlertService);
+    private readonly modelingExerciseService = inject(ModelingExerciseService);
+    private readonly modalService = inject(NgbModal);
+    private readonly popupService = inject(ExerciseUpdateWarningService);
+    private readonly courseService = inject(CourseManagementService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly exerciseGroupService = inject(ExerciseGroupService);
+    private readonly eventManager = inject(EventManager);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
+    private readonly calendarEventService = inject(CalendarEventService);
 
-    @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
+    exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent?: TeamConfigFormGroupComponent;
     @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor?: ModelingEditorComponent;
+
     @ViewChild('bonusPoints') bonusPoints?: NgModel;
     @ViewChild('points') points?: NgModel;
     @ViewChild('solutionPublicationDate') solutionPublicationDateField?: FormDateTimePickerComponent;
@@ -97,8 +100,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
     @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
 
-    readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly documentationType: DocumentationType = 'Model';
+    protected readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly documentationType: DocumentationType = 'Model';
 
     AssessmentType = AssessmentType;
     UMLDiagramType = UMLDiagramType;
@@ -119,8 +122,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     formSectionStatus: FormSectionStatus[];
 
-    // Subscription
-    titleChannelNameComponentSubscription?: Subscription;
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
@@ -134,12 +135,24 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     ngAfterViewInit() {
-        this.titleChannelNameComponentSubscription = this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.subscribe(() =>
-            this.calculateFormSectionStatus(),
-        );
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.teamSubscription = this.teamConfigFormGroupComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
+    }
+
+    constructor() {
+        effect(() => {
+            this.updateFormSectionsOnIsValidChange();
+        });
+    }
+
+    /**
+     * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
+     */
+    private updateFormSectionsOnIsValidChange() {
+        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // triggers effect on change
+
+        this.calculateFormSectionStatus().then();
     }
 
     /**
@@ -182,7 +195,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                         this.modelingExercise.mode = ExerciseMode.INDIVIDUAL;
                         this.modelingExercise.teamAssignmentConfig = undefined;
                         this.modelingExercise.teamMode = false;
-                        // Exam exercises cannot be not included into the total score
+                        // Exam exercises cannot be not included in the total score
                         if (this.modelingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
                             this.modelingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
                         }
@@ -219,7 +232,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     ngOnDestroy() {
-        this.titleChannelNameComponentSubscription?.unsubscribe();
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
     }
@@ -229,7 +241,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.formSectionStatus = [
             {
                 title: 'artemisApp.exercise.sections.general',
-                valid: Boolean(this.exerciseTitleChannelNameComponent?.titleChannelNameComponent.formValid),
+                valid: this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(),
             },
             { title: 'artemisApp.exercise.sections.mode', valid: Boolean(this.teamConfigFormGroupComponent?.formValid) },
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
@@ -265,7 +277,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             },
         ];
 
-        // otherwise the change detection does not work on the initial load
+        // otherwise, the change detection does not work on the initial load
         this.changeDetectorRef.detectChanges();
     }
 
@@ -313,6 +325,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.isSaving = false;
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
+        this.calendarEventService.refresh();
     }
 
     private onSaveError(errorRes: HttpErrorResponse): void {

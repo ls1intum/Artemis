@@ -94,6 +94,24 @@ public class ModelingExerciseUtilService {
     private ExerciseTestRepository exerciseRepository;
 
     /**
+     * Creates and saves a ModelingExercise.
+     *
+     * @param course            The Course to which the exercise belongs
+     * @param startDate         The release date of the TextExercise
+     * @param releaseDate       The release date of the TextExercise
+     * @param dueDate           The due date of the TextExercise
+     * @param assessmentDueDate The assessment due date of the TextExercise
+     * @return The created TextExercise
+     */
+    public ModelingExercise addModelingExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(releaseDate, startDate, dueDate, assessmentDueDate, DiagramType.ClassDiagram, course);
+        modelingExercise.setTitle("Modeling Exercise");
+        course.addExercises(modelingExercise);
+        course.setMaxComplaintTimeDays(14);
+        return exerciseRepository.save(modelingExercise);
+    }
+
+    /**
      * Creates and saves a Course with a ModelingExercise. The ModelingExercise's DiagramType is set to ClassDiagram.
      *
      * @param title The title of the ModelingExercise
@@ -111,6 +129,16 @@ public class ModelingExerciseUtilService {
         assertThat(course.getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(modelingExercise);
         assertThat(modelingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
         return course;
+    }
+
+    public ModelingExercise addModelingExerciseToCourse(Course course) {
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+                course);
+        modelingExercise.setTitle("ClassDiagram");
+        course.addExercises(modelingExercise);
+        courseRepo.save(course);
+        modelingExercise = exerciseRepository.save(modelingExercise);
+        return modelingExercise;
     }
 
     /**

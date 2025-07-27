@@ -1,6 +1,5 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, input, output } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { faArrowLeft, faArrowRight, faChevronRight, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -15,15 +14,15 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, TranslateDirective, NgClass, DecimalPipe, ArtemisTranslatePipe],
 })
 export class PlagiarismSidebarComponent implements OnChanges {
-    @Input() activeID: number;
-    @Input() comparisons?: PlagiarismComparison<TextSubmissionElement>[];
-    @Input() casesFiltered = false;
-    @Input() offset = 0;
+    readonly activeID = input<number>();
+    readonly comparisons = input<PlagiarismComparison[]>();
+    readonly casesFiltered = input(false);
+    readonly offset = input(0);
 
-    @Input() showRunDetails: boolean;
-    @Output() showRunDetailsChange = new EventEmitter<boolean>();
+    readonly showRunDetails = input<boolean>();
+    readonly showRunDetailsChange = output<boolean>();
 
-    @Output() selectIndex = new EventEmitter<number>();
+    readonly selectIndex = output<number>();
 
     readonly CONFIRMED = PlagiarismStatus.CONFIRMED;
     readonly DENIED = PlagiarismStatus.DENIED;
@@ -43,7 +42,7 @@ export class PlagiarismSidebarComponent implements OnChanges {
     /**
      * Subset of currently paged comparisons.
      */
-    public pagedComparisons?: PlagiarismComparison<TextSubmissionElement>[];
+    public pagedComparisons?: PlagiarismComparison[];
 
     /**
      * Number of comparisons per page.
@@ -56,8 +55,8 @@ export class PlagiarismSidebarComponent implements OnChanges {
     faArrowRight = faArrowRight;
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.comparisons) {
-            const comparisons: PlagiarismComparison<TextSubmissionElement>[] = changes.comparisons.currentValue;
+        if (changes.comparisons?.currentValue !== changes.comparisons?.previousValue) {
+            const comparisons: PlagiarismComparison[] = changes.comparisons.currentValue;
 
             this.currentPage = 0;
             if (!comparisons) {
@@ -79,7 +78,7 @@ export class PlagiarismSidebarComponent implements OnChanges {
 
     getPagedComparisons() {
         const startIndex = this.currentPage * this.pageSize;
-        return this.comparisons?.slice(startIndex, startIndex + this.pageSize);
+        return this.comparisons()?.slice(startIndex, startIndex + this.pageSize);
     }
 
     getPagedIndex(idx: number) {

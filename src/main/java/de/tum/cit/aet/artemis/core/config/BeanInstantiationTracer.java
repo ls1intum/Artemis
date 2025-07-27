@@ -41,7 +41,7 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
             if (parent != null) {
                 edges.add(new Pair<>(parent, name));
             }
-            log.info("Instantiating: {} ← {}", name, parent != null ? parent : "root");
+            log.debug("Instantiating: {} ← {}", name, parent != null ? parent : "root");
             stack.push(name);
         }
         return null;
@@ -70,7 +70,7 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
                 out.printf("  \"%s\" -> \"%s\";%n", edge.first(), edge.second());
             }
             out.println("}");
-            log.info("Bean instantiation graph exported to startupBeans.dot ({} edges)", edges.size());
+            log.debug("Bean instantiation graph exported to startupBeans.dot ({} edges)", edges.size());
         }
         catch (IOException e) {
             log.error("Failed to write startupBeans.dot", e);
