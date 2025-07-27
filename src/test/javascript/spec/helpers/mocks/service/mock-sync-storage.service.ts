@@ -1,7 +1,7 @@
-import { StorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'ngx-webstorage';
 import { Observable } from 'rxjs';
 
-export class MockSyncStorage implements StorageService {
+export class MockSyncStorage implements LocalStorageService {
     private static storage: { [key: string]: any } = {};
 
     clear(key?: string): any {}
