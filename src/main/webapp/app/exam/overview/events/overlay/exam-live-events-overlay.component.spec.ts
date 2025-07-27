@@ -10,6 +10,7 @@ import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.se
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockProvider } from 'ng-mocks';
+import dayjs from 'dayjs/esm';
 
 describe('ExamLiveEventsOverlayComponent', () => {
     let component: ExamLiveEventsOverlayComponent;
@@ -28,14 +29,13 @@ describe('ExamLiveEventsOverlayComponent', () => {
                 MockProvider(NgbActiveModal),
             ],
         }).compileComponents();
-    });
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(ExamLiveEventsOverlayComponent);
         component = fixture.componentInstance;
         mockLiveEventsService = TestBed.inject(ExamParticipationLiveEventsService);
         mockExamExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
         mockActiveModal = TestBed.inject(NgbActiveModal);
+        fixture.componentRef.setInput('examStartDate', dayjs());
         fixture.detectChanges();
     });
 

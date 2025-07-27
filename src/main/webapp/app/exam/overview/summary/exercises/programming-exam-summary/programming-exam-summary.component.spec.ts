@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
@@ -26,6 +25,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -45,24 +45,6 @@ const programmingSubmission = {
     type: SubmissionType.MANUAL,
     commitHash: '123456789ab',
 } as ProgrammingSubmission;
-
-const programmingParticipation = {
-    id: 4,
-    student: user,
-    submissions: [programmingSubmission],
-    type: ParticipationType.PROGRAMMING,
-    participantIdentifier: 'student1',
-    repositoryUri: 'https://username@artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username',
-} as ProgrammingExerciseStudentParticipation;
-
-const programmingExercise = {
-    id: 4,
-    type: ExerciseType.PROGRAMMING,
-    studentParticipations: [programmingParticipation],
-    exerciseGroup,
-    projectKey: 'TEST',
-    dueDate: dayjs().subtract(5, 'minutes'),
-} as ProgrammingExercise;
 
 const feedbackReference = {
     id: 1,
@@ -93,6 +75,25 @@ const result = {
     assessmentType: AssessmentType.MANUAL,
 } as Result;
 
+const programmingParticipation = {
+    id: 4,
+    student: user,
+    submissions: [programmingSubmission],
+    type: ParticipationType.PROGRAMMING,
+    participantIdentifier: 'student1',
+    repositoryUri: 'https://username@artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username',
+    results: [result],
+} as ProgrammingExerciseStudentParticipation;
+
+const programmingExercise = {
+    id: 4,
+    type: ExerciseType.PROGRAMMING,
+    studentParticipations: [programmingParticipation],
+    exerciseGroup,
+    projectKey: 'TEST',
+    dueDate: dayjs().subtract(5, 'minutes'),
+} as ProgrammingExercise;
+
 describe('ProgrammingExamSummaryComponent', () => {
     let component: ProgrammingExamSummaryComponent;
     let fixture: ComponentFixture<ProgrammingExamSummaryComponent>;
@@ -113,13 +114,14 @@ describe('ProgrammingExamSummaryComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExamSummaryComponent);
                 component = fixture.componentInstance;
 
-                component.exercise = programmingExercise;
                 programmingSubmission.results = [result];
                 programmingSubmission.participation = programmingParticipation;
                 programmingParticipation.submissions = [programmingSubmission];
-                component.participation = programmingParticipation;
-                component.submission = programmingSubmission;
-                component.exam = exam;
+
+                fixture.componentRef.setInput('exercise', programmingExercise);
+                fixture.componentRef.setInput('participation', programmingParticipation);
+                fixture.componentRef.setInput('submission', programmingSubmission);
+                fixture.componentRef.setInput('exam', exam);
             });
     });
 
@@ -134,8 +136,7 @@ describe('ProgrammingExamSummaryComponent', () => {
     });
 
     it('should show result if present and results are published', () => {
-        component.isAfterResultsArePublished = true;
-
+        fixture.componentRef.setInput('isAfterResultsArePublished', true);
         fixture.detectChanges();
 
         expect(component.feedbackComponentParameters.exercise).toEqual(programmingExercise);
@@ -147,8 +148,7 @@ describe('ProgrammingExamSummaryComponent', () => {
     });
 
     it('should not show results if not yet published', () => {
-        component.isAfterResultsArePublished = false;
-
+        fixture.componentRef.setInput('isAfterResultsArePublished', false);
         fixture.detectChanges();
 
         const feedbackComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;

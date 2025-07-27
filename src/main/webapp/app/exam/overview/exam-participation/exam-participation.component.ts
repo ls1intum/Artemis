@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -108,8 +108,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private examManagementService = inject(ExamManagementService);
     private profileService = inject(ProfileService);
 
-    @ViewChildren(ExamSubmissionComponent)
-    currentPageComponents: QueryList<ExamSubmissionComponent>;
+    currentPageComponents = viewChildren(ExamSubmissionComponent);
 
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
@@ -313,7 +312,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
-        return this.currentPageComponents.find(
+        return this.currentPageComponents().find(
             (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage.exercise!.id,
         );
     }
@@ -932,7 +931,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private updateLocalStudentExam() {
-        this.currentPageComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
+        this.currentPageComponents()
+            .filter((component) => component.hasUnsavedChanges())
+            .forEach((component) => component.updateSubmissionFromView());
     }
 
     private onSaveSubmissionSuccess(submission: Submission) {

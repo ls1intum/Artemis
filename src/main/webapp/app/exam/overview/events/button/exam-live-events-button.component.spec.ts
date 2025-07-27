@@ -6,6 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { of } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import dayjs from 'dayjs/esm';
 import { MockExamParticipationLiveEventsService } from 'test/helpers/mocks/service/mock-exam-participation-live-events.service';
 import { ExamLiveEventsOverlayComponent } from 'app/exam/overview/events/overlay/exam-live-events-overlay.component';
 
@@ -21,13 +22,11 @@ describe('ExamLiveEventsButtonComponent', () => {
             imports: [MockModule(FontAwesomeModule)],
             providers: [MockProvider(AlertService), MockProvider(NgbModal), { provide: ExamParticipationLiveEventsService, useClass: MockExamParticipationLiveEventsService }],
         }).compileComponents();
-    });
-
-    beforeEach(() => {
         fixture = TestBed.createComponent(ExamLiveEventsButtonComponent);
         component = fixture.componentInstance;
         mockModalService = TestBed.inject(NgbModal);
         mockLiveEventsService = TestBed.inject(ExamParticipationLiveEventsService);
+        fixture.componentRef.setInput('examStartDate', dayjs());
         fixture.detectChanges();
     });
 

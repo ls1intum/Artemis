@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission/file-upload-submission.component';
@@ -9,8 +9,8 @@ import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-uplo
     imports: [FileUploadSubmissionComponent],
 })
 export class FileUploadExamSummaryComponent {
-    @Input() submission: FileUploadSubmission;
-    @Input() exercise: Exercise;
-    @Input() expandProblemStatement = false;
-    @Input() isAfterResultsArePublished = false;
+    submission = input.required<FileUploadSubmission>();
+    exercise = input.required<Exercise>();
+    expandProblemStatement = input(false);
+    isAfterResultsArePublished = input(false);
 }

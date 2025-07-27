@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { AfterViewInit, Component, OnInit, inject, input, model, output } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
@@ -17,7 +17,6 @@ import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExamLiveEventsButtonComponent } from '../events/button/exam-live-events-button.component';
 import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -29,7 +28,7 @@ import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.m
     selector: 'jhi-exam-navigation-bar',
     templateUrl: './exam-navigation-bar.component.html',
     styleUrls: ['./exam-navigation-bar.component.scss'],
-    imports: [TranslateDirective, ExamLiveEventsButtonComponent, NgClass, NgbTooltip, FaIconComponent, ExamTimerComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, NgClass, NgbTooltip, FaIconComponent, ExamTimerComponent, ArtemisTranslatePipe],
 })
 export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     private layoutService = inject(LayoutService);
@@ -38,20 +37,20 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     private repositoryService = inject(CodeEditorRepositoryService);
     private conflictService = inject(CodeEditorConflictStateService);
 
-    @Input() exercises: Exercise[] = [];
-    @Input() exerciseIndex = 0;
-    @Input() endDate: dayjs.Dayjs;
-    @Input() overviewPageOpen: boolean;
-    @Input() examSessions?: ExamSession[] = [];
-    @Input() examTimeLineView = false;
-    @Output() onPageChanged = new EventEmitter<{
+    exercises = input<Exercise[]>([]);
+    exerciseIndex = model(0);
+    endDate = input<dayjs.Dayjs>(dayjs());
+    overviewPageOpen = input<boolean>();
+    examSessions = input<ExamSession[]>([]);
+    examTimeLineView = input(false);
+    onPageChanged = output<{
         overViewChange: boolean;
         exercise?: Exercise;
         forceSave: boolean;
         submission?: ProgrammingSubmission | SubmissionVersion | FileUploadSubmission;
     }>();
-    @Output() examAboutToEnd = new EventEmitter<void>();
-    @Output() onExamHandInEarly = new EventEmitter<void>();
+    examAboutToEnd = output<void>();
+    onExamHandInEarly = output<void>();
 
     static itemsVisiblePerSideDefault = 4;
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
@@ -66,7 +65,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     faBars = faBars;
 
     ngOnInit(): void {
-        if (!this.examTimeLineView) {
+        if (!this.examTimeLineView()) {
             this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdForNavigation.subscribe((exerciseIdToNavigateTo) => {
                 // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
                 this.changeExerciseById(exerciseIdToNavigateTo);
@@ -86,13 +85,13 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
             }
         });
 
-        const isInitialSession = this.examSessions && this.examSessions.length > 0 && this.examSessions[0].initialSession;
+        const isInitialSession = this.examSessions() && this.examSessions().length > 0 && this.examSessions()[0].initialSession;
         if (isInitialSession || isInitialSession == undefined) {
             return;
         }
 
         // If it is not an initial session, update the isSynced variable for out of sync submissions.
-        this.exercises
+        this.exercises()
             .filter((exercise) => exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations)
             .forEach((exercise) => {
                 const domain: DomainChange = [DomainType.PARTICIPATION, exercise.studentParticipations![0]];
@@ -130,27 +129,27 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     }
 
     /**
-     * @param overviewPage: user wants to switch to the overview page
-     * @param exerciseIndex: index of the exercise to switch to, if it should not be used, you can pass -1
-     * @param forceSave: true if forceSave shall be used.
+     * @param overviewPage user wants to switch to the overview page
+     * @param exerciseIndex index of the exercise to switch to, if it should not be used, you can pass -1
+     * @param forceSave true if forceSave shall be used.
      * @param submission the submission to be viewed, used in the exam timeline
      */
     changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean, submission?: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission): void {
         if (!overviewPage) {
             // out of index -> do nothing
-            if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
+            if (exerciseIndex > this.exercises().length - 1 || exerciseIndex < 0) {
                 return;
             }
             // set index and emit event
-            this.exerciseIndex = exerciseIndex;
-            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave, submission: submission });
+            this.exerciseIndex.set(exerciseIndex);
+            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises()[this.exerciseIndex()], forceSave: !!forceSave, submission: submission });
         } else if (overviewPage) {
             // set index and emit event
-            this.exerciseIndex = -1;
+            this.exerciseIndex.set(-1);
             // save current exercise
             this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
         }
-        this.setExerciseButtonStatus(this.exerciseIndex);
+        this.setExerciseButtonStatus(this.exerciseIndex());
     }
 
     /**
@@ -158,7 +157,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
      * @param exerciseId the unique identifier of an exercise that stays the same regardless of student exam ordering
      */
     changeExerciseById(exerciseId: number) {
-        const foundIndex = this.exercises.findIndex((exercise) => exercise.id === exerciseId);
+        const foundIndex = this.exercises().findIndex((exercise) => exercise.id === exerciseId);
         this.changePage(false, foundIndex, true);
     }
 
@@ -167,16 +166,16 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
      * @param changeExercise whether to go to the next exercise {boolean}
      */
     saveExercise(changeExercise = true) {
-        const newIndex = this.exerciseIndex + 1;
-        const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
+        const newIndex = this.exerciseIndex() + 1;
+        const submission = ExamParticipationService.getSubmissionForExercise(this.exercises()[this.exerciseIndex()]);
         // we do not submit programming exercises on a save
-        if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
+        if (submission && this.exercises()[this.exerciseIndex()].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
         }
         if (changeExercise) {
-            if (newIndex > this.exercises.length - 1) {
+            if (newIndex > this.exercises().length - 1) {
                 // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
-                this.changePage(false, this.exerciseIndex, true);
+                this.changePage(false, this.exerciseIndex(), true);
             } else {
                 this.changePage(false, newIndex, true);
             }
@@ -184,15 +183,15 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     }
 
     isProgrammingExercise() {
-        return this.exercises[this.exerciseIndex].type === ExerciseType.PROGRAMMING;
+        return this.exercises()[this.exerciseIndex()].type === ExerciseType.PROGRAMMING;
     }
 
     isFileUploadExercise() {
-        return this.exercises[this.exerciseIndex].type === ExerciseType.FILE_UPLOAD;
+        return this.exercises()[this.exerciseIndex()].type === ExerciseType.FILE_UPLOAD;
     }
 
     getOverviewStatus(): 'active' | '' {
-        return this.overviewPageOpen ? 'active' : '';
+        return this.overviewPageOpen() ? 'active' : '';
     }
 
     /**
@@ -208,15 +207,15 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
         this.icon = faCheck;
         // If we are in the exam timeline we do not use not synced as not synced shows
         // that the current submission is not saved which doesn't make sense in the timeline.
-        if (this.examTimeLineView) {
-            return this.exerciseIndex === exerciseIndex ? 'synced active' : 'synced';
+        if (this.examTimeLineView()) {
+            return this.exerciseIndex() === exerciseIndex ? 'synced active' : 'synced';
         }
 
         // start with a yellow status (edit icon)
         // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
         this.icon = faEdit;
-        const exercise = this.exercises[exerciseIndex];
+        const exercise = this.exercises()[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
             // in case no participation/submission yet exists -> display synced
@@ -228,7 +227,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
         }
         if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {
             // make button blue (except for the current page)
-            if (exerciseIndex === this.exerciseIndex && !this.overviewPageOpen) {
+            if (exerciseIndex === this.exerciseIndex() && !this.overviewPageOpen()!) {
                 return 'synced active';
             } else {
                 return 'synced';

@@ -1,13 +1,13 @@
 <div>
-    @if (exercise?.studentParticipations?.length && exercise?.studentParticipations?.[0]?.id) {
+    @if (exercise()?.studentParticipations?.length && exercise()?.studentParticipations?.[0]?.id) {
         <jhi-file-upload-submission
-            [participationId]="exercise.studentParticipations![0].id"
+            [participationId]="exercise().studentParticipations![0].id"
             [displayHeader]="false"
-            [expandProblemStatement]="expandProblemStatement"
+            [expandProblemStatement]="expandProblemStatement()"
             [displayedInExamSummary]="true"
-            [inputExercise]="isAfterResultsArePublished ? undefined : exercise"
-            [inputSubmission]="isAfterResultsArePublished ? undefined : submission"
-            [inputParticipation]="isAfterResultsArePublished ? undefined : exercise.studentParticipations![0]"
+            [inputExercise]="isAfterResultsArePublished() ? undefined : exercise()"
+            [inputSubmission]="isAfterResultsArePublished() ? undefined : submission()"
+            [inputParticipation]="isAfterResultsArePublished() ? undefined : exercise().studentParticipations![0]"
         />
     } @else {
         <div>No submission</div>
