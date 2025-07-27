@@ -171,7 +171,7 @@ public class SharedQueueProcessingService {
 
         distributedDataAccessService.getAdjustBuildAgentCapacityTopic().addMessageListener(message -> {
             BuildAgentCapacityAdjustmentDTO adjustment = message.getMessageObject();
-            if (adjustment.getBuildAgentName() == null || buildAgentShortName.equals(adjustment.getBuildAgentName())) {
+            if (buildAgentShortName.equals(adjustment.getBuildAgentName())) {
                 boolean success = buildAgentConfiguration.adjustConcurrentBuildSize(adjustment.getNewCapacity());
                 if (success) {
                     buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
