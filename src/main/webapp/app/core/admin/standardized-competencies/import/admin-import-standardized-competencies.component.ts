@@ -56,7 +56,9 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected importData?: KnowledgeAreasForImportDTO;
     protected importCount?: ImportCount;
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
-    protected treeControl = new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children);
+    protected treeControl = new NestedTreeControl<KnowledgeAreaForTree>({
+        childrenAccessor: (node) => node.children,
+    });
     private fileReader: FileReader = new FileReader();
 
     //Icons

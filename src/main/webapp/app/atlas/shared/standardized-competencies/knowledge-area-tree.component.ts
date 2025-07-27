@@ -16,7 +16,9 @@ import { CommonModule } from '@angular/common';
 })
 export class KnowledgeAreaTreeComponent {
     @Input() dataSource: MatTreeNestedDataSource<KnowledgeAreaForTree> = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
-    @Input() treeControl: NestedTreeControl<KnowledgeAreaForTree> = new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children);
+    @Input() treeControl: NestedTreeControl<KnowledgeAreaForTree> = new NestedTreeControl<KnowledgeAreaForTree>({
+        childrenAccessor: (node) => node.children,
+    });
 
     @ContentChild('knowledgeAreaTemplate') knowledgeAreaTemplate: TemplateRef<any>;
     @ContentChild('competencyTemplate') competencyTemplate: TemplateRef<any>;

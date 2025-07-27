@@ -25,7 +25,9 @@ export abstract class StandardizedCompetencyFilterPageComponent {
 
     // data and control for the tree structure
     protected dataSource = new MatTreeNestedDataSource<KnowledgeAreaForTree>();
-    protected treeControl = new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children);
+    protected treeControl = new NestedTreeControl<KnowledgeAreaForTree>({
+        childrenAccessor: (node) => node.children,
+    });
 
     /**
      * Filters out all knowledge areas except for the one specified in the {@link knowledgeAreaFilter} and its direct ancestors.
