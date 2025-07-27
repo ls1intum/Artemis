@@ -1262,10 +1262,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.programmingExercise.allowOnlineEditor).toBeTrue();
         expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
         expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
-        // allow manual feedback requests, Athena feedback modules and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
-        expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
-        expect(comp.programmingExercise.feedbackSuggestionModule).toBeUndefined();
-        expect(comp.programmingExercise.preliminaryFeedbackModule).toBeUndefined();
+        // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
+        expect(comp.programmingExercise.allowFeedbackRequests).toBeFalse();
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
         // name and short name should also be imported
         expect(comp.programmingExercise.title).toEqual(importedProgrammingExercise.title);
@@ -1289,9 +1287,7 @@ const getProgrammingExerciseForImport = () => {
     programmingExercise.allowOfflineIde = true;
     programmingExercise.allowOnlineEditor = true;
     programmingExercise.allowComplaintsForAutomaticAssessments = true;
-    programmingExercise.allowManualFeedbackRequests = true;
-    programmingExercise.feedbackSuggestionModule = 'athena-module-1';
-    programmingExercise.preliminaryFeedbackModule = 'athena-module-2"';
+    programmingExercise.allowFeedbackRequests = true;
 
     history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
 

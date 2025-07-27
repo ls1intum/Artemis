@@ -39,8 +39,4 @@ export class MockUserService {
     initializeLTIUser(): Observable<HttpResponse<{ password: string }>> {
         return of({ headers: new HttpHeaders(), body: { password: '' } } as HttpResponse<{ password: string }>);
     }
-
-    updateExternalLLMUsageConsent(): Observable<HttpResponse<void>> {
-        return of(new HttpResponse<void>({ status: 200 }));
-    }
 }

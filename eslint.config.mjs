@@ -24,6 +24,7 @@ export default tseslint.config(
             'docker/',
             'docs/',
             'gradle/',
+            'local/',
             'node/',
             'node_modules/',
             'out/',
@@ -98,7 +99,7 @@ export default tseslint.config(
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@angular-eslint/no-output-on-prefix': 'off',
             '@typescript-eslint/ban-ts-comment': 'warn',
-            // '@typescript-eslint/no-deprecated': 'warn',
+            '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/no-non-null-asserted-optional-chain': 'warn',
             '@typescript-eslint/no-explicit-any': 'off',
@@ -143,6 +144,9 @@ export default tseslint.config(
         files: ['src/test/**/mock-*.ts'],
         languageOptions: {
             parser: typescriptParser,
+            parserOptions: {
+                project: ['./tsconfig.spec.json'],
+            },
         },
         plugins: {
             '@typescript-eslint': tsPlugin,
@@ -163,7 +167,7 @@ export default tseslint.config(
             ...jestExtendedPlugin.configs.all.rules,
             'jest/expect-expect': 'off',
             'jest/no-conditional-expect': 'off',
-            // '@typescript-eslint/no-deprecated': 'warn',
+            '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/ban-ts-comment': 'off',
             '@typescript-eslint/no-var-requires': 'off',
