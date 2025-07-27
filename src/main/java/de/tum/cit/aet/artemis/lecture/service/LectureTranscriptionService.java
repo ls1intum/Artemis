@@ -1,13 +1,16 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,6 +27,8 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
  * Communicates with the external Nebula service to poll transcription job status and persist results.
  */
 @Service
+@Lazy
+@Profile(PROFILE_CORE)
 public class LectureTranscriptionService {
 
     private static final Logger log = LoggerFactory.getLogger(LectureTranscriptionService.class);
@@ -93,7 +98,6 @@ public class LectureTranscriptionService {
      * @param dto   The completed transcription result returned from Nebula
      * @return The updated LectureTranscription entity
      */
-    @Transactional
     public LectureTranscription saveFinalTranscriptionResult(String jobId, LectureTranscriptionDTO dto) {
         LectureTranscription transcription = lectureTranscriptionRepository.findByJobId(jobId)
                 .orElseThrow(() -> new IllegalStateException("No transcription found for jobId: " + jobId));
@@ -111,7 +115,6 @@ public class LectureTranscriptionService {
      * @param transcription The transcription entity to update
      * @param errorMessage  The error message returned by Nebula
      */
-    @Transactional
     public void markTranscriptionAsFailed(LectureTranscription transcription, String errorMessage) {
         transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
         lectureTranscriptionRepository.save(transcription);
@@ -126,7 +129,6 @@ public class LectureTranscriptionService {
      * @param lectureUnitId ID of the lecture unit
      * @param jobId         The Nebula job ID for this transcription
      */
-    @Transactional
     public void createEmptyTranscription(Long lectureId, Long lectureUnitId, String jobId) {
         LectureUnit lectureUnit = validateAndCleanup(lectureId, lectureUnitId);
 
