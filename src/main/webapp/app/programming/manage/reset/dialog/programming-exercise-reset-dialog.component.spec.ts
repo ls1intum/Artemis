@@ -96,7 +96,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         });
 
         it('should not be called when there is an error in the reset response', fakeAsync(() => {
-            const errorResponse = throwError(() => new Error({ status: 500 }));
+            const errorResponse = throwError(() => new Error('Internal Server Error'));
             comp.programmingExerciseResetOptions = {
                 deleteBuildPlans: false,
                 deleteRepositories: false,
