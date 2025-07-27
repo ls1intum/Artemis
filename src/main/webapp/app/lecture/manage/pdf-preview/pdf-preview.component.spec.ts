@@ -8,7 +8,7 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 import { PdfPreviewComponent } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { ElementRef, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { PDFDocument } from 'pdf-lib';
 import dayjs from 'dayjs/esm';
@@ -109,6 +109,7 @@ describe('PdfPreviewComponent', () => {
         await TestBed.configureTestingModule({
             imports: [PdfPreviewComponent],
             providers: [
+                provideHttpClient(),
                 { provide: ActivatedRoute, useValue: routeMock },
                 { provide: AttachmentService, useValue: attachmentServiceMock },
                 { provide: AttachmentVideoUnitService, useValue: attachmentUnitServiceMock },
