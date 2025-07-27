@@ -374,7 +374,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
             ),
         );
         comp.programmingExercise = mockProgrammingExercise;
-        comp.programmingExercise = mockProgrammingExercise;
         comp.generateStructureOracle();
         expect(alertSpy).toHaveBeenCalledWith({
             type: AlertType.DANGER,
