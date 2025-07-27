@@ -142,21 +142,6 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/test/**/mock-*.ts'],
-        languageOptions: {
-            parser: typescriptParser,
-            parserOptions: {
-                project: ['./tsconfig.spec.json'],
-            },
-        },
-        plugins: {
-            '@typescript-eslint': tsPlugin,
-        },
-        rules: {
-            '@typescript-eslint/no-unused-vars': 'off',
-        },
-    },
-    {
         files: ['src/test/javascript/**','src/main/webapp/app/**/*.spec.ts'],
         plugins: {
             jest: jestPlugin,
@@ -172,8 +157,25 @@ export default tseslint.config(
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/ban-ts-comment': 'off',
             '@typescript-eslint/no-var-requires': 'off',
-            '@typescript-eslint/no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': 'warn',
             'no-unused-private-class-members': 'error',
+            'no-unused-vars': 'warn',
+            'no-undef': 'off',
+        },
+    },
+    {
+        files: ['src/test/**/mock-*.ts'],
+        languageOptions: {
+            parser: typescriptParser,
+            parserOptions: {
+                project: ['./tsconfig.spec.json'],
+            },
+        },
+        plugins: {
+            '@typescript-eslint': tsPlugin,
+        },
+        rules: {
+            '@typescript-eslint/no-unused-vars': 'off',
             'no-unused-vars': 'off',
             'no-undef': 'off',
         },
