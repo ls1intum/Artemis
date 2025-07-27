@@ -10,6 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.within;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
@@ -267,7 +268,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         studentExamRepository.save(studentExamForTestExam2);
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(), any());
+        doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(), any(), anyBoolean());
         doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), any());
         // TODO: all parts using programmingExerciseTestService should also be provided for LocalVC+Jenkins
         programmingExerciseTestService.setup(this, versionControlService);
