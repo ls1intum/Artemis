@@ -54,14 +54,14 @@ describe('ScienceSettingsService', () => {
     });
 
     it('should refresh settings after user settings changed', () => {
-        userSettingsService.userSettingsChangeEvent.subscribe = jest.fn().mockImplementation((observer) => {
-            observer.next?.();
+        userSettingsService.userSettingsChangeEvent.subscribe = jest.fn().mockImplementation((callback) => {
+            callback();
         });
 
         const spy = jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse<Setting[]>({ body: scienceSettingsForTesting })));
 
         scienceSettingsService['listenForScienceSettingsChanges']();
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledOnce();
 
         const settings = scienceSettingsService.getScienceSettings();
         expect(settings).toEqual(scienceSettingsForTesting);
