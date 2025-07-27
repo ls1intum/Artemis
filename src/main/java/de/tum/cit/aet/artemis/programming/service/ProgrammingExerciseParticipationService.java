@@ -227,8 +227,8 @@ public class ProgrammingExerciseParticipationService {
      * @param sourceURL the repository that should be used as source for all files
      */
     public void resetRepository(VcsRepositoryUri targetURL, VcsRepositoryUri sourceURL) throws GitAPIException, IOException {
-        Repository targetRepo = gitService.getOrCheckoutRepository(targetURL, true);
-        Repository sourceRepo = gitService.getOrCheckoutRepository(sourceURL, true);
+        Repository targetRepo = gitService.getOrCheckoutRepository(targetURL, true, true);
+        Repository sourceRepo = gitService.getOrCheckoutRepository(sourceURL, true, true);
 
         // Replace everything but the files corresponding to git (such as the .git folder or the .gitignore file)
         FilenameFilter filter = (dir, name) -> !dir.isDirectory() || !name.contains(".git");

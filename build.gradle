@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.3.1"
+version = "8.3.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -230,7 +230,7 @@ dependencies {
 
     implementation "org.jsoup:jsoup:1.21.1"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
-    implementation "commons-codec:commons-codec:1.18.0"
+    implementation "commons-codec:commons-codec:1.19.0"
 
     // use the latest version to avoid security vulnerabilities
     implementation "org.springframework:spring-aop:${spring_framework_version}"
@@ -299,6 +299,7 @@ dependencies {
     implementation "org.hibernate.orm:hibernate-envers:${hibernate_version}"
 
     // Required for jdbc connection pooling to databases
+    // NOTE: cannot upgrade to 6.3.2 because of an issue: NoSuchMethodException error that is thrown when setting a metric registry
     implementation "com.zaxxer:HikariCP:6.3.0"
 
     // Required for several dependencies
@@ -357,7 +358,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:10.3.1"
+    implementation "com.nimbusds:nimbus-jose-jwt:10.4"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
