@@ -34,15 +34,14 @@ test.describe('Programming exercise Theia integration', { tag: '@sequential' }, 
         });
     });
 
-    test('Opens the programming exercise in theia and make a submission', async ({ page, login, programmingExerciseOverview, landingPage }) => {
+    test('Opens the programming exercise in theia and ensure repository is cloned', async ({ page, login, programmingExerciseOverview, landingPage }) => {
         console.log(exercise);
         await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
         await login(studentOne, `/courses/${course.id!}/exercises/${exercise.id!}`);
         const [theiaPage] = await Promise.all([page.context().waitForEvent('page'), programmingExerciseOverview.openInOnlineIDE()]);
         await theiaPage.waitForURL(`**/${THEIA_BASE}/**`);
         landingPage.setPage(theiaPage);
-        //await landingPage.login(studentOne.username, studentOne.password);
-        await landingPage.login('pr00mte', 'VRe4K6Jqil');
+        await landingPage.login(studentOne.username, studentOne.password);
         await theiaPage.waitForURL(/.*#\/home\/project/); //signalizes that theia session is loading
     });
 

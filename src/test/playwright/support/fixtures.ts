@@ -142,6 +142,8 @@ export type ArtemisPageObjects = {
     textExerciseFeedback: TextExerciseFeedbackPage;
     exerciseResult: ExerciseResultPage;
     exerciseTeams: ExerciseTeamsPage;
+    landingPage: LandingPage;
+    programmingExerciseSubmissions: ProgrammingExerciseSubmissionsPage;
 };
 
 export type ArtemisRequests = {
@@ -388,5 +390,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     communicationAPIRequests: async ({ page }, use) => {
         await use(new CommunicationAPIRequests(page));
+    },
+    landingPage: async ({ page }, use) => {
+        await use(new LandingPage(page));
     },
 });
