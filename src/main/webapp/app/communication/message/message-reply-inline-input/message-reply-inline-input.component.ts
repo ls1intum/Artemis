@@ -171,20 +171,14 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
                             }
                             this.metisService.updateAnswerPost(createdAnswerPost).subscribe({
                                 next: (updatedAnswerPost: AnswerPost) => {
-                                    // eslint-disable-next-line no-undef
-                                    console.log('Answer post updated with linked posting ID:', updatedAnswerPost.linkedPostingId);
                                     this.finalizeCreation(createdPost);
                                 },
                                 error: (error) => {
-                                    // eslint-disable-next-line no-undef
-                                    console.error('Failed to update answer post with linked posting ID:', error);
                                     this.isLoading = false;
                                 },
                             });
                         },
                         error: (error) => {
-                            // eslint-disable-next-line no-undef
-                            console.error('Failed to create directed post:', error);
                             this.isLoading = false;
                         },
                     });
@@ -193,8 +187,6 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
                 }
             },
             error: (error) => {
-                // eslint-disable-next-line no-undef
-                console.error('Failed to create answer post:', error);
                 this.isLoading = false;
             },
         });

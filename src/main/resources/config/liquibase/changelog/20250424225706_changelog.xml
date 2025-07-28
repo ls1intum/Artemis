@@ -1,20 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<databaseChangeLog
-        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-
-    <changeSet id="20250424132000" author="aykan">
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20250726174929_2" author="aykan,eylulnc">
+        <!-- Add original_post_id column to post table -->
         <addColumn tableName="post">
-            <column name="original_post_id" type="BIGINT"/>
+            <column name="original_post_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
         </addColumn>
 
-        <addForeignKeyConstraint
-                baseTableName="post"
-                baseColumnNames="original_post_id"
-                constraintName="fk_post_original_post"
-                referencedTableName="post"
-                referencedColumnNames="id"/>
-    </changeSet>
+        <!-- Add linked_posting_id column to answer_post table -->
+        <addColumn tableName="answer_post">
+            <column name="linked_posting_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
 
+        <!-- Add linked_posting_id column to post table -->
+        <addColumn tableName="post">
+            <column name="linked_posting_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add foreign key constraints -->
+        <addForeignKeyConstraint baseTableName="answer_post" baseColumnNames="linked_posting_id" constraintName="fk_answer_post_linked_posting" referencedTableName="post" referencedColumnNames="id" onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseTableName="post" baseColumnNames="linked_posting_id" constraintName="fk_post_linked_posting" referencedTableName="answer_post" referencedColumnNames="id" onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseTableName="post" baseColumnNames="original_post_id" constraintName="fk_post_original_post" referencedTableName="post" referencedColumnNames="id" onDelete="CASCADE"/>
+    </changeSet>
 </databaseChangeLog>

@@ -36,6 +36,7 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, tap, throwError } from 'rxjs';
+import { captureException } from '@sentry/angular';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 
 @Injectable()
@@ -1076,19 +1077,31 @@ export class MetisService implements OnDestroy {
     private synchronizeLinkedAnswerPost(directedPost: Post): void {
         // Find the linked answer post in the cache
         const linkedAnswerPost = this.findLinkedAnswerPost(directedPost.originalPostId!);
+
         if (linkedAnswerPost && linkedAnswerPost.content !== directedPost.content) {
             // Update the answer post content to match the directed post
             linkedAnswerPost.content = directedPost.content;
             linkedAnswerPost.updatedDate = dayjs();
 
-            // Update the cache
-            const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === linkedAnswerPost.post?.id);
-            if (indexOfCachedPost > -1) {
-                const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === linkedAnswerPost.id) ?? -1;
-                if (indexOfAnswer > -1) {
-                    this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer] = linkedAnswerPost;
-                }
-            }
+            // Send backend request to update the answer post
+            this.answerPostService.update(this.courseId, linkedAnswerPost).subscribe({
+                next: (updatedAnswerPost: HttpResponse<AnswerPost>) => {
+                    // Update the cache with the response from backend
+                    const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === linkedAnswerPost.post?.id);
+                    if (indexOfCachedPost > -1) {
+                        const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === linkedAnswerPost.id) ?? -1;
+                        if (indexOfAnswer > -1) {
+                            this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer] = updatedAnswerPost.body!;
+
+                            // Force UI update
+                            this.posts$.next([...this.cachedPosts]);
+                        }
+                    }
+                },
+                error: (error) => {
+                    captureException('Failed to synchronize linked answer post:', error);
+                },
+            });
         }
     }
 
@@ -1103,6 +1116,22 @@ export class MetisService implements OnDestroy {
             // Update the directed message content to match the answer post
             linkedDirectedMessage.content = answerPost.content;
             linkedDirectedMessage.updatedDate = dayjs();
+
+            // Send backend request to update the directed message
+            this.postService.update(this.courseId, linkedDirectedMessage).subscribe({
+                next: (updatedPost: HttpResponse<Post>) => {
+                    // Update the cache with the response from backend
+                    const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === linkedDirectedMessage.id);
+                    if (indexToUpdate > -1) {
+                        updatedPost.body!.answers = [...(this.cachedPosts[indexToUpdate].answers ?? [])];
+                        updatedPost.body!.authorRole = this.cachedPosts[indexToUpdate].authorRole;
+                        this.cachedPosts[indexToUpdate] = updatedPost.body!;
+                    }
+                },
+                error: (error) => {
+                    captureException('Failed to synchronize linked directed message:', error);
+                },
+            });
         }
     }
 
