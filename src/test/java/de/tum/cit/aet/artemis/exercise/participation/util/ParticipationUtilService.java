@@ -951,7 +951,7 @@ public class ParticipationUtilService {
     public void mockCreationOfExerciseParticipation(String templateRepoName, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
             throws URISyntaxException {
         var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
+        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
                 any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
@@ -966,7 +966,8 @@ public class ParticipationUtilService {
     public void mockCreationOfExerciseParticipation(VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
             throws URISyntaxException {
         var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(), any(String.class), any(String.class), any(String.class), any(Integer.class));
+        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), any(), any(String.class), any(String.class), any(String.class),
+                any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
 
@@ -988,5 +989,44 @@ public class ParticipationUtilService {
     public Set<Result> getResultsForParticipation(Participation participation) {
         return Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
                 .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).collect(Collectors.toSet());
+    }
+
+    /**
+     * Sets up a programming submission with two results: one completed and one draft.
+     *
+     * @param programmingExercise The programming exercise
+     * @param student             The student
+     * @return The configured programming submission with two results
+     */
+    public ProgrammingSubmission setupSubmissionWithTwoResults(ProgrammingExercise programmingExercise, User student) {
+        // Create student participation and submission
+        StudentParticipation participation = addStudentParticipationForProgrammingExercise(programmingExercise, student.getLogin());
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setParticipation(participation);
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now().minusHours(1).minusMinutes(30));
+        submission = submissionRepository.save(submission);
+        participation.addSubmission(submission);
+        addSubmission(participation, submission);
+
+        // Create results for both correction rounds
+        Result firstResult = generateResultWithScore(submission, student, 80.0);
+        firstResult.setRated(true);
+        firstResult.setCompletionDate(ZonedDateTime.now().minusMinutes(45));
+        firstResult = resultRepository.save(firstResult);
+        submission.addResult(firstResult);
+
+        Result secondResult = generateResult(submission, student);
+        secondResult.setRated(false); // Second correction not completed
+        secondResult.setCompletionDate(null);
+        secondResult.setScore(null); // Draft results should have null score
+        secondResult = resultRepository.save(secondResult);
+        submission.addResult(secondResult);
+        submission = submissionRepository.save(submission);
+
+        // Verify submission has both results: one completed, one draft
+        assertThat(submission.getResults()).hasSize(2);
+
+        return submission;
     }
 }

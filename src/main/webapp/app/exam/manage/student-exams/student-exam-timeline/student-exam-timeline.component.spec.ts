@@ -217,7 +217,6 @@ describe('Student Exam Timeline Component', () => {
             onActivate() {},
             updateViewFromSubmission() {},
             setSubmissionVersion() {},
-            loadGitDiffReport() {},
         } as unknown as ExamSubmissionComponent);
 
         let expectedSubmission = submission;
