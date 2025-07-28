@@ -1,54 +1,65 @@
 <div>
     <div class="upload-container">
         <h2>Upload Room Data</h2>
-        <input type="file" (change)="onFileSelected($event)" accept=".zip" />
-        <button class="upload-btn" (click)="upload()" [disabled]="!selectedFile">Upload</button>
+        <input type="file" class="btn-default" (change)="onFileSelected($event)" accept=".zip" />
+        <button class="upload-btn" (click)="upload()" [disabled]="!canUpload()">Upload</button>
+        <br /><br />
+        <button (click)="clearExamRooms()" class="btn-danger error">Clear All Exam Rooms</button>
+        <button (click)="deleteOutdatedAndUnusedExamRooms()" class="btn-default error">Safe delete</button>
 
-        @if (uploading) {
+        @if (isUploading()) {
             <div class="info">Uploading...</div>
         }
-        @if (uploadSuccess) {
+        @if (hasUploadFailed()) {
+            <div class="error">Upload failed.</div>
+        }
+        @if (hasUploadSucceeded()) {
             <div class="success">Upload successful!</div>
         }
-        @if (uploadError) {
-            <div class="error">Upload failed. {{ uploadError }}</div>
-        }
-        @if (uploadInformation) {
+        @if (uploadInformation()) {
             <div class="upload-info card">
                 <h3>Upload Summary</h3>
                 <ul>
-                    <li><strong>File:</strong> {{ uploadInformation.uploadedFileName }}</li>
-                    <li><strong>Duration:</strong> {{ uploadInformation.uploadDuration }}</li>
-                    <li><strong>Rooms Uploaded:</strong> {{ uploadInformation.numberOfUploadedRooms }}</li>
-                    <li><strong>Seats Uploaded:</strong> {{ uploadInformation.numberOfUploadedSeats }}</li>
-                    <li>
-                        <strong>Room Names:</strong>
-                        <ol>
-                            @for (name of uploadInformation.uploadedRoomNames; track name) {
-                                <li>{{ name }}</li>
-                            }
-                        </ol>
-                    </li>
+                    <li><strong>File:</strong> {{ uploadInformation()?.uploadedFileName }}</li>
+                    <li><strong>Duration:</strong> {{ uploadInformation()?.uploadDuration }}</li>
+                    <li><strong>Rooms Uploaded:</strong> {{ uploadInformation()?.numberOfUploadedRooms }}</li>
+                    <li><strong>Seats Uploaded:</strong> {{ uploadInformation()?.numberOfUploadedSeats }}</li>
+                    <!--                    <li>-->
+                    <!--                        <strong>Room Names:</strong>-->
+                    <!--                        <ol>-->
+                    <!--                            @for (name of uploadInformation()?.uploadedRoomNames; track name) {-->
+                    <!--                                <li>{{ name }}</li>-->
+                    <!--                            }-->
+                    <!--                        </ol>-->
+                    <!--                    </li>-->
+                </ul>
+            </div>
+        }
+        @if (deletionSummary()) {
+            <div class="card">
+                <h3>Deletion Summary</h3>
+                <ul>
+                    <li><strong>Duration:</strong> {{ deletionSummary()?.deleteDuration }}</li>
+                    <li><strong>Rooms Deleted:</strong> {{ deletionSummary()?.numberOfDeletedExamRooms }}</li>
                 </ul>
             </div>
         }
     </div>
     <br />
     <div class="info">
-        @if (overview) {
+        @if (overview()) {
             <h3>Exam Room Overview</h3>
-            <p>Rooms: {{ overview.numberOfStoredExamRooms }}</p>
-            <p>Seats: {{ overview.numberOfStoredExamSeats }}</p>
-            <p>Layout Strategies: {{ overview.numberOfStoredLayoutStrategies }}</p>
-            <p>Unique rooms: {{ overview.numberOfUniqueExamRooms }}</p>
-            <p>Unique seats: {{ overview.numberOfUniqueExamSeats }}</p>
-            <p>Unique layout strategies: {{ overview.numberOfUniqueLayoutStrategies }}</p>
-            <p>Distinct Layout Names: {{ overview.distinctLayoutStrategyNames.join(', ') }}</p>
+            <p>Rooms: {{ overview()?.numberOfStoredExamRooms }}</p>
+            <p>Seats: {{ overview()?.numberOfStoredExamSeats }}</p>
+            <p>Layout Strategies: {{ overview()?.numberOfStoredLayoutStrategies }}</p>
+            <p>Unique rooms: {{ overview()?.numberOfUniqueExamRooms }}</p>
+            <p>Unique seats: {{ overview()?.numberOfUniqueExamSeats }}</p>
+            <p>Unique layout strategies: {{ overview()?.numberOfUniqueLayoutStrategies }}</p>
+            <p>Distinct Layout Names: {{ overview()?.distinctLayoutStrategyNames?.join(', ') }}</p>
 
             <h4>Exam Rooms</h4>
-            <button (click)="clearExamRooms()" class="btn-danger">Clear All Exam Rooms</button>
             <ul>
-                @for (room of overview.examRoomDTOS; track room) {
+                @for (room of overview()?.examRoomDTOS; track room) {
                     <li>
                         {{ room.name }} ({{ room.roomNumber }}) - {{ room.numberOfSeats }} seats
                         <ul>
@@ -60,7 +71,7 @@
                 }
             </ul>
         } @else {
-            <p>Error: {{ overviewError }}</p>
+            <p>Error with displaying the overview</p>
         }
     </div>
 </div>

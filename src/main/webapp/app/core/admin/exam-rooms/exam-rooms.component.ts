@@ -1,24 +1,42 @@
-import { Component, OnInit } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpEvent, HttpEventType } from '@angular/common/http';
-import { ExamRoomAdminOverviewDTO, ExamRoomUploadInformationDTO } from 'app/core/admin/exam-rooms/exam-rooms.model';
+import { Component, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
+import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
+import { ExamRoomAdminOverviewDTO, ExamRoomDeletionSummaryDTO, ExamRoomUploadInformationDTO } from 'app/core/admin/exam-rooms/exam-rooms.model';
 
 @Component({
     selector: 'app-exam-room-repository',
     templateUrl: './exam-rooms.component.html',
 })
-export class ExamRoomsComponent implements OnInit {
-    selectedFile: File | null = null;
-    uploading: boolean = false;
-    uploadSuccess: boolean = false;
-    uploadError: string | null = null;
-    uploadInformation: ExamRoomUploadInformationDTO | null = null;
-    overview: ExamRoomAdminOverviewDTO | null = null;
-    overviewError: string | null = null;
+export class ExamRoomsComponent {
+    private http: HttpClient = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    // Writeable signals
+    selectedFile: WritableSignal<File | undefined> = signal(undefined);
+    uploading: WritableSignal<boolean> = signal(false);
+    uploadResult: WritableSignal<'success' | 'error' | undefined> = signal(undefined);
+    uploadInformation: WritableSignal<ExamRoomUploadInformationDTO | undefined> = signal(undefined);
+    overview: WritableSignal<ExamRoomAdminOverviewDTO | undefined> = signal(undefined);
+    deletionSummary: WritableSignal<ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
 
-    ngOnInit(): void {
+    // Computed signals
+    canUpload: Signal<boolean> = computed(() => !!this.selectedFile());
+    isUploading: Signal<boolean> = computed(() => this.uploading());
+    hasUploadSucceeded: Signal<boolean> = computed(() => this.uploadResult() === 'success');
+    hasUploadFailed: Signal<boolean> = computed(() => this.uploadResult() === 'error');
+
+    // Basically ngInit
+    initEffect = effect(() => {
         this.loadExamRoomOverview();
+    });
+
+    loadExamRoomOverview(): void {
+        this.http.get<ExamRoomAdminOverviewDTO>('/api/exam/admin/exam-rooms/admin-overview').subscribe({
+            next: (response) => {
+                this.overview.set(response);
+            },
+            error: () => {
+                this.overview.set(undefined);
+            },
+        });
     }
 
     onFileSelected(event: Event): void {
@@ -26,25 +44,22 @@ export class ExamRoomsComponent implements OnInit {
         if (input.files && input.files.length > 0) {
             const file = input.files[0];
             if (file.name.endsWith('.zip')) {
-                this.selectedFile = file;
-                this.uploadError = null;
+                this.selectedFile.set(file);
             } else {
-                this.uploadError = 'Please select a .zip file.';
-                this.selectedFile = null;
+                this.selectedFile.set(undefined);
             }
         }
     }
 
     upload(): void {
-        if (!this.selectedFile) return;
+        const file = this.selectedFile();
+        if (!file) return;
 
         const formData = new FormData();
-        formData.append('file', this.selectedFile);
+        formData.append('file', file);
 
-        this.uploading = true;
-        this.uploadSuccess = false;
-        this.uploadError = null;
-        this.uploadInformation = null;
+        this.uploading.set(true);
+        this.uploadResult.set(undefined);
 
         this.http
             .post('/api/exam/admin/exam-rooms/upload', formData, {
@@ -54,47 +69,56 @@ export class ExamRoomsComponent implements OnInit {
             .subscribe({
                 next: (event: HttpEvent<any>) => {
                     if (event.type === HttpEventType.Response) {
-                        this.uploadSuccess = true;
-                        this.selectedFile = null;
-                        this.uploadInformation = event.body;
+                        this.uploadResult.set('success');
+                        this.selectedFile.set(undefined);
+                        this.uploadInformation.set(event.body);
                     }
                 },
-                error: (error: HttpErrorResponse) => {
-                    this.uploading = false;
-                    this.uploadSuccess = false;
-                    this.uploadError = error.message;
+                error: () => {
+                    this.uploading.set(false);
+                    this.uploadResult.set('error');
                 },
                 complete: () => {
-                    this.uploading = false;
+                    this.uploading.set(false);
+                    this.deletionSummary.set(undefined);
+                    this.loadExamRoomOverview();
                 },
             });
-    }
-
-    loadExamRoomOverview(): void {
-        this.http.get<ExamRoomAdminOverviewDTO>('/api/exam/admin/exam-rooms/admin-overview').subscribe({
-            next: (response) => {
-                this.overview = response;
-                this.overviewError = null;
-            },
-            error: (error: HttpErrorResponse) => {
-                this.overview = null;
-                this.overviewError = error.message;
-            },
-        });
     }
 
     clearExamRooms(): void {
         if (!confirm('Are you sure you want to delete ALL exam rooms? This action cannot be undone.')) {
             return;
         }
-        this.http.delete('/api/exam/admin/exam-rooms').subscribe({
+        this.http.delete<void>('/api/exam/admin/exam-rooms').subscribe({
             next: () => {
                 alert('All exam rooms deleted.');
-                // Refresh or reset your UI here as needed
             },
             error: (err) => {
                 alert('Failed to clear exam rooms: ' + err.message);
             },
+            complete: () => {
+                this.turnOffUploadResult();
+                this.deletionSummary.set(undefined);
+                this.loadExamRoomOverview();
+            },
         });
+    }
+
+    deleteOutdatedAndUnusedExamRooms(): void {
+        this.http.delete<ExamRoomDeletionSummaryDTO>('api/exam/admin/exam-rooms/outdated-and-unused').subscribe({
+            next: (summary) => {
+                this.deletionSummary.set(summary);
+            },
+            complete: () => {
+                this.uploadInformation.set(undefined);
+                this.loadExamRoomOverview();
+            },
+        });
+    }
+
+    private turnOffUploadResult(): void {
+        this.uploadResult.set(undefined);
+        this.uploadInformation.set(undefined);
     }
 }

@@ -59,8 +59,6 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
      * Finds and returns all IDs of outdated and unused exam rooms.
      * An exam room is outdated if there exists a newer entry of the same (number, name) combination.
      * An exam room is unused if it isn't connected to any exam.
-     * <p>
-     * This query is native as a query with 2 CTEs is not supported.
      *
      * @return A collection of all outdated and unused exam rooms
      */
@@ -73,9 +71,6 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 FROM ExamRoom
                 GROUP BY roomNumber, name
                 HAVING COUNT(*) > 1
-            ), usedRoomsIds AS (
-                SELECT DISTINCT examRoomAssignment.examRoom.id AS id
-                FROM ExamRoomAssignment examRoomAssignment
             )
             SELECT examRoom.id
             FROM ExamRoom examRoom
@@ -83,7 +78,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 ON examRoom.roomNumber = latestRoom.roomNumber
                 AND examRoom.name = latestRoom.name
                 AND examRoom.createdDate < latestRoom.maxCreatedDate
-            WHERE examRoom.id NOT IN usedRoomsIds
-            """, nativeQuery = true)
+            WHERE examRoom.id NOT IN (SELECT DISTINCT examRoom.id FROM ExamRoomAssignment)
+            """)
     Set<Long> findAllIdsOfOutdatedAndUnusedExamRooms();
 }

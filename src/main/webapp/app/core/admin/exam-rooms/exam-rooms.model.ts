@@ -30,3 +30,8 @@ export interface ExamRoomAdminOverviewDTO {
     distinctLayoutStrategyNames: string[];
     examRoomDTOS: ExamRoomDTO[];
 }
+
+export interface ExamRoomDeletionSummaryDTO {
+    deleteDuration: string;
+    numberOfDeletedExamRooms: number;
+}

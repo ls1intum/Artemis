@@ -9,12 +9,5 @@ public record ExamRoomUniqueRoomsDTO(
     Integer numberOfUniqueSeats,
     Integer numberOfUniqueLayoutStrategies
 ) {
-    public ExamRoomUniqueRoomsDTO(Number numberOfUniqueRooms, Number numberOfUniqueSeats, Number numberOfUniqueLayoutStrategies) {
-        this(
-            numberOfUniqueRooms.intValue(),
-            numberOfUniqueSeats.intValue(),
-            numberOfUniqueLayoutStrategies.intValue()
-        );
-    }
 }
 // @formatter:on

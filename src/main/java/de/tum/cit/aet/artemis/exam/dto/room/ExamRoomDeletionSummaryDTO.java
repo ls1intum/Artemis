@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 // @formatter:off
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamRoomSeatCountDTO(
-    Long examRoomId,
-    Long seatCount
+public record ExamRoomDeletionSummaryDTO(
+    String deleteDuration,
+    Integer numberOfDeletedExamRooms
 ) {
 }
 // @formatter:on

@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
@@ -100,10 +101,18 @@ public class AdminExamResource {
 
     @DeleteMapping("exam-rooms")
     public ResponseEntity<Void> deleteAllExamRooms() {
-        log.debug("REST request to delete all exam rooms");
+        log.debug("REST request to delete ALL exam rooms");
 
         examRoomService.deleteAllExamRooms();
         return ResponseEntity.noContent().build();  // HTTP 204 - No Content
+    }
+
+    @DeleteMapping("exam-rooms/outdated-and-unused")
+    public ResponseEntity<ExamRoomDeletionSummaryDTO> deleteAllOutdatedAndUnusedExamRooms() {
+        log.debug("REST request to delete all outdated and unused exam rooms");
+
+        var examRoomDeletionSummaryDTO = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
+        return ResponseEntity.ok(examRoomDeletionSummaryDTO);
     }
 
 }
