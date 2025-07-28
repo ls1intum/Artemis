@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRe
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupCommunicationApi;
@@ -277,16 +276,14 @@ public class ConversationDTOService {
     @NotNull
     private Set<ConversationUserDTO> getChatParticipantDTOs(User requestingUser, Course course, Set<ConversationParticipant> conversationParticipants) {
         return conversationParticipants.stream().map(ConversationParticipant::getUser).map(user -> {
-            var userDTO = new ConversationUserDTO(user);
-            userDTO.setIsRequestingUser(user.getId().equals(requestingUser.getId()));
-            userDTO.setIsChannelModerator(null); // not needed for one to one chats
+            // isChannelModerator not needed for one to one chats
+            var userDTO = new ConversationUserDTO(user, null, user.getId().equals(requestingUser.getId()));
             var userWithGroups = user;
             var groupsInitialized = Persistence.getPersistenceUtil().isLoaded(user, "groups") && user.getGroups() != null;
             if (!groupsInitialized) {
                 userWithGroups = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(user.getId());
             }
-            UserPublicInfoDTO.assignRoleProperties(course, userWithGroups, userDTO);
-            return userDTO;
+            return userDTO.withRoles(course, userWithGroups);
         }).collect(Collectors.toSet());
     }
 

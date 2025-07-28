@@ -188,7 +188,7 @@ public class ConversationDTO {
     public String toString() {
         return "ConversationDTO{" + "type='" + type + '\'' + ", id=" + id + ", creationDate=" + creationDate + ", lastMessageDate=" + lastMessageDate + ", unreadMessageCount="
                 + unreadMessagesCount + ", lastReadDate=" + lastReadDate + ", isMember=" + isMember + ", isFavorite=" + isFavorite + ", isHidden=" + isHidden + ", isCreator="
-                + isCreator + ", numberOfMembers=" + numberOfMembers + ", creator=" + (creator != null ? creator.getName() : "") + '}';
+                + isCreator + ", numberOfMembers=" + numberOfMembers + ", creator=" + (creator != null ? creator.publicInfo().name() : "") + '}';
     }
 
 }
