@@ -3,7 +3,10 @@
 }
 
 hr {
-    border-top-color: var(--overview-light-border-color);
+    all: unset;
+    display: block;
+    border-top: 1px solid var(--bs-card-border-color);
+    transition: border-color 0.2s ease;
 }
 
 .unread-count {

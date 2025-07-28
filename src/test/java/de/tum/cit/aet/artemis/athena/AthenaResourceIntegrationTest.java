@@ -384,7 +384,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
         // Get exports from endpoint
         var authHeaders = new HttpHeaders();
-        authHeaders.add("Authorization", athenaSecret);
+        authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
         var repoZip = request.getFile("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, new LinkedMultiValueMap<>(),
                 authHeaders, null);
 
@@ -398,7 +398,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests", "submissions/100/repository" })
     void testRepositoryExportEndpointsFailWhenAthenaNotEnabled(String urlSuffix) throws Exception {
         var authHeaders = new HttpHeaders();
-        authHeaders.add("Authorization", athenaSecret);
+        authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
 
         // Expect status 503 because Athena is not enabled for the exercise
         request.get("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.SERVICE_UNAVAILABLE, Result.class, authHeaders);
@@ -408,7 +408,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests", "submissions/100/repository" })
     void testRepositoryExportEndpointsFailWithWrongAuthentication(String urlSuffix) throws Exception {
         var authHeaders = new HttpHeaders();
-        authHeaders.add("Authorization", athenaSecret + "-wrong");
+        authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret + "-wrong");
 
         // Enable Athena for the exercise
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
