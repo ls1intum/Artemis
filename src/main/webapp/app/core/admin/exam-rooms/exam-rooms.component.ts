@@ -1,10 +1,18 @@
 import { Component, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
 import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
-import { ExamRoomAdminOverviewDTO, ExamRoomDeletionSummaryDTO, ExamRoomUploadInformationDTO } from 'app/core/admin/exam-rooms/exam-rooms.model';
+import { ExamRoomAdminOverviewDTO, ExamRoomDTO, ExamRoomDeletionSummaryDTO, ExamRoomUploadInformationDTO } from 'app/core/admin/exam-rooms/exam-rooms.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
+import { FormControl, FormGroup, FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-exam-room-repository',
     templateUrl: './exam-rooms.component.html',
+    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, FormsModule],
 })
 export class ExamRoomsComponent {
     private http: HttpClient = inject(HttpClient);
@@ -16,16 +24,35 @@ export class ExamRoomsComponent {
     uploadInformation: WritableSignal<ExamRoomUploadInformationDTO | undefined> = signal(undefined);
     overview: WritableSignal<ExamRoomAdminOverviewDTO | undefined> = signal(undefined);
     deletionSummary: WritableSignal<ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
+    userSearchForm: WritableSignal<FormGroup | undefined> = signal(undefined);
+
+    // regular signals
+    searchTerm: Signal<string> = signal('');
 
     // Computed signals
     canUpload: Signal<boolean> = computed(() => !!this.selectedFile());
     isUploading: Signal<boolean> = computed(() => this.uploading());
     hasUploadSucceeded: Signal<boolean> = computed(() => this.uploadResult() === 'success');
     hasUploadFailed: Signal<boolean> = computed(() => this.uploadResult() === 'error');
+    hasExamRoomsStored: Signal<boolean> = computed(() => !!this.overview()?.examRoomDTOS?.length);
 
-    // Basically ngInit
+    // Icons
+    faSort = faSort;
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faEye = faEye;
+    faWrench = faWrench;
+    faFilter = faFilter;
+
+    // Basically ngInit / constructor
     initEffect = effect(() => {
         this.loadExamRoomOverview();
+
+        this.userSearchForm.set(
+            new FormGroup({
+                searchControl: new FormControl('', { updateOn: 'change' }),
+            }),
+        );
     });
 
     loadExamRoomOverview(): void {
@@ -120,5 +147,18 @@ export class ExamRoomsComponent {
     private turnOffUploadResult(): void {
         this.uploadResult.set(undefined);
         this.uploadInformation.set(undefined);
+    }
+
+    getMaxCapacityOfExamRoom(examRoom: ExamRoomDTO): number {
+        return examRoom!.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity ?? 0).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
+    }
+
+    getLayoutStrategyNames(examRoom: ExamRoomDTO): string {
+        return (
+            examRoom!.layoutStrategies
+                ?.map((layoutStrategy) => layoutStrategy.name)
+                .sort()
+                .join(', ') ?? ''
+        );
     }
 }
