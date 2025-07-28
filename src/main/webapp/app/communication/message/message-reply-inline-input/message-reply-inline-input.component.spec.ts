@@ -165,7 +165,14 @@ describe('MessageReplyInlineInputComponent', () => {
         let answerPost: AnswerPost;
 
         beforeEach(() => {
-            conv = { id: 42, title: 'Test Conversation', type: 'CHANNEL' } as any;
+            conv = {
+                id: 42,
+                title: 'Test Conversation',
+                type: 'channel',
+                isMember: true,
+                isArchived: false,
+                isAnnouncementChannel: false,
+            } as any;
             answerPost = { id: 1, content: '', post: { id: 99 } as any } as AnswerPost;
             component.posting = answerPost;
             (component as any).activeConversation = () => conv;
@@ -180,7 +187,14 @@ describe('MessageReplyInlineInputComponent', () => {
         });
 
         it('should create a direct‐message post and emit it when sendAsDirectMessage=true', fakeAsync(() => {
-            const conv = { id: 42, title: 'Test Conversation' } as any;
+            const conv = {
+                id: 42,
+                title: 'Test Conversation',
+                type: 'channel',
+                isMember: true,
+                isArchived: false,
+                isAnnouncementChannel: false,
+            } as any;
             component.posting = { id: 1, content: '', post: { id: 99 } as any } as AnswerPost;
             (component as any).activeConversation = () => conv;
             component.sendAsDirectMessage.set(true);
@@ -286,7 +300,15 @@ describe('MessageReplyInlineInputComponent', () => {
     describe('Draft functionality', () => {
         beforeEach(fakeAsync(() => {
             component.posting = directMessageUser1;
-            (component as any).activeConversation = () => ({ id: 1, name: 'Test Channel' }) as any;
+            (component as any).activeConversation = () =>
+                ({
+                    id: 1,
+                    name: 'Test Channel',
+                    type: 'channel',
+                    isMember: true,
+                    isArchived: false,
+                    isAnnouncementChannel: false,
+                }) as any;
             jest.spyOn(accountService, 'identity').mockResolvedValue({ id: 1 } as any);
             component.resetFormGroup();
             component.ngOnInit();
