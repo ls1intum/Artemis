@@ -134,7 +134,14 @@ describe('DataExportComponent', () => {
     });
 
     it('should call alert service when requesting for another user fails', () => {
-        jest.spyOn(dataExportService, 'requestDataExportForAnotherUser').mockReturnValue(throwError(() => new Error('Internal Server Error')));
+        jest.spyOn(dataExportService, 'requestDataExportForAnotherUser').mockReturnValue(
+            throwError(
+                () =>
+                    new HttpErrorResponse({
+                        status: 500,
+                    }),
+            ),
+        );
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         component.requestExportForAnotherUser('ge12abc');
         expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.dataExport.requestForUserError', { login: 'ge12abc' });

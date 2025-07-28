@@ -63,7 +63,14 @@ describe('TypeAheadUserSearchFieldComponent', () => {
     });
 
     it('should set searchFailed to true if the user service throws an error', () => {
-        jest.spyOn(userService, 'search').mockReturnValue(throwError(() => new Error('Internal Server Error')));
+        jest.spyOn(userService, 'search').mockReturnValue(
+            throwError(
+                () =>
+                    new HttpErrorResponse({
+                        status: 500,
+                    }),
+            ),
+        );
         component.search(of('ge12abc')).subscribe();
         expect(component.searchFailed).toBeTrue();
         expect(component.searching).toBeFalse();

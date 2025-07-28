@@ -124,7 +124,14 @@ describe('SuspiciousBehaviorComponent', () => {
     });
 
     it('should set analyzed to true and analyzing to false if the request fails', () => {
-        jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(throwError(() => new Error('Internal Server Error')));
+        jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(
+            throwError(
+                () =>
+                    new HttpErrorResponse({
+                        status: 500,
+                    }),
+            ),
+        );
         component.checkboxCriterionDifferentStudentExamsSameIPAddressChecked = true;
         component.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked = true;
         component.analyzeSessions();
