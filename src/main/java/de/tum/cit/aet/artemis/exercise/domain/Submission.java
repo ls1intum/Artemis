@@ -142,6 +142,26 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     /**
+     * Returns the most recent result that has been completed, i.e. has a non-null completion date.
+     * This ignores draft results that might exist when an assessment lock was created but not
+     * finished.
+     *
+     * @return the latest completed {@link Result} or {@code null} if none exists
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getLatestCompletedResult() {
+        Result latestResult = Optional.ofNullable(results).orElse(Collections.emptyList()).stream().filter(result -> result != null && result.getCompletionDate() != null)
+                .max(Comparator.comparing(Result::getCompletionDate)).orElse(null);
+
+        if (latestResult != null) {
+            latestResult.setSubmission(this);
+        }
+
+        return latestResult;
+    }
+
+    /**
      * Used to get result by correction round (which ignores automatic results).
      * Works for all exercise types
      *
