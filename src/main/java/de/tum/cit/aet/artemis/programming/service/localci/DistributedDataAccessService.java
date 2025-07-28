@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 
 /**
- * This service is used to access the distributed data structures in Hazelcast.
+ * This service is used to access the distributed data structures in Hazelcast used for localci.
  * All data structures are created lazily, meaning they are only created when they are first accessed.
  */
 @Lazy

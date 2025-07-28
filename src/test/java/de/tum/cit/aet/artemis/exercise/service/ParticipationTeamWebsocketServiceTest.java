@@ -20,6 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
+
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -59,6 +62,8 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
 
     private StudentParticipation textParticipation;
 
+    private HazelcastInstance hazelcastInstance;
+
     private static String websocketTopic(Participation participation) {
         return "/topic/participations/" + participation.getId() + "/team";
     }
@@ -77,7 +82,8 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
 
         closeable = MockitoAnnotations.openMocks(this);
-        participationTeamWebsocketService.clearDestinationTracker();
+        IMap<String, String> destinationTracker = hazelcastInstance.getMap("destinationTracker");
+        destinationTracker.clear();
     }
 
     @AfterEach

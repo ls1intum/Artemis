@@ -18,6 +18,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.service.CoreDistributedDataAccessService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -35,16 +36,20 @@ public class FeatureToggleService {
 
     private final HazelcastInstance hazelcastInstance;
 
+    private final CoreDistributedDataAccessService coreDistributedDataAccessService;
+
     private Map<Feature, Boolean> features;
 
-    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
+            CoreDistributedDataAccessService coreDistributedDataAccessService) {
         this.websocketMessagingService = websocketMessagingService;
         this.hazelcastInstance = hazelcastInstance;
+        this.coreDistributedDataAccessService = coreDistributedDataAccessService;
     }
 
     private Optional<Map<Feature, Boolean>> getFeatures() {
         try {
-            if (isHazelcastRunning()) {
+            if (coreDistributedDataAccessService.isInstanceRunning()) {
                 return Optional.ofNullable(features);
             }
         }
@@ -130,7 +135,7 @@ public class FeatureToggleService {
 
     private void sendUpdate() {
         try {
-            if (isHazelcastRunning()) {
+            if (coreDistributedDataAccessService.isInstanceRunning()) {
                 websocketMessagingService.sendMessage(TOPIC_FEATURE_TOGGLES, enabledFeatures());
             }
         }
@@ -147,7 +152,7 @@ public class FeatureToggleService {
      */
     public boolean isFeatureEnabled(Feature feature) {
         try {
-            if (isHazelcastRunning()) {
+            if (coreDistributedDataAccessService.isInstanceRunning()) {
                 Boolean isEnabled = getFeaturesMap().get(feature);
                 return Boolean.TRUE.equals(isEnabled);
             }
@@ -165,7 +170,7 @@ public class FeatureToggleService {
      */
     public List<Feature> enabledFeatures() {
         try {
-            if (isHazelcastRunning()) {
+            if (coreDistributedDataAccessService.isInstanceRunning()) {
                 return getFeaturesMap().entrySet().stream().filter(feature -> Boolean.TRUE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
             }
         }
@@ -182,7 +187,7 @@ public class FeatureToggleService {
      */
     public List<Feature> disabledFeatures() {
         try {
-            if (isHazelcastRunning()) {
+            if (coreDistributedDataAccessService.isInstanceRunning()) {
                 return getFeaturesMap().entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
             }
         }
@@ -190,9 +195,5 @@ public class FeatureToggleService {
             log.error("Failed to retrieve disabled features update in FeatureToggleService as Hazelcast instance is not active any more.");
         }
         return List.of();
-    }
-
-    private boolean isHazelcastRunning() {
-        return hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning();
     }
 }
