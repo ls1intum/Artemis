@@ -291,6 +291,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
         submittedAnswer.setQuizQuestion(mcQuestion);
+        submittedAnswer.setSelectedOptions(Set.of());
         QuizTrainingAnswerDTO trainingAnswerDTO = new QuizTrainingAnswerDTO(submittedAnswer);
 
         SubmittedAnswerAfterEvaluationDTO result = request.postWithResponseBody("/api/quiz/courses/" + course.getId() + "/training/" + mcQuestion.getId() + "/quiz",

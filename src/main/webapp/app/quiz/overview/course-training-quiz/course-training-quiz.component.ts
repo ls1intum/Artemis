@@ -194,7 +194,7 @@ export class CourseTrainingQuizComponent {
 
         this.questionScores = roundValueSpecifiedByCourseSettings(evaluatedAnswer.scoreInPoints || 0, this.course());
 
-        // UI mit den evaluierten Daten aktualisieren
+        // update UI with the evaluated answer
         this.applyEvaluatedAnswer(evaluatedAnswer);
     }
 

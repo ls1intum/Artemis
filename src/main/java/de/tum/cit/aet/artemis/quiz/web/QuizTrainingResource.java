@@ -80,12 +80,12 @@ public class QuizTrainingResource {
     }
 
     /**
-     * POST /exercises/:exerciseId/submissions/training : Submit a new quizSubmission for training mode.
+     * POST /exercises/:exerciseId/training/:quizQuestionId/quiz: Submit a new quizQuestion for training mode.
      *
-     * @param courseId        the id of the course containing the quiz exercise
+     * @param courseId        the id of the course containing the quiz question
      * @param quizQuestionId  the id of the quiz question which is being answered
      * @param submittedAnswer the submitted answer by the user for the quiz question
-     * @return the ResponseEntity with status 200 (OK) and the result of the submitted answer as its body
+     * @return the ResponseEntity with status 200 (OK) and the result of the evaluated submitted answer as its body
      */
     @PostMapping("courses/{courseId}/training/{quizQuestionId}/quiz")
     @EnforceAtLeastStudent
