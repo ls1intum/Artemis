@@ -318,8 +318,8 @@ export abstract class TextEditorAction implements Disposable {
         if (text) {
             artemisIntelligence.rewrite(text, variant, courseId).subscribe({
                 next: (rewriteResult) => {
-                    if (rewriteResult.result) {
-                        this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), rewriteResult.result!);
+                    if (rewriteResult.rewrittenText) {
+                        this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), rewriteResult.rewrittenText!);
                         resultSignal.set(rewriteResult);
                     }
                 },

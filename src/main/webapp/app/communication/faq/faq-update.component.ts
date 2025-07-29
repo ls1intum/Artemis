@@ -14,7 +14,7 @@ import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { PROFILE_IRIS, PROFILE_NEBULA } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -55,13 +55,15 @@ export class FaqUpdateComponent implements OnInit {
         inconsistencies: undefined,
         suggestions: undefined,
         improvement: undefined,
+        rewrittenText: '',
     });
 
     showConsistencyCheck = computed(() => !!this.renderedConsistencyCheckResultMarkdown().result);
 
     irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+    nebulaEnabled = this.profileService.isProfileActive(PROFILE_NEBULA);
     artemisIntelligenceActions = computed(() =>
-        this.irisEnabled ? [new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId, this.renderedConsistencyCheckResultMarkdown)] : [],
+        this.nebulaEnabled ? [new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId, this.renderedConsistencyCheckResultMarkdown)] : [],
     );
     // Icons
     readonly faQuestionCircle = faQuestionCircle;
@@ -195,6 +197,7 @@ export class FaqUpdateComponent implements OnInit {
             inconsistencies: [],
             suggestions: [],
             improvement: '',
+            rewrittenText: '',
         });
     }
 }

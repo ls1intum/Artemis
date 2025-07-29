@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, finalize } from 'rxjs';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
-import { AlertService } from 'app/shared/service/alert.service';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 /**
@@ -12,11 +11,10 @@ import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-in
  */
 @Injectable({ providedIn: 'root' })
 export class ArtemisIntelligenceService {
-    public resourceUrl = 'api/iris';
+    public resourceUrl = 'api/nebula';
 
     private http = inject(HttpClient);
     private websocketService = inject(WebsocketService);
-    private alertService = inject(AlertService);
 
     private isLoadingRewrite = signal<boolean>(false);
     private isLoadingConsistencyCheck = signal<boolean>(false);
@@ -39,45 +37,12 @@ export class ArtemisIntelligenceService {
     rewrite(toBeRewritten: string | undefined, rewritingVariant: RewritingVariant, courseId: number): Observable<RewriteResult> {
         this.isLoadingRewrite.set(true);
 
-        return new Observable<{ result: string | undefined; inconsistencies: string[]; suggestions: string[]; improvement: string }>((observer) => {
-            this.http
-                .post(`${this.resourceUrl}/courses/${courseId}/rewrite-text`, {
-                    toBeRewritten: toBeRewritten,
-                    variant: rewritingVariant,
-                })
-                .subscribe({
-                    next: () => {
-                        const websocketTopic = `/user/topic/iris/rewriting/${courseId}`;
-                        this.websocketService.subscribe(websocketTopic);
-
-                        this.websocketService.receive(websocketTopic).subscribe({
-                            next: (update: any) => {
-                                if (update.result) {
-                                    observer.next({
-                                        result: update.result || undefined,
-                                        inconsistencies: update.inconsistencies || [],
-                                        suggestions: update.suggestions || [],
-                                        improvement: update.improvement || '',
-                                    });
-                                    observer.complete();
-                                    this.isLoadingRewrite.set(false);
-                                    this.websocketService.unsubscribe(websocketTopic);
-                                    this.alertService.success('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
-                                }
-                            },
-                            error: (error) => {
-                                observer.error(error);
-                                this.isLoadingRewrite.set(false);
-                                this.websocketService.unsubscribe(websocketTopic);
-                            },
-                        });
-                    },
-                    error: (error) => {
-                        this.isLoadingRewrite.set(false);
-                        observer.error(error);
-                    },
-                });
-        });
+        return this.http
+            .post<RewriteResult>(`${this.resourceUrl}/courses/${courseId}/rewrite-text`, {
+                toBeRewritten: toBeRewritten,
+                variant: rewritingVariant,
+            })
+            .pipe(finalize(() => this.isLoadingRewrite.set(false)));
     }
 
     /**

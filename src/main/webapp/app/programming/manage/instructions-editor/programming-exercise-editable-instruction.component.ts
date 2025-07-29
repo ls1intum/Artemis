@@ -94,7 +94,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                       this.artemisIntelligenceService,
                       RewritingVariant.PROBLEM_STATEMENT,
                       this.courseId,
-                      signal<RewriteResult>({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
+                      signal<RewriteResult>({
+                          rewrittenText: '',
+                          inconsistencies: undefined,
+                          suggestions: undefined,
+                          improvement: undefined,
+                          result: undefined,
+                      }),
                   ),
                   ...(this.exerciseId ? [new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId, this.renderedConsistencyCheckResultMarkdown)] : []),
               ]
