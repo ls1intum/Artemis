@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
+import { BuildAgentCapacityAdjustment } from 'app/buildagent/shared/entities/build-agent-capacity-adjustment.model';
 import { catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
@@ -90,7 +91,11 @@ export class BuildAgentsService {
      */
     adjustBuildAgentCapacity(agentName: string, newSize: number): Observable<void> {
         const encodedAgentName = encodeURIComponent(agentName);
-        return this.http.put<void>(`${this.adminResourceUrl}/agents/${encodedAgentName}/concurrent-builds/${newSize}`, null).pipe(
+        const capacityAdjustment: BuildAgentCapacityAdjustment = {
+            buildAgentName: agentName,
+            newCapacity: newSize,
+        };
+        return this.http.put<void>(`${this.adminResourceUrl}/agents/${encodedAgentName}/capacity`, capacityAdjustment).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to adjust build agent capacity ${agentName}\n${err.message}`));
             }),

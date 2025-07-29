@@ -1,14 +1,12 @@
 import { Component, input, output } from '@angular/core';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { CommonModule } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-number-input',
     templateUrl: './number-input.component.html',
     styleUrl: './number-input.component.scss',
-    standalone: true,
-    imports: [FontAwesomeModule, CommonModule],
+    imports: [FaIconComponent],
 })
 export class NumberInputComponent {
     value = input.required<number>();

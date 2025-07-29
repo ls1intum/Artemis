@@ -13,6 +13,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -481,7 +482,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         int newCapacity = 3;
 
         // The test verifies that the endpoint call doesn't throw an exception
-        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + newCapacity, null, HttpStatus.NO_CONTENT);
+        request.put("/api/core/admin/agents/" + agentName + "/capacity", Map.of("buildAgentName", agentName, "newCapacity", newCapacity), HttpStatus.NO_CONTENT);
     }
 
     @Test
@@ -491,7 +492,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         int invalidCapacity = 0;
 
         // This should fail due to validation in the service layer
-        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + invalidCapacity, null, HttpStatus.BAD_REQUEST);
+        request.put("/api/core/admin/agents/" + agentName + "/capacity", Map.of("buildAgentName", agentName, "newCapacity", invalidCapacity), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -501,7 +502,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         int negativeCapacity = -1;
 
         // This should fail due to validation in the service layer
-        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + negativeCapacity, null, HttpStatus.BAD_REQUEST);
+        request.put("/api/core/admin/agents/" + agentName + "/capacity", Map.of("buildAgentName", agentName, "newCapacity", negativeCapacity), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -511,7 +512,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         int newCapacity = 3;
 
         // The test verifies that the endpoint call returns a forbidden status
-        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + newCapacity, null, HttpStatus.FORBIDDEN);
+        request.put("/api/core/admin/agents/" + agentName + "/capacity", Map.of("buildAgentName", agentName, "newCapacity", newCapacity), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -521,7 +522,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         int exceedsMaxCapacity = 20; // This should exceed the configured maximum of 8
 
         // This should fail due to validation against the maximum value
-        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + exceedsMaxCapacity, null, HttpStatus.BAD_REQUEST);
+        request.put("/api/core/admin/agents/" + agentName + "/capacity", Map.of("buildAgentName", agentName, "newCapacity", exceedsMaxCapacity), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -530,6 +531,6 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         String agentName = agent1.buildAgent().name();
         int newCapacity = 3;
 
-        request.put("/api/core/admin/agents/" + agentName + "/concurrent-builds/" + newCapacity, null, HttpStatus.FORBIDDEN);
+        request.put("/api/core/admin/agents/" + agentName + "/capacity", Map.of("buildAgentName", agentName, "newCapacity", newCapacity), HttpStatus.FORBIDDEN);
     }
 }

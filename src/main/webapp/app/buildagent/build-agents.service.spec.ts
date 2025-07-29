@@ -198,8 +198,12 @@ describe('BuildAgentsService', () => {
     it('should adjust build agent capacity', () => {
         service.adjustBuildAgentCapacity('buildAgent1', 5).subscribe();
 
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/buildAgent1/concurrent-builds/5`);
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/buildAgent1/capacity`);
         expect(req.request.method).toBe('PUT');
+        expect(req.request.body).toEqual({
+            buildAgentName: 'buildAgent1',
+            newCapacity: 5,
+        });
         req.flush({});
     });
 
@@ -208,8 +212,12 @@ describe('BuildAgentsService', () => {
 
         const observable = lastValueFrom(service.adjustBuildAgentCapacity('buildAgent1', 5));
 
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/buildAgent1/concurrent-builds/5`);
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/buildAgent1/capacity`);
         expect(req.request.method).toBe('PUT');
+        expect(req.request.body).toEqual({
+            buildAgentName: 'buildAgent1',
+            newCapacity: 5,
+        });
         req.flush({ message: errorMessage }, { status: 500, statusText: 'Internal Server Error' });
 
         try {

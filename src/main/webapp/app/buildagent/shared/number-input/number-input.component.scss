@@ -4,20 +4,20 @@
 
     // Override button styles to be more compact and match input borders
     .btn {
-        min-width: 28px;
+        min-width: 1.75rem;
         padding: 0.25rem 0.5rem;
-        border-color: #dee2e6;
+        border-color: var(--bs-border-color);
 
         // Make buttons same height as small form controls
         line-height: 1.25;
     }
 
     .number-input-field {
-        width: 32px;
+        width: 2rem;
         text-align: center;
         border-radius: 0;
-        padding: 0.25rem 0rem;
-
+        padding: 0.25rem 0;
+        border-left: none; // Remove left border to prevent double border with button
         /* Hide spinner buttons */
         &::-webkit-outer-spin-button,
         &::-webkit-inner-spin-button {

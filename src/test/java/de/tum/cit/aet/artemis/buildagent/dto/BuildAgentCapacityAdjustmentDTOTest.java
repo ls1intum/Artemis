@@ -11,16 +11,16 @@ class BuildAgentCapacityAdjustmentDTOTest {
     void testValidConstruction() {
         BuildAgentCapacityAdjustmentDTO dto = new BuildAgentCapacityAdjustmentDTO("test-agent", 5);
 
-        assertThat(dto.getBuildAgentName()).isEqualTo("test-agent");
-        assertThat(dto.getNewCapacity()).isEqualTo(5);
+        assertThat(dto.buildAgentName()).isEqualTo("test-agent");
+        assertThat(dto.newCapacity()).isEqualTo(5);
     }
 
     @Test
     void testValidConstructionWithNullAgentName() {
         BuildAgentCapacityAdjustmentDTO dto = new BuildAgentCapacityAdjustmentDTO(null, 3);
 
-        assertThat(dto.getBuildAgentName()).isNull();
-        assertThat(dto.getNewCapacity()).isEqualTo(3);
+        assertThat(dto.buildAgentName()).isNull();
+        assertThat(dto.newCapacity()).isEqualTo(3);
     }
 
     @Test
@@ -39,23 +39,23 @@ class BuildAgentCapacityAdjustmentDTOTest {
     void testValidCapacityOne() {
         BuildAgentCapacityAdjustmentDTO dto = new BuildAgentCapacityAdjustmentDTO("agent1", 1);
 
-        assertThat(dto.getBuildAgentName()).isEqualTo("agent1");
-        assertThat(dto.getNewCapacity()).isEqualTo(1);
+        assertThat(dto.buildAgentName()).isEqualTo("agent1");
+        assertThat(dto.newCapacity()).isEqualTo(1);
     }
 
     @Test
     void testValidCapacityLargeNumber() {
         BuildAgentCapacityAdjustmentDTO dto = new BuildAgentCapacityAdjustmentDTO("agent-large", 1000);
 
-        assertThat(dto.getBuildAgentName()).isEqualTo("agent-large");
-        assertThat(dto.getNewCapacity()).isEqualTo(1000);
+        assertThat(dto.buildAgentName()).isEqualTo("agent-large");
+        assertThat(dto.newCapacity()).isEqualTo(1000);
     }
 
     @Test
     void testEmptyAgentName() {
         BuildAgentCapacityAdjustmentDTO dto = new BuildAgentCapacityAdjustmentDTO("", 2);
 
-        assertThat(dto.getBuildAgentName()).isEmpty();
-        assertThat(dto.getNewCapacity()).isEqualTo(2);
+        assertThat(dto.buildAgentName()).isEmpty();
+        assertThat(dto.newCapacity()).isEqualTo(2);
     }
 }
