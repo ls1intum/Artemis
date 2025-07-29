@@ -25,7 +25,6 @@ public class FaqService {
     public FaqService(FaqRepository faqRepository, Optional<PyrisFaqApi> pyrisFaqApi) {
         this.pyrisFaqApi = pyrisFaqApi;
         this.faqRepository = faqRepository;
-
     }
 
     /**
