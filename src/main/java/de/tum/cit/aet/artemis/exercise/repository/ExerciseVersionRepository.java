@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -28,5 +27,5 @@ public interface ExerciseVersionRepository extends ArtemisJpaRepository<Exercise
      * @param exerciseId the ID of the exercise
      * @return the latest version of the exercise, or empty if no versions exist
      */
-    Optional<ExerciseVersion> findTopByExerciseIdOrderByCreatedDateDesc(@Param("exerciseId") Long exerciseId);
+    Optional<ExerciseVersion> findTopByExerciseIdOrderByCreatedDateDesc(Long exerciseId);
 }
