@@ -1,9 +1,14 @@
 name: Check Bean Instantiations on Startup
 
 on:
+  push:
+    branches: [ develop ]
+    paths:
+      - src/main/java/**
   pull_request:
+# TODO revert this before merging
 #    paths:
-#      - 'src/main/java/**'
+#      -  src/main/java/**
 
 jobs:
   build:
@@ -44,19 +49,22 @@ jobs:
 
       - name: Wait for the application to start
         run: |
-          echo "Waiting up to 60s for 'Artemis is running!' to appear in app.log..."
+          RUNNING_MESSAGE="'Artemis is running!'"
+          echo "Waiting up to 60s for $RUNNING_MESSAGE to appear in app.log..."
 
+          isAppRunning=false
           for i in {1..30}; do
-            if grep -q "'Artemis' is running!" app.log; then
-              echo "✅ Found 'Artemis is running!' in app.log after $i attempts"
+            if grep -q $RUNNING_MESSAGE app.log; then
+              isAppRunning=true
+              echo "✅ Found $RUNNING_MESSAGE in app.log after $i attempts"
               break
             fi
             echo "  attempt $i/30: not found yet"
             sleep 2
           done
 
-          if ! grep -q "'Artemis' is running!" app.log; then
-            echo "❌ Timeout: 'Artemis is running!' not found in app.log"
+          if [ "$isAppRunning" = false ]; then
+            echo "❌ Timeout: $RUNNING_MESSAGE not found in app.log"
             cat app.log
             exit 1
           fi
@@ -77,9 +85,20 @@ jobs:
           MAX_EDGES=94
           MAX_STACK_SIZE_THRESHOLD=9
           echo "Validating against thresholds: MIN_EDGES=$MIN_EDGES, MAX_EDGES=$MAX_EDGES, MAX_STACK_SIZE_THRESHOLD=$MAX_STACK_SIZE_THRESHOLD"
-          (( EDGES < MIN_EDGES )) && { echo "❌ < $MIN_EDGES edges. Something seems to be wrong as usually more beans are instantiated"; exit 1; }
-          (( EDGES > MAX_EDGES ))   && { echo "❌ > $MAX_EDGES edges"; exit 1; }
-          (( MAXSTACK > MAX_STACK_SIZE_THRESHOLD )) && { echo "❌ stack > $MAX_STACK_SIZE_THRESHOLD"; exit 1; }
+          if (( EDGES < MIN_EDGES )); then
+          echo "❌ < $MIN_EDGES edges. Something seems to be wrong, as usually more beans are instantiated."
+          exit 1
+          fi
+
+          if (( EDGES > MAX_EDGES )); then
+          echo "❌ > $MAX_EDGES edges"
+          exit 1
+          fi
+
+          if (( MAXSTACK > MAX_STACK_SIZE_THRESHOLD )); then
+          echo "❌ stack > $MAX_STACK_SIZE_THRESHOLD"
+          exit 1
+          fi
           echo "✅ Final values → Edges: $EDGES; Max call stack size: $MAXSTACK"
           echo "🎉 Number of instantiated beans on startup within expected ranges"
 
