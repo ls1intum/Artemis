@@ -720,10 +720,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const originalRenderPages = component.renderPages;
             const originalCreateCanvas = component.createCanvas;
 
-            let createCanvasCallCount = 0;
-
             component.createCanvas = function () {
-                createCanvasCallCount++;
                 return mockCanvas;
             };
 
@@ -856,7 +853,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 1: existingCanvas2,
                 length: 2,
                 item: (index: number) => (index === 0 ? existingCanvas1 : existingCanvas2),
-                forEach: function (callback: (element: Element, index: number, list: NodeListOf<Element>) => void) {
+                forEach: function (callback: () => void) {
                     callback(existingCanvas1, 0, this as unknown as NodeListOf<Element>);
                     callback(existingCanvas2, 1, this as unknown as NodeListOf<Element>);
                 },

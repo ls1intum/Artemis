@@ -205,7 +205,7 @@ describe('TextExercise Management Update Component', () => {
             route.data = of({ textExercise });
             route.snapshot = {
                 paramMap: {
-                    get: (key: string) => 'mockValue',
+                    get: () => 'mockValue',
                 },
             } as ActivatedRouteSnapshot;
 

@@ -148,7 +148,7 @@ describe('Sort Service', () => {
         );
     });
 
-    function repeatWithRandomArray(times: number, fn: (arr: TestObject[]) => void) {
+    function repeatWithRandomArray(times: number, fn: () => void) {
         return () => {
             while (times-- > 0) {
                 fn(shuffle([e1, e2, e3, e4, e5, e6]));

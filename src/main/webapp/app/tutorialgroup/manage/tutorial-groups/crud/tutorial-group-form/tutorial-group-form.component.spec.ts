@@ -55,8 +55,8 @@ describe('TutorialGroupFormComponent', () => {
     const validPeriod = [validPeriodStart, validPeriodEnd];
     const validLocation = 'ExampleLocation';
 
-    let clickSubmit: (expectSubmitEvent: boolean) => void;
-    let testFormIsInvalidOnMissingRequiredProperty: (controlName: string, subFormName?: string) => void;
+    let clickSubmit: () => void;
+    let testFormIsInvalidOnMissingRequiredProperty: () => void;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

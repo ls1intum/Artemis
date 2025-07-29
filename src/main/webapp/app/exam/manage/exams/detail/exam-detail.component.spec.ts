@@ -3,7 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Data, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -104,7 +104,7 @@ describe('ExamDetailComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         data: {
-                            subscribe: (fn: (value: Data) => void) =>
+                            subscribe: (fn: () => void) =>
                                 fn({
                                     exam,
                                 }),

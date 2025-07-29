@@ -363,7 +363,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const node = {} as Node;
 
         const questionElement = {
-            contains(other: Node | null): boolean {
+            contains(): boolean {
                 return true;
             },
         } as unknown as HTMLElement;
@@ -373,9 +373,9 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const range = {
             cloneRange(): Range {
                 return {
-                    selectNodeContents(node1: Node) {},
+                    selectNodeContents() {},
 
-                    setEnd(node2: Node, offset: number) {},
+                    setEnd() {},
                     cloneContents() {},
                 } as Range;
             },
@@ -394,7 +394,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 },
             },
 
-            getRangeAt(index: number): Range {
+            getRangeAt(): Range {
                 return range as Range;
             },
             toString() {
@@ -404,7 +404,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         jest.spyOn(window, 'getSelection').mockReturnValue(nodeValue);
 
         const returnHTMLDivElement = {
-            appendChild(param: DocumentFragment) {
+            appendChild() {
                 return {} as DocumentFragment;
             },
             innerHTML: 'innerHTML',
@@ -414,7 +414,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const markdownHelper = {
             length: 1,
 
-            substring(start: number, end?: number): string {
+            substring(): string {
                 return '';
             },
         } as string;

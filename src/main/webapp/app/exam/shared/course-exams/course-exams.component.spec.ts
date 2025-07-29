@@ -194,9 +194,9 @@ describe('CourseExamsComponent', () => {
         expectedMap.set(visibleTestExam2.id!, false);
         expectedMap.set(42, false);
 
-        let updateHandler: (course: Course) => void = () => {};
+        let updateHandler: () => void = () => {};
         subscribeToCourseUpdates.mockReturnValue({
-            subscribe: (handler: (course: Course) => void): void => {
+            subscribe: (handler: () => void): void => {
                 updateHandler = handler;
             },
         });

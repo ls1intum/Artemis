@@ -14,7 +14,7 @@ describe('FeedbackModalComponent', () => {
 
     const mockLongFeedbackTextService = {
         find: jest.fn().mockReturnValue({
-            subscribe: (callback: (response: { body: string }) => void) => callback({ body: 'Loaded long feedback' }),
+            subscribe: (callback: () => void) => callback({ body: 'Loaded long feedback' }),
         }),
     };
 

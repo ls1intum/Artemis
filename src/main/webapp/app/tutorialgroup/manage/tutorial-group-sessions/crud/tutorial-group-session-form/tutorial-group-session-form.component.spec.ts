@@ -24,8 +24,8 @@ describe('TutorialGroupSessionForm', () => {
     const validEndTime = '13:00:00';
     const validLocation = 'Garching';
 
-    let clickSubmit: (expectSubmitEvent: boolean) => void;
-    let testFormIsInvalidOnMissingRequiredProperty: (controlName: string) => void;
+    let clickSubmit: () => void;
+    let testFormIsInvalidOnMissingRequiredProperty: () => void;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

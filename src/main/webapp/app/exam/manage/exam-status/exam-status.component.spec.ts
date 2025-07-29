@@ -17,7 +17,9 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { input } from '@angular/core';
 
 enum DateOffsetType {
+    // eslint-disable-next-line no-unused-vars
     HOURS = 'hours',
+    // eslint-disable-next-line no-unused-vars
     DAYS = 'days',
 }
 

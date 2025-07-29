@@ -11,7 +11,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { Params, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { throwError } from 'rxjs';
@@ -26,7 +26,7 @@ describe('TextAssessmentAnalytics Service', () => {
     const route = (): ActivatedRoute =>
         ({
             params: {
-                subscribe: (fn: (value: Params) => void) =>
+                subscribe: (fn: () => void) =>
                     fn({
                         courseId: 1,
                     }),

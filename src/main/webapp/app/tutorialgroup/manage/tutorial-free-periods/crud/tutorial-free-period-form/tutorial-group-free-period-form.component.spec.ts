@@ -30,7 +30,7 @@ describe('TutorialFreePeriodFormComponent', () => {
 
     const validReason = 'Holiday';
 
-    let clickSubmit: (expectSubmitEvent: boolean) => void;
+    let clickSubmit: () => void;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

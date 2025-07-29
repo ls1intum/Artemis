@@ -146,6 +146,7 @@ describe('WebsocketService', () => {
                 try {
                     // Attempt to decode the invalid Base64
                     receivedMessage = window.atob(message);
+                    // eslint-disable-next-line no-unused-vars
                 } catch (error) {
                     receivedMessage = null; // Handle decoding error
                 }

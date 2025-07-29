@@ -342,7 +342,7 @@ examples.forEach((activeConversation) => {
             });
         });
 
-        function genericConfirmationDialogTest(method: (event: MouseEvent) => void) {
+        function genericConfirmationDialogTest(method: () => void) {
             const modalService = TestBed.inject(NgbModal);
             const mockModalRef = {
                 componentInstance: {

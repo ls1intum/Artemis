@@ -23,8 +23,8 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     const validPeriodEnd = new Date(Date.UTC(2021, 2, 1));
     const validPeriod = [validPeriodStart, validPeriodEnd];
 
-    let clickSubmit: (expectSubmitEvent: boolean) => void;
-    let testFormIsInvalidOnMissingRequiredProperty: (controlName: string) => void;
+    let clickSubmit: () => void;
+    let testFormIsInvalidOnMissingRequiredProperty: () => void;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
