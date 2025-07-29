@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
-import { HttpClientModule } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
 import { ElementRef, Signal, SimpleChanges, signal } from '@angular/core';
@@ -65,7 +64,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [PdfPreviewThumbnailGridComponent, HttpClientModule],
+            imports: [PdfPreviewThumbnailGridComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: { data: of({}) } },
                 { provide: AlertService, useValue: alertServiceMock },

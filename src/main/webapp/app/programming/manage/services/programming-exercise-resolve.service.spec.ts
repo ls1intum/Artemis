@@ -5,6 +5,7 @@ import { ProgrammingExerciseResolve } from './programming-exercise-resolve.servi
 import { ProgrammingExerciseService } from './programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 describe('ProgrammingExerciseResolve', () => {
     let resolver: ProgrammingExerciseResolve;
@@ -42,7 +43,7 @@ describe('ProgrammingExerciseResolve', () => {
             params: { exerciseId: exerciseId },
         } as unknown as ActivatedRouteSnapshot;
 
-        const result = await resolver.resolve(route).toPromise();
+        const result = await firstValueFrom(resolver.resolve(route));
         expect(result).toEqual(mockExercise);
         expect(mockProgrammingExerciseService.find).toHaveBeenCalledWith(exerciseId, true);
     });
@@ -52,7 +53,7 @@ describe('ProgrammingExerciseResolve', () => {
             params: {},
         } as unknown as ActivatedRouteSnapshot;
 
-        const result = await resolver.resolve(route).toPromise();
+        const result = await firstValueFrom(resolver.resolve(route));
         expect(result).toBeInstanceOf(ProgrammingExercise);
         expect(result?.id).toBeUndefined();
         expect(mockProgrammingExerciseService.find).not.toHaveBeenCalled();
@@ -63,7 +64,7 @@ describe('ProgrammingExerciseResolve', () => {
             params: { exerciseId: undefined },
         } as unknown as ActivatedRouteSnapshot;
 
-        const result = await resolver.resolve(route).toPromise();
+        const result = await firstValueFrom(resolver.resolve(route));
         expect(result).toBeInstanceOf(ProgrammingExercise);
         expect(result?.id).toBeUndefined();
         expect(mockProgrammingExerciseService.find).not.toHaveBeenCalled();

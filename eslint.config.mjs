@@ -18,6 +18,7 @@ export default tseslint.config(
             '.github/',
             '.gradle/',
             '.idea/',
+            '.venv/',
             '.jhipster/',
             'build/',
             'coverage/',
