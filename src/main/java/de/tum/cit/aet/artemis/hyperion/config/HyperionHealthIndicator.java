@@ -6,22 +6,19 @@ import java.util.HashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
+import de.tum.cit.aet.artemis.hyperion.client.api.HealthcheckApi;
+import de.tum.cit.aet.artemis.hyperion.client.model.HealthCheck;
 
 /**
- * Health indicator for Hyperion service availability monitoring.
- *
- * Performs HTTP health checks against Hyperion service and reports
- * connection status, configuration details, and error information
- * for operational monitoring and troubleshooting.
+ * Spring Boot health indicator for monitoring Hyperion service availability.
  */
 @Component
 @Lazy
@@ -36,31 +33,51 @@ public class HyperionHealthIndicator implements HealthIndicator {
 
     private static final String HYPERION_STATUS_KEY = "status";
 
-    private final RestClient shortTimeoutRestClient;
+    private static final String HYPERION_VERSION_KEY = "version";
 
-    private final HyperionRestConfigurationProperties config;
+    private static final String HYPERION_UPTIME_KEY = "uptime";
 
-    public HyperionHealthIndicator(@Qualifier("shortTimeoutHyperionRestClient") RestClient shortTimeoutRestClient, HyperionRestConfigurationProperties config) {
-        this.shortTimeoutRestClient = shortTimeoutRestClient;
-        this.config = config;
+    private final HealthcheckApi healthcheckApi;
+
+    @Value("${artemis.hyperion.url}")
+    private String hyperionUrl;
+
+    @Value("${artemis.hyperion.api-key}")
+    private String hyperionApiKey;
+
+    public HyperionHealthIndicator(HealthcheckApi healthcheckApi) {
+        this.healthcheckApi = healthcheckApi;
     }
 
     @Override
     public Health health() {
         var additionalInfo = new HashMap<String, Object>();
-        additionalInfo.put(HYPERION_URL_KEY, config.getUrl());
-        additionalInfo.put(HYPERION_SECURITY_KEY, config.getApiKey() != null ? "API Key configured" : "No authentication");
+        additionalInfo.put(HYPERION_URL_KEY, hyperionUrl);
+        additionalInfo.put(HYPERION_SECURITY_KEY, hyperionApiKey != null ? "API Key configured" : "No authentication");
 
         ConnectorHealth health;
         try {
-            log.debug("Performing REST health check for Hyperion at {}", config.getUrl());
+            log.debug("Performing health check for Hyperion using generated API client");
 
-            // Call the health endpoint using modern RestClient
-            shortTimeoutRestClient.get().uri("/health").retrieve().body(Object.class);
+            // Use the generated HealthcheckApi to perform health check
+            HealthCheck healthCheckResponse = healthcheckApi.getHealthHealthGet();
 
             additionalInfo.put(HYPERION_STATUS_KEY, "UP");
-            health = new ConnectorHealth(true, additionalInfo);
 
+            // Extract additional health information from the response
+            if (healthCheckResponse != null) {
+                if (healthCheckResponse.getVersion() != null) {
+                    additionalInfo.put(HYPERION_VERSION_KEY, healthCheckResponse.getVersion());
+                }
+                if (healthCheckResponse.getUptimeSeconds() != null) {
+                    additionalInfo.put(HYPERION_UPTIME_KEY, healthCheckResponse.getUptimeSeconds() + " seconds");
+                }
+                if (healthCheckResponse.getTimestamp() != null) {
+                    additionalInfo.put("timestamp", healthCheckResponse.getTimestamp());
+                }
+            }
+
+            health = new ConnectorHealth(true, additionalInfo);
             log.debug("Hyperion health check successful");
 
         }

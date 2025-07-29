@@ -193,7 +193,7 @@ task generateHyperionJavaClient(type: org.openapitools.generator.gradle.plugin.t
     modelPackage.set('de.tum.cit.aet.artemis.hyperion.client.model')
     invokerPackage.set('de.tum.cit.aet.artemis.hyperion.client')
     configOptions.set([
-        library: 'restclient',
+        library: 'resttemplate',
         openApiNullable: 'false',
         useJakartaEe: 'true',
         serializationLibrary: 'jackson',

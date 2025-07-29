@@ -1,383 +1,1197 @@
 openapi: 3.1.0
 info:
   title: Artemis Application Server API
-  contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.2.0
+  contact:
+    name: Stephan Krusche
+    email: krusche@tum.de
+  version: 8.3.3
 servers:
-- {url: 'http://localhost:8080', description: Generated server url}
+- url: http://localhost:8080
+  description: Generated server url
 paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}:
+    get:
+      tags:
+      - tutorial-group
+      operationId: getOneOfCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroup"
+    put:
+      tags:
+      - tutorial-group
+      operationId: update
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TutorialGroupUpdate"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroup"
     delete:
-      tags: [tutorial-group]
+      tags:
+      - tutorial-group
       operationId: delete
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       - name: tutorialGroupId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       responses:
-        '200': {description: OK}
+        "200":
+          description: OK
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}:
+    get:
+      tags:
+      - tutorial-group-session
+      operationId: getOneOfTutorialGroup
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroupSession"
+    put:
+      tags:
+      - tutorial-group-session
+      operationId: update_1
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TutorialGroupSessionRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroupSession"
     delete:
-      tags: [tutorial-group-session]
+      tags:
+      - tutorial-group-session
       operationId: deleteSession
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       - name: tutorialGroupId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       - name: sessionId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       responses:
-        '200': {description: OK}
+        "200":
+          description: OK
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}:
+    put:
+      tags:
+      - tutorial-groups-configuration
+      operationId: update_2
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TutorialGroupsConfiguration"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroupsConfiguration"
   ? /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}
-  : delete:
-      tags: [tutorial-group-free-period]
+  : get:
+      tags:
+      - tutorial-group-free-period
+      operationId: getOneOfConfiguration
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupFreePeriodId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroupFreePeriod"
+    put:
+      tags:
+      - tutorial-group-free-period
+      operationId: update_3
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupFreePeriodId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TutorialGroupFreePeriodRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroupFreePeriod"
+    delete:
+      tags:
+      - tutorial-group-free-period
       operationId: delete_1
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       - name: tutorialGroupsConfigurationId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       - name: tutorialGroupFreePeriodId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       responses:
-        '200': {description: OK}
+        "200":
+          description: OK
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
-      tags: [tutorial-group]
+      tags:
+      - tutorial-group
       operationId: getAllForCourse
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
-              schema: {type: array}
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TutorialGroup"
+    post:
+      tags:
+      - tutorial-group
+      operationId: create
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TutorialGroup"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroup"
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions:
+    post:
+      tags:
+      - tutorial-group-session
+      operationId: create_1
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TutorialGroupSessionRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroupSession"
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
+    post:
+      tags:
+      - tutorial-group-session
+      operationId: cancel
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TutorialGroupStatus"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroupSession"
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate:
+    post:
+      tags:
+      - tutorial-group-session
+      operationId: activate
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroupSession"
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin}:
     post:
-      tags: [tutorial-group]
+      tags:
+      - tutorial-group
       operationId: registerStudent
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       - name: tutorialGroupId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       - name: studentLogin
         in: path
         required: true
-        schema: {type: string}
+        schema:
+          type: string
       responses:
-        '200': {description: OK}
+        "200":
+          description: OK
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple:
     post:
-      tags: [tutorial-group]
+      tags:
+      - tutorial-group
       operationId: registerMultipleStudentsToTutorialGroup
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       - name: tutorialGroupId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       requestBody:
         content:
           application/json:
             schema:
               type: array
-              items: {$ref: '#/components/schemas/Student'}
+              items:
+                $ref: "#/components/schemas/Student"
               uniqueItems: true
         required: true
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: {$ref: '#/components/schemas/Student'}
+                items:
+                  $ref: "#/components/schemas/Student"
                 uniqueItems: true
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/import:
     post:
-      tags: [tutorial-group]
+      tags:
+      - tutorial-group
       operationId: importRegistrations
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       requestBody:
         content:
           application/json:
             schema:
               type: array
-              items: {$ref: '#/components/schemas/TutorialGroupRegistrationImport'}
+              items:
+                $ref: "#/components/schemas/TutorialGroupRegistrationImport"
               uniqueItems: true
         required: true
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: {$ref: '#/components/schemas/TutorialGroupRegistrationImport'}
+                items:
+                  $ref: "#/components/schemas/TutorialGroupRegistrationImport"
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration:
+    get:
+      tags:
+      - tutorial-groups-configuration
+      operationId: getOneOfCourse_1
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroupsConfiguration"
+    post:
+      tags:
+      - tutorial-groups-configuration
+      operationId: create_2
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TutorialGroupsConfiguration"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroupsConfiguration"
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods:
+    post:
+      tags:
+      - tutorial-group-free-period
+      operationId: create_3
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TutorialGroupFreePeriodRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroupFreePeriod"
+  /api/programming/exercises/{exerciseId}/hyperion/problem-statement-rewrite:
+    post:
+      tags:
+      - hyperion-review-and-refine
+      summary: Rewrite problem statement
+      description: Rewrites and improves a problem statement using AI assistance
+      operationId: rewriteProblemStatement
+      parameters:
+      - name: exerciseId
+        in: path
+        description: ID of the programming exercise
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProblemStatementRewriteRequest"
+        required: true
+      responses:
+        "200":
+          description: Problem statement rewritten successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemStatementRewriteResponse"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemStatementRewriteResponse"
+        "503":
+          description: Hyperion service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemStatementRewriteResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemStatementRewriteResponse"
+  /api/programming/exercises/{exerciseId}/hyperion/consistency-check:
+    post:
+      tags:
+      - hyperion-review-and-refine
+      summary: Check exercise consistency
+      description: "Analyzes a programming exercise for consistency issues between\
+        \ problem statement, template code, solution code, and test cases"
+      operationId: checkExerciseConsistency
+      parameters:
+      - name: exerciseId
+        in: path
+        description: ID of the programming exercise to analyze
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Consistency check completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsistencyCheckResponse"
+        "503":
+          description: Hyperion service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsistencyCheckResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsistencyCheckResponse"
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/attendance-count:
+    patch:
+      tags:
+      - tutorial-group-session
+      operationId: updateAttendanceCount
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tutorialGroupId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: attendanceCount
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          maximum: 3000
+          minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorialGroupSession"
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
-      tags: [tutorial-group]
+      tags:
+      - tutorial-group
       operationId: getTitle
       parameters:
       - name: tutorialGroupId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
-              schema: {type: string}
+              schema:
+                type: string
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/language-values:
     get:
-      tags: [tutorial-group]
+      tags:
+      - tutorial-group
       operationId: getUniqueLanguageValues
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: {type: string}
+                items:
+                  type: string
                 uniqueItems: true
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/export/json:
     get:
-      tags: [tutorial-group]
+      tags:
+      - tutorial-group
       operationId: exportTutorialGroupsToJSON
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       - name: fields
         in: query
         required: true
         schema:
           type: array
-          items: {type: string}
+          items:
+            type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: {$ref: '#/components/schemas/TutorialGroupExport'}
+                items:
+                  $ref: "#/components/schemas/TutorialGroupExport"
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/export/csv:
     get:
-      tags: [tutorial-group]
+      tags:
+      - tutorial-group
       operationId: exportTutorialGroupsToCSV
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       - name: fields
         in: query
         required: true
         schema:
           type: array
-          items: {type: string}
+          items:
+            type: string
       responses:
-        '200':
+        "200":
           description: OK
           content:
             text/csv:
-              schema: {type: string, format: binary}
+              schema:
+                type: string
+                format: binary
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/campus-values:
     get:
-      tags: [tutorial-group]
+      tags:
+      - tutorial-group
       operationId: getUniqueCampusValues
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: {type: string}
+                items:
+                  type: string
                 uniqueItems: true
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin}:
     delete:
-      tags: [tutorial-group]
+      tags:
+      - tutorial-group
       operationId: deregisterStudent
       parameters:
       - name: courseId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       - name: tutorialGroupId
         in: path
         required: true
-        schema: {type: integer, format: int64}
+        schema:
+          type: integer
+          format: int64
       - name: studentLogin
         in: path
         required: true
-        schema: {type: string}
+        schema:
+          type: string
       responses:
-        '200': {description: OK}
+        "200":
+          description: OK
 components:
   schemas:
+    ProblemStatementRewriteResponse:
+      type: object
+      description: Response containing rewritten problem statement
+      properties:
+        rewrittenText:
+          type: string
+          description: Improved problem statement text
+          example: Write a Java function that calculates the sum of two integers.
+            The function should handle edge cases like null inputs and return appropriate
+            error messages.
+        improved:
+          type: boolean
+          description: Whether the text was actually improved
+          example: true
+      required:
+      - improved
+      - rewrittenText
     Channel:
       type: object
       properties:
-        type: {type: string}
-        id: {type: integer, format: int64}
-        creationDate: {type: string, format: date-time}
-        lastMessageDate: {type: string, format: date-time}
-        creator: {$ref: '#/components/schemas/ConversationUser'}
-        lastReadDate: {type: string, format: date-time}
-        unreadMessagesCount: {type: integer, format: int64}
-        isFavorite: {type: boolean}
-        isHidden: {type: boolean}
-        isMuted: {type: boolean}
-        isCreator: {type: boolean}
-        isMember: {type: boolean}
-        numberOfMembers: {type: integer, format: int32}
-        name: {type: string}
-        description: {type: string}
-        topic: {type: string}
-        isPublic: {type: boolean}
-        isAnnouncementChannel: {type: boolean}
-        isArchived: {type: boolean}
-        isCourseWide: {type: boolean}
-        hasChannelModerationRights: {type: boolean}
-        isChannelModerator: {type: boolean}
-        tutorialGroupId: {type: integer, format: int64}
-        tutorialGroupTitle: {type: string}
+        type:
+          type: string
+        id:
+          type: integer
+          format: int64
+        creationDate:
+          type: string
+          format: date-time
+        lastMessageDate:
+          type: string
+          format: date-time
+        creator:
+          $ref: "#/components/schemas/ConversationUser"
+        lastReadDate:
+          type: string
+          format: date-time
+        unreadMessagesCount:
+          type: integer
+          format: int64
+        isFavorite:
+          type: boolean
+        isHidden:
+          type: boolean
+        isMuted:
+          type: boolean
+        isCreator:
+          type: boolean
+        isMember:
+          type: boolean
+        numberOfMembers:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+        topic:
+          type: string
+        isPublic:
+          type: boolean
+        isAnnouncementChannel:
+          type: boolean
+        isArchived:
+          type: boolean
+        isCourseWide:
+          type: boolean
+        hasChannelModerationRights:
+          type: boolean
+        isChannelModerator:
+          type: boolean
+        tutorialGroupId:
+          type: integer
+          format: int64
+        tutorialGroupTitle:
+          type: string
         subType:
           type: string
-          enum: [general, exercise, lecture, exam, feedbackDiscussion]
-        subTypeReferenceId: {type: integer, format: int64}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
-    TutorialGroupFreePeriodRequest:
-      type: object
-      properties:
-        startDate: {type: string, format: date-time}
-        endDate: {type: string, format: date-time}
-        reason: {type: string}
-      required: [endDate, startDate]
+          enum:
+          - general
+          - exercise
+          - lecture
+          - exam
+          - feedbackDiscussion
+        subTypeReferenceId:
+          type: integer
+          format: int64
+        subTypeWithReferenceFromChannel:
+          $ref: "#/components/schemas/Channel"
+          writeOnly: true
     TutorialGroupStatus:
       type: object
       properties:
-        status_explanation: {type: string}
+        status_explanation:
+          type: string
     TutorialGroupRegistrationImport:
       type: object
       properties:
-        title: {type: string}
-        student: {$ref: '#/components/schemas/Student'}
-        importSuccessful: {type: boolean}
+        title:
+          type: string
+        student:
+          $ref: "#/components/schemas/Student"
+        importSuccessful:
+          type: boolean
         error:
           type: string
-          enum: [NO_TITLE, NO_USER_FOUND, MULTIPLE_REGISTRATIONS]
-        campus: {type: string}
-        capacity: {type: integer, format: int32}
-        language: {type: string}
-        additionalInformation: {type: string}
-        isOnline: {type: boolean}
-    TutorialGroupExport:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        dayOfWeek: {type: string}
-        startTime: {type: string}
-        endTime: {type: string}
-        location: {type: string}
-        campus: {type: string}
-        language: {type: string}
-        additionalInformation: {type: string}
-        capacity: {type: integer, format: int32}
-        isOnline: {type: boolean}
-        students:
-          type: array
-          items: {$ref: '#/components/schemas/StudentExport'}
-    ConversationUser:
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        login: {type: string}
-        name: {type: string}
-        firstName: {type: string}
-        lastName: {type: string}
-        imageUrl: {type: string}
-        isInstructor: {type: boolean}
-        isEditor: {type: boolean}
-        isTeachingAssistant: {type: boolean}
-        isStudent: {type: boolean}
-        isChannelModerator: {type: boolean}
-        isRequestingUser: {type: boolean}
+          enum:
+          - NO_TITLE
+          - NO_USER_FOUND
+          - MULTIPLE_REGISTRATIONS
+        campus:
+          type: string
+        capacity:
+          type: integer
+          format: int32
+        language:
+          type: string
+        additionalInformation:
+          type: string
+        isOnline:
+          type: boolean
     Student:
       type: object
       properties:
-        login: {type: string, maxLength: 50, minLength: 0}
-        firstName: {type: string, maxLength: 50, minLength: 0}
-        lastName: {type: string, maxLength: 50, minLength: 0}
-        registrationNumber: {type: string, maxLength: 10, minLength: 0}
-        email: {type: string, maxLength: 100, minLength: 0}
+        login:
+          type: string
+          maxLength: 50
+          minLength: 0
+        firstName:
+          type: string
+          maxLength: 50
+          minLength: 0
+        lastName:
+          type: string
+          maxLength: 50
+          minLength: 0
+        registrationNumber:
+          type: string
+          maxLength: 10
+          minLength: 0
+        email:
+          type: string
+          maxLength: 100
+          minLength: 0
     TutorialGroupUpdate:
       type: object
       properties:
-        notificationText: {type: string, maxLength: 1000, minLength: 1}
-        updateTutorialGroupChannelName: {type: boolean}
-      required: [tutorialGroup]
+        tutorialGroup:
+          $ref: "#/components/schemas/TutorialGroup"
+        notificationText:
+          type: string
+          maxLength: 1000
+          minLength: 1
+        updateTutorialGroupChannelName:
+          type: boolean
+      required:
+      - tutorialGroup
+    ConsistencyCheckResponse:
+      type: object
+      description: Response containing consistency check results
+      properties:
+        issues:
+          type: array
+          description: List of consistency issues found
+          items:
+            $ref: "#/components/schemas/ConsistencyIssue"
+        hasIssues:
+          type: boolean
+          description: Whether any issues were found
+          example: true
+        summary:
+          type: string
+          description: Summary of the consistency check
+          example: Found 3 consistency issues
+      required:
+      - hasIssues
+      - issues
+      - summary
+    TutorialGroupFreePeriodRequest:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        reason:
+          type: string
+      required:
+      - endDate
+      - startDate
+    ConsistencyIssue:
+      type: object
+      description: Individual consistency issue details
+      properties:
+        severity:
+          type: string
+          description: Severity of the issue
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          example: HIGH
+        category:
+          type: string
+          description: Category of the issue
+          example: PROBLEM_STATEMENT_MISMATCH
+        description:
+          type: string
+          description: Detailed description of the issue
+          example: Problem statement does not match test cases
+        suggestedFix:
+          type: string
+          description: Suggested fix for the issue
+          example: Update problem statement to clarify expected behavior
+      required:
+      - category
+      - description
+      - severity
+      - suggestedFix
+    TutorialGroupExport:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        dayOfWeek:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        location:
+          type: string
+        campus:
+          type: string
+        language:
+          type: string
+        additionalInformation:
+          type: string
+        capacity:
+          type: integer
+          format: int32
+        isOnline:
+          type: boolean
+        students:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudentExport"
+    ConversationUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        login:
+          type: string
+        name:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        imageUrl:
+          type: string
+        isInstructor:
+          type: boolean
+        isEditor:
+          type: boolean
+        isTeachingAssistant:
+          type: boolean
+        isStudent:
+          type: boolean
+        isChannelModerator:
+          type: boolean
+        isRequestingUser:
+          type: boolean
     TutorialGroupSessionRequest:
       type: object
       properties:
-        date: {type: string, format: date}
-        startTime: {type: string}
-        endTime: {type: string}
-        location: {type: string, maxLength: 2000, minLength: 1}
-      required: [date, endTime, startTime]
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+        endTime:
+          type: string
+        location:
+          type: string
+          maxLength: 2000
+          minLength: 1
+      required:
+      - date
+      - endTime
+      - startTime
+    ProblemStatementRewriteRequest:
+      type: object
+      description: Request containing the problem statement to rewrite
+      properties:
+        problemStatementText:
+          type: string
+          description: Original problem statement text to be improved
+          example: Write a function that calculates the sum of two numbers
+          minLength: 1
+      required:
+      - problemStatementText
     StudentExport:
       type: object
       properties:
-        registrationNumber: {type: string}
-        firstName: {type: string}
-        lastName: {type: string}
+        registrationNumber:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string

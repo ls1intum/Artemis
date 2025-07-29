@@ -16,22 +16,26 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewAndRefineRestService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
- * REST endpoints for programming exercise review and enhancement using Hyperion service.
- *
- * Provides HTTP endpoints for consistency checking and problem statement enhancement.
- * All endpoints require appropriate instructor-level permissions and handle external
- * service integration with proper error mapping.
+ * REST controller for programming exercise review and enhancement using Hyperion service.
  */
 @RestController
 @Lazy
 @Profile(PROFILE_HYPERION)
-@RequestMapping("api/hyperion/review-and-refine/")
+@RequestMapping("api/hyperion/programming/")
 public class HyperionReviewAndRefineResource {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionReviewAndRefineResource.class);
@@ -50,70 +54,80 @@ public class HyperionReviewAndRefineResource {
     }
 
     /**
-     * Analyzes programming exercise for consistency issues between problem statement,
-     * template code, solution code, and test cases using Hyperion service.
+     * Analyzes a programming exercise for consistency issues between problem statement,
+     * template code, solution code, and test cases using the Hyperion service.
      *
      * @param exerciseId the ID of the programming exercise to analyze
      * @return HTTP 200 with consistency analysis results, or appropriate error status
      */
-    @EnforceAtLeastEditorInExercise
-    @PostMapping("exercises/{exerciseId}/check-consistency")
-    public ResponseEntity<String> checkExerciseConsistency(@PathVariable Long exerciseId) {
+    @Operation(summary = "Check exercise consistency", description = "Analyzes a programming exercise for consistency issues between problem statement, template code, solution code, and test cases")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Consistency check completed successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ConsistencyCheckResponseDTO.class))),
+            @ApiResponse(responseCode = "503", description = "Hyperion service unavailable"), @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @EnforceAtLeastInstructor
+    @PostMapping("exercises/{exerciseId}/consistency-check")
+    public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(
+            @Parameter(description = "ID of the programming exercise to analyze", required = true) @PathVariable Long exerciseId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         log.info("Performing consistency check for exercise {} by user {}", exerciseId, user.getLogin());
 
         try {
-            String result = reviewAndRefineService.checkConsistency(user, programmingExercise);
+            ConsistencyCheckResponseDTO result = reviewAndRefineService.checkConsistency(user, programmingExercise);
             log.info("Consistency check completed successfully for exercise {}", exerciseId);
             return ResponseEntity.ok(result);
         }
         catch (NetworkingException e) {
             log.error("Consistency check failed for exercise {}: {}", exerciseId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Service unavailable: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
         catch (Exception e) {
             log.error("Consistency check failed for exercise {}: {}", exerciseId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     /**
-     * Enhances problem statement text using Hyperion service to improve clarity,
-     * structure, and pedagogical value of exercise descriptions.
+     * Rewrites and improves a problem statement using the Hyperion service.
      *
-     * @param request  the request containing the original problem statement text
-     * @param courseId the ID of the course (for authorization context)
-     * @return HTTP 200 with enhanced problem statement, or appropriate error status
+     * @param exerciseId the ID of the programming exercise
+     * @param requestDTO the request containing the problem statement text to be improved
+     * @return HTTP 200 with improved problem statement text, or appropriate error status
      */
-    @EnforceAtLeastEditorInCourse
-    @PostMapping("courses/{courseId}/rewrite-problem-statement")
-    public ResponseEntity<String> rewriteProblemStatement(@RequestBody RewriteProblemStatementRequestDTO request, @PathVariable Long courseId) {
-        log.debug("REST request to rewrite problem statement via Hyperion: {}", request.text());
+    @Operation(summary = "Rewrite problem statement", description = "Rewrites and improves a problem statement using AI assistance")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Problem statement rewritten successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProblemStatementRewriteResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid request body"), @ApiResponse(responseCode = "503", description = "Hyperion service unavailable"),
+            @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @EnforceAtLeastInstructor
+    @PostMapping("exercises/{exerciseId}/problem-statement-rewrite")
+    public ResponseEntity<ProblemStatementRewriteResponseDTO> rewriteProblemStatement(
+            @Parameter(description = "ID of the programming exercise", required = true) @PathVariable Long exerciseId,
+            @Parameter(description = "Request containing the problem statement to rewrite", required = true) @RequestBody ProblemStatementRewriteRequestDTO requestDTO) {
+
+        if (requestDTO.problemStatementText() == null || requestDTO.problemStatementText().trim().isEmpty()) {
+            log.warn("Problem statement rewrite requested with empty text for exercise {}", exerciseId);
+            return ResponseEntity.badRequest().build();
+        }
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        log.info("Rewriting problem statement for exercise {} by user {}", exerciseId, user.getLogin());
 
         try {
-            String rewrittenText = reviewAndRefineService.rewriteProblemStatement(user, request.text());
-            log.info("Problem statement rewriting completed successfully for user {}", user.getLogin());
-            return ResponseEntity.ok(rewrittenText);
+            ProblemStatementRewriteResponseDTO result = reviewAndRefineService.rewriteProblemStatement(user, programmingExercise, requestDTO.problemStatementText());
+            log.info("Problem statement rewrite completed successfully for exercise {}", exerciseId);
+            return ResponseEntity.ok(result);
         }
         catch (NetworkingException e) {
-            log.error("Problem statement rewriting failed for user {}: {}", user.getLogin(), e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Service unavailable: " + e.getMessage());
+            log.error("Problem statement rewrite failed for exercise {}: {}", exerciseId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
         catch (Exception e) {
-            log.error("Problem statement rewriting failed for user {}: {}", user.getLogin(), e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal error: " + e.getMessage());
+            log.error("Problem statement rewrite failed for exercise {}: {}", exerciseId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-    }
-
-    /**
-     * Request DTO for problem statement enhancement operations.
-     *
-     * @param text the original problem statement text to be enhanced
-     */
-    public record RewriteProblemStatementRequestDTO(String text) {
     }
 }
