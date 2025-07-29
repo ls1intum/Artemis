@@ -4,9 +4,8 @@ on:
   push:
     branches: [ develop ]
   pull_request:
-# TODO revert this before merging
-#    paths:
-#      -  src/main/java/**
+    paths:
+      -  src/main/java/**
 
 jobs:
   code-quality-analysis:
