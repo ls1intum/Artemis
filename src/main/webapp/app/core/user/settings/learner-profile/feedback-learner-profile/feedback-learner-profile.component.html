@@ -9,7 +9,7 @@
     <div class="col"><span jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.description"></span><br /></div>
 </div>
 
-@if (!isProfileSetup) {
+@if (!isProfileSetup()) {
     <button class="btn btn-primary mt-3" (click)="openOnboardingModal()" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.setPreferencesButton"></button>
 } @else {
     <!-- Profile settings section -->

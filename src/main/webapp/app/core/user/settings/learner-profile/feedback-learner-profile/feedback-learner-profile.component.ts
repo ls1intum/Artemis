@@ -32,7 +32,7 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     /** Computed signal indicating whether the profile is set up */
     public readonly isProfileSetup = computed(() => {
         const profile = this.learnerProfile();
-        return !!profile && !!profile.hasSetupFeedbackPreferences;
+        return !!profile && profile.hasSetupFeedbackPreferences === true;
     });
 
     /** Flag indicating whether the profile editing is disabled */

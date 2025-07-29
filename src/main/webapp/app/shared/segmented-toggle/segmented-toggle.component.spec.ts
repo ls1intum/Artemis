@@ -61,7 +61,7 @@ describe('SegmentedToggleComponent', () => {
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
-        const options = compiled.querySelectorAll('jhi-button');
+        const options = compiled.querySelectorAll('button');
         expect(options).toHaveLength(mockOptions.length);
 
         options.forEach((option: HTMLElement, index: number) => {
