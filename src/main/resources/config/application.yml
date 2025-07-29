@@ -131,8 +131,7 @@ artemis:
 
     # TODO: !!!!! REMOVE THIS BEFORE MERGING START !!!!!
     hyperion:
-        host: hyperion.aet.cit.tum.de
-        port: 8080
+      url: https://hyperion.aet.cit.tum.de
     # TODO: !!!!! REMOVE THIS BEFORE MERGING END !!!!!
 
 
