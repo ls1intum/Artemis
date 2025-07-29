@@ -40,6 +40,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('FileUploadAssessmentComponent', () => {
     let comp: FileUploadAssessmentComponent;
@@ -71,7 +72,7 @@ describe('FileUploadAssessmentComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([routes[0]])],
+            imports: [RouterModule.forRoot([routes[0]]), FaIconComponent],
             declarations: [
                 FileUploadAssessmentComponent,
                 MockComponent(UpdatingResultComponent),

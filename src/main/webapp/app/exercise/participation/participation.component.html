@@ -347,13 +347,8 @@
                                         jhiDeleteButton
                                         [entityTitle]="exercise.teamMode ? value.team?.name : value.student?.name"
                                         deleteQuestion="artemisApp.participation.delete.question"
-                                        (delete)="deleteParticipation(value.id, $event)"
+                                        (delete)="deleteParticipation(value.id)"
                                         [dialogError]="dialogError"
-                                        [additionalChecks]="
-                                            exercise.type === ExerciseType.PROGRAMMING
-                                                ? { deleteBuildPlan: 'artemisApp.participation.deleteBuildPlan', deleteRepository: 'artemisApp.participation.deleteRepository' }
-                                                : undefined
-                                        "
                                     >
                                         <fa-icon [icon]="faTrash" />
                                     </button>

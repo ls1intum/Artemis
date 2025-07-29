@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
@@ -44,12 +43,11 @@ public class QuizQuestionProgressService {
      *
      * @param quizExercise   The quiz exercise containing the questions
      * @param quizSubmission The quiz submission containing the user's answers
-     * @param participation  The student participation for the submission
+     * @param userId         The ID of the user who answered the questions
      */
-    public void retrieveProgressFromResultAndSubmission(QuizExercise quizExercise, QuizSubmission quizSubmission, StudentParticipation participation) {
+    public void retrieveProgressFromResultAndSubmission(QuizExercise quizExercise, QuizSubmission quizSubmission, Long userId) {
         ZonedDateTime lastAnsweredAt = quizSubmission.getSubmissionDate();
         Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions = new HashMap<>();
-        Long userId = participation.getParticipant().getId();
         Set<SubmittedAnswer> answers = quizSubmission.getSubmittedAnswers();
         Map<Long, QuizQuestion> questionMap = quizExercise.getQuizQuestions().stream().collect(Collectors.toMap(QuizQuestion::getId, q -> q));
 
@@ -283,4 +281,12 @@ public class QuizQuestionProgressService {
         }
     }
 
+    /**
+     *
+     * @param courseId The id of the course for which the questions are to be checked
+     * @return true if there are questions availble for training, false otherwise
+     */
+    public boolean questionsAvailableForTraining(Long courseId) {
+        return quizQuestionRepository.areQuizQuestionsAvailableForPractice(courseId);
+    }
 }

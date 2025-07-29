@@ -317,7 +317,6 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('isTutorAssessment', true);
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('feedbacks', exampleFeedbacks);
-        TestBed.flushEffects();
         fixture.detectChanges();
         // Use .then() here instead of await so fakeAsync does not break.
         comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) }).then(() => {
@@ -374,7 +373,6 @@ describe('CodeEditorMonacoComponent', () => {
         comp.onUpdateFeedback.subscribe(updateFeedbackCallbackStub);
         // Copy the original example feedback in to ensure changes here do not affect the component.
         fixture.componentRef.setInput('feedbacks', [...exampleFeedbacks]);
-        TestBed.flushEffects();
         fixture.detectChanges();
         feedbackToUpdate.text = 'some other text';
         comp.updateFeedback(feedbackToUpdate);
@@ -391,7 +389,6 @@ describe('CodeEditorMonacoComponent', () => {
         comp.onUpdateFeedback.subscribe(updateFeedbackCallbackStub);
         comp.newFeedbackLines.set([newFeedbackLine]);
         fixture.componentRef.setInput('feedbacks', [...remainingFeedbacks]);
-        TestBed.flushEffects();
         fixture.detectChanges();
         comp.updateFeedback(feedbackToSave);
         const expectedFeedbacks = [...remainingFeedbacks, feedbackToSave];
@@ -406,7 +403,6 @@ describe('CodeEditorMonacoComponent', () => {
         const acceptSuggestionCallbackStub = jest.fn();
         const suggestionToAccept: Feedback = exampleFeedbacks[0];
         fixture.componentRef.setInput('feedbackSuggestions', [suggestionToAccept]);
-        TestBed.flushEffects();
         comp.onAcceptSuggestion.subscribe(acceptSuggestionCallbackStub);
         fixture.detectChanges();
         comp.acceptSuggestion(suggestionToAccept);
@@ -419,7 +415,6 @@ describe('CodeEditorMonacoComponent', () => {
         const discardSuggestionCallbackStub = jest.fn();
         const suggestionToDiscard = exampleFeedbacks[0];
         fixture.componentRef.setInput('feedbackSuggestions', [suggestionToDiscard]);
-        TestBed.flushEffects();
         comp.onDiscardSuggestion.subscribe(discardSuggestionCallbackStub);
         fixture.detectChanges();
         comp.discardSuggestion(suggestionToDiscard);

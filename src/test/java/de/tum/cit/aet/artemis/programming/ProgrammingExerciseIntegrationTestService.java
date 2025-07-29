@@ -390,8 +390,8 @@ public class ProgrammingExerciseIntegrationTestService {
     List<Path> exportSubmissionsWithPracticeSubmissionByParticipationIds(boolean excludePracticeSubmissions) throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath2, null);
-        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
 
         // Set one of the participations to practice mode
         participation1.setPracticeMode(false);
@@ -430,8 +430,8 @@ public class ProgrammingExerciseIntegrationTestService {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath2, null);
 
-        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
         doThrow(EmptyCommitException.class).when(gitService).stageAllChanges(any());
 
         // Create the eclipse .project file which will be modified.
@@ -472,8 +472,8 @@ public class ProgrammingExerciseIntegrationTestService {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath2, null);
 
-        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
 
         // Create the eclipse .project file which will be modified.
         Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
@@ -514,8 +514,8 @@ public class ProgrammingExerciseIntegrationTestService {
     void testExportSubmissionsByParticipationIds() throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath2, null);
-        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
 
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
@@ -535,7 +535,7 @@ public class ProgrammingExerciseIntegrationTestService {
     void testExportSubmissionAnonymizationCombining() throws Exception {
         // provide repositories
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
 
         // Mock and pretend first commit is template commit
         ObjectId head = localGit.getRepository().findRef("HEAD").getObjectId();
@@ -584,7 +584,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.FORBIDDEN);
@@ -599,8 +599,8 @@ public class ProgrammingExerciseIntegrationTestService {
     private File exportSubmissionsByStudentLogins() throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath2, null);
-        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/" + userPrefix + "student1,"
                 + userPrefix + "student2";
         return request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
@@ -781,7 +781,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/with-participations";
         request.get(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
@@ -807,7 +807,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testGenerateStructureOracle() throws Exception {
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(VcsRepositoryUri.class), any(Path.class), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(VcsRepositoryUri.class), any(Path.class), anyBoolean(), anyBoolean());
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests";
         var result = request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.OK);
         assertThat(result).startsWith("Successfully generated the structure oracle");
@@ -872,7 +872,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.FORBIDDEN);
     }
 
@@ -989,7 +989,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         final var endpoint = "/api/programming/programming-exercises/timeline";
         MultiValueMap<String, String> params = new HttpHeaders();
         params.add("notificationText", "The notification text");
@@ -1039,7 +1039,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void createProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         programmingExercise.setId(null);
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.FORBIDDEN);
     }
@@ -1291,7 +1291,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void importProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         request.post("/api/programming/programming-exercises/import/" + programmingExercise.getId(), programmingExercise, HttpStatus.FORBIDDEN);
     }
 
@@ -1417,7 +1417,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         request.post(getDefaultAPIEndpointForExportRepos(), getOptions(), HttpStatus.FORBIDDEN);
     }
 
@@ -1455,7 +1455,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
-        userUtilService.addTeachingAssistant("other-tutors", userPrefix + "tutoralt");
+        userUtilService.addTeachingAssistant("other-tutors", userPrefix + "tutoralt1");
         request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, String.class);
     }
 
@@ -1473,7 +1473,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
-        userUtilService.addTeachingAssistant("other-teaching-assistants", userPrefix + "other-teaching-assistant");
+        userUtilService.addTeachingAssistant("other-teaching-assistants", userPrefix + "other-teaching-assistant1");
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases";
 
         request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
@@ -1526,7 +1526,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor");
+        userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor1");
         final var update = new ProgrammingExerciseTestCaseDTO(null, null, null, null, null);
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
@@ -1613,7 +1613,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor");
+        userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor1");
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
         request.patchWithResponseBody("/api" + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
     }
@@ -2167,7 +2167,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden(String testPrefix) throws Exception {
-        userUtilService.addInstructor("other-instructors", testPrefix + "instructoralt");
+        userUtilService.addInstructor("other-instructors", testPrefix + "instructoralt1");
         programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExercise, HttpStatus.FORBIDDEN);

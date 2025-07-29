@@ -1,7 +1,8 @@
 import { Page, expect } from '@playwright/test';
-import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { Post } from 'app/communication/shared/entities/post.model';
+import { UserCredentials } from '../../users';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Messages page.
@@ -224,6 +225,46 @@ export class CourseMessagesPage {
      */
     async closeEditPanel() {
         await this.page.locator('.conversation-detail-dialog .btn-close').click();
+    }
+
+    /**
+     * @param login method to log in a user and navigate to a certain URL
+     * @param user who shall be logged in to create the communication channel
+     * @param course in which the channel should be created
+     * @param communicationAPIRequests to create the channel
+     */
+    async setupCommunicationChannel(
+        login: (credentials: UserCredentials, url?: string) => Promise<void>,
+        user: UserCredentials,
+        course: Course,
+        communicationAPIRequests,
+    ): Channel {
+        await login(user, `/courses/${course.id}/communication`);
+        await this.acceptCodeOfConductButton();
+        const channel = await communicationAPIRequests.createCourseMessageChannel(course, 'test-channel', 'Test Channel', false, true);
+        await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, user);
+        return channel;
+    }
+
+    /**
+     * @param login method to log in a user and navigate to a certain URL
+     * @param user who shall be logged in
+     * @param courseId to which the channel belongs
+     * @param channelId of the channel in which the message should be sent
+     * @param messageText of the message to be sent
+     *
+     * @note The user will still be logged in after this method, make sure to log in with another user afterward if needed.
+     */
+    async sendMessageInChannel(
+        login: (credentials: UserCredentials, url?: string) => Promise<void>,
+        user: UserCredentials,
+        courseId: number,
+        channelId: string,
+        messageText: string,
+    ) {
+        await login(user, `/courses/${courseId}/communication?conversationId=${channelId}`);
+        await this.writeMessage(messageText);
+        await this.save();
     }
 
     /**
