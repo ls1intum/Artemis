@@ -10,7 +10,6 @@ import static org.mockito.Mockito.doReturn;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -150,9 +149,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
 
-        List<Result> results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId());
-
-        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results, participation);
+        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(participation.getId());
         assertThat(resultBuildJobMap).hasSize(0);
         assertThat(participation).isNotNull();
         assertThat(participation.getSubmissions()).hasSize(1);
@@ -209,7 +206,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     private void setUpProgrammingExerciseMocks() {
-        doReturn(new VcsRepositoryUri()).when(versionControlService).copyRepository(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt());
+        doReturn(new VcsRepositoryUri()).when(versionControlService).copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt());
         doReturn("fake-build-plan-id").when(continuousIntegrationService).copyBuildPlan(any(), anyString(), any(), anyString(), anyString(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(ProgrammingExerciseParticipation.class));
     }

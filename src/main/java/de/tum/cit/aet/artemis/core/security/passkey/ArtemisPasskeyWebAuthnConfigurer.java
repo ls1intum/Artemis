@@ -13,6 +13,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -44,6 +45,8 @@ import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
 public class ArtemisPasskeyWebAuthnConfigurer {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisPasskeyWebAuthnConfigurer.class);
+
+    private final AuditEventRepository auditEventRepository;
 
     private final HttpMessageConverter<Object> converter;
 
@@ -85,12 +88,13 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final String relyingPartyName = "Artemis";
 
-    public ArtemisPasskeyWebAuthnConfigurer(MappingJackson2HttpMessageConverter converter, JWTCookieService jwtCookieService, UserRepository userRepository,
-            PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
+    public ArtemisPasskeyWebAuthnConfigurer(AuditEventRepository auditEventRepository, MappingJackson2HttpMessageConverter converter, JWTCookieService jwtCookieService,
+            UserRepository userRepository, PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,
             MailSendingService mailSendingService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
             GlobalNotificationSettingRepository globalNotificationSettingRepository) {
+        this.auditEventRepository = auditEventRepository;
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
@@ -164,9 +168,9 @@ public class ArtemisPasskeyWebAuthnConfigurer {
             return false;
         }
 
-        WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userRepository, publicKeyCredentialUserEntityRepository,
-                userCredentialRepository, publicKeyCredentialCreationOptionsRepository, publicKeyCredentialRequestOptionsRepository, mailSendingService,
-                artemisSuccessfulLoginService, globalNotificationSettingRepository);
+        WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(auditEventRepository, converter, jwtCookieService, userRepository,
+                publicKeyCredentialUserEntityRepository, userCredentialRepository, publicKeyCredentialCreationOptionsRepository, publicKeyCredentialRequestOptionsRepository,
+                mailSendingService, artemisSuccessfulLoginService, globalNotificationSettingRepository);
 
         http.with(webAuthnConfigurer, configurer -> {
             configurer.allowedOrigins(allowedOrigins).rpId(relyingPartyId).rpName(relyingPartyName);

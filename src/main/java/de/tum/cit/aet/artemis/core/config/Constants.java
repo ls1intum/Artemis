@@ -501,18 +501,9 @@ public final class Constants {
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
-    // gRPC channel configuration
-    public static final String GRPC_CHANNEL_HYPERION = "hyperionChannel";
+    public static final String JWT_COOKIE_NAME = "jwt";
 
-    public static final long GRPC_KEEP_ALIVE_TIME_SECONDS = 30;
-
-    public static final long GRPC_KEEP_ALIVE_TIMEOUT_SECONDS = 5;
-
-    public static final long GRPC_IDLE_TIMEOUT_MINUTES = 5;
-
-    public static final int GRPC_MAX_INBOUND_MESSAGE_SIZE = 16 * 1024 * 1024; // 16MB
-
-    public static final int GRPC_MAX_RETRY_ATTEMPTS = 3;
+    public static final String BEARER_PREFIX = "Bearer ";
 
     private Constants() {
     }

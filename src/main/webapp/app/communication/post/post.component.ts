@@ -138,7 +138,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
     constructor() {
         super();
-        this.course = this.metisService.getCourse() ?? throwError('Course not found');
+        this.course = this.metisService.getCourse() ?? throwError(() => new Error('Course not found'));
         // Reactive check: if forwarded post/answer is deleted, update flag
         effect(() => {
             const hasDeletedForwardedPost = this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined;

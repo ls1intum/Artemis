@@ -76,14 +76,6 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         return localPath;
     }
 
-    public Collection<File> getFiles() {
-        return files;
-    }
-
-    public void setFiles(Collection<File> files) {
-        this.files = files;
-    }
-
     public void closeBeforeDelete() {
         super.close();
         super.doClose();

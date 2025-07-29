@@ -53,8 +53,8 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         } as unknown as CourseNotificationService;
 
         await TestBed.configureTestingModule({
-            imports: [BrowserAnimationsModule, CommonModule, NoopAnimationsModule],
-            declarations: [CourseNotificationPopupOverlayComponent, MockComponent(CourseNotificationComponent), MockComponent(FaIconComponent)],
+            imports: [BrowserAnimationsModule, CommonModule, NoopAnimationsModule, FaIconComponent],
+            declarations: [CourseNotificationPopupOverlayComponent, MockComponent(CourseNotificationComponent)],
             providers: [
                 { provide: CourseNotificationWebsocketService, useValue: courseNotificationWebsocketService },
                 { provide: CourseNotificationService, useValue: courseNotificationService },

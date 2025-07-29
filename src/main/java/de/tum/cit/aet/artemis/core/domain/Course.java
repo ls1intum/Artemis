@@ -249,12 +249,6 @@ public class Course extends DomainObject {
     private Long numberOfStudentsTransient;
 
     @Transient
-    private Long numberOfLecturesTransient;
-
-    @Transient
-    private Long numberOfExamsTransient;
-
-    @Transient
     private Long numberOfTutorialGroupsTransient;
 
     @Transient
@@ -263,12 +257,15 @@ public class Course extends DomainObject {
     @Transient
     private Long numberOfPrerequisitesTransient;
 
-    public Long getNumberOfLectures() {
-        return numberOfLecturesTransient;
+    @Transient
+    private boolean trainingEnabledTransient;
+
+    public boolean isTrainingEnabled() {
+        return trainingEnabledTransient;
     }
 
-    public Long getNumberOfExams() {
-        return numberOfExamsTransient;
+    public void setTrainingEnabled(boolean trainingEnabled) {
+        this.trainingEnabledTransient = trainingEnabled;
     }
 
     public Long getNumberOfTutorialGroups() {
@@ -281,14 +278,6 @@ public class Course extends DomainObject {
 
     public Long getNumberOfPrerequisites() {
         return numberOfPrerequisitesTransient;
-    }
-
-    public void setNumberOfLectures(Long numberOfLectures) {
-        this.numberOfLecturesTransient = numberOfLectures;
-    }
-
-    public void setNumberOfExams(Long numberOfExams) {
-        this.numberOfExamsTransient = numberOfExams;
     }
 
     public void setNumberOfTutorialGroups(Long numberOfTutorialGroups) {

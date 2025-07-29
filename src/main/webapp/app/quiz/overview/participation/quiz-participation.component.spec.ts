@@ -36,6 +36,7 @@ import { ShortAnswerQuestionComponent } from '../../shared/questions/short-answe
 import { DragAndDropQuestionComponent } from '../../shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { MultipleChoiceQuestionComponent } from '../../shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestion } from '../../shared/entities/short-answer-question.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const now = dayjs();
 const question1: QuizQuestion = {
@@ -145,6 +146,7 @@ describe('QuizParticipationComponent', () => {
     describe('live mode', () => {
         beforeEach(waitForAsync(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(FaIconComponent)
                 .keep(MultipleChoiceQuestionComponent)
                 .keep(DragAndDropQuestionComponent)
                 .keep(ShortAnswerQuestionComponent)
@@ -518,6 +520,7 @@ describe('QuizParticipationComponent', () => {
     describe('preview mode', () => {
         beforeEach(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(FaIconComponent)
                 .keep(MultipleChoiceQuestionComponent)
                 .keep(DragAndDropQuestionComponent)
                 .keep(ShortAnswerQuestionComponent)
@@ -599,6 +602,7 @@ describe('QuizParticipationComponent', () => {
     describe('practice mode', () => {
         beforeEach(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(FaIconComponent)
                 .keep(MultipleChoiceQuestionComponent)
                 .keep(DragAndDropQuestionComponent)
                 .keep(ShortAnswerQuestionComponent)
@@ -686,6 +690,7 @@ describe('QuizParticipationComponent', () => {
     describe('solution mode', () => {
         beforeEach(() => {
             MockBuilder(QuizParticipationComponent)
+                .keep(FaIconComponent)
                 .keep(MultipleChoiceQuestionComponent)
                 .keep(DragAndDropQuestionComponent)
                 .keep(ShortAnswerQuestionComponent)

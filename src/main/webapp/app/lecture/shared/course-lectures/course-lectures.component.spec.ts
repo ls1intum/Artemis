@@ -10,7 +10,6 @@ import { CourseOverviewService } from 'app/core/course/overview/services/course-
 import { HttpResponse } from '@angular/common/http';
 import { LtiService } from 'app/shared/service/lti.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { RouterTestingModule } from '@angular/router/testing';
 
 describe('CourseLecturesComponent', () => {
     let component: CourseLecturesComponent;
@@ -21,7 +20,7 @@ describe('CourseLecturesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule, CourseLecturesComponent],
+            imports: [CourseLecturesComponent],
             declarations: [],
             providers: [
                 LtiService,

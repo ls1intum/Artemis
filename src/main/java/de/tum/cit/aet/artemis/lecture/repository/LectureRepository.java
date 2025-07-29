@@ -17,7 +17,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -36,6 +36,18 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             WHERE lecture.course.id = :courseId
             """)
     Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO(
+                lecture.title,
+                lecture.visibleDate,
+                lecture.startDate,
+                lecture.endDate
+            )
+            FROM Lecture lecture
+            WHERE lecture.course.id = :courseId AND (lecture.startDate IS NOT NULL OR lecture.endDate IS NOT NULL)
+            """)
+    Set<LectureCalendarEventDTO> getLectureCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT lecture
@@ -184,18 +196,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithLectureUnitsWithCompetencyLinksAndAttachments(@Param("lectureId") Long lectureId);
-
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO(
-                COUNT(l.id),
-                l.course.id
-            )
-            FROM Lecture l
-            WHERE l.course.id IN :courseIds
-                AND (l.visibleDate IS NULL OR l.visibleDate <= :now)
-            GROUP BY l.course.id
-            """)
-    Set<CourseContentCountDTO> countVisibleLectures(@Param("courseIds") Set<Long> courseIds, @Param("now") ZonedDateTime now);
 
     long countByCourse_Id(long courseId);
 }
