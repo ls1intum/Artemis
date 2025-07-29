@@ -55,8 +55,10 @@ describe('TutorialGroupFormComponent', () => {
     const validPeriod = [validPeriodStart, validPeriodEnd];
     const validLocation = 'ExampleLocation';
 
-    let clickSubmit: () => void;
-    let testFormIsInvalidOnMissingRequiredProperty: () => void;
+    // eslint-disable-next-line no-unused-vars
+    let clickSubmit: (expectSubmitEvent: boolean) => void;
+    // eslint-disable-next-line no-unused-vars
+    let testFormIsInvalidOnMissingRequiredProperty: (controlName: string, subFormName?: string) => void;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

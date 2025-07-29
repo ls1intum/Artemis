@@ -27,7 +27,8 @@ const fakeItemTemplate = `
 
 interface FakeData {
     item: TreeViewItem<number>;
-    checkedChange: () => void;
+    // eslint-disable-next-line no-unused-vars
+    checkedChange: (checked: boolean) => void;
 }
 
 const fakeData: FakeData = {

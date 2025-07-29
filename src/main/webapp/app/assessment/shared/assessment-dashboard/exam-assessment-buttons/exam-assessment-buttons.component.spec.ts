@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Params, convertToParamMap } from '@angular/router';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -79,7 +79,8 @@ describe('ExamAssessmentButtons', () => {
             provide: ActivatedRoute,
             useValue: {
                 params: {
-                    subscribe: (fn: () => void) =>
+                    // eslint-disable-next-line no-unused-vars
+                    subscribe: (fn: (value: Params) => void) =>
                         fn({
                             courseId: 1,
                         }),

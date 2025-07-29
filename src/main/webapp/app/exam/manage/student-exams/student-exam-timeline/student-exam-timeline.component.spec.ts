@@ -198,7 +198,8 @@ describe('Student Exam Timeline Component', () => {
         // Create a mock model signal that supports update()
         const createMockSignal = <T>(initial: T) => ({
             value: initial,
-            update: jest.fn(function (fn: () => T) {
+            // eslint-disable-next-line no-unused-vars
+            update: jest.fn(function (fn: (prev: T) => T) {
                 this.value = fn(this.value);
                 return this.value;
             }),

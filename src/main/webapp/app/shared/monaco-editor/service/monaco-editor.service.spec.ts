@@ -66,7 +66,8 @@ describe('MonacoEditorService', () => {
         },
     ])(
         'should insert an editor ($className) into the provided DOM element',
-        ({ className, createFn }: { className: string; createFn: () => monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor }) => {
+        // eslint-disable-next-line no-unused-vars
+        ({ className, createFn }: { className: string; createFn: (element: HTMLElement) => monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor }) => {
             const element = document.createElement('div');
             const editor = createFn(element);
             expect(editor.getContainerDomNode()).toBe(element);

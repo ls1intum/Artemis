@@ -10,7 +10,7 @@ import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectur
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -96,7 +96,8 @@ describe('LectureUnitManagementComponent', () => {
                     useValue: {
                         parent: {
                             params: {
-                                subscribe: (fn_1: () => void) =>
+                                // eslint-disable-next-line no-unused-vars
+                                subscribe: (fn_1: (value: Params) => void) =>
                                     fn_1({
                                         lectureId: 1,
                                     }),

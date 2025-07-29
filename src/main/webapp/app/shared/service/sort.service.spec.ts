@@ -148,7 +148,8 @@ describe('Sort Service', () => {
         );
     });
 
-    function repeatWithRandomArray(times: number, fn: () => void) {
+    // eslint-disable-next-line no-unused-vars
+    function repeatWithRandomArray(times: number, fn: (arr: TestObject[]) => void) {
         return () => {
             while (times-- > 0) {
                 fn(shuffle([e1, e2, e3, e4, e5, e6]));

@@ -22,9 +22,10 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     const validPeriodStart = new Date(Date.UTC(2021, 1, 1));
     const validPeriodEnd = new Date(Date.UTC(2021, 2, 1));
     const validPeriod = [validPeriodStart, validPeriodEnd];
-
-    let clickSubmit: () => void;
-    let testFormIsInvalidOnMissingRequiredProperty: () => void;
+    // eslint-disable-next-line no-unused-vars
+    let clickSubmit: (expectSubmitEvent: boolean) => void;
+    // eslint-disable-next-line no-unused-vars
+    let testFormIsInvalidOnMissingRequiredProperty: (controlName: string) => void;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

@@ -30,7 +30,8 @@ describe('TutorialFreePeriodFormComponent', () => {
 
     const validReason = 'Holiday';
 
-    let clickSubmit: () => void;
+    // eslint-disable-next-line no-unused-vars
+    let clickSubmit: (expectSubmitEvent: boolean) => void;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

@@ -53,7 +53,8 @@ describe('ExamStudentsComponent', () => {
     const route = {
         snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
         url: new Observable<UrlSegment[]>(),
-        data: { subscribe: (fn: () => void) => fn({ exam: examWithCourse }) },
+        // eslint-disable-next-line no-unused-vars
+        data: { subscribe: (fn: (value: any) => void) => fn({ exam: examWithCourse }) },
     } as any as ActivatedRoute;
 
     let component: ExamStudentsComponent;

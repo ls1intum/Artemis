@@ -363,7 +363,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const node = {} as Node;
 
         const questionElement = {
-            contains(): boolean {
+            // eslint-disable-next-line no-unused-vars
+            contains(other: Node | null): boolean {
                 return true;
             },
         } as unknown as HTMLElement;
@@ -373,9 +374,10 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const range = {
             cloneRange(): Range {
                 return {
-                    selectNodeContents() {},
-
-                    setEnd() {},
+                    // eslint-disable-next-line no-unused-vars
+                    selectNodeContents(node1: Node) {},
+                    // eslint-disable-next-line no-unused-vars
+                    setEnd(node2: Node, offset: number) {},
                     cloneContents() {},
                 } as Range;
             },
@@ -393,8 +395,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
                     },
                 },
             },
-
-            getRangeAt(): Range {
+            // eslint-disable-next-line no-unused-vars
+            getRangeAt(index: number): Range {
                 return range as Range;
             },
             toString() {
@@ -404,7 +406,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
         jest.spyOn(window, 'getSelection').mockReturnValue(nodeValue);
 
         const returnHTMLDivElement = {
-            appendChild() {
+            // eslint-disable-next-line no-unused-vars
+            appendChild(param: DocumentFragment) {
                 return {} as DocumentFragment;
             },
             innerHTML: 'innerHTML',
@@ -413,8 +416,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         const markdownHelper = {
             length: 1,
-
-            substring(): string {
+            // eslint-disable-next-line no-unused-vars
+            substring(start: number, end?: number): string {
                 return '';
             },
         } as string;

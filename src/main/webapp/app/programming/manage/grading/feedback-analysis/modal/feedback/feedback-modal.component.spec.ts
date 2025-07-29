@@ -14,7 +14,8 @@ describe('FeedbackModalComponent', () => {
 
     const mockLongFeedbackTextService = {
         find: jest.fn().mockReturnValue({
-            subscribe: (callback: () => void) => callback({ body: 'Loaded long feedback' }),
+            // eslint-disable-next-line no-unused-vars
+            subscribe: (callback: (response: { body: string }) => void) => callback({ body: 'Loaded long feedback' }),
         }),
     };
 

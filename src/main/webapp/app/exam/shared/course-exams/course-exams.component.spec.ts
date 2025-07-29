@@ -193,10 +193,11 @@ describe('CourseExamsComponent', () => {
         expectedMap.set(visibleTestExam1.id!, false);
         expectedMap.set(visibleTestExam2.id!, false);
         expectedMap.set(42, false);
-
-        let updateHandler: () => void = () => {};
+        // eslint-disable-next-line no-unused-vars
+        let updateHandler: (course: Course) => void = () => {};
         subscribeToCourseUpdates.mockReturnValue({
-            subscribe: (handler: () => void): void => {
+            // eslint-disable-next-line no-unused-vars
+            subscribe: (handler: (course: Course) => void): void => {
                 updateHandler = handler;
             },
         });
