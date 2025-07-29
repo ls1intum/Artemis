@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -35,7 +37,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
     private final User user;
 
-    public LocalVCPrePushHook(LocalVCServletService localVCServletService, User user) {
+    public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NotNull User user) {
         this.localVCServletService = localVCServletService;
         this.user = user;
     }

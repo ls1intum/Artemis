@@ -11,10 +11,9 @@ import { CourseTrainingQuizService } from '../service/course-training-quiz.servi
 import { MockSyncStorage } from 'src/test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { SessionStorageService } from 'ngx-webstorage';
-import { Result } from '../../../exercise/shared/entities/result/result.model';
-import { QuizParticipationService } from '../service/quiz-participation.service';
-import { AlertService } from '../../../shared/service/alert.service';
-import { CourseManagementService } from '../../../core/course/manage/services/course-management.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AlertService } from 'app/shared/service/alert.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MultipleChoiceSubmittedAnswer } from '../../shared/entities/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from '../../shared/entities/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from '../../shared/entities/short-answer-submitted-answer.model';
@@ -54,7 +53,7 @@ const course = { id: 1, title: 'Test Course' };
 const result: Result = { id: 1, submission: { submittedAnswers: [{ scoreInPoints: 2 }] } as any };
 
 describe('CourseTrainingQuizComponent', () => {
-    MockInstance.scope();
+    MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as SecuredImageComponent));
     let component: CourseTrainingQuizComponent;
     let fixture: ComponentFixture<CourseTrainingQuizComponent>;
     let quizService: CourseTrainingQuizService;
@@ -81,7 +80,6 @@ describe('CourseTrainingQuizComponent', () => {
         quizService = TestBed.inject(CourseTrainingQuizService);
         jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(of([question1, question2, question3]));
         jest.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: course })));
-        MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as SecuredImageComponent));
 
         fixture = TestBed.createComponent(CourseTrainingQuizComponent);
         component = fixture.componentInstance;
@@ -146,7 +144,7 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should submit quiz and handle success', () => {
-        const submitSpy = jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(of(new HttpResponse({ body: result })));
+        const submitSpy = jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(of(new HttpResponse({ body: result })));
         const showResultSpy = jest.spyOn(component, 'showResult');
         // Drag and Drop
         jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1, exerciseId: 1 } as any);
@@ -197,7 +195,7 @@ describe('CourseTrainingQuizComponent', () => {
             headers: new HttpHeaders({ 'X-artemisApp-message': 'Fehler beim Absenden' }),
             statusText: 'Bad Request',
         });
-        jest.spyOn(TestBed.inject(QuizParticipationService), 'submitForPractice').mockReturnValue(throwError(() => error));
+        jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(throwError(() => error));
         component.currentIndex.set(2);
         component.onSubmit();
         expect(alertSpy).toHaveBeenCalled();

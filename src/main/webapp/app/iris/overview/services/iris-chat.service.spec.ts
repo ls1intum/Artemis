@@ -67,7 +67,7 @@ describe('IrisChatService', () => {
         httpService = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
         wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
 
-        service['courseId'] = courseId;
+        service.setCourseId(courseId);
     });
 
     afterEach(() => {

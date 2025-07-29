@@ -360,7 +360,7 @@ public class ProgrammingPlagiarismDetectionService {
 
     private Optional<Repository> cloneTemplateRepository(ProgrammingExercise programmingExercise, Path targetPath) {
         try {
-            var templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
+            var templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath, false);
             gitService.resetToOriginHead(templateRepo); // start with clean state
             return Optional.of(templateRepo);
         }
