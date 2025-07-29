@@ -121,8 +121,8 @@ export class IrisSettingsUpdateComponent implements OnInit, OnDestroy, DoCheck, 
         if (this.irisSettings && this.irisSettings.irisFaqIngestionSettings) {
             this.irisSettings.irisFaqIngestionSettings.autoIngestOnFaqCreation = this.autoFaqIngestion;
         }
-        this.saveIrisSettingsObservable().subscribe(
-            (response) => {
+        this.saveIrisSettingsObservable().subscribe({
+            next: (response) => {
                 this.isSaving = false;
                 this.isDirty = false;
                 this.irisSettings = response.body ?? undefined;
@@ -130,7 +130,7 @@ export class IrisSettingsUpdateComponent implements OnInit, OnDestroy, DoCheck, 
                 this.originalIrisSettings = cloneDeep(this.irisSettings);
                 this.alertService.success('artemisApp.iris.settings.success');
             },
-            (error) => {
+            error: (error) => {
                 this.isSaving = false;
                 captureException('Error saving iris settings', error);
                 if (error.status === 400 && error.error && error.error.message) {
@@ -139,7 +139,7 @@ export class IrisSettingsUpdateComponent implements OnInit, OnDestroy, DoCheck, 
                     this.alertService.error('artemisApp.iris.settings.error.save');
                 }
             },
-        );
+        });
     }
 
     loadParentIrisSettingsObservable(): Observable<IrisSettings | undefined> {
