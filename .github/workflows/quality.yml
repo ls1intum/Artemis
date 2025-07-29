@@ -3,6 +3,8 @@ name: Java Code Quality Analysis
 on:
   push:
     branches: [ develop ]
+    paths:
+      - src/main/java/**
   pull_request:
     paths:
       -  src/main/java/**
