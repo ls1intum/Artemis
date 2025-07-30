@@ -102,15 +102,21 @@
             <!-- action buttons -->
             <div>
                 @if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
-                    <button (click)="createAssignmentParticipation()" [disabled]="loadingState !== LOADING_STATE.CLEAR" class="btn btn-primary me-2">
-                        @if (loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                            <fa-icon [icon]="faPlus" class="text-white me-2" />
-                        }
-                        @if (loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                            <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
-                        }
-                        <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo"></span>
-                    </button>
+                    <div
+                        [ngbTooltip]="'artemisApp.editor.repoSelect.createAssignmentRepoDisabledTooltip' | artemisTranslate"
+                        [disableTooltip]="!isCreateAssignmentRepoDisabled"
+                        class="d-inline-block"
+                    >
+                        <button (click)="createAssignmentParticipation()" [disabled]="isCreateAssignmentRepoDisabled" class="btn btn-primary me-2">
+                            @if (loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
+                                <fa-icon [icon]="faPlus" class="text-white me-2" />
+                            }
+                            @if (loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
+                                <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
+                            }
+                            <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo"></span>
+                        </button>
+                    </div>
                 }
                 @if (exercise.studentParticipations && exercise.studentParticipations.length && exercise.isAtLeastInstructor) {
                     <button (click)="deleteAssignmentParticipation()" [disabled]="loadingState !== LOADING_STATE.CLEAR" class="btn btn-danger">
