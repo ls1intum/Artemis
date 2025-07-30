@@ -4,5 +4,5 @@ import java.util.List;
 
 import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
 
-public record FaqRewritingDTO(String toBeRewritten, List<FaqDTO> faqs) {
+public record FaqConsistencyDTO(String toBeChecked, List<FaqDTO> faqs) {
 }

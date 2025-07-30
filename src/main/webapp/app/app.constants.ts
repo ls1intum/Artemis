@@ -45,13 +45,16 @@ export const MODULE_FEATURE_TEXT = 'text';
 
 export const MODULE_FEATURE_TUTORIALGROUP = 'tutorialgroup';
 
+export const MODULE_FEATURE_NEBULA = 'nebula';
+
 export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY
     | typeof MODULE_FEATURE_ATLAS
     | typeof MODULE_FEATURE_EXAM
     | typeof MODULE_FEATURE_PLAGIARISM
     | typeof MODULE_FEATURE_TEXT
-    | typeof MODULE_FEATURE_TUTORIALGROUP;
+    | typeof MODULE_FEATURE_TUTORIALGROUP
+    | typeof MODULE_FEATURE_NEBULA;
 
 export const PROFILE_LOCALCI = 'localci';
 
@@ -77,8 +80,6 @@ export const PROFILE_THEIA = 'theia';
 
 export const PROFILE_LDAP = 'ldap';
 
-export const PROFILE_NEBULA = 'nebula';
-
 export type ProfileFeature =
     | typeof PROFILE_LOCALCI
     | typeof PROFILE_AEOLUS
@@ -91,5 +92,4 @@ export type ProfileFeature =
     | typeof PROFILE_APOLLON
     | typeof PROFILE_ATHENA
     | typeof PROFILE_THEIA
-    | typeof PROFILE_LDAP
-    | typeof PROFILE_NEBULA;
+    | typeof PROFILE_LDAP;

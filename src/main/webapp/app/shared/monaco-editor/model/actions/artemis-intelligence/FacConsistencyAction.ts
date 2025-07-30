@@ -1,22 +1,23 @@
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
-import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { WritableSignal } from '@angular/core';
+import { ConsistencyCheckResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence-results';
 
 /**
  * Artemis Intelligence action for rewriting in the editor.
  */
-export class RewriteAction extends TextEditorAction {
-    static readonly ID = 'artemisIntelligence.rewrite.action';
+export class FaqConsistencyAction extends TextEditorAction {
+    static readonly ID = 'artemisIntelligence.faqConsistency.action';
 
     element?: HTMLElement;
 
     constructor(
         private readonly artemisIntelligenceService: ArtemisIntelligenceService,
-        private readonly rewritingVariant: RewritingVariant,
         private readonly courseId: number,
+        private readonly resultSignal: WritableSignal<ConsistencyCheckResult>,
     ) {
-        super(RewriteAction.ID, 'artemisApp.markdownEditor.artemisIntelligence.commands.rewrite');
+        super(FaqConsistencyAction.ID, 'artemisApp.markdownEditor.artemisIntelligence.commands.consistencyCheck');
     }
 
     /**
@@ -24,6 +25,6 @@ export class RewriteAction extends TextEditorAction {
      * @param editor The editor in which to rewrite the markdown.
      */
     run(editor: TextEditor): void {
-        this.rewriteMarkdown(editor, this.artemisIntelligenceService, this.rewritingVariant, this.courseId);
+        this.checkForFaqConsistency(editor, this.artemisIntelligenceService, this.courseId, this.resultSignal);
     }
 }

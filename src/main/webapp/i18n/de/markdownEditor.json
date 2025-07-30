@@ -23,6 +23,9 @@
                 "alerts": {
                     "rewrite": {
                         "success": "Der Text wurde umgeschrieben. Drücke Strg+Z / Cmd+Z, um den Originaltext wiederherzustellen."
+                    },
+                    "consistency": {
+                        "success": "Der Text wurde auf Konsistenz geprüft."
                     }
                 }
             }

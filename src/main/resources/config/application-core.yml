@@ -9,6 +9,9 @@ artemis:
         enabled: true
     tutorialgroup:
         enabled: true
+    nebula:
+        enabled: true
+
     user-management:
         passkey:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME

@@ -14,7 +14,6 @@ import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_IRIS, PROFILE_NEBULA } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -23,7 +22,9 @@ import { FormsModule } from '@angular/forms';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
-import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { ConsistencyCheckResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence-results';
+import { FaqConsistencyAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/FacConsistencyAction';
+import { MODULE_FEATURE_NEBULA } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-faq-update',
@@ -50,20 +51,22 @@ export class FaqUpdateComponent implements OnInit {
     isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
 
-    renderedConsistencyCheckResultMarkdown = signal<RewriteResult>({
-        result: undefined,
+    renderedConsistencyCheckResultMarkdown = signal<ConsistencyCheckResult>({
         inconsistencies: undefined,
         suggestions: undefined,
         improvement: undefined,
-        rewrittenText: '',
     });
 
-    showConsistencyCheck = computed(() => !!this.renderedConsistencyCheckResultMarkdown().result);
+    showConsistencyCheck = computed(() => !!this.renderedConsistencyCheckResultMarkdown().inconsistencies);
 
-    irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-    nebulaEnabled = this.profileService.isProfileActive(PROFILE_NEBULA);
+    nebulaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_NEBULA);
     artemisIntelligenceActions = computed(() =>
-        this.nebulaEnabled ? [new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId, this.renderedConsistencyCheckResultMarkdown)] : [],
+        this.nebulaEnabled
+            ? [
+                  new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId),
+                  new FaqConsistencyAction(this.artemisIntelligenceService, this.courseId, this.renderedConsistencyCheckResultMarkdown),
+              ]
+            : [],
     );
     // Icons
     readonly faQuestionCircle = faQuestionCircle;
@@ -193,11 +196,9 @@ export class FaqUpdateComponent implements OnInit {
 
     dismissConsistencyCheck() {
         this.renderedConsistencyCheckResultMarkdown.set({
-            result: '',
             inconsistencies: [],
             suggestions: [],
             improvement: '',
-            rewrittenText: '',
         });
     }
 }

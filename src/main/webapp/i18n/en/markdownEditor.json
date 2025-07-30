@@ -23,6 +23,9 @@
                 "alerts": {
                     "rewrite": {
                         "success": "The text was rewritten. Press Ctrl+Z / Cmd+Z to restore the original text."
+                    },
+                    "consistency": {
+                        "success": "The text was checked for consistency."
                     }
                 }
             }

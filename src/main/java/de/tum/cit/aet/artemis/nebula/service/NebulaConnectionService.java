@@ -1,12 +1,10 @@
 package de.tum.cit.aet.artemis.nebula.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_NEBULA;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -21,13 +19,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorException;
+import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
+import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyDTO;
+import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponse;
 import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingDTO;
 import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponse;
 import de.tum.cit.aet.artemis.nebula.exception.NebulaException;
 import de.tum.cit.aet.artemis.nebula.exception.NebulaForbiddenException;
 import de.tum.cit.aet.artemis.nebula.exception.NebulaInternalErrorException;
 
-@Profile(PROFILE_NEBULA)
+@Conditional(NebulaEnabled.class)
 @Lazy
 @Service
 public class NebulaConnectionService {
@@ -60,6 +61,28 @@ public class NebulaConnectionService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<FaqRewritingDTO> request = new HttpEntity<>(faqRewritingDTO, headers);
             ResponseEntity<FaqRewritingResponse> response = restTemplate.exchange(nebulaUrl + "/faq/rewrite-faq", HttpMethod.POST, request, FaqRewritingResponse.class);
+            return response.getBody();
+        }
+        catch (HttpStatusCodeException e) {
+            throw toNebulaException(e);
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to fetch response from Nebula", e);
+            throw new PyrisConnectorException("Could not fetch response from Nebula");
+        }
+    }
+
+    /**
+     * Executes the FAQ rewriting operation by sending a request to the Nebula service.
+     *
+     * @param faqConsistencyDTO the data transfer object containing the necessary information for consistency check the current FAQs
+     */
+    public FaqConsistencyResponse executeFaqConsistencyCheck(FaqConsistencyDTO faqConsistencyDTO) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<FaqConsistencyDTO> request = new HttpEntity<>(faqConsistencyDTO, headers);
+            ResponseEntity<FaqConsistencyResponse> response = restTemplate.exchange(nebulaUrl + "/faq/check-consistency", HttpMethod.POST, request, FaqConsistencyResponse.class);
             return response.getBody();
         }
         catch (HttpStatusCodeException e) {

@@ -6,7 +6,6 @@
 # More information on profiles: https://www.jhipster.tech/profiles/
 # More information on configuration properties: https://www.jhipster.tech/common-application-properties/
 # ===================================================================
-
 # ===================================================================
 # Standard Spring Boot properties.
 # Full reference is available at:
@@ -59,8 +58,8 @@ spring:
         localInstances: true
 
 server:
-    port: 8080
-    url: http://localhost
+  port: 8080
+  url: http://host.docker.internal:8080
 # ===================================================================
 # JHipster specific properties
 #
