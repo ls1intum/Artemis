@@ -1,11 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
-import { finalize, tap } from 'rxjs/operators';
+import { finalize, map, tap } from 'rxjs/operators';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { AlertService } from 'app/shared/service/alert.service';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { WebsocketService } from 'app/shared/service/websocket.service';
+import { HyperionReviewAndRefineApiService } from 'app/openapi/api/hyperionReviewAndRefineApi.service';
+import { ProblemStatementRewriteRequest } from 'app/openapi/model/problemStatementRewriteRequest';
+import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
+import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 
 /**
  * Service providing shared functionality for Artemis Intelligence of the markdown editor.
@@ -14,44 +18,37 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 @Injectable({ providedIn: 'root' })
 export class ArtemisIntelligenceService {
     public resourceUrl = 'api/iris';
-    public hyperionResourceUrl = 'api/hyperion';
 
     private http = inject(HttpClient);
     private alertService = inject(AlertService);
     private websocketService = inject(WebsocketService);
+    private hyperionApiService = inject(HyperionReviewAndRefineApiService);
 
     private isLoadingRewrite = signal<boolean>(false);
     private isLoadingConsistencyCheck = signal<boolean>(false);
     isLoading = computed(() => this.isLoadingRewrite() || this.isLoadingConsistencyCheck());
 
     /**
-     * Triggers the rewriting pipeline via HTTP and returns the result directly.
-     * @param toBeRewritten The text to be rewritten.
-     * @param rewritingVariant The variant for rewriting.
-     * @param courseId The ID of the course to which the rewritten text belongs.
-     * @return Observable that emits the rewritten text when available.
-     */
-    /**
      * Triggers the rewriting pipeline via HTTP and subscribes to its WebSocket updates.
      * @param toBeRewritten The text to be rewritten.
      * @param rewritingVariant The variant for rewriting.
-     * @param courseId The ID of the course to which the rewritten text belongs.
+     * @param contextId The ID of the context (courseId for both Iris and Hyperion).
      * @return Observable that emits the rewritten text when available.
      */
-    rewrite(toBeRewritten: string | undefined, rewritingVariant: RewritingVariant, courseId: number): Observable<RewriteResult> {
+    rewrite(toBeRewritten: string | undefined, rewritingVariant: RewritingVariant, contextId: number): Observable<RewriteResult> {
         this.isLoadingRewrite.set(true);
 
         if (rewritingVariant === RewritingVariant.FAQ) {
             // Use WebSocket approach for FAQ rewriting via Iris
             return new Observable<RewriteResult>((observer) => {
                 this.http
-                    .post(`${this.resourceUrl}/courses/${courseId}/rewrite-text`, {
+                    .post(`${this.resourceUrl}/courses/${contextId}/rewrite-text`, {
                         toBeRewritten: toBeRewritten,
                         variant: rewritingVariant,
                     })
                     .subscribe({
                         next: () => {
-                            const websocketTopic = `/user/topic/iris/rewriting/${courseId}`;
+                            const websocketTopic = `/user/topic/iris/rewriting/${contextId}`;
                             this.websocketService.subscribe(websocketTopic);
 
                             this.websocketService.receive(websocketTopic).subscribe({
@@ -83,11 +80,20 @@ export class ArtemisIntelligenceService {
                     });
             });
         } else {
-            // Use simple HTTP approach for Hyperion rewriting
-            const endpoint = `${this.hyperionResourceUrl}/review-and-refine/courses/${courseId}/rewrite-problem-statement`;
-            const requestBody = { text: toBeRewritten };
+            // Use OpenAPI client for Hyperion rewriting (contextId is courseId)
+            const request: ProblemStatementRewriteRequest = {
+                problemStatementText: toBeRewritten || '',
+            };
 
-            return this.http.post<RewriteResult>(endpoint, requestBody).pipe(
+            return this.hyperionApiService.rewriteProblemStatement(contextId, request).pipe(
+                map(
+                    (response: ProblemStatementRewriteResponse): RewriteResult => ({
+                        result: response.rewrittenText,
+                        inconsistencies: undefined,
+                        suggestions: undefined,
+                        improvement: response.improved ? 'Text was improved' : 'Text was not improved',
+                    }),
+                ),
                 tap(() => {
                     this.alertService.success('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
                 }),
@@ -97,15 +103,13 @@ export class ArtemisIntelligenceService {
     }
 
     /**
-     * Triggers the consistency check pipeline via HTTP and returns the result directly.
+     * Triggers the consistency check pipeline using the OpenAPI client.
      *
      * @param exerciseId The ID of the exercise to check for consistency.
-     * @return Observable that emits the consistency check result immediately.
+     * @return Observable that emits the consistency check result.
      */
-    consistencyCheck(exerciseId: number): Observable<string> {
+    consistencyCheck(exerciseId: number): Observable<ConsistencyCheckResponse> {
         this.isLoadingConsistencyCheck.set(true);
-        return this.http
-            .post(`${this.hyperionResourceUrl}/review-and-refine/exercises/${exerciseId}/check-consistency`, null, { responseType: 'text' })
-            .pipe(finalize(() => this.isLoadingConsistencyCheck.set(false)));
+        return this.hyperionApiService.checkExerciseConsistency(exerciseId).pipe(finalize(() => this.isLoadingConsistencyCheck.set(false)));
     }
 }

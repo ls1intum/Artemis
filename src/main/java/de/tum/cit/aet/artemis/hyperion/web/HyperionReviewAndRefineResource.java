@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
@@ -42,13 +43,16 @@ public class HyperionReviewAndRefineResource {
 
     private final UserRepository userRepository;
 
+    private final CourseRepository courseRepository;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final HyperionReviewAndRefineRestService reviewAndRefineService;
 
-    public HyperionReviewAndRefineResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+    public HyperionReviewAndRefineResource(UserRepository userRepository, CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             HyperionReviewAndRefineRestService reviewAndRefineService) {
         this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.reviewAndRefineService = reviewAndRefineService;
     }
@@ -101,32 +105,31 @@ public class HyperionReviewAndRefineResource {
             @ApiResponse(responseCode = "400", description = "Invalid request body"), @ApiResponse(responseCode = "503", description = "Hyperion service unavailable"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
     @EnforceAtLeastInstructor
-    @PostMapping("exercises/{exerciseId}/problem-statement-rewrite")
-    public ResponseEntity<ProblemStatementRewriteResponseDTO> rewriteProblemStatement(
-            @Parameter(description = "ID of the programming exercise", required = true) @PathVariable Long exerciseId,
+    @PostMapping("courses/{courseId}/problem-statement-rewrite")
+    public ResponseEntity<ProblemStatementRewriteResponseDTO> rewriteProblemStatement(@Parameter(description = "ID of the course", required = true) @PathVariable Long courseId,
             @Parameter(description = "Request containing the problem statement to rewrite", required = true) @RequestBody ProblemStatementRewriteRequestDTO requestDTO) {
 
         if (requestDTO.problemStatementText() == null || requestDTO.problemStatementText().trim().isEmpty()) {
-            log.warn("Problem statement rewrite requested with empty text for exercise {}", exerciseId);
+            log.warn("Problem statement rewrite requested with empty text for course {}", courseId);
             return ResponseEntity.badRequest().build();
         }
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
 
-        log.info("Rewriting problem statement for exercise {} by user {}", exerciseId, user.getLogin());
+        log.info("Rewriting problem statement for course {} by user {}", courseId, user.getLogin());
 
         try {
-            ProblemStatementRewriteResponseDTO result = reviewAndRefineService.rewriteProblemStatement(user, programmingExercise, requestDTO.problemStatementText());
-            log.info("Problem statement rewrite completed successfully for exercise {}", exerciseId);
+            ProblemStatementRewriteResponseDTO result = reviewAndRefineService.rewriteProblemStatement(user, course, requestDTO.problemStatementText());
+            log.info("Problem statement rewrite completed successfully for course {}", courseId);
             return ResponseEntity.ok(result);
         }
         catch (NetworkingException e) {
-            log.error("Problem statement rewrite failed for exercise {}: {}", exerciseId, e.getMessage(), e);
+            log.error("Problem statement rewrite failed for course {}: {}", courseId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
         catch (Exception e) {
-            log.error("Problem statement rewrite failed for exercise {}: {}", exerciseId, e.getMessage(), e);
+            log.error("Problem statement rewrite failed for course {}: {}", courseId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

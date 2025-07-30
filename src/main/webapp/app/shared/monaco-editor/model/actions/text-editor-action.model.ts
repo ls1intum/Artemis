@@ -11,6 +11,7 @@ import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-int
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { WritableSignal } from '@angular/core';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 export abstract class TextEditorAction implements Disposable {
@@ -339,8 +340,22 @@ export abstract class TextEditorAction implements Disposable {
         const text = editor.getFullText();
         if (text) {
             artemisIntelligence.consistencyCheck(exerciseId).subscribe({
-                next: (result) => {
-                    resultSignal.set(htmlForMarkdown(result));
+                next: (response: ConsistencyCheckResponse) => {
+                    // Format the response as markdown
+                    let markdownResult = `# Consistency Check Results\n\n`;
+                    markdownResult += `**Summary:** ${response.summary}\n\n`;
+
+                    if (response.hasIssues && response.issues.length > 0) {
+                        markdownResult += `## Issues Found (${response.issues.length})\n\n`;
+                        response.issues.forEach((issue, index) => {
+                            markdownResult += `### Issue ${index + 1}\n`;
+                            markdownResult += `${issue.description}\n\n`;
+                        });
+                    } else {
+                        markdownResult += `✅ No consistency issues found!\n\n`;
+                    }
+
+                    resultSignal.set(htmlForMarkdown(markdownResult));
                 },
             });
         }

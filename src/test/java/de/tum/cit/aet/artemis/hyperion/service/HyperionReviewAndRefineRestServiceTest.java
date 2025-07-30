@@ -111,10 +111,10 @@ class HyperionReviewAndRefineRestServiceTest extends AbstractHyperionRestTest {
         String originalText = "Original problem statement";
         String improvedText = "Improved problem statement with better clarity";
 
-        hyperionRequestMockProvider.mockProblemStatementRewriteSuccess(programmingExercise.getId(), improvedText, hasJsonPath("$.text"));
+        hyperionRequestMockProvider.mockProblemStatementRewriteSuccess(course.getId(), improvedText, hasJsonPath("$.text"));
 
-        ProblemStatementRewriteResponseDTO result = hyperionReviewAndRefineRestService.rewriteProblemStatement(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"),
-                programmingExercise, originalText);
+        ProblemStatementRewriteResponseDTO result = hyperionReviewAndRefineRestService.rewriteProblemStatement(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), course,
+                originalText);
 
         assertThat(result).isNotNull();
         assertThat(result.rewrittenText()).isEqualTo(improvedText);
@@ -127,10 +127,10 @@ class HyperionReviewAndRefineRestServiceTest extends AbstractHyperionRestTest {
     void testRewriteProblemStatement_NoImprovement() throws Exception {
         String originalText = "Already perfect problem statement";
 
-        hyperionRequestMockProvider.mockProblemStatementRewriteNoImprovement(programmingExercise.getId(), originalText);
+        hyperionRequestMockProvider.mockProblemStatementRewriteNoImprovement(course.getId(), originalText);
 
-        ProblemStatementRewriteResponseDTO result = hyperionReviewAndRefineRestService.rewriteProblemStatement(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"),
-                programmingExercise, originalText);
+        ProblemStatementRewriteResponseDTO result = hyperionReviewAndRefineRestService.rewriteProblemStatement(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), course,
+                originalText);
 
         assertThat(result).isNotNull();
         assertThat(result.rewrittenText()).isEqualTo(originalText);
@@ -144,8 +144,8 @@ class HyperionReviewAndRefineRestServiceTest extends AbstractHyperionRestTest {
         String originalText = "Problem statement";
         hyperionRequestMockProvider.mockRewriteProblemStatementNetworkError();
 
-        assertThatExceptionOfType(NetworkingException.class).isThrownBy(
-                () -> hyperionReviewAndRefineRestService.rewriteProblemStatement(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), programmingExercise, originalText));
+        assertThatExceptionOfType(NetworkingException.class)
+                .isThrownBy(() -> hyperionReviewAndRefineRestService.rewriteProblemStatement(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), course, originalText));
 
         hyperionRequestMockProvider.verify();
     }
@@ -154,10 +154,10 @@ class HyperionReviewAndRefineRestServiceTest extends AbstractHyperionRestTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRewriteProblemStatement_Timeout() throws Exception {
         String originalText = "Problem statement";
-        hyperionRequestMockProvider.mockRewriteProblemStatementTimeout(programmingExercise.getId());
+        hyperionRequestMockProvider.mockRewriteProblemStatementTimeout(course.getId());
 
-        assertThatExceptionOfType(NetworkingException.class).isThrownBy(
-                () -> hyperionReviewAndRefineRestService.rewriteProblemStatement(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), programmingExercise, originalText));
+        assertThatExceptionOfType(NetworkingException.class)
+                .isThrownBy(() -> hyperionReviewAndRefineRestService.rewriteProblemStatement(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), course, originalText));
 
         hyperionRequestMockProvider.verify();
     }
@@ -168,8 +168,8 @@ class HyperionReviewAndRefineRestServiceTest extends AbstractHyperionRestTest {
         String emptyText = "";
 
         // The service should validate and throw an exception for empty text
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
-                () -> hyperionReviewAndRefineRestService.rewriteProblemStatement(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), programmingExercise, emptyText))
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> hyperionReviewAndRefineRestService.rewriteProblemStatement(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), course, emptyText))
                 .withMessage("Problem statement text must not be null or empty");
     }
 
@@ -196,10 +196,10 @@ class HyperionReviewAndRefineRestServiceTest extends AbstractHyperionRestTest {
     void testRewriteProblemStatement_LargeText() throws NetworkingException {
         String largeText = "Complex problem statement with many details. ".repeat(50);
 
-        hyperionRequestMockProvider.mockProblemStatementRewriteSuccess(programmingExercise.getId(), largeText, largeText + " Enhanced with additional clarity.");
+        hyperionRequestMockProvider.mockProblemStatementRewriteSuccess(course.getId(), largeText, largeText + " Enhanced with additional clarity.");
 
-        ProblemStatementRewriteResponseDTO result = hyperionReviewAndRefineRestService.rewriteProblemStatement(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"),
-                programmingExercise, largeText);
+        ProblemStatementRewriteResponseDTO result = hyperionReviewAndRefineRestService.rewriteProblemStatement(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), course,
+                largeText);
 
         assertThat(result).isNotNull();
         assertThat(result.improved()).isTrue();

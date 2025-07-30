@@ -95,7 +95,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 new RewriteAction(
                     this.artemisIntelligenceService,
                     RewritingVariant.PROBLEM_STATEMENT,
-                    this.courseId,
+                    this.exerciseId, // Use exerciseId for Hyperion, not courseId
                     signal<RewriteResult>({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
                 ),
             );

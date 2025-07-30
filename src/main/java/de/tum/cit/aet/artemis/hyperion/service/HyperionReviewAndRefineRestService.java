@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.client.api.ReviewAndRefineApi;
@@ -101,24 +102,24 @@ public class HyperionReviewAndRefineRestService {
      * Rewrites and improves a problem statement using the Hyperion service.
      *
      * @param user                 the user requesting the problem statement rewrite
-     * @param exercise             the programming exercise context (used for logging)
+     * @param course               the course context (used for logging and tracking)
      * @param problemStatementText the original problem statement text to improve
      * @return DTO containing the improved problem statement text
      * @throws NetworkingException      if communication with the Hyperion service fails
      * @throws IllegalArgumentException if any parameter is null or problemStatementText is empty
      */
-    public ProblemStatementRewriteResponseDTO rewriteProblemStatement(User user, ProgrammingExercise exercise, String problemStatementText) throws NetworkingException {
+    public ProblemStatementRewriteResponseDTO rewriteProblemStatement(User user, Course course, String problemStatementText) throws NetworkingException {
         if (user == null) {
             throw new IllegalArgumentException("User must not be null");
         }
-        if (exercise == null) {
-            throw new IllegalArgumentException("Exercise must not be null");
+        if (course == null) {
+            throw new IllegalArgumentException("Course must not be null");
         }
         if (problemStatementText == null || problemStatementText.trim().isEmpty()) {
             throw new IllegalArgumentException("Problem statement text must not be null or empty");
         }
 
-        log.info("Rewriting problem statement for exercise {} by user {}", exercise.getId(), user.getLogin());
+        log.info("Rewriting problem statement for course {} by user {}", course.getId(), user.getLogin());
 
         try {
             var request = new RewriteProblemStatementRequest();
@@ -130,21 +131,21 @@ public class HyperionReviewAndRefineRestService {
             String result = response.getRewrittenText();
 
             if (result == null || result.trim().isEmpty()) {
-                log.warn("Hyperion service returned empty rewritten text for exercise {}", exercise.getId());
+                log.warn("Hyperion service returned empty rewritten text for course {}", course.getId());
                 throw new NetworkingException("Hyperion service returned empty response");
             }
 
             boolean improved = !result.trim().equals(problemStatementText.trim());
 
-            log.info("Problem statement rewrite completed for exercise {}", exercise.getId());
+            log.info("Problem statement rewrite completed for course {}", course.getId());
             return new ProblemStatementRewriteResponseDTO(result.trim(), improved);
         }
         catch (RestClientException e) {
-            log.error("Failed to rewrite problem statement for exercise {} by user {}: {}", exercise.getId(), user.getLogin(), e.getMessage(), e);
+            log.error("Failed to rewrite problem statement for course {} by user {}: {}", course.getId(), user.getLogin(), e.getMessage(), e);
             throw new NetworkingException("An error occurred while calling Hyperion: " + e.getMessage(), e);
         }
         catch (Exception e) {
-            log.error("Failed to rewrite problem statement for exercise {} by user {}", exercise.getId(), user.getLogin(), e);
+            log.error("Failed to rewrite problem statement for course {} by user {}", course.getId(), user.getLogin(), e);
             throw new NetworkingException("An error occurred while rewriting problem statement", e);
         }
     }
