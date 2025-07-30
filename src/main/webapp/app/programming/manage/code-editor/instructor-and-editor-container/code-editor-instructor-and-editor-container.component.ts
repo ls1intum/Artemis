@@ -13,9 +13,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { isExamExercise } from 'app/shared/util/utils';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -35,19 +32,19 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseEditableInstructionComponent,
-        NgbTooltip,
-        ArtemisTranslatePipe,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
-    protected readonly faPlus = faPlus;
-    protected readonly faTimes = faTimes;
-    protected readonly faCircleNotch = faCircleNotch;
-    protected readonly faTimesCircle = faTimesCircle;
-    protected readonly IncludedInOverallScore = IncludedInOverallScore;
-    protected readonly RepositoryType = RepositoryType;
-    protected readonly isExamExercise = isExamExercise;
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
+
+    readonly IncludedInOverallScore = IncludedInOverallScore;
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faCircleNotch = faCircleNotch;
+    faTimesCircle = faTimesCircle;
     irisSettings?: IrisSettings;
+    protected readonly RepositoryType = RepositoryType;
 }
