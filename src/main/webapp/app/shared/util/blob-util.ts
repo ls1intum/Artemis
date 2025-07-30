@@ -53,11 +53,16 @@ export function objectToJsonBlob(obj: object) {
 export function blobToBinaryString(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onloadend = () => {
-            return resolve((reader.result as string) || '');
-        };
         reader.onerror = reject;
-        reader.readAsBinaryString(blob);
+        reader.readAsArrayBuffer(blob);
+        reader.onloadend = () => {
+            if (reader.result instanceof ArrayBuffer) {
+                const binaryString = arrayBufferToBinaryString(reader.result);
+                resolve(binaryString);
+            } else {
+                resolve('');
+            }
+        };
     });
 }
 
