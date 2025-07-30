@@ -48,7 +48,7 @@ artemis:
         url: https://version-control.fake.fake
         token: fake-token
         health-api-token: fake-token
-        ssh-template-clone-url: ssh://git@artemis.tum.de:7921/
+        ssh-template-clone-url: ssh://git@version-control.fake.fake:1111/
         default-branch: main
         local-vcs-repo-path: ./local/server-integration-test/local-vcs-repos
     continuous-integration:
