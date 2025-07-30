@@ -94,6 +94,7 @@ describe('LearningPathsTableComponent', () => {
 
     it('should change page', async () => {
         const onPageChangeSpy = jest.spyOn(component, 'setPage');
+        const getAverageProgressSpy = jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue({ averageProgress: 42, courseId: 1, totalStudents: 5 });
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -102,6 +103,7 @@ describe('LearningPathsTableComponent', () => {
 
         expect(onPageChangeSpy).toHaveBeenLastCalledWith(2);
         expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, { ...pageable, page: 2 });
+        expect(getAverageProgressSpy).toHaveBeenCalledWith(courseId);
     });
 
     it('should search for learning paths when the search term changes', async () => {
@@ -128,6 +130,38 @@ describe('LearningPathsTableComponent', () => {
         await fixture.whenStable();
 
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should format average progress to 2 decimal places', async () => {
+        const mockAverageProgress = { averageProgress: 42.567, courseId: 1, totalStudents: 5 };
+        jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.averageProgress()).toBe(42.567);
+        expect(component.formattedAverageProgress()).toBe('42.57');
+    });
+
+    it('should handle undefined average progress in formatted property', async () => {
+        const error = new Error('Error loading average progress');
+        jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockRejectedValue(error);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.averageProgress()).toBeUndefined();
+        expect(component.formattedAverageProgress()).toBeUndefined();
+    });
+
+    it('should format whole numbers with 2 decimal places', async () => {
+        const mockAverageProgress = { averageProgress: 50.0, courseId: 1, totalStudents: 5 };
+        jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.formattedAverageProgress()).toBe('50.00');
     });
 
     it('should set isLoading correctly', async () => {
