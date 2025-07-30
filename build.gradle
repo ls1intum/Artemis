@@ -165,24 +165,6 @@ sourceSets {
     }
 }
 
-// OpenAPI Configuration for REST Client Generation
-openApiGenerate {
-    generatorName.set('java')
-    inputSpec.set('openapi/hyperion.yaml')
-    outputDir.set("${buildDir}/generated/sources/openapi")
-    apiPackage.set('de.tum.cit.aet.artemis.hyperion.client.api')
-    modelPackage.set('de.tum.cit.aet.artemis.hyperion.client.model')
-    invokerPackage.set('de.tum.cit.aet.artemis.hyperion.client')
-    configOptions.set([
-        library: 'restclient',
-        openApiNullable: 'false',
-        useJakartaEe: 'true',
-        serializationLibrary: 'jackson',
-        hideGenerationTimestamp: 'true',
-        generateClientAsBean: 'false'
-    ])
-    skipOverwrite.set(false)
-}
 
 // Custom task for generating Hyperion Java client
 task generateHyperionJavaClient(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask) {

@@ -21,7 +21,7 @@
         customBootRun {
 
             jvmArgs = ["-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,lti,hyperion," +
-                           "dev","-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web", "-Dspringdoc.api-docs.enabled=true" ,"-Dspringdoc.pre-loading-enabled=true",
+                           "dev","-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup,de.tum.cit.aet.artemis.hyperion,de.tum.cit.aet.artemis.communication.domain", "-Dspringdoc.api-docs.enabled=true" ,"-Dspringdoc.pre-loading-enabled=true",
             ]
 
 // TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
