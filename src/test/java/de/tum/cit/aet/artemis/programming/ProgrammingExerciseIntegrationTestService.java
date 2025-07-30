@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -96,7 +97,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
-import de.tum.cit.aet.artemis.plagiarism.service.ProgrammingPlagiarismDetectionService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -119,13 +119,13 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingUtilTestService;
+import de.tum.cit.aet.artemis.programming.util.TestFileUtil;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
@@ -154,9 +154,6 @@ public class ProgrammingExerciseIntegrationTestService {
     @Autowired
     // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private UriService uriService;
-
-    @Autowired
-    private GitUtilService gitUtilService;
 
     @Autowired
     private CourseTestRepository courseRepository;
@@ -218,9 +215,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private ProgrammingUtilTestService programmingUtilTestService;
-
-    @Autowired
-    private ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService;
 
     private Course course;
 
@@ -302,7 +296,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // the following 2 lines prepare the generation of the structural test oracle
         var testjsonFilePath = localRepoPath.resolve("test").resolve(programmingExercise.getPackageFolderName()).resolve("test.json");
-        gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
+        TestFileUtil.writeEmptyJsonFileToPath(testjsonFilePath);
         // create two empty commits
         GitService.commit(localGit).setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
         localGit.push().call();
@@ -914,8 +908,6 @@ public class ProgrammingExerciseIntegrationTestService {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
         // Create a new course with different id.
-        Long oldCourseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        Long newCourseId = oldCourseId + 1;
         Course newCourse = courseUtilService.createCourse();
 
         // Assign new course to the programming exercise.
@@ -1780,7 +1772,7 @@ public class ProgrammingExerciseIntegrationTestService {
             // Get all student participations for this exercise
             var studentParticipations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).stream()
                     .filter(p -> p.getParticipant() != null && p.getParticipant().getName() != null && !p.getParticipant().getName().contains("instructor"))
-                    .sorted((p1, p2) -> p1.getId().compareTo(p2.getId())).toList();
+                    .sorted(Comparator.comparing(DomainObject::getId)).toList();
 
             if (!studentParticipations.isEmpty() && participation.getId().equals(studentParticipations.get(0).getId())) {
                 return mockRepo1;
@@ -2184,29 +2176,6 @@ public class ProgrammingExerciseIntegrationTestService {
         ProgrammingExercise programmingExerciseToBeConflicted = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().get(1);
 
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExerciseToBeConflicted, HttpStatus.CONFLICT);
-    }
-
-    void test_redirectGetSolutionRepositoryFilesWithoutContent() throws Exception {
-        test_redirectGetSolutionRepositoryFilesWithoutContent((exercise, files) -> {
-            LocalRepository localRepository = new LocalRepository("main");
-            try {
-                programmingUtilTestService.setupSolution(files, exercise, localRepository);
-            }
-            catch (Exception e) {
-                fail("Setup solution threw unexpected exception: " + e.getMessage());
-            }
-            return localRepository;
-        });
-    }
-
-    private void test_redirectGetSolutionRepositoryFilesWithoutContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
-        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
-
-        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-
-        // We expect an URL which is the endpoint, with which the file contents can be retrieved
-        request.getWithForwardedUrl("/api/programming/programming-exercises/" + programmingExercise.getId() + "/file-names", HttpStatus.OK,
-                "/api/programming/repository/" + savedExercise.getSolutionParticipation().getId() + "/file-names");
     }
 
     void test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries() throws Exception {
