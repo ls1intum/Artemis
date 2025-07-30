@@ -107,7 +107,7 @@ export class ThemeService {
      * Returns the theme preference stored in local storage or undefined if no preference is stored
      */
     private getStoredThemePreference(): Theme | undefined {
-        const storedIdentifier = this.localStorageService.retrieve(THEME_LOCAL_STORAGE_KEY);
+        const storedIdentifier = this.localStorageService.retrieve<string>(THEME_LOCAL_STORAGE_KEY);
         const storedTheme = Theme.all.find((theme) => theme.identifier === storedIdentifier);
 
         // An unknown theme was stored. Let's clear it
