@@ -5,6 +5,7 @@ import { ProgrammingExerciseSubmission } from './pageobjects/exercises/programmi
 
 // Requests
 export const BASE_API = 'api';
+export const THEIA_BASE = process.env.THEIA_BASE || '';
 
 export const COURSE_ADMIN_BASE = `${BASE_API}/core/admin/courses`;
 
@@ -13,7 +14,6 @@ export const QUIZ_EXERCISE_BASE = `${BASE_API}/quiz/quiz-exercises`;
 export const TEXT_EXERCISE_BASE = `${BASE_API}/text/text-exercises`;
 export const MODELING_EXERCISE_BASE = `${BASE_API}/modeling/modeling-exercises`;
 export const UPLOAD_EXERCISE_BASE = `${BASE_API}/fileupload/file-upload-exercises`;
-export const THEIA_BASE = `theia.artemis.cit.tum.de`;
 
 // Constants
 export const USER_ID_SELECTOR = 'USERID';
