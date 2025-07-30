@@ -584,7 +584,9 @@ export class IrisChatService implements OnDestroy {
      * is loaded directly by accessing the link or by reloading the page.</p>
      */
     public getCourseId(): number | undefined {
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- usage in getter is okay
         if (this.courseId) {
+            // eslint-disable-next-line @typescript-eslint/no-deprecated -- usage in getter is okay
             return this.courseId;
         }
 
@@ -592,6 +594,7 @@ export class IrisChatService implements OnDestroy {
     }
 
     public setCourseId(courseId: number | undefined): void {
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- usage in setter is okay
         this.courseId = courseId;
     }
 

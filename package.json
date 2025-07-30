@@ -29,9 +29,9 @@
         "@danielmoncada/angular-datetime-picker": "20.0.0",
         "@fingerprintjs/fingerprintjs": "4.6.2",
         "@fortawesome/angular-fontawesome": "2.0.1",
-        "@fortawesome/fontawesome-svg-core": "6.7.2",
-        "@fortawesome/free-regular-svg-icons": "6.7.2",
-        "@fortawesome/free-solid-svg-icons": "6.7.2",
+        "@fortawesome/fontawesome-svg-core": "7.0.0",
+        "@fortawesome/free-regular-svg-icons": "7.0.0",
+        "@fortawesome/free-solid-svg-icons": "7.0.0",
         "@ls1intum/apollon": "3.4.0",
         "@ng-bootstrap/ng-bootstrap": "19.0.1",
         "@ngx-translate/core": "16.0.4",
@@ -166,8 +166,8 @@
         "weak-napi": "2.0.2"
     },
     "engines": {
-        "node": ">=22.16.0",
-        "npm": ">=10.9.2"
+        "node": ">=24.4.1",
+        "npm": ">=11.4.2"
     },
     "scripts": {
         "build": "npm run webapp:prod --",
