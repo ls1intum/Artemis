@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of, throwError } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseResetDialogComponent } from 'app/programming/manage/reset/dialog/programming-exercise-reset-dialog.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
