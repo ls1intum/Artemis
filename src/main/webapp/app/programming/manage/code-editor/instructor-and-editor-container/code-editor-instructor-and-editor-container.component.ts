@@ -47,7 +47,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly RepositoryType = RepositoryType;
     protected readonly isExamExercise = isExamExercise;
-    protected readonly isCreateAssignmentRepoDisabled = this.loadingState !== this.LOADING_STATE.CLEAR || isExamExercise(this.exercise);
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
     irisSettings?: IrisSettings;

@@ -104,10 +104,14 @@
                 @if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
                     <div
                         [ngbTooltip]="'artemisApp.editor.repoSelect.createAssignmentRepoDisabledTooltip' | artemisTranslate"
-                        [disableTooltip]="!isCreateAssignmentRepoDisabled"
+                        [disableTooltip]="!(this.loadingState !== this.LOADING_STATE.CLEAR || isExamExercise(this.exercise))"
                         class="d-inline-block"
                     >
-                        <button (click)="createAssignmentParticipation()" [disabled]="isCreateAssignmentRepoDisabled" class="btn btn-primary me-2">
+                        <button
+                            (click)="createAssignmentParticipation()"
+                            [disabled]="this.loadingState !== this.LOADING_STATE.CLEAR || isExamExercise(this.exercise)"
+                            class="btn btn-primary me-2"
+                        >
                             @if (loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
                                 <fa-icon [icon]="faPlus" class="text-white me-2" />
                             }
