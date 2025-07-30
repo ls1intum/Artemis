@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.atlas.web;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MAX_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MIN_PROFILE_VALUE;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -54,18 +56,31 @@ public class LearnerProfileResource {
     }
 
     /**
-     * GET learner-profile : get the {@link LearnerProfile} of the current user.
-     * If no profile exists for the current user, a BadRequestAlertException is thrown.
+     * GET learner-profile : get the {@link LearnerProfile} of the current user if it exists, otherwise create a new profile..
      *
      * @return A ResponseEntity with a status matching the validity of the request containing the profile.
      */
     @GetMapping("learner-profile")
     @EnforceAtLeastStudent
-    public ResponseEntity<LearnerProfileDTO> getLearnerProfile() {
+    public ResponseEntity<LearnerProfileDTO> getOrCreateLearnerProfile() {
         User user = userRepository.getUser();
         log.debug("REST request to get LearnerProfile of user {}", user.getLogin());
-        LearnerProfile profile = learnerProfileRepository.findByUserElseThrow(user);
-        return ResponseEntity.ok(LearnerProfileDTO.of(profile));
+        Optional<LearnerProfile> existingProfile = learnerProfileRepository.findByUser(user);
+        if (existingProfile.isPresent()) {
+            return ResponseEntity.ok(LearnerProfileDTO.of(existingProfile.get()));
+        }
+
+        LearnerProfile profile = new LearnerProfile();
+        profile.setUser(user);
+        profile.setFeedbackAlternativeStandard(2);
+        profile.setFeedbackBriefDetailed(2);
+        profile.setFeedbackFollowupSummary(2);
+
+        user.setLearnerProfile(profile);
+        userRepository.save(user);
+
+        LearnerProfile persistedProfile = learnerProfileRepository.findByUserElseThrow(user);
+        return ResponseEntity.ok(LearnerProfileDTO.of(persistedProfile));
     }
 
     /**
