@@ -103,8 +103,8 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     }
 
     exportJSON(modal: NgbModalRef) {
-        this.tutorialGroupsService.exportToJson(this.courseId(), this.selectedFields).subscribe(
-            (response) => {
+        this.tutorialGroupsService.exportToJson(this.courseId(), this.selectedFields).subscribe({
+            next: (response) => {
                 const blob = new Blob([response], { type: 'application/json' });
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -115,12 +115,12 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
                 this.resetSelections();
                 modal.close();
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.tutorialGroupExportDialog.failedJSON');
                 this.resetSelections();
                 modal.dismiss('error');
             },
-        );
+        });
     }
 
     private resetSelections() {

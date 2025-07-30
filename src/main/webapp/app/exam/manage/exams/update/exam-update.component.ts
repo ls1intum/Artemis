@@ -27,8 +27,6 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
-import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
@@ -46,8 +44,6 @@ import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-
         FaIconComponent,
         WorkingTimeChangeComponent,
         FormDateTimePickerComponent,
-        CustomMinDirective,
-        CustomMaxDirective,
         ExamExerciseImportComponent,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
