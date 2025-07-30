@@ -3,7 +3,7 @@ import { Page } from '@playwright/test';
 /**
  * A class which encapsulates UI selectors and actions for the Landing Page.
  */
-export class LandingPage {
+export class TheiaLandingPage {
     private page: Page;
 
     constructor(page: Page) {

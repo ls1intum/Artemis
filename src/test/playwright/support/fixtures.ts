@@ -68,8 +68,8 @@ import { QuizExerciseParticipationPage } from './pageobjects/exercises/quiz/Quiz
 import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
 import { AccountManagementAPIRequests } from './requests/AccountManagementAPIRequests';
-import { LandingPage } from './pageobjects/theia/LandingPage';
 import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/programming/ProgrammingExercisesSubmissionsPage';
+import { TheiaLandingPage } from './pageobjects/theia/TheiaLandingPage';
 
 /*
  * Define custom types for fixtures
@@ -129,6 +129,7 @@ export type ArtemisPageObjects = {
     programmingExerciseRepository: RepositoryPage;
     programmingExercisesScaConfig: CodeAnalysisGradingPage;
     programmingExerciseScaFeedback: ScaFeedbackModal;
+    programmingExerciseSubmissions: ProgrammingExerciseSubmissionsPage;
     quizExerciseCreation: QuizExerciseCreationPage;
     quizExerciseDragAndDropQuiz: DragAndDropQuiz;
     quizExerciseMultipleChoice: MultipleChoiceQuiz;
@@ -142,8 +143,7 @@ export type ArtemisPageObjects = {
     textExerciseFeedback: TextExerciseFeedbackPage;
     exerciseResult: ExerciseResultPage;
     exerciseTeams: ExerciseTeamsPage;
-    landingPage: LandingPage;
-    programmingExerciseSubmissions: ProgrammingExerciseSubmissionsPage;
+    theiaLandingPage: TheiaLandingPage;
 };
 
 export type ArtemisRequests = {
@@ -334,6 +334,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     programmingExerciseScaFeedback: async ({ page }, use) => {
         await use(new ScaFeedbackModal(page));
     },
+    programmingExerciseSubmissions: async ({ page }, use) => {
+        await use(new ProgrammingExerciseSubmissionsPage(page));
+    },
     quizExerciseCreation: async ({ page }, use) => {
         await use(new QuizExerciseCreationPage(page));
     },
@@ -391,7 +394,7 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     communicationAPIRequests: async ({ page }, use) => {
         await use(new CommunicationAPIRequests(page));
     },
-    landingPage: async ({ page }, use) => {
-        await use(new LandingPage(page));
+    theiaLandingPage: async ({ page }, use) => {
+        await use(new TheiaLandingPage(page));
     },
 });

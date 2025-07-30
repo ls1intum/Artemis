@@ -38,7 +38,7 @@ dayjs.extend(utc);
  */
 export function generateUUID() {
     const uuid = uuidv4().replace(/-/g, '');
-    return uuid.substr(0, 9);
+    return uuid.substr(0, 4);
 }
 
 /**
