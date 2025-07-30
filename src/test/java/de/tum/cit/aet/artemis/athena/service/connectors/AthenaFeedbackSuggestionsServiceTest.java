@@ -65,13 +65,17 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
         textSubmission = new TextSubmission(2L).text("This is a text submission");
-        textSubmission.setParticipation(new StudentParticipation().exercise(textExercise));
+        StudentParticipation textParticipation = new StudentParticipation().exercise(textExercise);
+        textParticipation.setId(1L);
+        textSubmission.setParticipation(textParticipation);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setId(3L);
-        programmingSubmission.setParticipation(new StudentParticipation().exercise(programmingExercise));
+        StudentParticipation programmingParticipation = new StudentParticipation().exercise(programmingExercise);
+        programmingParticipation.setId(2L);
+        programmingSubmission.setParticipation(programmingParticipation);
     }
 
     @Test
