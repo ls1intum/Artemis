@@ -426,7 +426,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         const toKeep = pickBy(this.loadAnnotations(), (a) => !savedFiles.includes(a.fileName));
 
         this.localStorageService.store(
-            'annotations-' + this.sessionId,
+            'annotations-' + this.sessionId(),
             JSON.stringify({
                 ...toKeep,
                 ...toUpdate,
@@ -438,7 +438,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * Loads annotations from local storage
      */
     loadAnnotations() {
-        return JSON.parse(this.localStorageService.retrieve<string>('annotations-' + this.sessionId) || '{}');
+        return JSON.parse(this.localStorageService.retrieve<string>('annotations-' + this.sessionId()) || '{}');
     }
 
     setBuildAnnotations(buildAnnotations: Annotation[]): void {
