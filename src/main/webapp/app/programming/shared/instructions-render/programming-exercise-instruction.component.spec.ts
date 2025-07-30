@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement, VERSION } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -84,9 +83,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .overrideModule(BrowserDynamicTestingModule, { set: {} })
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
         comp = fixture.componentInstance;

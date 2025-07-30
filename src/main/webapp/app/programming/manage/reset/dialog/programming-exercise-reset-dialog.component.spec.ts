@@ -96,7 +96,12 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         });
 
         it('should not be called when there is an error in the reset response', fakeAsync(() => {
-            const errorResponse = throwError({ status: 500 });
+            const errorResponse = throwError(
+                () =>
+                    new HttpErrorResponse({
+                        status: 500,
+                    }),
+            );
             comp.programmingExerciseResetOptions = {
                 deleteBuildPlans: false,
                 deleteRepositories: false,

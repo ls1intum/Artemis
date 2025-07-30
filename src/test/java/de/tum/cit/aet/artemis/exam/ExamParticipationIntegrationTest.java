@@ -3,9 +3,6 @@ package de.tum.cit.aet.artemis.exam;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.withPrecision;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.doReturn;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -177,8 +174,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @BeforeEach
     void initTestCase() throws GitAPIException {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
-        doReturn(null).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean(), anyBoolean());
-
         course1 = courseUtilService.addEmptyCourse();
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");

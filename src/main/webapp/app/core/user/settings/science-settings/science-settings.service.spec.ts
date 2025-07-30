@@ -54,7 +54,7 @@ describe('ScienceSettingsService', () => {
         const spy = jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse<Setting[]>({ body: scienceSettingsForTesting })));
 
         scienceSettingsService['listenForScienceSettingsChanges']();
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledOnce();
 
         const settings = scienceSettingsService.getScienceSettings();
         expect(settings).toEqual(scienceSettingsForTesting);

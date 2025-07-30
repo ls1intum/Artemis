@@ -18,6 +18,7 @@ export default tseslint.config(
             '.github/',
             '.gradle/',
             '.idea/',
+            '.venv/',
             '.jhipster/',
             'build/',
             'local/',
@@ -25,6 +26,7 @@ export default tseslint.config(
             'docker/',
             'docs/',
             'gradle/',
+            'local/',
             'node/',
             'node_modules/',
             'out/',
@@ -34,6 +36,7 @@ export default tseslint.config(
             'src/main/resources/',
             'target/',
             'uploads/',
+            'local/',
             'supporting_scripts/',
             'src/test/javascript/spec/stub.js',
             '.lintstagedrc.js',
@@ -99,7 +102,7 @@ export default tseslint.config(
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@angular-eslint/no-output-on-prefix': 'off',
             '@typescript-eslint/ban-ts-comment': 'warn',
-            // '@typescript-eslint/no-deprecated': 'warn',
+            '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/no-non-null-asserted-optional-chain': 'warn',
             '@typescript-eslint/no-explicit-any': 'off',
@@ -141,18 +144,6 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/test/**/mock-*.ts'],
-        languageOptions: {
-            parser: typescriptParser,
-        },
-        plugins: {
-            '@typescript-eslint': tsPlugin,
-        },
-        rules: {
-            '@typescript-eslint/no-unused-vars': 'off',
-        },
-    },
-    {
         files: ['src/test/javascript/**','src/main/webapp/app/**/*.spec.ts'],
         plugins: {
             jest: jestPlugin,
@@ -164,12 +155,29 @@ export default tseslint.config(
             ...jestExtendedPlugin.configs.all.rules,
             'jest/expect-expect': 'off',
             'jest/no-conditional-expect': 'off',
-            // '@typescript-eslint/no-deprecated': 'warn',
+            '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/ban-ts-comment': 'off',
             '@typescript-eslint/no-var-requires': 'off',
-            '@typescript-eslint/no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': 'warn',
             'no-unused-private-class-members': 'error',
+            'no-unused-vars': 'warn',
+            'no-undef': 'off',
+        },
+    },
+    {
+        files: ['src/test/**/mock-*.ts'],
+        languageOptions: {
+            parser: typescriptParser,
+            parserOptions: {
+                project: ['./tsconfig.spec.json'],
+            },
+        },
+        plugins: {
+            '@typescript-eslint': tsPlugin,
+        },
+        rules: {
+            '@typescript-eslint/no-unused-vars': 'off',
             'no-unused-vars': 'off',
             'no-undef': 'off',
         },

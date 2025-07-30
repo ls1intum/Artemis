@@ -475,7 +475,7 @@ describe('ParticipationComponent', () => {
                 error: { errorKey: 'invalid.presentations.maxNumberOfPresentationsExceeded' },
                 status: 400,
             });
-            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(throwError(errorResponse));
+            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(throwError(() => errorResponse));
 
             component.exercise = exercise3;
             component.gradeStepsDTO = gradingScaleWithGradedPresentation;

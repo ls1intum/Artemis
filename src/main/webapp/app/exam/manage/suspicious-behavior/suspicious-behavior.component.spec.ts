@@ -15,7 +15,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -123,7 +123,14 @@ describe('SuspiciousBehaviorComponent', () => {
     });
 
     it('should set analyzed to true and analyzing to false if the request fails', () => {
-        jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(throwError({ status: 500 }));
+        jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(
+            throwError(
+                () =>
+                    new HttpErrorResponse({
+                        status: 500,
+                    }),
+            ),
+        );
         component.checkboxCriterionDifferentStudentExamsSameIPAddressChecked = true;
         component.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked = true;
         component.analyzeSessions();

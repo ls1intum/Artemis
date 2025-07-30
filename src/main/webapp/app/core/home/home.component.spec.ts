@@ -17,7 +17,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
@@ -46,7 +45,7 @@ describe('HomeComponent', () => {
         router.setUrl('');
 
         await TestBed.configureTestingModule({
-            imports: [MockRouterLinkDirective, RouterTestingModule, SetupPasskeyModalComponent],
+            imports: [MockRouterLinkDirective, SetupPasskeyModalComponent],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: route },

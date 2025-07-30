@@ -113,7 +113,6 @@ describe('ProgrammingExamSummaryComponent', () => {
                 component = fixture.componentInstance;
 
                 component.exercise = programmingExercise;
-                programmingSubmission.results = [result];
                 programmingSubmission.participation = programmingParticipation;
                 programmingParticipation.submissions = [programmingSubmission];
                 component.participation = programmingParticipation;
@@ -126,15 +125,16 @@ describe('ProgrammingExamSummaryComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
+    it('should initialize and set commit hash', () => {
         fixture.detectChanges();
 
         expect(component).toBeTruthy();
+        expect(component.commitHash).toBe('123456789ab');
     });
 
     it('should show result if present and results are published', () => {
         component.isAfterResultsArePublished = true;
-
+        programmingSubmission.results = [result];
         fixture.detectChanges();
 
         expect(component.feedbackComponentParameters.exercise).toEqual(programmingExercise);
@@ -147,7 +147,7 @@ describe('ProgrammingExamSummaryComponent', () => {
 
     it('should not show results if not yet published', () => {
         component.isAfterResultsArePublished = false;
-
+        programmingSubmission.results = [result];
         fixture.detectChanges();
 
         const feedbackComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
