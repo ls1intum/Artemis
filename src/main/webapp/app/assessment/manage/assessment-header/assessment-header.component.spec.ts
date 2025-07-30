@@ -93,7 +93,6 @@ describe('AssessmentHeaderComponent', () => {
         fixture.componentRef.setInput('isAssessor', true);
         fixture.componentRef.setInput('exerciseDashboardLink', []);
         fixture.componentRef.setInput('canOverride', false);
-        fixture.componentRef.setInput('isIllegalSubmission', false);
         fixture.componentRef.setInput('assessmentsAreValid', false);
         fixture.componentRef.setInput('hasAssessmentDueDatePassed', true);
         fixture.detectChanges();
