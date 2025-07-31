@@ -6,18 +6,20 @@
     <changeSet id="20250731120000-remove-duplicates-quiz-question-progress" author="MoritzSpengler">
         <comment>Remove duplicates</comment>
         <sql>
+            /* Create a temporary table and insert the oldest entry for each userId, quizQuestionId pair*/
             CREATE TEMPORARY TABLE to_keep_ids (
                 id BIGINT
             );
-
             INSERT INTO to_keep_ids (id)
             SELECT MIN(id)
             FROM quiz_question_progress
             GROUP BY user_id, quiz_question_id;
 
+            /* Delete all entries from the progress table that are not in the temporary table - all duplicates */
             DELETE FROM quiz_question_progress
             WHERE id NOT IN (SELECT id FROM to_keep_ids);
 
+            /* Delete the temporary table */
             DROP TEMPORARY TABLE to_keep_ids;
         </sql>
     </changeSet>
