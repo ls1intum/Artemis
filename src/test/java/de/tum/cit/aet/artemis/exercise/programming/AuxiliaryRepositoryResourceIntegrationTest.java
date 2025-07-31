@@ -12,7 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,7 +71,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    private URI localVCBaseUrl;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCRepoPath;

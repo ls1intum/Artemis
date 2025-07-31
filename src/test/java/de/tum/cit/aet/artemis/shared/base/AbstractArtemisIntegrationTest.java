@@ -58,7 +58,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
@@ -66,6 +65,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipati
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.shared.TestRepositoryConfiguration;
 import de.tum.cit.aet.artemis.text.service.TextBlockService;
@@ -228,19 +228,19 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     @Override
-    public void mockGetRepositorySlugFromRepositoryUri(String repositorySlug, VcsRepositoryUri repositoryUri) {
+    public void mockGetRepositorySlugFromRepositoryUri(String repositorySlug, LocalVCRepositoryUri repositoryUri) {
         // mock both versions to be independent
         doReturn(repositorySlug).when(uriService).getRepositorySlugFromRepositoryUri(repositoryUri);
         doReturn(repositorySlug).when(uriService).getRepositorySlugFromRepositoryUriString(repositoryUri.toString());
     }
 
     @Override
-    public void mockGetProjectKeyFromRepositoryUri(String projectKey, VcsRepositoryUri repositoryUri) {
+    public void mockGetProjectKeyFromRepositoryUri(String projectKey, LocalVCRepositoryUri repositoryUri) {
         doReturn(projectKey).when(uriService).getProjectKeyFromRepositoryUri(repositoryUri);
     }
 
     @Override
-    public void mockGetRepositoryPathFromRepositoryUri(String projectPath, VcsRepositoryUri repositoryUri) {
+    public void mockGetRepositoryPathFromRepositoryUri(String projectPath, LocalVCRepositoryUri repositoryUri) {
         doReturn(projectPath).when(uriService).getRepositoryPathFromRepositoryUri(repositoryUri);
     }
 

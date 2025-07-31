@@ -165,7 +165,7 @@ public class AuxiliaryRepository extends DomainObject {
             return new LocalVCRepositoryUri(repositoryUri);
         }
         catch (LocalVCInternalException e) {
-            log.error("Malformed URI {} could not be used to instantiate VcsRepositoryUri.", getRepositoryUri(), e);
+            log.error("Malformed URI {} could not be used to instantiate LocalVCRepositoryUri.", getRepositoryUri(), e);
         }
         return null;
     }
@@ -179,7 +179,7 @@ public class AuxiliaryRepository extends DomainObject {
     /**
      * Used to map the name of an auxiliary repository to its repository uri.
      */
-    public record AuxRepoNameWithUri(String name, VcsRepositoryUri repositoryUri) {
+    public record AuxRepoNameWithUri(String name, LocalVCRepositoryUri repositoryUri) {
     }
 
     public boolean containsEqualStringValues(AuxiliaryRepository other) {

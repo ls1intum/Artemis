@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -39,8 +39,8 @@ public interface ContinuousIntegrationService {
      * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise, ignored.
      */
     // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
-    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
-            VcsRepositoryUri solutionRepositoryUri);
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, LocalVCRepositoryUri repositoryUri, LocalVCRepositoryUri testRepositoryUri,
+            LocalVCRepositoryUri solutionRepositoryUri);
 
     /**
      * Recreates BASE and SOLUTION Build Plan for the given programming exercise

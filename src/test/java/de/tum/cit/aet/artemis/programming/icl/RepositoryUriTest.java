@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 class RepositoryUriTest {
@@ -163,36 +162,36 @@ class RepositoryUriTest {
     }
 
     @Test
-    void testConstructorWithValidUriString() throws URISyntaxException {
+    void testConstructorWithValidUriString() {
         String uriSpecString = "https://artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username";
-        VcsRepositoryUri uri = new VcsRepositoryUri(uriSpecString);
+        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(uriSpecString);
         assertThat(uri.getURI().toString()).isEqualTo(uriSpecString);
     }
 
     @Test
     void testConstructorWithInvalidUriString() {
         String invalidUriSpecString = "https://malformed-uri.de/h?s=^123";
-        assertThatThrownBy(() -> new VcsRepositoryUri(invalidUriSpecString)).isInstanceOf(URISyntaxException.class).hasMessageContaining("Illegal character");
+        assertThatThrownBy(() -> new LocalVCRepositoryUri(invalidUriSpecString)).isInstanceOf(URISyntaxException.class).hasMessageContaining("Illegal character");
     }
 
     @Test
     void testConstructorWithFile() {
         File file = Path.of("/path/to/repo").toFile();
-        VcsRepositoryUri uri = new VcsRepositoryUri(file);
+        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(file.getPath());
         assertThat(uri.getURI().toString()).isEqualTo(file.toURI().toString());
     }
 
     @Test
     void testFolderNameForRepositoryUriWithFileUri() throws URISyntaxException {
         URI fileUri = new URI("file:///path/to/repo/projectName");
-        VcsRepositoryUri uri = new VcsRepositoryUri(fileUri.toString());
+        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(fileUri.toString());
         assertThat(uri.folderNameForRepositoryUri()).isEqualTo("projectName");
     }
 
     @Test
     void testFolderNameForRepositoryUriWithHttpUri() throws URISyntaxException {
         URI httpUri = new URI("https://example.com/git/projectName.git");
-        VcsRepositoryUri uri = new VcsRepositoryUri(httpUri.toString());
+        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(httpUri.toString());
         assertThat(uri.folderNameForRepositoryUri()).isEqualTo("projectName");
     }
 
@@ -200,8 +199,8 @@ class RepositoryUriTest {
     void testEqualsAndHashCodeAndToString() throws URISyntaxException {
         URI uri1 = new URI("https://example.com/git/projectName.git");
         URI uri2 = new URI("https://example.com/git/projectName.git");
-        VcsRepositoryUri vcsUri1 = new VcsRepositoryUri(uri1.toString());
-        VcsRepositoryUri vcsUri2 = new VcsRepositoryUri(uri2.toString());
+        LocalVCRepositoryUri vcsUri1 = new LocalVCRepositoryUri(uri1.toString());
+        LocalVCRepositoryUri vcsUri2 = new LocalVCRepositoryUri(uri2.toString());
 
         assertThat(vcsUri1).isEqualTo(vcsUri2);
         assertThat(vcsUri1.hashCode()).isEqualTo(vcsUri2.hashCode());
@@ -211,21 +210,21 @@ class RepositoryUriTest {
     @Test
     void testRepositoryNameWithoutProjectKey() throws URISyntaxException {
         URI uri = new URI("https://example.com/git/GREAT/great-artemis_admin.git");
-        VcsRepositoryUri vcsUri = new VcsRepositoryUri(uri.toString());
+        LocalVCRepositoryUri vcsUri = new LocalVCRepositoryUri(uri.toString());
         assertThat(vcsUri.repositoryNameWithoutProjectKey()).isEqualTo("artemis_admin");
     }
 
     @Test
     void testRepositorySlug() throws URISyntaxException {
         URI uri = new URI("https://example.com/git/projectName/project-slug.git");
-        VcsRepositoryUri vcsUri = new VcsRepositoryUri(uri.toString());
+        LocalVCRepositoryUri vcsUri = new LocalVCRepositoryUri(uri.toString());
         assertThat(vcsUri.repositorySlug()).isEqualTo("project-slug");
     }
 
     @Test
     void testRepositoryNameAndProjectKey() throws URISyntaxException {
         URI uri = new URI("https://example.com/git/projectKey/repositorySlug.git");
-        VcsRepositoryUri vcsUri = new VcsRepositoryUri(uri.toString());
+        LocalVCRepositoryUri vcsUri = new LocalVCRepositoryUri(uri.toString());
         assertThat(vcsUri.repositoryNameWithoutProjectKey()).isEqualTo("repositoryslug");  // The result is in lowercase
     }
 }

@@ -34,12 +34,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.AeolusGenerationResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusRepository;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.InternalUrlService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
  * Service for publishing custom build plans using Aeolus
@@ -98,14 +98,14 @@ public class AeolusBuildPlanService {
     /**
      * Returns the internal VCS URL to the CI server
      *
-     * @param url the URL of the repository
+     * @param localVCRepositoryUri the URL of the repository
      * @return the internal URL to the CI server
      */
-    private String getVCSUrl(VcsRepositoryUri url) {
+    private String getVCSUrl(LocalVCRepositoryUri localVCRepositoryUri) {
         if (internalUrlService.isEmpty()) {
-            return url.toString();
+            return localVCRepositoryUri.toString();
         }
-        return internalUrlService.get().toInternalVcsUrl(url).toString();
+        return internalUrlService.get().toInternalVcsUrl(localVCRepositoryUri).toString();
     }
 
     /**
@@ -207,7 +207,7 @@ public class AeolusBuildPlanService {
      * @return a map of repositories used in Aeolus to create the checkout task in the custom build plan
      */
     public Map<String, AeolusRepository> createRepositoryMapForWindfile(ProgrammingLanguage programmingLanguage, String branch, boolean checkoutSolutionRepository,
-            VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri,
+            LocalVCRepositoryUri repositoryUri, LocalVCRepositoryUri testRepositoryUri, LocalVCRepositoryUri solutionRepositoryUri,
             List<AuxiliaryRepository.AuxRepoNameWithUri> auxiliaryRepositories) {
         Map<String, AeolusRepository> repositoryMap = new HashMap<>();
         repositoryMap.put(ASSIGNMENT_REPO_NAME,

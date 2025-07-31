@@ -10,6 +10,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * Represents a Version Control System (VCS) repository URI with capabilities to manipulate and extract information from it.
  * This class supports handling both local file references and remote repository URIs.
  */
+// TODO: merge with subclass LocalVCRepositoryUri
 public class VcsRepositoryUri {
 
     /** The username associated with the VCS repository URI, if applicable. */
@@ -22,7 +23,7 @@ public class VcsRepositoryUri {
      * Default constructor, intended for internal use only to prevent compile errors.
      * IMPORTANT: It is discouraged to use it as it creates an uninitialized object.
      */
-    public VcsRepositoryUri() {
+    protected VcsRepositoryUri() {
     }
 
     /**
@@ -31,7 +32,7 @@ public class VcsRepositoryUri {
      * @param uriSpecString The URI string to be parsed into a URI.
      * @throws URISyntaxException If the provided string does not form a valid URI.
      */
-    public VcsRepositoryUri(String uriSpecString) throws URISyntaxException {
+    protected VcsRepositoryUri(String uriSpecString) throws URISyntaxException {
         this.uri = new URI(uriSpecString);
     }
 
@@ -42,7 +43,7 @@ public class VcsRepositoryUri {
      * @param vcBaseUrl      The base URL of the version control system
      * @param repositoryName containing the project key at the beginning
      */
-    public VcsRepositoryUri(String vcBaseUrl, String repositoryName) throws URISyntaxException {
+    protected VcsRepositoryUri(String vcBaseUrl, String repositoryName) throws URISyntaxException {
         if (!repositoryName.matches("[a-zA-Z0-9]+-[a-zA-Z0-9-]+")) {
             throw new IllegalArgumentException("Repository name must be in the format <project-key>-<repo-type>");
         }
@@ -57,7 +58,7 @@ public class VcsRepositoryUri {
      *
      * @param file The file from which the URI will be created.
      */
-    public VcsRepositoryUri(java.io.File file) {
+    protected VcsRepositoryUri(java.io.File file) {
         this.uri = file.toURI();
     }
 

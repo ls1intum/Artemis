@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -27,7 +26,7 @@ public class LocalVCInfoContributor implements InfoContributor {
     private static final Logger log = LoggerFactory.getLogger(LocalVCInfoContributor.class);
 
     @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    private URI localVCBaseUrl;
 
     @Value("${server.url}")
     private String artemisServerUrl;

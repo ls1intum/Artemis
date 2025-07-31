@@ -6,7 +6,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusRepository;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
@@ -39,6 +37,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildScriptGenerationService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -108,14 +107,14 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testRepositoryMapForJavaWindfileCreation() throws URISyntaxException {
+    void testRepositoryMapForJavaWindfileCreation() {
         ProgrammingLanguage language = ProgrammingLanguage.JAVA;
         String branch = "develop";
-        VcsRepositoryUri repositoryUri = new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO.git");
-        VcsRepositoryUri testRepositoryUri = new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-test.git");
-        VcsRepositoryUri solutionRepositoryUri = new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-solution.git");
-        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-aux1.git")),
-                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-aux2.git")));
+        LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri("https://artemis.server/scm/PROJECT/REPO.git");
+        LocalVCRepositoryUri testRepositoryUri = new LocalVCRepositoryUri("https://artemis.server/scm/PROJECT/REPO-test.git");
+        LocalVCRepositoryUri solutionRepositoryUri = new LocalVCRepositoryUri("https://artemis.server/scm/PROJECT/REPO-solution.git");
+        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new LocalVCRepositoryUri("https://artemis.server/scm/PROJECT/REPO-aux1.git")),
+                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new LocalVCRepositoryUri("https://artemis.server/scm/PROJECT/REPO-aux2.git")));
         var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, false, repositoryUri, testRepositoryUri, solutionRepositoryUri, auxiliaryRepositories);
         assertThat(map).isNotNull();
         var assignmentDirectory = RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);
@@ -136,14 +135,14 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testRepositoryMapForHaskellWindfileCreation() throws URISyntaxException {
+    void testRepositoryMapForHaskellWindfileCreation() {
         ProgrammingLanguage language = ProgrammingLanguage.HASKELL;
         String branch = "develop";
-        VcsRepositoryUri repositoryUri = new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO.git");
-        VcsRepositoryUri testRepositoryUri = new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-test.git");
-        VcsRepositoryUri solutionRepositoryUri = new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-solution.git");
-        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-aux1.git")),
-                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-aux2.git")));
+        LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri("https://artemis.server/scm/PROJECT/REPO.git");
+        LocalVCRepositoryUri testRepositoryUri = new LocalVCRepositoryUri("https://artemis.server/scm/PROJECT/REPO-test.git");
+        LocalVCRepositoryUri solutionRepositoryUri = new LocalVCRepositoryUri("https://artemis.server/scm/PROJECT/REPO-solution.git");
+        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new LocalVCRepositoryUri("https://artemis.server/scm/PROJECT/REPO-aux1.git")),
+                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new LocalVCRepositoryUri("https://artemis.server/scm/PROJECT/REPO-aux2.git")));
         var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, true, repositoryUri, testRepositoryUri, solutionRepositoryUri, auxiliaryRepositories);
         assertThat(map).isNotNull();
         var assignmentDirectory = RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);

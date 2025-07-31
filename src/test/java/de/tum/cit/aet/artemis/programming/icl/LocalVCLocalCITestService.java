@@ -8,8 +8,8 @@ import static org.awaitility.Awaitility.await;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -82,7 +82,7 @@ public class LocalVCLocalCITestService {
     private ResultTestRepository resultRepository;
 
     @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    private URI localVCBaseUrl;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCRepoPath;

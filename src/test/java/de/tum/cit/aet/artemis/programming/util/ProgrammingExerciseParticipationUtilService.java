@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.programming.util;
 
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.net.URI;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -33,7 +35,7 @@ public class ProgrammingExerciseParticipationUtilService {
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepo;
 
     @Value("${artemis.version-control.url}")
-    protected String artemisVersionControlUrl;
+    protected URI artemisVersionControlUrl;
 
     /**
      * Adds template participation to the provided programming exercise.

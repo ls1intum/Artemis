@@ -8,7 +8,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
-import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +24,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
-import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultResource;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -42,11 +40,8 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository;
-import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
@@ -66,22 +61,10 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
-    private BuildLogEntryService buildLogEntryService;
-
-    @Autowired
-    private BuildLogEntryRepository buildLogEntryRepository;
-
-    @Autowired
-    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
-
-    @Autowired
     private UserUtilService userUtilService;
 
     @Autowired
     private ResultService resultService;
-
-    @Autowired
-    private ResultTestRepository resultRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -126,7 +109,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateParticipationForExternalSubmission() throws Exception {
+    void testCreateParticipationForExternalSubmission() {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
         participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
@@ -142,7 +125,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetBuildJobsForResultsOfParticipation() throws Exception {
+    void testGetBuildJobsForResultsOfParticipation() {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
         participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
@@ -161,7 +144,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
+    void canStartExerciseWithPracticeParticipationAfterDueDateChange() {
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
@@ -206,7 +189,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     private void setUpProgrammingExerciseMocks() {
-        doReturn(new VcsRepositoryUri()).when(versionControlService).copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt());
+        doReturn(new LocalVCRepositoryUri("test")).when(versionControlService).copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(),
+                anyInt());
         doReturn("fake-build-plan-id").when(continuousIntegrationService).copyBuildPlan(any(), anyString(), any(), anyString(), anyString(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(ProgrammingExerciseParticipation.class));
     }
@@ -214,7 +198,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @ValueSource(booleans = { true, false })
-    void testStartPracticeMode(boolean useGradedParticipation) throws URISyntaxException {
+    void testStartPracticeMode(boolean useGradedParticipation) {
         exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusMinutes(2));
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");

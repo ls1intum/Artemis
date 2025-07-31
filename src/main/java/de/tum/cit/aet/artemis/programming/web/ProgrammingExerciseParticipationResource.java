@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -56,7 +57,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
@@ -82,7 +82,7 @@ public class ProgrammingExerciseParticipationResource {
     private static final String ENTITY_NAME = "programmingExerciseParticipation";
 
     @Value("${artemis.version-control.url}")
-    private String localVCBaseUrl;
+    private URI localVCBaseUri;
 
     private final ParticipationRepository participationRepository;
 
@@ -162,9 +162,7 @@ public class ProgrammingExerciseParticipationResource {
 
     private void filterParticipationSubmissionResults(ProgrammingExerciseStudentParticipation participation) {
         if (shouldHideExamExerciseResults(participation)) {
-            participation.getSubmissions().forEach(submission -> {
-                submission.setResults(List.of());
-            });
+            participation.getSubmissions().forEach(submission -> submission.setResults(List.of()));
         }
     }
 
@@ -205,14 +203,14 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise-participations")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationByRepoName(@RequestParam(required = true, name = "repoName") String repoNameParam) {
+    public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationByRepoName(@RequestParam(name = "repoName") String repoNameParam) {
         String repoUri;
         if (!StringUtils.hasText(repoNameParam)) {
             throw new BadRequestAlertException("Repository name must be provided", ENTITY_NAME, "repoNameRequired");
         }
 
         try {
-            repoUri = new VcsRepositoryUri(localVCBaseUrl, repoNameParam).toString();
+            repoUri = new LocalVCRepositoryUri(localVCBaseUri.toString(), repoNameParam).toString();
         }
         catch (URISyntaxException e) {
             throw new BadRequestAlertException("Invalid repository URL", ENTITY_NAME, "invalidRepositoryUrl");
@@ -498,8 +496,7 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("programming-exercise-participations/{participationId}/files-content/{commitId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Map<String, String>> getParticipationRepositoryFiles(@PathVariable long participationId, @PathVariable String commitId)
-            throws GitAPIException, IOException {
+    public ResponseEntity<Map<String, String>> getParticipationRepositoryFiles(@PathVariable long participationId, @PathVariable String commitId) throws IOException {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
@@ -520,7 +517,7 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise/{exerciseId}/files-content-commit-details/{commitId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @PathVariable String commitId,
-            @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType) throws GitAPIException, IOException {
+            @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType) throws IOException {
         if (participationId != null) {
             Participation participation = participationRepository.findByIdElseThrow(participationId);
             ProgrammingExerciseParticipation programmingExerciseParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId,

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
 
@@ -15,7 +14,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -40,7 +40,7 @@ public abstract class InternalUrlService {
      * @param vcsRepositoryUri the vcs repository uri
      * @return the vcs repository uri with the internal url
      */
-    public VcsRepositoryUri toInternalVcsUrl(VcsRepositoryUri vcsRepositoryUri) {
+    public LocalVCRepositoryUri toInternalVcsUrl(LocalVCRepositoryUri vcsRepositoryUri) {
         if (vcsRepositoryUri.getURI() == null) {
             log.warn("Cannot replace url to internal url {} because the url is null.", internalVcsUrl);
             return vcsRepositoryUri;
@@ -48,9 +48,9 @@ public abstract class InternalUrlService {
 
         try {
             String newInternalUrl = toInternalVcsUrl(vcsRepositoryUri.getURI().toString());
-            return new VcsRepositoryUri(newInternalUrl);
+            return new LocalVCRepositoryUri(newInternalUrl);
         }
-        catch (URISyntaxException e) {
+        catch (LocalVCInternalException e) {
             log.warn("Cannot replace url {} to {}: {}. Falling back to original url.", vcsRepositoryUri, internalVcsUrl, e.getMessage());
             return vcsRepositoryUri;
         }

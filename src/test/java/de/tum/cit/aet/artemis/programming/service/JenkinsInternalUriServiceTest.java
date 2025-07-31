@@ -17,11 +17,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 class JenkinsInternalUriServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
-    private VcsRepositoryUri vcsRepositoryUri;
+    private LocalVCRepositoryUri vcsRepositoryUri;
 
     private String ciUrl;
 
@@ -31,7 +31,7 @@ class JenkinsInternalUriServiceTest extends AbstractProgrammingIntegrationJenkin
 
     @BeforeEach
     void initTestCase() throws Exception {
-        vcsRepositoryUri = new VcsRepositoryUri("http://localhost:80/some-repo.git");
+        vcsRepositoryUri = new LocalVCRepositoryUri("http://localhost:80/some-repo.git");
         ciUrl = "http://localhost:8080/some-ci-path";
         internalVcsUrl = new URI("http://1.2.3.4:123").toURL();
         internalCiUrl = new URI("http://5.6.7.8:123").toURL();
@@ -52,7 +52,7 @@ class JenkinsInternalUriServiceTest extends AbstractProgrammingIntegrationJenkin
         var newVcsUrl = jenkinsInternalUrlService.toInternalVcsUrl(vcsRepositoryUri);
         assertThat(newVcsUrl).hasToString("http://1.2.3.4:123/some-repo.git");
 
-        var vcsRepositoryUri = mock(VcsRepositoryUri.class);
+        var vcsRepositoryUri = mock(LocalVCRepositoryUri.class);
         doReturn(null).when(vcsRepositoryUri).getURI();
         assertThat(jenkinsInternalUrlService.toInternalVcsUrl(vcsRepositoryUri)).isEqualTo(vcsRepositoryUri);
 

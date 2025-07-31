@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -28,7 +28,7 @@ public class UriService {
      * @return The repository slug
      * @throws VersionControlException if the URI is invalid and no repository slug could be extracted
      */
-    public String getRepositorySlugFromRepositoryUri(VcsRepositoryUri repositoryUri) throws VersionControlException {
+    public String getRepositorySlugFromRepositoryUri(LocalVCRepositoryUri repositoryUri) throws VersionControlException {
         return getRepositorySlugFromUri(repositoryUri.getURI());
     }
 
@@ -82,7 +82,7 @@ public class UriService {
      * @return <project key>/<repositorySlug>
      * @throws VersionControlException if the URI is invalid and no project key could be extracted
      */
-    public String getRepositoryPathFromRepositoryUri(VcsRepositoryUri repositoryUri) throws VersionControlException {
+    public String getRepositoryPathFromRepositoryUri(LocalVCRepositoryUri repositoryUri) throws VersionControlException {
         return getRepositoryPathFromUri(repositoryUri.getURI());
     }
 
@@ -113,7 +113,7 @@ public class UriService {
      * @return The project key
      * @throws VersionControlException if the URI is invalid and no project key could be extracted
      */
-    public String getProjectKeyFromRepositoryUri(VcsRepositoryUri repositoryUri) throws VersionControlException {
+    public String getProjectKeyFromRepositoryUri(LocalVCRepositoryUri repositoryUri) throws VersionControlException {
         return getProjectKeyFromUri(repositoryUri.getURI());
     }
 
@@ -151,7 +151,7 @@ public class UriService {
      * @return The plain URI
      * @throws VersionControlException if the URI is invalid and no plain URI could be extracted
      */
-    public String getPlainUriFromRepositoryUri(VcsRepositoryUri repositoryUri) throws VersionControlException {
+    public String getPlainUriFromRepositoryUri(LocalVCRepositoryUri repositoryUri) throws VersionControlException {
         var uri = repositoryUri.getURI();
         try {
             var updatedUri = new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), uri.getPath(), null, uri.getFragment());

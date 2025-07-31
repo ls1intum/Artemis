@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -65,7 +64,7 @@ public abstract class AbstractGitService {
     protected static final String REMOTE_NAME = "origin";
 
     @Value("${artemis.version-control.url}")
-    protected URL gitUrl;
+    protected URI gitUri;
 
     @Value("${artemis.version-control.token:#{null}}")
     protected Optional<String> gitToken;
@@ -99,7 +98,7 @@ public abstract class AbstractGitService {
      */
     protected void configureSsh() {
         CredentialsProvider.setDefault(new CustomCredentialsProvider());
-        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, gitUrl);
+        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, gitUri);
         jgitKeyCache = new JGitKeyCache();
         sshdSessionFactory = sshSessionFactoryBuilder.build(jgitKeyCache);
         sshCallback = transport -> {
@@ -113,11 +112,11 @@ public abstract class AbstractGitService {
         };
     }
 
-    protected static SshdSessionFactoryBuilder getSshdSessionFactoryBuilder(Optional<String> gitSshPrivateKeyPath, Optional<String> gitSshPrivateKeyPassphrase, URL gitUrl) {
+    protected static SshdSessionFactoryBuilder getSshdSessionFactoryBuilder(Optional<String> gitSshPrivateKeyPath, Optional<String> gitSshPrivateKeyPassphrase, URI gitUri) {
         // @formatter:off
         return new SshdSessionFactoryBuilder()
             .setKeyPasswordProvider(keyPasswordProvider -> new CustomKeyPasswordProvider(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase))
-            .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUrl))
+            .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUri))
             .setSshDirectory(Path.of(gitSshPrivateKeyPath.orElseThrow()).toFile())
             .setHomeDirectory(Path.of(System.getProperty("user.home")).toFile());
             // @formatter:on
@@ -355,13 +354,7 @@ public abstract class AbstractGitService {
         }
     }
 
-    static class CustomSshConfigStore implements SshConfigStore {
-
-        URL gitUrl;
-
-        public CustomSshConfigStore(URL gitUrl) {
-            this.gitUrl = gitUrl;
-        }
+    record CustomSshConfigStore(URI gitUrl) implements SshConfigStore {
 
         @Override
         public HostConfig lookup(String hostName, int port, String userName) {

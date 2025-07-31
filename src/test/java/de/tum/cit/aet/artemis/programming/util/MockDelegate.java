@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 public interface MockDelegate {
 
@@ -35,13 +35,13 @@ public interface MockDelegate {
     void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) throws IOException, URISyntaxException;
 
     @Deprecated
-    void mockGetRepositorySlugFromRepositoryUri(String repositorySlug, VcsRepositoryUri repositoryUri);
+    void mockGetRepositorySlugFromRepositoryUri(String repositorySlug, LocalVCRepositoryUri repositoryUri);
 
     @Deprecated
-    void mockGetProjectKeyFromRepositoryUri(String projectKey, VcsRepositoryUri repositoryUri);
+    void mockGetProjectKeyFromRepositoryUri(String projectKey, LocalVCRepositoryUri repositoryUri);
 
     @Deprecated
-    void mockGetRepositoryPathFromRepositoryUri(String projectPath, VcsRepositoryUri repositoryUri);
+    void mockGetRepositoryPathFromRepositoryUri(String projectPath, LocalVCRepositoryUri repositoryUri);
 
     @Deprecated
     void mockGetProjectKeyFromAnyUrl(String projectKey);

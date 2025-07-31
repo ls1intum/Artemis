@@ -4,6 +4,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
+import org.springframework.web.util.UriComponentsBuilder;
+
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
@@ -47,6 +49,26 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
 
         this.projectKey = projectKey;
         this.repositorySlug = repositorySlug;
+        this.repositoryTypeOrUserName = getRepositoryTypeOrUserName(repositorySlug, projectKey);
+        this.isPracticeRepository = isPracticeRepository(repositorySlug, projectKey);
+    }
+
+    /**
+     * Initializes a new instance of the {@link LocalVCRepositoryUri} class from a repository name
+     * and builds an url to format <code>{server.url}/git/{project-key}/{repo-name}.git</code> with <code>repo-name</code> consisting of <code>{project-key}-{repo-type}</code>
+     *
+     * @param vcBaseUrl      The base URL of the version control system
+     * @param repositoryName containing the project key at the beginning
+     */
+    public LocalVCRepositoryUri(String vcBaseUrl, String repositoryName) throws URISyntaxException {
+        if (!repositoryName.matches("[a-zA-Z0-9]+-[a-zA-Z0-9-]+")) {
+            throw new IllegalArgumentException("Repository name must be in the format <project-key>-<repo-type>");
+        }
+
+        var projectKey = repositoryName.split("-")[0];
+        this.uri = UriComponentsBuilder.fromUriString(vcBaseUrl).pathSegment("git", projectKey.toUpperCase(), repositoryName + ".git").build().toUri();
+        this.projectKey = projectKey;
+        this.repositorySlug = repositoryName;
         this.repositoryTypeOrUserName = getRepositoryTypeOrUserName(repositorySlug, projectKey);
         this.isPracticeRepository = isPracticeRepository(repositorySlug, projectKey);
     }

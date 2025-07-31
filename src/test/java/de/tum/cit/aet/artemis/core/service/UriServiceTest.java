@@ -12,21 +12,21 @@ import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    private final VcsRepositoryUri repositoryUri1 = new VcsRepositoryUri("https://ab12cde@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde.git");
+    private final LocalVCRepositoryUri repositoryUri1 = new LocalVCRepositoryUri("https://ab12cde@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde.git");
 
-    private final VcsRepositoryUri repositoryUri2 = new VcsRepositoryUri("https://artemistest2.aet.cit.tum.de/TESTADAPTER/testadapter-exercise.git");
+    private final LocalVCRepositoryUri repositoryUri2 = new LocalVCRepositoryUri("https://artemistest2.aet.cit.tum.de/TESTADAPTER/testadapter-exercise.git");
 
-    private final VcsRepositoryUri repositoryUri3 = new VcsRepositoryUri("https://username@artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
+    private final LocalVCRepositoryUri repositoryUri3 = new LocalVCRepositoryUri("https://username@artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
 
-    private final VcsRepositoryUri fileRepositoryUri1 = new VcsRepositoryUri(Path.of("C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950").toFile());
+    private final LocalVCRepositoryUri fileRepositoryUri1 = new LocalVCRepositoryUri(Path.of("C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950").toString());
 
-    private final VcsRepositoryUri fileRepositoryUri2 = new VcsRepositoryUri(
-            Path.of("/var/folders/vc/sk85td_s54v7w9tjq07b0_q80000gn/T/studentTeamOriginRepo420037178325056205").toFile());
+    private final LocalVCRepositoryUri fileRepositoryUri2 = new LocalVCRepositoryUri(
+            Path.of("/var/folders/vc/sk85td_s54v7w9tjq07b0_q80000gn/T/studentTeamOriginRepo420037178325056205").toString());
 
     /**
      * empty constructor for exception handling
@@ -47,7 +47,7 @@ class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(repoSlug).isEqualTo("ftcscagrading1-username");
 
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> uriService.getRepositorySlugFromRepositoryUri(new VcsRepositoryUri("https://artemistest2.aet.cit.tum.de")));
+                .isThrownBy(() -> uriService.getRepositorySlugFromRepositoryUri(new LocalVCRepositoryUri("https://artemistest2.aet.cit.tum.de")));
     }
 
     @Test
@@ -60,7 +60,7 @@ class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(repoSlug).isEqualTo("FTCSCAGRADING1/ftcscagrading1-username");
 
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> uriService.getRepositoryPathFromRepositoryUri(new VcsRepositoryUri("https://artemistest2.aet.cit.tum.de")));
+                .isThrownBy(() -> uriService.getRepositoryPathFromRepositoryUri(new LocalVCRepositoryUri("https://artemistest2.aet.cit.tum.de")));
     }
 
     @Test
@@ -73,7 +73,7 @@ class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(repoSlug).isEqualTo("FTCSCAGRADING1");
 
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> uriService.getProjectKeyFromRepositoryUri(new VcsRepositoryUri("https://artemistest2.aet.cit.tum.de")));
+                .isThrownBy(() -> uriService.getProjectKeyFromRepositoryUri(new LocalVCRepositoryUri("https://artemistest2.aet.cit.tum.de")));
     }
 
     @Test

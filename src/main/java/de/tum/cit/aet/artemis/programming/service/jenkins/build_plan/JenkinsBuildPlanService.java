@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusRepository;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
@@ -57,6 +56,7 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsInternalUrlServ
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlConfigBuilder;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Lazy
 @Service
@@ -124,7 +124,7 @@ public class JenkinsBuildPlanService {
      * @param planKey       the name of the plan
      * @param repositoryUri the uri of the vcs repository
      */
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, LocalVCRepositoryUri repositoryUri) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUris = getInternalRepositoryUris(exercise, repositoryUri);
         programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(exercise);
 
@@ -153,10 +153,10 @@ public class JenkinsBuildPlanService {
         triggerBuild(jobFolder, job);
     }
 
-    private JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs getInternalRepositoryUris(final ProgrammingExercise exercise, final VcsRepositoryUri assignmentRepositoryUri) {
-        final VcsRepositoryUri assignmentUrl = jenkinsInternalUrlService.toInternalVcsUrl(assignmentRepositoryUri);
-        final VcsRepositoryUri testUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.TESTS));
-        final VcsRepositoryUri solutionUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.SOLUTION));
+    private JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs getInternalRepositoryUris(final ProgrammingExercise exercise, final LocalVCRepositoryUri assignmentRepositoryUri) {
+        final LocalVCRepositoryUri assignmentUrl = jenkinsInternalUrlService.toInternalVcsUrl(assignmentRepositoryUri);
+        final LocalVCRepositoryUri testUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.TESTS));
+        final LocalVCRepositoryUri solutionUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.SOLUTION));
 
         return new JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs(assignmentUrl, testUrl, solutionUrl);
     }
@@ -439,13 +439,13 @@ public class JenkinsBuildPlanService {
      *
      * @param programmingExercise   the programming exercise for which to create the build plan
      * @param buildPlanId           the id of the build plan
-     * @param repositoryUri         the url of the assignment repository
-     * @param testRepositoryUri     the url of the test repository
-     * @param solutionRepositoryUri the url of the solution repository
+     * @param repositoryUri         the uri of the assignment repository
+     * @param testRepositoryUri     the uri of the test repository
+     * @param solutionRepositoryUri the uri of the solution repository
      * @return the key of the created build plan, or null if it could not be created
      */
-    private String createCustomAeolusBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, VcsRepositoryUri repositoryUri,
-            VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri) throws ContinuousIntegrationBuildPlanException {
+    private String createCustomAeolusBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, LocalVCRepositoryUri repositoryUri,
+            LocalVCRepositoryUri testRepositoryUri, LocalVCRepositoryUri solutionRepositoryUri) throws ContinuousIntegrationBuildPlanException {
         if (aeolusBuildPlanService.isEmpty() || programmingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             return null;
         }
