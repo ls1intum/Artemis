@@ -66,21 +66,27 @@ enum FilterProp {
     ],
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
-    private route = inject(ActivatedRoute);
-    private participationService = inject(ParticipationService);
-    private alertService = inject(AlertService);
-    private eventManager = inject(EventManager);
-    private exerciseService = inject(ExerciseService);
-    private programmingSubmissionService = inject(ProgrammingSubmissionService);
-    private accountService = inject(AccountService);
-    private profileService = inject(ProfileService);
-    private gradingSystemService = inject(GradingSystemService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly participationService = inject(ParticipationService);
+    private readonly alertService = inject(AlertService);
+    private readonly eventManager = inject(EventManager);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private readonly accountService = inject(AccountService);
+    private readonly profileService = inject(ProfileService);
+    private readonly gradingSystemService = inject(GradingSystemService);
 
-    // make constants available to html for comparison
-    readonly FilterProp = FilterProp;
-    readonly ExerciseType = ExerciseType;
-    readonly ActionType = ActionType;
-    readonly FeatureToggle = FeatureToggle;
+    protected readonly faTable = faTable;
+    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faEraser = faEraser;
+    protected readonly faFilePowerpoint = faFilePowerpoint;
+
+    protected readonly FilterProp = FilterProp;
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly ActionType = ActionType;
+    protected readonly FeatureToggle = FeatureToggle;
     protected readonly RepositoryType = RepositoryType;
 
     participations: StudentParticipation[] = [];
@@ -111,14 +117,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     isLoading: boolean;
     isSaving: boolean;
     afterDueDate = false;
-
-    // Icons
-    faTable = faTable;
-    faTimes = faTimes;
-    faTrash = faTrash;
-    faCircleNotch = faCircleNotch;
-    faEraser = faEraser;
-    faFilePowerpoint = faFilePowerpoint;
 
     constructor() {
         this.participationCriteria = {
