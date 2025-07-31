@@ -83,11 +83,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     protected readonly faEraser = faEraser;
     protected readonly faFilePowerpoint = faFilePowerpoint;
 
-    protected readonly FilterProp = FilterProp;
     protected readonly ExerciseType = ExerciseType;
     protected readonly ActionType = ActionType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly RepositoryType = RepositoryType;
+    readonly FilterProp = FilterProp;
 
     participations: StudentParticipation[] = [];
     participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
