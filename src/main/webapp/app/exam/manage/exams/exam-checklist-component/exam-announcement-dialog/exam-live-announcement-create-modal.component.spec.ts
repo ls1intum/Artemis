@@ -76,7 +76,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
     });
 
     it('should handle failed announcement submission', () => {
-        jest.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(throwError('Error'));
+        jest.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(throwError(() => new Error('Error')));
         component.submitAnnouncement();
         expect(component.status).toBe('not_submitted');
         expect(mockExamManagementService.createAnnouncement).toHaveBeenCalled();
