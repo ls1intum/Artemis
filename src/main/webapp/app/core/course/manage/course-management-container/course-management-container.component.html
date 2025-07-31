@@ -65,8 +65,8 @@
                         id="course-body-container"
                         [ngClass]="{
                             'module-bg rounded rounded-3 scrollable-content': !hasSidebar(),
+                            'p-3': !hasSidebar() && !removePadding,
                             'content-height-dev': !isProduction || isTestServer,
-                            'p-3': !removePadding,
                         }"
                     >
                         @if (!hasSidebar()) {
