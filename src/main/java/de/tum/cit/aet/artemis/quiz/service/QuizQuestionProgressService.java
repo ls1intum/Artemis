@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -148,14 +149,23 @@ public class QuizQuestionProgressService {
             QuizQuestion question = entry.getKey();
             QuizQuestionProgressData data = entry.getValue();
             QuizQuestionProgress progress = progressMap.getOrDefault(question.getId(), new QuizQuestionProgress());
-            progress.setUserId(userId);
-            progress.setQuizQuestionId(question.getId());
+
+            if (progress.getId() == null) {
+                progress.setUserId(userId);
+                progress.setQuizQuestionId(question.getId());
+            }
+
             progress.setProgressJson(data);
             progress.setLastAnsweredAt(lastAnsweredAt);
             return progress;
         }).toList();
+        try {
+            quizQuestionProgressRepository.saveAll(progressToSave);
+        }
+        catch (DataIntegrityViolationException e) {
+            throw new IllegalStateException("Error while saving quiz question progress. Duplicate entry for userId and quizQuestionId.", e);
+        }
 
-        quizQuestionProgressRepository.saveAll(progressToSave);
     }
 
     /**
