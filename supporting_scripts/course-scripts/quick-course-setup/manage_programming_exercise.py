@@ -6,12 +6,50 @@ from requests import Session
 
 exercise_Ids: list[int] = []
 
-def sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
+def sanitize_exercise_name(exercise_name: str) -> str:
     """Sanitize the exercise name to create a valid short name."""
     valid_short_name = re.sub(r'[^a-zA-Z0-9]', '', exercise_name)
     if not valid_short_name or not valid_short_name[0].isalpha():
         valid_short_name = f"A{valid_short_name}"
-    return f"{valid_short_name}{short_name_index}"
+    return valid_short_name
+
+def sanitize_exercise_name_with_index(exercise_name: str, short_name_index: int) -> str:
+    return f"{sanitize_exercise_name(exercise_name)}{short_name_index}"
+
+
+def create_single_programming_exercise(session: Session, course_id: int, server_url: str, exercise_name: str, build_script: str | None = None):
+    url: str = f"{server_url}/programming/programming-exercises/setup"
+    headers: Dict[str, str] = {"Content-Type": "application/json"}
+    short_name = sanitize_exercise_name(exercise_name)
+
+    default_programming_exercise: Dict[str, Any] = {
+        "type": "programming",
+        "title": f"{exercise_name}",
+        "shortName": short_name,
+        "course": {"id": course_id},
+        "programmingLanguage": "JAVA",
+        "projectType": "PLAIN_GRADLE",
+        "allowOnlineEditor": True,
+        "allowOfflineIde": True,
+        "maxPoints": 100,
+        "assessmentType": "AUTOMATIC",
+        "packageName": "de.tum.in.www1.example",
+        "staticCodeAnalysisEnabled": False,
+        "buildConfig": {
+            "buildScript": build_script if build_script else "#!/usr/bin/env bash\nset -e\n\ngradle () {\n  echo '⚙️ executing gradle'\n  chmod +x ./gradlew\n  ./gradlew clean test\n}\n\nmain () {\n  gradle\n}\n\nmain \"${@}\"\n",
+            "checkoutSolutionRepository": False,
+        },
+    }
+
+    response = session.post(url, json=default_programming_exercise, headers=headers)
+
+    if response.status_code == 201:
+        logging.info(f"Created programming exercise {default_programming_exercise['title']} with id {response.json().get('id')} successfully")
+        return response.json()
+    elif response.status_code == 400:
+        logging.info(f"Programming exercise with shortName {default_programming_exercise['shortName']} already exists. Please provide the exercise IDs in the config file and set create_exercises to FALSE.")
+    raise Exception(f"Could not create programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
+
 
 def create_programming_exercise(session: Session, course_id: int, server_url: str, exercises_to_create: int, exercise_name: str) -> None:
     """Create multiple programming exercises for the course."""
@@ -20,7 +58,7 @@ def create_programming_exercise(session: Session, course_id: int, server_url: st
         headers: Dict[str, str] = {"Content-Type": "application/json"}
         short_name_index: int = i + 1
 
-        short_name = sanitize_exercise_name(exercise_name, short_name_index)
+        short_name = sanitize_exercise_name_with_index(exercise_name, short_name_index)
 
         default_programming_exercise: Dict[str, Any] = {
             "type": "programming",
