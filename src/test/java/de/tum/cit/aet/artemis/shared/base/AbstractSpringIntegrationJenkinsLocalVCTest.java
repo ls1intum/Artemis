@@ -50,11 +50,11 @@ import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 
 // TODO: rewrite this test to use LocalVC
@@ -164,7 +164,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
         // mocking them turned out to be not feasible with reasonable effort as this effects a lot of other test classes and leads to many other test failures.
         // not mocking for all tests also posed a problem due to many test failures in other classes.
         doCallRealMethod().when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
-        doCallRealMethod().when(gitService).getOrCheckoutRepository(any(VcsRepositoryUri.class), eq(true), anyBoolean());
+        doCallRealMethod().when(gitService).getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), anyBoolean());
     }
 
     @Override

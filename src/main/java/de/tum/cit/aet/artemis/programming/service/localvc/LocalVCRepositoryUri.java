@@ -85,6 +85,17 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
     }
 
     /**
+     * Associates a username with the current VCS repository URI and returns the instance for chaining.
+     *
+     * @param username The username to be associated with the URI.
+     * @return The instance of {@link LocalVCRepositoryUri} with the username set.
+     */
+    public LocalVCRepositoryUri withUser(final String username) {
+        this.username = username;
+        return this;
+    }
+
+    /**
      * Determines the index of the "git" segment within a given URI path.
      * This method scans the path segments of a URI to find the segment "git", which typically marks the start of
      * repository-specific segments in a URI structure used for version control systems. This index is critical for

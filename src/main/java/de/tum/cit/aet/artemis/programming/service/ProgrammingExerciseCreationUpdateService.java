@@ -41,12 +41,12 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.OracleGenerator;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
@@ -386,8 +386,8 @@ public class ProgrammingExerciseCreationUpdateService {
      * @throws IOException     If the URLs cannot be converted to actual {@link Path paths}
      * @throws GitAPIException If the checkout fails
      */
-    public boolean generateStructureOracleFile(VcsRepositoryUri solutionRepoUri, VcsRepositoryUri exerciseRepoUri, VcsRepositoryUri testRepoUri, String testsPath, User user)
-            throws IOException, GitAPIException {
+    public boolean generateStructureOracleFile(LocalVCRepositoryUri solutionRepoUri, LocalVCRepositoryUri exerciseRepoUri, LocalVCRepositoryUri testRepoUri, String testsPath,
+            User user) throws IOException, GitAPIException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoUri, true, true);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoUri, true, true);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoUri, true, true);

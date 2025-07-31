@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -249,8 +249,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         mockConnectorRequestsForSetup(exercise, false, true, false);
         exercise.setChannelName("exercise-pe");
         exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-        VcsRepositoryUri assignmentUri = exercise.getRepositoryURL(repositoryType);
-        VcsRepositoryUri testUri = exercise.getRepositoryURL(RepositoryType.TESTS);
+        LocalVCRepositoryUri assignmentUri = exercise.getRepositoryURL(repositoryType);
+        LocalVCRepositoryUri testUri = exercise.getRepositoryURL(RepositoryType.TESTS);
         Repository assignmentRepository = gitService.getOrCheckoutRepository(assignmentUri, true, true);
         Repository testRepository = gitService.getOrCheckoutRepository(testUri, true, true);
         moveAssignmentSourcesOf(assignmentRepository.getLocalPath(), testRepository.getLocalPath());

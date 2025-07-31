@@ -69,6 +69,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -368,18 +369,18 @@ public class ProgrammingExerciseParticipationResource {
             throw new BadRequestAlertException("Cannot reset repository in an exam", ENTITY_NAME, "noRepoResetInExam");
         }
 
-        VcsRepositoryUri sourceURL;
+        LocalVCRepositoryUri sourceUri;
         if (gradedParticipationId != null) {
             ProgrammingExerciseStudentParticipation gradedParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(gradedParticipationId);
             participationAuthCheckService.checkCanAccessParticipationElseThrow(gradedParticipation);
 
-            sourceURL = gradedParticipation.getVcsRepositoryUri();
+            sourceUri = gradedParticipation.getVcsRepositoryUri();
         }
         else {
-            sourceURL = exercise.getVcsTemplateRepositoryUri();
+            sourceUri = exercise.getVcsTemplateRepositoryUri();
         }
 
-        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL);
+        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceUri);
         continuousIntegrationTriggerService
                 .orElseThrow(() -> new UnsupportedOperationException(
                         "Cannot trigger build because neither the Jenkins nor the LocalCI profile are active. This is a misconfiguration if you want to use programming exercises"))

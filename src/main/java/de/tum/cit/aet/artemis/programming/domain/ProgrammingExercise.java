@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.domain;
 
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING;
 
-import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,6 +38,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
  * A ProgrammingExercise.
@@ -422,16 +423,16 @@ public class ProgrammingExercise extends Exercise {
      * @return a URL object of the templateRepositoryUri or null if there is no templateRepositoryUri
      */
     @JsonIgnore
-    public VcsRepositoryUri getVcsTemplateRepositoryUri() {
+    public LocalVCRepositoryUri getVcsTemplateRepositoryUri() {
         var templateRepositoryUri = getTemplateRepositoryUri();
         if (templateRepositoryUri == null || templateRepositoryUri.isEmpty()) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUri(templateRepositoryUri);
+            return new LocalVCRepositoryUri(templateRepositoryUri);
         }
-        catch (URISyntaxException e) {
+        catch (LocalVCInternalException e) {
             log.warn("Cannot create URI for templateRepositoryUri: {} due to the following error: {}", templateRepositoryUri, e.getMessage());
         }
         return null;
@@ -443,16 +444,16 @@ public class ProgrammingExercise extends Exercise {
      * @return a URL object of the solutionRepositoryUri or null if there is no solutionRepositoryUri
      */
     @JsonIgnore
-    public VcsRepositoryUri getVcsSolutionRepositoryUri() {
+    public LocalVCRepositoryUri getVcsSolutionRepositoryUri() {
         var solutionRepositoryUri = getSolutionRepositoryUri();
         if (solutionRepositoryUri == null || solutionRepositoryUri.isEmpty()) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUri(solutionRepositoryUri);
+            return new LocalVCRepositoryUri(solutionRepositoryUri);
         }
-        catch (URISyntaxException e) {
+        catch (LocalVCInternalException e) {
             log.warn("Cannot create URI for solutionRepositoryUri: {} due to the following error: {}", solutionRepositoryUri, e.getMessage());
         }
         return null;
@@ -464,15 +465,15 @@ public class ProgrammingExercise extends Exercise {
      * @return a URL object of the testRepositoryURl or null if there is no testRepositoryUri
      */
     @JsonIgnore
-    public VcsRepositoryUri getVcsTestRepositoryUri() {
+    public LocalVCRepositoryUri getVcsTestRepositoryUri() {
         if (testRepositoryUri == null || testRepositoryUri.isEmpty()) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUri(testRepositoryUri);
+            return new LocalVCRepositoryUri(testRepositoryUri);
         }
-        catch (URISyntaxException e) {
+        catch (LocalVCInternalException e) {
             log.warn("Cannot create URI for testRepositoryUri: {} due to the following error: {}", testRepositoryUri, e.getMessage());
         }
         return null;
@@ -485,7 +486,7 @@ public class ProgrammingExercise extends Exercise {
      * @return The repository uri
      */
     @JsonIgnore
-    public VcsRepositoryUri getRepositoryURL(RepositoryType repositoryType) {
+    public LocalVCRepositoryUri getRepositoryURL(RepositoryType repositoryType) {
         return switch (repositoryType) {
             case TEMPLATE -> this.getVcsTemplateRepositoryUri();
             case SOLUTION -> this.getVcsSolutionRepositoryUri();

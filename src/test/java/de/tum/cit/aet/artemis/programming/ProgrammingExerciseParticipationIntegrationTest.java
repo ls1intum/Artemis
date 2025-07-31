@@ -48,10 +48,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 
@@ -466,14 +464,14 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestResultWithFeedbacksForSolutionParticipationAsTutorShouldReturnForbidden() throws Exception {
-        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult(TEST_PREFIX + "student1");
+        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult();
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetLatestResultWithFeedbacksForSolutionParticipationAsTutor() throws Exception {
-        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult(TEST_PREFIX + "tutor1");
+        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
         assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
@@ -482,7 +480,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLatestResultWithFeedbacksForSolutionParticipationAsInstructor() throws Exception {
-        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult(TEST_PREFIX + "instructor1");
+        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
         assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
@@ -669,7 +667,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetProgrammingExerciseStudentParticipationNoParam() throws Exception {
-        String body = request.get("/api/programming/programming-exercise-participations", HttpStatus.BAD_REQUEST, String.class);
+        request.get("/api/programming/programming-exercise-participations", HttpStatus.BAD_REQUEST, String.class);
     }
 
     @Test
@@ -682,14 +680,13 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         Optional<ProgrammingExerciseStudentParticipation> foundParticipation;
         do {
             repoUrl = new URI(participation.getRepositoryUri());
-            repoUrl = new URI(repoUrl.getScheme(), repoUrl.getUserInfo(), repoUrl.getHost(), repoUrl.getPort(), "/" + UUID.randomUUID().toString(), repoUrl.getQuery(),
-                    repoUrl.getFragment());
+            repoUrl = new URI(repoUrl.getScheme(), repoUrl.getUserInfo(), repoUrl.getHost(), repoUrl.getPort(), "/" + UUID.randomUUID(), repoUrl.getQuery(), repoUrl.getFragment());
             foundParticipation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl.toString());
         }
         while (foundParticipation.isPresent());
 
         var repoName = extractRepoName(repoUrl.toString());
-        String body = request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
@@ -712,7 +709,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         while (foundParticipation.isPresent());
 
         var repoName = extractRepoName(repoUrl.toString());
-        String body = request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.BAD_REQUEST, String.class);
+        request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.BAD_REQUEST, String.class);
     }
 
     @Test
@@ -721,7 +718,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
 
         var repoName = extractRepoName(participation.getRepositoryUri());
-        String body = request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -735,7 +732,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         var repoName = extractRepoName(participation.getRepositoryUri());
-        String body = request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.FORBIDDEN, String.class);
     }
 
     String extractRepoName(String repoUrl) {
@@ -860,7 +857,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author", "authorEmail");
         var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
         doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
-        doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).checkoutRepositoryAtCommit(participation.getVcsRepositoryUri(), commitHash, true);
         doReturn(Map.of()).when(gitService).listFilesAndFolders(any());
         doReturn(Map.of()).when(gitService).listFilesAndFolders(any(), anyBoolean());
         doNothing().when(gitService).switchBackToDefaultBranchHead(any());
@@ -894,8 +890,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             doReturn(Map.of()).when(gitService).listFilesAndFolders(any());
             doReturn(Map.of()).when(gitService).listFilesAndFolders(any(), anyBoolean());
             doNothing().when(gitService).switchBackToDefaultBranchHead(any());
-            doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).checkoutRepositoryAtCommit(any(VcsRepositoryUri.class), any(String.class),
-                    any(Boolean.class));
             doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(any());
             PATH_PREFIX = "/api/programming/programming-exercise/" + participation.getProgrammingExercise().getId() + "/files-content-commit-details/" + COMMIT_HASH;
         }
@@ -999,11 +993,10 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         return (TemplateProgrammingExerciseParticipation) programmingExerciseParticipation;
     }
 
-    private SolutionProgrammingExerciseParticipation addSolutionParticipationWithResult(String login) {
+    private SolutionProgrammingExerciseParticipation addSolutionParticipationWithResult() {
         programmingExerciseParticipation = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise)
                 .getSolutionParticipation();
         Result result = this.programmingExerciseUtilService.addSolutionSubmissionWithResult(programmingExercise);
-        ;
         result.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(null);
 
         participationUtilService.addVariousVisibilityFeedbackToResult(result);
