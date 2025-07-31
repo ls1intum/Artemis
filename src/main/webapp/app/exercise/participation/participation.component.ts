@@ -112,7 +112,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     exerciseSubmissionState: ExerciseSubmissionState;
 
-    localCIEnabled = true;
+    isLocalCIEnabled = true;
     isAdmin = false;
     isLoading: boolean;
     isSaving: boolean;
@@ -131,7 +131,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
         this.registerChangeInParticipations();
         this.isAdmin = this.accountService.isAdmin();
-        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     }
 
     /**
