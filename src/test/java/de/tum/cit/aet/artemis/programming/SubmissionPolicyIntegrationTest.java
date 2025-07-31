@@ -8,7 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -432,7 +432,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         assertThat(result).isNotNull();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             assertThat(result.getScore()).isEqualTo(15);
-            assertThat(result.getFeedbacks()).anyMatch(feedback -> StringUtils.startsWith(feedback.getText(), SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
+            assertThat(result.getFeedbacks()).anyMatch(feedback -> Strings.CS.startsWith(feedback.getText(), SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
         }
         else {
             assertThat(result.getScore()).isEqualTo(25);
