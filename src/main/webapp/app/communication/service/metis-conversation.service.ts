@@ -388,7 +388,6 @@ export class MetisConversationService implements OnDestroy {
             if (event instanceof NavigationEnd) {
                 // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation
                 if (this.activeConversation) {
-                    this.activeConversation.lastReadDate = dayjs();
                     this.activeConversation.unreadMessagesCount = 0;
                     this.hasUnreadMessagesCheck();
                 }

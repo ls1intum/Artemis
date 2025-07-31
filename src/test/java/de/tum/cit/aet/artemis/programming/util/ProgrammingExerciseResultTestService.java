@@ -170,7 +170,7 @@ public class ProgrammingExerciseResultTestService {
                 .addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, userPrefix + "student2");
         var localRepoFile = Files.createTempDirectory(tempPath, "repo").toFile();
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean(), anyBoolean());
     }
 
     public void setupProgrammingExerciseForExam(boolean isExamOver) {
@@ -245,7 +245,7 @@ public class ProgrammingExerciseResultTestService {
         final var alteredObj = convertBuildResultToJsonObject(requestBodyMap);
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
+        httpHeaders.add(HttpHeaders.AUTHORIZATION, ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
         request.postWithoutLocation("/api/programming/public/programming-exercises/new-result", alteredObj, HttpStatus.OK, httpHeaders);
     }
 

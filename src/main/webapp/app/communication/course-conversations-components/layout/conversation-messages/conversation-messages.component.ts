@@ -19,7 +19,7 @@ import {
     input,
     output,
 } from '@angular/core';
-import { faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Observable, Subject, forkJoin, map, takeUntil } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -28,7 +28,7 @@ import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'a
 import { MetisService } from 'app/communication/service/metis.service';
 import { Channel, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -46,6 +46,7 @@ import { ForwardedMessageDTO, ForwardedMessagesGroupDTO } from 'app/communicatio
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
 import { canCreateNewMessageInConversation } from 'app/communication/conversations/conversation-permissions.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 interface PostGroup {
     author: User | undefined;
@@ -57,7 +58,16 @@ interface PostGroup {
     templateUrl: './conversation-messages.component.html',
     styleUrls: ['./conversation-messages.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FaIconComponent, TranslateDirective, InfiniteScrollDirective, NgClass, PostingThreadComponent, PostCreateEditModalComponent, MessageInlineInputComponent],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        InfiniteScrollDirective,
+        NgClass,
+        PostingThreadComponent,
+        PostCreateEditModalComponent,
+        MessageInlineInputComponent,
+        ButtonComponent,
+    ],
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
     metisService = inject(MetisService);
@@ -69,6 +79,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     readonly PageType = PageType;
     readonly ButtonType = ButtonType;
+    readonly ButtonSize = ButtonSize;
 
     private scrollDebounceTime = 100; // ms
     scrollSubject = new Subject<number>();
@@ -106,22 +117,29 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     newPost?: Post;
     posts: Post[] = [];
     allPosts: Post[] = [];
+    unreadPosts: Post[] = [];
     groupedPosts: PostGroup[] = [];
     totalNumberOfPosts = 0;
     page = 1;
     public isFetchingPosts = true;
+    currentUser: User;
+    firstUnreadPostId: number | undefined;
+    unreadPostsCount: number = 0;
+    atNewPostPosition = false;
     // Icons
-    faTimes = faTimes;
-    faEnvelope = faEnvelope;
-    faCircleNotch = faCircleNotch;
+    protected readonly faTimes = faTimes;
+    protected readonly faEnvelope = faEnvelope;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faArrowDown = faArrowDown;
+
     isMobile = false;
     isHiddenInputWithCallToAction = false;
     isHiddenInputFull = false;
     focusOnPostId: number | undefined = undefined;
     isOpenThreadOnFocus = false;
 
-    private layoutService: LayoutService = inject(LayoutService);
-
+    layoutService: LayoutService = inject(LayoutService);
+    accountService: AccountService = inject(AccountService);
     constructor() {
         effect(() => {
             this.focusOnPostId = this.focusPostId();
@@ -171,6 +189,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.cdr.detectChanges();
             });
 
+        this.accountService.identity().then((user: User) => {
+            this.currentUser = user!;
+        });
+
         // Ensure that all pinned posts are fetched when the component is initialized
         this.metisService.fetchAllPinnedPosts(this._activeConversation!.id!).subscribe();
         this.cdr.detectChanges();
@@ -215,6 +237,15 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         });
         this.content.nativeElement.addEventListener('scroll', () => {
             this.findElementsAtScrollPosition();
+        });
+
+        const el = this.content.nativeElement;
+        const observer = new MutationObserver(() => {
+            this.findElementsAtScrollPosition();
+        });
+        observer.observe(el, {
+            childList: true,
+            subtree: true,
         });
     }
 
@@ -262,6 +293,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.allPosts = posts;
             this.setPosts();
             this.isFetchingPosts = false;
+            this.computeLastReadState();
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
@@ -437,7 +469,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     /**
      * Extracts all source post and answer post IDs from forwarded messages.
      */
-    private collectSourceIds(map: Map<number, ForwardedMessageDTO[]>): { sourcePostIds: number[]; sourceAnswerIds: number[] } {
+    private collectSourceIds(map: Map<number, ForwardedMessageDTO[]>): {
+        sourcePostIds: number[];
+        sourceAnswerIds: number[];
+    } {
         const sourcePostIds: number[] = [];
         const sourceAnswerIds: number[] = [];
 
@@ -475,7 +510,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     /**
      * Extracts fetched post and answer post arrays from forkJoin responses.
      */
-    private extractFetchedSources(responses: (Posting[] | undefined)[]): { fetchedPosts: Post[]; fetchedAnswerPosts: AnswerPost[] } {
+    private extractFetchedSources(responses: (Posting[] | undefined)[]): {
+        fetchedPosts: Post[];
+        fetchedAnswerPosts: AnswerPost[];
+    } {
         let fetchedPosts: Post[] = [];
         let fetchedAnswerPosts: AnswerPost[] = [];
 
@@ -573,6 +611,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     setPostForThread(post: Post) {
         this.openThread.emit(post);
     }
+
     handleScrollOnNewMessage = () => {
         if ((this.posts.length > 0 && this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
             this.scrollToBottomOfMessages();
@@ -643,6 +682,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (this.elementsAtScrollPosition && this.elementsAtScrollPosition.length > 0 && this.canStartSaving) {
             this.saveScrollPosition(this.elementsAtScrollPosition[0].post.id!);
         }
+        this.setFirstUnreadPostId();
+        this.atNewPostPosition = this.isAnyUnreadPostVisible();
+        this.cdr.detectChanges();
     }
 
     /**
@@ -650,5 +692,116 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      */
     onTriggerNavigateToPost(post: Posting) {
         this.onNavigateToPost.emit(post);
+    }
+
+    private computeLastReadState(): void {
+        this.unreadPosts = this.getUnreadPosts();
+        this.unreadPostsCount = this.unreadPosts.length;
+    }
+
+    /**
+     * Returns a list of posts that were created after the lastReadDate
+     * and were not authored by the current user (i.e. true unread posts).
+     */
+    private getUnreadPosts(): Post[] {
+        const lastReadDate = this._activeConversation?.lastReadDate;
+        if (!lastReadDate || !this.allPosts?.length) {
+            return [];
+        }
+
+        const sortedPosts = [...this.allPosts].sort((a, b) => a.creationDate!.diff(b.creationDate!));
+        const indexFirstRelevantPost = sortedPosts.findIndex((post) => post.creationDate?.isAfter(lastReadDate) && post.author?.id !== this.currentUser.id);
+        return indexFirstRelevantPost >= 0 ? sortedPosts.slice(indexFirstRelevantPost) : [];
+    }
+
+    /**
+     * Scrolls the container to the first unread post (top-aligned),
+     * if it is not currently visible. If the post is taller than the container,
+     * a small offset is applied to keep the line above visible.
+     */
+    scrollToFirstUnreadPostIfNotVisible(): void {
+        const rects = this.getBoundingRectsForFirstUnreadPost();
+        if (!rects) {
+            return;
+        }
+
+        const component = this.messages.find((m) => m.post.id === this.firstUnreadPostId);
+        if (!component?.elementRef?.nativeElement) {
+            return;
+        }
+
+        const containerElement = this.content.nativeElement;
+        const { postRect, containerRect } = rects;
+
+        const isVisible = postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;
+        const postIsTallerThanContainer = postRect.bottom - postRect.top > containerRect.bottom - containerRect.top;
+        //15 is an arbitrary to ensure the "new" line above the first unread post is visible
+        const scrollOffset = postIsTallerThanContainer ? 15 : 0;
+
+        if (!isVisible) {
+            requestAnimationFrame(() => {
+                const offsetTop = component.elementRef.nativeElement.offsetTop;
+                containerElement.scrollTop = Math.max(offsetTop - scrollOffset, 0);
+            });
+        }
+    }
+
+    /**
+     * Returns the bounding rectangles of the given post and the scroll container.
+     * Returns `undefined` if the post or container is not available in the DOM.
+     */
+    private getBoundingRectsForPost(postId: number): { postRect: DOMRect; containerRect: DOMRect } | undefined {
+        if (!this.content?.nativeElement) {
+            return undefined;
+        }
+
+        const component = this.messages.find((m) => m.post.id === postId);
+        if (!component?.elementRef?.nativeElement) {
+            return undefined;
+        }
+
+        const postRect = component.elementRef.nativeElement.getBoundingClientRect();
+        const containerRect = this.content.nativeElement.getBoundingClientRect();
+
+        return { postRect, containerRect };
+    }
+
+    /**
+     * Returns the bounding rectangles of the first unread post and the scroll container.
+     * Returns `undefined` if the post or container is not available in the DOM.
+     */
+    private getBoundingRectsForFirstUnreadPost(): { postRect: DOMRect; containerRect: DOMRect } | undefined {
+        if (!this.unreadPosts.length || !this.firstUnreadPostId) {
+            return undefined;
+        }
+
+        return this.getBoundingRectsForPost(this.firstUnreadPostId);
+    }
+
+    private isPostVisible(postId: number): boolean {
+        const rects = this.getBoundingRectsForPost(postId);
+        if (!rects) {
+            return false;
+        }
+
+        const { postRect, containerRect } = rects;
+
+        return postRect.bottom > containerRect.top && postRect.top < containerRect.bottom;
+    }
+
+    private isAnyUnreadPostVisible(): boolean {
+        if (!this.unreadPosts?.length) {
+            return false;
+        }
+
+        return this.unreadPosts.some((unreadPost) => this.isPostVisible(unreadPost.id!));
+    }
+
+    private setFirstUnreadPostId(): void {
+        if (this.unreadPosts.length > 0) {
+            this.firstUnreadPostId = this.unreadPosts[0].id;
+        } else {
+            this.firstUnreadPostId = undefined;
+        }
     }
 }
