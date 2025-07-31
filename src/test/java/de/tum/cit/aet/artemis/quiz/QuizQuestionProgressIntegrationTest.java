@@ -294,7 +294,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         submittedAnswer.setSelectedOptions(Set.of());
         QuizTrainingAnswerDTO trainingAnswerDTO = new QuizTrainingAnswerDTO(submittedAnswer);
 
-        SubmittedAnswerAfterEvaluationDTO result = request.postWithResponseBody("/api/quiz/courses/" + course.getId() + "/training/" + mcQuestion.getId() + "/quiz",
+        SubmittedAnswerAfterEvaluationDTO result = request.postWithResponseBody("/api/quiz/courses/" + course.getId() + "/training/" + mcQuestion.getId() + "/submit",
                 trainingAnswerDTO, SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.OK);
 
         assertThat(result).isNotNull();
@@ -329,7 +329,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
 
-        List<QuizQuestion> quizQuestions = request.getList("/api/quiz/courses/" + course.getId() + "/training/quiz", OK, QuizQuestion.class);
+        List<QuizQuestion> quizQuestions = request.getList("/api/quiz/courses/" + course.getId() + "/training/questions", OK, QuizQuestion.class);
 
         Assertions.assertThat(quizQuestions).isNotNull();
         Assertions.assertThat(quizQuestions).hasSameSizeAs(quizExercise.getQuizQuestions());
