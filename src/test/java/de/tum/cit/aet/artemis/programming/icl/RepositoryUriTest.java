@@ -163,7 +163,7 @@ class RepositoryUriTest {
 
     @Test
     void testConstructorWithValidUriString() {
-        String uriSpecString = "https://artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username";
+        String uriSpecString = "https://artemistest2.aet.cit.tum.de/git/FTCSCAGRADING1/ftcscagrading1-username.git";
         LocalVCRepositoryUri uri = new LocalVCRepositoryUri(uriSpecString);
         assertThat(uri.getURI().toString()).isEqualTo(uriSpecString);
     }
@@ -171,40 +171,41 @@ class RepositoryUriTest {
     @Test
     void testConstructorWithInvalidUriString() {
         String invalidUriSpecString = "https://malformed-uri.de/h?s=^123";
-        assertThatThrownBy(() -> new LocalVCRepositoryUri(invalidUriSpecString)).isInstanceOf(URISyntaxException.class).hasMessageContaining("Illegal character");
+        assertThatThrownBy(() -> new LocalVCRepositoryUri(invalidUriSpecString)).isInstanceOf(LocalVCInternalException.class)
+                .hasMessageContaining("Could not create local VC Repository URI");
     }
 
     @Test
     void testConstructorWithFile() {
-        File file = Path.of("/path/to/repo").toFile();
+        File file = Path.of("/path/to/repo/git/name/name-slug.git").toFile();
         LocalVCRepositoryUri uri = new LocalVCRepositoryUri(file.getPath());
-        assertThat(uri.getURI().toString()).isEqualTo(file.toURI().toString());
+        assertThat(uri.getURI().toString()).isEqualTo(file.getPath());
     }
 
     @Test
     void testFolderNameForRepositoryUriWithFileUri() throws URISyntaxException {
-        URI fileUri = new URI("file:///path/to/repo/projectName");
+        URI fileUri = new URI("file:///path/to/repo/git/projectName/projectName-slug.git");
         LocalVCRepositoryUri uri = new LocalVCRepositoryUri(fileUri.toString());
-        assertThat(uri.folderNameForRepositoryUri()).isEqualTo("projectName");
+        assertThat(uri.folderNameForRepositoryUri()).isEqualTo("projectName-slug.git");
     }
 
     @Test
     void testFolderNameForRepositoryUriWithHttpUri() throws URISyntaxException {
-        URI httpUri = new URI("https://example.com/git/projectName.git");
+        URI httpUri = new URI("https://example.com/git/projectName/projectName-slug.git");
         LocalVCRepositoryUri uri = new LocalVCRepositoryUri(httpUri.toString());
-        assertThat(uri.folderNameForRepositoryUri()).isEqualTo("projectName");
+        assertThat(uri.folderNameForRepositoryUri()).isEqualTo("projectName/projectName-slug");
     }
 
     @Test
     void testEqualsAndHashCodeAndToString() throws URISyntaxException {
-        URI uri1 = new URI("https://example.com/git/projectName.git");
-        URI uri2 = new URI("https://example.com/git/projectName.git");
+        URI uri1 = new URI("https://example.com/git/projectName/projectName-slug.git");
+        URI uri2 = new URI("https://example.com/git/projectName/projectName-slug.git");
         LocalVCRepositoryUri vcsUri1 = new LocalVCRepositoryUri(uri1.toString());
         LocalVCRepositoryUri vcsUri2 = new LocalVCRepositoryUri(uri2.toString());
 
         assertThat(vcsUri1).isEqualTo(vcsUri2);
         assertThat(vcsUri1.hashCode()).isEqualTo(vcsUri2.hashCode());
-        assertThat(vcsUri1.toString()).isEqualTo("https://example.com/git/projectName.git");
+        assertThat(vcsUri1.toString()).isEqualTo("https://example.com/git/projectName/projectName-slug.git");
     }
 
     @Test
@@ -216,14 +217,14 @@ class RepositoryUriTest {
 
     @Test
     void testRepositorySlug() throws URISyntaxException {
-        URI uri = new URI("https://example.com/git/projectName/project-slug.git");
+        URI uri = new URI("https://example.com/git/projectName/projectName-projectslug.git");
         LocalVCRepositoryUri vcsUri = new LocalVCRepositoryUri(uri.toString());
-        assertThat(vcsUri.repositorySlug()).isEqualTo("project-slug");
+        assertThat(vcsUri.repositorySlug()).isEqualTo("projectName-projectslug");
     }
 
     @Test
     void testRepositoryNameAndProjectKey() throws URISyntaxException {
-        URI uri = new URI("https://example.com/git/projectKey/repositorySlug.git");
+        URI uri = new URI("https://example.com/git/projectKey/projectKey-repositorySlug.git");
         LocalVCRepositoryUri vcsUri = new LocalVCRepositoryUri(uri.toString());
         assertThat(vcsUri.repositoryNameWithoutProjectKey()).isEqualTo("repositoryslug");  // The result is in lowercase
     }
