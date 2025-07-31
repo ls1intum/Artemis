@@ -287,7 +287,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
         // update the associated student score should trigger the entity listener and update the student score
-        originalResult.setRated(null);
+        originalResult.setRated(false);
         Result updatedResult = resultRepository.saveAndFlush(originalResult);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, updatedResult.getId(), updatedResult.getScore(), null, null);
     }
