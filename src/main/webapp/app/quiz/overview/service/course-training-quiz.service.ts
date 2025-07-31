@@ -16,10 +16,10 @@ export class CourseTrainingQuizService {
      * @param courseId
      */
     getQuizQuestions(courseId: number): Observable<QuizQuestion[]> {
-        return this.http.get<QuizQuestion[]>(`api/quiz/courses/${courseId}/training/quiz`);
+        return this.http.get<QuizQuestion[]>(`api/quiz/courses/${courseId}/training/questions`);
     }
 
     submitForTraining(answer: QuizTrainingAnswer, questionId: number, courseId: number): Observable<HttpResponse<SubmittedAnswerAfterEvaluation>> {
-        return this.http.post<SubmittedAnswerAfterEvaluation>(`api/quiz/courses/${courseId}/training/${questionId}/quiz`, answer, { observe: 'response' });
+        return this.http.post<SubmittedAnswerAfterEvaluation>(`api/quiz/courses/${courseId}/training/${questionId}/submit`, answer, { observe: 'response' });
     }
 }

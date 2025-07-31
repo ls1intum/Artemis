@@ -31,15 +31,15 @@ public class QuizTrainingService {
     /**
      * Submits a quiz question for training mode, calculates scores and creates a result.
      *
-     * @param quizQuestionId  the id of the quiz question being submitted
-     * @param userId          the id of the user who is submitting the quiz
-     * @param submittedAnswer the answer submitted by the user
-     * @param answeredAt      the time when the question was answered
+     * @param quizQuestionId         the id of the quiz question being submitted
+     * @param userId                 the id of the user who is submitting the quiz
+     * @param studentSubmittedAnswer the answer submitted by the user
+     * @param answeredAt             the time when the question was answered
      * @return a DTO containing the submitted answer after the evaluation
      */
-    public SubmittedAnswerAfterEvaluationDTO submitForTraining(Long quizQuestionId, Long userId, QuizTrainingAnswerDTO submittedAnswer, ZonedDateTime answeredAt) {
+    public SubmittedAnswerAfterEvaluationDTO submitForTraining(Long quizQuestionId, Long userId, QuizTrainingAnswerDTO studentSubmittedAnswer, ZonedDateTime answeredAt) {
         QuizQuestion quizQuestion = quizQuestionRepository.findByIdElseThrow(quizQuestionId);
-        SubmittedAnswer answer = submittedAnswer.getSubmittedAnswer();
+        SubmittedAnswer answer = studentSubmittedAnswer.submittedAnswer();
 
         double score = quizQuestion.scoreForAnswer(answer);
 

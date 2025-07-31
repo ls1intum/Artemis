@@ -66,7 +66,7 @@ public class QuizTrainingResource {
      * @param courseId the id of the course whose quiz questions should be retrieved
      * @return a set of quiz questions from the specified course that are released for practice
      */
-    @GetMapping("courses/{courseId}/training/quiz")
+    @GetMapping("courses/{courseId}/training/questions")
     @EnforceAtLeastStudent
     public ResponseEntity<List<QuizQuestionWithSolutionDTO>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
@@ -80,14 +80,14 @@ public class QuizTrainingResource {
     }
 
     /**
-     * POST /exercises/:exerciseId/training/:quizQuestionId/quiz: Submit a new quizQuestion for training mode.
+     * POST /exercises/:courseId/training/:quizQuestionId/submit: Submit a new quizQuestion for training mode.
      *
      * @param courseId        the id of the course containing the quiz question
      * @param quizQuestionId  the id of the quiz question which is being answered
      * @param submittedAnswer the submitted answer by the user for the quiz question
      * @return the ResponseEntity with status 200 (OK) and the result of the evaluated submitted answer as its body
      */
-    @PostMapping("courses/{courseId}/training/{quizQuestionId}/quiz")
+    @PostMapping("courses/{courseId}/training/{quizQuestionId}/submit")
     @EnforceAtLeastStudent
     public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable Long courseId, @PathVariable Long quizQuestionId,
             @Valid @RequestBody QuizTrainingAnswerDTO submittedAnswer) {
