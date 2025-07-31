@@ -32,6 +32,7 @@ import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profil
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { HttpHeaders } from '@angular/common/http';
 
 // Mock the diff.utils module to avoid Monaco Editor issues in tests
 jest.mock('app/programming/shared/utils/diff.utils', () => ({
@@ -362,7 +363,16 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     it('should error on generate structure oracle', () => {
         const alertSpy = jest.spyOn(alertService, 'addAlert');
-        jest.spyOn(exerciseService, 'generateStructureOracle').mockReturnValue(throwError({ headers: { get: () => 'error' } }));
+        jest.spyOn(exerciseService, 'generateStructureOracle').mockReturnValue(
+            throwError(
+                () =>
+                    new HttpErrorResponse({
+                        status: 500,
+                        error: { message: 'Some error occurred.' },
+                        headers: new HttpHeaders({ 'X-artemisApp-alert': 'error' }),
+                    }),
+            ),
+        );
         comp.programmingExercise = mockProgrammingExercise;
         comp.generateStructureOracle();
         expect(alertSpy).toHaveBeenCalledWith({

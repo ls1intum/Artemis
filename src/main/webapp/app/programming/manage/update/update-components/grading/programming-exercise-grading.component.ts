@@ -16,8 +16,6 @@ import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/li
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
-import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -32,8 +30,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         TranslateDirective,
         IncludedInOverallScorePickerComponent,
         FormsModule,
-        CustomMinDirective,
-        CustomMaxDirective,
         FaIconComponent,
         NgbTooltip,
         SubmissionPolicyUpdateComponent,
