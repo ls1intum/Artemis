@@ -467,14 +467,14 @@ describe('CourseOverviewComponent', () => {
         const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'addAlert');
 
-        component.loadCourse().subscribe(
-            () => {
+        component.loadCourse().subscribe({
+            next: () => {
                 throw new Error('should not happen');
             },
-            (error) => {
+            error: (error) => {
                 expect(error).toBeDefined();
             },
-        );
+        });
 
         expect(alertServiceSpy).toHaveBeenCalled();
     });
@@ -494,15 +494,14 @@ describe('CourseOverviewComponent', () => {
     it('should throw for unexpected registration responses from the server', fakeAsync(() => {
         findOneForRegistrationStub.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
-        // test that canRegisterForCourse throws
-        component.canRegisterForCourse().subscribe(
-            () => {
+        component.canRegisterForCourse().subscribe({
+            next: () => {
                 throw new Error('should not be called');
             },
-            (error) => {
+            error: (error) => {
                 expect(error).toEqual(new HttpResponse({ status: 404 }));
             },
-        );
+        });
 
         tick();
     }));

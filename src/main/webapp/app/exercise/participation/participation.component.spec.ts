@@ -288,7 +288,7 @@ describe('ParticipationComponent', () => {
 
         const deleteStub = jest.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse()));
 
-        component.deleteParticipation(1, {});
+        component.deleteParticipation(1);
         tick();
 
         expect(deleteStub).toHaveBeenCalledOnce();
@@ -475,7 +475,7 @@ describe('ParticipationComponent', () => {
                 error: { errorKey: 'invalid.presentations.maxNumberOfPresentationsExceeded' },
                 status: 400,
             });
-            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(throwError(errorResponse));
+            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(throwError(() => errorResponse));
 
             component.exercise = exercise3;
             component.gradeStepsDTO = gradingScaleWithGradedPresentation;
