@@ -80,7 +80,7 @@ public class QuizTrainingResource {
     }
 
     /**
-     * POST /exercises/:courseId/training/:quizQuestionId/submit: Submit a new quizQuestion for training mode.
+     * POST /courses/:courseId/training/:quizQuestionId/submit: Submit a new quizQuestion for training mode.
      *
      * @param courseId        the id of the course containing the quiz question
      * @param quizQuestionId  the id of the quiz question which is being answered
