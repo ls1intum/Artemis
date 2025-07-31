@@ -45,7 +45,6 @@ jobs:
           echo "Complex beans found: $complex_beans (max allowed: $max_complex_beans)"
           echo ""
 
-          # Check thresholds
           violations=0
           large_class_violation=false
           complex_bean_violation=false
@@ -71,7 +70,6 @@ jobs:
             echo "::error::Code quality check failed"
             echo ""
 
-            # Show detailed violating classes only when failing
             if [ "$large_class_violation" = true ]; then
               echo "VIOLATING LARGE CLASSES ($large_classes classes):"
               echo "------------------------------------------------"
