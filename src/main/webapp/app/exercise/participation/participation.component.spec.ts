@@ -29,6 +29,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
+import { By } from '@angular/platform-browser';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -78,6 +80,42 @@ describe('ParticipationComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    describe('cleanup button', () => {
+        it('should be displayed when not localCI', () => {
+            const profileServiceSpy = jest.spyOn(component['profileService'], 'isProfileActive').mockReturnValue(false);
+
+            component.isLoading = false;
+            // Set up the exercise as a programming exercise with the required conditions
+            component.exercise = {
+                ...exercise,
+                type: ExerciseType.PROGRAMMING,
+                isAtLeastInstructor: true,
+                teamMode: false,
+            };
+            component.isLocalCIEnabled = false;
+
+            // Mock a participation with a buildPlanId
+            const participation = {
+                id: 1,
+                buildPlanId: 'buildPlan123',
+                student: { name: 'Student Name' },
+            };
+            component.participations = [participation];
+
+            componentFixture.detectChanges();
+
+            // const cleanupButton = componentFixture.debugElement.query(
+            //     By.css('button[jhiDeleteButton][deleteQuestion="artemisApp.participation.cleanupBuildPlan.question"]')
+            // )?.nativeElement;
+            const cleanupButton = componentFixture.debugElement.query(By.css('#test'))?.nativeElement;
+
+            expect(profileServiceSpy).toHaveBeenCalledOnce();
+            expect(profileServiceSpy).toHaveBeenCalledWith(PROFILE_LOCALCI);
+            expect(cleanupButton).toBeTruthy();
+            expect(cleanupButton.querySelector('fa-icon')).toBeTruthy();
+        });
     });
 
     it('should initialize with exerciseId from route', () => {
