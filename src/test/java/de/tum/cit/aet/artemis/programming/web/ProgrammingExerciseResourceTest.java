@@ -143,9 +143,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         var files = java.util.Map.of("test.txt", "test content");
         byte[] mockZipData = createTestZipFile(files);
         InputStreamResource mockZipResource = createMockZipResource(mockZipData, "mock-repo.zip");
-        doReturn(mockZipResource).when(gitService).exportRepositorySnapshot(any(), anyString());
+        doReturn(mockZipResource).when(gitService).exportRepositoryWithFullHistoryToMemory(any(), anyString());
 
-        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-snapshot/" + RepositoryType.TEMPLATE.name(),
+        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);
 
         assertThat(result).isNotNull();
@@ -233,9 +233,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         InputStreamResource mockZipResource = createMockZipResource(mockZipData, "mock-repo-with-git.zip");
         doReturn(mockZipResource).when(gitService).exportRepositoryWithFullHistoryToMemory(any(), anyString());
 
-        byte[] result = request.get(
-                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-with-full-history/" + RepositoryType.TEMPLATE.name(), HttpStatus.OK,
-                byte[].class);
+        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + RepositoryType.TEMPLATE.name(),
+                HttpStatus.OK, byte[].class);
 
         assertThat(result).isNotNull();
         assertThat(result.length).isGreaterThan(0);
