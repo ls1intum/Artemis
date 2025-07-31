@@ -110,8 +110,7 @@
                         <button (click)="createAssignmentParticipation()" [disabled]="isCreateAssignmentRepoDisabled" class="btn btn-primary me-2">
                             @if (loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
                                 <fa-icon [icon]="faPlus" class="text-white me-2" />
-                            }
-                            @if (loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
+                            } @else {
                                 <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
                             }
                             <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo"></span>
