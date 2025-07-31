@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { ArtifactLocation } from './artifactLocation';
 
 
 /**
@@ -29,6 +30,10 @@ export interface ConsistencyIssue {
      * Suggested fix for the issue
      */
     suggestedFix: string;
+    /**
+     * Related locations across artifacts
+     */
+    relatedLocations: Array<ArtifactLocation>;
 }
 export namespace ConsistencyIssue {
     export const SeverityEnum = {

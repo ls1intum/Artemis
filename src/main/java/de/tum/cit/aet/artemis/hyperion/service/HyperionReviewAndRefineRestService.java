@@ -19,15 +19,20 @@ import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.client.api.ReviewAndRefineApi;
 import de.tum.cit.aet.artemis.hyperion.client.model.ConsistencyCheckRequest;
 import de.tum.cit.aet.artemis.hyperion.client.model.ConsistencyCheckResponse;
+import de.tum.cit.aet.artemis.hyperion.client.model.ConsistencyIssueSeverity;
 import de.tum.cit.aet.artemis.hyperion.client.model.Repository;
 import de.tum.cit.aet.artemis.hyperion.client.model.RepositoryFile;
 import de.tum.cit.aet.artemis.hyperion.client.model.RewriteProblemStatementRequest;
 import de.tum.cit.aet.artemis.hyperion.client.model.RewriteProblemStatementResponse;
+import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ArtifactType;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.Severity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -78,7 +83,9 @@ public class HyperionReviewAndRefineRestService {
 
             // Convert to DTO
             List<ConsistencyIssueDTO> issueDTOs = response.getIssues().stream()
-                    .map(issue -> new ConsistencyIssueDTO(issue.getSeverity().getValue(), issue.getCategory(), issue.getDescription(), issue.getSuggestedFix()))
+                    .map(issue -> new ConsistencyIssueDTO(mapHyperionSeverity(issue.getSeverity()), issue.getCategory(), issue.getDescription(), issue.getSuggestedFix(),
+                            issue.getRelatedLocations().stream().map(location -> new ArtifactLocationDTO(mapHyperionArtifactType(location.getType()), location.getFilePath(),
+                                    location.getStartLine(), location.getEndLine())).collect(Collectors.toList())))
                     .collect(Collectors.toList());
 
             boolean hasIssues = !issueDTOs.isEmpty();
@@ -188,7 +195,7 @@ public class HyperionReviewAndRefineRestService {
      * @return the corresponding Hyperion API programming language enumeration
      */
     private de.tum.cit.aet.artemis.hyperion.client.model.AppCreationStepsStep8ReviewAndRefineConsistencyCheckModelsProgrammingLanguage mapProgrammingLanguage(
-            de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage artemisLanguage) {
+            ProgrammingLanguage artemisLanguage) {
         return switch (artemisLanguage) {
             case JAVA -> de.tum.cit.aet.artemis.hyperion.client.model.AppCreationStepsStep8ReviewAndRefineConsistencyCheckModelsProgrammingLanguage.JAVA;
             case PYTHON -> de.tum.cit.aet.artemis.hyperion.client.model.AppCreationStepsStep8ReviewAndRefineConsistencyCheckModelsProgrammingLanguage.PYTHON;
@@ -290,5 +297,33 @@ public class HyperionReviewAndRefineRestService {
             log.error("Could not get repository content from {}", repositoryUri, e);
             return java.util.Map.of();
         }
+    }
+
+    /**
+     * Maps Hyperion's ArtifactType enum to Artemis's ArtifactType enum.
+     *
+     * @param hyperionType the artifact type from Hyperion
+     * @return the corresponding Artemis artifact type
+     */
+    private ArtifactType mapHyperionArtifactType(de.tum.cit.aet.artemis.hyperion.client.model.ArtifactType hyperionType) {
+        return switch (hyperionType) {
+            case PROBLEM_STATEMENT -> ArtifactType.PROBLEM_STATEMENT;
+            case TEMPLATE_REPOSITORY -> ArtifactType.TEMPLATE_REPOSITORY;
+            case SOLUTION_REPOSITORY -> ArtifactType.SOLUTION_REPOSITORY;
+        };
+    }
+
+    /**
+     * Maps Hyperion's ConsistencyIssueSeverity enum to Artemis's Severity enum.
+     *
+     * @param hyperionSeverity the severity from Hyperion
+     * @return the corresponding Artemis severity
+     */
+    private Severity mapHyperionSeverity(ConsistencyIssueSeverity hyperionSeverity) {
+        return switch (hyperionSeverity) {
+            case LOW -> Severity.LOW;
+            case MEDIUM -> Severity.MEDIUM;
+            case HIGH -> Severity.HIGH;
+        };
     }
 }

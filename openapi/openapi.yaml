@@ -425,6 +425,22 @@ components:
         endDate: {type: string, format: date-time}
         reason: {type: string}
       required: [endDate, startDate]
+    ArtifactLocation:
+      type: object
+      description: Location information for artifacts
+      properties:
+        type:
+          type: string
+          description: Type of artifact
+          enum: [PROBLEM_STATEMENT, TEMPLATE_REPOSITORY, SOLUTION_REPOSITORY]
+          example: PROBLEM_STATEMENT
+        filePath: {type: string, description: 'Path to file, empty or problem_statement.md
+            for problem statement', example: src/main/java/Main.java}
+        startLine: {type: integer, format: int32, description: Start line number (1-based),
+          example: 10}
+        endLine: {type: integer, format: int32, description: End line number (1-based),
+          example: 15}
+      required: [endLine, filePath, startLine, type]
     ConsistencyIssue:
       type: object
       description: Individual consistency issue details
@@ -439,7 +455,11 @@ components:
           example: Problem statement does not match test cases}
         suggestedFix: {type: string, description: Suggested fix for the issue, example: Update
             problem statement to clarify expected behavior}
-      required: [category, description, severity, suggestedFix]
+        relatedLocations:
+          type: array
+          description: Related locations across artifacts
+          items: {$ref: '#/components/schemas/ArtifactLocation'}
+      required: [category, description, relatedLocations, severity, suggestedFix]
     TutorialGroupExport:
       type: object
       properties:

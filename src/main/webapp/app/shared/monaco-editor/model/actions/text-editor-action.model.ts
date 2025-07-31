@@ -12,6 +12,8 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { WritableSignal } from '@angular/core';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 export abstract class TextEditorAction implements Disposable {
@@ -341,23 +343,130 @@ export abstract class TextEditorAction implements Disposable {
         if (text) {
             artemisIntelligence.consistencyCheck(exerciseId).subscribe({
                 next: (response: ConsistencyCheckResponse) => {
-                    // Format the response as markdown
-                    let markdownResult = `# Consistency Check Results\n\n`;
-                    markdownResult += `**Summary:** ${response.summary}\n\n`;
-
-                    if (response.hasIssues && response.issues.length > 0) {
-                        markdownResult += `## Issues Found (${response.issues.length})\n\n`;
-                        response.issues.forEach((issue, index) => {
-                            markdownResult += `### Issue ${index + 1}\n`;
-                            markdownResult += `${issue.description}\n\n`;
-                        });
-                    } else {
-                        markdownResult += `✅ No consistency issues found!\n\n`;
-                    }
-
+                    const markdownResult = this.formatConsistencyCheckResults(response);
                     resultSignal.set(htmlForMarkdown(markdownResult));
                 },
             });
+        }
+    }
+
+    /**
+     * Formats consistency check results into well-structured markdown for instructor review.
+     */
+    private formatConsistencyCheckResults(response: ConsistencyCheckResponse): string {
+        let result = `**${response.summary}**\n\n`;
+
+        if (!response.hasIssues || !response.issues.length) {
+            return result + `**No consistency issues found!**\n\n`;
+        }
+
+        // Group issues by category for better organization
+        const issuesByCategory = this.groupIssuesByCategory(response.issues);
+
+        // Add summary statistics
+        const severityCount = this.getSeverityCount(response.issues);
+        result += `**${response.issues.length} issues found:** `;
+        if (severityCount[ConsistencyIssue.SeverityEnum.High] > 0) result += `${severityCount[ConsistencyIssue.SeverityEnum.High]} HIGH `;
+        if (severityCount[ConsistencyIssue.SeverityEnum.Medium] > 0) result += `${severityCount[ConsistencyIssue.SeverityEnum.Medium]} MEDIUM `;
+        if (severityCount[ConsistencyIssue.SeverityEnum.Low] > 0) result += `${severityCount[ConsistencyIssue.SeverityEnum.Low]} LOW`;
+        result += `\n\n`;
+
+        // Format issues by category
+        Object.entries(issuesByCategory).forEach(([category, issues]) => {
+            result += `**${category}**\n\n`;
+
+            issues.forEach((issue) => {
+                const locationInfo = this.formatLocationInfo(issue.relatedLocations);
+
+                result += `**[${issue.severity}]** **${locationInfo}**\n`;
+                result += `   ${issue.description}\n`;
+                if (issue.suggestedFix) {
+                    result += `   → *${issue.suggestedFix}*\n`;
+                }
+                result += `\n`;
+            });
+        });
+
+        return result;
+    }
+
+    private groupIssuesByCategory(issues: ConsistencyIssue[]): Record<string, ConsistencyIssue[]> {
+        return issues.reduce(
+            (groups, issue) => {
+                const category = issue.category || 'General';
+                if (!groups[category]) {
+                    groups[category] = [];
+                }
+                groups[category].push(issue);
+                return groups;
+            },
+            {} as Record<string, ConsistencyIssue[]>,
+        );
+    }
+
+    private getSeverityCount(issues: ConsistencyIssue[]): Record<string, number> {
+        return issues.reduce(
+            (count, issue) => {
+                const severityKey = issue.severity;
+                count[severityKey] = (count[severityKey] || 0) + 1;
+                return count;
+            },
+            {} as Record<string, number>,
+        );
+    }
+
+    private formatLocationInfo(relatedLocations: ArtifactLocation[]): string {
+        if (!relatedLocations || relatedLocations.length === 0) {
+            return 'Exercise';
+        }
+
+        // Use the first location as primary (most specific/relevant)
+        const primaryLocation = relatedLocations[0];
+
+        // Format the artifact type for display
+        const artifactType = this.formatArtifactType(primaryLocation.type);
+
+        // Format file path and line range
+        let locationStr = '';
+
+        if (primaryLocation.filePath && primaryLocation.filePath.trim() !== '') {
+            // Extract just the filename if it's a full path
+            const fileName = primaryLocation.filePath.split('/').pop() || primaryLocation.filePath;
+            locationStr = fileName;
+        } else {
+            // No specific file, use artifact type
+            locationStr = artifactType;
+        }
+
+        // Add line range if available
+        if (primaryLocation.startLine && primaryLocation.endLine) {
+            if (primaryLocation.startLine === primaryLocation.endLine) {
+                locationStr += `:L${primaryLocation.startLine}`;
+            } else {
+                locationStr += `:L${primaryLocation.startLine}-${primaryLocation.endLine}`;
+            }
+        } else if (primaryLocation.startLine) {
+            locationStr += `:L${primaryLocation.startLine}`;
+        }
+
+        // If there are multiple locations, indicate that
+        if (relatedLocations.length > 1) {
+            locationStr += ` (+${relatedLocations.length - 1} more)`;
+        }
+
+        return locationStr;
+    }
+
+    private formatArtifactType(type: ArtifactLocation.TypeEnum): string {
+        switch (type) {
+            case ArtifactLocation.TypeEnum.ProblemStatement:
+                return 'Problem Statement';
+            case ArtifactLocation.TypeEnum.TemplateRepository:
+                return 'Template';
+            case ArtifactLocation.TypeEnum.SolutionRepository:
+                return 'Solution';
+            default:
+                return type;
         }
     }
 }
