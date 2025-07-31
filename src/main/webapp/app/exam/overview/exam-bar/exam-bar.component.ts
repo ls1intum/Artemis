@@ -19,7 +19,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     styleUrl: './exam-bar.component.scss',
 })
 export class ExamBarComponent implements AfterViewInit, OnInit {
-    private elementRef = inject(ElementRef);
+    private readonly elementRef = inject(ElementRef);
+
+    protected readonly faDoorClosed = faDoorClosed;
 
     @Output() onExamHandInEarly = new EventEmitter<void>();
     @Output() examAboutToEnd = new EventEmitter<void>();
@@ -34,11 +36,10 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
     @Input() studentExam: StudentExam;
     @Input() examStartDate: dayjs.Dayjs;
 
-    readonly faDoorClosed = faDoorClosed;
     criticalTime = dayjs.duration(5, 'minutes');
     criticalTimeEndView = dayjs.duration(30, 'seconds');
     testExam: boolean;
-    testRun: boolean;
+    isTestRun: boolean;
 
     private previousHeight: number;
     examTitle: string;
@@ -48,7 +49,7 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
         this.examTitle = this.exam.title ?? '';
         this.exercises = this.studentExam.exercises ?? [];
         this.testExam = this.exam.testExam ?? false;
-        this.testRun = this.studentExam.testRun ?? false;
+        this.isTestRun = this.studentExam.testRun ?? false;
     }
 
     /**
