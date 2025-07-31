@@ -163,9 +163,45 @@ public class QuizQuestionProgressService {
             quizQuestionProgressRepository.saveAll(progressToSave);
         }
         catch (DataIntegrityViolationException e) {
-            throw new IllegalStateException("Error while saving quiz question progress. Duplicate entry for userId and quizQuestionId.", e);
+            handleDataIntegrityViolation(answeredQuestions, lastAnsweredAt, userId);
         }
 
+    }
+
+    /**
+     * The function handles the DataIntegrityViolationException and tries to update the progress instead of saving it.
+     *
+     * @param answeredQuestions Set of quiz questions that were answered
+     * @param lastAnsweredAt    Time when the question was last answered
+     * @param userId            The ID of the user for the participation
+     */
+    private void handleDataIntegrityViolation(Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions, ZonedDateTime lastAnsweredAt, Long userId) {
+        Set<Long> questionIdsToUpdate = answeredQuestions.keySet().stream().map(QuizQuestion::getId).collect(Collectors.toSet());
+        Set<QuizQuestionProgress> currentProgressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIdsToUpdate);
+        Map<Long, QuizQuestionProgress> currentProgressMap = currentProgressList.stream().collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> progress));
+
+        List<QuizQuestionProgress> progressToUpdate = answeredQuestions.entrySet().stream().map(entry -> {
+            QuizQuestion question = entry.getKey();
+            QuizQuestionProgressData data = entry.getValue();
+            QuizQuestionProgress progress = currentProgressMap.get(question.getId());
+
+            if (progress == null) {
+                progress = new QuizQuestionProgress();
+                progress.setUserId(userId);
+                progress.setQuizQuestionId(question.getId());
+            }
+
+            progress.setProgressJson(data);
+            progress.setLastAnsweredAt(lastAnsweredAt);
+            return progress;
+        }).toList();
+
+        try {
+            quizQuestionProgressRepository.saveAll(progressToUpdate);
+        }
+        catch (DataIntegrityViolationException retryException) {
+            throw new IllegalStateException("Error while saving quiz question progress after retry. Persistent duplicate entry issue.", retryException);
+        }
     }
 
     /**
