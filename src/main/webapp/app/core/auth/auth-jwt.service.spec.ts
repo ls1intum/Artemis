@@ -2,11 +2,18 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { provideHttpClient } from '@angular/common/http';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 describe('AuthServerProvider', () => {
     let service: AuthServerProvider;
+    let localStorageService: LocalStorageService;
+    let sessionStorageService: SessionStorageService;
     let httpMock: HttpTestingController;
+    let sessionStorageClearSpy: jest.SpyInstance;
+    let localStorageClearSpy: jest.SpyInstance;
 
+    const tokenKey = 'authenticationToken';
     const storedToken = 'test token with some length';
     const respPayload = { id_token: storedToken };
 
@@ -17,7 +24,12 @@ describe('AuthServerProvider', () => {
             .compileComponents()
             .then(() => {
                 service = TestBed.inject(AuthServerProvider);
+                localStorageService = TestBed.inject(LocalStorageService);
+                sessionStorageService = TestBed.inject(SessionStorageService);
                 httpMock = TestBed.inject(HttpTestingController);
+
+                sessionStorageClearSpy = jest.spyOn(sessionStorageService, 'clear');
+                localStorageClearSpy = jest.spyOn(localStorageService, 'clear');
             });
     });
 
@@ -71,4 +83,18 @@ describe('AuthServerProvider', () => {
             tick();
         }));
     });
+
+    it('should clear caches', fakeAsync(() => {
+        localStorageService.store(tokenKey, storedToken);
+        sessionStorageService.store(tokenKey, storedToken);
+
+        service.clearCaches().subscribe((resp) => {
+            expect(resp).toBeUndefined();
+            expect(sessionStorageClearSpy).toHaveBeenCalledOnce();
+            expect(sessionStorageClearSpy).toHaveBeenCalledWith();
+            expect(localStorageClearSpy).toHaveBeenCalledOnce();
+            expect(localStorageClearSpy).toHaveBeenCalledWith();
+        });
+        tick();
+    }));
 });
