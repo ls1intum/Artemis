@@ -205,7 +205,6 @@ describe('TextExercise Management Update Component', () => {
             route.data = of({ textExercise });
             route.snapshot = {
                 paramMap: {
-                    // eslint-disable-next-line no-unused-vars
                     get: (key: string) => 'mockValue',
                 },
             } as ActivatedRouteSnapshot;

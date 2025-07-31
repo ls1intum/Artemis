@@ -79,7 +79,6 @@ describe('ExamAssessmentButtons', () => {
             provide: ActivatedRoute,
             useValue: {
                 params: {
-                    // eslint-disable-next-line no-unused-vars
                     subscribe: (fn: (value: Params) => void) =>
                         fn({
                             courseId: 1,

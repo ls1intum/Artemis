@@ -96,7 +96,6 @@ describe('LectureUnitManagementComponent', () => {
                     useValue: {
                         parent: {
                             params: {
-                                // eslint-disable-next-line no-unused-vars
                                 subscribe: (fn_1: (value: Params) => void) =>
                                     fn_1({
                                         lectureId: 1,

@@ -338,7 +338,6 @@ examples.forEach((activeConversation) => {
             });
         });
 
-        // eslint-disable-next-line no-unused-vars
         function genericConfirmationDialogTest(method: (event: MouseEvent) => void) {
             const modalService = TestBed.inject(NgbModal);
             const mockModalRef = {

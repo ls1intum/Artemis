@@ -18,7 +18,7 @@ describe('TutorialGroupService', () => {
     let tutorialGroupSessionService: jest.Mocked<TutorialGroupSessionService>;
     // following service is being used therefore the suppression is being used
     // @ts-expect-error
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let tutorialGroupsConfigurationService: jest.Mocked<TutorialGroupsConfigurationService>;
     let tutorialGroupApiService: jest.Mocked<TutorialGroupApiService>;
     let elemDefault: TutorialGroup;

@@ -104,7 +104,6 @@ describe('ExamDetailComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         data: {
-                            // eslint-disable-next-line no-unused-vars
                             subscribe: (fn: (value: Data) => void) =>
                                 fn({
                                     exam,

@@ -223,7 +223,6 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should attach the result to participation if the participation has undefined for results value', () => {
-        // eslint-disable-next-line no-unused-vars
         const { submissions, ...participationWithoutResult } = participation;
 
         participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithoutResult.id!, true);

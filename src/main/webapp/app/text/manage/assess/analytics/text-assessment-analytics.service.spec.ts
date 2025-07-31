@@ -26,7 +26,6 @@ describe('TextAssessmentAnalytics Service', () => {
     const route = (): ActivatedRoute =>
         ({
             params: {
-                // eslint-disable-next-line no-unused-vars
                 subscribe: (fn: (value: Params) => void) =>
                     fn({
                         courseId: 1,

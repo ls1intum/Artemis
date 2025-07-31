@@ -23,9 +23,9 @@ describe('TutorialGroupSessionForm', () => {
     const validStartTime = '12:00:00';
     const validEndTime = '13:00:00';
     const validLocation = 'Garching';
-    // eslint-disable-next-line no-unused-vars
+
     let clickSubmit: (expectSubmitEvent: boolean) => void;
-    // eslint-disable-next-line no-unused-vars
+
     let testFormIsInvalidOnMissingRequiredProperty: (controlName: string) => void;
 
     beforeEach(() => {
