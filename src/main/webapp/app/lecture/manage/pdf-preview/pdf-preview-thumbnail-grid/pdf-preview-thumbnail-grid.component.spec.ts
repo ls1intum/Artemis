@@ -853,7 +853,6 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 1: existingCanvas2,
                 length: 2,
                 item: (index: number) => (index === 0 ? existingCanvas1 : existingCanvas2),
-
                 forEach: function (callback: (element: Element, index: number, list: NodeListOf<Element>) => void) {
                     callback(existingCanvas1, 0, this as unknown as NodeListOf<Element>);
                     callback(existingCanvas2, 1, this as unknown as NodeListOf<Element>);

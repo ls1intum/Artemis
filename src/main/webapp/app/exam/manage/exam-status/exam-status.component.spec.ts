@@ -18,7 +18,6 @@ import { input } from '@angular/core';
 
 enum DateOffsetType {
     HOURS = 'hours',
-
     DAYS = 'days',
 }
 
