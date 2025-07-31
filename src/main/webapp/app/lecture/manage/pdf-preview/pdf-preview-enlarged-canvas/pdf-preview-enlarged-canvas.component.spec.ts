@@ -1,6 +1,5 @@
 import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-enlarged-canvas/pdf-preview-enlarged-canvas.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpClientModule } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -27,7 +26,7 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [PdfPreviewEnlargedCanvasComponent, HttpClientModule],
+            imports: [PdfPreviewEnlargedCanvasComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: { data: of({}) } },
                 { provide: AlertService, useValue: { error: jest.fn() } },

@@ -7,15 +7,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CourseDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
@@ -32,8 +33,6 @@ import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 @Lazy
 public class CourseAdminService {
 
-    private static final Logger log = LoggerFactory.getLogger(CourseAdminService.class);
-
     private final BuildJobRepository buildJobRepository;
 
     private final PostRepository postRepository;
@@ -46,14 +45,21 @@ public class CourseAdminService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final UserRepository userRepository;
+
+    private final CourseRepository courseRepository;
+
     public CourseAdminService(BuildJobRepository buildJobRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<ExamMetricsApi> examMetricsApi, ExerciseRepository exerciseRepository) {
+            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<ExamMetricsApi> examMetricsApi, ExerciseRepository exerciseRepository, UserRepository userRepository,
+            CourseRepository courseRepository) {
         this.buildJobRepository = buildJobRepository;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.examMetricsApi = examMetricsApi;
         this.exerciseRepository = exerciseRepository;
+        this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -63,6 +69,11 @@ public class CourseAdminService {
      * @return the course deletion summary
      */
     public CourseDeletionSummaryDTO getDeletionSummary(long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
+        long numberOfTutors = userRepository.countUserInGroup(course.getTeachingAssistantGroupName());
+        long numberOfEditors = userRepository.countUserInGroup(course.getEditorGroupName());
+        long numberOfInstructors = userRepository.countUserInGroup(course.getInstructorGroupName());
 
         long numberOfBuilds = buildJobRepository.countBuildJobsByCourseId(courseId);
 
@@ -78,8 +89,8 @@ public class CourseAdminService {
         long numberFileUploadExercises = countByExerciseType.get(ExerciseType.FILE_UPLOAD);
         long numberModelingExercises = countByExerciseType.get(ExerciseType.MODELING);
 
-        return new CourseDeletionSummaryDTO(numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts, numberProgrammingExercises, numberTextExercises,
-                numberFileUploadExercises, numberModelingExercises, numberQuizExercises, numberExams, numberLectures);
+        return new CourseDeletionSummaryDTO(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors, numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts,
+                numberProgrammingExercises, numberTextExercises, numberFileUploadExercises, numberModelingExercises, numberQuizExercises, numberExams, numberLectures);
     }
 
     /**

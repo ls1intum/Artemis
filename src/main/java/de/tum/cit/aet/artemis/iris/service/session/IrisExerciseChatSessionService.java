@@ -108,20 +108,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     }
 
     /**
-     * Creates a new Iris session for the given exercise and user.
-     *
-     * @param exercise The exercise the session belongs to
-     * @param user     The user the session belongs to
-     * @return The created session
-     */
-    // TODO: This function is only used in tests. Replace with createSession once the tests are refactored.
-    @Deprecated
-    public IrisProgrammingExerciseChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
-        checkIfExamExercise(exercise);
-        return irisSessionRepository.save(new IrisProgrammingExerciseChatSession(exercise, user));
-    }
-
-    /**
      * Checks if the user has access to the Iris session.
      * A user has access if they have access to the exercise and the session belongs to them.
      *

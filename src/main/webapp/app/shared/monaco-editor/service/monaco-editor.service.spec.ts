@@ -40,17 +40,17 @@ describe('MonacoEditorService', () => {
     });
 
     it('should correctly handle themes', () => {
-        TestBed.flushEffects();
+        TestBed.tick();
         // Initialization: The editor should be in light mode since that is what we initialized the themeSubject with
         expect(setThemeSpy).toHaveBeenCalledExactlyOnceWith(MONACO_LIGHT_THEME_DEFINITION.id);
         // Switch to dark theme
         themeService.applyThemePreference(Theme.DARK);
-        TestBed.flushEffects();
+        TestBed.tick();
         expect(setThemeSpy).toHaveBeenCalledTimes(2);
         expect(setThemeSpy).toHaveBeenNthCalledWith(2, MONACO_DARK_THEME_DEFINITION.id);
         // Switch back to light theme
         themeService.applyThemePreference(Theme.LIGHT);
-        TestBed.flushEffects();
+        TestBed.tick();
         expect(setThemeSpy).toHaveBeenCalledTimes(3);
         expect(setThemeSpy).toHaveBeenNthCalledWith(3, MONACO_LIGHT_THEME_DEFINITION.id);
     });

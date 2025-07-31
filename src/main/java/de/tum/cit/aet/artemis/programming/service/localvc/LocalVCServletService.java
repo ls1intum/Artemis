@@ -5,7 +5,7 @@ import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonal
 import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -110,28 +111,23 @@ public class LocalVCServletService {
     // TODO As soon as only LocalVC is supported, this Optional can be removed
     private final Optional<VcsAccessLogService> vcsAccessLogService;
 
-    private static URL localVCBaseUrl;
+    private static URI localVCBaseUri;
 
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Value("${artemis.version-control.url}")
-    public void setLocalVCBaseUrl(URL localVCBaseUrl) {
-        LocalVCServletService.localVCBaseUrl = localVCBaseUrl;
+    public void setLocalVCBaseUrl(URI localVCBaseUri) {
+        LocalVCServletService.localVCBaseUri = localVCBaseUri;
     }
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath;
+    private Path localVCBasePath;
 
     @Value("${artemis.version-control.build-agent-git-username}")
     private String buildAgentGitUsername;
 
     @Value("${artemis.version-control.build-agent-git-password}")
     private String buildAgentGitPassword;
-
-    /**
-     * Name of the header containing the authorization information.
-     */
-    public static final String AUTHORIZATION_HEADER = "Authorization";
 
     public static final String BUILD_USER_NAME = "buildjob_user";
 
@@ -173,7 +169,7 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
         // Find the local repository depending on the name.
-        Path repositoryDir = Path.of(localVCBasePath, repositoryPath);
+        Path repositoryDir = localVCBasePath.resolve(repositoryPath);
 
         log.debug("Path to resolve repository from: {}", repositoryDir);
         if (!Files.exists(repositoryDir)) {
@@ -220,7 +216,7 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
 
-        String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         // The first request does not contain an authorizationHeader, the client expects this response
         if (authorizationHeader == null) {
@@ -286,7 +282,7 @@ public class LocalVCServletService {
         if (optionalParticipation.isPresent()) {
             ProgrammingExerciseParticipation participation = optionalParticipation.get();
             var ipAddress = request.getRemoteAddr();
-            var authenticationMechanism = resolveHTTPSAuthenticationMechanism(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER), user);
+            var authenticationMechanism = resolveHTTPSAuthenticationMechanism(request.getHeader(HttpHeaders.AUTHORIZATION), user);
 
             String finalCommitHash = getCommitHash(localVCRepositoryUri);
             RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH : RepositoryActionType.PULL;
@@ -339,7 +335,7 @@ public class LocalVCServletService {
             }
             case AuthenticationContext.Request request -> {
                 try {
-                    return resolveHTTPSAuthenticationMechanism(request.request().getHeader(LocalVCServletService.AUTHORIZATION_HEADER), user);
+                    return resolveHTTPSAuthenticationMechanism(request.request().getHeader(HttpHeaders.AUTHORIZATION), user);
                 }
                 catch (LocalVCAuthException ignored) {
                     return AuthenticationMechanism.AUTH_HEADER_MISSING;
@@ -498,11 +494,11 @@ public class LocalVCServletService {
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
         var urlString = request.getRequestURL().toString().replace("/info/refs", "");
-        return new LocalVCRepositoryUri(Path.of(urlString), localVCBaseUrl);
+        return new LocalVCRepositoryUri(Path.of(urlString), localVCBaseUri);
     }
 
     private LocalVCRepositoryUri parseRepositoryUri(Path repositoryPath) {
-        return new LocalVCRepositoryUri(repositoryPath, localVCBaseUrl);
+        return new LocalVCRepositoryUri(repositoryPath, localVCBaseUri);
     }
 
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
@@ -569,6 +565,19 @@ public class LocalVCServletService {
         checkAccessForRepository(participation, user, exercise, repositoryActionType);
 
         return Optional.of(participation);
+    }
+
+    /**
+     * Retrieves a user based on the provided authorization header.
+     *
+     * @param authorizationHeader the authorization header containing Basic credentials
+     * @return the {@link User}
+     * @throws LocalVCAuthException if the user could not be found or if the authorization header is invalid
+     */
+    public User getUserByAuthHeader(String authorizationHeader) throws LocalVCAuthException {
+        UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+        String username = usernameAndPassword.username();
+        return userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
     }
 
     /**
@@ -816,7 +825,7 @@ public class LocalVCServletService {
 
     private static LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
-            return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUrl);
+            return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUri);
         }
         catch (LocalVCInternalException e) {
             // This means something is misconfigured.
@@ -1022,7 +1031,7 @@ public class LocalVCServletService {
      */
     public void createVCSAccessLogForFailedAuthenticationAttempt(HttpServletRequest servletRequest) {
         try {
-            String authorizationHeader = servletRequest.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+            String authorizationHeader = servletRequest.getHeader(HttpHeaders.AUTHORIZATION);
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
             AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;

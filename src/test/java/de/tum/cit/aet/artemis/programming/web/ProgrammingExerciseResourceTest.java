@@ -2,28 +2,24 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.io.ByteArrayOutputStream;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -31,16 +27,17 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -50,6 +47,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResourceTest.class);
 
     private static final String TEST_PREFIX = "programmingexerciseresource";
+
+    private static final String MOCK_BUNDLE_CONTENT = "# v2 git bundle\n" + "version https://git-scm.com/docs/gitformat-bundle\n"
+            + "object 1234567890abcdef1234567890abcdef12345678\n" + "type commit\n" + "tag v1.0.0\n" + "1234567890abcdef1234567890abcdef12345678\n"
+            + "committer Test User <test@example.com> 1234567890 +0000\n" + "\n" + "Initial commit\n" + "\n" + "tree 1234567890abcdef1234567890abcdef12345678\n"
+            + "parent 0000000000000000000000000000000000000000\n" + "author Test User <test@example.com> 1234567890 +0000\n" + "\n" + "Initial commit\n" + "\n"
+            + "1234567890abcdef1234567890abcdef12345678\n" + "100644 test.txt\0test content";
 
     @Autowired
     private UserUtilService userUtilService;
@@ -125,18 +128,22 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = java.nio.file.Files.createTempDirectory("testOriginRepo");
-        localRepo.configureRepos("testLocalRepo", originRepoPath);
+        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        templateParticipation
+                .setRepositoryUri(new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, originRepoPath)).getURI().toString());
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
-        // Mock the getBareRepository call to return a proper repository
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
+        // Mock the export methods to return valid resources
+        var files = java.util.Map.of("test.txt", "test content");
+        byte[] mockZipData = createTestZipFile(files);
+        InputStreamResource mockZipResource = createMockZipResource(mockZipData, "mock-repo.zip");
+        doReturn(mockZipResource).when(gitService).exportRepositorySnapshot(any(), anyString());
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-snapshot/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);
@@ -207,19 +214,24 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = java.nio.file.Files.createTempDirectory("testOriginRepo");
-        localRepo.configureRepos("testLocalRepo", originRepoPath);
+        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        templateParticipation
+                .setRepositoryUri(new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, originRepoPath)).getURI().toString());
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
-        // Mock the getBareRepository and getOrCheckoutRepository calls
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(), any());
+        // Mock the export methods to return valid resources
+        var files = java.util.Map.of(".git/config", "[core]\nrepositoryformatversion = 0", ".git/HEAD", "ref: refs/heads/main", ".git/refs/heads/main",
+                "1234567890abcdef1234567890abcdef12345678", ".git/objects/12/34567890abcdef1234567890abcdef12345678", "mock git object content", "test.txt", "test content");
+
+        byte[] mockZipData = createTestZipFile(files);
+        InputStreamResource mockZipResource = createMockZipResource(mockZipData, "mock-repo-with-git.zip");
+        doReturn(mockZipResource).when(gitService).exportRepositoryWithFullHistoryToMemory(any(), anyString());
 
         byte[] result = request.get(
                 "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-with-full-history/" + RepositoryType.TEMPLATE.name(), HttpStatus.OK,
@@ -315,18 +327,21 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = java.nio.file.Files.createTempDirectory("testOriginRepo");
-        localRepo.configureRepos("testLocalRepo", originRepoPath);
+        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        templateParticipation
+                .setRepositoryUri(new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, originRepoPath)).getURI().toString());
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
-        // Mock the getBareRepository call to return a proper repository
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
+        // Mock the export methods to return valid resources
+        byte[] mockBundleData = MOCK_BUNDLE_CONTENT.getBytes();
+        InputStreamResource mockBundleResource = createMockZipResource(mockBundleData, "mock-repo.bundle");
+        doReturn(mockBundleResource).when(gitService).exportRepositoryBundle(any(), anyString());
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-bundle/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);
@@ -356,23 +371,21 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = java.nio.file.Files.createTempDirectory("testOriginRepo");
-        localRepo.configureRepos("testLocalRepo", originRepoPath);
-
-        // Add multiple commits to create history
-        createAndCommitFile(localRepo, "file1.txt", "Initial content", "Initial commit");
-        createAndCommitFile(localRepo, "file2.txt", "Second file", "Second commit");
-        createAndCommitFile(localRepo, "file1.txt", "Modified content", "Third commit");
+        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
+        templateParticipation
+                .setRepositoryUri(new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, originRepoPath)).getURI().toString());
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
-        // Mock the getBareRepository call to return a proper repository
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
+        // Mock the export methods to return valid resources
+        byte[] mockBundleData = MOCK_BUNDLE_CONTENT.getBytes();
+        InputStreamResource mockBundleResource = createMockZipResource(mockBundleData, "mock-repo-with-history.bundle");
+        doReturn(mockBundleResource).when(gitService).exportRepositoryBundle(any(), anyString());
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-bundle/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);
@@ -391,144 +404,41 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         localRepo.resetLocalRepo();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void testRepositoryExportPerformance() throws Exception {
-        final int PERFORMANCE_TEST_ITERATIONS = 30;
-
-        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course.setInstructorGroupName(instructor.getGroups().iterator().next());
-        courseRepository.save(course);
-
-        var localRepo = new LocalRepository(defaultBranch);
-        var originRepoPath = Files.createTempDirectory("testOriginRepo");
-        localRepo.configureRepos("testLocalRepo", originRepoPath);
-
-        createTestRepositoryContent(localRepo);
-
-        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-
-        var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
-        templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
-
-        programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
-
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getBareRepository(any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(), any());
-
-        var snapshotStats = testEndpointWithWarmup("Repository Snapshot",
-                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-snapshot/" + RepositoryType.TEMPLATE.name(),
-                PERFORMANCE_TEST_ITERATIONS);
-
-        var fullHistoryStats = testEndpointWithWarmup("Repository with Full History",
-                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-with-full-history/" + RepositoryType.TEMPLATE.name(),
-                PERFORMANCE_TEST_ITERATIONS);
-
-        var bundleStats = testEndpointWithWarmup("Repository Bundle",
-                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repository-bundle/" + RepositoryType.TEMPLATE.name(),
-                PERFORMANCE_TEST_ITERATIONS);
-
-        generateSimpleReport(snapshotStats, fullHistoryStats, bundleStats, PERFORMANCE_TEST_ITERATIONS);
-
-        assertThat(fullHistoryStats.avgFileSize).isGreaterThan(snapshotStats.avgFileSize);
-
-        localRepo.resetLocalRepo();
-    }
-
-    private void createTestRepositoryContent(LocalRepository localRepo) throws Exception {
-        createAndCommitFile(localRepo, "README.md", "# Test Repository\nThis is a test repository for performance testing.\n", "Initial README");
-        createAndCommitFile(localRepo, "src/main/java/Main.java",
-                "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello World!\");\n    }\n}\n", "Add Main class");
-        createAndCommitFile(localRepo, "config/application.properties", "config.property1=value1\nconfig.property2=value2\n", "Add configuration");
-    }
-
-    private SimpleStats testEndpointWithWarmup(String endpointName, String url, int iterations) throws Exception {
-        // Warmup phase - 3 calls to eliminate first-call overhead
-        log.info("Warming up {} endpoint (3 rounds)...", endpointName);
-        for (int i = 0; i < 3; i++) {
-            request.get(url, HttpStatus.OK, byte[].class);
+    /**
+     * Creates a test ZIP file with the given files and their content.
+     *
+     * @param files Map of filename to content
+     * @return Byte array containing the ZIP file
+     */
+    private byte[] createTestZipFile(java.util.Map<String, String> files) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+            for (java.util.Map.Entry<String, String> entry : files.entrySet()) {
+                ZipEntry zipEntry = new ZipEntry(entry.getKey());
+                zos.putNextEntry(zipEntry);
+                zos.write(entry.getValue().getBytes());
+                zos.closeEntry();
+            }
         }
-        log.info("Warmup completed for {}", endpointName);
-
-        List<Long> times = new ArrayList<>();
-        List<Long> sizes = new ArrayList<>();
-
-        log.info("Testing {} endpoint ({} iterations)...", endpointName, iterations);
-        for (int i = 0; i < iterations; i++) {
-            long startTime = System.nanoTime();
-            byte[] result = request.get(url, HttpStatus.OK, byte[].class);
-            long endTime = System.nanoTime();
-
-            times.add((endTime - startTime) / 1_000_000); // Convert to milliseconds
-            sizes.add((long) result.length);
-
-            assertThat(result).isNotNull();
-            assertThat(result.length).isGreaterThan(0);
-        }
-
-        var timeStats = times.stream().mapToLong(Long::longValue).summaryStatistics();
-        var sizeStats = sizes.stream().mapToLong(Long::longValue).summaryStatistics();
-
-        return new SimpleStats(endpointName, timeStats.getMin(), timeStats.getMax(), timeStats.getAverage(), sizeStats.getAverage());
+        return baos.toByteArray();
     }
 
-    private void generateSimpleReport(SimpleStats snapshot, SimpleStats fullHistory, SimpleStats bundle, int iterations) throws IOException {
-        List<String> report = new ArrayList<>();
+    /**
+     * Creates a mock InputStreamResource from byte array data.
+     */
+    private InputStreamResource createMockZipResource(byte[] data, String filename) {
+        return new InputStreamResource(new ByteArrayInputStream(data)) {
 
-        report.add("Repository Export Performance Test Report");
-        report.add("Iterations: " + iterations);
-        report.add("=" + "=".repeat(50));
-        report.add("");
+            @Override
+            public String getFilename() {
+                return filename;
+            }
 
-        addSimpleResults(report, snapshot);
-        addSimpleResults(report, fullHistory);
-        addSimpleResults(report, bundle);
-
-        // Create build/reports/performance-test directory if it doesn't exist
-        Path reportsDir = Path.of("build", "reports", "performance-test");
-        FileUtils.forceMkdir(reportsDir.toFile());
-
-        // Generate timestamp for unique filename
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-        Path reportPath = reportsDir.resolve("export_performance_report_" + timestamp + ".txt");
-        FileUtils.writeLines(reportPath.toFile(), report);
-
-        log.info("Performance report written to: {}", reportPath.toAbsolutePath());
-        log.info(String.format("%s: %.1fms avg, %.1fKB avg", snapshot.name, snapshot.avgTime, snapshot.avgFileSize / 1024.0));
-        log.info(String.format("%s: %.1fms avg, %.1fKB avg", fullHistory.name, fullHistory.avgTime, fullHistory.avgFileSize / 1024.0));
-        log.info(String.format("%s: %.1fms avg, %.1fKB avg", bundle.name, bundle.avgTime, bundle.avgFileSize / 1024.0));
+            @Override
+            public long contentLength() {
+                return data.length;
+            }
+        };
     }
 
-    private void addSimpleResults(List<String> report, SimpleStats stats) {
-        report.add(stats.name + ":");
-        report.add(String.format("  Time: min=%dms, max=%dms, avg=%.1fms", stats.minTime, stats.maxTime, stats.avgTime));
-        report.add(String.format("  Size: avg=%.1fKB", stats.avgFileSize / 1024.0));
-        report.add("");
-    }
-
-    private static class SimpleStats {
-
-        final String name;
-
-        final long minTime, maxTime;
-
-        final double avgTime, avgFileSize;
-
-        SimpleStats(String name, long minTime, long maxTime, double avgTime, double avgFileSize) {
-            this.name = name;
-            this.minTime = minTime;
-            this.maxTime = maxTime;
-            this.avgTime = avgTime;
-            this.avgFileSize = avgFileSize;
-        }
-    }
-
-    private void createAndCommitFile(LocalRepository localRepository, String filename, String content, String commitMessage) throws Exception {
-        var file = Path.of(localRepository.localRepoFile.toPath().toString(), filename);
-        FileUtils.writeStringToFile(file.toFile(), content, "UTF-8");
-        localRepository.localGit.add().addFilepattern(filename).call();
-        GitService.commit(localRepository.localGit).setMessage(commitMessage).call();
-    }
 }

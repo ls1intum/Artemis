@@ -802,41 +802,21 @@ Course Info Bar
         display: inline;
     }
 
+    /**
+     * Adds extra space below ordered and unordered lists
+     * within markdown previews. The margin is applied to the end of the list,
+     * ensuring vertical separation when a list is followed by another
+     * block element (such as a paragraph) for improved readability.
+     *
+     * Example (Markdown):
+     * 
+     * - First item
+     * - Second item
+     * More text after the list.
+     */
     ol,
     ul {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-    }
-
-    ol {
-        counter-reset: item;
-    }
-
-    ol > li,
-    ul > li {
-        position: relative;
-        padding-left: 1em;
-        margin-bottom: 0.5em;
-        line-height: 1;
-        text-indent: 0;
-    }
-
-    ol > li::before {
-        content: counter(item) '.';
-        counter-increment: item;
-        position: absolute;
-        left: 0;
-        top: 0;
-        font-weight: normal;
-    }
-
-    ul > li::before {
-        content: '•';
-        position: absolute;
-        left: 0;
-        top: 0;
-        font-weight: bold;
+        margin-bottom: 0.75em;
     }
 }
 

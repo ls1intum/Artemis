@@ -25,8 +25,8 @@ import {
 } from 'test/helpers/sample/iris-sample-data';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import 'app/shared/util/array.extension';
-import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { Router } from '@angular/router';
+import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;
@@ -67,7 +67,7 @@ describe('IrisChatService', () => {
         httpService = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
         wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
 
-        service['courseId'] = courseId;
+        service.setCourseId(courseId);
     });
 
     afterEach(() => {
@@ -249,7 +249,7 @@ describe('IrisChatService', () => {
 
     it('should emit sessionId when set', () => {
         const expectedId = 456;
-        service.sessionId$.subscribe((id) => {
+        service.currentSessionId().subscribe((id) => {
             expect(id).toBe(expectedId);
         });
         service.sessionId = expectedId;
@@ -283,7 +283,7 @@ describe('IrisChatService', () => {
         it('should not switch if session id is the same', () => {
             const closeSpy = jest.spyOn(service as any, 'close');
             jest.spyOn(httpService, 'getChatSessionById').mockReturnValue(of());
-            const session = { id: id } as IrisSession;
+            const session = { id: id } as IrisSessionDTO;
             service.sessionId = id;
 
             service.switchToSession(session);
@@ -292,7 +292,7 @@ describe('IrisChatService', () => {
         });
 
         it('should switch to a different session if llm usage is accepted', fakeAsync(() => {
-            const newSession = { ...mockConversation, id: 456, chatMode: ChatServiceMode.COURSE };
+            const newSession = { ...mockConversation, id: 456, chatMode: ChatServiceMode.COURSE, entityName: 'Course 1' };
 
             const closeSpy = jest.spyOn(service as any, 'close');
             jest.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));
@@ -319,7 +319,7 @@ describe('IrisChatService', () => {
             service['hasJustAcceptedExternalLLMUsage'] = false;
             service['sessionCreationIdentifier'] = 'tutor-suggestion/1';
 
-            const newSession = { id: 12, chatMode: ChatServiceMode.TUTOR_SUGGESTION, messages: [], creationDate: new Date(), entityId: 1 } as IrisSession;
+            const newSession = { id: 12, chatMode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
 
             const closeSpy = jest.spyOn(service as any, 'close');
             const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
@@ -343,7 +343,7 @@ describe('IrisChatService', () => {
             service['hasJustAcceptedExternalLLMUsage'] = true;
             service['sessionCreationIdentifier'] = 'course/1';
 
-            const newSession = { id: 12, chatMode: ChatServiceMode.COURSE, messages: [], creationDate: new Date(), entityId: 1 } as IrisSession;
+            const newSession = { id: 12, chatMode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
 
             const closeSpy = jest.spyOn(service as any, 'close');
             const wsStub = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
@@ -362,7 +362,7 @@ describe('IrisChatService', () => {
 
     describe('loadChatSessions', () => {
         it('should load chat sessions and update the behavior subject', () => {
-            const sessions = [{ id: 1 }, { id: 2 }] as IrisSession[];
+            const sessions = [{ id: 1 }, { id: 2 }] as IrisSessionDTO[];
             const getChatSessionsSpy = jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of(sessions));
             const nextSpy = jest.spyOn(service.chatSessions, 'next');
 
@@ -373,7 +373,7 @@ describe('IrisChatService', () => {
         });
 
         it('should handle an empty array of sessions', () => {
-            const sessions: IrisSession[] = [];
+            const sessions: IrisSessionDTO[] = [];
             const getChatSessionsSpy = jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of(sessions));
             const nextSpy = jest.spyOn(service.chatSessions, 'next');
 
