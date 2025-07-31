@@ -10,6 +10,12 @@ Hyperion provides key AI-powered features:
 - **Exercise Consistency Checking**: Analyzes programming exercises for conflicts between problem statements, solution code, template code, and tests
 - **Problem Statement Rewriting**: Improves and refines exercise descriptions using AI to enhance clarity and pedagogical value
 
+.. important::
+   Hyperion is part of the EduTelligence suite. Please check the `compatibility matrix <https://github.com/ls1intum/edutelligence#-artemis-compatibility>`_
+   to ensure you're using compatible versions of Artemis and EduTelligence.
+
+.. _EduTelligence Hyperion documentation: https://github.com/ls1intum/edutelligence/tree/main/hyperion
+
 Prerequisites
 ^^^^^^^^^^^^^
 
@@ -65,14 +71,3 @@ For production deployments, use HTTPS and secure API keys:
    - Use HTTPS in production environments for secure communication
    - Store API keys as environment variables, not in configuration files
    - Ensure the Hyperion service is properly secured and accessible
-
-Health Check:
-^^^^^^^^^^^^^
-
-Artemis automatically monitors Hyperion service health through the ``/health`` endpoint. The health check uses a short timeout (10 seconds) to avoid blocking the application health monitoring.
-
-.. important::
-   Hyperion is part of the EduTelligence suite. Please check the `compatibility matrix <https://github.com/ls1intum/edutelligence#-artemis-compatibility>`_
-   to ensure you're using compatible versions of Artemis and EduTelligence.
-
-.. _EduTelligence Hyperion documentation: https://github.com/ls1intum/edutelligence/tree/main/hyperion
