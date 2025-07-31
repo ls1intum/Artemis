@@ -17,6 +17,8 @@ import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/a
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { Result } from '../../../exercise/shared/entities/result/result.model';
+import { AssessmentNote } from '../../shared/entities/assessment-note.model';
 
 describe('AssessmentLayoutComponent', () => {
     let component: AssessmentLayoutComponent;
@@ -82,5 +84,15 @@ describe('AssessmentLayoutComponent', () => {
         fixture.detectChanges();
         complaintsForTutorComponent = fixture.debugElement.query(By.directive(ComplaintsForTutorComponent));
         expect(complaintsForTutorComponent).toBeTruthy();
+    });
+
+    it('should set assessment note for result', () => {
+        const mockResult = new Result();
+        const mockAssessmentNote = { note: 'Test assessment note' } as AssessmentNote;
+        fixture.componentRef.setInput('result', () => mockResult);
+        fixture.detectChanges();
+
+        component.setAssessmentNoteForResult(mockAssessmentNote);
+        expect(component.result()!.assessmentNote).toBe(mockAssessmentNote);
     });
 });

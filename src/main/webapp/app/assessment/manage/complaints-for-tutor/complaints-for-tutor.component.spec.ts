@@ -12,19 +12,21 @@ import { FormsModule } from '@angular/forms';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { By } from '@angular/platform-browser';
-import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 
 describe('ComplaintsForTutorComponent', () => {
     let complaintsForTutorComponent: ComplaintsForTutorComponent;
     let fixture: ComponentFixture<ComplaintsForTutorComponent>;
     let injectedComplaintResponseService: ComplaintResponseService;
+    let injectedAlertService: AlertService;
 
     let course: Course;
     let exercise: Exercise;
@@ -37,7 +39,7 @@ describe('ComplaintsForTutorComponent', () => {
                 provideRouter([]),
                 MockProvider(ComplaintResponseService),
                 MockProvider(ComplaintService),
-                MockProvider(AlertService),
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
@@ -46,6 +48,7 @@ describe('ComplaintsForTutorComponent', () => {
                 fixture = TestBed.createComponent(ComplaintsForTutorComponent);
                 complaintsForTutorComponent = fixture.componentInstance;
                 injectedComplaintResponseService = TestBed.inject(ComplaintResponseService);
+                injectedAlertService = TestBed.inject(AlertService);
 
                 course = new Course();
                 course.maxComplaintResponseTextLimit = 26;
@@ -131,6 +134,28 @@ describe('ComplaintsForTutorComponent', () => {
         const removeLockStub = jest.spyOn(injectedComplaintResponseService, 'removeLock').mockReturnValue(of());
         lockButton.click();
         expect(removeLockStub).toHaveBeenCalledOnce();
+    }));
+
+    it('should handle error when creating a new complaint response for an unhandled complaint', fakeAsync(() => {
+        const unhandledComplaint = new Complaint();
+        unhandledComplaint.id = 1;
+        unhandledComplaint.accepted = undefined;
+        unhandledComplaint.complaintText = 'please check again';
+        unhandledComplaint.complaintResponse = undefined;
+        unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
+
+        const error = { status: 404 };
+        const createLockStub = jest.spyOn(injectedComplaintResponseService, 'createLock').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        const alertServiceErrorSpy = jest.spyOn(injectedAlertService, 'error');
+
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.detectChanges();
+        tick();
+
+        expect(createLockStub).toHaveBeenCalledOnce();
+        expect(complaintsForTutorComponent.isLoading).toBeFalse();
+        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     }));
 
     it('should refresh a complaint response for a unhandled complaint with a connected complaint response', fakeAsync(() => {
