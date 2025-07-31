@@ -226,10 +226,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
                 Submission.class);
         ofSubmissionMethod.setAccessible(true);
 
-        // Get the athenaDTOConverterService instance
         Object athenaDTOConverterService = ReflectionTestUtils.getField(athenaFeedbackSuggestionsService, "athenaDTOConverterService");
-
-        // Test with null submission
         Object result = ofSubmissionMethod.invoke(athenaDTOConverterService, 1L, null);
         assertThat(result).isNull();
     }

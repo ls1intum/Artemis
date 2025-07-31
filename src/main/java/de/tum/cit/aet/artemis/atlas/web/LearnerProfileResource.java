@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
+import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.DEFAULT_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MAX_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MIN_PROFILE_VALUE;
 
@@ -72,9 +73,9 @@ public class LearnerProfileResource {
 
         LearnerProfile profile = new LearnerProfile();
         profile.setUser(user);
-        profile.setFeedbackAlternativeStandard(2);
-        profile.setFeedbackBriefDetailed(2);
-        profile.setFeedbackFollowupSummary(2);
+        profile.setFeedbackAlternativeStandard(DEFAULT_PROFILE_VALUE);
+        profile.setFeedbackBriefDetailed(DEFAULT_PROFILE_VALUE);
+        profile.setFeedbackFollowupSummary(DEFAULT_PROFILE_VALUE);
 
         user.setLearnerProfile(profile);
         userRepository.save(user);

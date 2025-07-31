@@ -119,7 +119,6 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     private Submission getLatestSubmission(StudentParticipation participation) {
-        // extract the latest submission to pass it to Athena
         var latestResult = resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
         Submission latestSubmission = null;
         if (latestResult != null) {
@@ -183,9 +182,9 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         Submission latestSubmission = getLatestSubmission((StudentParticipation) submission.getParticipation());
+        SubmissionBaseDTO latestSubmissionDTO = latestSubmission != null ? athenaDTOConverterService.ofSubmission(exercise.getId(), latestSubmission) : null;
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded,
-                latestSubmission != null ? athenaDTOConverterService.ofSubmission(exercise.getId(), latestSubmission) : null);
+                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, latestSubmissionDTO);
         ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
