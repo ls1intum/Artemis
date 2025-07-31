@@ -10,6 +10,8 @@ import { TestBed } from '@angular/core/testing';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 describe('LoginService', () => {
     let accountService: AccountService;
@@ -17,11 +19,18 @@ describe('LoginService', () => {
     let router: Router;
     let alertService: AlertService;
     let loginService: LoginService;
+    let localStorageService: LocalStorageService;
+    let sessionStorageService: SessionStorageService;
 
     let authenticateStub: jest.SpyInstance;
     let authServerProviderStub: jest.SpyInstance;
     let alertServiceClearStub: jest.SpyInstance;
     let navigateByUrlStub: jest.SpyInstance;
+    let sessionStorageClearSpy: jest.SpyInstance;
+    let localStorageClearSpy: jest.SpyInstance;
+
+    const tokenKey = 'authenticationToken';
+    const storedToken = 'test token with some length';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -40,11 +49,17 @@ describe('LoginService', () => {
                 router = TestBed.inject(Router);
                 alertService = TestBed.inject(AlertService);
                 loginService = TestBed.inject(LoginService);
+                localStorageService = TestBed.inject(LocalStorageService);
+                sessionStorageService = TestBed.inject(SessionStorageService);
+                localStorageService.store(tokenKey, storedToken);
+                sessionStorageService.store(tokenKey, storedToken);
 
                 authenticateStub = jest.spyOn(accountService, 'authenticate');
                 authServerProviderStub = jest.spyOn(authServerProvider, 'logout');
                 alertServiceClearStub = jest.spyOn(alertService, 'closeAll');
                 navigateByUrlStub = jest.spyOn(router, 'navigateByUrl');
+                sessionStorageClearSpy = jest.spyOn(sessionStorageService, 'clear');
+                localStorageClearSpy = jest.spyOn(localStorageService, 'clear');
             });
     });
 
@@ -75,5 +90,9 @@ describe('LoginService', () => {
         expect(alertServiceClearStub).toHaveBeenCalledWith();
         expect(navigateByUrlStub).toHaveBeenCalledOnce();
         expect(navigateByUrlStub).toHaveBeenCalledWith('/');
+        expect(sessionStorageClearSpy).toHaveBeenCalledOnce();
+        expect(sessionStorageClearSpy).toHaveBeenCalledWith();
+        expect(localStorageClearSpy).toHaveBeenCalledOnce();
+        expect(localStorageClearSpy).toHaveBeenCalledWith();
     }
 });

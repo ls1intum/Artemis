@@ -5,6 +5,8 @@ import { finalize } from 'rxjs/operators';
 
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {
@@ -14,6 +16,8 @@ export class LoginService {
     private authServerProvider = inject(AuthServerProvider);
     private router = inject(Router);
     private alertService = inject(AlertService);
+    private localStorageService = inject(LocalStorageService);
+    private sessionStorageService = inject(SessionStorageService);
 
     /**
      * Login the user with the given credentials.
@@ -81,6 +85,8 @@ export class LoginService {
         this.accountService.authenticate(undefined);
         this.alertService.closeAll();
         this.router.navigateByUrl('/');
+        this.localStorageService.clear();
+        this.sessionStorageService.clear();
     }
 
     lastLogoutWasForceful(): boolean {
