@@ -24,7 +24,6 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     const validPeriod = [validPeriodStart, validPeriodEnd];
 
     let clickSubmit: (expectSubmitEvent: boolean) => void;
-
     let testFormIsInvalidOnMissingRequiredProperty: (controlName: string) => void;
 
     beforeEach(() => {

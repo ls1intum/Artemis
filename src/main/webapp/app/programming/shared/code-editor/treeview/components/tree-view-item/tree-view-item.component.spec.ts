@@ -27,7 +27,6 @@ const fakeItemTemplate = `
 
 interface FakeData {
     item: TreeViewItem<number>;
-
     checkedChange: (checked: boolean) => void;
 }
 
