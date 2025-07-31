@@ -3,7 +3,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20250731120000-remove-duplicates-quiz-question-progress" author="MoritzSpengler">
+    <changeSet id="20250731140151-remove-duplicates-quiz-question-progress" author="MoritzSpengler">
         <comment>Remove duplicates</comment>
         <sql>
             /* Remove duplicate quiz progress entries (keeping oldest) to prepare for unique constraint */
@@ -17,7 +17,7 @@
         </sql>
     </changeSet>
 
-    <changeSet id="20250731120100-add-unique-constraint-quiz-question-progress" author="MoritzSpengler">
+    <changeSet id="20250731140151-add-unique-constraint-quiz-question-progress" author="MoritzSpengler">
         <addUniqueConstraint
                 tableName="quiz_question_progress"
                 columnNames="user_id,quiz_question_id"
