@@ -29,6 +29,7 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
 
     Logger log = LoggerFactory.getLogger(ConversationMessageRepository.class);
 
+    // Eagerly fetch via query/graph
     // Fetch only Post with direct relationships (author, conversation)—not collections.
     @EntityGraph(attributePaths = { "author", "conversation" })
     List<Post> findByIdIn(List<Long> postIds);

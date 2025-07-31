@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.communication.domain.Posting;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.ReactionDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
@@ -30,6 +32,7 @@ import de.tum.cit.aet.artemis.plagiarism.exception.PlagiarismApiNotPresentExcept
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
+@Transactional
 public class ReactionService {
 
     private static final String METIS_REACTION_ENTITY_NAME = "posting reaction";
@@ -63,12 +66,23 @@ public class ReactionService {
      * Checks reaction validity, determines the reaction's user,
      * retrieves the associated posting and persists the mutual association
      *
-     * @param courseId if of course the according posting belongs to
-     * @param reaction reaction to create
+     * @param courseId    if of course the according posting belongs to
+     * @param reactionDTO reaction to create
      * @return created reaction that was persisted
      */
-    public Reaction createReaction(Long courseId, Reaction reaction) {
-        Posting posting = reaction.getPost() == null ? reaction.getAnswerPost() : reaction.getPost();
+    public Reaction createReaction(Long courseId, ReactionDTO reactionDTO) {
+        validateReactionAssociation(reactionDTO);
+
+        Reaction reaction = new Reaction();
+        reaction.setEmojiId(reactionDTO.emojiId());
+
+        if (reactionDTO.postId() != null) {
+            reaction.setPost(postRepository.findByIdElseThrow(reactionDTO.postId()));
+        }
+        if (reactionDTO.answerPostId() != null) {
+            reaction.setAnswerPost(answerPostRepository.findByIdElseThrow(reactionDTO.answerPostId()));
+        }
+
         final Course course = courseRepository.findByIdElseThrow(courseId);
 
         // checks
@@ -80,7 +94,9 @@ public class ReactionService {
         // set user to current user
         reaction.setUser(user);
 
-        // we query the repository dependent on the type of posting and update this posting
+        // Associate and persist
+        Posting posting = reaction.getPost() != null ? reaction.getPost() : reaction.getAnswerPost();
+
         Reaction savedReaction;
         if (posting instanceof Post post) {
             savedReaction = createReactionForPost(reaction, post, user, course);
@@ -102,6 +118,11 @@ public class ReactionService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         Reaction reaction = reactionRepository.findByIdElseThrow(reactionId);
+
+        Course reactionCourse = getReactionCourse(reaction);
+        if (reactionCourse == null || !reactionCourse.getId().equals(courseId)) {
+            throw new BadRequestAlertException("Reaction does not belong to the given course", "reaction", "wrongCourse");
+        }
 
         // check if user that wants to delete reaction is user that created the reaction
         if (!user.equals(reaction.getUser())) {
@@ -194,5 +215,24 @@ public class ReactionService {
         api.preparePostForBroadcast(post);
         api.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null);
         return savedReaction;
+    }
+
+    private Course getReactionCourse(Reaction reaction) {
+        if (reaction.getPost() != null) {
+            return reaction.getPost().getCoursePostingBelongsTo();
+        }
+        if (reaction.getAnswerPost() != null) {
+            return reaction.getAnswerPost().getCoursePostingBelongsTo();
+        }
+        return null;
+    }
+
+    private void validateReactionAssociation(ReactionDTO reactionDTO) {
+        if (reactionDTO.postId() != null && reactionDTO.answerPostId() != null) {
+            throw new BadRequestAlertException("Reaction cannot be associated with both a post and an answerPost", METIS_REACTION_ENTITY_NAME, "invalidAssociation");
+        }
+        if (reactionDTO.postId() == null && reactionDTO.answerPostId() == null) {
+            throw new BadRequestAlertException("Reaction must be associated with a post or an answerPost", METIS_REACTION_ENTITY_NAME, "noTarget");
+        }
     }
 }
