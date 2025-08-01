@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
@@ -113,34 +114,47 @@ public class LocalVCPrePushHook implements PreReceiveHook {
                 }
             }
 
-            // ----------- Check for large blobs (>10MB) -----------
-            ObjectReader reader = repository.newObjectReader();
-            RevWalk revWalk = new RevWalk(reader);
-            RevCommit newCommit = revWalk.parseCommit(command.getNewId());
-
-            // Use TreeWalk to walk all new files in the tree
-            TreeWalk treeWalk = new TreeWalk(reader);
-            treeWalk.addTree(newCommit.getTree());
-            treeWalk.setRecursive(true);
-
-            while (treeWalk.next()) {
-                ObjectId objectId = treeWalk.getObjectId(0);
-                ObjectLoader loader = reader.open(objectId);
-
-                if (loader.getType() == Constants.OBJ_BLOB && loader.getSize() > MAX_BLOB_SIZE_BYTES) {
-                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
-                            String.format("File '%s' exceeds 10MB size limit (%.2f MB)", treeWalk.getPathString(), loader.getSize() / (1024.0 * 1024.0)));
-                    break;
-                }
-            }
-
-            reader.close();
-            revWalk.close();
-
+            rejectFilesLargerThan10MbOrSymlinksOrSubModules(repository, command);
             git.close();
         }
         catch (IOException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
         }
+    }
+
+    private static void rejectFilesLargerThan10MbOrSymlinksOrSubModules(Repository repository, ReceiveCommand command) throws IOException {
+        ObjectReader reader = repository.newObjectReader();
+        RevWalk revWalk = new RevWalk(reader);
+        RevCommit newCommit = revWalk.parseCommit(command.getNewId());
+
+        TreeWalk treeWalk = new TreeWalk(reader);
+        treeWalk.addTree(newCommit.getTree());
+        treeWalk.setRecursive(true);
+
+        while (treeWalk.next()) {
+
+            FileMode mode = treeWalk.getFileMode(0);
+
+            if (FileMode.SYMLINK.equals(mode)) {
+                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("Symbolic links are not allowed: '%s'", treeWalk.getPathString()));
+                break;
+            }
+
+            if (FileMode.GITLINK.equals(mode)) {
+                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("Git submodules are not allowed: '%s'", treeWalk.getPathString()));
+                break;
+            }
+            ObjectId objectId = treeWalk.getObjectId(0);
+            ObjectLoader loader = reader.open(objectId);
+
+            if (loader.getType() == Constants.OBJ_BLOB && loader.getSize() > MAX_BLOB_SIZE_BYTES) {
+                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
+                        String.format("File '%s' exceeds 10MB size limit (%.2f MB)", treeWalk.getPathString(), loader.getSize() / (1024.0 * 1024.0)));
+                break;
+            }
+        }
+
+        reader.close();
+        revWalk.close();
     }
 }
