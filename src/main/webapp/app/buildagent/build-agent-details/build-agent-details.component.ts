@@ -18,12 +18,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
-import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
@@ -49,12 +48,10 @@ import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/
         TranslateDirective,
         BuildJobStatisticsComponent,
         HelpIconComponent,
-        ItemCountComponent,
         SortByDirective,
         SortDirective,
         DataTableComponent,
         NgxDatatableModule,
-        NgbPagination,
         FormsModule,
         SliceNavigatorComponent,
     ],
