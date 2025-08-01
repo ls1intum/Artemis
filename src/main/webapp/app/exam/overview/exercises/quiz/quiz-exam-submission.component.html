@@ -12,12 +12,12 @@
 </div>
 <hr />
 
-<!-- TODO this is duplicated with quiz-participation.component.html, we should add a shared component instead of copy pasting things -->
+<!-- TODO this is duplicated with quiz-participation.component.html, we should add a shared component merging bought approaches instead of copy pasting things -->
 <div class="row m-0 pb-5">
     @if (quizConfiguration().quizQuestions) {
         @if (!examTimeline()) {
             <div class="col-md-auto ps-0">
-                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard sticky-top-quiz">
+                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard sticky-top-quiz quiz-navigation-container">
                     @for (question of quizConfiguration().quizQuestions; track question; let index = $index) {
                         <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
                             @switch (question.type) {
