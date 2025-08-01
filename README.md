@@ -63,9 +63,10 @@ Artemis brings interactive learning to life with instant, individual feedback on
     * **Questions**: Iris supports students with answering questions about exercises, lectures, and the learning performance instantly.
     * **Pro-active assistance**: Iris can pro-actively communicate with the students, help them with the next steps in their learning experience and motivate them to continue.
 14. **[Athena](https://github.com/ls1intum/edutelligence/tree/main/athena)**: Artemis integrates Athena, a machine learning-based tool that supports instructors with the assessment of text, modeling and programming exercises. Athena offers different modules including automatic feedback suggestions based on generative AI. 
-15. **[Tutorial groups](https://docs.artemis.cit.tum.de/user/tutorialgroups/)**: Artemis supports the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
-16. **[Plagiarism checks](https://docs.artemis.cit.tum.de/user/plagiarism-check/)**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises in courses and exams. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.
-17. **[LTI](https://docs.artemis.cit.tum.de/user/lti)**: Artemis supports the Learning Tools Interoperability (LTI) standard to integrate Artemis into other learning management systems (LMS) such as Moodle and edX.
+15. **[Hyperion](https://github.com/ls1intum/edutelligence/tree/main/hyperion)**: Artemis integrates Hyperion, an AI-driven programming exercise creation assistance that helps instructors create high-quality programming exercises more efficiently through consistency checking and intelligent problem statement refinement.
+16. **[Tutorial groups](https://docs.artemis.cit.tum.de/user/tutorialgroups/)**: Artemis supports the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
+17. **[Plagiarism checks](https://docs.artemis.cit.tum.de/user/plagiarism-check/)**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises in courses and exams. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.
+18. **[LTI](https://docs.artemis.cit.tum.de/user/lti)**: Artemis supports the Learning Tools Interoperability (LTI) standard to integrate Artemis into other learning management systems (LMS) such as Moodle and edX.
 
 ## EduTelligence Integration
 
@@ -73,7 +74,7 @@ Artemis integrates with the [EduTelligence suite](https://github.com/ls1intum/ed
 
 * **Iris** - AI Virtual Tutor powered by Pyris for intelligent student assistance
 * **Athena** - Automated assessment system for text, modeling, and programming exercises
-* **Hyperion** - AI-powered programming exercise creation assistance
+* **Hyperion** - AI-driven programming exercise creation assistance
 
 Additional services are available in the EduTelligence suite for advanced deployments. For detailed information about all available services, please refer to the [EduTelligence repository](https://github.com/ls1intum/edutelligence).
 
@@ -94,6 +95,7 @@ The Artemis development team prioritizes the following areas in the future. We w
 * **Short term**: Further improve the communication features with mobile apps for iOS and Android
 * **Short term**: Add the possibility to use Iris for questions on all exercise types and lectures (partly done)
 * **Short term**: Provide GenAI based automatic feedback to modeling, text and programming exercise with Athena
+* **Short term**: Expand Hyperion's AI-powered exercise creation assistance beyond consistency checking
 * **Short term**: Improve the LTI integration with Moodle
 * **Medium term**: Improve the REST API of the server application
 * **Medium term**: Integrate an online IDE (e.g. Eclipse Theia) into Artemis for enhanced user experience

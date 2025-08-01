@@ -261,35 +261,33 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 
 .. _hyperion-service:
 
-Hyperion Service
-^^^^^^^^^^^^^^^^
+Hyperion Service (Optional)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Hyperion** is an AI-driven microservice for programming exercise creation assistance, part of the EduTelligence suite. It provides AI-powered tools to help instructors create high-quality programming exercises.
+**Hyperion** is an AI-driven programming exercise creation assistance that provides consistency checking and problem statement rewriting features for programming exercises.
 
-Prerequisites
-"""""""""""""
+Quick Setup for Development
+"""""""""""""""""""""""""""
 
-1. **Deploy Hyperion Service**
-
-   Deploy the Hyperion service separately using Docker Compose (see `Hyperion documentation <https://github.com/ls1intum/edutelligence/tree/main/hyperion>`__):
+1. **Start Hyperion Service**
 
    .. code-block:: bash
 
-      # For local development
+      # Navigate to EduTelligence Hyperion directory
+      cd /path/to/edutelligence/hyperion/docker
       docker compose -f compose.local.yaml up -d
 
-2. **Enable Profile**
+2. **Enable Hyperion Profile**
 
-   Add ``hyperion`` to your development profiles:
+   Add ``hyperion`` to your Spring profiles:
 
    .. code-block:: bash
 
-      ./gradlew bootRun --args='--spring.profiles.active=dev,localci,localvc,artemis,hyperion'
+      --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,hyperion
 
-Configuration
-"""""""""""""
+3. **Verify Connection**
 
-The Hyperion service is already configured in the default configuration files. For local development,
-the default settings should work out of the box.
+   The default development configuration uses ``http://localhost:8000`` with API key ``local-development-key``.
 
-For production setup and advanced configuration options, see the :doc:`admin setup documentation <../../admin/setup/hyperion>`.
+.. note::
+   For detailed setup, AI provider configuration, and production deployment, see the :doc:`Hyperion admin documentation <../../admin/setup/hyperion>` and the `EduTelligence Hyperion repository <https://github.com/ls1intum/edutelligence/tree/main/hyperion>`__.
