@@ -1,3 +1,5 @@
+@use 'sass:map';
+
 // only place declarations within this manual scope (otherwise other components could be affected)
 jhi-exam-students {
     $dropdown-item: (
@@ -25,18 +27,18 @@ jhi-exam-students {
             justify-content: space-between;
 
             &.active {
-                background-color: map-get($dropdown-item, active-color);
+                background-color: map.get($dropdown-item, active-color);
             }
 
             &.already-registered {
-                $vars: map-get($dropdown-item, already-registered);
+                $vars: map.get($dropdown-item, already-registered);
 
-                color: map-get($vars, color);
-                background-color: map-get($vars, background-color);
+                color: map.get($vars, color);
+                background-color: map.get($vars, background-color);
                 opacity: 0.5;
 
                 &.active {
-                    background-color: map-get($vars, background-color-hover);
+                    background-color: map.get($vars, background-color-hover);
                     opacity: 0.8;
                 }
             }
@@ -45,16 +47,16 @@ jhi-exam-students {
 
     .datatable-body-row {
         &.newly-registered {
-            $vars: map-get($datatable-row, newly-registered);
+            $vars: map.get($datatable-row, newly-registered);
 
             animation-name: flash-animation;
-            animation-delay: map-get($vars, animation-delay);
-            animation-duration: map-get($vars, animation-duration);
+            animation-delay: map.get($vars, animation-delay);
+            animation-duration: map.get($vars, animation-duration);
             animation-timing-function: ease-out;
 
             @keyframes flash-animation {
                 30% {
-                    background-color: map-get($vars, background-color);
+                    background-color: map.get($vars, background-color);
                 }
             }
         }
