@@ -36,7 +36,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 @RestController
 @Lazy
 @Profile(PROFILE_HYPERION)
-@RequestMapping("api/hyperion/programming/")
+@RequestMapping("api/hyperion/")
 public class HyperionReviewAndRefineResource {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionReviewAndRefineResource.class);

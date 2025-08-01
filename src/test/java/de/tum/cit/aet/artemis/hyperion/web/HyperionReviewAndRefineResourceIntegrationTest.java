@@ -56,7 +56,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         hyperionRequestMockProvider.mockConsistencyCheckSuccess(programmingExercise.getId(), "No issues found");
 
         // Perform request
-        ConsistencyCheckResponseDTO response = request.postWithResponseBody("/api/hyperion/programming/exercises/" + programmingExercise.getId() + "/consistency-check", null,
+        ConsistencyCheckResponseDTO response = request.postWithResponseBody("/api/hyperion/exercises/" + programmingExercise.getId() + "/consistency-check", null,
                 ConsistencyCheckResponseDTO.class, HttpStatus.OK);
 
         // Verify response
@@ -74,7 +74,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         hyperionRequestMockProvider.mockConsistencyCheckFailure(HttpStatus.SERVICE_UNAVAILABLE);
 
         // Perform request and expect 503
-        request.post("/api/hyperion/programming/exercises/" + programmingExercise.getId() + "/consistency-check", null, HttpStatus.SERVICE_UNAVAILABLE);
+        request.post("/api/hyperion/exercises/" + programmingExercise.getId() + "/consistency-check", null, HttpStatus.SERVICE_UNAVAILABLE);
 
         hyperionRequestMockProvider.verify();
     }
@@ -83,21 +83,21 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckExerciseConsistency_ExerciseNotFound() throws Exception {
         // Request consistency check for non-existent exercise
-        request.post("/api/hyperion/programming/exercises/99999/consistency-check", null, HttpStatus.NOT_FOUND);
+        request.post("/api/hyperion/exercises/99999/consistency-check", null, HttpStatus.NOT_FOUND);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckExerciseConsistency_Forbidden() throws Exception {
         // Students should not be able to access consistency check
-        request.post("/api/hyperion/programming/exercises/" + programmingExercise.getId() + "/consistency-check", null, HttpStatus.FORBIDDEN);
+        request.post("/api/hyperion/exercises/" + programmingExercise.getId() + "/consistency-check", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCheckExerciseConsistency_Forbidden_Tutor() throws Exception {
         // Tutors should not be able to access consistency check (instructor-only)
-        request.post("/api/hyperion/programming/exercises/" + programmingExercise.getId() + "/consistency-check", null, HttpStatus.FORBIDDEN);
+        request.post("/api/hyperion/exercises/" + programmingExercise.getId() + "/consistency-check", null, HttpStatus.FORBIDDEN);
     }
 
     // ==================== Problem Statement Rewrite Tests ====================
@@ -115,7 +115,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         ProblemStatementRewriteRequestDTO requestDTO = new ProblemStatementRewriteRequestDTO(originalText);
 
         // Perform request
-        ProblemStatementRewriteResponseDTO response = request.postWithResponseBody("/api/hyperion/programming/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO,
+        ProblemStatementRewriteResponseDTO response = request.postWithResponseBody("/api/hyperion/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO,
                 ProblemStatementRewriteResponseDTO.class, HttpStatus.OK);
 
         // Verify response
@@ -133,7 +133,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         ProblemStatementRewriteRequestDTO requestDTO = new ProblemStatementRewriteRequestDTO("");
 
         // Perform request and expect 400 Bad Request
-        request.postWithResponseBody("/api/hyperion/programming/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/hyperion/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -146,8 +146,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         ProblemStatementRewriteRequestDTO requestDTO = new ProblemStatementRewriteRequestDTO("Test text");
 
         // Perform request and expect 503
-        request.postWithResponseBody("/api/hyperion/programming/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class,
-                HttpStatus.SERVICE_UNAVAILABLE);
+        request.postWithResponseBody("/api/hyperion/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class, HttpStatus.SERVICE_UNAVAILABLE);
 
         hyperionRequestMockProvider.verify();
     }
@@ -159,7 +158,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         ProblemStatementRewriteRequestDTO requestDTO = new ProblemStatementRewriteRequestDTO("Test text");
 
         // Students should not be able to access problem statement rewrite
-        request.postWithResponseBody("/api/hyperion/programming/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/hyperion/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -169,7 +168,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         ProblemStatementRewriteRequestDTO requestDTO = new ProblemStatementRewriteRequestDTO("Test text");
 
         // Tutors should not be able to access problem statement rewrite (instructor-only)
-        request.postWithResponseBody("/api/hyperion/programming/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/hyperion/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class, HttpStatus.FORBIDDEN);
     }
 
     // ==================== Additional Edge Case Tests ====================
@@ -178,7 +177,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckExerciseConsistency_InvalidExerciseId() throws Exception {
         // Test with negative exercise ID
-        request.post("/api/hyperion/programming/exercises/-1/consistency-check", null, HttpStatus.NOT_FOUND);
+        request.post("/api/hyperion/exercises/-1/consistency-check", null, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -187,7 +186,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         ProblemStatementRewriteRequestDTO requestDTO = new ProblemStatementRewriteRequestDTO("Test text");
 
         // Test with negative course ID
-        request.postWithResponseBody("/api/hyperion/programming/courses/-1/problem-statement-rewrite", requestDTO, String.class, HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api/hyperion/courses/-1/problem-statement-rewrite", requestDTO, String.class, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -197,7 +196,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         ProblemStatementRewriteRequestDTO requestDTO = new ProblemStatementRewriteRequestDTO(null);
 
         // Perform request and expect 400 Bad Request
-        request.postWithResponseBody("/api/hyperion/programming/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/hyperion/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -207,7 +206,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         ProblemStatementRewriteRequestDTO requestDTO = new ProblemStatementRewriteRequestDTO("   \t\n   ");
 
         // Perform request and expect 400 Bad Request
-        request.postWithResponseBody("/api/hyperion/programming/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/hyperion/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -217,7 +216,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         hyperionRequestMockProvider.mockConsistencyCheckWithIssues(programmingExercise.getId());
 
         // Perform request
-        ConsistencyCheckResponseDTO response = request.postWithResponseBody("/api/hyperion/programming/exercises/" + programmingExercise.getId() + "/consistency-check", null,
+        ConsistencyCheckResponseDTO response = request.postWithResponseBody("/api/hyperion/exercises/" + programmingExercise.getId() + "/consistency-check", null,
                 ConsistencyCheckResponseDTO.class, HttpStatus.OK);
 
         // Verify response
@@ -236,7 +235,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         hyperionRequestMockProvider.mockConsistencyCheckTimeout(programmingExercise.getId());
 
         // Perform request and expect 503
-        request.post("/api/hyperion/programming/exercises/" + programmingExercise.getId() + "/consistency-check", null, HttpStatus.SERVICE_UNAVAILABLE);
+        request.post("/api/hyperion/exercises/" + programmingExercise.getId() + "/consistency-check", null, HttpStatus.SERVICE_UNAVAILABLE);
 
         hyperionRequestMockProvider.verify();
     }
@@ -251,8 +250,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         ProblemStatementRewriteRequestDTO requestDTO = new ProblemStatementRewriteRequestDTO("Test text");
 
         // Perform request and expect 503
-        request.postWithResponseBody("/api/hyperion/programming/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class,
-                HttpStatus.SERVICE_UNAVAILABLE);
+        request.postWithResponseBody("/api/hyperion/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO, String.class, HttpStatus.SERVICE_UNAVAILABLE);
 
         hyperionRequestMockProvider.verify();
     }
@@ -269,7 +267,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
         ProblemStatementRewriteRequestDTO requestDTO = new ProblemStatementRewriteRequestDTO(originalText);
 
         // Perform request
-        ProblemStatementRewriteResponseDTO response = request.postWithResponseBody("/api/hyperion/programming/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO,
+        ProblemStatementRewriteResponseDTO response = request.postWithResponseBody("/api/hyperion/courses/" + course.getId() + "/problem-statement-rewrite", requestDTO,
                 ProblemStatementRewriteResponseDTO.class, HttpStatus.OK);
 
         // Verify response
@@ -293,7 +291,7 @@ class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRes
 
         // Perform request and measure response time
         long startTime = System.currentTimeMillis();
-        ConsistencyCheckResponseDTO response = request.postWithResponseBody("/api/hyperion/programming/exercises/" + programmingExercise.getId() + "/consistency-check", null,
+        ConsistencyCheckResponseDTO response = request.postWithResponseBody("/api/hyperion/exercises/" + programmingExercise.getId() + "/consistency-check", null,
                 ConsistencyCheckResponseDTO.class, HttpStatus.OK);
         long duration = System.currentTimeMillis() - startTime;
 

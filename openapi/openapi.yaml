@@ -148,7 +148,7 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/TutorialGroupRegistrationImport'}
-  /api/hyperion/programming/exercises/{exerciseId}/consistency-check:
+  /api/hyperion/exercises/{exerciseId}/consistency-check:
     post:
       tags: [hyperion-review-and-refine]
       summary: Check exercise consistency
@@ -177,7 +177,7 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
-  /api/hyperion/programming/courses/{courseId}/problem-statement-rewrite:
+  /api/hyperion/courses/{courseId}/problem-statement-rewrite:
     post:
       tags: [hyperion-review-and-refine]
       summary: Rewrite problem statement

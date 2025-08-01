@@ -78,7 +78,7 @@ export class HyperionReviewAndRefineApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/hyperion/programming/exercises/${this.configuration.encodeParam({name: "exerciseId", value: exerciseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/consistency-check`;
+        let localVarPath = `/api/hyperion/exercises/${this.configuration.encodeParam({name: "exerciseId", value: exerciseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/consistency-check`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ConsistencyCheckResponse>('post', `${basePath}${localVarPath}`,
             {
@@ -146,7 +146,7 @@ export class HyperionReviewAndRefineApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/hyperion/programming/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/problem-statement-rewrite`;
+        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/problem-statement-rewrite`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ProblemStatementRewriteResponse>('post', `${basePath}${localVarPath}`,
             {
