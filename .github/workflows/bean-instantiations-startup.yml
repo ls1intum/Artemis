@@ -78,7 +78,7 @@ jobs:
       - name: Extract and validate startup bean instantiation metrics
         run: |
           # Configuration variables
-          STARTUP_LOG_PATTERN="Bean instantiation graph exported to startupBeans\.dot \(([0-9]+) edges, longest dependency chain: \[([^\]]*)\]\)"
+          STARTUP_LOG_PATTERN="Bean instantiation graph exported to startupBeans\.dot \(([0-9]+) edges, longest dependency chain length: \[([^\]]*)\]\)"
           MIN_INSTANTIATED_BEANS=20
           MAX_INSTANTIATED_BEANS=94
           MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH=9

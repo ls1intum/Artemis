@@ -97,7 +97,7 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
                 out.printf("  \"%s\" -> \"%s\";%n", edge.first(), edge.second());
             }
             out.println("}");
-            log.debug("Bean instantiation graph exported to startupBeans.dot ({} edges, longest dependency chain: {})", edges.size(), longestChain.get());
+            log.debug("Bean instantiation graph exported to startupBeans.dot ({} edges, longest dependency chain length: {})", edges.size(), longestChain.get().size());
         }
         catch (IOException e) {
             log.error("Failed to write startupBeans.dot", e);
@@ -110,7 +110,6 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
             log.debug("Startup long bean instantiation chain {} (length {}): {}", i++, reversed.size(), String.join(" → ", reversed));
         }
 
-        // Log the single longest chain
         List<String> longest = longestChain.get();
         if (!longest.isEmpty()) {
             List<String> forward = new ArrayList<>(longest);
