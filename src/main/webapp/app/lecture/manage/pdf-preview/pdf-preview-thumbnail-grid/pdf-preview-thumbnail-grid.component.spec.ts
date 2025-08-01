@@ -720,10 +720,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const originalRenderPages = component.renderPages;
             const originalCreateCanvas = component.createCanvas;
 
-            let createCanvasCallCount = 0;
-
             component.createCanvas = function () {
-                createCanvasCallCount++;
                 return mockCanvas;
             };
 
