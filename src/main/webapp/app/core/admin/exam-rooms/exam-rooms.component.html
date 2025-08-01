@@ -1,6 +1,6 @@
 <div>
     <div class="upload-container">
-        <h2><span jhiTranslate="artemisApp.examRooms.adminOverview.uploadRoomData"></span></h2>
+        <h2><span jhiTranslate="artemisApp.examRooms.adminOverview.title"></span></h2>
         <input id="roomDataFileSelect" type="file" style="display: none" (change)="onFileSelected($event)" accept=".zip" />
         <label jhiTranslate="artemisApp.examRooms.adminOverview.uploadRoomData" for="roomDataFileSelect" class="btn btn-outline-primary"></label>
         <button jhiTranslate="entity.action.save" class="btn btn-primary" (click)="upload()" [disabled]="!canUpload()"></button>
@@ -19,6 +19,7 @@
             <div jhiTranslate="artemisApp.examRooms.adminOverview.uploadSuccess" class="success"></div>
         }
         @if (uploadInformation()) {
+            <p></p>
             <div class="upload-info card">
                 <h3><span jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.title"></span></h3>
                 <ul>
@@ -30,6 +31,7 @@
             </div>
         }
         @if (deletionSummary()) {
+            <p></p>
             <div class="card">
                 <h3><span jhiTranslate="artemisApp.examRooms.adminOverview.deletionSummary.title"></span></h3>
                 <ul>
@@ -39,7 +41,7 @@
             </div>
         }
     </div>
-    <br />
+    <p></p>
     <div class="info">
         @if (overview()) {
             <h3><div jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.title"></div></h3>

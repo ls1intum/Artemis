@@ -1,8 +1,43 @@
 {
     "artemisApp": {
         "examRooms": {
-            "adminExamRoomUpload": {
-                "pageTitle": "Admin Exam Raum Hochlade Seiten-Titel"
+            "adminOverview": {
+                "pageTitle": "Admin Prüfungsraum Management",
+                "title": "Prüfungsraum Management",
+                "uploadRoomData": "Prüfungsraumdaten hochladen",
+                "deleteAllExamRooms": "Lösche ALLE Prüfungsraumdaten",
+                "deleteExamRoomsSafe": "Lösche veraltete Prüfungsraumdaten",
+                "uploadSuccess": "Upload erfolgreich",
+                "uploadFailed": "Ups. Beim Verarbeiten ist etwas schiefgelaufen.",
+                "uploadSummary": {
+                    "title": "Upload-Zusammenfassung",
+                    "file": "Dateiname:",
+                    "duration": "Verarbeitungsdauer:",
+                    "roomsUploaded": "Gespeicherte Räume:",
+                    "seatsUploaded": "Gespeicherte Sitze:"
+                },
+                "deletionSummary": {
+                    "title": "Lösch-Zusammenfassung",
+                    "duration": "Verarbeitungsdauer:",
+                    "roomsDeleted": "Gelöschte Räume:"
+                },
+                "examRoomOverview": {
+                    "missing": "Übersicht zurzeit leider nicht verfügbar",
+                    "title": "Prüfungsraumübersicht",
+                    "totalExamRooms": "Gespeicherte Prüfungsräume:",
+                    "totalSeats": "Gespeicherte Sitze:",
+                    "totalLayoutStrategies": "Gespeicherte Verteilungsstrategien:",
+                    "uniqueExamRooms": "Einzigartige Prüfungsräume:",
+                    "uniqueSeats": "Einzigartige Sitze:",
+                    "uniqueLayoutStrategies": "Einzigartige Verteilungsstrategien:",
+                    "distinctLayoutStrategyNames": "Alle verfügbaren Verteilungsstrategien:",
+                    "examRoomsTitle": "Alle verfügbaren Prüfungsräume",
+                    "roomNumber": "Raumnummer",
+                    "roomName": "Raumname",
+                    "building": "Gebäude",
+                    "maxCapacity": "Maximale Kapazität",
+                    "layoutStrategies": "Verfügbare Strategien"
+                }
             }
         }
     }
