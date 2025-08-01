@@ -32,7 +32,7 @@ import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.m
     selector: 'jhi-quiz-submission-exam',
     templateUrl: './quiz-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
-    styleUrls: ['../../../../quiz/overview/participation/quiz-participation.component.scss'],
+    styleUrls: ['../../../../quiz/overview/participation/quiz-participation.component.scss', './quiz-exam-submission.component.scss'],
     imports: [
         CommonModule,
         TranslateDirective,
