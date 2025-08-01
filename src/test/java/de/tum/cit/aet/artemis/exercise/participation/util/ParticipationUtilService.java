@@ -387,7 +387,7 @@ public class ParticipationUtilService {
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
-        participation.setRepositoryUri(String.format(localRepoPath.toString() + "%s/%s.git", exercise.getProjectKey(), repoName));
+        participation.setRepositoryUri(localRepoPath.toString());
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
