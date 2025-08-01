@@ -153,7 +153,7 @@
 
 .sticky-top-stepwizard {
     position: sticky;
-    top: 46px;
+    top: 0; // Stick overview to the top, if not set explicitly sticky does not work
     z-index: 18;
 }
 
