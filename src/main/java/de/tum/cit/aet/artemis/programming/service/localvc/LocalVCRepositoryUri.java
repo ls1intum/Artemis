@@ -47,7 +47,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
     }
 
     private static URI buildUri(URI localVCBaseUri, String projectKey, String repositorySlug) {
-        return UriComponentsBuilder.fromUri(localVCBaseUri).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri();
+        return UriComponentsBuilder.fromUri(localVCBaseUri).pathSegment("git", projectKey, repositorySlug + ".git").build().toUri();
     }
 
     /**
