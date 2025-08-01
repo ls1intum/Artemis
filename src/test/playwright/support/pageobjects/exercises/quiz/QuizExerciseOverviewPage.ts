@@ -29,4 +29,13 @@ export class QuizExerciseOverviewPage {
     async startQuizBatch(exerciseId: number, batchId: number) {
         await this.page.locator(`#instructor-quiz-start-${exerciseId}-${batchId}`).click();
     }
+
+    /**
+     * Exports a quiz exercise.
+     *
+     * @Note Assumes to be on the details page of a quiz.
+     */
+    async exportQuizExercise() {
+        await this.page.locator('button', { hasText: 'Export' }).click();
+    }
 }

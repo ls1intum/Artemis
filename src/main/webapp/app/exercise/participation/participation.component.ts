@@ -66,22 +66,28 @@ enum FilterProp {
     ],
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
-    private route = inject(ActivatedRoute);
-    private participationService = inject(ParticipationService);
-    private alertService = inject(AlertService);
-    private eventManager = inject(EventManager);
-    private exerciseService = inject(ExerciseService);
-    private programmingSubmissionService = inject(ProgrammingSubmissionService);
-    private accountService = inject(AccountService);
-    private profileService = inject(ProfileService);
-    private gradingSystemService = inject(GradingSystemService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly participationService = inject(ParticipationService);
+    private readonly alertService = inject(AlertService);
+    private readonly eventManager = inject(EventManager);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private readonly accountService = inject(AccountService);
+    private readonly profileService = inject(ProfileService);
+    private readonly gradingSystemService = inject(GradingSystemService);
 
-    // make constants available to html for comparison
-    readonly FilterProp = FilterProp;
-    readonly ExerciseType = ExerciseType;
-    readonly ActionType = ActionType;
-    readonly FeatureToggle = FeatureToggle;
+    protected readonly faTable = faTable;
+    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faEraser = faEraser;
+    protected readonly faFilePowerpoint = faFilePowerpoint;
+
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly ActionType = ActionType;
+    protected readonly FeatureToggle = FeatureToggle;
     protected readonly RepositoryType = RepositoryType;
+    readonly FilterProp = FilterProp;
 
     participations: StudentParticipation[] = [];
     participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
@@ -106,19 +112,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     exerciseSubmissionState: ExerciseSubmissionState;
 
-    localCIEnabled = true;
+    isLocalCIEnabled = true;
     isAdmin = false;
     isLoading: boolean;
     isSaving: boolean;
     afterDueDate = false;
-
-    // Icons
-    faTable = faTable;
-    faTimes = faTimes;
-    faTrash = faTrash;
-    faCircleNotch = faCircleNotch;
-    faEraser = faEraser;
-    faFilePowerpoint = faFilePowerpoint;
 
     constructor() {
         this.participationCriteria = {
@@ -133,7 +131,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
         this.registerChangeInParticipations();
         this.isAdmin = this.accountService.isAdmin();
-        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     }
 
     /**
@@ -349,11 +347,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     /**
      * Deletes participation
      * @param participationId the id of the participation that we want to delete
-     * @param event passed from delete dialog to represent if checkboxes were checked
      */
-    deleteParticipation(participationId: number, event: { [key: string]: boolean }) {
-        const deleteBuildPlan = event.deleteBuildPlan ? event.deleteBuildPlan : false;
-        const deleteRepository = event.deleteRepository ? event.deleteRepository : false;
+    deleteParticipation(participationId: number) {
+        const deleteBuildPlan = true;
+        const deleteRepository = true;
         this.participationService.delete(participationId, { deleteBuildPlan, deleteRepository }).subscribe({
             next: () => {
                 this.eventManager.broadcast({
