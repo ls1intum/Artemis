@@ -53,8 +53,8 @@ export class FaqUpdateComponent implements OnInit {
 
     renderedConsistencyCheckResultMarkdown = signal<ConsistencyCheckResult>({
         inconsistencies: undefined,
-        suggestions: undefined,
         improvement: undefined,
+        faqIds: undefined,
     });
 
     showConsistencyCheck = computed(() => !!this.renderedConsistencyCheckResultMarkdown().inconsistencies);
@@ -197,8 +197,8 @@ export class FaqUpdateComponent implements OnInit {
     dismissConsistencyCheck() {
         this.renderedConsistencyCheckResultMarkdown.set({
             inconsistencies: [],
-            suggestions: [],
             improvement: '',
+            faqIds: [],
         });
     }
 }

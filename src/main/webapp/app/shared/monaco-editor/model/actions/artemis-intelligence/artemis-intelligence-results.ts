@@ -4,6 +4,6 @@ export interface RewriteResult {
 
 export interface ConsistencyCheckResult {
     inconsistencies: string[] | undefined;
-    suggestions: string[] | undefined;
     improvement: string | undefined;
+    faqIds: number[] | undefined;
 }

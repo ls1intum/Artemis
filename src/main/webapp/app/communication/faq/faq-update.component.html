@@ -29,9 +29,10 @@
 
                 @if (showConsistencyCheck()) {
                     <faq-consistency-check
-                        [suggestions]="renderedConsistencyCheckResultMarkdown().suggestions"
                         [inconsistencies]="renderedConsistencyCheckResultMarkdown().inconsistencies"
                         [improvement]="renderedConsistencyCheckResultMarkdown().improvement"
+                        [faqIds]="renderedConsistencyCheckResultMarkdown().faqIds"
+                        [courseId]="faq.course!.id!"
                         (closeConsistencyWidget)="dismissConsistencyCheck()"
                     />
                 }
