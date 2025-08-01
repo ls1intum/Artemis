@@ -967,9 +967,8 @@ public class ParticipationUtilService {
      * @param versionControlService        The mocked VersionControlService
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
      */
-    public void mockCreationOfExerciseParticipation(VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
-            throws URISyntaxException {
-        var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
+    public void mockCreationOfExerciseParticipation(VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) {
+        var someURL = new LocalVCRepositoryUri("http://vcs.fake.fake/git/abc/abcRepoSlug.git");
         doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), any(), any(String.class), any(String.class), any(String.class),
                 any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
