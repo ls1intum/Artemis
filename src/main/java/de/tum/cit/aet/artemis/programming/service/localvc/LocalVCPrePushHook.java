@@ -90,8 +90,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
             return;
         }
 
-        try {
-            Git git = new Git(repository);
+        try (Git git = new Git(repository)) {
 
             // Prevent deletion of branches.
             Ref ref = git.getRepository().exactRef(command.getRefName());
@@ -115,7 +114,6 @@ public class LocalVCPrePushHook implements PreReceiveHook {
             }
 
             rejectFilesLargerThan10MbOrSymlinksOrSubModules(repository, command);
-            git.close();
         }
         catch (IOException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
@@ -123,38 +121,30 @@ public class LocalVCPrePushHook implements PreReceiveHook {
     }
 
     private static void rejectFilesLargerThan10MbOrSymlinksOrSubModules(Repository repository, ReceiveCommand command) throws IOException {
-        ObjectReader reader = repository.newObjectReader();
-        RevWalk revWalk = new RevWalk(reader);
-        RevCommit newCommit = revWalk.parseCommit(command.getNewId());
-
-        TreeWalk treeWalk = new TreeWalk(reader);
-        treeWalk.addTree(newCommit.getTree());
-        treeWalk.setRecursive(true);
-
-        while (treeWalk.next()) {
-
-            FileMode mode = treeWalk.getFileMode(0);
-
-            if (FileMode.SYMLINK.equals(mode)) {
-                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("Symbolic links are not allowed: '%s'", treeWalk.getPathString()));
-                break;
-            }
-
-            if (FileMode.GITLINK.equals(mode)) {
-                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("Git submodules are not allowed: '%s'", treeWalk.getPathString()));
-                break;
-            }
-            ObjectId objectId = treeWalk.getObjectId(0);
-            ObjectLoader loader = reader.open(objectId);
-
-            if (loader.getType() == Constants.OBJ_BLOB && loader.getSize() > MAX_BLOB_SIZE_BYTES) {
-                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
-                        String.format("File '%s' exceeds 10MB size limit (%.2f MB)", treeWalk.getPathString(), loader.getSize() / (1024.0 * 1024.0)));
-                break;
+        try (ObjectReader reader = repository.newObjectReader(); RevWalk revWalk = new RevWalk(reader)) {
+            RevCommit newCommit = revWalk.parseCommit(command.getNewId());
+            try (TreeWalk treeWalk = new TreeWalk(reader)) {
+                treeWalk.addTree(newCommit.getTree());
+                treeWalk.setRecursive(true);
+                while (treeWalk.next()) {
+                    FileMode mode = treeWalk.getFileMode(0);
+                    if (FileMode.SYMLINK.equals(mode)) {
+                        command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("Symbolic links are not allowed: '%s'", treeWalk.getPathString()));
+                        break;
+                    }
+                    if (FileMode.GITLINK.equals(mode)) {
+                        command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("Git submodules are not allowed: '%s'", treeWalk.getPathString()));
+                        break;
+                    }
+                    ObjectId objectId = treeWalk.getObjectId(0);
+                    ObjectLoader loader = reader.open(objectId);
+                    if (loader.getType() == Constants.OBJ_BLOB && loader.getSize() > MAX_BLOB_SIZE_BYTES) {
+                        command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
+                                String.format("File '%s' exceeds 10MB size limit (%.2f MB)", treeWalk.getPathString(), loader.getSize() / (1024.0 * 1024.0)));
+                        break;
+                    }
+                }
             }
         }
-
-        reader.close();
-        revWalk.close();
     }
 }
