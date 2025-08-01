@@ -187,7 +187,9 @@ public class DatabaseMigration {
             return null;
         }
         catch (SQLException e) {
-            if (StringUtils.containsIgnoreCase(e.getMessage(), "databasechangelog") && (e.getMessage().contains("does not exist") || (e.getMessage().contains("doesn't exist")))) {
+            // not found is needed for h2 database
+            if (StringUtils.containsIgnoreCase(e.getMessage(), "databasechangelog")
+                    && (e.getMessage().contains("does not exist") || (e.getMessage().contains("doesn't exist")) || e.getMessage().contains("not found"))) {
                 return null;
             }
             log.error(error, e);
