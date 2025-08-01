@@ -1,6 +1,8 @@
 // === BOOTSTRAP ===
 // Mostly stolen from Bootswatch Darkly 5.1.3
 
+@use 'sass:color';
+
 $white: #fff;
 $gray-100: #f8f9fa;
 $gray-200: #ebebeb;
@@ -74,12 +76,12 @@ $pagination-bg: $blue;
 $pagination-border-width: 0;
 $pagination-border-color: transparent;
 $pagination-hover-color: $white;
-$pagination-hover-bg: lighten($blue, 10%);
+$pagination-hover-bg: color.adjust($blue, $lightness: 10%);
 $pagination-hover-border-color: transparent;
 $pagination-active-bg: $pagination-hover-bg;
 $pagination-active-border-color: transparent;
 $pagination-disabled-color: $white;
-$pagination-disabled-bg: darken($blue, 15%);
+$pagination-disabled-bg: color.adjust($blue, $lightness: -15%);
 $pagination-disabled-border-color: transparent;
 
 $toast-background-color: $gray-700;
@@ -115,15 +117,15 @@ $artemis-dark: #353d47; // (not bootstrap)
 $link-color: #3e8acc;
 
 // Border
-$border-color: lighten($body-bg, 10);
+$border-color: color.adjust($body-bg, $lightness: 10%);
 
 // Base for dark spaces
 $neutral-dark: rgb(24, 26, 24); // (not bootstrap)
 
-$neutral-dark-l-5: lighten($neutral-dark, 5%);
-$neutral-dark-l-10: lighten($neutral-dark, 10%);
-$neutral-dark-l-15: lighten($neutral-dark, 15%);
-$neutral-dark-l-20: lighten($neutral-dark, 20%);
+$neutral-dark-l-5: color.adjust($neutral-dark, $lightness: 5%);
+$neutral-dark-l-10: color.adjust($neutral-dark, $lightness: 10%);
+$neutral-dark-l-15: color.adjust($neutral-dark, $lightness: 15%);
+$neutral-dark-l-20: color.adjust($neutral-dark, $lightness: 20%);
 
 // Footer
 $footer-bg: $neutral-dark;
@@ -171,13 +173,13 @@ $tooltip-color: $white;
 // Navigation Tab Bar
 $tab-bar-color: $gray-500;
 $tab-bar-color-hover: $gray-300;
-$tab-bar-color-active: lighten($primary, 20);
+$tab-bar-color-active: color.adjust($primary, $lightness: 20%);
 
 // Backgrounds
-$darker-body-bg: darken($body-bg, 20);
-$slightly-darker-body-bg: darken($body-bg, 10);
-$brighter-body-bg: lighten($body-bg, 10);
-$hover-slightly-darker-body-bg: transparentize(#fff, 0.9);
+$darker-body-bg: color.adjust($body-bg, $lightness: -20%);
+$slightly-darker-body-bg: color.adjust($body-bg, $lightness: -10%);
+$brighter-body-bg: color.adjust($body-bg, $lightness: 10%);
+$hover-slightly-darker-body-bg: color.adjust(#fff, $alpha: -0.9);
 
 $dropdown-bg: $neutral-dark;
 $popover-bg: $neutral-dark-l-5;
@@ -191,11 +193,11 @@ $theme-switch-box-border-color: $neutral-dark-l-15;
 $colored-btn-font: #fff;
 $default-btn-font: white;
 $default-btn-background: $artemis-dark;
-$default-btn-border: lighten($artemis-dark, 20%);
+$default-btn-border: color.adjust($artemis-dark, $lightness: 20%);
 
 $border-lightgrey: rgba(0, 0, 0, 0.125);
 $text-lightgrey: rgba(0, 0, 0, 0.125);
-$form-control-focus-background: transparentize(#fff, 0.9);
+$form-control-focus-background: color.adjust(#fff, $alpha: -0.9);
 $form-control-color: $white;
 $browserupgrade-color: black;
 $browserupgrade-color-background: #ccc;
@@ -234,7 +236,7 @@ $code-password-selection: white;
 $code-password-selection-background: #3297fd;
 $code-password-hover: white;
 
-$unreferenced-feedback-background: transparentize(#fff, 0.95);
+$unreferenced-feedback-background: color.adjust(#fff, $alpha: -0.95);
 $displaycolor-background: #f8f9fa;
 
 $markdown-preview-editor-background: $module-bg;
@@ -262,7 +264,7 @@ $fo-blue-font-color: #4188d3;
 $fo-box-overlay-background: $neutral-dark-l-5;
 
 // Header Participation
-$header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 5%), 15%);
+$header-participation-page-info-bar-background: color.adjust($artemis-dark, $saturation: 5%, $lightness: 15%);
 
 // Markdown Editor
 $md-wrapper-body-bg: $body-bg;
@@ -285,7 +287,7 @@ $metis-light-blue: #0e252d;
 $metis-green: #33cd32;
 $metis-course-discussion-select-bg: $neutral-dark;
 
-$metis-pinned-post-highlight-color: darken($metis-blue, 44%);
+$metis-pinned-post-highlight-color: color.adjust($metis-blue, $lightness: -44%);
 
 $metis-answer-post-background-color: rgba(255, 255, 255, 0.02);
 
@@ -303,7 +305,7 @@ $metis-selection-option-hover-background: $neutral-dark-l-5;
 $plagiarism-verdict-disabled-overlay-color: rgba(0, 0, 0, 0.9);
 
 // Component: plagiarism-inspector.component.scss
-$plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
+$plagiarism-inspector-darker-artemis-dark: color.adjust($artemis-dark, $lightness: -4%);
 
 // Component: course-exercise-card
 $course-exercise-card-border-color: $border-color;
@@ -322,14 +324,14 @@ $stat-av-sc-legend-median: rgba(127, 127, 127, 255);
 $stat-av-sc-legend-best: rgba(40, 164, 40, 1);
 
 // Component: pdf-preview.component.scss
-$pdf-preview-pdf-container-shadow: scale-color($black, $alpha: -90%);
-$pdf-preview-canvas-shadow: scale-color($white, $alpha: -40%);
-$pdf-preview-container-overlay: scale-color($black, $alpha: -60%);
-$pdf-preview-enlarged-container-overlay: scale-color($black, $alpha: -20%);
+$pdf-preview-pdf-container-shadow: color.scale($black, $alpha: -90%);
+$pdf-preview-canvas-shadow: color.scale($white, $alpha: -40%);
+$pdf-preview-container-overlay: color.scale($black, $alpha: -60%);
+$pdf-preview-enlarged-container-overlay: color.scale($black, $alpha: -20%);
 $pdf-preview-date-box-title-background: $gray-800;
 
 // Programming Exercise Update
-$update-programming-exercise-plan-preview-box-background: transparentize(#fff, 0.95);
+$update-programming-exercise-plan-preview-box-background: color.adjust(#fff, $alpha: -0.95);
 
 // Form Footer
 $update-footer-background: $neutral-dark;
@@ -370,7 +372,7 @@ $quiz-participation-refresh-overlay-active-background: rgba(255, 255, 255, 0.6);
 $quiz-participation-btn-circle-light-border-color: transparent;
 
 $quiz-participation-question-disabled-color: $gray-600;
-$quiz-participation-question-disabled-background: transparentize(#fff, 0.9);
+$quiz-participation-question-disabled-background: color.adjust(#fff, $alpha: -0.9);
 $quiz-participation-question-result-border-color: $success;
 $quiz-participation-question-result-incorrect-border-color: $warning;
 $quiz-participation-question-h2-span-color: grey;
@@ -385,10 +387,10 @@ $quiz-question-border-color: $neutral-dark-l-20;
 
 $quiz-visual-question-border-color: $quiz-question-border-color;
 $quiz-visual-answer-correct-container-color: $success;
-$quiz-visual-answer-correct-container-hover-color: lighten($success, 40%);
-$quiz-visual-answer-wrong-container-hover-color: lighten($danger, 40%);
+$quiz-visual-answer-correct-container-hover-color: color.adjust($success, $lightness: 40%);
+$quiz-visual-answer-wrong-container-hover-color: color.adjust($danger, $lightness: 40%);
 $quiz-visual-answer-add-container-color: $primary;
-$quiz-visual-answer-add-container-hover-color: lighten($primary, 20%);
+$quiz-visual-answer-add-container-hover-color: color.adjust($primary, $lightness: 20%);
 
 $dnd-question-drop-location-background: white;
 $dnd-question-drop-location-border-color: black;
@@ -405,8 +407,8 @@ $dnd-question-dnd-items-drag-items-background: $neutral-dark-l-10;
 $dnd-question-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
 $dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
 
-$sa-question-container-input-background: transparentize(#fff, 0.95);
-$sa-question-container-input-border: transparentize(#fff, 0.9);
+$sa-question-container-input-background: color.adjust(#fff, $alpha: -0.95);
+$sa-question-container-input-border: color.adjust(#fff, $alpha: -0.9);
 $sa-question-input-invalid-background: $gray-700;
 $sa-question-input-wrong-background: $danger;
 $sa-question-input-correct-background: $warning;
@@ -414,7 +416,7 @@ $sa-question-input-completely-correct-background: $success;
 
 $mc-question-answer-option-border: $neutral-dark-l-10;
 $mc-question-answer-option-hover-background: $neutral-dark-l-5;
-$mc-question-answer-option-selected-background: transparentize($primary, 0.7);
+$mc-question-answer-option-selected-background: color.adjust($primary, $alpha: -0.7);
 
 // Programming Exercises
 $programming-exercise-instruction-step-wizard-card-header-background: $neutral-dark-l-5;
@@ -428,15 +430,15 @@ $programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
 $edit-sqi-grading-instructions-update-border: $border-color;
 $edit-sqi-criterion-title-row-background: $neutral-dark-l-5;
 
-$sgi-assessment-layout-zero-background: darken($warning, 40);
-$sgi-assessment-layout-positive-background: darken($success, 30);
-$sgi-assessment-layout-negative-background: darken($danger, 45);
+$sgi-assessment-layout-zero-background: color.adjust($warning, $lightness: -40%);
+$sgi-assessment-layout-positive-background: color.adjust($success, $lightness: -30%);
+$sgi-assessment-layout-negative-background: color.adjust($danger, $lightness: -45%);
 
 // Code Editor
 $code-editor-file-browser-header-background: $neutral-dark-l-5;
 $code-editor-file-browser-header-border: $neutral-dark-l-10;
 $code-editor-file-browser-tree-hover: $neutral-dark-l-5;
-$code-editor-file-browser-input-background: darken($neutral-dark, 10%);
+$code-editor-file-browser-input-background: color.adjust($neutral-dark, $lightness: -10%);
 $code-editor-file-browser-input-color: white;
 $code-editor-file-browser-badge-background: $code-editor-file-browser-tree-hover;
 $code-editor-diff-newline-background: rgba(46, 160, 67, 0.22);
@@ -445,16 +447,16 @@ $code-editor-grid-grip-lines-color: $gray-300;
 
 // Monaco editor
 $monaco-suggest-widget-background: $gray-900;
-$monaco-editor-build-annotation-error-background: scale-color($danger, $alpha: -80%);
+$monaco-editor-build-annotation-error-background: color.scale($danger, $alpha: -80%);
 $monaco-editor-build-annotation-error-glyph: $danger;
-$monaco-editor-build-annotation-warning-background: scale-color($warning, $alpha: -80%);
+$monaco-editor-build-annotation-warning-background: color.scale($warning, $alpha: -80%);
 $monaco-editor-build-annotation-warning-glyph: $warning;
-$monaco-editor-build-annotation-outdated-background: scale-color($gray-500, $alpha: -90%);
+$monaco-editor-build-annotation-outdated-background: color.scale($gray-500, $alpha: -90%);
 $monaco-editor-build-annotation-outdated-glyph: $gray-500;
 $monaco-editor-diff-highlight-green: $success;
-$monaco-editor-diff-line-highlight: scale-color($monaco-editor-diff-highlight-green, $alpha: -80%, $lightness: -20%);
+$monaco-editor-diff-line-highlight: color.scale($monaco-editor-diff-highlight-green, $alpha: -80%, $lightness: -20%);
 $monaco-editor-add-feedback-button-background: $gray-600;
-$monaco-editor-add-feedback-button-hover-background: lighten($gray-600, 10%);
+$monaco-editor-add-feedback-button-hover-background: color.adjust($gray-600, $lightness: 10%);
 $monaco-editor-add-feedback-button-text: $gray-300;
 
 // Git-Diff Viewer
@@ -467,12 +469,12 @@ $git-diff-viewer-placeholder-line-gutter-background: rgba(100, 100, 100, 0.2);
 
 // Overview variables
 $overview-border-color: $border-color;
-$overview-light-border-color: darken($overview-border-color, 5%);
+$overview-light-border-color: color.adjust($overview-border-color, $lightness: -5%);
 $overview-light-background-color: rgba($overview-light-border-color, 0.3);
 $overview-light-primary-background-color: rgba($primary, 0.3);
-$overview-blue-border-color: darken($primary, 20);
+$overview-blue-border-color: color.adjust($primary, $lightness: -20%);
 $overview-tab-active-border-color: $body-color;
-$overview-refresh-overlay-bg-color: transparentize($neutral-dark, 0.5);
+$overview-refresh-overlay-bg-color: color.adjust($neutral-dark, $alpha: -0.5);
 $overview-refresh-overlay-color: $gray-400;
 
 // Lecture Unit
@@ -525,12 +527,12 @@ $data-table-dropdown-item-selected-background-color: $primary;
 $team-participation-table-last-row-border-bottom: $gray-700;
 $team-participation-table-even-row-background: $gray-700;
 $team-participation-table-header-inner-background: $neutral-dark;
-$team-participation-table-current-exercise-bg: mix($success, $neutral-dark, 10%);
+$team-participation-table-current-exercise-bg: color.mix($success, $neutral-dark, 10%);
 $team-participation-table-current-exercise-text: $success;
 $team-participation-table-box-shadow-color: black;
 
 // Team Short Name
-$team-short-name-background: transparentize($blue, 0.85);
+$team-short-name-background: color.adjust($blue, $alpha: -0.85);
 $team-short-name-color: $blue;
 
 // Exam
@@ -570,20 +572,20 @@ $textblock-feedback-editor-dropdown-hover: $gray-700;
 $manual-text-selection-span-hover-background-color: $gray-700;
 
 // Alerts
-$artemis-alert-info-color: lighten($info, 15);
-$artemis-alert-info-background: darken($info, 30);
-$artemis-alert-info-border: darken($info, 5);
-$artemis-alert-danger-color: lighten($danger, 15);
-$artemis-alert-danger-background: darken($danger, 45);
-$artemis-alert-danger-border: darken($danger, 5);
+$artemis-alert-info-color: color.adjust($info, $lightness: 15%);
+$artemis-alert-info-background: color.adjust($info, $lightness: -30%);
+$artemis-alert-info-border: color.adjust($info, $lightness: -5%);
+$artemis-alert-danger-color: color.adjust($danger, $lightness: 15%);
+$artemis-alert-danger-background: color.adjust($danger, $lightness: -45%);
+$artemis-alert-danger-border: color.adjust($danger, $lightness: -5%);
 $artemis-alert-warning-color: $warning;
-$artemis-alert-warning-background: darken($warning, 40);
-$artemis-alert-warning-border: darken($warning, 5);
+$artemis-alert-warning-background: color.adjust($warning, $lightness: -40%);
+$artemis-alert-warning-border: color.adjust($warning, $lightness: -5%);
 $artemis-alert-success-color: $success;
-$artemis-alert-success-background: darken($success, 30);
-$artemis-alert-success-border: darken($success, 5);
+$artemis-alert-success-background: color.adjust($success, $lightness: -30%);
+$artemis-alert-success-border: color.adjust($success, $lightness: -5%);
 $artemis-alert-neutral-color: white;
-$artemis-alert-neutral-background: darken($gray-600, 20%);
+$artemis-alert-neutral-background: color.adjust($gray-600, $lightness: -20%);
 $artemis-alert-neutral-border: $gray-600;
 $artemis-alerts-shadow: rgba($black, 0.55);
 
@@ -605,7 +607,7 @@ $apollon-grid: $neutral-dark-l-10;
 
 // Feedback Suggestions (Athena)
 $feedback-suggestions-primary: rgb(181, 78, 254, 1);
-$feedback-suggestions-background: darken($feedback-suggestions-primary, 50%);
+$feedback-suggestions-background: color.adjust($feedback-suggestions-primary, $lightness: -50%);
 
 // NGX Graph Colors
 $graph-light-grey: rgb(182, 182, 182);
@@ -624,11 +626,11 @@ $user-management-border-color: rgba($white, 0.15);
 
 // Competency Rings
 $competency-rings-red: $red;
-$competency-rings-red-bg: transparentize($competency-rings-red, 0.8);
+$competency-rings-red-bg: color.adjust($competency-rings-red, $alpha: -0.8);
 $competency-rings-green: $green;
-$competency-rings-green-bg: transparentize($competency-rings-green, 0.8);
+$competency-rings-green-bg: color.adjust($competency-rings-green, $alpha: -0.8);
 $competency-rings-blue: $blue;
-$competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
+$competency-rings-blue-bg: color.adjust($competency-rings-blue, $alpha: -0.8);
 
 // Iris Chatbot
 $iris-chat-widget-background: var(--neutral-dark-l-5);
@@ -658,8 +660,8 @@ $ssh-key-settings-text-color: $white;
 $ssh-key-settings-shadow: rgba(0, 0, 0, 0.5);
 
 // Calendar
-$pastel-cyan: lighten($cyan, 25%);
-$pastel-blue: lighten($blue, 5%);
-$pastel-purple: lighten($purple, 20%);
-$pastel-teal: lighten($teal, 15%);
-$calendar-loading-overlay-background: transparentize($module-bg, 0.5);
+$pastel-cyan: color.adjust($cyan, $lightness: 25%);
+$pastel-blue: color.adjust($blue, $lightness: 5%);
+$pastel-purple: color.adjust($purple, $lightness: 20%);
+$pastel-teal: color.adjust($teal, $lightness: 15%);
+$calendar-loading-overlay-background: color.adjust($module-bg, $alpha: -0.5);
