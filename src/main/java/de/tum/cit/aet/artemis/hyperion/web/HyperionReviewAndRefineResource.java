@@ -95,7 +95,7 @@ public class HyperionReviewAndRefineResource {
     /**
      * Rewrites and improves a problem statement using the Hyperion service.
      *
-     * @param exerciseId the ID of the programming exercise
+     * @param courseId   the ID of the course containing the problem statement
      * @param requestDTO the request containing the problem statement text to be improved
      * @return HTTP 200 with improved problem statement text, or appropriate error status
      */

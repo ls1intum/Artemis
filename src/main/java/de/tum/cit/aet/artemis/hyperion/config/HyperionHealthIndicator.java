@@ -66,12 +66,8 @@ public class HyperionHealthIndicator implements HealthIndicator {
 
             // Extract additional health information from the response
             if (healthCheckResponse != null) {
-                if (healthCheckResponse.getVersion() != null) {
-                    additionalInfo.put(HYPERION_VERSION_KEY, healthCheckResponse.getVersion());
-                }
-                if (healthCheckResponse.getUptimeSeconds() != null) {
-                    additionalInfo.put(HYPERION_UPTIME_KEY, healthCheckResponse.getUptimeSeconds() + " seconds");
-                }
+                additionalInfo.put(HYPERION_VERSION_KEY, healthCheckResponse.getVersion());
+                additionalInfo.put(HYPERION_UPTIME_KEY, healthCheckResponse.getUptimeSeconds() + " seconds");
                 if (healthCheckResponse.getTimestamp() != null) {
                     additionalInfo.put("timestamp", healthCheckResponse.getTimestamp());
                 }

@@ -34,7 +34,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 /**
  * Mock provider for Hyperion REST API requests during testing.
  * Provides sophisticated mocking capabilities for HTTP interactions with Hyperion service.
- * Follows the same pattern as AthenaRequestMockProvider but modernized for RestClient.
  */
 @Component
 @Profile(PROFILE_HYPERION)
@@ -161,10 +160,7 @@ public class HyperionRequestMockProvider {
         // Create issues array based on the result parameter
         var issuesArray = mapper.createArrayNode();
 
-        if ("No issues found".equals(result)) {
-            // Empty issues array for no issues
-        }
-        else if ("Language mapping test".equals(result)) {
+        if ("Language mapping test".equals(result)) {
             // Single issue for language mapping test
             var issue = mapper.createObjectNode();
             issue.put("category", "language-mapping");
@@ -192,7 +188,7 @@ public class HyperionRequestMockProvider {
                 }
             }
         }
-        else {
+        else if (!"No issues found".equals(result)) {
             // Default: create issues for the standard mock response
             // Issue 1
             var issue1 = mapper.createObjectNode();
@@ -224,34 +220,6 @@ public class HyperionRequestMockProvider {
         responseActions.andRespond(withSuccess(response.toString(), MediaType.APPLICATION_JSON));
     }
 
-    /**
-     * Mock consistency check with default success response.
-     */
-    public void mockConsistencyCheckSuccess(Long exerciseId) {
-        mockConsistencyCheckSuccess(exerciseId, MOCK_INCONSISTENCY_RESULT);
-    }
-
-    /**
-     * Mock consistency check failure scenarios.
-     */
-    public void mockConsistencyCheckFailure(Long exerciseId, HttpStatus status) {
-        ObjectNode errorResponse = mapper.createObjectNode();
-        errorResponse.put("error", "Consistency check failed");
-        errorResponse.put("details", "Service temporarily unavailable");
-
-        // Expect up to 3 calls (initial + 2 retries) for failure scenarios
-        mockServer.expect(ExpectedCount.between(1, 3), requestTo(hyperionUrl + "/review-and-refine/consistency-check")).andExpect(method(HttpMethod.POST))
-                .andRespond(withStatus(status).body(errorResponse.toString()).contentType(MediaType.APPLICATION_JSON));
-    }
-
-    /**
-     * Mock consistency check network error.
-     */
-    public void mockConsistencyCheckNetworkError(Long exerciseId) {
-        mockServer.expect(ExpectedCount.between(1, 3), requestTo(hyperionUrl + "/review-and-refine/consistency-check")).andExpect(method(HttpMethod.POST))
-                .andRespond(withException(new IOException("Network error")));
-    }
-
     // ===== PROBLEM STATEMENT REWRITING MOCKING =====
 
     /**
@@ -279,13 +247,6 @@ public class HyperionRequestMockProvider {
     }
 
     /**
-     * Mock problem statement rewriting with default response.
-     */
-    public void mockRewriteProblemStatementSuccess(String originalText) {
-        mockRewriteProblemStatementSuccess(originalText, MOCK_REWRITTEN_STATEMENT);
-    }
-
-    /**
      * Mock problem statement rewriting success for specific exercise with DTO response.
      */
     public void mockProblemStatementRewriteSuccess(Long exerciseId, String rewrittenText, RequestMatcher... additionalMatchers) {
@@ -308,26 +269,10 @@ public class HyperionRequestMockProvider {
     // ===== UTILITY METHODS =====
 
     /**
-     * Create a request matcher that validates JSON path content.
-     */
-    public static RequestMatcher jsonPath(String expression, Object expectedValue) {
-        return org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath(expression).value(expectedValue);
-    }
-
-    /**
      * Create a request matcher that validates the presence of a JSON field.
      */
     public static RequestMatcher hasJsonPath(String expression) {
         return org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath(expression).exists();
-    }
-
-    /**
-     * Mock any request to fail with a specific HTTP status.
-     */
-    public void mockAnyRequestFailure(HttpStatus status) {
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(hyperionUrl + "/**")).andRespond(withStatus(status));
-
-        mockServerShortTimeout.expect(ExpectedCount.manyTimes(), requestTo(hyperionUrl + "/**")).andRespond(withStatus(status));
     }
 
     /**
@@ -414,42 +359,6 @@ public class HyperionRequestMockProvider {
     }
 
     // ===== Additional Mock Methods for Service Tests =====
-
-    /**
-     * Mock consistency check with request expectations.
-     */
-    public void mockConsistencyCheckAndExpect(Long exerciseId, RequestMatcher... matchers) {
-        ObjectNode response = mapper.createObjectNode();
-        response.put("has_issues", false);
-        response.set("issues", mapper.createArrayNode());
-
-        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(hyperionUrl + "/review-and-refine/consistency-check"))
-                .andExpect(method(HttpMethod.POST)).andExpect(header("X-API-Key", "test-api-key"));
-
-        for (RequestMatcher matcher : matchers) {
-            responseActions.andExpect(matcher);
-        }
-
-        responseActions.andRespond(withSuccess(response.toString(), MediaType.APPLICATION_JSON));
-    }
-
-    /**
-     * Mock problem statement rewrite with request expectations.
-     */
-    public void mockProblemStatementRewriteAndExpect(Long exerciseId, String originalText, RequestMatcher... matchers) {
-        ObjectNode response = mapper.createObjectNode();
-        response.put("rewritten_text", "Improved problem statement with better clarity");
-        response.put("improved", true);
-
-        ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(hyperionUrl + "/review-and-refine/problem-statement-rewrite"))
-                .andExpect(method(HttpMethod.POST)).andExpect(header("X-API-Key", "test-api-key"));
-
-        for (RequestMatcher matcher : matchers) {
-            responseActions.andExpect(matcher);
-        }
-
-        responseActions.andRespond(withSuccess(response.toString(), MediaType.APPLICATION_JSON));
-    }
 
     /**
      * Mock health status network error.

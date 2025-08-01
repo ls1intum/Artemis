@@ -13,15 +13,14 @@ import org.springframework.test.context.TestPropertySource;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.hyperion.AbstractHyperionRestTest;
+import de.tum.cit.aet.artemis.hyperion.AbstractHyperionIntegrationTest;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 @TestPropertySource(properties = { "artemis.hyperion.url=http://localhost:8080", "artemis.hyperion.api-key=test-api-key" })
-
-class HyperionReviewAndRefineRestServiceTest extends AbstractHyperionRestTest {
+class HyperionReviewAndRefineIntegrationServiceTest extends AbstractHyperionIntegrationTest {
 
     private static final String TEST_PREFIX = "hyperionservice";
 

@@ -13,7 +13,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Individual consistency issue details")
-public record ConsistencyIssueDTO(@NotNull @Schema(description = "Severity of the issue", example = "HIGH") Severity severity,
+public record ConsistencyIssueDTO(
+
+        @NotNull @Schema(description = "Severity of the issue", example = "HIGH") Severity severity,
 
         @NotNull @Schema(description = "Category of the issue", example = "PROBLEM_STATEMENT_MISMATCH") String category,
 

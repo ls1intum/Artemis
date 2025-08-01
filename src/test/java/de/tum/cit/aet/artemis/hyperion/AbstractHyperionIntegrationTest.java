@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
  * Base class for Hyperion REST integration tests providing common functionality.
  * Follows the same pattern as AbstractAthenaTest but for modern REST-based Hyperion testing.
  */
-public abstract class AbstractHyperionRestTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+public abstract class AbstractHyperionIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     protected HyperionRequestMockProvider hyperionRequestMockProvider;

@@ -137,7 +137,7 @@ public class HyperionReviewAndRefineRestService {
 
             String result = response.getRewrittenText();
 
-            if (result == null || result.trim().isEmpty()) {
+            if (result.trim().isEmpty()) {
                 log.warn("Hyperion service returned empty rewritten text for course {}", course.getId());
                 throw new NetworkingException("Hyperion service returned empty response");
             }

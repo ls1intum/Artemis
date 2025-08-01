@@ -12,7 +12,7 @@ import org.springframework.test.context.TestPropertySource;
 import de.tum.cit.aet.artemis.core.connector.HyperionRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.hyperion.AbstractHyperionRestTest;
+import de.tum.cit.aet.artemis.hyperion.AbstractHyperionIntegrationTest;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
  */
 @TestPropertySource(properties = { "artemis.hyperion.url=http://localhost:8080", "artemis.hyperion.api-key=test-api-key",
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_hyperion_integration_test" })
-class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionRestTest {
+class HyperionReviewAndRefineResourceIntegrationTest extends AbstractHyperionIntegrationTest {
 
     private static final String TEST_PREFIX = "hyperionresourceintegration";
 

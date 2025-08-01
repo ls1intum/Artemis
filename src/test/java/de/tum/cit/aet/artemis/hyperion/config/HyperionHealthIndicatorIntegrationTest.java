@@ -8,11 +8,10 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.test.context.TestPropertySource;
 
-import de.tum.cit.aet.artemis.hyperion.AbstractHyperionRestTest;
+import de.tum.cit.aet.artemis.hyperion.AbstractHyperionIntegrationTest;
 
 @TestPropertySource(properties = { "artemis.hyperion.url=http://localhost:8080", "artemis.hyperion.api-key=test-api-key" })
-
-class HyperionHealthIndicatorRestTest extends AbstractHyperionRestTest {
+class HyperionHealthIndicatorIntegrationTest extends AbstractHyperionIntegrationTest {
 
     @Autowired
     private HyperionHealthIndicator hyperionHealthIndicator;
