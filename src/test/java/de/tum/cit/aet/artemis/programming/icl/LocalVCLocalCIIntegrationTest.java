@@ -986,7 +986,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
         practiceParticipation.setPracticeMode(true);
-        practiceParticipation.setRepositoryUri(localVCLocalCITestService.constructLocalVCUrl("", "", projectKey1, practiceRepositorySlug));
+        practiceParticipation.setRepositoryUri(localVCLocalCITestService.constructLocalVCUri("", "", projectKey1, practiceRepositorySlug));
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 
         // Students should be able to fetch and push, teaching assistants should be able to fetch but not push and editors and higher should be able to fetch and push.
@@ -1040,7 +1040,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
         practiceParticipation.setPracticeMode(true);
-        practiceParticipation.setRepositoryUri(localVCLocalCITestService.constructLocalVCUrl("", "", projectKey1, practiceRepositorySlug));
+        practiceParticipation.setRepositoryUri(localVCLocalCITestService.constructLocalVCUri("", "", projectKey1, practiceRepositorySlug));
 
         // practiceParticipation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), practiceRepositorySlug));
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
@@ -1083,7 +1083,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 instructor1Login);
         practiceParticipation.setPracticeMode(true);
-        practiceParticipation.setRepositoryUri(localVCLocalCITestService.constructLocalVCUrl("", "", projectKey1, practiceRepositorySlug));
+        practiceParticipation.setRepositoryUri(localVCLocalCITestService.constructLocalVCUri("", "", projectKey1, practiceRepositorySlug));
 
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 

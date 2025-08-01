@@ -104,7 +104,7 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public LocalVCRepositoryUri getCloneRepositoryUri(String projectKey, String repositorySlug) {
-        return new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUri);
+        return new LocalVCRepositoryUri(localVCBaseUri, projectKey, repositorySlug);
     }
 
     /**
@@ -151,7 +151,7 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public void createRepository(String projectKey, String repositorySlug) {
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUri);
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, projectKey, repositorySlug);
 
         Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
 

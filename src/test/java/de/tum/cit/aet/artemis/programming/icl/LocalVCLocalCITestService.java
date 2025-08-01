@@ -8,14 +8,15 @@ import static org.awaitility.Awaitility.await;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.http.client.utils.URIBuilder;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
@@ -82,7 +83,7 @@ public class LocalVCLocalCITestService {
     private ResultTestRepository resultRepository;
 
     @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    private URI localVCBaseUri;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCRepoPath;
@@ -116,7 +117,7 @@ public class LocalVCLocalCITestService {
         String projectKey = programmingExercise.getProjectKey();
         String repositorySlug = getRepositorySlug(projectKey, userLogin);
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
-        participation.setRepositoryUri(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, repositorySlug));
+        participation.setRepositoryUri(String.format(localVCBaseUri + "/git/%s/%s.git", projectKey, repositorySlug));
         participation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(participation);
 
@@ -218,10 +219,10 @@ public class LocalVCLocalCITestService {
      * @param username       the username of the user that tries to access the repository using this URL.
      * @param projectKey     the project key of the repository.
      * @param repositorySlug the repository slug of the repository.
-     * @return the URL to the repository.
+     * @return the URL as string to the repository.
      */
-    public String constructLocalVCUrl(String username, String projectKey, String repositorySlug) {
-        return constructLocalVCUrl(username, USER_PASSWORD, projectKey, repositorySlug);
+    public String constructLocalVCUri(String username, String projectKey, String repositorySlug) throws URISyntaxException {
+        return constructLocalVCUri(username, USER_PASSWORD, projectKey, repositorySlug);
     }
 
     /**
@@ -231,11 +232,12 @@ public class LocalVCLocalCITestService {
      * @param password       the password of the user that tries to access the repository using this URL.
      * @param projectKey     the project key of the repository.
      * @param repositorySlug the repository slug of the repository.
-     * @return the URL to the repository.
+     * @return the URL as string to the repository.
      */
-    public String constructLocalVCUrl(String username, String password, String projectKey, String repositorySlug) {
-        return "http://" + username + (!password.isEmpty() ? ":" : "") + password + (!username.isEmpty() ? "@" : "") + "localhost:" + port + "/git/" + projectKey.toUpperCase()
-                + "/" + repositorySlug + ".git";
+    public String constructLocalVCUri(String username, String password, String projectKey, String repositorySlug) throws URISyntaxException {
+        URI uri = new URIBuilder().setScheme("http").setUserInfo(username, password).setHost("localhost").setPort(port)
+                .setPathSegments("git", projectKey.toUpperCase(), repositorySlug + ".git").build();
+        return uri.toString();
     }
 
     /**
@@ -344,7 +346,7 @@ public class LocalVCLocalCITestService {
     }
 
     private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
-        String repositoryUri = constructLocalVCUrl(username, password, projectKey, repositorySlug);
+        String repositoryUri = constructLocalVCUri(username, password, projectKey, repositorySlug);
         FetchCommand fetchCommand = repositoryHandle.fetch();
         // Set the remote URL.
         fetchCommand.setRemote(repositoryUri);
@@ -472,7 +474,7 @@ public class LocalVCLocalCITestService {
     }
 
     private void performPush(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
-        String repositoryUri = constructLocalVCUrl(username, password, projectKey, repositorySlug);
+        String repositoryUri = constructLocalVCUri(username, password, projectKey, repositorySlug);
         PushCommand pushCommand = repositoryHandle.push();
         // Set the remote URL.
         pushCommand.setRemote(repositoryUri);

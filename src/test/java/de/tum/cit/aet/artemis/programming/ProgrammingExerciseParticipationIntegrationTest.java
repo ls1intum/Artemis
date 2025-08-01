@@ -735,9 +735,34 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.FORBIDDEN, String.class);
     }
 
-    String extractRepoName(String repoUrl) {
-        // <server.url>/git/<project_key>/<repo-name>.git
-        return repoUrl.substring(repoUrl.lastIndexOf("/") + 1, repoUrl.length() - 4);
+    /**
+     * Extracts the repository name from a Git repository URL ending in ".git".
+     *
+     * <p>
+     * Assumes the URL format:
+     * {@code http(s)://<host>/git/<project_key>/<repo-name>.git}
+     * </p>
+     *
+     * @param repoUrl the full URL of the Git repository (e.g., "http://localhost:7990/git/PROJ/my-repo.git")
+     * @return the repository name without the ".git" suffix (e.g., "my-repo")
+     * @throws IllegalArgumentException if the input does not end with ".git" or contains no slashes
+     *
+     *                                      <p>
+     *                                      <b>Examples:</b>
+     *                                      </p>
+     *
+     *                                      <pre>
+     * extractRepoName("http://localhost:7990/git/PROJ/proj-repo.git") → "proj-repo"
+     * extractRepoName("https://example.com/git/ABC/abc-repo.git") → "abc-repo"
+     *                                      </pre>
+     */
+    private String extractRepoName(String repoUrl) {
+        if (repoUrl == null || !repoUrl.endsWith(".git") || !repoUrl.contains("/")) {
+            throw new IllegalArgumentException("Invalid Git repository URL: " + repoUrl);
+        }
+
+        int lastSlash = repoUrl.lastIndexOf('/');
+        return repoUrl.substring(lastSlash + 1, repoUrl.length() - 4); // remove ".git"
     }
 
     @Test
