@@ -18,40 +18,62 @@
         @if (!examTimeline()) {
             <div class="col-md-auto ps-0">
                 <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard sticky-top-quiz">
-                    @for (question of quizConfiguration().quizQuestions; track question; let i = $index) {
-                        <div class="stepwizardquiz__step mb-3">
-                            @if (question.type === DRAG_AND_DROP) {
-                                <span
-                                    class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
-                                    (click)="navigateToQuestion(question.id!)"
-                                    [ngbTooltip]="!!dragAndDropMappings.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                                    [ngClass]="!!dragAndDropMappings.get(question.id!)?.length ? 'changed-question' : ''"
-                                >
-                                    <b class="fa">DD</b>
-                                </span>
-                            }
-                            @if (question.type === MULTIPLE_CHOICE) {
-                                <span
-                                    class="btn btn-light btn-circle stepbutton stepwizardquiz-circle multiplechoicecolor-question"
-                                    (click)="navigateToQuestion(question.id!)"
-                                    [ngbTooltip]="!!selectedAnswerOptions.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                                    [ngClass]="!!selectedAnswerOptions.get(question.id!)?.length ? 'changed-question' : ''"
-                                >
-                                    <b class="fa">MC</b>
-                                </span>
-                            }
-                            @if (question.type === SHORT_ANSWER) {
-                                <span
-                                    class="btn btn-light btn-circle stepbutton stepwizardquiz-circle shortanswercolor-question"
-                                    (click)="navigateToQuestion(question.id!)"
-                                    [ngbTooltip]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                                    [ngClass]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? 'changed-question' : ''"
-                                >
-                                    <b class="fa">SA</b>
-                                </span>
+                    @for (question of quizConfiguration().quizQuestions; track question; let index = $index) {
+                        <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
+                            @switch (question.type) {
+                                @case (DRAG_AND_DROP) {
+                                    <ng-template
+                                        [ngTemplateOutlet]="stepwizardCircle"
+                                        [ngTemplateOutletContext]="{
+                                            questionId: question.id,
+                                            questionAnswers: dragAndDropMappings,
+                                            abbreviation: 'DD',
+                                            questionColorClass: 'draganddropcolor-question',
+                                        }"
+                                    />
+                                }
+                                @case (MULTIPLE_CHOICE) {
+                                    <ng-template
+                                        [ngTemplateOutlet]="stepwizardCircle"
+                                        [ngTemplateOutletContext]="{
+                                            questionId: question.id,
+                                            questionAnswers: selectedAnswerOptions,
+                                            abbreviation: 'MC',
+                                            questionColorClass: 'multiplechoicecolor-question',
+                                        }"
+                                    />
+                                }
+                                @case (SHORT_ANSWER) {
+                                    <ng-template
+                                        [ngTemplateOutlet]="stepwizardCircle"
+                                        [ngTemplateOutletContext]="{
+                                            questionId: question.id,
+                                            questionAnswers: shortAnswerSubmittedTexts,
+                                            abbreviation: 'SA',
+                                            questionColorClass: 'shortanswercolor-question',
+                                        }"
+                                    />
+                                }
                             }
                             <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }} </ng-template>
                             <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }} </ng-template>
+                            <ng-template
+                                #stepwizardCircle
+                                let-questionAnswers="questionAnswers"
+                                let-abbreviation="abbreviation"
+                                let-questionColorClass="questionColorClass"
+                                let-questionId="questionId"
+                            >
+                                <span
+                                    class="btn btn-light btn-circle"
+                                    [class]="questionColorClass"
+                                    (click)="navigateToQuestion(questionId)"
+                                    [ngbTooltip]="!!questionAnswers.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                                    [ngClass]="!!questionAnswers.get(question.id!)?.length ? 'changed-question' : ''"
+                                >
+                                    <b class="fa">{{ abbreviation }}</b>
+                                </span>
+                            </ng-template>
                         </div>
                     }
                 </div>
@@ -59,7 +81,7 @@
         }
 
         <div class="col p-0 quiz-content mb-3">
-            @for (question of quizConfiguration().quizQuestions; track question; let i = $index) {
+            @for (question of quizConfiguration().quizQuestions; track question; let index = $index) {
                 <div>
                     <!-- TODO: Map vs Array consistency -->
                     @if (question.type === MULTIPLE_CHOICE) {
@@ -70,7 +92,7 @@
                             (selectedAnswerOptionsChange)="selectedAnswerOptions.set(question.id!, $event)"
                             [fnOnSelection]="onSelectionChanged.bind(this)"
                             [quizQuestions]="quizConfiguration().quizQuestions"
-                            [questionIndex]="i + 1"
+                            [questionIndex]="index + 1"
                             [clickDisabled]="readonly()"
                         />
                     }
@@ -82,7 +104,7 @@
                             [mappings]="dragAndDropMappings.get(question.id!)!"
                             (mappingsChange)="dragAndDropMappings.set(question.id!, $event)"
                             [onMappingUpdate]="onSelectionChanged.bind(this)"
-                            [questionIndex]="i + 1"
+                            [questionIndex]="index + 1"
                             [clickDisabled]="readonly()"
                         />
                     }
@@ -94,7 +116,7 @@
                             [submittedTexts]="shortAnswerSubmittedTexts.get(question.id!)!"
                             (submittedTextsChange)="shortAnswerSubmittedTexts.set(question.id!, $event)"
                             [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
-                            [questionIndex]="i + 1"
+                            [questionIndex]="index + 1"
                             [clickDisabled]="readonly()"
                         />
                     }

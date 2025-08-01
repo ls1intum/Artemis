@@ -22,7 +22,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { NgClass } from '@angular/common';
+import { CommonModule, NgClass, NgTemplateOutlet } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
@@ -32,13 +32,15 @@ import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.m
     selector: 'jhi-quiz-submission-exam',
     templateUrl: './quiz-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
-    styleUrls: ['./quiz-exam-submission.component.scss'],
+    styleUrls: ['../../../../quiz/overview/participation/quiz-participation.component.scss'],
     imports: [
+        CommonModule,
         TranslateDirective,
         IncludedInScoreBadgeComponent,
         ExerciseSaveButtonComponent,
         NgbTooltip,
         NgClass,
+        NgTemplateOutlet,
         MultipleChoiceQuestionComponent,
         DragAndDropQuestionComponent,
         ShortAnswerQuestionComponent,
@@ -138,7 +140,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      * @param questionId
      */
     navigateToQuestion(questionId: number): void {
-        // get html element for question
         const element = document.getElementById('question' + questionId);
         if (element) {
             element.scrollIntoView({
