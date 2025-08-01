@@ -22,7 +22,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import {
     FeedbackType,
-    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+    PRELIMINARY_FEEDBACK_IDENTIFIER,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
@@ -94,7 +94,7 @@ describe('ResultService', () => {
         score: 80,
     };
     const result6: Result = {
-        feedbacks: [{ text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
+        feedbacks: [{ text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
         submission: {
             participation: { type: ParticipationType.PROGRAMMING },
         },
@@ -103,7 +103,7 @@ describe('ResultService', () => {
         successful: true,
     };
     const result7: Result = {
-        feedbacks: [{ text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
+        feedbacks: [{ text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
         submission: {
             participation: { type: ParticipationType.PROGRAMMING },
         },

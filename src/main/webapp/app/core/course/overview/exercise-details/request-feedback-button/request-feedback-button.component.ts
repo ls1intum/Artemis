@@ -23,7 +23,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-request-feedback-button',
@@ -67,11 +66,15 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        if (this.athenaEnabled) {
+            this.requestFeedbackEnabled = !!this.exercise().preliminaryFeedbackModule;
+        } else {
+            this.requestFeedbackEnabled = this.exercise().allowManualFeedbackRequests ?? false;
+        }
         this.isExamExercise = isExamExercise(this.exercise());
         if (this.isExamExercise || !this.exercise().id) {
             return;
         }
-        this.requestFeedbackEnabled = this.exercise().allowFeedbackRequests ?? false;
         this.updateParticipation();
         this.setUserAcceptedExternalLLMUsage();
     }
@@ -86,11 +89,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                 next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
                     this.participation = this.participationService.getSpecificStudentParticipation(exerciseResponse.body!.exercise.studentParticipations ?? [], false);
                     if (this.participation) {
-                        this.currentFeedbackRequestCount =
-                            getAllResultsOfAllSubmissions(this.participation.submissions)?.filter(
-                                (result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && result.successful == true,
-                            ).length ?? 0;
                         this.subscribeToResultUpdates();
+                        this.loadAthenaFeedbackCount(this.participation.id!);
                     }
                 },
                 error: (error: HttpErrorResponse) => {
@@ -198,5 +198,16 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Loads the current number of successful AUTOMATIC_ATHENA requests for this participation
+     * and stores it in `currentFeedbackRequestCount`.
+     */
+    private loadAthenaFeedbackCount(participationId: number): void {
+        this.courseExerciseService.getAthenaFeedbackRequestCount(participationId).subscribe({
+            next: (count) => (this.currentFeedbackRequestCount = count),
+            error: () => this.alertService.error('artemisApp.exercise.feedbackRequestCountFailed'),
+        });
     }
 }

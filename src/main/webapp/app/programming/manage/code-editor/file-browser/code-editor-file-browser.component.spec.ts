@@ -931,6 +931,8 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folderA/file': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
             'folderB/file1': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
             'folderB/file2': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 2)],
+            'folderC/file1': [new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, 1)],
+            'folderC/file2': [new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, 2)],
         };
 
         beforeEach(() => {
@@ -947,9 +949,23 @@ describe('CodeEditorFileBrowserComponent', () => {
             expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)]);
         });
 
-        it('should aggregate file badges for a collapsed folder', () => {
+        it('should aggregate file badges for a collapsed folder FEEDBACK_SUGGESTION', () => {
             const result = comp.getFolderBadges({ value: 'folderB', collapsed: true } as TreeViewItem<string>);
             expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3)]); // 1 + 2
         });
+
+        it('should aggregate file badges for a collapsed folder for PRELIMINARY_FEEDBACK', () => {
+            const result = comp.getFolderBadges({ value: 'folderC', collapsed: true } as TreeViewItem<string>);
+            expect(result).toEqual([new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, 3)]); // 1 + 2
+        });
+    });
+
+    it('should emit onReopenFeedback when reopenFeedback is called', () => {
+        const treeViewItem = { value: 'file1.java' } as TreeViewItem<string>;
+        const emitSpy = jest.spyOn(comp.onReopenFeedback, 'emit');
+
+        comp.reopenFeedback(treeViewItem);
+
+        expect(emitSpy).toHaveBeenCalledWith('file1.java');
     });
 });

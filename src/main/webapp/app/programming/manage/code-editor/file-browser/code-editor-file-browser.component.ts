@@ -105,6 +105,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     fileBadges: { [path: string]: FileBadge[] } = {};
     @Input()
     allowHiddenFiles = false;
+    @Input()
+    disableReopenFeedbackButton: boolean = true;
 
     @Output()
     onToggleCollapse = new EventEmitter<InteractableEvent>();
@@ -116,6 +118,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     commitStateChange = new EventEmitter<CommitState>();
     @Output()
     onError = new EventEmitter<string>();
+    @Output()
+    onReopenFeedback = new EventEmitter<string>();
 
     isLoadingFiles: boolean;
     selectedFileValue?: string;
@@ -556,6 +560,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     createFolder = (folderName: string): Observable<void> => {
         return this.repositoryFileService.createFolder(folderName);
+    };
+
+    reopenFeedback = (item: TreeViewItem<string>): void => {
+        this.onReopenFeedback.emit(item.value);
     };
 
     /**

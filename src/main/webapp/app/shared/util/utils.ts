@@ -115,6 +115,15 @@ export const findLatestResult = (results?: (Result | null | undefined)[]): Resul
     return clean.length ? clean.reduce((a, b) => (a.id! > b.id! ? a : b)) : undefined;
 };
 
+/**
+ * finds the latest result with available test information based on the max id
+ * @param results
+ */
+export const findLatestResultWithTests = (results: Result[] | undefined) => {
+    const resultsWithTests = results?.filter((result) => result.testCaseCount !== undefined && result.testCaseCount !== null && result.testCaseCount !== 0);
+    return resultsWithTests?.length ? resultsWithTests.reduce((current, result) => (current.id! > result.id! ? current : result)) : undefined;
+};
+
 export const isDate = (input: any) => {
     return input instanceof Date || Object.prototype.toString.call(input) === '[object Date]';
 };

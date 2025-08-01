@@ -52,6 +52,27 @@ export abstract class Participation implements BaseEntity {
     protected constructor(type: ParticipationType) {
         this.type = type;
     }
+
+    /**
+     * Returns the newest submission in `submissions`, determined
+     * by `submissionDate`.  If no dates are set it falls back to the last
+     * element in the array.
+     */
+    public static getLatestSubmission(participation?: Participation): Submission | undefined {
+        const submissions = participation?.submissions;
+        if (!submissions || submissions.length === 0) {
+            return undefined;
+        }
+
+        // Choose by date if available …
+        const dated = submissions.filter((s: Submission) => !!s.submissionDate);
+        if (dated.length > 0) {
+            return dated.sort((a: Submission, b: Submission) => b.submissionDate!.valueOf() - a.submissionDate!.valueOf())[0];
+        }
+
+        // Otherwise fall back to the last array element
+        return submissions[submissions.length - 1];
+    }
 }
 
 /**

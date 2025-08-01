@@ -48,7 +48,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseCodeReviewFeedbackService.class);
 
-    public static final String NON_GRADED_FEEDBACK_SUGGESTION = "NonGradedFeedbackSuggestion:";
+    // feedback.detailText prefix
+    public static final String PRELIMINARY_FEEDBACK_PREFIX = "NonGradedFeedbackSuggestion:";
 
     private final GroupNotificationService groupNotificationService;
 
@@ -129,7 +130,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         automaticResult.setScore(100.0);
         automaticResult.setSuccessful(null);
         automaticResult.setCompletionDate(ZonedDateTime.now().plusMinutes(5)); // we do not want to show dates without a completion date, but we want the students to know their
-                                                                               // feedback request is in work
+        // feedback request is in work
         automaticResult = this.resultRepository.save(automaticResult);
 
         try {
@@ -148,17 +149,17 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                         String feedbackText;
                         if (Objects.nonNull(individualFeedbackItem.lineStart())) {
                             if (Objects.nonNull(individualFeedbackItem.lineEnd()) && !individualFeedbackItem.lineStart().equals(individualFeedbackItem.lineEnd())) {
-                                feedbackText = String.format(NON_GRADED_FEEDBACK_SUGGESTION + "File %s at lines %d-%d", individualFeedbackItem.filePath(),
-                                        individualFeedbackItem.lineStart(), individualFeedbackItem.lineEnd());
+                                feedbackText = String.format(PRELIMINARY_FEEDBACK_PREFIX + "File %s at lines %d-%d", individualFeedbackItem.filePath(),
+                                        individualFeedbackItem.lineStart() + 1, individualFeedbackItem.lineEnd() + 1);
                             }
                             else {
-                                feedbackText = String.format(NON_GRADED_FEEDBACK_SUGGESTION + "File %s at line %d", individualFeedbackItem.filePath(),
-                                        individualFeedbackItem.lineStart());
+                                feedbackText = String.format(PRELIMINARY_FEEDBACK_PREFIX + "File %s at line %d", individualFeedbackItem.filePath(),
+                                        individualFeedbackItem.lineStart() + 1);
                             }
                             feedback.setReference(String.format("file:%s_line:%d", individualFeedbackItem.filePath(), individualFeedbackItem.lineStart()));
                         }
                         else {
-                            feedbackText = String.format(NON_GRADED_FEEDBACK_SUGGESTION + "File %s", individualFeedbackItem.filePath());
+                            feedbackText = String.format(PRELIMINARY_FEEDBACK_PREFIX + "File %s", individualFeedbackItem.filePath());
                         }
                         feedback.setText(feedbackText);
                         feedback.setDetailText(individualFeedbackItem.description());

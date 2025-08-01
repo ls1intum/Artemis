@@ -44,6 +44,8 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
+import de.tum.cit.aet.artemis.athena.domain.AthenaModuleMode;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -175,6 +177,8 @@ public class ProgrammingExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
+
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
@@ -186,7 +190,7 @@ public class ProgrammingExerciseResource {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ChannelRepository channelRepository,
             Optional<AthenaApi> athenaApi, Environment environment, RepositoryCheckoutService repositoryCheckoutService, Optional<SlideApi> slideApi,
-            ProgrammingExerciseDeletionService programmingExerciseDeletionService) {
+            Optional<AthenaFeedbackApi> athenaFeedbackApi, ProgrammingExerciseDeletionService programmingExerciseDeletionService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
@@ -215,6 +219,7 @@ public class ProgrammingExerciseResource {
         this.environment = environment;
         this.repositoryCheckoutService = repositoryCheckoutService;
         this.slideApi = slideApi;
+        this.athenaFeedbackApi = athenaFeedbackApi;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
     }
 
@@ -241,8 +246,10 @@ public class ProgrammingExerciseResource {
                     ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
         }
 
-        // It has already been checked when setting the test case weights that their sum is at least >= 0.
-        // Only when changing the assessment format to automatic an additional check for > 0 has to be performed.
+        // It has already been checked when setting the test case weights that their sum
+        // is at least >= 0.
+        // Only when changing the assessment format to automatic an additional check for
+        // > 0 has to be performed.
         if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
             final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
             if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(testCases)) {
@@ -253,10 +260,13 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * POST /programming-exercises/setup : Set up a new programmingExercise (with all needed repositories etc.)
+     * POST /programming-exercises/setup : Set up a new programmingExercise (with
+     * all needed repositories etc.)
      *
      * @param programmingExercise the programmingExercise to set up
-     * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
+     * @return the ResponseEntity with status 201 (Created) and with body the new
+     *         programmingExercise, or with status 400 (Bad Request) if the
+     *         parameters are invalid
      */
     @PostMapping("programming-exercises/setup")
     @EnforceAtLeastEditor
@@ -271,7 +281,10 @@ public class ProgrammingExerciseResource {
         programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, course);
 
         // Check that only allowed athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME), () -> programmingExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
+                () -> programmingExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+                () -> programmingExercise.setPreliminaryFeedbackModule(null));
 
         try {
             // Setup all repositories etc
@@ -294,10 +307,15 @@ public class ProgrammingExerciseResource {
     /**
      * PUT /programming-exercises : Updates an existing updatedProgrammingExercise.
      *
-     * @param updatedProgrammingExercise the programmingExercise that has been updated on the client
-     * @param notificationText           to notify the student group about the update on the programming exercise
-     * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the updated ProgrammingExercise
-     *         is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
+     * @param updatedProgrammingExercise the programmingExercise that has been
+     *                                       updated on the client
+     * @param notificationText           to notify the student group about the
+     *                                       update on the programming exercise
+     * @return the ResponseEntity with status 200 (OK) and with body the updated
+     *         ProgrammingExercise, or with status 400 (Bad Request) if the updated
+     *         ProgrammingExercise
+     *         is not valid, or with status 500 (Internal Server Error) if the
+     *         updated ProgrammingExercise couldn't be saved to the database
      */
     @PutMapping("programming-exercises")
     @EnforceAtLeastEditor
@@ -310,6 +328,10 @@ public class ProgrammingExerciseResource {
         }
 
         updatedProgrammingExercise.validateGeneralSettings();
+
+        if (!this.athenaApi.isPresent()) {
+            updatedProgrammingExercise.validateSettingsForManualFeedbackRequest();
+        }
 
         // Valid exercises have set either a course or an exerciseGroup
         updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
@@ -346,10 +368,13 @@ public class ProgrammingExerciseResource {
             }
         }
 
-        // Verify that the checkout directories have not been changed. This is required since the buildScript and result paths are determined during the creation of the exercise.
+        // Verify that the checkout directories have not been changed. This is required
+        // since the buildScript and result paths are determined during the creation of
+        // the exercise.
         programmingExerciseValidationService.validateCheckoutDirectoriesUnchanged(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        // Verify that the programming language supports the selected network access option
+        // Verify that the programming language supports the selected network access
+        // option
         programmingExerciseValidationService.validateDockerFlags(updatedProgrammingExercise);
 
         // Verify that a theia image is provided when the online IDE is enabled
@@ -365,8 +390,10 @@ public class ProgrammingExerciseResource {
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
 
         // Check that only allowed Athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
                 () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+                () -> updatedProgrammingExercise.setPreliminaryFeedbackModule(null));
         // Changing Athena module after the due date has passed is not allowed
         athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
 
@@ -381,7 +408,8 @@ public class ProgrammingExerciseResource {
         // Update the auxiliary repositories in the DB and ProgrammingExercise instance
         auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        // Update the auxiliary repositories in the VCS. This needs to be decoupled to break circular dependencies.
+        // Update the auxiliary repositories in the VCS. This needs to be decoupled to
+        // break circular dependencies.
         programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         if (updatedProgrammingExercise.getBonusPoints() == null) {
@@ -401,12 +429,19 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * PUT /programming-exercises/timeline : Updates the timeline attributes of a given exercise
+     * PUT /programming-exercises/timeline : Updates the timeline attributes of a
+     * given exercise
      *
-     * @param updatedProgrammingExercise containing the changes that have to be saved
-     * @param notificationText           an optional text to notify the student group about the update on the programming exercise
-     * @return the ResponseEntity with status 200 (OK) with the updated ProgrammingExercise, or with status 403 (Forbidden)
-     *         if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
+     * @param updatedProgrammingExercise containing the changes that have to be
+     *                                       saved
+     * @param notificationText           an optional text to notify the student
+     *                                       group about the update on the programming
+     *                                       exercise
+     * @return the ResponseEntity with status 200 (OK) with the updated
+     *         ProgrammingExercise, or with status 403 (Forbidden)
+     *         if the user is not allowed to update the exercise or with 404 (Not
+     *         Found) if the updated ProgrammingExercise couldn't be found in the
+     *         database
      */
     @PutMapping("programming-exercises/timeline")
     @EnforceAtLeastEditor
@@ -424,12 +459,17 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
+     * PATCH /programming-exercises-problem: Updates the problem statement of the
+     * exercise.
      *
-     * @param exerciseId              The ID of the exercise for which to change the problem statement
+     * @param exerciseId              The ID of the exercise for which to change the
+     *                                    problem statement
      * @param updatedProblemStatement The new problemStatement
-     * @param notificationText        to notify the student group about the updated problemStatement on the programming exercise
-     * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the
+     * @param notificationText        to notify the student group about the updated
+     *                                    problemStatement on the programming exercise
+     * @return the ResponseEntity with status 200 (OK) and with body the updated
+     *         problemStatement, with status 404 if the programmingExercise could
+     *         not be found, or with 403 if the
      *         user does not have permissions to access the programming exercise.
      */
     @PatchMapping("programming-exercises/{exerciseId}/problem-statement")
@@ -443,17 +483,20 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateProblemStatement(programmingExercise, updatedProblemStatement, notificationText);
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        // we saved a problem statement with test ids instead of test names. For easier editing we send a problem statement with test names to the client:
+        // we saved a problem statement with test ids instead of test names. For easier
+        // editing we send a problem statement with test names to the client:
         programmingExerciseTaskService.replaceTestIdsWithNames(updatedProgrammingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(updatedProgrammingExercise);
     }
 
     /**
-     * GET /courses/:courseId/programming-exercises : get all the programming exercises.
+     * GET /courses/:courseId/programming-exercises : get all the programming
+     * exercises.
      *
      * @param courseId of the course for which the exercise should be fetched
-     * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
+     * @return the ResponseEntity with status 200 (OK) and the list of
+     *         programmingExercises in body
      */
     @GetMapping("courses/{courseId}/programming-exercises")
     @EnforceAtLeastTutor
@@ -481,11 +524,16 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId : get the "exerciseId" programmingExercise.
+     * GET /programming-exercises/:exerciseId : get the "exerciseId"
+     * programmingExercise.
      *
-     * @param exerciseId                    the id of the programmingExercise to retrieve
-     * @param withPlagiarismDetectionConfig boolean flag whether to include the plagiarism detection config of the exercise
-     * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
+     * @param exerciseId                    the id of the programmingExercise to
+     *                                          retrieve
+     * @param withPlagiarismDetectionConfig boolean flag whether to include the
+     *                                          plagiarism detection config of the
+     *                                          exercise
+     * @return the ResponseEntity with status 200 (OK) and with body the
+     *         programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping("programming-exercises/{exerciseId}")
     @EnforceAtLeastTutor
@@ -497,7 +545,8 @@ public class ProgrammingExerciseResource {
         programmingExercise.setGradingCriteria(gradingCriteria);
 
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, programmingExercise);
-        // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it, otherwise also TA have access
+        // If the exercise belongs to an exam, only editors, instructors and admins are
+        // allowed to access it, otherwise also TA have access
         if (programmingExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         }
@@ -517,10 +566,13 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/theia-config : get the theia config for the programmingExercise.
+     * GET /programming-exercises/:exerciseId/theia-config : get the theia config
+     * for the programmingExercise.
      *
-     * @param exerciseId the id of the programmingExercise to retrieve the configuration for
-     * @return the ResponseEntity with status 200 (OK) and with body the TheiaConfigDTO, or with status 404 (Not Found)
+     * @param exerciseId the id of the programmingExercise to retrieve the
+     *                       configuration for
+     * @return the ResponseEntity with status 200 (OK) and with body the
+     *         TheiaConfigDTO, or with status 404 (Not Found)
      */
     @GetMapping("programming-exercises/{exerciseId}/theia-config")
     @EnforceAtLeastStudentInExercise
@@ -532,10 +584,12 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/with-participations/ : get the "exerciseId" programmingExercise.
+     * GET /programming-exercises/:exerciseId/with-participations/ : get the
+     * "exerciseId" programmingExercise.
      *
      * @param exerciseId the id of the programmingExercise to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the
+     *         programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping("programming-exercises/{exerciseId}/with-participations")
     @EnforceAtLeastEditor
@@ -554,12 +608,15 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/with-template-and-solution-participation
+     * GET
+     * /programming-exercises/:exerciseId/with-template-and-solution-participation
      *
      * @param exerciseId            the id of the programmingExercise to retrieve
      * @param withSubmissionResults get all submission results
      * @param withGradingCriteria   also get the grading criteria for the exercise
-     * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and the programming exercise
+     *         with template and solution participation, or with status 404 (Not
+     *         Found)
      */
     @GetMapping("programming-exercises/{exerciseId}/with-template-and-solution-participation")
     @EnforceAtLeastTutorInExercise
@@ -574,7 +631,9 @@ public class ProgrammingExerciseResource {
      * GET /programming-exercises/:exerciseId/with-auxiliary-repository
      *
      * @param exerciseId the id of the programmingExercise to retrieve
-     * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and the programming exercise
+     *         with template and solution participation, or with status 404 (Not
+     *         Found)
      */
     @GetMapping("programming-exercises/{exerciseId}/with-auxiliary-repository")
     @EnforceAtLeastTutorInExercise
@@ -589,9 +648,14 @@ public class ProgrammingExerciseResource {
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
      * @param exerciseId                the id of the programmingExercise to delete
-     * @param deleteBaseReposBuildPlans boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
-     *                                      LocalCI, it does not make sense to keep these artifacts
-     * @return the ResponseEntity with status 200 (OK) when programming exercise has been successfully deleted or with status 404 (Not Found)
+     * @param deleteBaseReposBuildPlans boolean which states whether the base repos
+     *                                      and build plans should be deleted as well,
+     *                                      this is true by default because for LocalVC
+     *                                      and
+     *                                      LocalCI, it does not make sense to keep
+     *                                      these artifacts
+     * @return the ResponseEntity with status 200 (OK) when programming exercise has
+     *         been successfully deleted or with status 404 (Not Found)
      */
     @DeleteMapping("programming-exercises/{exerciseId}")
     @EnforceAtLeastInstructor
@@ -607,10 +671,14 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * PUT /programming-exercises/{exerciseId}/generate-tests : Makes a call to StructureOracleGenerator to generate the structure oracle aka the test.json file
+     * PUT /programming-exercises/{exerciseId}/generate-tests : Makes a call to
+     * StructureOracleGenerator to generate the structure oracle aka the test.json
+     * file
      *
-     * @param exerciseId The ID of the programming exercise for which the structure oracle should get generated
-     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
+     * @param exerciseId The ID of the programming exercise for which the structure
+     *                       oracle should get generated
+     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad
+     *         Request) if the parameters are invalid
      */
     @PutMapping(value = "programming-exercises/{exerciseId}/generate-tests", produces = MediaType.TEXT_PLAIN_VALUE)
     @EnforceAtLeastEditor
@@ -631,7 +699,8 @@ public class ProgrammingExerciseResource {
 
         try {
             String testsPath = Path.of("test", programmingExercise.getPackageFolderName()).toString();
-            // Atm we only have one folder that can have structural tests, but this could change.
+            // Atm we only have one folder that can have structural tests, but this could
+            // change.
             testsPath = programmingExercise.getBuildConfig().hasSequentialTestRuns() ? Path.of("structural", testsPath).toString() : testsPath;
             boolean didGenerateOracle = programmingExerciseCreationUpdateService.generateStructureOracleFile(solutionRepoUri, exerciseRepoUri, testRepoUri, testsPath, user);
 
@@ -656,10 +725,13 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/test-case-state : Returns a DTO that offers information on the test case state of the programming exercise.
+     * GET /programming-exercises/:exerciseId/test-case-state : Returns a DTO that
+     * offers information on the test case state of the programming exercise.
      *
      * @param exerciseId the id of a ProgrammingExercise
-     * @return the ResponseEntity with status 200 (OK) and ProgrammingExerciseTestCaseStateDTO. Returns 404 (notFound) if the exercise does not exist.
+     * @return the ResponseEntity with status 200 (OK) and
+     *         ProgrammingExerciseTestCaseStateDTO. Returns 404 (notFound) if the
+     *         exercise does not exist.
      */
     @GetMapping("programming-exercises/{exerciseId}/test-case-state")
     @EnforceAtLeastTutor
@@ -674,9 +746,11 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Search for all programming exercises by id, title and course title. The result is pageable since there might be hundreds of exercises in the DB.
+     * Search for all programming exercises by id, title and course title. The
+     * result is pageable since there might be hundreds of exercises in the DB.
      *
-     * @param search         The pageable search containing the page size, page number and query string
+     * @param search         The pageable search containing the page size, page
+     *                           number and query string
      * @param isCourseFilter Whether to search in the courses for exercises
      * @param isExamFilter   Whether to search in the groups for exercises
      * @return The desired page, sorted and matching the given query
@@ -690,10 +764,13 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Search for programming exercises by id, title and course title. Only exercises with SCA enabled and the given programming language will be included.
+     * Search for programming exercises by id, title and course title. Only
+     * exercises with SCA enabled and the given programming language will be
+     * included.
      * The result is pageable since there might be hundreds of exercises in the DB.
      *
-     * @param search              The pageable search containing the page size, page number and query string
+     * @param search              The pageable search containing the page size, page
+     *                                number and query string
      * @param isCourseFilter      Whether to search in the courses for exercises
      * @param isExamFilter        Whether to search in the groups for exercises
      * @param programmingLanguage Filters for only exercises with this language
@@ -712,8 +789,10 @@ public class ProgrammingExerciseResource {
      * Returns a list of auxiliary repositories for a given programming exercise.
      *
      * @param exerciseId of the exercise
-     * @return the ResponseEntity with status 200 (OK) and the list of auxiliary repositories for the
-     *         given programming exercise. 404 when the programming exercise was not found.
+     * @return the ResponseEntity with status 200 (OK) and the list of auxiliary
+     *         repositories for the
+     *         given programming exercise. 404 when the programming exercise was not
+     *         found.
      */
     @GetMapping("programming-exercises/{exerciseId}/auxiliary-repository")
     @EnforceAtLeastTutor
@@ -724,18 +803,26 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Reset a programming exercise by performing a set of operations as specified in the
+     * Reset a programming exercise by performing a set of operations as specified
+     * in the
      * ProgrammingExerciseResetOptionsDTO for an exercise given an exerciseId.
      * <p>
      * The available operations include:
      * 1. deleteBuildPlans: Deleting all student build plans (except BASE/SOLUTION).
-     * 2. deleteRepositories: Deleting all student repositories (requires: 1. deleteBuildPlans == true).
-     * 3. deleteParticipationsSubmissionsAndResults: Deleting all participations, submissions, and results.
-     * 4. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI / Aeolus, this will reset the customized build plans).
+     * 2. deleteRepositories: Deleting all student repositories (requires: 1.
+     * deleteBuildPlans == true).
+     * 3. deleteParticipationsSubmissionsAndResults: Deleting all participations,
+     * submissions, and results.
+     * 4. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build
+     * plans (for LocalCI / Aeolus, this will reset the customized build plans).
      *
-     * @param exerciseId                         - Id of the programming exercise to reset.
-     * @param programmingExerciseResetOptionsDTO - Data Transfer Object specifying which operations to perform during the exercise reset.
-     * @return ResponseEntity<Void> - The ResponseEntity with status 200 (OK) if the reset was successful.
+     * @param exerciseId                         - Id of the programming exercise to
+     *                                               reset.
+     * @param programmingExerciseResetOptionsDTO - Data Transfer Object specifying
+     *                                               which operations to perform during
+     *                                               the exercise reset.
+     * @return ResponseEntity<Void> - The ResponseEntity with status 200 (OK) if the
+     *         reset was successful.
      */
     @PutMapping("programming-exercises/{exerciseId}/reset")
     @EnforceAtLeastEditor
@@ -766,13 +853,22 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * PUT /programming-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing ProgrammingExercise.
+     * PUT /programming-exercises/{exerciseId}/re-evaluate : Re-evaluates and
+     * updates an existing ProgrammingExercise.
      *
      * @param exerciseId                                  of the exercise
-     * @param programmingExercise                         the ProgrammingExercise to re-evaluate and update
-     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
-     * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the ProgrammingExercise is not valid,
-     *         or with status 409 (Conflict) if given exerciseId is not same as in the object of the request body, or with status 500 (Internal Server Error) if the
+     * @param programmingExercise                         the ProgrammingExercise to
+     *                                                        re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that
+     *                                                        indicates whether the
+     *                                                        associated feedback should
+     *                                                        be deleted or not
+     * @return the ResponseEntity with status 200 (OK) and with body the updated
+     *         ProgrammingExercise, or with status 400 (Bad Request) if the
+     *         ProgrammingExercise is not valid,
+     *         or with status 409 (Conflict) if given exerciseId is not same as in
+     *         the object of the request body, or with status 500 (Internal Server
+     *         Error) if the
      *         ProgrammingExercise
      *         couldn't be updated
      */
@@ -796,11 +892,13 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * DELETE programming-exercises/:exerciseId/tasks : Delete all tasks for an existing ProgrammingExercise.
+     * DELETE programming-exercises/:exerciseId/tasks : Delete all tasks for an
+     * existing ProgrammingExercise.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 204},
-     *         or with status {@code 400 (Bad Request) if the exerciseId is not valid}.
+     *         or with status
+     *         {@code 400 (Bad Request) if the exerciseId is not valid}.
      */
     @DeleteMapping("programming-exercises/{exerciseId}/tasks")
     @EnforceAtLeastEditor
@@ -817,11 +915,14 @@ public class ProgrammingExerciseResource {
     /**
      * GET programming-exercises/:exerciseId/solution-files-content
      * <p>
-     * Returns the solution repository files with content for a given programming exercise.
-     * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
+     * Returns the solution repository files with content for a given programming
+     * exercise.
+     * Note: This endpoint redirects the request to the
+     * ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
      *
-     * @param exerciseId   the exercise for which the solution repository files should be retrieved
+     * @param exerciseId   the exercise for which the solution repository files
+     *                         should be retrieved
      * @param omitBinaries do not send binaries to reduce payload size
      * @return a redirect to the endpoint returning the files with content
      */
@@ -836,18 +937,23 @@ public class ProgrammingExerciseResource {
 
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
-        // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
+        // TODO: We want to get rid of ModelAndView and use ResponseEntity instead.
+        // Define an appropriate service method and then call it here and in the
+        // referenced endpoint.
         return new ModelAndView("forward:/api/programming/repository/" + participation.getId() + "/files-content" + (omitBinaries ? "?omitBinaries=" + omitBinaries : ""));
     }
 
     /**
      * GET programming-exercises/:exerciseId/template-files-content
      * <p>
-     * Returns the template repository files with content for a given programming exercise.
-     * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
+     * Returns the template repository files with content for a given programming
+     * exercise.
+     * Note: This endpoint redirects the request to the
+     * ProgrammingExerciseParticipationService. This is required if
      * the template participation id is not known for the client.
      *
-     * @param exerciseId   the exercise for which the template repository files should be retrieved
+     * @param exerciseId   the exercise for which the template repository files
+     *                         should be retrieved
      * @param omitBinaries do not send binaries to reduce payload size
      * @return a redirect to the endpoint returning the files with content
      */
@@ -862,18 +968,25 @@ public class ProgrammingExerciseResource {
 
         var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
-        // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
+        // TODO: We want to get rid of ModelAndView and use ResponseEntity instead.
+        // Define an appropriate service method and then call it here and in the
+        // referenced endpoint.
         return new ModelAndView("forward:/api/programming/repository/" + participation.getId() + "/files-content" + (omitBinaries ? "?omitBinaries=" + omitBinaries : ""));
     }
 
     /**
      * GET programming-exercises/repository-checkout-directories
      *
-     * @param programmingLanguage for which the checkout directories should be retrieved
-     * @param checkoutSolution    whether the checkout solution repository shall be checked out during the template and submission build plan,
+     * @param programmingLanguage for which the checkout directories should be
+     *                                retrieved
+     * @param checkoutSolution    whether the checkout solution repository shall be
+     *                                checked out during the template and submission
+     *                                build plan,
      *                                if not supplied set to true as default
-     * @return a DTO containing the checkout directories for the exercise, solution, and tests repository
-     *         for the requested programming language for the submission and solution build.
+     * @return a DTO containing the checkout directories for the exercise, solution,
+     *         and tests repository
+     *         for the requested programming language for the submission and
+     *         solution build.
      */
     @Profile(PROFILE_LOCALCI)
     @GetMapping("programming-exercises/repository-checkout-directories")
