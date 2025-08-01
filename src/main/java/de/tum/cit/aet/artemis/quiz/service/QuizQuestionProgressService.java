@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -148,14 +149,59 @@ public class QuizQuestionProgressService {
             QuizQuestion question = entry.getKey();
             QuizQuestionProgressData data = entry.getValue();
             QuizQuestionProgress progress = progressMap.getOrDefault(question.getId(), new QuizQuestionProgress());
-            progress.setUserId(userId);
-            progress.setQuizQuestionId(question.getId());
+
+            if (progress.getId() == null) {
+                progress.setUserId(userId);
+                progress.setQuizQuestionId(question.getId());
+            }
+
+            progress.setProgressJson(data);
+            progress.setLastAnsweredAt(lastAnsweredAt);
+            return progress;
+        }).toList();
+        try {
+            quizQuestionProgressRepository.saveAll(progressToSave);
+        }
+        catch (DataIntegrityViolationException e) {
+            handleDataIntegrityViolation(answeredQuestions, lastAnsweredAt, userId);
+        }
+
+    }
+
+    /**
+     * The function handles the DataIntegrityViolationException and tries to update the progress instead of saving it.
+     *
+     * @param answeredQuestions Set of quiz questions that were answered
+     * @param lastAnsweredAt    Time when the question was last answered
+     * @param userId            The ID of the user for the participation
+     */
+    private void handleDataIntegrityViolation(Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions, ZonedDateTime lastAnsweredAt, Long userId) {
+        Set<Long> questionIdsToUpdate = answeredQuestions.keySet().stream().map(QuizQuestion::getId).collect(Collectors.toSet());
+        Set<QuizQuestionProgress> currentProgressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIdsToUpdate);
+        Map<Long, QuizQuestionProgress> currentProgressMap = currentProgressList.stream().collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> progress));
+
+        List<QuizQuestionProgress> progressToUpdate = answeredQuestions.entrySet().stream().map(entry -> {
+            QuizQuestion question = entry.getKey();
+            QuizQuestionProgressData data = entry.getValue();
+            QuizQuestionProgress progress = currentProgressMap.get(question.getId());
+
+            if (progress == null) {
+                progress = new QuizQuestionProgress();
+                progress.setUserId(userId);
+                progress.setQuizQuestionId(question.getId());
+            }
+
             progress.setProgressJson(data);
             progress.setLastAnsweredAt(lastAnsweredAt);
             return progress;
         }).toList();
 
-        quizQuestionProgressRepository.saveAll(progressToSave);
+        try {
+            quizQuestionProgressRepository.saveAll(progressToUpdate);
+        }
+        catch (DataIntegrityViolationException retryException) {
+            throw new IllegalStateException("Error while saving quiz question progress after retry. Persistent duplicate entry issue.", retryException);
+        }
     }
 
     /**
