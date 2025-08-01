@@ -11,7 +11,7 @@ on:
 #      -  src/main/java/**
 
 jobs:
-  build:
+  bean-instantiation-check:
     runs-on: ubuntu-latest
 
     steps:
@@ -203,7 +203,7 @@ jobs:
         run: |
           # Configuration variables
           DEFERRED_DEEP_CHAIN_PATTERN="Deferred long bean instantiation chain"
-          MAX_DEFERRED_DEPENDENCY_CHAIN_LENGTH=15
+          MAX_DEFERRED_DEPENDENCY_CHAIN_LENGTH=10
           LOG_FILE="app.log"
 
           echo "Checking for deferred dependency chains exceeding threshold..."
