@@ -60,13 +60,13 @@
             <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
-                        <tr jhiSort [ascending]="true">
+                        <tr jhiSort [(predicate)]="sort_attribute" [(ascending)]="ascending" (sortChange)="sortRows()">
                             <th jhiSortBy="roomNumber">
                                 <!-- 1. Room number -->
                                 <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.roomNumber"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
-                            <th jhiSortBy="roomName">
+                            <th jhiSortBy="name">
                                 <!-- 2. Room name -->
                                 <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.roomName"></span>
                                 <fa-icon [icon]="faSort" />
@@ -87,9 +87,9 @@
                             </th>
                         </tr>
                     </thead>
-                    @if (hasExamRoomsStored()) {
+                    @if (hasExamRoomData()) {
                         <tbody>
-                            @for (examRoom of overview()!.examRoomDTOS; track examRoom.roomNumber) {
+                            @for (examRoom of examRoomData()!; track examRoom.roomNumber) {
                                 <tr>
                                     <td>
                                         <!-- 1. Room number -->
@@ -105,28 +105,16 @@
                                     </td>
                                     <td>
                                         <!-- 4. Max capacity -->
-                                        <span>{{ getMaxCapacityOfExamRoom(examRoom) }}</span>
+                                        <span>{{ examRoom.maxCapacity }}</span>
                                     </td>
                                     <td>
                                         <!-- 5. Layout strategies -->
-                                        <span>{{ getLayoutStrategyNames(examRoom) }}</span>
+                                        <span>{{ examRoom.layoutStrategyNames!.join(', ') }}</span>
                                     </td>
                                 </tr>
                             }
                         </tbody>
                     }
-                    <!--                    <ul>-->
-                    <!--                        @for (room of overview()?.examRoomDTOS; track room) {-->
-                    <!--                            <li>-->
-                    <!--                                {{ room.name }} ({{ room.roomNumber }}) - {{ room.numberOfSeats }} seats-->
-                    <!--                                <ul>-->
-                    <!--                                    @for (strategy of room.layoutStrategies; track strategy) {-->
-                    <!--                                        <li>{{ strategy.name }}, Type: {{ strategy.type }}, Capacity: {{ strategy.capacity ?? 'N/A' }}</li>-->
-                    <!--                                    }-->
-                    <!--                                </ul>-->
-                    <!--                            </li>-->
-                    <!--                        }-->
-                    <!--                    </ul>-->
                 </table>
             </div>
         } @else {
