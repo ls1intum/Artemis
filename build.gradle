@@ -22,7 +22,7 @@ plugins {
     id "com.google.cloud.tools.jib" version "3.4.5"
     id "com.gorylenko.gradle-git-properties" version "2.5.2"
     id "io.spring.dependency-management" version "1.1.7"
-    id "nebula.lint" version "20.6.2"
+    id "nebula.lint" version "21.0.0"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.1.3"
     id "org.springframework.boot" version "${spring_boot_version}"
@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.3.0"
+version = "8.3.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -230,7 +230,7 @@ dependencies {
 
     implementation "org.jsoup:jsoup:1.21.1"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
-    implementation "commons-codec:commons-codec:1.18.0"
+    implementation "commons-codec:commons-codec:1.19.0"
 
     // use the latest version to avoid security vulnerabilities
     implementation "org.springframework:spring-aop:${spring_framework_version}"
@@ -256,7 +256,7 @@ dependencies {
     implementation "com.github.docker-java:docker-java-transport-zerodep:${docker_java_version}"
 
     // use newest version of commons-compress to avoid security issues through outdated dependencies
-    implementation "org.apache.commons:commons-compress:1.27.1"
+    implementation "org.apache.commons:commons-compress:1.28.0"
 
     // required for monitoring with prometheus and grafana
     implementation "io.micrometer:micrometer-registry-prometheus:${micrometer_version}"
@@ -299,7 +299,8 @@ dependencies {
     implementation "org.hibernate.orm:hibernate-envers:${hibernate_version}"
 
     // Required for jdbc connection pooling to databases
-    implementation "com.zaxxer:HikariCP:6.3.0"
+    // NOTE: cannot upgrade to 6.3.2 because of an issue: NoSuchMethodException error that is thrown when setting a metric registry
+    implementation "com.zaxxer:HikariCP:7.0.0"
 
     // Required for several dependencies
     implementation "org.apache.commons:commons-text:${commons_text_version}"
@@ -349,7 +350,7 @@ dependencies {
 
     // passkey functionality to simplify login
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.11.2.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.29.4.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.29.5.RELEASE"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -357,7 +358,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:10.3.1"
+    implementation "com.nimbusds:nimbus-jose-jwt:10.4"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -394,7 +395,7 @@ dependencies {
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.maven:maven-model:3.9.11"
     implementation "org.apache.pdfbox:pdfbox:3.0.5"
-    implementation "org.apache.commons:commons-csv:1.14.0"
+    implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.commonmark:commonmark:0.25.0"
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
@@ -408,14 +409,14 @@ dependencies {
     implementation "com.google.code.gson:gson:2.13.1"
 
     // explicitly only use this at runtime (required by liquibase, because developers should prefer org.apache.commons:csv
-    runtimeOnly "com.opencsv:opencsv:5.11.2"
+    runtimeOnly "com.opencsv:opencsv:5.12.0"
     // make sure to use the latest version to avoid security vulnerabilities
     runtimeOnly "commons-beanutils:commons-beanutils:1.11.0"
     checkstyle "commons-beanutils:commons-beanutils:1.11.0"
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
 
-    implementation "com.google.errorprone:error_prone_annotations:2.40.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.41.0"
     // needed for OpenAPI generation
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
 
@@ -458,7 +459,7 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.181"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.14.3"
+    testImplementation "org.gradle:gradle-tooling-api:9.0.0"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.3"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 

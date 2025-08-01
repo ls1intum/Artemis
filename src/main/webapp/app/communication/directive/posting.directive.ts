@@ -49,7 +49,10 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     ngOnDestroy(): void {
         if (this.deleteTimer !== undefined) {
             clearTimeout(this.deleteTimer);
-            this.deletePostingWithoutTimeout();
+            // Only delete if still marked as deleted
+            if (this.isDeleted) {
+                this.deletePostingWithoutTimeout();
+            }
         }
 
         if (this.deleteInterval !== undefined) {
