@@ -50,7 +50,7 @@ jobs:
       - name: Wait for the application to start
         run: |
           # Configuration variables
-          RUNNING_MESSAGE="'Artemis is running!'"
+          RUNNING_MESSAGE="'Artemis' is running!"
           STARTUP_TIMEOUT_ATTEMPTS=30
           STARTUP_RETRY_INTERVAL=2
           STARTUP_TOTAL_TIMEOUT=$((STARTUP_TIMEOUT_ATTEMPTS * STARTUP_RETRY_INTERVAL))
