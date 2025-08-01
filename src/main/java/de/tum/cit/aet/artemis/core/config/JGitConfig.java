@@ -17,6 +17,10 @@ public class JGitConfig {
 
     private static final Logger log = LoggerFactory.getLogger(JGitConfig.class);
 
+    /**
+     * Disables JGit's packed Git memory-mapped file feature to prevent issues when deleting repositories on NFS filesystems.
+     * This configuration is applied early in the application startup process, so it ran before any repository interaction.
+     */
     @PostConstruct
     public void disablePackedGitMMap() {
         log.debug("Applying JGit configuration: disable packed git mmap");
