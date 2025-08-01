@@ -17,7 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
@@ -68,7 +69,7 @@ public class HyperionReviewAndRefineResource {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Consistency check completed successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ConsistencyCheckResponseDTO.class))),
             @ApiResponse(responseCode = "503", description = "Hyperion service unavailable"), @ApiResponse(responseCode = "500", description = "Internal server error") })
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     @PostMapping("exercises/{exerciseId}/consistency-check")
     public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(
             @Parameter(description = "ID of the programming exercise to analyze", required = true) @PathVariable Long exerciseId) {
@@ -104,7 +105,7 @@ public class HyperionReviewAndRefineResource {
             @ApiResponse(responseCode = "200", description = "Problem statement rewritten successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProblemStatementRewriteResponseDTO.class))),
             @ApiResponse(responseCode = "400", description = "Invalid request body"), @ApiResponse(responseCode = "503", description = "Hyperion service unavailable"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     @PostMapping("courses/{courseId}/problem-statement-rewrite")
     public ResponseEntity<ProblemStatementRewriteResponseDTO> rewriteProblemStatement(@Parameter(description = "ID of the course", required = true) @PathVariable Long courseId,
             @Parameter(description = "Request containing the problem statement to rewrite", required = true) @RequestBody ProblemStatementRewriteRequestDTO requestDTO) {
