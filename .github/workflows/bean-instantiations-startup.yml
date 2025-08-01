@@ -171,7 +171,7 @@ jobs:
           if [ -z "$DEFERRED_LINE" ]; then
             echo "❌ No deferred eager bean chain length line found after ${DEFERRED_TOTAL_TIMEOUT}s"
             echo "Last $LOG_TAIL_LINES lines of $LOG_FILE:"
-            tail -$LOG_TAIL_LINES $LOG_FILE
+            cat $LOG_FILE
             exit 1
           fi
 
