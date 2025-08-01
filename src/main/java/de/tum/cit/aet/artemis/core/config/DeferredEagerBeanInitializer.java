@@ -41,6 +41,7 @@ public class DeferredEagerBeanInitializer {
      * This method should be called after the application is fully started to not block the startup process.
      */
     public void initializeDeferredEagerBeans() {
+        log.error("Starting deferred eager initialization of all beans");
         // Force eager initialization of HazelcastConnection first, so that connections are established as early as possible.
         try {
             context.getBean(HazelcastConnection.class);
