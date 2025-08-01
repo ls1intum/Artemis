@@ -78,7 +78,7 @@ jobs:
         run: |
           STARTUP_LOG_PATTERN="Bean instantiation graph exported to startupBeans\.dot \(([0-9]+) edges, longest dependency chain length: ([0-9]+)\)"
           MIN_INSTANTIATED_BEANS=20
-          MAX_INSTANTIATED_BEANS=94
+          MAX_INSTANTIATED_BEANS=92
           MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH=9
           LOG_FILE="app.log"
 
@@ -117,7 +117,7 @@ jobs:
           fi
 
           echo "✅ Final values → Beans: $INSTANTIATED_BEANS; Longest dependency chain length: $LONGEST_CHAIN_LENGTH"
-          echo "🎉 Startup bean instantiation metrics within expected ranges"
+          echo "✅ Startup bean instantiation metrics within expected ranges"
 
           # Export variables for next step
           echo "LONGEST_CHAIN_LENGTH=$LONGEST_CHAIN_LENGTH" >> $GITHUB_ENV
@@ -147,7 +147,7 @@ jobs:
           DEFERRED_RETRY_INTERVAL=12
           DEFERRED_TOTAL_TIMEOUT=$((DEFERRED_TIMEOUT_ATTEMPTS * DEFERRED_RETRY_INTERVAL))
           MIN_DEFERRED_CHAIN_LENGTH=1
-          MAX_DEFERRED_CHAIN_LENGTH=15
+          MAX_DEFERRED_CHAIN_LENGTH=10
           LOG_FILE="app.log"
           LOG_TAIL_LINES=50
 
@@ -195,7 +195,7 @@ jobs:
           fi
 
           echo "✅ Deferred eager bean chain length: $DEFERRED_CHAIN_LENGTH"
-          echo "🎉 Deferred eager bean dependency chain length within expected ranges"
+          echo "✅ Deferred eager bean dependency chain length within expected ranges"
 
           # Export variable for next step
           echo "DEFERRED_CHAIN_LENGTH=$DEFERRED_CHAIN_LENGTH" >> $GITHUB_ENV
