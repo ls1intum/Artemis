@@ -126,7 +126,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         const getTemplateRepositorySpy = jest.spyOn(programmingExerciseService, 'getTemplateRepositoryTestFilesWithContent');
 
         // Spy on the processRepositoryDiff method to ensure it sets the diff information
-        const processRepositoryDiffSpy = jest.spyOn(component, 'processRepositoryDiff').mockImplementation(async (left, right) => {
+        const processRepositoryDiffSpy = jest.spyOn(component, 'processRepositoryDiff').mockImplementation(async () => {
             component.diffInformation.set(mockDiffInformation);
         });
 
@@ -220,7 +220,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
             .mockReturnValueOnce(of(new Map([[mockDiffInformation.diffInformations[0].modifiedPath, mockDiffInformation.diffInformations[0].modifiedFileContent || '']])));
 
         // Spy on the processRepositoryDiff method to ensure it sets the diff information
-        const processRepositoryDiffSpy = jest.spyOn(component, 'processRepositoryDiff').mockImplementation(async (left, right) => {
+        const processRepositoryDiffSpy = jest.spyOn(component, 'processRepositoryDiff').mockImplementation(async () => {
             component.diffInformation.set(mockDiffInformation);
         });
 
