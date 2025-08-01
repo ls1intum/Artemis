@@ -16,11 +16,10 @@ jobs:
 
     env:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 9
-      MAX_DEFERRED_DEPENDENCY_CHAIN_LENGTH: 9
+      MAX_DEFERRED_CHAIN_LENGTH: 9
       MIN_INSTANTIATED_BEANS: 20
       MAX_INSTANTIATED_BEANS: 92
       MIN_DEFERRED_CHAIN_LENGTH: 1
-      MAX_DEFERRED_CHAIN_LENGTH: 10
 
     steps:
       - name: Check out code
@@ -32,11 +31,10 @@ jobs:
 
           echo "GitHub Action thresholds:"
           echo "  MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH = $MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH"
-          echo "  MAX_DEFERRED_DEPENDENCY_CHAIN_LENGTH = $MAX_DEFERRED_DEPENDENCY_CHAIN_LENGTH"
+          echo "  MAX_DEFERRED_CHAIN_LENGTH = $MAX_DEFERRED_CHAIN_LENGTH"
           echo "  MIN_INSTANTIATED_BEANS = $MIN_INSTANTIATED_BEANS"
           echo "  MAX_INSTANTIATED_BEANS = $MAX_INSTANTIATED_BEANS"
           echo "  MIN_DEFERRED_CHAIN_LENGTH = $MIN_DEFERRED_CHAIN_LENGTH"
-          echo "  MAX_DEFERRED_CHAIN_LENGTH = $MAX_DEFERRED_CHAIN_LENGTH"
 
           JAVA_FILE="src/main/java/de/tum/cit/aet/artemis/core/config/BeanInstantiationTracer.java"
 
@@ -70,10 +68,10 @@ jobs:
             THRESHOLD_MISMATCH=true
           fi
 
-          if [ "$JAVA_DEFERRED_MAX" != "$MAX_DEFERRED_DEPENDENCY_CHAIN_LENGTH" ]; then
+          if [ "$JAVA_DEFERRED_MAX" != "$MAX_DEFERRED_CHAIN_LENGTH" ]; then
             echo "❌ DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD mismatch:"
             echo "   Java: $JAVA_DEFERRED_MAX"
-            echo "   GitHub Action: $MAX_DEFERRED_DEPENDENCY_CHAIN_LENGTH"
+            echo "   GitHub Action: $MAX_DEFERRED_CHAIN_LENGTH"
             THRESHOLD_MISMATCH=true
           fi
 
@@ -278,13 +276,13 @@ jobs:
 
           echo "Checking for deferred dependency chains exceeding threshold..."
 
-          if (( DEFERRED_CHAIN_LENGTH > MAX_DEFERRED_DEPENDENCY_CHAIN_LENGTH )); then
-            echo "❌ Deferred dependency chain length $DEFERRED_CHAIN_LENGTH > $MAX_DEFERRED_DEPENDENCY_CHAIN_LENGTH threshold"
+          if (( DEFERRED_CHAIN_LENGTH > MAX_DEFERRED_CHAIN_LENGTH )); then
+            echo "❌ Deferred dependency chain length $DEFERRED_CHAIN_LENGTH > $MAX_DEFERRED_CHAIN_LENGTH threshold"
             echo "Chains exceeding threshold:"
             grep -E "$DEFERRED_LONG_CHAIN_PATTERN" $LOG_FILE || echo "  (No detailed chains found in log)"
-            echo "🔧 These chains violate the threshold MAX_DEFERRED_DEPENDENCY_CHAIN_LENGTH. Please refactor them to break these chains."
+            echo "🔧 These chains violate the threshold MAX_DEFERRED_CHAIN_LENGTH. Please refactor them to break these chains."
           else
-            echo "✅ No deferred dependency chains exceed the threshold of $MAX_DEFERRED_DEPENDENCY_CHAIN_LENGTH"
+            echo "✅ No deferred dependency chains exceed the threshold of $MAX_DEFERRED_CHAIN_LENGTH"
           fi
 
           if [ "$DEFERRED_VALIDATION_FAILED" = "true" ]; then
