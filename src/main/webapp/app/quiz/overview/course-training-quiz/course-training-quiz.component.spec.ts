@@ -8,10 +8,9 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from 
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseTrainingQuizService } from '../service/course-training-quiz.service';
-import { MockSyncStorage } from 'src/test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { SessionStorageService } from 'ngx-webstorage';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MultipleChoiceSubmittedAnswer } from '../../shared/entities/multiple-choice-submitted-answer.model';
@@ -67,7 +66,7 @@ describe('CourseTrainingQuizComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 {
                     provide: ActivatedRoute,
                     useValue: {

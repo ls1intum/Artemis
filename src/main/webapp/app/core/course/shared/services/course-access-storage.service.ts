@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 @Injectable({
     providedIn: 'root',
 })
 export class CourseAccessStorageService {
-    private localStorage = inject(LocalStorageService);
+    private localStorageService = inject(LocalStorageService);
 
     public static readonly STORAGE_KEY = 'artemis.courseAccess';
     public static readonly STORAGE_KEY_DROPDOWN = 'artemis.courseAccessDropdown';
@@ -14,7 +14,7 @@ export class CourseAccessStorageService {
     public static readonly MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN = 6;
 
     onCourseAccessed(courseId: number, storageKey: string, maxAccessedCourses: number): void {
-        const courseAccessMap: { [key: number]: number } = this.localStorage.retrieve(storageKey) || {};
+        const courseAccessMap = this.localStorageService.retrieve<{ [key: number]: number }>(storageKey) ?? {};
 
         courseAccessMap[courseId] = Date.now();
 
@@ -23,11 +23,11 @@ export class CourseAccessStorageService {
             delete courseAccessMap[Number(oldestEntry[0])];
         }
 
-        this.localStorage.store(storageKey, courseAccessMap);
+        this.localStorageService.store<{ [key: number]: number }>(storageKey, courseAccessMap);
     }
 
     getLastAccessedCourses(storageKey: string): number[] {
-        const courseAccessMap: { [key: number]: number } = this.localStorage.retrieve(storageKey) || {};
+        const courseAccessMap = this.localStorageService.retrieve<{ [key: number]: number }>(storageKey) ?? {};
 
         return Object.entries(courseAccessMap)
             .sort((a, b) => b[1] - a[1])

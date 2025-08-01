@@ -13,12 +13,10 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockBuilder } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import { MockLocalStorageService } from 'src/test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
-import { MockSyncStorage } from 'src/test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
@@ -36,6 +34,7 @@ import { ShortAnswerQuestionComponent } from '../../shared/questions/short-answe
 import { DragAndDropQuestionComponent } from '../../shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { MultipleChoiceQuestionComponent } from '../../shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestion } from '../../shared/entities/short-answer-question.model';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const now = dayjs();
@@ -161,8 +160,8 @@ describe('QuizParticipationComponent', () => {
                 .provide(provideHttpClient())
                 .provide(provideHttpClientTesting())
                 .provide({ provide: TranslateService, useClass: MockTranslateService })
-                .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
-                .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
+                .provide(LocalStorageService)
+                .provide(SessionStorageService)
                 .provide({ provide: WebsocketService, useClass: MockWebsocketService })
                 .provide({
                     provide: ActivatedRoute,
@@ -534,8 +533,8 @@ describe('QuizParticipationComponent', () => {
                 .provide(provideHttpClient())
                 .provide(provideHttpClientTesting())
                 .provide({ provide: TranslateService, useClass: MockTranslateService })
-                .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
-                .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
+                .provide(LocalStorageService)
+                .provide(SessionStorageService)
                 .provide({ provide: WebsocketService, useClass: MockWebsocketService })
                 .provide({
                     provide: ActivatedRoute,
@@ -617,8 +616,8 @@ describe('QuizParticipationComponent', () => {
                 .provide(provideHttpClient())
                 .provide(provideHttpClientTesting())
                 .provide({ provide: TranslateService, useClass: MockTranslateService })
-                .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
-                .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
+                .provide(LocalStorageService)
+                .provide(SessionStorageService)
                 .provide({ provide: Router, useClass: MockRouter })
                 .provide({
                     provide: ActivatedRoute,
@@ -704,8 +703,8 @@ describe('QuizParticipationComponent', () => {
                 .provide(provideHttpClient())
                 .provide(provideHttpClientTesting())
                 .provide({ provide: TranslateService, useClass: MockTranslateService })
-                .provide({ provide: LocalStorageService, useClass: MockLocalStorageService })
-                .provide({ provide: SessionStorageService, useClass: MockSyncStorage })
+                .provide(LocalStorageService)
+                .provide(SessionStorageService)
                 .provide({ provide: WebsocketService, useClass: MockWebsocketService })
                 .provide({
                     provide: ActivatedRoute,

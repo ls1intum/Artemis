@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { LocalStorageService } from 'ngx-webstorage';
 import { inject } from '@angular/core';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 const DRAFT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -10,35 +10,27 @@ export class DraftService {
 
     saveDraft(key: string, content: string): void {
         const trimmedContent = content.trim();
-        if (key && key !== '' && content && content.trim()) {
+        if (key && trimmedContent) {
             const draftData: DraftData = {
                 content: trimmedContent,
                 timestamp: Date.now(),
             };
-            this.localStorageService.store(key, JSON.stringify(draftData));
-        } else if (key && key !== '') {
+            this.localStorageService.store<DraftData>(key, draftData);
+        } else if (key) {
             this.clearDraft(key);
         }
     }
 
     loadDraft(key: string): string | undefined {
-        if (!key || key === '') {
+        if (!key) {
             return undefined;
         }
 
-        const raw = this.localStorageService.retrieve(key);
-
+        const raw = this.localStorageService.retrieve<string>(key);
         if (raw) {
             try {
                 const draftData: DraftData = JSON.parse(raw);
-                if (
-                    typeof draftData === 'object' &&
-                    draftData !== null &&
-                    'content' in draftData &&
-                    'timestamp' in draftData &&
-                    typeof draftData.content === 'string' &&
-                    typeof draftData.timestamp === 'number'
-                ) {
+                if (this.isDraftData(draftData)) {
                     // Check expiry
                     if (Date.now() - draftData.timestamp > DRAFT_EXPIRY_MS) {
                         this.clearDraft(key);
@@ -57,9 +49,13 @@ export class DraftService {
         }
     }
 
+    private isDraftData(value: any): value is DraftData {
+        return typeof value === 'object' && value !== null && typeof value.content === 'string' && typeof value.timestamp === 'number';
+    }
+
     clearDraft(key: string): void {
-        if (key && key !== '') {
-            this.localStorageService.clear(key);
+        if (key) {
+            this.localStorageService.remove(key);
         }
     }
 }

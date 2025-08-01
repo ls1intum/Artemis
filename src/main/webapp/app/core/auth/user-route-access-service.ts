@@ -1,16 +1,16 @@
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { AlertService } from 'app/shared/service/alert.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {
     private router = inject(Router);
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
-    private stateStorageService = inject(StateStorageService);
+    private sessionStorageService = inject(SessionStorageService);
 
     /**
      * Check if the client can activate a route.
@@ -79,7 +79,7 @@ export class UserRouteAccessService implements CanActivate {
                     });
                 }
 
-                this.stateStorageService.storeUrl(url);
+                this.sessionStorageService.store('previousUrl', url);
                 this.router.navigate(['accessdenied']).then(() => {
                     // only show the login dialog, if the user hasn't logged in yet
                     if (!account) {

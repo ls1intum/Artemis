@@ -11,8 +11,6 @@ import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
 import { Bonus } from 'app/assessment/shared/entities/bonus.model';
 import { HttpResponse } from '@angular/common/http';
@@ -85,7 +83,6 @@ describe('GradingKeyTableComponent', () => {
                 MockProvider(BonusService),
                 MockProvider(CourseStorageService),
                 MockProvider(ScoresStorageService),
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         })
             .compileComponents()

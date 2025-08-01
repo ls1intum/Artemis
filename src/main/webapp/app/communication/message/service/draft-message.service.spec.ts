@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { DraftService } from './draft-message.service';
-import { LocalStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -11,7 +10,7 @@ describe('DraftService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [DraftService, { provide: LocalStorageService, useClass: MockSyncStorage }],
+            providers: [DraftService, LocalStorageService],
         });
         draftService = TestBed.inject(DraftService);
         localStorageService = TestBed.inject(LocalStorageService);
@@ -30,7 +29,7 @@ describe('DraftService', () => {
     });
 
     it('should clear draft if content is empty', () => {
-        const clearSpy = jest.spyOn(localStorageService, 'clear');
+        const clearSpy = jest.spyOn(localStorageService, 'remove');
         draftService.clearDraft('key');
         expect(clearSpy).toHaveBeenCalledWith('key');
     });
@@ -50,7 +49,7 @@ describe('DraftService', () => {
         const expiredTimestamp = now - 8 * 24 * 60 * 60 * 1000; // 8 days ago
         const draftData = JSON.stringify({ content: 'expired draft', timestamp: expiredTimestamp });
 
-        const clearSpy = jest.spyOn(localStorageService, 'clear');
+        const clearSpy = jest.spyOn(localStorageService, 'remove');
         jest.spyOn(localStorageService, 'retrieve').mockReturnValue(draftData);
 
         const result = draftService.loadDraft('key');
@@ -63,7 +62,7 @@ describe('DraftService', () => {
         const justOver7DaysAgo = now - SEVEN_DAYS_MS - 1;
         const draftData = JSON.stringify({ content: 'expired draft', timestamp: justOver7DaysAgo });
 
-        const clearSpy = jest.spyOn(localStorageService, 'clear');
+        const clearSpy = jest.spyOn(localStorageService, 'remove');
         jest.spyOn(localStorageService, 'retrieve').mockReturnValue(draftData);
 
         const result = draftService.loadDraft('key');

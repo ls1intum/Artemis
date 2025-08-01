@@ -8,8 +8,6 @@ import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-obser
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { SimpleChange } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
@@ -53,7 +51,7 @@ describe('CodeEditorMonacoComponent', () => {
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
+
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();

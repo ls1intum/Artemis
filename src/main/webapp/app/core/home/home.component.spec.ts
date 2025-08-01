@@ -4,7 +4,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,6 +22,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { User } from 'app/core/user/user.model';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('HomeComponent', () => {
     let component: HomeComponent;
@@ -30,6 +30,7 @@ describe('HomeComponent', () => {
     let accountService: AccountService;
     let modalService: NgbModal;
     let loginService: LoginService;
+    let localStorageService: LocalStorageService;
 
     let router: MockRouter;
 
@@ -43,8 +44,6 @@ describe('HomeComponent', () => {
         router = new MockRouter();
         router.setUrl('');
 
-        localStorage.clear();
-
         await TestBed.configureTestingModule({
             imports: [MockRouterLinkDirective, SetupPasskeyModalComponent],
             providers: [
@@ -55,7 +54,6 @@ describe('HomeComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(LoginService),
-                MockProvider(StateStorageService),
                 MockProvider(EventManager),
                 MockProvider(AlertService),
                 MockProvider(WebauthnService),
@@ -66,6 +64,8 @@ describe('HomeComponent', () => {
             ],
         }).compileComponents();
 
+        localStorageService = TestBed.inject(LocalStorageService);
+        localStorageService.clear();
         fixture = TestBed.createComponent(HomeComponent);
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService);
@@ -176,7 +176,7 @@ describe('HomeComponent', () => {
             component.isPasskeyEnabled = true;
             const futureDate = new Date();
             futureDate.setDate(futureDate.getDate() + 1);
-            localStorage.setItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, futureDate.toISOString());
+            localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, futureDate);
 
             accountService.userIdentity = { askToSetupPasskey: true } as User;
             const openModalSpy = jest.spyOn(modalService, 'open');
@@ -190,7 +190,7 @@ describe('HomeComponent', () => {
             component.isPasskeyEnabled = true;
             const dateInPast = new Date();
             dateInPast.setDate(dateInPast.getDate() - 10);
-            localStorage.setItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, dateInPast.toISOString());
+            localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, dateInPast);
 
             accountService.userIdentity = { askToSetupPasskey: true } as User;
             const openModalSpy = jest.spyOn(modalService, 'open');
