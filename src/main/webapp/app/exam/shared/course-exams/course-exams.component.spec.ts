@@ -1,11 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -33,7 +33,6 @@ describe('CourseExamsComponent', () => {
     let courseStorageService: CourseStorageService;
     let courseOverviewService: CourseOverviewService;
     let examParticipationService: ExamParticipationService;
-    let subscribeToCourseUpdates: jest.SpyInstance;
     const router = new MockRouter();
 
     const visibleRealExam1 = {
@@ -138,7 +137,6 @@ describe('CourseExamsComponent', () => {
                 courseStorageService = TestBed.inject(CourseStorageService);
                 examParticipationService = TestBed.inject(ExamParticipationService);
                 courseOverviewService = TestBed.inject(CourseOverviewService);
-                subscribeToCourseUpdates = jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of());
                 (examParticipationService as any).examIsStarted$ = of(false);
                 jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
                     exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam],
@@ -188,30 +186,21 @@ describe('CourseExamsComponent', () => {
         expect(component.expandAttemptsMap).toEqual(expectedMap);
     });
 
-    it('should correctly update new exams', () => {
-        const expectedMap = new Map<number, boolean>();
-        expectedMap.set(visibleTestExam1.id!, false);
-        expectedMap.set(visibleTestExam2.id!, false);
-        expectedMap.set(42, false);
-        let updateHandler: (_course: Course) => void = () => {};
-        subscribeToCourseUpdates.mockReturnValue({
-            subscribe: (handler: (course: Course) => void): void => {
-                updateHandler = handler;
-            },
-        });
-
-        component.ngOnInit();
-
+    it('should correctly update new exams', fakeAsync(() => {
         const newExam = {
             id: 42,
             visibleDate: dayjs().subtract(1, 'minutes'),
-            testExam: true,
         } as Exam;
-        updateHandler({ exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam, newExam] });
+        component.course = new Course();
+        component.course!.exams = [visibleRealExam1, visibleRealExam2];
 
-        expect(component.expandAttemptsMap).toEqual(expectedMap);
-        expect(component.testExamsOfCourse).toContain(newExam);
-    });
+        jest.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([visibleRealExam1, visibleRealExam2, newExam]));
+        examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
+        examParticipationService.shouldUpdateTestExamsObservable = new BehaviorSubject<boolean>(false).asObservable();
+        component.ngOnInit();
+        tick();
+        expect(component.studentExamsForRealExams.has(newExam.id!)).toBeTrue();
+    }));
 
     it('should correctly return visible real exams ordered according to startedDate', () => {
         component.ngOnInit();
