@@ -42,9 +42,9 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
@@ -206,7 +206,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     private void setUpProgrammingExerciseMocks() {
-        doReturn(new VcsRepositoryUri()).when(versionControlService).copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt());
+        doReturn(new LocalVCRepositoryUri(localVCBaseUri, "abc", "def")).when(versionControlService).copyRepositoryWithoutHistory(anyString(), anyString(), anyString(),
+                anyString(), anyString(), anyInt());
         doReturn("fake-build-plan-id").when(continuousIntegrationService).copyBuildPlan(any(), anyString(), any(), anyString(), anyString(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(ProgrammingExerciseParticipation.class));
     }

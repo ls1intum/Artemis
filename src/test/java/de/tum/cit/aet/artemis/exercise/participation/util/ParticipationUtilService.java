@@ -72,7 +72,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
@@ -952,9 +951,9 @@ public class ParticipationUtilService {
      * @param versionControlService        The mocked VersionControlService
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
      */
-    public void mockCreationOfExerciseParticipation(String templateRepoName, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
-            throws URISyntaxException {
-        var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
+    public void mockCreationOfExerciseParticipation(String templateRepoName, VersionControlService versionControlService,
+            ContinuousIntegrationService continuousIntegrationService) {
+        var someURL = new LocalVCRepositoryUri("http://vcs.fake.fake/git/abc/abcRepoSlug.git");
         doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
                 any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
