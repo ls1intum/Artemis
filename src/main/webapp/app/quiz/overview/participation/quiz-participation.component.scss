@@ -61,7 +61,7 @@
 }
 
 .stepwizardquiz {
-    max-height: 65vh; // This value is based on trial and error, it should be the maximum height that the navigation container can have without overflowing other components
+    max-height: 70vh; // This value is based on trial and error, it should be the maximum height that the navigation container can have without overflowing other components
     overflow-y: auto;
 
     &__step {
