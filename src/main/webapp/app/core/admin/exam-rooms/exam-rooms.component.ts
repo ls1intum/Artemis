@@ -63,6 +63,7 @@ export class ExamRoomsComponent {
     // Basically ngInit / constructor
     initEffect = effect(() => {
         this.loadExamRoomOverview();
+        // used for functionality with jhi-sort (SortDirective & SortService)
     });
 
     loadExamRoomOverview(): void {
