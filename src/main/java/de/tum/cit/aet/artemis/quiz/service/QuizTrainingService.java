@@ -37,7 +37,7 @@ public class QuizTrainingService {
      * @param answeredAt             the time when the question was answered
      * @return a DTO containing the submitted answer after the evaluation
      */
-    public SubmittedAnswerAfterEvaluationDTO submitForTraining(Long quizQuestionId, Long userId, QuizTrainingAnswerDTO studentSubmittedAnswer, ZonedDateTime answeredAt) {
+    public SubmittedAnswerAfterEvaluationDTO submitForTraining(long quizQuestionId, long userId, QuizTrainingAnswerDTO studentSubmittedAnswer, ZonedDateTime answeredAt) {
         QuizQuestion quizQuestion = quizQuestionRepository.findByIdElseThrow(quizQuestionId);
         SubmittedAnswer answer = studentSubmittedAnswer.submittedAnswer();
 
