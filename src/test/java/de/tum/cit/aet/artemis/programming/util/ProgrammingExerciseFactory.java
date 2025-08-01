@@ -13,8 +13,6 @@ import java.util.Set;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.beans.factory.annotation.Value;
-
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -53,8 +51,8 @@ public class ProgrammingExerciseFactory {
 
     public static final String DEFAULT_BRANCH = "main";
 
-    @Value("${artemis.version-control.url}")
-    protected static URI localVCBaseUri;
+    // must be injected from a test class
+    public static URI localVCBaseUri;
 
     /**
      * Generates a programming exercise with the given release and due date. This exercise is added to the provided course.
@@ -178,7 +176,8 @@ public class ProgrammingExerciseFactory {
      * @param programmingLanguage The programming language for which a package name is created.
      * @return The package name or null if the programming language requires no package name.
      */
-    public static @Nullable String generatePackageName(ProgrammingLanguage programmingLanguage) {
+    @Nullable
+    public static String generatePackageName(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
             case JAVA, KOTLIN -> "de.test";
             case SWIFT, GO -> "testPackage";

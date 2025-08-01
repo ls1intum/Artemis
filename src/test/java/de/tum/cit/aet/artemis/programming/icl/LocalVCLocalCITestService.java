@@ -16,7 +16,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.client.utils.URIBuilder;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
@@ -33,6 +35,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
@@ -221,8 +225,8 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug the repository slug of the repository.
      * @return the URL as string to the repository.
      */
-    public String constructLocalVCUri(String username, String projectKey, String repositorySlug) throws URISyntaxException {
-        return constructLocalVCUri(username, USER_PASSWORD, projectKey, repositorySlug);
+    public String buildLocalVCUri(String username, String projectKey, String repositorySlug) {
+        return buildLocalVCUri(username, USER_PASSWORD, projectKey, repositorySlug);
     }
 
     /**
@@ -234,10 +238,17 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug the repository slug of the repository.
      * @return the URL as string to the repository.
      */
-    public String constructLocalVCUri(String username, String password, String projectKey, String repositorySlug) throws URISyntaxException {
-        URI uri = new URIBuilder().setScheme("http").setUserInfo(username, password).setHost("localhost").setPort(port)
-                .setPathSegments("git", projectKey.toUpperCase(), repositorySlug + ".git").build();
-        return uri.toString();
+    public String buildLocalVCUri(@Nullable String username, @Nullable String password, @NotNull String projectKey, @NotNull String repositorySlug) {
+        String userInfo = null;
+
+        if (!StringUtils.hasText(username)) {
+            userInfo = username;
+            if (!StringUtils.hasText(password)) {
+                userInfo += ":" + password;
+            }
+        }
+        return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri()
+                .toString();
     }
 
     /**
@@ -295,7 +306,7 @@ public class LocalVCLocalCITestService {
         try {
             performFetch(repositoryHandle, username, password, projectKey, repositorySlug);
         }
-        catch (GitAPIException e) {
+        catch (GitAPIException | URISyntaxException e) {
             fail("Fetching was not successful: " + e.getMessage());
         }
     }
@@ -345,8 +356,8 @@ public class LocalVCLocalCITestService {
                 .withMessageContaining(expectedMessage);
     }
 
-    private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
-        String repositoryUri = constructLocalVCUri(username, password, projectKey, repositorySlug);
+    private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException, URISyntaxException {
+        String repositoryUri = buildLocalVCUri(username, password, projectKey, repositorySlug);
         FetchCommand fetchCommand = repositoryHandle.fetch();
         // Set the remote URL.
         fetchCommand.setRemote(repositoryUri);
@@ -474,7 +485,7 @@ public class LocalVCLocalCITestService {
     }
 
     private void performPush(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
-        String repositoryUri = constructLocalVCUri(username, password, projectKey, repositorySlug);
+        String repositoryUri = buildLocalVCUri(username, password, projectKey, repositorySlug);
         PushCommand pushCommand = repositoryHandle.push();
         // Set the remote URL.
         pushCommand.setRemote(repositoryUri);

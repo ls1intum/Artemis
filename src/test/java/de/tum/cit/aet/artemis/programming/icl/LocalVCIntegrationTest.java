@@ -238,7 +238,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         // ":" prefix in the refspec means delete the branch in the remote repository.
         RefSpec refSpec = new RefSpec(":refs/heads/" + defaultBranch);
-        String repositoryUri = localVCLocalCITestService.constructLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
         PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRefSpecs(refSpec).setRemote(repositoryUri).call().iterator().next();
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
@@ -250,7 +250,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStudentTriesToForcePush() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        String repositoryUri = localVCLocalCITestService.constructLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
 
         RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, repositoryUri, student1Login, projectKey1, assignmentRepositorySlug);
 
@@ -265,10 +265,10 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testInstructorTriesToForcePushOverHttp() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        String assignmentRepoUri = localVCLocalCITestService.constructLocalVCUri(instructor1Login, projectKey1, assignmentRepositorySlug);
-        String templateRepoUri = localVCLocalCITestService.constructLocalVCUri(instructor1Login, projectKey1, templateRepositorySlug);
-        String solutionRepoUri = localVCLocalCITestService.constructLocalVCUri(instructor1Login, projectKey1, solutionRepositorySlug);
-        String testsRepoUri = localVCLocalCITestService.constructLocalVCUri(instructor1Login, projectKey1, testsRepositorySlug);
+        String assignmentRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, assignmentRepositorySlug);
+        String templateRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, templateRepositorySlug);
+        String solutionRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, solutionRepositorySlug);
+        String testsRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, testsRepositorySlug);
 
         // Force push to assignment repository is allowed for instructors
         RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, assignmentRepoUri, instructor1Login, projectKey1, assignmentRepositorySlug);
@@ -324,7 +324,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         // Users cannot create new branches.
         assignmentRepository.workingCopyGitRepo.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
-        String repositoryUri = localVCLocalCITestService.constructLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
 
         // Push the new branch.
         PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch"))
@@ -364,7 +364,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assignmentRepository.workingCopyGitRepo.add().addFilepattern("large-file.txt").call();
         GitService.commit(assignmentRepository.workingCopyGitRepo).setMessage("Add large file").call();
 
-        String repositoryUri = localVCLocalCITestService.constructLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
         PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRemote(repositoryUri)
                 .setRefSpecs(new RefSpec("refs/heads/" + defaultBranch + ":refs/heads/" + defaultBranch)).call().iterator().next();
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();

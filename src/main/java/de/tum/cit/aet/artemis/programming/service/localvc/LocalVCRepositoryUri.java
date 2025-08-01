@@ -39,11 +39,15 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * @throws LocalVCInternalException If the project key or repository slug results in an invalid URI, encapsulating the {@link URISyntaxException}.
      */
     public LocalVCRepositoryUri(URI localVCBaseUri, String projectKey, String repositorySlug) {
-        this.uri = UriComponentsBuilder.fromUri(localVCBaseUri).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri();
+        this.uri = buildUri(localVCBaseUri, projectKey, repositorySlug);
         this.projectKey = projectKey;
         this.repositorySlug = repositorySlug;
         this.repositoryTypeOrUserName = getRepositoryTypeOrUserName(repositorySlug, projectKey);
         this.isPracticeRepository = isPracticeRepository(repositorySlug, projectKey);
+    }
+
+    private static URI buildUri(URI localVCBaseUri, String projectKey, String repositorySlug) {
+        return UriComponentsBuilder.fromUri(localVCBaseUri).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri();
     }
 
     /**
@@ -199,7 +203,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
         this.repositorySlug = repositoryPath.getFileName().toString().replace(".git", "");
         validateProjectKeyAndRepositorySlug(projectKey, repositorySlug);
 
-        this.uri = UriComponentsBuilder.fromUri(localVCBaseUri).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri();
+        this.uri = buildUri(localVCBaseUri, projectKey, repositorySlug);
         this.repositoryTypeOrUserName = getRepositoryTypeOrUserName(repositorySlug, projectKey);
         this.isPracticeRepository = isPracticeRepository(repositorySlug, projectKey);
     }
