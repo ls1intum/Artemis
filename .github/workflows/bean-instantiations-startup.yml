@@ -145,7 +145,7 @@ jobs:
         run: |
           DEFERRED_BEAN_PATTERN="Maximum dependency chain length during deferred eager init: ([0-9]+)"
           DEFERRED_TIMEOUT_ATTEMPTS=10
-          DEFERRED_RETRY_INTERVAL=3
+          DEFERRED_RETRY_INTERVAL=12
           DEFERRED_TOTAL_TIMEOUT=$((DEFERRED_TIMEOUT_ATTEMPTS * DEFERRED_RETRY_INTERVAL))
           MIN_DEFERRED_CHAIN_LENGTH=1
           MAX_DEFERRED_CHAIN_LENGTH=15
