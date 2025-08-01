@@ -40,6 +40,8 @@ export enum ProgrammingExerciseInputField {
     ASSESSMENT_DUE_DATE = 'assessmentDueDate',
     EXAMPLE_SOLUTION_PUBLICATION_DATE = 'exampleSolutionPublicationDate',
     COMPLAINT_ON_AUTOMATIC_ASSESSMENT = 'complaintOnAutomaticAssessment',
+    FEEDBACK_SUGGESTIONS = 'feedbackSuggestions',
+    PRELIMINARY_FEEDBACK_REQUESTS = 'preliminaryFeedbackRequests',
     MANUAL_FEEDBACK_REQUESTS = 'manualFeedbackRequests',
     SHOW_TEST_NAMES_TO_STUDENTS = 'showTestNamesToStudents',
     INCLUDE_TESTS_INTO_EXAMPLE_SOLUTION = 'includeTestsIntoExampleSolution',
@@ -88,10 +90,13 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: InputFieldEditModeMapping = {
     assessmentDueDate: true,
     exampleSolutionPublicationDate: false,
     complaintOnAutomaticAssessment: false,
+    feedbackSuggestions: false,
     manualFeedbackRequests: false,
     showTestNamesToStudents: false,
     includeTestsIntoExampleSolution: false,
     assessmentInstructions: true,
     presentationScore: false,
     plagiarismControl: false,
+    // Feedback section
+    preliminaryFeedbackRequests: false,
 };
