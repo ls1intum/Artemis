@@ -17,7 +17,6 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -104,8 +103,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     Optional<Result> findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
-
-    Optional<Result> findFirstBySubmissionParticipationIdAndAssessmentTypeOrderByCompletionDateDesc(long participationId, AssessmentType assessmentType);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
     Optional<Result> findResultWithFeedbacksAndTestCasesById(long resultId);
@@ -300,11 +297,13 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     /**
-     * Counts the number of locked assessments for an exam exercise by other tutors.
+     * Use this method only for exams!
+     * Given an exerciseId and the tutorId, return the number of locked assessments that have been finished, for that exerciseId and each correctionRound
      *
+     * @param exerciseId id of the exam exercise
+     * @param tutorId    id of the tutor
      * @return a list that contains the count of locked assessments for each studentParticipation of the exercise
      */
-
     @Query("""
             SELECT COUNT(r.id)
             FROM StudentParticipation p
@@ -571,10 +570,10 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         long inTime = 0;
         long late = 0;
         for (var ratedCount : ratedCounts) {
-            if (Boolean.TRUE.equals(ratedCount.rated())) {
+            if (ratedCount.rated()) {
                 inTime = ratedCount.count();
             }
-            else if (Boolean.FALSE.equals(ratedCount.rated())) {
+            else {
                 late = ratedCount.count();
             }
             // we are not interested in results with rated is null even if the database would return such
@@ -833,16 +832,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         }
         return results;
     }
-
-    @Query("""
-            SELECT r
-            FROM Result r
-                LEFT JOIN FETCH r.submission
-            WHERE r.submission.participation.id = :participationId
-                AND r.completionDate IS NOT NULL
-            ORDER BY r.id DESC
-            """)
-    List<Result> findLatestResultsForParticipation(@Param("participationId") Long participationId, Pageable pageable);
 
     @Query("""
             SELECT r
