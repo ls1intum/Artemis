@@ -268,8 +268,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         studentExamRepository.save(studentExamForTestExam2);
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        doReturn(new Repository("ab", new LocalVCRepositoryUri("uri"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(), any(), anyBoolean());
-        doReturn(new Repository("ab", new LocalVCRepositoryUri("uri"))).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), any());
+        // TODO: get rid of these mocks, we should have realistic tests
+        doReturn(new Repository("ab", new LocalVCRepositoryUri(localVCBaseUri, "test", "test-test"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(),
+                any(), anyBoolean());
+        doReturn(new Repository("ab", new LocalVCRepositoryUri(localVCBaseUri, "test", "test-test"))).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), any());
         // TODO: all parts using programmingExerciseTestService should also be provided for LocalVC+Jenkins
         programmingExerciseTestService.setup(this, versionControlService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);

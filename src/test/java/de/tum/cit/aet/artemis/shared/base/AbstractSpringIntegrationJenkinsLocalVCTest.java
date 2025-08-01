@@ -104,8 +104,11 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @MockitoSpyBean
     protected ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
 
+    protected URI localVCBaseUri;
+
     @Value("${artemis.version-control.url}")
     public void setLocalVCBaseUri(URI localVCBaseUri) {
+        this.localVCBaseUri = localVCBaseUri;
         ProgrammingExerciseFactory.localVCBaseUri = localVCBaseUri; // Set the static field in ProgrammingExerciseFactory for convenience
     }
 
