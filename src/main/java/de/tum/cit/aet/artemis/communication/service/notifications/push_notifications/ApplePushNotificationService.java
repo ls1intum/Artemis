@@ -15,7 +15,6 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyService;
 
 /**
  * Handles the sending of iOS Notifications to the Relay Service
@@ -33,8 +32,8 @@ public class ApplePushNotificationService extends PushNotificationService {
     @Value("${artemis.push-notification-relay:https://hermes-sandbox.artemis.cit.tum.de}")
     private String relayServerBaseUrl;
 
-    public ApplePushNotificationService(CourseNotificationPushProxyService pushProxyService, PushNotificationDeviceConfigurationRepository repository, RestTemplate restTemplate) {
-        super(restTemplate, pushProxyService);
+    public ApplePushNotificationService(PushNotificationDeviceConfigurationRepository repository, RestTemplate restTemplate) {
+        super(restTemplate);
         this.repository = repository;
     }
 
