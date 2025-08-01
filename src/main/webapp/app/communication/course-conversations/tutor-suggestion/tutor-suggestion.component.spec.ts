@@ -4,7 +4,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { concat, of, throwError } from 'rxjs';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { mockSettings } from 'test/helpers/mocks/iris/mock-settings';
@@ -12,6 +12,13 @@ import { AccountService } from 'app/core/auth/account.service';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateService } from '@ngx-translate/core';
+import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
+import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { UserService } from 'app/core/user/shared/user.service';
+import dayjs from 'dayjs/esm';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 
 describe('TutorSuggestionComponent', () => {
     let component: TutorSuggestionComponent;
@@ -26,30 +33,54 @@ describe('TutorSuggestionComponent', () => {
     let translateService: TranslateService;
     const irisSettings = mockSettings();
 
+    const statusMock = {
+        currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
+        handleRateLimitInfo: jest.fn(),
+        getActiveStatus: jest.fn().mockReturnValue(of({})),
+    } as any;
+    const mockUserService = {
+        updateExternalLLMUsageConsent: jest.fn(),
+    } as any;
+    const accountMock = {
+        userIdentity: { externalLLMUsageAccepted: dayjs() },
+        setUserAcceptedExternalLLMUsage: jest.fn(),
+        getAuthenticationState: jest.fn(),
+    } as any;
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TutorSuggestionComponent],
+            imports: [TutorSuggestionComponent, MockComponent(IrisBaseChatbotComponent)],
             providers: [
-                MockProvider(IrisChatService),
+                { provide: LocalStorageService, useValue: {} },
+                { provide: TranslateService, useValue: {} },
+                { provide: SessionStorageService, useValue: {} },
+                { provide: HttpClient, useValue: {} },
+                { provide: AccountService, useValue: accountMock },
+                { provide: UserService, useValue: mockUserService },
+                { provide: IrisStatusService, useValue: statusMock },
                 MockProvider(IrisSettingsService),
                 MockProvider(ProfileService),
                 MockProvider(AccountService),
-                MockProvider(IrisStatusService),
                 MockProvider(FeatureToggleService),
                 MockProvider(TranslateService),
+                MockProvider(ActivatedRoute),
             ],
-        }).compileComponents();
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(TutorSuggestionComponent);
+                chatService = TestBed.inject(IrisChatService);
+                chatService.setCourseId(123);
+            });
 
         irisStatusService = TestBed.inject(IrisStatusService);
         jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
 
-        fixture = TestBed.createComponent(TutorSuggestionComponent);
         component = fixture.componentInstance;
         componentRef = fixture.componentRef;
 
         irisSettingsService = TestBed.inject(IrisSettingsService);
         profileService = TestBed.inject(ProfileService);
-        chatService = TestBed.inject(IrisChatService);
         accountService = TestBed.inject(AccountService);
         featureToggleService = TestBed.inject(FeatureToggleService);
         translateService = TestBed.inject(TranslateService);
@@ -60,6 +91,7 @@ describe('TutorSuggestionComponent', () => {
         jest.spyOn(translateService, 'stream').mockReturnValue(of(''));
         (translateService as any).onTranslationChange = of({ lang: 'en', translations: {} });
         (translateService as any).onDefaultLangChange = of({ lang: 'en', translations: {} });
+        chatService.setCourseId(123);
 
         componentRef.setInput('post', { id: 1 } as any);
         componentRef.setInput('course', { id: 1 } as any);
@@ -275,6 +307,44 @@ describe('TutorSuggestionComponent', () => {
             component['requestSuggestion']();
             tick();
             expect(requestTutorSuggestionSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should not request suggestion if last message is from LLM or ARTIFACT', fakeAsync(() => {
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+            const mockMessages = [
+                { id: 1, sender: 'USER' },
+                { id: 2, sender: 'LLM' },
+            ] as IrisMessage[];
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+            const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+
+            component['requestSuggestion']();
+            tick();
+
+            expect(requestTutorSuggestionSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should handle error when currentMessages fails and proceed with empty array', fakeAsync(() => {
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(throwError(() => new Error('test')));
+            const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+
+            component['requestSuggestion']();
+            tick();
+
+            expect(component['error']).toBe(IrisErrorMessageKey.SESSION_LOAD_FAILED);
+            expect(requestTutorSuggestionSpy).toHaveBeenCalled();
+        }));
+
+        it('should set error if requestTutorSuggestion fails', fakeAsync(() => {
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
+            jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(throwError(() => new Error('test')));
+
+            component['requestSuggestion']();
+            tick();
+
+            expect(component['error']).toBe(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
         }));
 
         it('should not request suggestion when student is not tutor in course', fakeAsync(() => {
