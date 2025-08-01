@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -38,7 +37,6 @@ import de.tum.cit.aet.artemis.core.repository.MigrationChangeRepository;
 @Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
-@ConditionalOnBooleanProperty(prefix = "spring.liquibase", name = "enabled", matchIfMissing = true)
 public class MigrationService {
 
     private static final Logger log = LoggerFactory.getLogger(MigrationService.class);
