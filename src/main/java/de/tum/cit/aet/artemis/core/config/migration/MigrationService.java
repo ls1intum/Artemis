@@ -23,7 +23,6 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -63,8 +62,7 @@ public class MigrationService {
      * @param entryClassMap The changelog to be executed
      */
     public void execute(ApplicationReadyEvent event, SortedMap<Integer, Class<? extends MigrationEntry>> entryClassMap) throws MigrationIntegrityException {
-        Environment env = event.getApplicationContext().getEnvironment();
-        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+        if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return;
         }
 

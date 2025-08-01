@@ -118,7 +118,7 @@ public class LiquibaseConfiguration {
      */
     @EventListener
     public void storeCurrentVersionToDatabase(ApplicationReadyEvent event) {
-        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+        if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return; // Do not perform any operations if the application is running in the test profile.
         }
 

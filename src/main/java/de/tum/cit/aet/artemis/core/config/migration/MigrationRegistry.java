@@ -7,7 +7,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Component;
 @Component
 @Lazy
 @Profile(PROFILE_CORE_AND_SCHEDULING)
-@ConditionalOnBooleanProperty(prefix = "spring.liquibase", name = "enabled", matchIfMissing = true)
 public class MigrationRegistry {
 
     // Using SortedMap to allow sorting. I'm using a map because with a list entries could accidentally be switched.

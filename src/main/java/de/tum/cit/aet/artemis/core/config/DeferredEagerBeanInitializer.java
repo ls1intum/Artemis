@@ -41,7 +41,6 @@ public class DeferredEagerBeanInitializer {
      * This method should be called after the application is fully started to not block the startup process.
      */
     public void initializeDeferredEagerBeans() {
-
         // Force eager initialization of HazelcastConnection first, so that connections are established as early as possible.
         try {
             context.getBean(HazelcastConnection.class);
@@ -52,7 +51,6 @@ public class DeferredEagerBeanInitializer {
         }
 
         DefaultListableBeanFactory bf = (DefaultListableBeanFactory) context.getBeanFactory();
-        log.error("Number of beans {}: ", bf.getBeanDefinitionNames().length);
         Arrays.stream(bf.getBeanDefinitionNames()).filter(name -> {
             BeanDefinition def = bf.getBeanDefinition(name);
             return def.isSingleton() && def.isLazyInit();
