@@ -102,3 +102,9 @@ artemis:
   science: # The science module is used for research purposes such as the collection of data.
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
+
+  # Hyperion Configuration (Programming Exercise Creation Assistance)
+  # hyperion:
+  #   url: https://hyperion.yourdomain.com        # Hyperion service REST API URL
+  #   api-key: ${HYPERION_API_KEY}                # API key for authentication (use environment variable)
+
