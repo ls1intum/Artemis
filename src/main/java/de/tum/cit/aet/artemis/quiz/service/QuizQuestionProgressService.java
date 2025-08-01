@@ -229,7 +229,7 @@ public class QuizQuestionProgressService {
         existingProgress.setLastAnsweredAt(answeredAt);
         existingProgress.setQuizQuestionId(question.getId());
         existingProgress.setUserId(userId);
-        double score = answer.getScoreInPoints() / question.getPoints();
+        double score = question.getPoints() > 0 ? answer.getScoreInPoints() / question.getPoints() : 0.0;
         updateProgressWithNewAttempt(data, score, answeredAt);
         updateProgressCalculations(data, score, existingProgress);
         existingProgress.setProgressJson(data);
