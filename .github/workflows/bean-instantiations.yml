@@ -1,4 +1,4 @@
-name: Check Bean Instantiations on Startup
+name: Check Bean Instantiations on Startup and with deferred eager Initialization
 
 on:
   push:
@@ -12,7 +12,6 @@ on:
 
 jobs:
   build:
-    name: Check Bean Instantiations on Startup
     runs-on: ubuntu-latest
 
     steps:
