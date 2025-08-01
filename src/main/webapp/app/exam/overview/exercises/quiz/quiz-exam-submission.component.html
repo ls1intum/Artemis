@@ -17,7 +17,7 @@
     @if (quizConfiguration().quizQuestions) {
         @if (!examTimeline()) {
             <div class="col-md-auto ps-0">
-                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard sticky-top-quiz quiz-navigation-container">
+                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard sticky-top-quiz">
                     @for (question of quizConfiguration().quizQuestions; track question; let index = $index) {
                         <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
                             @switch (question.type) {

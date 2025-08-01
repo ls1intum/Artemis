@@ -61,6 +61,9 @@
 }
 
 .stepwizardquiz {
+    max-height: 65vh; // This value is based on trial and error, it should be the maximum height that the navigation container can have without overflowing other components
+    overflow-y: auto;
+
     &__step {
         .btn {
             cursor: help;
@@ -161,14 +164,4 @@
     position: sticky;
     bottom: -1rem; // Removes margin from 'course-body' class to improve layout alignment
     z-index: 18;
-}
-
-.quiz-navigation-container {
-    max-height: 65vh; /* Adjust based on your header/footer size */
-    overflow-y: auto;
-    position: sticky;
-    top: 0; /* Match your sticky-top-quiz value */
-    display: flex;
-    flex-direction: column;
-    padding-right: 10px;
 }
