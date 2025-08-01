@@ -28,7 +28,7 @@ import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.uti
 @Component({
     selector: 'jhi-student-exam-timeline',
     templateUrl: './student-exam-timeline.component.html',
-    styleUrls: ['./student-exam-timeline.component.scss'],
+    styleUrls: ['../../../../quiz/overview/participation/quiz-participation.scss'],
     imports: [
         TranslateDirective,
         MatSlider,
