@@ -31,6 +31,11 @@ import de.tum.cit.aet.artemis.core.util.Pair;
 @Lazy
 public class BeanInstantiationTracer implements InstantiationAwareBeanPostProcessor {
 
+    // Keep these two constants in sync with the values in .github/workflows/bean-instantiations.yml
+    private static final int STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD = 9;
+
+    private static final int DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD = 10;
+
     private static final Logger log = LoggerFactory.getLogger(BeanInstantiationTracer.class);
 
     private static final String BASE = "de.tum.cit.aet.artemis";
@@ -42,10 +47,6 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
     private final AtomicInteger maxCallStackSize = new AtomicInteger(0);
 
     private final AtomicReference<List<String>> longestChain = new AtomicReference<>(new ArrayList<>());
-
-    private static final int STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD = 9;
-
-    private static final int DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD = 15;
 
     private final Queue<List<String>> exceedingThresholdChains = new ConcurrentLinkedQueue<>();
 
@@ -89,6 +90,11 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
         return bean;
     }
 
+    /**
+     * Prints the bean instantiation graph to a DOT file that can be visualized on <a href="http://www.webgraphviz.com/">GraphViz</a> when the application starts up.
+     * The event is only published when the development profile is active.
+     * This is useful for debugging and performance improvements, but should not be enabled in production environments
+     */
     @EventListener(PrintStartupBeansEvent.class)
     public void printDependencyGraph() {
         try (PrintWriter out = new PrintWriter("startupBeans.dot")) {
@@ -118,6 +124,9 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
         }
     }
 
+    /**
+     * Logs the deferred bean instantiation chains that exceed the threshold after the deferred eager bean initialization is completed.
+     */
     @EventListener(DeferredEagerBeanInitializationCompletedEvent.class)
     public void logDeferredInitChainsExceedingThreshold() {
         int i = 1;
