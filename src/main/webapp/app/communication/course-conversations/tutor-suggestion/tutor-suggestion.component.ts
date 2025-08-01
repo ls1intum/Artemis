@@ -1,9 +1,9 @@
-import { Component, ElementRef, OnChanges, OnDestroy, OnInit, ViewChild, inject, input } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { Subscription, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, shareReplay, skip, switchMap, take, tap } from 'rxjs/operators';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
-import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -18,9 +18,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { FormsModule } from '@angular/forms';
-import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 
 /**
@@ -44,9 +42,6 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     private statusService = inject(IrisStatusService);
     private featureToggleService = inject(FeatureToggleService);
 
-    @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
-    @ViewChild('messagesElement') messagesElement: ElementRef<HTMLElement>;
-
     irisActive$ = this.statusService.getActiveStatus().pipe(shareReplay(1));
 
     irisIsActive = false;
@@ -67,9 +62,6 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
 
     irisEnabled = false;
     isAtLeastTutor = false;
-
-    newMessageTextContent = '';
-    faPaperPlane = faPaperPlane;
 
     post = input<Post>();
     course = input<Course>();
@@ -168,32 +160,12 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * Sends a message to Iris to provide a new suggestion based on the current context
-     */
-    sendMessageToIris(): void {
-        const message = this.newMessageTextContent;
-        this.newMessageTextContent = '';
-        this.chatService
-            .sendMessage(message)
-            .pipe(
-                catchError((err) => {
-                    this.error = IrisErrorMessageKey.SEND_MESSAGE_FAILED;
-                    return of(undefined);
-                }),
-            )
-            .subscribe();
-    }
-
-    /**
      * Fetches the messages from the chat service and updates the suggestion if necessary
      */
     private fetchMessages(): void {
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
                 this.suggestion = messages.findLast((m) => m.sender === IrisSender.ARTIFACT);
-                if (messages.last()?.sender === IrisSender.LLM || messages.last()?.sender === IrisSender.USER) {
-                    this.scrollToBottom('smooth');
-                }
             }
             this.messages = messages;
         });
@@ -203,6 +175,10 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
         this.errorSubscription = this.chatService.currentError().subscribe((error) => (this.error = error));
     }
 
+    /**
+     * Subscribes to the Iris activation status and requests a suggestion when Iris is activated
+     * This method ensures that the suggestion is requested only when Iris is active and the session ID is available
+     */
     private subscribeToIrisActivation(): void {
         this.irisActivationSubscription?.unsubscribe();
         this.irisActivationSubscription = this.irisActive$
@@ -223,57 +199,15 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
             .subscribe(() => this.requestSuggestion());
     }
 
-    onModelChange(): void {
-        //TODO: Implement this method to handle changes in the model
-    }
-
-    handleKey(event: KeyboardEvent): void {
-        if (event.key === 'Enter') {
-            if (this.suggestion) {
-                if (!event.shiftKey) {
-                    event.preventDefault();
-                    this.sendMessageToIris();
-                } else {
-                    const textArea = event.target as HTMLTextAreaElement;
-                    const { selectionStart, selectionEnd } = textArea;
-                    const value = textArea.value;
-                    textArea.value = value.slice(0, selectionStart) + value.slice(selectionEnd);
-                    textArea.selectionStart = textArea.selectionEnd = selectionStart + 1;
-                }
-            }
-        }
-    }
-
     /**
-     * Handles the input event in the message textarea.
+     * Returns a timestamp string based on the provided date.
+     * If the date is today, it returns "just now", "X minutes ago", or "X hours ago".
+     * If the date is yesterday, it returns "yesterday".
+     * If the date is within the last 7 days, it returns "X days ago".
+     * Otherwise, it returns the date formatted as "DD/MM/YYYY".
+     * @param date - The date to format, can be a dayjs object, string, or Date object.
+     * @returns A formatted timestamp string or an empty string if the date is undefined.
      */
-    onInput() {
-        this.adjustTextareaRows();
-    }
-
-    /**
-     * Handles the paste event in the message textarea.
-     */
-    onPaste() {
-        setTimeout(() => {
-            this.adjustTextareaRows();
-        }, 0);
-    }
-
-    /**
-     * Adjusts the height of the message textarea based on its content.
-     */
-    adjustTextareaRows() {
-        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
-        textarea.style.height = 'auto'; // Reset the height to auto
-        const bufferForSpaceBetweenLines = 4;
-        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + bufferForSpaceBetweenLines;
-        const maxRows = 3;
-        const maxHeight = lineHeight * maxRows;
-
-        textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
-    }
-
     getTimestamp(date: dayjs.Dayjs | string | Date | undefined): string | undefined {
         if (!date) {
             return '';
@@ -303,22 +237,4 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
             }
         }
     }
-
-    /**
-     * Scrolls the chat body to the bottom.
-     * @param behavior - The scroll behavior.
-     */
-    scrollToBottom(behavior: ScrollBehavior) {
-        setTimeout(() => {
-            const messagesElement: HTMLElement = this.messagesElement.nativeElement;
-            messagesElement.scrollTo({
-                top: messagesElement.scrollHeight,
-                behavior: behavior,
-            });
-        });
-    }
-
-    protected readonly ButtonType = ButtonType;
-    protected readonly IrisSender = IrisSender;
-    protected readonly IrisMessageContentType = IrisMessageContentType;
 }
