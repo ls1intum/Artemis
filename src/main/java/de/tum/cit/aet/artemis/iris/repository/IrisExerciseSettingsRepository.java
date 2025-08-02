@@ -18,21 +18,37 @@ public interface IrisExerciseSettingsRepository extends ArtemisJpaRepository<Iri
 
     @Query("""
             SELECT CASE
-                       WHEN COALESCE(gps.enabled, TRUE) = TRUE
-                        AND COALESCE(cps.enabled, TRUE) = TRUE
-                        AND COALESCE(eps.enabled, TRUE) = TRUE
-                       THEN TRUE
-                       ELSE FALSE
-                   END
+                WHEN COALESCE(
+                        FUNCTION(
+                          'JSON_VALUE',
+                          gs.irisProgrammingExerciseChatSettings,
+                          '$.enabled'
+                        ) = 'true',
+                        TRUE
+                      )
+                AND COALESCE(
+                    FUNCTION(
+                        'JSON_VALUE',
+                        cs.irisProgrammingExerciseChatSettings,
+                        '$.enabled'
+                    ) = 'true',
+                    TRUE
+                )
+                AND COALESCE(
+                    FUNCTION(
+                        'JSON_VALUE',
+                        es.irisProgrammingExerciseChatSettings,
+                        '$.enabled'
+                    ) = 'true',
+                    TRUE
+                )
+                 THEN TRUE
+                 ELSE FALSE
+               END
             FROM Exercise e
             LEFT JOIN IrisCourseSettings   cs  ON cs.courseId   = e.course.id
             LEFT JOIN IrisExerciseSettings es  ON es.exerciseId = e.id
             LEFT JOIN IrisGlobalSettings   gs  ON TRUE
-
-            LEFT JOIN gs.irisProgrammingExerciseChatSettings gps
-            LEFT JOIN cs.irisProgrammingExerciseChatSettings cps
-            LEFT JOIN es.irisProgrammingExerciseChatSettings eps
-
             WHERE e.id = :exerciseId
             """)
     Boolean isProgrammingExerciseChatEnabled(@Param("exerciseId") long exerciseId);

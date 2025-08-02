@@ -28,23 +28,22 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisFaqIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisGlobalSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureChatSubSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisProgrammingExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisTutorSuggestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisCompetencyGenerationSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisCourseChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisFaqIngestionSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisLectureChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisLectureIngestionSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisProgrammingExerciseChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisTextExerciseChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisTutorSuggestionSubSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
-import de.tum.cit.aet.artemis.iris.repository.IrisSubSettingsRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -53,9 +52,6 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "irissettingsintegration";
-
-    @Autowired
-    private IrisSubSettingsRepository irisSubSettingsRepository;
 
     @Autowired
     private IrisSettingsRepository irisSettingsRepository;
@@ -211,14 +207,6 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
         var loadedSettings1 = request.get("/api/iris/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
-        var chatSubSettingsId = loadedSettings1.getIrisProgrammingExerciseChatSettings().getId();
-        var textExerciseChatSubSettingsId = loadedSettings1.getIrisTextExerciseChatSettings().getId();
-        var courseChatSubSettingsId = loadedSettings1.getIrisCourseChatSettings().getId();
-        var competencyGenerationSubSettingsId = loadedSettings1.getIrisCompetencyGenerationSettings().getId();
-        var lectureIngestionSubSettingsId = loadedSettings1.getIrisLectureIngestionSettings().getId();
-        var tutorSuggestionSubSettingsId = loadedSettings1.getIrisTutorSuggestionSettings().getId();
-        var lectureChatSubSettingsId = loadedSettings1.getIrisLectureChatSettings().getId();
-
         loadedSettings1.setIrisProgrammingExerciseChatSettings(null);
         loadedSettings1.setIrisTextExerciseChatSettings(null);
         loadedSettings1.setIrisCourseChatSettings(null);
@@ -232,14 +220,6 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
         assertThat(updatedSettings).isNotNull().usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings1);
         assertThat(updatedSettings).isNotNull().usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings2);
-        // Original subsettings should not exist anymore
-        assertThat(irisSubSettingsRepository.findById(chatSubSettingsId)).isEmpty();
-        assertThat(irisSubSettingsRepository.findById(textExerciseChatSubSettingsId)).isEmpty();
-        assertThat(irisSubSettingsRepository.findById(courseChatSubSettingsId)).isEmpty();
-        assertThat(irisSubSettingsRepository.findById(competencyGenerationSubSettingsId)).isEmpty();
-        assertThat(irisSubSettingsRepository.findById(lectureIngestionSubSettingsId)).isEmpty();
-        assertThat(irisSubSettingsRepository.findById(tutorSuggestionSubSettingsId)).isEmpty();
-        assertThat(irisSubSettingsRepository.findById(lectureChatSubSettingsId)).isEmpty();
     }
 
     @Test
@@ -443,7 +423,6 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
         var loadedSettings1 = request.get("/api/iris/exercises/" + programmingExercise.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
-        var chatSubSettingsId = loadedSettings1.getIrisProgrammingExerciseChatSettings().getId();
         loadedSettings1.setIrisProgrammingExerciseChatSettings(null);
 
         var updatedSettings = request.putWithResponseBody("/api/iris/exercises/" + programmingExercise.getId() + "/raw-iris-settings", loadedSettings1, IrisSettings.class,
@@ -452,8 +431,6 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
         assertThat(updatedSettings).isNotNull().usingRecursiveComparison().ignoringFields("exercise").isEqualTo(loadedSettings1);
         assertThat(updatedSettings).isNotNull().usingRecursiveComparison().ignoringFields("exercise").isEqualTo(loadedSettings2);
-        // Original subsettings should not exist anymore
-        assertThat(irisSubSettingsRepository.findById(chatSubSettingsId)).isEmpty();
     }
 
     @Test

@@ -4,23 +4,21 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.DiscriminatorColumn;
-import jakarta.persistence.DiscriminatorType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
-import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisCompetencyGenerationSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisCourseChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisFaqIngestionSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisLectureChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisLectureIngestionSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisProgrammingExerciseChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisTextExerciseChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisTutorSuggestionSubSettings;
 
 /**
  * IrisSubSettings is an abstract super class for the specific sub settings types.
@@ -30,11 +28,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  * <p>
  * Also see {@link de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService} for more information.
  */
-@Entity
-@Table(name = "iris_sub_settings")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
 @JsonSubTypes({
@@ -49,16 +42,13 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class IrisSubSettings extends DomainObject {
 
-    @Column(name = "enabled")
     private boolean enabled = true;
 
-    @Column(name = "allowed_variants", nullable = false)
-    @Convert(converter = IrisListConverter.class)
     private SortedSet<String> allowedVariants = new TreeSet<>();
 
-    @Column(name = "selected_variant")
     private String selectedVariant;
 
     public boolean isEnabled() {

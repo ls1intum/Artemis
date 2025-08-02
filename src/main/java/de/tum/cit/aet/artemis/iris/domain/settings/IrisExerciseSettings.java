@@ -1,13 +1,22 @@
 package de.tum.cit.aet.artemis.iris.domain.settings;
 
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisCompetencyGenerationSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisCourseChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisFaqIngestionSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisLectureChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisLectureIngestionSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisProgrammingExerciseChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisTextExerciseChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.subsettings.IrisTutorSuggestionSubSettings;
 
 /**
  * An {@link IrisSettings} implementation for exercise specific settings.
@@ -20,12 +29,12 @@ public class IrisExerciseSettings extends IrisSettings {
 
     private long exerciseId;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_chat_settings_id")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "iris_programming_exercise_chat_settings", columnDefinition = "json")
     private IrisProgrammingExerciseChatSubSettings irisProgrammingExerciseChatSettings;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_text_exercise_chat_settings_id")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "iris_text_exercise_chat_settings", columnDefinition = "json")
     private IrisTextExerciseChatSubSettings irisTextExerciseChatSettings;
 
     public long getExerciseId() {

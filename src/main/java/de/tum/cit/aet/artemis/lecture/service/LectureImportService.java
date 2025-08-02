@@ -81,7 +81,7 @@ public class LectureImportService {
             clonedAttachment.setLecture(lecture);
             attachments.add(clonedAttachment);
         }
-        lecture.setAttachments(attachments);
+        lecture.getAttachments().addAll(attachments);
         attachmentRepository.saveAll(attachments);
 
         // Save again to establish the ordered list relationship

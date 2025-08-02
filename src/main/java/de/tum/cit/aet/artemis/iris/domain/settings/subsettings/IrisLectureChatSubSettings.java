@@ -1,21 +1,18 @@
-package de.tum.cit.aet.artemis.iris.domain.settings;
-
-import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH;
+package de.tum.cit.aet.artemis.iris.domain.settings.subsettings;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
 import jakarta.validation.constraints.Min;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 
 /**
  * An {@link IrisSubSettings} implementation for the settings for the chat in a text exercise.
  */
-@Entity
-@DiscriminatorValue("LECTURE_CHAT")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class IrisLectureChatSubSettings extends IrisSubSettings {
 
     /**
@@ -24,7 +21,6 @@ public class IrisLectureChatSubSettings extends IrisSubSettings {
      */
     @Nullable
     @Min(1)
-    @Column(name = "rate_limit")
     private Integer rateLimit;
 
     /**
@@ -33,11 +29,9 @@ public class IrisLectureChatSubSettings extends IrisSubSettings {
      */
     @Nullable
     @Min(1)
-    @Column(name = "rate_limit_timeframe_hours")
     private Integer rateLimitTimeframeHours;
 
     @Nullable
-    @Column(name = "custom_instructions", length = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH)
     private String customInstructions;
 
     @Nullable
