@@ -152,7 +152,8 @@
                 "sourceURLValidationError": "Not a valid URL",
                 "urlVideoHelper": "Transform into embeddable format ",
                 "urlHelperPlaceholder": "You can enter a Video URL here and use the arrow to create the correct embeddable URL from it",
-                "urlHelperValidationError": "Automatic embed link generation is not possible for this URL"
+                "urlHelperValidationError": "Automatic embed link generation is not possible for this URL",
+                "generateTranscriptLabel": "Generate transcript after saving"
             },
             "editAttachmentVideoUnit": {
                 "title": "Edit Attachment Unit"
