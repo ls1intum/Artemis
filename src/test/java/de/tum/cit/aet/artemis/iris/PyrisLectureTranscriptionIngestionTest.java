@@ -78,9 +78,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         LectureTranscriptionSegment segment2 = new LectureTranscriptionSegment(0.0, 12.0, "Today we will talk about Artemis", 1);
         LectureTranscription transcription = new LectureTranscription("en", List.of(new LectureTranscriptionSegment[] { segment1, segment2 }), this.lectureUnit);
 
-        LectureTranscription transcriptionAttachmentUnit = new LectureTranscription("en", List.of(), this.lectureUnit);
         lectureTranscriptionRepository.save(transcription);
-        lectureTranscriptionRepository.save(transcriptionAttachmentUnit);
     }
 
     @Test
