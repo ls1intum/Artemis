@@ -43,6 +43,7 @@ import { PostingContentComponent } from 'app/communication/posting-content/posti
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
 import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-post',
@@ -132,7 +133,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     forwardedPosts = input<(Post | undefined)[]>([]);
     forwardedAnswerPosts = input<(AnswerPost | undefined)[]>([]);
     dropdownPosition = { x: 0, y: 0 };
+    originalPost?: Post;
     course: Course;
+    newContent?: string;
 
     hasOriginalPostBeenDeleted: boolean;
 
@@ -145,6 +148,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             const hasDeletedForwardedAnswerPost = this.forwardedAnswerPosts().length > 0 && this.forwardedAnswerPosts()[0] === undefined;
             this.hasOriginalPostBeenDeleted = hasDeletedForwardedAnswerPost || hasDeletedForwardedPost;
         });
+        this.newContent = this.content;
     }
 
     get reactionsBar() {
@@ -255,6 +259,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.updateShowSearchResultInAnswersHint();
         this.sortAnswerPosts();
         this.assignPostingToPost();
+        this.loadOriginalPostContent();
         this.fetchForwardedMessages();
     }
 
@@ -403,5 +408,58 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             return;
         }
         this.onNavigateToPost.emit(post);
+    }
+
+    removeMarkdown(content?: string) {
+        if (!content) {
+            return;
+        }
+
+        const transformations = [
+            { regex: /~~(.*?)~~/g, replacement: '$1' }, // strikethrough
+            { regex: /\*\*(.*?)\*\*/g, replacement: '$1' }, // bold
+            { regex: /\*(.*?)\*/g, replacement: '$1' }, // italic
+            { regex: /\[(.*?)\]\(.*?\)/g, replacement: '$1' }, // link
+            { regex: /<ins>(.*?)<\/ins>/g, replacement: '$1' }, // underline
+            { regex: /```([\s\S]*?)```/g, replacement: '$1' }, // code block
+            { regex: /`([^`]*)`/g, replacement: '$1' }, // inline code
+            { regex: /^\s*>+\s?/gm, replacement: '' }, // quote
+        ];
+
+        let newContent = content;
+        transformations.forEach(({ regex, replacement }) => {
+            newContent = newContent.replace(regex, replacement);
+        });
+
+        const metisTags = ['user', 'channel', 'faq', 'lecture', 'programming'];
+        metisTags.forEach((tag) => {
+            const regex = new RegExp(`\\[${tag}\\](.*?)\\[\\/${tag}\\]`, 'g');
+            newContent = newContent.replace(regex, (match, group1) => {
+                return group1.replace(/\(.*?\)/g, '');
+            });
+        });
+
+        this.newContent = newContent;
+        this.changeDetector.detectChanges();
+    }
+
+    private loadOriginalPostContent(): void {
+        const postId = this.posting.originalPostId;
+        const conversationId = this.posting.conversation?.id;
+
+        if (postId && conversationId) {
+            this.metisService.getPostByIdInConversation(postId, conversationId).subscribe({
+                next: (post) => {
+                    if (post) {
+                        this.originalPost = post;
+                        this.changeDetector.detectChanges();
+                        this.removeMarkdown(this.originalPost.content);
+                    }
+                },
+                error: (error) => {
+                    captureException('Failed to load original post:', error);
+                },
+            });
+        }
     }
 }

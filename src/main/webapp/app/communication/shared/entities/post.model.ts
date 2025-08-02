@@ -12,6 +12,7 @@ export class Post extends Posting {
     public resolved?: boolean;
     public forwardedPosts?: (Post | undefined)[] = [];
     public forwardedAnswerPosts?: (AnswerPost | undefined)[] = [];
+    public originalPostId?: number;
 
     constructor() {
         super();

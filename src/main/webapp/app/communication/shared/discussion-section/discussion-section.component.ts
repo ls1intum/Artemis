@@ -7,6 +7,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Subject, combineLatest, map, takeUntil } from 'rxjs';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { User } from 'app/core/user/user.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { HttpResponse } from '@angular/common/http';
@@ -79,6 +80,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     currentUser?: User;
     shouldSendMessage: boolean;
     readonly PAGE_TYPE = PageType.PAGE_SECTION;
+
+    // Track which posts should show their answers
+    postsWithExpandedAnswers = new Set<number>();
 
     // Icons
     faChevronRight = faChevronRight;
@@ -325,5 +329,41 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
     toggleSendMessage(): void {
         this.shouldSendMessage = !this.shouldSendMessage;
+    }
+
+    /**
+     * Handles navigation to a specific post when a reference is clicked
+     * @param post The post to navigate to
+     */
+    onNavigateToPost(post: Posting): void {
+        if (post.id) {
+            this.scrollToPostAndExpandReplies(post.id);
+        }
+    }
+
+    /**
+     * Scrolls to a specific post and expands its replies
+     * @param postId The ID of the post to scroll to
+     */
+    private scrollToPostAndExpandReplies(postId: number): void {
+        // Find the post in the current posts array
+        const targetPost = this.posts.find((post) => post.id === postId);
+        if (!targetPost) {
+            return;
+        }
+
+        // Expand replies for the target post
+        this.postsWithExpandedAnswers.add(postId);
+
+        // Wait for the DOM to update, then scroll to the post
+        setTimeout(() => {
+            const postElement = document.getElementById('item-' + postId);
+            if (postElement) {
+                postElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                });
+            }
+        }, 100);
     }
 }

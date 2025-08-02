@@ -135,5 +135,9 @@ export class MockMetisService {
         return of(metisCoursePosts.slice(0, 5));
     }
 
+    getPostByIdInConversation(postId: number, conversationId: number): Observable<Post | null> {
+        return of(null);
+    }
+
     setCourse(course: Course | undefined): void {}
 }

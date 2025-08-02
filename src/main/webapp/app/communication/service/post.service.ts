@@ -35,6 +35,8 @@ export class PostService extends PostingService<Post> {
             plagiarismCase: post.plagiarismCase ? { id: post.plagiarismCase.id } : undefined,
             creationDate: post.creationDate,
             updatedDate: post.updatedDate,
+            originalPostId: post.originalPostId,
+            linkedPostingId: post.linkedPostingId,
         };
         const copy = this.convertPostingDateFromClient(postDTO);
         return this.http.post<Post>(`${this.getResourceEndpoint(courseId, undefined, post)}`, copy, { observe: 'response' }).pipe(map(this.convertPostingResponseDateFromServer));

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewEncapsulation, inject, input } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -9,9 +9,13 @@ import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdo
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { DraftService } from 'app/communication/message/service/draft-message.service';
 import { Subscription } from 'rxjs';
+import { canCreateNewMessageInConversation } from 'app/communication/conversations/conversation-permissions.utils';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
@@ -22,22 +26,59 @@ import { Subscription } from 'rxjs';
 })
 export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges, OnDestroy {
     private localStorageService = inject(LocalStorageService);
+
+    private cdr = inject(ChangeDetectorRef);
+
+    warningDismissed = false;
+    channelName?: string;
     private accountService = inject(AccountService);
     private draftService = inject(DraftService);
 
-    warningDismissed = false;
     private readonly DRAFT_KEY_PREFIX = 'thread_draft_';
     private currentUserId: number | undefined;
     private draftMessageSubscription?: Subscription;
 
     readonly activeConversation = input<ConversationDTO>();
 
-    @Output() valueChange = new EventEmitter<void>();
+    valueChange = output<void>();
+
+    sendAsDirectMessage = signal<boolean>(false);
+
+    /**
+     * Returns true if the user can send as direct message in the current conversation
+     */
+    get canSendAsDirectMessage(): boolean {
+        const conversation = this.activeConversation();
+        if (!conversation) {
+            return false;
+        }
+
+        // If it's a channel and it's an announcement channel, disable the checkbox
+        if (conversation.type === 'channel') {
+            const channel = conversation as ChannelDTO;
+            if (channel.isAnnouncementChannel) {
+                return false;
+            }
+        }
+
+        return canCreateNewMessageInConversation(conversation as ChannelDTO);
+    }
 
     ngOnInit(): void {
         super.ngOnInit();
         this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
         void this.loadCurrentUser();
+        this.channelName = (this.activeConversation() as ChannelDTO).name;
+
+        // If it's an announcement channel, ensure the checkbox is unchecked
+        if (this.activeConversation()?.type === 'channel') {
+            const channel = this.activeConversation() as ChannelDTO;
+            if (channel.isAnnouncementChannel) {
+                this.sendAsDirectMessage.set(false);
+            }
+        }
+
+        this.cdr.detectChanges();
     }
 
     ngOnChanges(changes: SimpleChanges | void) {
@@ -53,6 +94,16 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
 
         super.ngOnChanges();
         this.loadDraft();
+
+        // Check if conversation changed and update checkbox state for announcement channels
+        if (changes && changes['activeConversation']) {
+            if (this.activeConversation()?.type === 'channel') {
+                const channel = this.activeConversation() as ChannelDTO;
+                if (channel.isAnnouncementChannel) {
+                    this.sendAsDirectMessage.set(false);
+                }
+            }
+        }
     }
 
     private async loadCurrentUser(): Promise<void> {
@@ -61,6 +112,14 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
             this.currentUserId = account.id;
             this.loadDraft();
         }
+    }
+
+    toggleSendAsDirectMessage(): void {
+        // Don't allow toggling if it's an announcement channel
+        if (!this.canSendAsDirectMessage) {
+            return;
+        }
+        this.sendAsDirectMessage.set(!this.sendAsDirectMessage());
     }
 
     /**
@@ -94,17 +153,61 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
      */
     createPosting(): void {
         this.posting.content = this.formGroup.get('content')?.value;
-        this.metisService.createAnswerPost(this.posting).subscribe({
-            next: (answerPost: AnswerPost) => {
-                this.resetFormGroup('');
-                this.isLoading = false;
-                this.clearDraft();
-                this.onCreate.emit(answerPost);
+        this.isLoading = true;
+
+        const createAnswerPost$ = this.metisService.createAnswerPost(this.posting);
+
+        createAnswerPost$.subscribe({
+            next: (createdAnswerPost: AnswerPost) => {
+                if (this.sendAsDirectMessage()) {
+                    const newPost = this.mapAnswerPostToPost(createdAnswerPost);
+                    this.metisService.createPost(newPost).subscribe({
+                        next: (createdPost: Post) => {
+                            // Update the answer post with the linked posting ID
+                            createdAnswerPost.linkedPostingId = createdPost.id;
+                            // Ensure the answer post has the conversation property for proper endpoint routing
+                            if (createdAnswerPost.post && this.activeConversation()) {
+                                createdAnswerPost.post.conversation = { id: this.activeConversation()!.id } as any;
+                            }
+                            this.metisService.updateAnswerPost(createdAnswerPost).subscribe({
+                                next: (updatedAnswerPost: AnswerPost) => {
+                                    this.finalizeCreation(createdPost);
+                                },
+                                error: (error) => {
+                                    this.isLoading = false;
+                                },
+                            });
+                        },
+                        error: (error) => {
+                            this.isLoading = false;
+                        },
+                    });
+                } else {
+                    this.finalizeCreation(createdAnswerPost);
+                }
             },
-            error: () => {
+            error: (error) => {
                 this.isLoading = false;
             },
         });
+    }
+
+    private finalizeCreation(posting: Posting): void {
+        this.resetFormGroup('');
+        this.clearDraft();
+        this.isLoading = false;
+        this.onCreate.emit(posting);
+    }
+
+    private mapAnswerPostToPost(answerPost: AnswerPost): Post {
+        if (!answerPost.post) {
+            throw new Error('Answer post does not have a reference to its parent post');
+        }
+        return {
+            content: answerPost.content,
+            conversation: this.activeConversation(),
+            originalPostId: answerPost.post!.id,
+        } as Post;
     }
 
     /**

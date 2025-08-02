@@ -56,6 +56,12 @@ public abstract class Posting extends DomainObject {
     @Transient
     private UserRole authorRoleTransient;
 
+    @Column(name = "has_forwarded_messages")
+    private boolean hasForwardedMessages;
+
+    @Column(name = "linked_posting_id")
+    private Long linkedPostingId;
+
     @JsonProperty
     public User getAuthor() {
         return author;
@@ -110,4 +116,20 @@ public abstract class Posting extends DomainObject {
     public abstract Course getCoursePostingBelongsTo();
 
     public abstract Conversation getConversation();
+
+    public boolean getHasForwardedMessages() {
+        return hasForwardedMessages;
+    }
+
+    public void setHasForwardedMessages(boolean hasForwardedMessages) {
+        this.hasForwardedMessages = hasForwardedMessages;
+    }
+
+    public Long getLinkedPostingId() {
+        return linkedPostingId;
+    }
+
+    public void setLinkedPostingId(Long linkedPostingId) {
+        this.linkedPostingId = linkedPostingId;
+    }
 }

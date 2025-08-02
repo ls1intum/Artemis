@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record CreatePostDTO(String content, String title, boolean hasForwardedMessages, CreatePostConversationDTO conversation) {
+public record CreatePostDTO(String content, String title, boolean hasForwardedMessages, CreatePostConversationDTO conversation, Long originalPostId) {
 
     /**
      * Converts this DTO to a Post entity.
@@ -22,6 +22,7 @@ public record CreatePostDTO(String content, String title, boolean hasForwardedMe
         post.setContent(this.content);
         post.setTitle(this.title);
         post.setHasForwardedMessages(this.hasForwardedMessages);
+        post.setOriginalPostId(this.originalPostId);
         return post;
     }
 

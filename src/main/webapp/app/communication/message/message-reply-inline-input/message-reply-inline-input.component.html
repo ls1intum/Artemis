@@ -12,7 +12,7 @@
             [isFormGroupValid]="formGroup.valid"
             [editType]="editType"
         />
-        <div class="col mt-1 text-end">
+        <div class="col mt-1">
             @if (!warningDismissed) {
                 <div class="alert alert-warning alert-dismissible text-start fade show" role="alert">
                     <button type="button" class="btn-close" (click)="closeAlert()" aria-label="Close"></button>
@@ -22,23 +22,38 @@
                     <p class="mb-0" jhiTranslate="artemisApp.messageWarning.lastParagraph"></p>
                 </div>
             }
-            @if (editType === EditType.UPDATE) {
-                <button
-                    jhi-posting-button
-                    [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate"
-                    class="btn btn-sm btn-outline-secondary"
-                    (click)="isModalOpen.emit()"
-                ></button>
-                <button
-                    jhi-posting-button
-                    [buttonLoading]="isLoading"
-                    [disabled]="isLoading || !formGroup.valid"
-                    [buttonLabel]="'artemisApp.conversationsLayout.saveMessage' | artemisTranslate"
-                    class="btn btn-sm btn-outline-primary"
-                    id="save"
-                    type="submit"
-                ></button>
-            }
+            <div class="d-flex justify-content-between align-items-center">
+                @if (editType !== EditType.UPDATE) {
+                    <div class="message-checkbox" [class.disabled-checkbox]="!canSendAsDirectMessage">
+                        <input type="checkbox" id="messageCheckbox" [checked]="sendAsDirectMessage()" (change)="toggleSendAsDirectMessage()" [disabled]="!canSendAsDirectMessage" />
+                        @if (this.activeConversation()!.type === 'channel') {
+                            <label for="messageCheckbox" jhiTranslate="artemisApp.conversationsLayout.sendToChannel" [translateValues]="{ channelName: this.channelName }"> </label>
+                        } @else if (this.activeConversation()!.type === 'oneToOneChat') {
+                            <label for="messageCheckbox" jhiTranslate="artemisApp.conversationsLayout.sendAsDirectMessage"></label>
+                        } @else {
+                            <label for="messageCheckbox" jhiTranslate="artemisApp.conversationsLayout.sendToGroup"></label>
+                        }
+                    </div>
+                } @else {
+                    <div class="d-flex gap-2">
+                        <button
+                            jhi-posting-button
+                            [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate"
+                            class="btn btn-sm btn-outline-secondary"
+                            (click)="isModalOpen.emit()"
+                        ></button>
+                        <button
+                            jhi-posting-button
+                            [buttonLoading]="isLoading"
+                            [disabled]="isLoading || !formGroup.valid"
+                            [buttonLabel]="'artemisApp.conversationsLayout.saveMessage' | artemisTranslate"
+                            class="btn btn-sm btn-outline-primary"
+                            id="save"
+                            type="submit"
+                        ></button>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </form>

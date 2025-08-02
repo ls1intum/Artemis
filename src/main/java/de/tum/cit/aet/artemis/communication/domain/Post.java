@@ -80,8 +80,8 @@ public class Post extends Posting {
     @Transient
     private boolean isSaved = false;
 
-    @Column(name = "has_forwarded_messages")
-    private boolean hasForwardedMessages;
+    @Column(name = "original_post_id")
+    private Long originalPostId;
 
     public Post() {
     }
@@ -96,14 +96,6 @@ public class Post extends Posting {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public boolean getHasForwardedMessages() {
-        return hasForwardedMessages;
-    }
-
-    public void setHasForwardedMessages(boolean hasForwardedMessages) {
-        this.hasForwardedMessages = hasForwardedMessages;
     }
 
     public Boolean isVisibleForStudents() {
@@ -202,6 +194,14 @@ public class Post extends Posting {
 
     public void setIsSaved(boolean isSaved) {
         this.isSaved = isSaved;
+    }
+
+    public Long getOriginalPostId() {
+        return originalPostId;
+    }
+
+    public void setOriginalPostId(Long originalPostId) {
+        this.originalPostId = originalPostId;
     }
 
     /**

@@ -45,6 +45,8 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { of } from 'rxjs';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import { MockConversationService } from 'test/helpers/mocks/service/mock-conversation.service';
 
 describe('PostingReactionsBarComponent', () => {
     let component: PostingReactionsBarComponent<Posting>;
@@ -90,6 +92,7 @@ describe('PostingReactionsBarComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: ConversationService, useClass: MockConversationService },
             ],
         })
             .compileComponents()
@@ -721,5 +724,78 @@ describe('PostingReactionsBarComponent', () => {
         expect(createForwardedMessagesSpy).toHaveBeenCalledOnce();
         expect(createForwardedMessagesSpy).toHaveBeenCalledWith([testPost], testConversation, isAnswer, content);
         expect(consoleErrorSpy).not.toHaveBeenCalled();
+    });
+
+    describe('Conversation filtering in openForwardMessageView', () => {
+        let conversationService: any;
+
+        beforeEach(() => {
+            conversationService = TestBed.inject(ConversationService);
+            jest.spyOn(component['modalService'] as any, 'open').mockReturnValue({
+                componentInstance: {
+                    users: { set: jest.fn() },
+                    channels: { set: jest.fn() },
+                    postToForward: { set: jest.fn() },
+                    courseId: { set: jest.fn() },
+                },
+                result: Promise.resolve({
+                    channels: [],
+                    users: [],
+                    messageContent: 'Test content',
+                }),
+            } as any);
+        });
+
+        it('should filter out announcement channels from forwarding options', fakeAsync(() => {
+            const conversations = [
+                { id: 1, type: ConversationType.CHANNEL, isAnnouncementChannel: true, isArchived: false } as ChannelDTO,
+                { id: 2, type: ConversationType.CHANNEL, isAnnouncementChannel: false, isArchived: false } as ChannelDTO,
+                { id: 3, type: ConversationType.CHANNEL, isAnnouncementChannel: false, isArchived: false } as ChannelDTO,
+            ];
+
+            jest.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(
+                of({
+                    body: conversations,
+                }),
+            );
+
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.course = input({ id: 1 } as any);
+                component.posting = input({ id: 1, content: 'Test content' } as Post);
+            });
+
+            component.forwardMessage();
+            tick();
+
+            expect(component['channels']).toHaveLength(2);
+            expect(component['channels'].map((c: ChannelDTO) => c.id)).toEqual([2, 3]);
+            expect(component['channels'].some((c: ChannelDTO) => c.isAnnouncementChannel)).toBeFalsy();
+        }));
+
+        it('should filter out archived channels from forwarding options', fakeAsync(() => {
+            const conversations = [
+                { id: 1, type: ConversationType.CHANNEL, isAnnouncementChannel: false, isArchived: true } as ChannelDTO,
+                { id: 2, type: ConversationType.CHANNEL, isAnnouncementChannel: false, isArchived: false } as ChannelDTO,
+                { id: 3, type: ConversationType.CHANNEL, isAnnouncementChannel: false, isArchived: true } as ChannelDTO,
+            ];
+
+            jest.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(
+                of({
+                    body: conversations,
+                }),
+            );
+
+            runInInjectionContext(fixture.debugElement.injector, () => {
+                component.course = input({ id: 1 } as any);
+                component.posting = input({ id: 1, content: 'Test content' } as Post);
+            });
+
+            component.forwardMessage();
+            tick();
+
+            expect(component['channels']).toHaveLength(1);
+            expect(component['channels'][0].id).toBe(2);
+            expect(component['channels'].some((c: ChannelDTO) => c.isArchived)).toBeFalsy();
+        }));
     });
 });

@@ -45,6 +45,7 @@ export class AnswerPostService extends PostingService<AnswerPost> {
             resolvesPost: answerPost.resolvesPost,
             creationDate: answerPost.creationDate,
             updatedDate: answerPost.updatedDate,
+            linkedPostingId: answerPost.linkedPostingId,
         };
         const copy = this.convertPostingDateFromClient(updatedAnswer);
         return this.http

@@ -132,9 +132,10 @@
                                             [id]="'item-' + post.id"
                                             class="item"
                                             [post]="post"
-                                            [showAnswers]="posts.length === 1"
+                                            [showAnswers]="posts.length === 1 || postsWithExpandedAnswers.has(post.id!)"
                                             [showChannelReference]="false"
                                             [isCommunicationPage]="false"
+                                            (onNavigateToPost)="onNavigateToPost($event)"
                                         />
                                     }
                                 </div>
