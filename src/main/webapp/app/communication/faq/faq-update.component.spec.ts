@@ -277,7 +277,7 @@ describe('FaqUpdateComponent', () => {
         expect(faqUpdateComponent.faq.questionAnswer).toBe('test');
     });
 
-    it('should have no intelligence action when IRIS is not active', () => {
+    it('should have no intelligence action when Nebula is not active', () => {
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
         faqUpdateComponentFixture.detectChanges();
@@ -285,7 +285,7 @@ describe('FaqUpdateComponent', () => {
         expect(faqUpdateComponent.artemisIntelligenceActions()).toEqual([]);
     });
 
-    it('should have intelligence action when IRIS is active', () => {
+    it('should have intelligence action when Nebula is active', () => {
         const isProfileActiveSpy = jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
@@ -298,7 +298,7 @@ describe('FaqUpdateComponent', () => {
         const actions = faqUpdateComponent.artemisIntelligenceActions();
         expect(actions).toHaveLength(2);
         expect(actions[0]).toBeInstanceOf(RewriteAction);
-        expect(actions[0]).toBeInstanceOf(FaqConsistencyAction);
+        expect(actions[1]).toBeInstanceOf(FaqConsistencyAction);
     });
 
     it('should reset renderedConsistencyCheckResultMarkdown when dismissConsistencyCheck is called', () => {
