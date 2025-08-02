@@ -95,7 +95,6 @@ $modal-content-bg: $white;
 
 // Exam
 $exam-height-offset: 88px;
-$update-footer-offset: 42px; // height of the update footer (connection status)
 
 // === END BOOTSTRAP ===
 
@@ -478,6 +477,7 @@ $exam-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $exam-participation-footer-connected-background: #d1ecf1;
 $exam-participation-footer-disconnected-background: #fff2cc;
 $exam-text-exam-summary-background: #f8f9fa;
+$exam-update-footer-offset: 42px; // height of the update footer (connection status)
 
 // Assessment
 $textblock-assessment-span-hover-background: $gray-300;
