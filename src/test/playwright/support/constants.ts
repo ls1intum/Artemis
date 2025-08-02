@@ -5,6 +5,7 @@ import { ProgrammingExerciseSubmission } from './pageobjects/exercises/programmi
 
 // Requests
 export const BASE_API = 'api';
+export const THEIA_BASE = process.env.THEIA_BASE || '';
 
 export const COURSE_ADMIN_BASE = `${BASE_API}/core/admin/courses`;
 
