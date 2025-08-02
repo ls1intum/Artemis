@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
-import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
@@ -247,10 +247,12 @@ public class PyrisPipelineService {
      * @param textExerciseDTOOptional the optional text exercise DTO if this is due to a specific event
      * @param submissionDTO           the optional submission DTO if this is due to a specific event
      * @param exerciseDTO             the optional programming exercise DTO if this is due to a specific event
-     * @param post                    the post the session is about
+     * @param postDTO                 the post DTO containing the post
      */
     public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureIdOptional,
-            Optional<PyrisTextExerciseDTO> textExerciseDTOOptional, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> exerciseDTO, Post post) {
+            Optional<PyrisTextExerciseDTO> textExerciseDTOOptional, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> exerciseDTO,
+            PostDTO postDTO) {
+        var post = postDTO.post();
         var course = post.getCoursePostingBelongsTo();
         if (course == null) {
             throw new IllegalStateException("Course not found for post " + post.getId());
