@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -2279,4 +2280,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         assertThat(sameStudentExamDifferentIpAndFingerprint).hasSize(2);
     }
     // </editor-fold>
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExamSidebarDataForRealExams() throws Exception {
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExam(course);
+        Exam testExam = examUtilService.addTestExam(course);
+        StudentExam studentExam1 = examUtilService.addStudentExamWithUser(exam, student1);
+        examUtilService.addStudentExamWithUser(testExam, student1);
+        Set<ExamSidebarDataDTO> examSidebarData = request.getSet("/api/exam/courses/" + course.getId() + "/real-exams-sidebar-data", HttpStatus.OK, ExamSidebarDataDTO.class);
+        assertThat(examSidebarData).hasSize(1);
+        ExamSidebarDataDTO element = examSidebarData.iterator().next();
+        assertThat(element.id()).isEqualTo(exam.getId());
+        assertThat(element.title()).isEqualTo(exam.getTitle());
+        assertThat(element.workingTime()).isEqualTo(studentExam1.getWorkingTime());
+        assertThat(element.startDate().withZoneSameInstant(ZoneId.systemDefault())).isCloseTo(exam.getStartDate(), within(1, ChronoUnit.SECONDS));
+    }
 }

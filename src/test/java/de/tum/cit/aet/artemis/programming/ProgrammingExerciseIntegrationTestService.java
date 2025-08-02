@@ -1647,13 +1647,13 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(jplagZipArchive).exists();
 
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
-            assertThat(zipFile.getEntry("overview.json")).isNotNull();
+            assertThat(zipFile.getEntry("submissionMappings.json")).isNotNull();
             assertThat(zipFile.getEntry("files/1-Submission1.java/1-Submission1.java")).isNotNull();
             assertThat(zipFile.getEntry("files/2-Submission2.java/2-Submission2.java")).isNotNull();
 
             // it is random which of the following two exists, but one of them must be part of the zip file
-            var json1 = zipFile.getEntry("1-Submission1.java-2-Submission2.java.json");
-            var json2 = zipFile.getEntry("2-Submission2.java-1-Submission1.java.json");
+            var json1 = zipFile.getEntry("comparisons/1-Submission1.java-2-Submission2.java.json");
+            var json2 = zipFile.getEntry("comparisons/2-Submission2.java-1-Submission1.java.json");
             assertThat(json1 != null || json2 != null).isTrue();
         }
     }
