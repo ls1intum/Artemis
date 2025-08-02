@@ -8,7 +8,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -22,6 +21,7 @@ import java.util.stream.Stream;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -696,17 +696,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetProgrammingExerciseStudentParticipationByRepoNameNotFound() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        // Generate a random URI that is not in the database
-        URI repoUrl;
-        Optional<ProgrammingExerciseStudentParticipation> foundParticipation;
-        do {
-            repoUrl = new URI(participation.getRepositoryUri());
-            repoUrl = new URI(repoUrl.getScheme(), repoUrl.getUserInfo(), repoUrl.getHost(), repoUrl.getPort(), "/" + UUID.randomUUID(), repoUrl.getQuery(), repoUrl.getFragment());
-            foundParticipation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl.toString());
-        }
-        while (foundParticipation.isPresent());
+        String repoUrl = generateRandomRepoUrl(participation, true);
 
-        var repoName = extractRepoName(repoUrl.toString());
+        var repoName = extractRepoName(repoUrl);
         request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.NOT_FOUND, String.class);
     }
 
@@ -715,7 +707,13 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetProgrammingExerciseStudentParticipationByInvalidRepoName() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        // Generate a random URI that is not in the database
+        String repoUrl = generateRandomRepoUrl(participation, false);
+
+        var repoName = extractRepoName(repoUrl.toString());
+        request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.BAD_REQUEST, String.class);
+    }
+
+    private @NotNull String generateRandomRepoUrl(ProgrammingExerciseStudentParticipation participation, boolean valid) {
         String baseRepoPath = participation.getRepositoryUri();
         String repoUrl;
         Optional<ProgrammingExerciseStudentParticipation> foundParticipation;
@@ -728,14 +726,13 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             String basePath = baseRepoPath.substring(0, baseRepoPath.indexOf("/git/") + 4);
 
             // Format: /path/to/git/PROJECT_KEY/repo_name.git
-            repoUrl = String.format("%s/%s/%s.git", basePath, randomKey, randomName);
+            String repoName = valid ? String.format("%s-%s", randomKey, randomName) : randomName;
+            repoUrl = String.format("%s/%s/%s.git", basePath, randomKey, repoName);
 
             foundParticipation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl);
         }
         while (foundParticipation.isPresent());
-
-        var repoName = extractRepoName(repoUrl.toString());
-        request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.BAD_REQUEST, String.class);
+        return repoUrl;
     }
 
     @Test
