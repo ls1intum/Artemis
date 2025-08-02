@@ -42,6 +42,7 @@ import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complain
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-solution.component';
+import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -86,6 +87,7 @@ type StateBeforeResetting = {
         ComplaintsStudentViewComponent,
         ProgrammingExamSummaryComponent,
         ArtemisTranslatePipe,
+        TestRunRibbonComponent,
     ],
 })
 export class ExamResultSummaryComponent implements OnInit {

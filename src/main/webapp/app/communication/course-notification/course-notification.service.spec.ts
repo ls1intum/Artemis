@@ -425,11 +425,11 @@ describe('CourseNotificationService', () => {
         });
 
         it('should return "date" for notifications created before this week', () => {
-            jest.spyOn(dayjs.prototype, 'startOf').mockImplementation(function (this: dayjs.Dayjs) {
+            jest.spyOn(dayjs.prototype, 'startOf').mockImplementation(function () {
                 if (arguments[0] === 'week') return dayjs('2023-12-31');
                 return this;
             });
-            jest.spyOn(dayjs.prototype, 'endOf').mockImplementation(function (this: dayjs.Dayjs) {
+            jest.spyOn(dayjs.prototype, 'endOf').mockImplementation(function () {
                 if (arguments[0] === 'week') return dayjs('2024-01-06');
                 return this;
             });
