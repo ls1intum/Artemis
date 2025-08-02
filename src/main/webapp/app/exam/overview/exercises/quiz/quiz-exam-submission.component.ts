@@ -22,7 +22,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { CommonModule, NgClass, NgTemplateOutlet } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
@@ -34,13 +34,11 @@ import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.m
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['../../../../quiz/overview/participation/quiz-participation.component.scss', './quiz-exam-submission.component.scss'],
     imports: [
-        CommonModule,
         TranslateDirective,
         IncludedInScoreBadgeComponent,
         ExerciseSaveButtonComponent,
         NgbTooltip,
         NgClass,
-        NgTemplateOutlet,
         MultipleChoiceQuestionComponent,
         DragAndDropQuestionComponent,
         ShortAnswerQuestionComponent,
