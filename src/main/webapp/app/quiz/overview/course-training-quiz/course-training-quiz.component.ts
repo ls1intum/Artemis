@@ -13,13 +13,13 @@ import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { EMPTY, filter, map, switchMap } from 'rxjs';
-import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/QuizTrainingAnswer';
+import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluation';
 
 @Component({
     selector: 'jhi-course-practice-quiz',
@@ -63,9 +63,7 @@ export class CourseTrainingQuizComponent {
     );
     course = computed(() => this.courseSignal());
 
-    submission = new QuizSubmission();
-    isSubmitting = false;
-    result = new Result();
+    trainingAnswer = new QuizTrainingAnswer();
     showingResult = false;
     submitted = false;
     questionScores: number = 0;
@@ -113,7 +111,7 @@ export class CourseTrainingQuizComponent {
     initQuestion(question: QuizQuestion): void {
         this.showingResult = false;
         this.submitted = false;
-        this.submission = new QuizSubmission();
+        this.trainingAnswer = new QuizTrainingAnswer();
         if (question) {
             switch (question.type) {
                 case QuizQuestionType.MULTIPLE_CHOICE:
@@ -130,10 +128,10 @@ export class CourseTrainingQuizComponent {
     }
 
     /**
-     * applies the current selection to the submission object
+     * applies the current selection to the trainingAnswer object
      */
     applySelection() {
-        this.submission.submittedAnswers = [];
+        this.trainingAnswer.submittedAnswer = undefined;
         const question = this.currentQuestion();
         if (!question) {
             return;
@@ -145,7 +143,7 @@ export class CourseTrainingQuizComponent {
                 const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
                 mcSubmittedAnswer.quizQuestion = question;
                 mcSubmittedAnswer.selectedOptions = answerOptions;
-                this.submission.submittedAnswers.push(mcSubmittedAnswer);
+                this.trainingAnswer.submittedAnswer = mcSubmittedAnswer;
                 break;
             }
             case QuizQuestionType.DRAG_AND_DROP: {
@@ -153,7 +151,7 @@ export class CourseTrainingQuizComponent {
                 const ddSubmittedAnswer = new DragAndDropSubmittedAnswer();
                 ddSubmittedAnswer.quizQuestion = question;
                 ddSubmittedAnswer.mappings = mappings;
-                this.submission.submittedAnswers.push(ddSubmittedAnswer);
+                this.trainingAnswer.submittedAnswer = ddSubmittedAnswer;
                 break;
             }
             case QuizQuestionType.SHORT_ANSWER: {
@@ -161,7 +159,7 @@ export class CourseTrainingQuizComponent {
                 const saSubmittedAnswer = new ShortAnswerSubmittedAnswer();
                 saSubmittedAnswer.quizQuestion = question;
                 saSubmittedAnswer.submittedTexts = submittedTexts;
-                this.submission.submittedAnswers.push(saSubmittedAnswer);
+                this.trainingAnswer.submittedAnswer = saSubmittedAnswer;
                 break;
             }
         }
@@ -171,19 +169,17 @@ export class CourseTrainingQuizComponent {
      * Submits the quiz for practice
      */
     onSubmit() {
-        const exerciseId = this.currentQuestion()?.exerciseId;
-        if (!exerciseId) {
+        const questionId = this.currentQuestion()?.id;
+        if (!questionId) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
-                message: 'error.noExerciseIdForQuestion',
+                message: 'No questionId found',
             });
-            this.isSubmitting = false;
             return;
         }
         this.applySelection();
-        this.isSubmitting = true;
-        this.quizService.submitForTraining(this.submission, exerciseId).subscribe({
-            next: (response: HttpResponse<Result>) => {
+        this.quizService.submitForTraining(this.trainingAnswer, questionId, this.courseId()).subscribe({
+            next: (response: HttpResponse<SubmittedAnswerAfterEvaluation>) => {
                 if (response.body) {
                     this.onSubmitSuccess(response.body);
                 }
@@ -192,65 +188,45 @@ export class CourseTrainingQuizComponent {
         });
     }
 
-    onSubmitSuccess(result: Result) {
-        this.isSubmitting = false;
+    onSubmitSuccess(evaluatedAnswer: SubmittedAnswerAfterEvaluation) {
         this.submitted = true;
-        this.submission = result.submission as QuizSubmission;
-        this.applySubmission();
-        this.showResult(result);
+        this.showingResult = true;
+
+        this.questionScores = roundValueSpecifiedByCourseSettings(evaluatedAnswer.scoreInPoints || 0, this.course());
+
+        // update UI with the evaluated answer
+        this.applyEvaluatedAnswer(evaluatedAnswer);
     }
 
     /**
      * Callback function for handling error when submitting
      */
     onSubmitError(error: HttpErrorResponse) {
-        const errorMessage = 'Submitting the quiz was not possible. ' + (error.headers?.get('X-artemisApp-message') || error.message);
+        const errorMessage = 'Submitting the quiz was not possible. ' + error.message;
         this.alertService.addAlert({
             type: AlertType.DANGER,
             message: errorMessage,
             disableTranslation: true,
         });
-        this.isSubmitting = false;
     }
+
     /**
-     * applies the data from the model to the UI (reverse of applySelection):
-     *
-     * Sets the checkmarks (selected answers) for all questions according to the submission data
+     * Applies the evaluated answer to the current question
      */
-    applySubmission() {
-        this.selectedAnswerOptions = [];
-        this.dragAndDropMappings = [];
-        this.shortAnswerSubmittedTexts = [];
+    applyEvaluatedAnswer(evaluatedAnswer: SubmittedAnswerAfterEvaluation) {
         const question = this.currentQuestion();
-        if (question) {
-            const submittedAnswer = this.submission.submittedAnswers?.find((answer) => answer.quizQuestion?.id === question.id);
+        if (!question) return;
 
-            switch (question.type) {
-                case QuizQuestionType.MULTIPLE_CHOICE:
-                    this.selectedAnswerOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer)?.selectedOptions || [];
-                    break;
-                case QuizQuestionType.DRAG_AND_DROP:
-                    this.dragAndDropMappings = (submittedAnswer as DragAndDropSubmittedAnswer)?.mappings || [];
-                    break;
-                case QuizQuestionType.SHORT_ANSWER:
-                    this.shortAnswerSubmittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || [];
-                    break;
-            }
-        }
-    }
-
-    /**
-     * Display results of the quiz for the user
-     * @param result
-     */
-    showResult(result: Result) {
-        this.result = result;
-        if (this.result) {
-            this.showingResult = true;
-            const submittedAnswer = this.submission.submittedAnswers?.find((answer) => answer.quizQuestion?.id === this.currentQuestion()?.id);
-            if (submittedAnswer) {
-                this.questionScores = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints, this.course());
-            }
+        switch (question.type) {
+            case QuizQuestionType.MULTIPLE_CHOICE:
+                this.selectedAnswerOptions = evaluatedAnswer.selectedOptions || [];
+                break;
+            case QuizQuestionType.DRAG_AND_DROP:
+                this.dragAndDropMappings = evaluatedAnswer.mappings || [];
+                break;
+            case QuizQuestionType.SHORT_ANSWER:
+                this.shortAnswerSubmittedTexts = evaluatedAnswer.submittedTexts || [];
+                break;
         }
     }
 

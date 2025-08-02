@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -346,18 +346,19 @@ public class ExerciseService {
      * Filter all exercises for a given course based on the user role and course settings
      * Assumes that the exercises are already been loaded (i.e. no proxy)
      *
-     * @param course corresponding course: exercises
-     * @param user   the user entity
+     * @param course                      corresponding course: exercises
+     * @param user                        the user entity
+     * @param reloadOnlineCourseExercises this is only necessary when fetching a single course
      * @return a set of all Exercises for the given course
      */
-    public Set<Exercise> filterExercisesForCourse(Course course, User user) {
+    public Set<Exercise> filterExercisesForCourse(Course course, User user, boolean reloadOnlineCourseExercises) {
         Set<Exercise> exercises = course.getExercises();
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             // no need to filter for tutors/editors/instructors/admins because they can see all exercises of the course
             return exercises;
         }
 
-        if (course.isOnlineCourse()) {
+        if (reloadOnlineCourseExercises && course.isOnlineCourse()) {
             // this case happens rarely, so we can reload the relevant exercises from the database
             // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
             exercises = exerciseRepository.findByCourseIdWhereLtiResourceLaunchExists(course.getId(), user.getLogin());
@@ -372,10 +373,11 @@ public class ExerciseService {
      * Loads additional details for team exercises and for active quiz exercises
      * Assumes that the exercises are already been loaded (i.e. no proxy)
      *
-     * @param course corresponding course: exercises
-     * @param user   the user entity
+     * @param course          corresponding course: exercises
+     * @param user            the user entity
+     * @param loadQuizBatches only necessary when loading one course
      */
-    public void loadExerciseDetailsIfNecessary(Course course, User user) {
+    public void loadExerciseDetailsIfNecessary(Course course, User user, boolean loadQuizBatches) {
         for (Exercise exercise : course.getExercises()) {
             // only necessary for team exercises
             setAssignedTeamIdForExerciseAndUser(exercise, user);
@@ -385,7 +387,7 @@ public class ExerciseService {
                 quizExercise.filterSensitiveInformation();
 
                 // if the quiz is not active the batches do not matter and there is no point in loading them
-                if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
+                if (loadQuizBatches && quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
                     // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
                     quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
                 }
@@ -765,7 +767,7 @@ public class ExerciseService {
         }
         // start sending problem statement updates within the last 5 minutes before the exam starts
         else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(originalExercise.getExam().getStartDate()) && originalExercise.isExamExercise()
-                && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
+                && !Strings.CS.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
             ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamLiveEventsApi.class));
             api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
         }
