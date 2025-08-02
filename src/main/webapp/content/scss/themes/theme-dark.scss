@@ -1,5 +1,6 @@
 /* stylelint-disable */
 @use 'sass:meta';
+@use 'sass:color';
 @use 'generate-css-vars';
 
 @import 'dark-variables';
@@ -87,7 +88,7 @@ html {
 
     // Do defaults for all colors
     @each $color, $value in $theme-colors {
-        $blackened: darken($value, 20%);
+        $blackened: color.adjust($value, $lightness: -20%);
         &-#{$color} {
             background: $blackened;
             border-color: $value;
@@ -150,7 +151,7 @@ html {
 
 .form-control,
 .form-select {
-    border-color: lighten($neutral-dark, 10%);
+    border-color: color.adjust($neutral-dark, $lightness: 10%);
 }
 
 .form-select {
@@ -162,7 +163,7 @@ html {
 }
 
 .text-primary {
-    color: lighten($primary, 30) !important;
+    color: color.adjust($primary, $lightness: 30%) !important;
 }
 
 .owl-dt-control-button {
@@ -176,7 +177,7 @@ html {
 }
 
 .owl-dt-timer-content .owl-dt-timer-input {
-    background: transparentize(#fff, 0.95) !important;
+    background: color.adjust(#fff, $alpha: -0.95) !important;
     color: white !important;
 }
 
@@ -185,7 +186,7 @@ html {
 }
 
 .owl-dt-container {
-    background-color: lighten($neutral-dark, 5) !important;
+    background-color: color.adjust($neutral-dark, $lightness: 5%) !important;
 }
 
 .owl-dt-calendar-table {
@@ -198,7 +199,7 @@ html {
     }
 }
 .bg-light {
-    background: transparentize(white, 0.95) !important;
+    background: color.adjust(white, $alpha: -0.95) !important;
 }
 
 .form-select option {
@@ -206,15 +207,15 @@ html {
     background-color: $gray-800;
 
     &:checked {
-        background-color: mix($neutral-dark, $white, 70%) !important;
+        background-color: color.mix($neutral-dark, $white, 70%) !important;
     }
 }
 
 .cdk-overlay-container .tag-option {
-    background: mix($neutral-dark, $white, 90%);
+    background: color.mix($neutral-dark, $white, 90%);
 
     &:hover {
-        background: mix($neutral-dark, $white, 80%);
+        background: color.mix($neutral-dark, $white, 80%);
     }
 }
 

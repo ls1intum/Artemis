@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 .plagiarism-sidebar {
     border-right: 1px solid var(--body-bg);
     display: flex;
@@ -55,7 +57,7 @@
         justify-content: space-between;
 
         &.selected {
-            background-color: transparentize(lightskyblue, 0.5);
+            background-color: color.adjust(lightskyblue, $alpha: -0.5);
             font-weight: bold;
         }
 
@@ -93,7 +95,7 @@
             }
 
             &.selected {
-                background-color: transparentize(lightskyblue, 0.5);
+                background-color: color.adjust(lightskyblue, $alpha: -0.5);
 
                 .plagiarism-name {
                     font-weight: bold;
