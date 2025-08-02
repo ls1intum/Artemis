@@ -11,7 +11,7 @@ import { downloadFile, downloadZipFromFilePromises } from 'app/shared/util/downl
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import JSZip from 'jszip';
 import { FileService } from 'app/shared/service/file.service';
-import { toQuizExerciseUpdateDto } from 'app/quiz/shared/entities/quiz-exercise-update.model';
+import { toQuizExerciseUpdateModel } from 'app/quiz/shared/entities/quiz-exercise-update.model';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -79,7 +79,7 @@ export class QuizExerciseService {
         const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
 
-        const exerciseDTO = toQuizExerciseUpdateDto(copy);
+        const exerciseDTO = toQuizExerciseUpdateModel(copy);
         const formData = new FormData();
         formData.append('exercise', objectToJsonBlob(exerciseDTO));
         files.forEach((file, fileName) => {

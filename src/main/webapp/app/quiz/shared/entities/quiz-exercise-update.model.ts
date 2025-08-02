@@ -1,6 +1,6 @@
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { QuizBatch, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
@@ -22,7 +22,7 @@ export interface QuizExerciseUpdateModel {
     quizQuestions?: QuizQuestion[];
 }
 
-export function toQuizExerciseUpdateDto(quizExercise: QuizExerciseUpdateModel): QuizExerciseUpdateModel {
+export function toQuizExerciseUpdateModel(quizExercise: QuizExercise): QuizExerciseUpdateModel {
     return {
         title: quizExercise.title,
         channelName: quizExercise.channelName,
