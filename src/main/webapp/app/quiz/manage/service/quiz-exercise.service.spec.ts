@@ -123,7 +123,7 @@ describe('QuizExercise Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.update(1, expected, fileMap));
-        const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz/quiz-exercises/1' });
+        const req = httpMock.expectOne({ method: 'PATCH', url: 'api/quiz/quiz-exercises/1' });
         validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
