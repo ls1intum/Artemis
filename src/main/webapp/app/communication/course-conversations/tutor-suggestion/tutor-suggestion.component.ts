@@ -67,8 +67,6 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     ngOnInit(): void {
         this.featureToggleSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorSuggestions).subscribe((active) => {
             if (active) {
-                this.subscribeToIrisActivation();
-
                 if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
                     return;
                 }
@@ -83,6 +81,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
                         this.irisEnabled = !!settings?.irisTutorSuggestionSettings?.enabled;
                         if (this.irisEnabled) {
                             this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
+                            this.subscribeToIrisActivation();
                             this.fetchMessages();
                         }
                     });
