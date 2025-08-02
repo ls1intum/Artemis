@@ -122,7 +122,8 @@
                 "lti": "LTI Configuration",
                 "standardizedCompetencies": "Standardized Competencies",
                 "cleanupService": "Cleanup Service",
-                "lectureTranscription": "Lecture Transcription"
+                "lectureTranscription": "Lecture Transcription",
+                "examRooms": "Exam Rooms"
             },
             "language": "Language",
             "settings": "Settings"
