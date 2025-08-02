@@ -1,0 +1,62 @@
+{
+    "artemisApp": {
+        "memiris": {
+            "breadcrumb": "Memiris",
+            "admin": {
+                "title": "Memiris Admin-Bereich",
+                "graphTitle": "Erinnerungs-Graph"
+            },
+            "memory": {
+                "singular": "Erinnerung",
+                "plural": "Erinnerungen"
+            },
+            "learning": {
+                "singular": "Erkenntnis",
+                "plural": "Erkenntnisse"
+            },
+            "connection": {
+                "memory-memory": "Verbindung Erinnerung zu Erinnerung",
+                "memory-learning": "Verbindung Erinnerung zu Erkenntnis",
+                "related": {
+                    "name": "Verwandt",
+                    "graphName": "verwandt",
+                    "action": "Verwandt mit {{ memory }}",
+                    "description": "Die Erinnerungen hängen thematisch zusammen, sind aber weder doppelt noch widersprechen sie sich."
+                },
+                "contradicts": {
+                    "name": "Widerspricht",
+                    "graphName": "widerspricht",
+                    "action": "Widerspricht {{ memory }}",
+                    "description": "Die Erinnerungen widersprechen sich, das heißt, sie können nicht gleichzeitig wahr sein."
+                },
+                "same_topic": {
+                    "name": "Gleiches Thema",
+                    "graphName": "gleiches Thema",
+                    "action": "Gleiches Thema wie {{ memory }}",
+                    "description": "Die Erinnerungen behandeln dasselbe Thema, widersprechen sich aber nicht."
+                },
+                "duplicate": {
+                    "name": "Duplikat",
+                    "graphName": "duplikat",
+                    "action": "Duplikat von {{ memory }}",
+                    "description": "Die Erinnerungen sind Duplikate voneinander, enthalten also (teilweise) dieselben Informationen."
+                },
+                "created_from": {
+                    "name": "Erstellt aus",
+                    "graphName": "erstellt aus",
+                    "actionFrom": "Erstellt aus {{ memory }}",
+                    "actionTo": "Verwendet zum Erstellen von {{ memory }}",
+                    "description": "Eine Erinnerung wurde aus mehreren anderen Erinnerungen erstellt und enthält deren zusammengefasste Informationen."
+                }
+            },
+            "graphSettings": {
+                "title": "Einstellungen",
+                "otherTitle": "Sonstiges",
+                "showMemories": "Erinnerungen anzeigen",
+                "hideDeleted": "Gelöschte ausblenden",
+                "showLearnings": "Erkenntnisse anzeigen",
+                "showConnections": "Verbindungen anzeigen"
+            }
+        }
+    }
+}
