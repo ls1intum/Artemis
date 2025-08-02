@@ -6,9 +6,8 @@ on:
     paths:
       - src/main/java/**
   pull_request:
-# TODO revert this before merging
-#    paths:
-#      -  src/main/java/**
+    paths:
+      -  src/main/java/**
 
 jobs:
   bean-instantiation-check:
