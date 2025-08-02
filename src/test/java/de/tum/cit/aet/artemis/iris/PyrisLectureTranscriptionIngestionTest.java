@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 
@@ -41,9 +40,6 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
 
     @Autowired
     private LectureUtilService lectureUtilService;
-
-    @Autowired
-    private LectureUnitRepository lectureUnitRepository;
 
     private Lecture lecture1;
 
@@ -84,17 +80,16 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
 
         LectureTranscription transcriptionAttachmentUnit = new LectureTranscription("en", List.of(), this.lectureUnit);
         lectureTranscriptionRepository.save(transcription);
+        lectureTranscriptionRepository.save(transcriptionAttachmentUnit);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIngestTranscriptionInPyrisWithLectureId() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockTranscriptionIngestionWebhookRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-        });
-        Optional<LectureUnit> lu = lectureUnitRepository.findById(this.lectureUnit.getId());
+        irisRequestMockProvider.mockTranscriptionIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         request.put("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + this.lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.OK);
+        // TODO add assertions to check if the transcription was ingested correctly
     }
 
     @Test
@@ -129,9 +124,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testIngestTranscriptionInPyrisWithoutPermission() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockTranscriptionIngestionWebhookRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-        });
+        irisRequestMockProvider.mockTranscriptionIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         request.put("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.FORBIDDEN);
     }
 
@@ -139,19 +132,16 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteTranscriptionInPyris() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-        });
+        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         request.delete("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", HttpStatus.OK);
+        // TODO add assertions to check if the transcription was deleted correctly
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteTranscriptionInPyrisInvalidLecture() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-        });
+        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         request.delete("/api/lecture/" + 1000L + "/lecture-unit/" + lectureUnit.getId() + "/transcription", HttpStatus.BAD_REQUEST);
     }
 
@@ -159,9 +149,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testDeleteTranscriptionInPyrisWithoutPermission() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-        });
+        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         request.delete("/api/lecture/" + 1000L + "/lecture-unit/" + lectureUnit.getId() + "/transcription", HttpStatus.FORBIDDEN);
     }
 
@@ -169,9 +157,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testDeleteTranscriptionInPyrisWithInstructorOfDifferentCourse() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-        });
+        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         request.delete("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", HttpStatus.FORBIDDEN);
     }
 
@@ -179,9 +165,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testDeleteTranscriptionInPyrisWithoutTranscription() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-        });
+        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         request.delete("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + emptyLectureUnit.getId() + "/transcription", HttpStatus.FORBIDDEN);
     }
 }
