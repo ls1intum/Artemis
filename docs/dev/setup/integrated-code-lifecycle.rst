@@ -79,12 +79,14 @@ You can manually determine this number by adding the following property to the `
 
 .. code-block:: yaml
 
-       artemis:
-           continuous-integration:
-                specify-concurrent-builds: true
-                # The number of concurrent builds that can be executed
-                concurrent-build-size: 2
-                # More options can be found in application-localci.yml and application-buildagent.yml
+    artemis:
+        continuous-integration:
+            specify-concurrent-builds: true                     # Set to true to manually specify concurrent builds
+            # Configuration for concurrent build jobs
+            concurrent-builds:
+                default: 2                                      # Default number of concurrent builds when specify-concurrent-builds is false
+                maximum: 8                                      # Maximum number of concurrent builds allowed (enforced on server and client side). If not provided, uses number of CPU cores.
+            # More options can be found in application-localci.yml and application-buildagent.yml
 
 
 More options can be found in ``src/main/resources/config/application-localci.yml`` and ``src/main/resources/config/application-buildagent.yml``.

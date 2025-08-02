@@ -31,6 +31,7 @@ import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentCapacityAdjustmentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
@@ -109,6 +110,33 @@ public class SharedQueueManagementService {
 
     public void resumeAllBuildAgents() {
         distributedDataAccessService.getBuildAgentInformation().forEach(agent -> resumeBuildAgent(agent.buildAgent().name()));
+    }
+
+    public void adjustBuildAgentCapacity(String agentName, int newCapacity) {
+        if (newCapacity <= 0) {
+            throw new IllegalArgumentException("Concurrent build size must be at least 1");
+        }
+
+        if (agentName == null || agentName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Agent name cannot be null or empty");
+        }
+
+        BuildAgentInformation targetAgent = getBuildAgentByName(agentName);
+
+        if (newCapacity > targetAgent.maxConcurrentBuildsAllowed()) {
+            throw new IllegalArgumentException("Concurrent build size must not exceed maximum of " + targetAgent.maxConcurrentBuildsAllowed());
+        }
+
+        distributedDataAccessService.getAdjustBuildAgentCapacityTopic().publish(new BuildAgentCapacityAdjustmentDTO(agentName, newCapacity));
+    }
+
+    /**
+     * Gets the build agent information by name from the distributed data.
+     */
+    private BuildAgentInformation getBuildAgentByName(String agentName) {
+        List<BuildAgentInformation> buildAgents = distributedDataAccessService.getBuildAgentInformation();
+        return buildAgents.stream().filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Build agent '" + agentName + "' not found"));
     }
 
     /**

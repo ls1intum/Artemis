@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,6 +29,7 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
@@ -50,6 +52,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
+
+    @Value("${artemis.continuous-integration.build-agent.display-name:}")
+    private String buildAgentDisplayName;
 
     @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs}")
     private int pauseAfterConsecutiveFailures;
@@ -84,6 +89,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.clear();
         processingJobs.clear();
         resultQueue.clear();
+        buildAgentInformation.clear();
+
+        // Initialize build agent information in Hazelcast map
+        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        BuildAgentDTO buildAgentDTO = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
+        BuildAgentInformation initialBuildAgent = new BuildAgentInformation(buildAgentDTO, 2, 0, new ArrayList<>(), BuildAgentInformation.BuildAgentStatus.IDLE, null, null,
+                pauseAfterConsecutiveFailures, 2);
+        buildAgentInformation.put(memberAddress, initialBuildAgent);
     }
 
     @Test

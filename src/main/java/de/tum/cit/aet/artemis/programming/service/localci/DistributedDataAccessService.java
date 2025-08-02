@@ -26,6 +26,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentCapacityAdjustmentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
@@ -56,6 +57,8 @@ public class DistributedDataAccessService {
     private ITopic<String> pauseBuildAgentTopic;
 
     private ITopic<String> resumeBuildAgentTopic;
+
+    private ITopic<BuildAgentCapacityAdjustmentDTO> adjustBuildAgentCapacityTopic;
 
     public DistributedDataAccessService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
@@ -272,6 +275,17 @@ public class DistributedDataAccessService {
             this.resumeBuildAgentTopic = this.hazelcastInstance.getTopic("resumeBuildAgentTopic");
         }
         return this.resumeBuildAgentTopic;
+    }
+
+    /**
+     * @return ITopic for adjusting build agent capacity
+     *         The topic is initialized lazily the first time this method is called if it is still null.
+     */
+    public ITopic<BuildAgentCapacityAdjustmentDTO> getAdjustBuildAgentCapacityTopic() {
+        if (this.adjustBuildAgentCapacityTopic == null) {
+            this.adjustBuildAgentCapacityTopic = this.hazelcastInstance.getTopic("adjustBuildAgentCapacityTopic");
+        }
+        return this.adjustBuildAgentCapacityTopic;
     }
 
     /**
