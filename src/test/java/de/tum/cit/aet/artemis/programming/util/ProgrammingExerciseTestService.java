@@ -783,8 +783,8 @@ public class ProgrammingExerciseTestService {
 
     private AuxiliaryRepository addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
-        var url = versionControlService.getCloneRepositoryUri(sourceExercise.getProjectKey(), new LocalVCRepositoryUri(convertToLocalVcUriString(sourceAuxRepo)).toString());
-        repository.setRepositoryUri(url.toString());
+        var url = new LocalVCRepositoryUri(convertToLocalVcUriString(sourceAuxRepo)).toString();
+        repository.setRepositoryUri(url);
         return auxiliaryRepositoryRepository.save(repository);
     }
 
