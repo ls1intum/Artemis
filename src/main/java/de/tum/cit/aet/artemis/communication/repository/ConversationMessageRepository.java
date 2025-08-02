@@ -67,6 +67,4 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
             WHERE p.id = :postId AND answer.author = cp.user
             """)
     Set<User> findUsersWhoRepliedInMessage(@Param("postId") Long postId);
-
-    List<Long> id(Long id);
 }

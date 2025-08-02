@@ -54,13 +54,13 @@ public class ReactionResource {
     @PostMapping("courses/{courseId}/postings/reactions")
     @EnforceAtLeastStudent
     public ResponseEntity<ReactionDTO> createReaction(@PathVariable Long courseId, @Valid @RequestBody ReactionDTO reactionDto) throws URISyntaxException {
-        log.info("Received ReactionDTO: {}", reactionDto);
         try {
             Reaction createdReaction = reactionService.createReaction(courseId, reactionDto);
             URI location = new URI("/api/communication/courses/" + courseId + "/postings/reactions/" + createdReaction.getId());
             return ResponseEntity.created(location).body(new ReactionDTO(createdReaction));
         }
         catch (DataIntegrityViolationException ex) {
+            // this error can occur when multiple reactions are created at the exact same time, we log it, but doe not send it to the client
             log.warn(ex.getMessage(), ex);
             return ResponseEntity.ok(null);
         }

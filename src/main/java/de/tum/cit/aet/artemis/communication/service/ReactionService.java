@@ -7,7 +7,6 @@ import java.util.Optional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -32,7 +31,6 @@ import de.tum.cit.aet.artemis.plagiarism.exception.PlagiarismApiNotPresentExcept
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
-@Transactional
 public class ReactionService {
 
     private static final String METIS_REACTION_ENTITY_NAME = "posting reaction";
