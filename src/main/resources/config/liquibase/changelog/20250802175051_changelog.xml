@@ -3,7 +3,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <!-- 1. Add Exam Room Table -->
-    <changeSet id="20250707005400-01-add-exam-room" author="röttgermann">
+    <changeSet id="20250802175051-01-add-exam-room" author="röttgermann">
         <createTable tableName="exam_room">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true"/>
@@ -50,7 +50,7 @@
     </changeSet>
 
     <!-- 2. Add Layout Strategy table -->
-    <changeSet id="20250707005400-02-add-layout-strategy" author="röttgermann">
+    <changeSet id="20250802175051-02-add-layout-strategy" author="röttgermann">
         <createTable tableName="layout_strategy">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true"/>
@@ -100,7 +100,7 @@
     </changeSet>
 
     <!-- 3. Add exam to room assignment table -->
-    <changeSet id="20250707005400-03-add-exam-room-assignment" author="röttgermann">
+    <changeSet id="20250802175051-03-add-exam-room-assignment" author="röttgermann">
         <createTable tableName="exam_room_assignment">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true"/>
