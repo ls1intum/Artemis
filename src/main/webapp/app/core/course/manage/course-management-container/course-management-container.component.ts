@@ -103,10 +103,14 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private featureToggleSub: Subscription;
     private courseSub?: Subscription;
     private urlSubscription?: Subscription;
+    private routeSubscription?: Subscription;
+
     private learningPathsActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
     studentViewLink = signal<string[]>([]);
+
+    removePadding = false;
 
     // we cannot use signals here because the child component doesn't expect it
     dialogErrorSource = new Subject<string>();
@@ -135,6 +139,11 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
             this.checkIfSettingsPage();
+        });
+
+        this.routeSubscription = this.router.events.subscribe(() => {
+            // we do not want to have the padding to the left and right during test runs, see https://github.com/ls1intum/Artemis/pull/11235
+            this.removePadding = this.router.url.includes('test-runs') && this.router.url.includes('conduction');
         });
 
         this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
@@ -376,6 +385,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.featureToggleSub?.unsubscribe();
         this.urlSubscription?.unsubscribe();
         this.courseSub?.unsubscribe();
+        this.routeSubscription?.unsubscribe();
     }
 
     fetchCourseDeletionSummary(): Observable<EntitySummary> {
