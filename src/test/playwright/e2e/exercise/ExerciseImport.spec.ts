@@ -130,6 +130,13 @@ test.describe('Import exercises', () => {
                 const submission: QuizSubmission = await submitResponse.json();
                 expect(submission.submitted).toBe(true);
                 expect(submitResponse.status()).toBe(200);
+
+                await login(instructor, `/course-management/${secondCourse.id}/exercises`);
+                await courseManagementExercises.endQuiz(exercise.id!);
+
+                await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
+                await page.reload();
+                await expect(page.getByText('Your score: 1/1 (100%)')).toBeVisible();
             },
         );
 
