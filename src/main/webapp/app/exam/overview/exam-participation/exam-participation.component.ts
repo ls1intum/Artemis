@@ -108,6 +108,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private examManagementService = inject(ExamManagementService);
     private profileService = inject(ProfileService);
 
+    protected readonly faCheckCircle = faCheckCircle;
+    protected readonly faGraduationCap = faGraduationCap;
+
     @ViewChildren(ExamSubmissionComponent)
     currentPageComponents: QueryList<ExamSubmissionComponent>;
 
@@ -165,9 +168,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     sidebarData: SidebarData;
     sidebarExercises: SidebarCardElement[] = [];
 
-    // Icons
-    faCheckCircle = faCheckCircle;
-
     isProgrammingExercise() {
         return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
     }
@@ -195,9 +195,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     isAtLeastInstructor?: boolean;
 
     generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
-
-    // Icons
-    faGraduationCap = faGraduationCap;
 
     constructor() {
         // show only one synchronization error every 5s
