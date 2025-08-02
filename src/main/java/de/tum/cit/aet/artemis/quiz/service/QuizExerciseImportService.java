@@ -240,38 +240,67 @@ public class QuizExerciseImportService extends ExerciseImportService {
         dndQuestion.setCorrectMappings(newDragAndDropMappings);
     }
 
+    /**
+     * Prepares a short answer question for import by creating new instances of spots, solutions, and mappings.
+     * This method creates copies of the spots and solutions, resetting their identifiers and mappings.
+     * It then recreates the correct mappings by linking them to the new spots and solutions using either
+     * persistent IDs or temporary IDs from the original objects.
+     *
+     * @param saQuestion the short answer question to set up for import
+     */
     private void setUpShortAnswerQuestionForImport(ShortAnswerQuestion saQuestion) {
-        List<ShortAnswerSpot> newShortAnswerSpots = new ArrayList<>();
-        for (ShortAnswerSpot shortAnswerSpot : saQuestion.getSpots()) {
-            shortAnswerSpot.setId(null);
-            shortAnswerSpot.setQuestion(saQuestion);
-            shortAnswerSpot.setMappings(new HashSet<>());
-
-            newShortAnswerSpots.add(shortAnswerSpot);
+        HashMap<Long, ShortAnswerSpot> newSpotMap = new HashMap<>();
+        List<ShortAnswerSpot> newSpots = new ArrayList<>();
+        for (ShortAnswerSpot oldSpot : saQuestion.getSpots()) {
+            ShortAnswerSpot newSpot = new ShortAnswerSpot();
+            newSpot.setSpotNr(oldSpot.getSpotNr());
+            newSpot.setWidth(oldSpot.getWidth());
+            newSpot.setInvalid(oldSpot.isInvalid());
+            newSpot.setQuestion(saQuestion);
+            newSpot.setMappings(new HashSet<>());
+            Long key = oldSpot.getId() != null ? oldSpot.getId() : oldSpot.getTempID();
+            newSpotMap.put(key, newSpot);
+            newSpots.add(newSpot);
         }
-        saQuestion.setSpots(newShortAnswerSpots);
+        saQuestion.setSpots(newSpots);
 
-        List<ShortAnswerSolution> newShortAnswerSolutions = new ArrayList<>();
-        for (ShortAnswerSolution shortAnswerSolution : saQuestion.getSolutions()) {
-            shortAnswerSolution.setId(null);
-            shortAnswerSolution.setQuestion(saQuestion);
-            shortAnswerSolution.setMappings(new HashSet<>());
-
-            newShortAnswerSolutions.add(shortAnswerSolution);
+        HashMap<Long, ShortAnswerSolution> newSolutionMap = new HashMap<>();
+        List<ShortAnswerSolution> newSolutions = new ArrayList<>();
+        for (ShortAnswerSolution oldSolution : saQuestion.getSolutions()) {
+            ShortAnswerSolution newSolution = new ShortAnswerSolution();
+            newSolution.setText(oldSolution.getText());
+            newSolution.setInvalid(oldSolution.isInvalid());
+            newSolution.setQuestion(saQuestion);
+            newSolution.setMappings(new HashSet<>());
+            Long key = oldSolution.getId() != null ? oldSolution.getId() : oldSolution.getTempID();
+            newSolutionMap.put(key, newSolution);
+            newSolutions.add(newSolution);
         }
-        saQuestion.setSolutions(newShortAnswerSolutions);
+        saQuestion.setSolutions(newSolutions);
 
         List<ShortAnswerMapping> newShortAnswerMappings = new ArrayList<>();
-        for (ShortAnswerMapping shortAnswerMapping : saQuestion.getCorrectMappings()) {
-            shortAnswerMapping.setId(null);
-            shortAnswerMapping.setQuestion(saQuestion);
-            if (shortAnswerMapping.getShortAnswerSolutionIndex() != null) {
-                shortAnswerMapping.setSolution(saQuestion.getSolutions().get(shortAnswerMapping.getShortAnswerSolutionIndex()));
+        for (ShortAnswerMapping oldMapping : saQuestion.getCorrectMappings()) {
+            ShortAnswerMapping newMapping = new ShortAnswerMapping();
+            newMapping.setInvalid(oldMapping.isInvalid());
+            newMapping.setQuestion(saQuestion);
+
+            Long solutionKey = null;
+            if (oldMapping.getSolution() != null) {
+                solutionKey = oldMapping.getSolution().getId() != null ? oldMapping.getSolution().getId() : oldMapping.getSolution().getTempID();
             }
-            if (shortAnswerMapping.getShortAnswerSpotIndex() != null) {
-                shortAnswerMapping.setSpot(saQuestion.getSpots().get(shortAnswerMapping.getShortAnswerSpotIndex()));
+            if (solutionKey != null) {
+                newMapping.setSolution(newSolutionMap.get(solutionKey));
             }
-            newShortAnswerMappings.add(shortAnswerMapping);
+
+            Long spotKey = null;
+            if (oldMapping.getSpot() != null) {
+                spotKey = oldMapping.getSpot().getId() != null ? oldMapping.getSpot().getId() : oldMapping.getSpot().getTempID();
+            }
+            if (spotKey != null) {
+                newMapping.setSpot(newSpotMap.get(spotKey));
+            }
+
+            newShortAnswerMappings.add(newMapping);
         }
         saQuestion.setCorrectMappings(newShortAnswerMappings);
     }
@@ -293,4 +322,5 @@ public class QuizExerciseImportService extends ExerciseImportService {
         }
         newExercise.setQuizBatches(quizBatchList);
     }
+
 }
