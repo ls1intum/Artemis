@@ -39,6 +39,7 @@ import org.springframework.util.MultiValueMap;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -58,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 
 class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -85,6 +87,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @Autowired
     private StudentExamService studentExamService;
+
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -890,7 +895,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldThrowWithInvalidAuxiliaryRepositoryId() throws Exception {
-            request.getList(PATH_PREFIX + "AUXILIARY?repositoryId=" + 128, HttpStatus.NOT_FOUND, CommitInfoDTO.class);
+            long maxId = auxiliaryRepositoryRepository.findAll().stream().mapToLong(DomainObject::getId).max().orElse(0);
+            request.getList(PATH_PREFIX + "AUXILIARY?repositoryId=" + (maxId + 1), HttpStatus.NOT_FOUND, CommitInfoDTO.class);
         }
     }
 
