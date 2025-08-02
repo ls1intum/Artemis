@@ -5,10 +5,12 @@ from typing import Dict, Any, List
 
 config = configparser.ConfigParser()
 config.read('config.ini')
+secrets = configparser.ConfigParser()
+secrets.read('secrets.ini')
 
 SERVER_URL: str = config.get('Settings', 'server_url')
-ADMIN_USER: str = config.get('Settings', 'admin_user')
-ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
+ADMIN_USER: str = secrets.get('User', 'admin_user')
+ADMIN_PASSWORD: str = secrets.get('User', 'admin_password')
 
 def login_as_admin(session: requests.Session) -> None:
     """Authenticate as an admin using the provided session."""

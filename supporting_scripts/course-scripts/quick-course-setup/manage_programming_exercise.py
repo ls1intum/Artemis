@@ -17,7 +17,7 @@ def sanitize_exercise_name_with_index(exercise_name: str, short_name_index: int)
     return f"{sanitize_exercise_name(exercise_name)}{short_name_index}"
 
 
-def create_single_programming_exercise(session: Session, course_id: int, server_url: str, exercise_name: str, build_script: str | None = None):
+def create_single_programming_exercise(session: Session, course_id: int, server_url: str, exercise_name: str, package_name: str, programming_language: str = "JAVA", project_type: str = "PLAIN_GRADLE", build_script: str | None = None):
     url: str = f"{server_url}/programming/programming-exercises/setup"
     headers: Dict[str, str] = {"Content-Type": "application/json"}
     short_name = sanitize_exercise_name(exercise_name)
@@ -27,13 +27,13 @@ def create_single_programming_exercise(session: Session, course_id: int, server_
         "title": f"{exercise_name}",
         "shortName": short_name,
         "course": {"id": course_id},
-        "programmingLanguage": "JAVA",
-        "projectType": "PLAIN_GRADLE",
+        "programmingLanguage": programming_language,
+        "projectType": project_type,
         "allowOnlineEditor": True,
         "allowOfflineIde": True,
         "maxPoints": 100,
         "assessmentType": "AUTOMATIC",
-        "packageName": "de.tum.in.www1.example",
+        "packageName": package_name,
         "staticCodeAnalysisEnabled": False,
         "buildConfig": {
             "buildScript": build_script if build_script else "#!/usr/bin/env bash\nset -e\n\ngradle () {\n  echo '⚙️ executing gradle'\n  chmod +x ./gradlew\n  ./gradlew clean test\n}\n\nmain () {\n  gradle\n}\n\nmain \"${@}\"\n",
