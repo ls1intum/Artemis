@@ -10,6 +10,9 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
@@ -25,6 +28,7 @@ public class LectureTranscription extends DomainObject {
 
     @Convert(converter = LectureTranscriptionSegmentConverter.class)
     @Column(name = "segments", columnDefinition = "json")
+    @JdbcTypeCode(SqlTypes.JSON)
     private List<LectureTranscriptionSegment> segments;
 
     @OneToOne

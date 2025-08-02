@@ -13,10 +13,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { AccountService } from 'app/core/auth/account.service';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
+    transcriptionProperties?: TranscriptionProperties;
 }
 
 // matches structure of the reactive form
@@ -29,12 +32,17 @@ export interface FormProperties {
     videoSource?: string;
     urlHelper?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
+    videoTranscription?: string;
 }
 
 // file input is a special case and is not included in the reactive form structure
 export interface FileProperties {
     file?: File;
     fileName?: string;
+}
+
+export interface TranscriptionProperties {
+    videoTranscription?: string;
 }
 
 function isTumLiveUrl(url: URL): boolean {
@@ -85,7 +93,17 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
 @Component({
     selector: 'jhi-attachment-video-unit-form',
     templateUrl: './attachment-video-unit-form.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        NgbTooltip,
+        FormDateTimePickerComponent,
+        CompetencySelectionComponent,
+        ArtemisTranslatePipe,
+        ButtonComponent,
+    ],
 })
 export class AttachmentVideoUnitFormComponent implements OnChanges {
     protected readonly faQuestionCircle = faQuestionCircle;
@@ -118,6 +136,8 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
     private readonly formBuilder = inject(FormBuilder);
+    private readonly accountService = inject(AccountService);
+
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
         description: [undefined as string | undefined, [Validators.maxLength(1000)]],
@@ -127,6 +147,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
         updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
+        videoTranscription: [undefined as string | undefined],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 
@@ -187,17 +208,27 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         return this.form.get('urlHelper');
     }
 
+    get videoTranscriptionControl() {
+        return this.form.get('videoTranscription');
+    }
+
     submitForm() {
         const formValue = this.form.value;
         const formProperties: FormProperties = { ...formValue };
+
+        formProperties.videoTranscription = undefined;
         const fileProperties: FileProperties = {
             file: this.file,
             fileName: this.fileName(),
+        };
+        const transcriptionProperties: TranscriptionProperties = {
+            videoTranscription: formValue.videoTranscription,
         };
 
         this.formSubmitted.emit({
             formProperties,
             fileProperties,
+            transcriptionProperties,
         });
     }
 
@@ -210,6 +241,9 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         }
         if (formData?.fileProperties?.fileName) {
             this.fileName.set(formData?.fileProperties?.fileName);
+        }
+        if (formData?.transcriptionProperties) {
+            this.form.patchValue(formData.transcriptionProperties);
         }
     }
 
@@ -241,5 +275,9 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     cancelForm() {
         this.onCancel.emit();
+    }
+
+    shouldShowTranscriptionCreation(): boolean {
+        return this.accountService.isAdmin();
     }
 }
