@@ -60,6 +60,10 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
         return lectureUnitRepository.findByNameAndLectureTitleAndCourseIdWithCompetencies(name, lectureTitle, courseId);
     }
 
+    public LectureUnit findByIdElseThrow(long lectureUnitId) {
+        return lectureUnitRepository.findByIdElseThrow(lectureUnitId);
+    }
+
     public LectureUnit save(LectureUnit lectureUnit) {
         return lectureUnitRepository.save(lectureUnit);
     }

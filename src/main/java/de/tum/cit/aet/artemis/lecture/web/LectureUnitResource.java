@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -69,14 +70,18 @@ public class LectureUnitResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public LectureUnitResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, LectureRepository lectureRepository,
-            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi) {
+            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi,
+            InstanceMessageSendService instanceMessageSendService) {
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitService = lectureUnitService;
         this.competencyProgressApi = competencyProgressApi;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -227,6 +232,8 @@ public class LectureUnitResource {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
         LectureUnit lectureUnit = lectureUnitOptional.get();
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.INSTRUCTOR, lectureUnit.getLecture(), null);
+        this.instanceMessageSendService.sendLectureUnitAutoIngestionScheduleCancel(lectureUnitId);
         return lectureUnitService.ingestLectureUnitInPyris(lectureUnit);
     }
 }
