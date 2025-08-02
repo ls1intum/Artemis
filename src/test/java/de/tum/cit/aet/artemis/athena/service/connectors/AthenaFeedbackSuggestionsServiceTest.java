@@ -65,13 +65,17 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
         textSubmission = new TextSubmission(2L).text("This is a text submission");
-        textSubmission.setParticipation(new StudentParticipation().exercise(textExercise));
+        StudentParticipation textParticipation = new StudentParticipation().exercise(textExercise);
+        textParticipation.setId(1L);
+        textSubmission.setParticipation(textParticipation);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setId(3L);
-        programmingSubmission.setParticipation(new StudentParticipation().exercise(programmingExercise));
+        StudentParticipation programmingParticipation = new StudentParticipation().exercise(programmingExercise);
+        programmingParticipation.setId(2L);
+        programmingSubmission.setParticipation(programmingParticipation);
     }
 
     @Test
@@ -197,6 +201,33 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
         LearnerProfile result = invokeExtractLearnerProfile(submission);
         // Should catch exception and return null
+        assertThat(result).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testFeedbackSuggestionsTextWithNullLatestSubmission() throws NetworkingException {
+        // Test that the service handles null latest submission gracefully
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
+                jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
+                jsonPath("$.submission.text").value(textSubmission.getText()));
+
+        // The service should handle null latest submission without throwing an exception
+        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true);
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        assertThat(suggestions.getFirst().indexStart()).isEqualTo(3);
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    void testOfSubmissionWithNullSubmission() throws Exception {
+        // Test that AthenaDTOConverterService.ofSubmission handles null submissions gracefully
+        Method ofSubmissionMethod = AthenaFeedbackSuggestionsService.class.getDeclaredField("athenaDTOConverterService").getType().getDeclaredMethod("ofSubmission", long.class,
+                Submission.class);
+        ofSubmissionMethod.setAccessible(true);
+
+        Object athenaDTOConverterService = ReflectionTestUtils.getField(athenaFeedbackSuggestionsService, "athenaDTOConverterService");
+        Object result = ofSubmissionMethod.invoke(athenaDTOConverterService, 1L, null);
         assertThat(result).isNull();
     }
 
