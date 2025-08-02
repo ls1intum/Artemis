@@ -32,7 +32,7 @@ import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.m
     selector: 'jhi-quiz-submission-exam',
     templateUrl: './quiz-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
-    styleUrls: ['./quiz-exam-submission.component.scss'],
+    styleUrls: ['../../../../quiz/overview/participation/quiz-participation.component.scss', './quiz-exam-submission.component.scss'],
     imports: [
         TranslateDirective,
         IncludedInScoreBadgeComponent,
@@ -138,7 +138,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      * @param questionId
      */
     navigateToQuestion(questionId: number): void {
-        // get html element for question
         const element = document.getElementById('question' + questionId);
         if (element) {
             element.scrollIntoView({
