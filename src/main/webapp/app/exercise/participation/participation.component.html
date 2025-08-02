@@ -144,7 +144,7 @@
                         <ng-template ngx-datatable-cell-template let-row="row">
                             @if (row) {
                                 <span>
-                                    @if (!localCIEnabled) {
+                                    @if (!isLocalCIEnabled) {
                                         <a href="{{ row.buildPlanUrl }}" target="_blank" rel="noreferrer">
                                             {{ row.buildPlanId }}
                                         </a>
@@ -353,7 +353,7 @@
                                         <fa-icon [icon]="faTrash" />
                                     </button>
                                 }
-                                @if (exercise?.type === ExerciseType.PROGRAMMING && value.buildPlanId !== null && exercise.isAtLeastInstructor) {
+                                @if (exercise?.type === ExerciseType.PROGRAMMING && !isLocalCIEnabled && value.buildPlanId !== null && exercise.isAtLeastInstructor) {
                                     <button
                                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                         jhiDeleteButton
