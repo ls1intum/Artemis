@@ -59,7 +59,7 @@
         }
 
         <div class="col p-0 quiz-content mb-3">
-            @for (question of quizConfiguration().quizQuestions; track question; let index = $index) {
+            @for (question of quizConfiguration().quizQuestions; track question; let i = $index) {
                 <div>
                     <!-- TODO: Map vs Array consistency -->
                     @if (question.type === MULTIPLE_CHOICE) {
@@ -70,7 +70,7 @@
                             (selectedAnswerOptionsChange)="selectedAnswerOptions.set(question.id!, $event)"
                             [fnOnSelection]="onSelectionChanged.bind(this)"
                             [quizQuestions]="quizConfiguration().quizQuestions"
-                            [questionIndex]="index + 1"
+                            [questionIndex]="i + 1"
                             [clickDisabled]="readonly()"
                         />
                     }
@@ -82,7 +82,7 @@
                             [mappings]="dragAndDropMappings.get(question.id!)!"
                             (mappingsChange)="dragAndDropMappings.set(question.id!, $event)"
                             [onMappingUpdate]="onSelectionChanged.bind(this)"
-                            [questionIndex]="index + 1"
+                            [questionIndex]="i + 1"
                             [clickDisabled]="readonly()"
                         />
                     }
@@ -94,7 +94,7 @@
                             [submittedTexts]="shortAnswerSubmittedTexts.get(question.id!)!"
                             (submittedTextsChange)="shortAnswerSubmittedTexts.set(question.id!, $event)"
                             [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
-                            [questionIndex]="index + 1"
+                            [questionIndex]="i + 1"
                             [clickDisabled]="readonly()"
                         />
                     }
