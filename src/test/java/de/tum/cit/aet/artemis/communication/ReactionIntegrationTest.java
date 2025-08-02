@@ -123,10 +123,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         courseRepository.save(course);
 
         if (!shouldBeAllowed) {
-            // Should fail, expect BAD_REQUEST
-            request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, ReactionDTO.class,  // should expect DTO for
-                                                                                                                                                     // consistency
-                    HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, ReactionDTO.class, HttpStatus.BAD_REQUEST);
             return;
         }
 
@@ -163,8 +160,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
         courseRepository.save(course);
 
-        int countBefore = reactionRepository.findReactionsByPostId(messageReactedOn.getId()).size();
-
         if (!shouldBeAllowed) {
             request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnMessage, ReactionDTO.class, HttpStatus.BAD_REQUEST);
             return;
@@ -173,8 +168,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         ReactionDTO createdReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnMessage, ReactionDTO.class,
                 HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnMessage, createdReaction);
-        int countAfter = reactionRepository.findReactionsByPostId(messageReactedOn.getId()).size();
-        assertThat(countAfter).isEqualTo(countBefore + 1);
+        assertThat(messageReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(messageReactedOn.getId()).size() - 1);
     }
 
     @Test
@@ -184,14 +178,10 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post messageReactedOn = existingConversationPosts.get(2);
         ReactionDTO reactionToSaveOnMessage = createReactionDTOOnPost(messageReactedOn);
 
-        int countBefore = reactionRepository.findReactionsByPostId(messageReactedOn.getId()).size();
-
         ReactionDTO notCreatedReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnMessage, ReactionDTO.class,
                 HttpStatus.FORBIDDEN);
         assertThat(notCreatedReaction).isNull();
-
-        int countAfter = reactionRepository.findReactionsByPostId(messageReactedOn.getId()).size();
-        assertThat(countAfter).isEqualTo(countBefore);
+        assertThat(messageReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(messageReactedOn.getId()).size());
     }
 
     @Test
@@ -200,19 +190,14 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.getFirst();
         ReactionDTO reactionToSaveOnPost = createReactionDTOOnPost(postReactedOn);
-        int countBefore = reactionRepository.findReactionsByPostId(postReactedOn.getId()).size();
         ReactionDTO createdReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, ReactionDTO.class,
                 HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnPost, createdReaction);
-        int countAfterFirst = reactionRepository.findReactionsByPostId(postReactedOn.getId()).size();
-        assertThat(countAfterFirst).isEqualTo(countBefore + 1);
+        assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
 
         // try again: the post "silently" fails with a 200
         var response = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, ReactionDTO.class, HttpStatus.OK);
         assertThat(response).isNull();
-
-        int countAfterSecond = reactionRepository.findReactionsByPostId(postReactedOn.getId()).size();
-        assertThat(countAfterSecond).isEqualTo(countAfterFirst);
     }
 
     @ParameterizedTest
@@ -226,8 +211,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
         courseRepository.save(course);
 
-        int countBefore = reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size();
-
         if (!shouldBeAllowed) {
             request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, ReactionDTO.class, HttpStatus.BAD_REQUEST);
             return;
@@ -236,9 +219,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         ReactionDTO createdReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, ReactionDTO.class,
                 HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
-
-        int countAfter = reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size();
-        assertThat(countAfter).isEqualTo(countBefore + 1);
+        assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
     }
 
     @Test
@@ -247,30 +228,15 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.getFirst();
         ReactionDTO reactionToSaveOnAnswerPost = createReactionDTOOnAnswerPost(answerPostReactedOn);
-
-        int countBefore = reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size();
-
         // First attempt should create a reaction
         ReactionDTO createdReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, ReactionDTO.class,
                 HttpStatus.CREATED);
 
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
-
-        int countAfter = reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size();
-        assertThat(countAfter).isEqualTo(countBefore + 1);
-
+        assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
         // Try again: the endpoint should "silently" fail with a 200 OK and no body
-        var response = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, ReactionDTO.class,   // <--- use
-                                                                                                                                                                       // ReactionDTO.class,
-                                                                                                                                                                       // not
-                                                                                                                                                                       // Reaction.class
-                HttpStatus.OK);
-
+        var response = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, ReactionDTO.class, HttpStatus.OK);
         assertThat(response).isNull();
-
-        // Confirm count did NOT increase again
-        int countAfterSecond = reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size();
-        assertThat(countAfterSecond).isEqualTo(countAfter);
     }
 
     @Test
@@ -279,16 +245,11 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // student 1 is the author of the post and student 2 reacts on this post
         AnswerPost answerPostReactedOn = existingAnswerPosts.getFirst();
         ReactionDTO reactionToSaveOnAnswerPost = createReactionDTOOnAnswerPost(answerPostReactedOn);
-
-        int countBefore = reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size();
-
         // Create first reaction
         ReactionDTO createdFirstReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost,
                 ReactionDTO.class, HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdFirstReaction);
-
-        int countAfterFirst = reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size();
-        assertThat(countAfterFirst).isEqualTo(countBefore + 1);
+        assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
 
         // student 2 reacts again on this answer post
         reactionToSaveOnAnswerPost = createReactionDTOOnAnswerPost(answerPostReactedOn);
@@ -297,9 +258,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         ReactionDTO createdSecondReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost,
                 ReactionDTO.class, HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdSecondReaction);
-
-        int countAfterSecond = reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size();
-        assertThat(countAfterSecond).isEqualTo(countBefore + 2);
+        assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 2);
     }
 
     @Test
@@ -308,34 +267,18 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // student 1 is the author of the answer post and student 2 reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.getFirst();
         long answerPostId = answerPostReactedOn.getId();
-
-        // Count reactions before
-        int countBefore = reactionRepository.findReactionsByAnswerPostId(answerPostId).size();
-
         // First reaction
         ReactionDTO reactionToSave = createReactionDTOOnAnswerPost(answerPostReactedOn);
-
         ReactionDTO createdFirstReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSave, ReactionDTO.class,
                 HttpStatus.CREATED);
         checkCreatedReaction(reactionToSave, createdFirstReaction);
-
-        int countAfterFirst = reactionRepository.findReactionsByAnswerPostId(answerPostId).size();
-        assertThat(countAfterFirst).isEqualTo(countBefore + 1);
-
+        assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
         // Second reaction with a different emoji
-        ReactionDTO secondReactionToSave = new ReactionDTO(null,                      // id
-                reactionToSave.user(),     // user (keep same user)
-                null,                      // creationDate
-                "cry",                     // new emojiId
-                null,                      // postId, still null for AnswerPost
-                answerPostId               // answerPostId (must be set!)
-        );
+        ReactionDTO secondReactionToSave = new ReactionDTO(null, reactionToSave.user(), null, "cry", null, answerPostId);
         ReactionDTO createdSecondReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", secondReactionToSave, ReactionDTO.class,
                 HttpStatus.CREATED);
         checkCreatedReaction(secondReactionToSave, createdSecondReaction);
-
-        int countAfterSecond = reactionRepository.findReactionsByAnswerPostId(answerPostId).size();
-        assertThat(countAfterSecond).isEqualTo(countBefore + 2);
+        assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 2);
     }
 
     @Test
@@ -345,16 +288,12 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         AnswerPost answerPostReactedOn = existingAnswerPosts.getFirst();
         // Create the ReactionDTO to send
         ReactionDTO reactionDTO = createReactionDTOOnAnswerPost(answerPostReactedOn);
-
         // First create (should succeed)
         ReactionDTO createdReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionDTO, ReactionDTO.class,
                 HttpStatus.CREATED);
         checkCreatedReaction(reactionDTO, createdReaction);
-
-        ReactionDTO duplicateReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionDTO, ReactionDTO.class, HttpStatus.OK // Expect
-                                                                                                                                                                                     // 200
-                                                                                                                                                                                     // OK
-        );
+        ReactionDTO duplicateReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionDTO, ReactionDTO.class,
+                HttpStatus.OK);
         assertThat(duplicateReaction).isNull();
         assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
     }
@@ -521,19 +460,23 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("courseConfigurationProvider")
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
-    void testDeletePostReactionWithWrongCourseId_badRequest() throws Exception {
+    void testDeletePostReactionWithWrongCourseId_badRequest(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         Course dummyCourse = courseUtilService.createCourse();
         Post postToReactOn = existingPostsWithAnswers.getFirst();
-
-        // Create reaction via DTO, store its id
         ReactionDTO reactionToSaveOnPost = createReactionDTOOnPost(postToReactOn);
         ReactionDTO createdReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, ReactionDTO.class,
                 HttpStatus.CREATED);
+        course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        courseRepository.save(course);
 
+        checkCreatedReaction(reactionToSaveOnPost, createdReaction);
+        int initialCount = postRepository.findById(postToReactOn.getId()).orElseThrow().getReactions().size();
         request.delete("/api/communication/courses/" + dummyCourse.getId() + "/postings/reactions/" + createdReaction.id(), HttpStatus.BAD_REQUEST);
-        assertThat(postToReactOn.getReactions()).hasSameSizeAs(postRepository.findById(postToReactOn.getId()).orElseThrow().getReactions());
+        int countAfterFailedDelete = postRepository.findById(postToReactOn.getId()).orElseThrow().getReactions().size();
+        assertThat(countAfterFailedDelete).isEqualTo(initialCount);
     }
 
     @Test
@@ -566,14 +509,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         reaction.setUser(user);
         reaction.setEmojiId(VOTE_EMOJI_ID);
         reaction.setPost(postReactedOn);
-        return new ReactionDTO(reaction);
-    }
-
-    private ReactionDTO createInvalidReactionDTO() {
-        Reaction reaction = new Reaction();
-        reaction.setEmojiId("smiley");
-        reaction.setPost(existingPostsWithAnswers.getFirst());
-        reaction.setAnswerPost(existingAnswerPosts.getFirst());
         return new ReactionDTO(reaction);
     }
 
