@@ -89,9 +89,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
             return;
         }
 
-        try {
-            Git git = new Git(repository);
-
+        try (Git git = new Git(repository)) {
             // Prevent deletion of branches.
             Ref ref = git.getRepository().exactRef(command.getRefName());
             if (ref != null && command.getNewId().equals(ObjectId.zeroId())) {
@@ -136,8 +134,6 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
             reader.close();
             revWalk.close();
-
-            git.close();
         }
         catch (IOException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
