@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20250718201805" author="ahmetsenturk">
+        <addColumn tableName="learner_profile">
+            <column name="has_setup_feedback_preferences" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <renameColumn tableName="learner_profile" oldColumnName="feedback_followup_summary" newColumnName="feedback_formality" columnDataType="tinyint"/>
+        <renameColumn tableName="learner_profile" oldColumnName="feedback_brief_detailed" newColumnName="feedback_detail" columnDataType="tinyint"/>
+        <dropColumn tableName="learner_profile" columnName="feedback_alternative_standard"/>
+
+        <rollback>
+            <dropColumn tableName="learner_profile"
+                        columnName="has_setup_feedback_preferences"/>
+
+            <renameColumn tableName="learner_profile"
+                          oldColumnName="feedback_formality"
+                          newColumnName="feedback_followup_summary"
+                          columnDataType="tinyint"/>
+
+            <renameColumn tableName="learner_profile"
+                          oldColumnName="feedback_detail"
+                          newColumnName="feedback_brief_detailed"
+                          columnDataType="tinyint"/>
+
+            <addColumn tableName="learner_profile">
+                <column name="feedback_alternative_standard"
+                        type="tinyint"/>
+            </addColumn>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog> 

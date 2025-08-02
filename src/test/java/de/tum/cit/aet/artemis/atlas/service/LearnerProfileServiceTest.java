@@ -89,15 +89,13 @@ class LearnerProfileServiceTest {
     void learnerProfileDTO_of_shouldClampValuesWithinRange() {
         LearnerProfile profile = new LearnerProfile();
         profile.setId(42L);
-        profile.setFeedbackAlternativeStandard(0); // below min
-        profile.setFeedbackFollowupSummary(5);    // above max
-        profile.setFeedbackBriefDetailed(2);      // within range
+        profile.setFeedbackDetail(2);
+        profile.setFeedbackFormality(1);
 
         LearnerProfileDTO dto = LearnerProfileDTO.of(profile);
         assertThat(dto.id()).isEqualTo(42L);
-        assertThat(dto.feedbackAlternativeStandard()).isEqualTo(LearnerProfile.MIN_PROFILE_VALUE);
-        assertThat(dto.feedbackFollowupSummary()).isEqualTo(LearnerProfile.MAX_PROFILE_VALUE);
-        assertThat(dto.feedbackBriefDetailed()).isEqualTo(2);
+        assertThat(dto.feedbackDetail()).isEqualTo(2);
+        assertThat(dto.feedbackFormality()).isEqualTo(1);
     }
 
     @Test
