@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -134,22 +134,23 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobsForResultsOfParticipation() throws Exception {
-        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
+        User student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         StudentParticipation participation = setupParticipation(programmingExercise, student, SubmissionType.EXTERNAL);
 
         Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(participation.getId());
         assertThat(resultBuildJobMap).hasSize(1);
         assertThat(participation).isNotNull();
         assertThat(participation.getSubmissions()).hasSize(1);
-        assertThat(participation.getStudent()).contains(student.get());
+        assertThat(participation.getStudent()).contains(student);
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.findLatestSubmission().orElseThrow();
         assertThat(programmingSubmission.getType()).isEqualTo(SubmissionType.EXTERNAL);
         assertThat(programmingSubmission.getResults()).hasSize(1);
     }
 
-    private @NotNull StudentParticipation setupParticipation(ProgrammingExercise programmingExercise, Optional<User> student, SubmissionType external) throws URISyntaxException {
+    @NotNull
+    private StudentParticipation setupParticipation(ProgrammingExercise programmingExercise, User student, SubmissionType external) throws URISyntaxException {
         participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
-        StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(), external);
+        StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student, external);
         Submission submission = participation.getSubmissions().iterator().next();
         Result result = participationUtilService.addResultToSubmission(participation, submission);
         buildJobUtilService.addBuildJobForParticipationId(participation.getId(), programmingExercise.getId(), result);
@@ -159,7 +160,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobsForResultsOfExamParticipation() throws Exception {
-        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
+        User student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(examExercise);
         StudentParticipation participation = setupParticipation(examExercise, student, SubmissionType.INSTRUCTOR);
@@ -168,7 +169,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         assertThat(resultBuildJobMap).hasSize(1);
         assertThat(participation).isNotNull();
         assertThat(participation.getSubmissions()).hasSize(1);
-        assertThat(participation.getStudent()).contains(student.get());
+        assertThat(participation.getStudent()).contains(student);
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.findLatestSubmission().orElseThrow();
         assertThat(programmingSubmission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
         assertThat(programmingSubmission.getResults()).hasSize(1);
@@ -221,7 +222,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     private void setUpProgrammingExerciseMocks() {
-        doReturn(new VcsRepositoryUri()).when(versionControlService).copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt());
+        doReturn(new LocalVCRepositoryUri(localVCBaseUri, "abc", "def")).when(versionControlService).copyRepositoryWithoutHistory(anyString(), anyString(), anyString(),
+                anyString(), anyString(), anyInt());
         doReturn("fake-build-plan-id").when(continuousIntegrationService).copyBuildPlan(any(), anyString(), any(), anyString(), anyString(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(ProgrammingExerciseParticipation.class));
     }

@@ -129,7 +129,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
@@ -784,8 +783,8 @@ public class ProgrammingExerciseTestService {
 
     private AuxiliaryRepository addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
-        var url = versionControlService.getCloneRepositoryUri(sourceExercise.getProjectKey(), new LocalVCRepositoryUri(convertToLocalVcUriString(sourceAuxRepo)).toString());
-        repository.setRepositoryUri(url.toString());
+        var url = new LocalVCRepositoryUri(convertToLocalVcUriString(sourceAuxRepo)).toString();
+        repository.setRepositoryUri(url);
         return auxiliaryRepositoryRepository.save(repository);
     }
 
@@ -1806,7 +1805,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
-        VcsRepositoryUri vcsUrl = exercise.getRepositoryURL(repoType);
+        LocalVCRepositoryUri vcsUrl = exercise.getRepositoryURL(repoType);
         Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null);
 
         createAndCommitDummyFileInLocalRepository(localRepo, fileName);

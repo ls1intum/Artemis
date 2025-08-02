@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
@@ -126,7 +126,7 @@ public class ProgrammingExerciseRepositoryService {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path repositoryTypeTemplateDir = getTemplateDirectoryForRepositoryType(repositoryType);
 
-        final VcsRepositoryUri repoUri = programmingExercise.getRepositoryURL(repositoryType);
+        final LocalVCRepositoryUri repoUri = programmingExercise.getRepositoryURL(repositoryType);
         final Repository repo = gitService.getOrCheckoutRepository(repoUri, false, true);
 
         // Get path, files and prefix for the programming-language dependent files. They are copied first.

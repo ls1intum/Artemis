@@ -104,9 +104,7 @@ class PyrisConsistencyCheckIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void callConsistencyCheckAsAsStudentShouldThrowForbidden() throws Exception {
         PyrisProgrammingExerciseDTO exerciseDto = createPyrisProgrammingExerciseDTO(programmingExercise);
-        irisRequestMockProvider.mockProgrammingConsistencyCheckResponse(dto -> {
-            assertThat(dto.exercise().id()).isEqualTo(exerciseDto.id());
-        });
+        irisRequestMockProvider.mockProgrammingConsistencyCheckResponse(dto -> assertThat(dto.exercise().id()).isEqualTo(exerciseDto.id()));
         request.postWithoutResponseBody("/api/iris/consistency-check/exercises/" + exerciseDto.id(), exerciseDto, HttpStatus.FORBIDDEN);
     }
 
@@ -114,9 +112,7 @@ class PyrisConsistencyCheckIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void callConsistencyCheckAsAsTutorShouldThrowForbidden() throws Exception {
         PyrisProgrammingExerciseDTO exerciseDto = createPyrisProgrammingExerciseDTO(programmingExercise);
-        irisRequestMockProvider.mockProgrammingConsistencyCheckResponse(dto -> {
-            assertThat(dto.exercise().id()).isEqualTo(exerciseDto.id());
-        });
+        irisRequestMockProvider.mockProgrammingConsistencyCheckResponse(dto -> assertThat(dto.exercise().id()).isEqualTo(exerciseDto.id()));
         request.postWithoutResponseBody("/api/iris/consistency-check/exercises/" + exerciseDto.id(), exerciseDto, HttpStatus.FORBIDDEN);
     }
 
