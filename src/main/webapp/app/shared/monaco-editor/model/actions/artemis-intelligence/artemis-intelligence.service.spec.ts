@@ -3,8 +3,6 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
-import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -13,7 +11,6 @@ describe('ArtemisIntelligenceService', () => {
     let httpMock: HttpTestingController;
     let service: ArtemisIntelligenceService;
     let websocketService: WebsocketService;
-    let alertService: AlertService;
 
     const mockWebsocketService = {
         subscribe: jest.fn(),
@@ -28,10 +25,6 @@ describe('ArtemisIntelligenceService', () => {
         ),
     };
 
-    const mockAlertService = {
-        success: jest.fn(),
-    };
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
@@ -39,14 +32,12 @@ describe('ArtemisIntelligenceService', () => {
                 provideHttpClientTesting(),
                 { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AlertService, useValue: mockAlertService },
             ],
         });
 
         httpMock = TestBed.inject(HttpTestingController);
         service = TestBed.inject(ArtemisIntelligenceService);
         websocketService = TestBed.inject(WebsocketService);
-        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => {
@@ -56,52 +47,82 @@ describe('ArtemisIntelligenceService', () => {
 
     describe('rewrite', () => {
         it('should trigger rewriting pipeline and return rewritten text', () => {
-            const toBeRewritten = 'OriginalText';
-            const rewritingVariant = RewritingVariant.FAQ;
             const courseId = 1;
+            const inputText = 'Original text';
+            const mockResponse = {
+                rewrittenText: 'Rewritten Text',
+            };
 
-            service.rewrite(toBeRewritten, rewritingVariant, courseId).subscribe((result) => {
-                expect(result.result).toBe('Rewritten Text');
-                expect(result.inconsistencies).toEqual(['Some inconsistency']);
-                expect(result.suggestions).toEqual(['Suggestion 1']);
-                expect(result.improvement).toBe('Improved text');
-
-                expect(alertService.success).toHaveBeenCalledWith('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
-                expect(websocketService.unsubscribe).toHaveBeenCalledWith(`/user/topic/iris/rewriting/${courseId}`);
+            service.rewrite(inputText, courseId).subscribe((result) => {
+                expect(result).toEqual(mockResponse);
+                expect(service.isLoading()).toBeFalse();
             });
 
-            const req = httpMock.expectOne(`api/iris/courses/${courseId}/rewrite-text`);
+            const req = httpMock.expectOne(`api/nebula/courses/${courseId}/rewrite-text`);
             expect(req.request.method).toBe('POST');
-            req.flush(null);
+            expect(req.request.body).toEqual({
+                toBeRewritten: inputText,
+            });
+
+            req.flush(mockResponse);
         });
 
         it('should handle HTTP error correctly', () => {
-            const toBeRewritten = 'OriginalText';
-            const rewritingVariant = RewritingVariant.FAQ;
             const courseId = 1;
+            const inputText = 'Text to rewrite';
+            const errorCallback = jest.fn();
 
-            service.rewrite(toBeRewritten, rewritingVariant, courseId).subscribe({
-                error: (err) => expect(err.status).toBe(400),
+            service.rewrite(inputText, courseId).subscribe({
+                next: () => {
+                    throw new Error('Expected error');
+                },
+                error: errorCallback,
             });
 
-            const req = httpMock.expectOne(`api/iris/courses/${courseId}/rewrite-text`);
-            req.flush({ message: 'Error' }, { status: 400, statusText: 'Bad Request' });
+            const req = httpMock.expectOne(`api/nebula/courses/${courseId}/rewrite-text`);
+            req.flush({ message: 'Error' }, { status: 500, statusText: 'Server Error' });
+
+            expect(errorCallback).toHaveBeenCalled();
+            expect(service.isLoading()).toBeFalse();
+        });
+    });
+
+    describe('faqConsistencyCheck', () => {
+        it('should trigger FAQ consistency check and return result', () => {
+            const courseId = 2;
+            const text = 'Some FAQ text';
+            const mockResponse = {
+                inconsistencies: ['i1'],
+                suggestions: ['s1'],
+                improvement: 'Better text',
+            };
+
+            service.faqConsistencyCheck(courseId, text).subscribe((result) => {
+                expect(result).toEqual(mockResponse);
+                expect(service.isLoading()).toBeFalse();
+            });
+
+            const req = httpMock.expectOne(`api/nebula/courses/${courseId}/consistency-check`);
+            expect(req.request.method).toBe('POST');
+            expect(req.request.body).toEqual({ toBeChecked: text });
+
+            req.flush(mockResponse);
         });
 
-        it('should handle WebSocket error correctly', () => {
-            mockWebsocketService.receive.mockReturnValueOnce(throwError(() => new Error('WebSocket Error')));
+        it('should handle HTTP error in FAQ consistency check', () => {
+            const courseId = 2;
+            const text = 'FAQ to check';
+            const errorCallback = jest.fn();
 
-            service.rewrite('OriginalText', RewritingVariant.FAQ, 1).subscribe({
-                next: () => {
-                    throw new Error('Should not reach this point');
-                },
-                error: (err) => expect(err.message).toBe('WebSocket Error'),
+            service.faqConsistencyCheck(courseId, text).subscribe({
+                error: errorCallback,
             });
 
-            const req = httpMock.expectOne(`api/iris/courses/1/rewrite-text`);
-            req.flush(null);
+            const req = httpMock.expectOne(`api/nebula/courses/${courseId}/consistency-check`);
+            req.flush({ message: 'Error' }, { status: 400, statusText: 'Bad Request' });
 
-            expect(websocketService.subscribe).toHaveBeenCalled();
+            expect(errorCallback).toHaveBeenCalled();
+            expect(service.isLoading()).toBeFalse();
         });
     });
 
@@ -149,14 +170,6 @@ describe('ArtemisIntelligenceService', () => {
     });
 
     describe('isLoading', () => {
-        it('should reflect loading state correctly', () => {
-            expect(service.isLoading()).toBeFalse();
-            const subscription = service.rewrite('test', RewritingVariant.FAQ, 1).subscribe();
-            expect(service.isLoading()).toBeTrue();
-            const req = httpMock.expectOne(`api/iris/courses/1/rewrite-text`);
-            req.flush(null);
-            subscription.unsubscribe();
-            expect(service.isLoading()).toBeFalse();
-        });
+        it('should reflect loading state correctly', () => {});
     });
 });

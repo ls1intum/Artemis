@@ -63,7 +63,7 @@ public class FaqProcessingResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @EnforceAtLeastTutorInCourse
-    @PostMapping("/courses/{courseId}/rewrite-text")
+    @PostMapping("courses/{courseId}/rewrite-text")
     public ResponseEntity<FaqRewritingResponse> rewriteFaq(@RequestBody FaqRewritingDTO request, @PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -79,7 +79,7 @@ public class FaqProcessingResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @EnforceAtLeastTutorInCourse
-    @PostMapping("/courses/{courseId}/consistency-check")
+    @PostMapping("courses/{courseId}/consistency-check")
     public ResponseEntity<FaqConsistencyResponse> consistencyCheck(@RequestBody FaqConsistencyDTO request, @PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);

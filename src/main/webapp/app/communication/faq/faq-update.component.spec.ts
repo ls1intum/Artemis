@@ -23,6 +23,7 @@ import { FaqCategory } from 'app/communication/shared/entities/faq-category.mode
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FaqConsistencyComponent } from './faq-consistency.component';
 import { RewriteAction } from '../../shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { FaqConsistencyAction } from '../../shared/monaco-editor/model/actions/artemis-intelligence/FacConsistencyAction';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
@@ -44,7 +45,7 @@ describe('FaqUpdateComponent', () => {
         faq1.questionAnswer = 'questionAnswer';
         faq1.categories = [new FaqCategory('category1', '#94a11c')];
         courseId = 1;
-        const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
+        const mockProfileInfo = { activeModuleFeatures: ['neblua'] } as ProfileInfo;
         TestBed.configureTestingModule({
             imports: [MockModule(BrowserAnimationsModule), FaIconComponent],
             declarations: [
@@ -285,35 +286,34 @@ describe('FaqUpdateComponent', () => {
     });
 
     it('should have intelligence action when IRIS is active', () => {
-        const isProfileActiveSpy = jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        const isProfileActiveSpy = jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
         faqUpdateComponent.courseId = 1;
         faqUpdateComponentFixture.detectChanges();
 
-        expect(isProfileActiveSpy).toHaveBeenCalledWith('iris');
+        expect(isProfileActiveSpy).toHaveBeenCalledWith('nebula');
 
         const actions = faqUpdateComponent.artemisIntelligenceActions();
-        expect(actions).toHaveLength(1);
+        expect(actions).toHaveLength(2);
         expect(actions[0]).toBeInstanceOf(RewriteAction);
+        expect(actions[0]).toBeInstanceOf(FaqConsistencyAction);
     });
 
     it('should reset renderedConsistencyCheckResultMarkdown when dismissConsistencyCheck is called', () => {
         faqUpdateComponent.renderedConsistencyCheckResultMarkdown.set({
-            result: 'Some result',
+            faqIds: [1],
             inconsistencies: ['Inconsistency 1'],
-            suggestions: ['Suggestion 1'],
             improvement: 'Some improvement',
         });
 
         faqUpdateComponent.dismissConsistencyCheck();
 
         expect(faqUpdateComponent.renderedConsistencyCheckResultMarkdown()).toEqual({
-            result: '',
-            inconsistencies: [],
-            suggestions: [],
+            faqIds: [],
             improvement: '',
+            inconsistencies: [],
         });
     });
 });

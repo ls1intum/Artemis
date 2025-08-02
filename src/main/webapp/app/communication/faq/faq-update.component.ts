@@ -14,7 +14,6 @@ import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -63,7 +62,7 @@ export class FaqUpdateComponent implements OnInit {
     artemisIntelligenceActions = computed(() =>
         this.nebulaEnabled
             ? [
-                  new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId),
+                  new RewriteAction(this.artemisIntelligenceService, this.courseId),
                   new FaqConsistencyAction(this.artemisIntelligenceService, this.courseId, this.renderedConsistencyCheckResultMarkdown),
               ]
             : [],

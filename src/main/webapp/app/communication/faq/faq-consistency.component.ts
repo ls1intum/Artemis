@@ -28,36 +28,32 @@ export class FaqConsistencyComponent {
     }
 
     private buildLinksToFaqs(): string[] {
-        const ids = this.faqIds();
-        const course = this.courseId();
-
-        if (!ids || ids.length === 0 || !course) {
-            return [];
-        }
-
-        return ids.map((id) => `/courses/${course}/faq?faqId=${id}`);
+        const ids = this.faqIds() ?? [];
+        return ids.map((id) => this.buildLinkToFaq(id));
     }
 
-    buildInconsistencyTextWithLinks(): string[] {
+    private buildLinkToFaq(faqId: number): string {
+        const course = this.courseId();
+        return `/courses/${course}/faq?faqId=${faqId}`;
+    }
+
+    private buildInconsistencyTextWithLinks(): string[] {
         const inconsistencies = this.inconsistencies() ?? [];
         const faqIds = this.faqIds() ?? [];
         const links = this.linksToFaqs ?? [];
 
-        const merged: string[] = [];
-
-        for (let i = 0; i < inconsistencies.length; i++) {
-            const inconsistency = inconsistencies[i];
-            const id = faqIds[i];
-            const link = links[i];
-
-            if (id !== undefined && link) {
-                merged.push(`${inconsistency} <a href="${link}" target="_blank" rel="noopener noreferrer">#${id}</a>`);
-            } else {
-                merged.push(inconsistency);
-            }
+        if (inconsistencies.length !== faqIds.length) {
+            throw new Error('Inconsistencies and FAQ IDs arrays must have the same length');
         }
 
-        return merged;
+        return inconsistencies.map((inconsistency, index) => this.mergeInconsistencyWithLink(inconsistency, faqIds[index], links[index]));
+    }
+
+    private mergeInconsistencyWithLink(inconsistency: string, faqId?: number, link?: string): string {
+        if (faqId !== undefined && link) {
+            return `${inconsistency} <a href="${link}" target="_blank" rel="noopener noreferrer">#${faqId}</a>`;
+        }
+        return inconsistency;
     }
 
     dismissConsistencyCheck(): void {
