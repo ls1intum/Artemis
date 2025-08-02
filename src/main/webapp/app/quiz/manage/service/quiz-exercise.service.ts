@@ -11,7 +11,7 @@ import { downloadFile, downloadZipFromFilePromises } from 'app/shared/util/downl
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import JSZip from 'jszip';
 import { FileService } from 'app/shared/service/file.service';
-import { toQuizExerciseUpdateDto } from 'app/quiz/shared/entities/quiz-exercise-update.dto';
+import { toQuizExerciseUpdateDto } from 'app/quiz/shared/entities/quiz-exercise-update.model';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
