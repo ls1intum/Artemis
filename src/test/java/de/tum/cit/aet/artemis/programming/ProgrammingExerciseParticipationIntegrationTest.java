@@ -30,6 +30,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -39,10 +40,15 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -53,7 +59,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 
-class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
+class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "programmingexerciseparticipation";
 
@@ -64,6 +70,21 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     private ProgrammingExercise programmingExercise;
 
     private Participation programmingExerciseParticipation;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
+
+    @Autowired
+    private ParticipationTestRepository participationRepository;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private StudentExamService studentExamService;
 
     @BeforeEach
     void initTestCase() {
@@ -695,16 +716,21 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         // Generate a random URI that is not in the database
-        URI repoUrl;
+        String baseRepoPath = participation.getRepositoryUri();
+        String repoUrl;
         Optional<ProgrammingExerciseStudentParticipation> foundParticipation;
         do {
-            repoUrl = new URI(participation.getRepositoryUri());
+            // Generate random segments for the path
+            String randomKey = UUID.randomUUID().toString().replace("-", "").substring(0, 6);
+            String randomName = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
 
-            // test a repoName which does not match the expected pattern of <project_key>-<repo-type>
-            // generate random string without a dash
-            String invalidRepoName = UUID.randomUUID().toString().replace("-", "");
-            repoUrl = new URI(repoUrl.getScheme(), repoUrl.getUserInfo(), repoUrl.getHost(), repoUrl.getPort(), "/" + invalidRepoName, repoUrl.getQuery(), repoUrl.getFragment());
-            foundParticipation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl.toString());
+            // Extract base path up to /git/ directory
+            String basePath = baseRepoPath.substring(0, baseRepoPath.indexOf("/git/") + 4);
+
+            // Format: /path/to/git/PROJECT_KEY/repo_name.git
+            repoUrl = String.format("%s/%s/%s.git", basePath, randomKey, randomName);
+
+            foundParticipation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl);
         }
         while (foundParticipation.isPresent());
 
