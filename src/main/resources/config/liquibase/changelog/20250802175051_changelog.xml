@@ -80,6 +80,7 @@
                              constraintName="uc_layout_strategy_exam_room_name"/>
 
         <!-- Indexes for Layout Strategy table -->
+        <!-- One index on (exam_room_id), and one on (exam_room_id, layout_name) -->
         <createIndex indexName="idx_layout_strategy_exam_room_id" tableName="layout_strategy">
             <column name="exam_room_id"/>
         </createIndex>
@@ -121,10 +122,10 @@
                              constraintName="uc_exam_room_assignment_exam_room"/>
 
         <!-- Indexes for Exam Room Assignment table -->
+        <!-- One index on (exam_id), and one on (exam_room_id) -->
         <createIndex indexName="idx_exam_room_assignment_exam_id" tableName="exam_room_assignment">
             <column name="exam_id"/>
         </createIndex>
-
         <createIndex indexName="idx_exam_room_assignment_exam_room_id" tableName="exam_room_assignment">
             <column name="exam_room_id"/>
         </createIndex>
