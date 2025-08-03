@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -249,7 +250,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * @param saQuestion the short answer question to set up for import
      */
     private void setUpShortAnswerQuestionForImport(ShortAnswerQuestion saQuestion) {
-        HashMap<Long, ShortAnswerSpot> newSpotMap = new HashMap<>();
+        Map<Long, ShortAnswerSpot> newSpotMap = new HashMap<>();
         List<ShortAnswerSpot> newSpots = new ArrayList<>();
         for (ShortAnswerSpot oldSpot : saQuestion.getSpots()) {
             ShortAnswerSpot newSpot = new ShortAnswerSpot();
@@ -264,7 +265,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         }
         saQuestion.setSpots(newSpots);
 
-        HashMap<Long, ShortAnswerSolution> newSolutionMap = new HashMap<>();
+        Map<Long, ShortAnswerSolution> newSolutionMap = new HashMap<>();
         List<ShortAnswerSolution> newSolutions = new ArrayList<>();
         for (ShortAnswerSolution oldSolution : saQuestion.getSolutions()) {
             ShortAnswerSolution newSolution = new ShortAnswerSolution();
