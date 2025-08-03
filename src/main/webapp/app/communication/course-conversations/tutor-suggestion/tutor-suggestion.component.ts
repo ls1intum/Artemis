@@ -20,6 +20,8 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -29,7 +31,7 @@ import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-ba
     selector: 'jhi-tutor-suggestion',
     templateUrl: './tutor-suggestion.component.html',
     styleUrl: './tutor-suggestion.component.scss',
-    imports: [IrisLogoComponent, AsPipe, FormsModule, TranslateDirective, IrisBaseChatbotComponent],
+    imports: [IrisLogoComponent, AsPipe, FormsModule, TranslateDirective, IrisBaseChatbotComponent, ButtonComponent],
 })
 export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -56,6 +58,12 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
 
     messages: IrisMessage[];
     suggestion: IrisMessage | undefined;
+    suggestions: IrisMessage[] = [];
+
+    faArrowUp = faArrowUp;
+    upDisabled = true;
+    faArrowDown = faArrowDown;
+    downDisabled = true;
 
     stages?: IrisStageDTO[] = [];
     error?: IrisErrorMessageKey;
@@ -165,7 +173,11 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     private fetchMessages(): void {
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
-                this.suggestion = messages.findLast((m) => m.sender === IrisSender.ARTIFACT);
+                this.suggestions = messages.filter((message) => message.sender === IrisSender.ARTIFACT);
+                this.suggestion = this.suggestions.last();
+                if (this.suggestions.length > 0) {
+                    this.updateArrowDisabled(this.suggestions.length - 1);
+                }
             }
             this.messages = messages;
         });
@@ -236,5 +248,36 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
                 return parsedDate.format('DD/MM/YYYY');
             }
         }
+    }
+
+    /**
+     * Switches between suggestions based on the provided direction.
+     * If `up` is true, it switches to the next suggestion; if false,
+     * it switches to the previous suggestion.
+     * @param up
+     */
+    switchSuggestion(up: boolean) {
+        if (!this.suggestion || !this.suggestions) {
+            return;
+        }
+
+        const currentIndex = this.suggestions.findIndex((message) => message.id === this.suggestion?.id);
+        if (currentIndex === -1) {
+            return;
+        }
+
+        const newIndex = up ? currentIndex + 1 : currentIndex - 1;
+
+        if (newIndex < 0 || newIndex >= this.suggestions.length) {
+            return;
+        }
+
+        this.suggestion = this.suggestions[newIndex];
+        this.updateArrowDisabled(newIndex);
+    }
+
+    private updateArrowDisabled(currentIndex: number) {
+        this.downDisabled = currentIndex === 0;
+        this.upDisabled = currentIndex === this.suggestions.length - 1;
     }
 }

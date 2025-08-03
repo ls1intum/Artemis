@@ -2,20 +2,26 @@
     <div class="iris-suggestion">
         <div class="iris-suggestion-field">
             @if (suggestion) {
-                <div class="iris-text-content">
-                    <div class="iris-logo">
-                        <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
-                        <span class="fw-semibold">Iris-Suggestion:</span>
-                    </div>
-                    @for (content of suggestion?.content; track content.id) {
-                        <div>
-                            @for (line of (content | as: IrisTextMessageContent).textContent.split('\n'); track line) {
-                                <div [innerHTML]="line" class="iris-suggestion-text"></div>
-                            }
+                <div class="iris-suggestion-wrapper">
+                    <div class="iris-text-content">
+                        <div class="iris-logo">
+                            <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+                            <span class="fw-semibold">Iris-Suggestion:</span>
                         </div>
-                    }
-                    <div class="timestamp-container">
-                        {{ getTimestamp(suggestion.sentAt) }}
+                        @for (content of suggestion?.content; track content.id) {
+                            <div>
+                                @for (line of (content | as: IrisTextMessageContent).textContent.split('\n'); track line) {
+                                    <div [innerHTML]="line" class="iris-suggestion-text"></div>
+                                }
+                            </div>
+                        }
+                        <div class="timestamp-container">
+                            {{ getTimestamp(suggestion.sentAt) }}
+                        </div>
+                    </div>
+                    <div class="iris-suggestion-buttons">
+                        <jhi-button id="search-submit" class="ms-1" [icon]="faArrowUp" (onClick)="switchSuggestion(true)" [disabled]="upDisabled" />
+                        <jhi-button id="search-submit" class="ms-1" [icon]="faArrowDown" (onClick)="switchSuggestion(false)" [disabled]="downDisabled" />
                     </div>
                 </div>
             } @else {

@@ -44,3 +44,15 @@
     background: #ffffff;
     display: flex;
 }
+
+.iris-suggestion-wrapper {
+    display: flex;
+    flex-direction: row;
+}
+
+.iris-suggestion-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 5px;
+}
