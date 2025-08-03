@@ -57,7 +57,7 @@
         <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.uniqueLayoutStrategies"></span> {{ overview()!.numberOfUniqueLayoutStrategies }}</div>
         <div>
             <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.distinctLayoutStrategyNames"></span>
-            {{ overview()!.distinctLayoutStrategyNames?.join(', ') }}
+            {{ overview()!.distinctLayoutStrategyNames?.toSorted()?.join(', ') }}
         </div>
         <p></p>
         <h4><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.examRoomsTitle"></span></h4>

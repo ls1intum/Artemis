@@ -188,7 +188,7 @@ export class ExamRoomsComponent {
             examRoom!.layoutStrategies
                 ?.map((layoutStrategy) => layoutStrategy.name)
                 .sort()
-                .join('') ?? ''
+                .join(', ') ?? ''
         );
     }
 }
