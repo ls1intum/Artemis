@@ -5,15 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.PROGRAMMING_
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.function.BiConsumer;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -30,7 +22,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -38,7 +29,6 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.IExerciseScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationLifecycle;
@@ -69,13 +59,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
-
-    private final GroupNotificationService groupNotificationService;
-
-    private final GitService gitService;
 
     private final TaskScheduler scheduler;
 
@@ -84,9 +68,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, ProgrammingTriggerService programmingTriggerService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, GroupNotificationService groupNotificationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, @Qualifier("taskScheduler") TaskScheduler scheduler,
-            ProfileService profileService) {
+            ProgrammingExerciseGradingService programmingExerciseGradingService, @Qualifier("taskScheduler") TaskScheduler scheduler, ProfileService profileService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -94,10 +76,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.participationRepository = participationRepository;
         this.programmingExerciseParticipationRepository = programmingExerciseParticipationRepository;
         this.programmingTriggerService = programmingTriggerService;
-        this.groupNotificationService = groupNotificationService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.gitService = gitService;
         this.scheduler = scheduler;
         this.profileService = profileService;
     }
@@ -414,110 +393,5 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             final List<Result> updatedResults = programmingExerciseGradingService.updateResultsOnlyRegularDueDateParticipations(exercise);
             resultRepository.saveAll(updatedResults);
         };
-    }
-
-    /**
-     * Stash all student changes in the online editor for manual assessments and notify the instructor about stashing operations in case they fail.
-     * NOTE: this is only relevant when the online code editor is active
-     *
-     * @throws EntityNotFoundException if the programming exercise with template and solution participation was not found
-     */
-    // TODO: invoke this schedule operation properly without strong coupling to lock operations
-    private void stashStudentChangesAndNotifyInstructor(ProgrammingExercise exercise, Predicate<ProgrammingExerciseStudentParticipation> condition) {
-        Long programmingExerciseId = exercise.getId();
-
-        // Stash the not submitted/committed changes for exercises with manual assessment and with online editor enabled
-        // This is necessary for students who have used the online editor, to ensure that only submitted/committed changes are displayed during manual assessment
-        // in the case they still have saved changes on the Artemis server which have not been committed / pushed
-        // NOTE: we always stash, also when manual assessment is not activated, because instructors might change this after the exam
-        if (Boolean.TRUE.equals(exercise.isAllowOnlineEditor())) {
-            var failedStashOperations = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
-            failedStashOperations.thenAccept(failures -> {
-            });
-        }
-    }
-
-    private static String getNotificationText(List<ProgrammingExerciseStudentParticipation> failures, String failedOperationNotificationText,
-            String successfulOperationNotificationText) {
-        long numberOfFailedOperations = failures.size();
-        String notificationText;
-        if (numberOfFailedOperations > 0) {
-            notificationText = failedOperationNotificationText + numberOfFailedOperations;
-        }
-        else {
-            notificationText = successfulOperationNotificationText;
-        }
-        return notificationText;
-    }
-
-    private CompletableFuture<List<ProgrammingExerciseStudentParticipation>> stashChangesInAllStudentRepositories(Long programmingExerciseId,
-            Predicate<ProgrammingExerciseStudentParticipation> condition) throws EntityNotFoundException {
-        return invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId, programmingExerciseParticipationService::stashChangesInStudentRepositoryAfterDueDateHasPassed,
-                condition, "stash changes from all student repositories");
-    }
-
-    /**
-     * Invokes the given <code>operation</code> on all student participations that satisfy the <code>condition</code>-{@link Predicate}.
-     * <p>
-     *
-     * @param programmingExerciseId the programming exercise whose participations should be processed
-     * @param operation             the operation to perform
-     * @param condition             the condition that tests whether to invoke the operation on a participation
-     * @param operationName         the name of the operation, this is only used for logging
-     * @return a list containing all participations for which the operation has failed with an exception
-     * @throws EntityNotFoundException if the programming exercise can't be found.
-     */
-    private CompletableFuture<List<ProgrammingExerciseStudentParticipation>> invokeOperationOnAllParticipationsThatSatisfy(Long programmingExerciseId,
-            BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> operation, Predicate<ProgrammingExerciseStudentParticipation> condition,
-            String operationName) {
-        log.info("Invoking (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExerciseId);
-
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsByIdElseThrow(programmingExerciseId);
-        List<ProgrammingExerciseStudentParticipation> failedOperations = new ArrayList<>();
-
-        // TODO: we should think about executing those operations again in batches to avoid issues on the vcs server
-
-        // Create a thread pool to execute the operation with a fixed amount of threads
-        try (ExecutorService threadPool = Executors.newFixedThreadPool(10)) {
-            var participations = programmingExercise.getStudentParticipations();
-            List<CompletableFuture<ProgrammingExerciseStudentParticipation>> futures = new ArrayList<>();
-            for (StudentParticipation studentParticipation : participations) {
-                Supplier<ProgrammingExerciseStudentParticipation> action = () -> {
-                    // We need to set the authorization object for every thread
-                    SecurityUtils.setAuthorizationObject();
-                    var programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-
-                    if (condition.test(programmingExerciseStudentParticipation)) {
-                        operation.accept(programmingExercise, programmingExerciseStudentParticipation);
-                    }
-
-                    return programmingExerciseStudentParticipation;
-                };
-
-                CompletableFuture<ProgrammingExerciseStudentParticipation> future = CompletableFuture.supplyAsync(action, threadPool);
-                futures.add(future);
-            }
-
-            for (var future : futures) {
-                future.whenComplete((participation, exception) -> {
-                    if (exception != null) {
-                        log.error("'{}' failed for programming exercise with id {} for student repository with participation id {}", operationName, programmingExercise.getId(),
-                                participation.getId(), exception);
-                        failedOperations.add(participation);
-                    }
-                });
-            }
-
-            return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).thenApply(ignore -> {
-                threadPool.shutdown();
-                log.info("Finished executing (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExercise.getId());
-                if (!failedOperations.isEmpty()) {
-                    var failedIds = failedOperations.stream().map(participation -> participation.getId().toString()).collect(Collectors.joining(","));
-                    log.warn("The (scheduled) task '{}' for programming exercise {} failed for these {} participations: {}", operation, programmingExercise.getId(),
-                            failedOperations.size(), failedIds);
-                }
-                return failedOperations;
-            });
-        }
     }
 }
