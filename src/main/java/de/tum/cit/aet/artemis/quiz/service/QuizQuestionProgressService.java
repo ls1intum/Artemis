@@ -234,7 +234,25 @@ public class QuizQuestionProgressService {
         updateProgressWithNewAttempt(data, score, answeredAt);
         updateProgressCalculations(data, score, existingProgress);
         existingProgress.setProgressJson(data);
-        quizQuestionProgressRepository.save(existingProgress);
+        try {
+            quizQuestionProgressRepository.save(existingProgress);
+        }
+        catch (DataIntegrityViolationException e) {
+            updateExistingProgress(userId, question, data, answeredAt);
+        }
+    }
+
+    private void updateExistingProgress(Long userId, QuizQuestion question, QuizQuestionProgressData data, ZonedDateTime answeredAt) {
+        try {
+            QuizQuestionProgress progress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId())
+                    .orElseThrow(() -> new IllegalStateException("Progress entry should exist but was not found."));
+            progress.setLastAnsweredAt(answeredAt);
+            progress.setProgressJson(data);
+            quizQuestionProgressRepository.save(progress);
+        }
+        catch (DataIntegrityViolationException e) {
+            throw new IllegalStateException("Error when trying to update existing progress", e);
+        }
     }
 
 }
