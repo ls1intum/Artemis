@@ -108,7 +108,7 @@ public class LocalRepository {
         workingCopyGitRepo.remoteAdd().setName("origin").setUri(new URIish(remoteBareGitRepoFile.toURI().toString())).call();
 
         // Add an initial commit directly in the local working copy
-        File readme = new File(workingCopyGitRepoFile, "README.md");
+        File readme = workingCopyGitRepoFile.toPath().resolve("README.md").toFile();
         FileUtils.writeStringToFile(readme, "Initial commit", Charset.defaultCharset());
         workingCopyGitRepo.add().addFilepattern("README.md").call();
         GitService.commit(workingCopyGitRepo).setMessage("Initial commit").call();
@@ -121,7 +121,8 @@ public class LocalRepository {
         remoteBareGitRepo = Git.wrap(new FileRepositoryBuilder().setGitDir(remoteBareGitRepoFile).build());
 
         workingCopyGitRepo.close();
-        workingCopyGitRepo = Git.wrap(new FileRepositoryBuilder().setGitDir(new File(workingCopyGitRepoFile, ".git")).setWorkTree(workingCopyGitRepoFile).build());
+        var gitDir = workingCopyGitRepoFile.toPath().resolve(".git").toFile();
+        workingCopyGitRepo = Git.wrap(new FileRepositoryBuilder().setGitDir(gitDir).setWorkTree(workingCopyGitRepoFile).build());
         log.info("Configured local repository with one commit, working copy at {} and origin repository at {}", workingCopyGitRepoFile, remoteBareGitRepoFile);
     }
 
