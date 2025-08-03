@@ -7,7 +7,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
-import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
 
 // privately used interfaces, i.e., not sent from the server like this
 export interface ExamRoomDTOExtended extends ExamRoomDTO {
@@ -18,7 +17,7 @@ export interface ExamRoomDTOExtended extends ExamRoomDTO {
 @Component({
     selector: 'app-exam-room-repository',
     templateUrl: './exam-rooms.component.html',
-    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgbHighlight],
+    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent],
 })
 export class ExamRoomsComponent {
     private http: HttpClient = inject(HttpClient);
@@ -34,10 +33,10 @@ export class ExamRoomsComponent {
     canUpload: Signal<boolean> = computed(() => !!this.selectedFile());
     isUploading: Signal<boolean> = computed(() => this.actionStatus() === 'uploading');
     hasUploadInformation: Signal<boolean> = computed(() => this.actionStatus() === 'uploadSuccess' && !!this.uploadInformation());
-    hasUploadFailed: Signal<boolean> = computed(() => this.actionStatus() === 'error');
+    hasUploadFailed: Signal<boolean> = computed(() => this.actionStatus() === 'uploadError');
     isDeleting: Signal<boolean> = computed(() => this.actionStatus() === 'deleting');
     hasDeletionInformation: Signal<boolean> = computed(() => this.actionStatus() === 'deletionSuccess' && !!this.deletionInformation());
-    hasDeletionFailed: Signal<boolean> = computed(() => this.actionStatus() === 'deletionFailed');
+    hasDeletionFailed: Signal<boolean> = computed(() => this.actionStatus() === 'deletionError');
     uploadInformation: Signal<ExamRoomUploadInformationDTO | undefined> = computed(() => this.actionInformation() as ExamRoomUploadInformationDTO);
     deletionInformation: Signal<ExamRoomDeletionSummaryDTO | undefined> = computed(() => this.actionInformation() as ExamRoomDeletionSummaryDTO);
     hasOverview: Signal<boolean> = computed(() => !!this.overview());
