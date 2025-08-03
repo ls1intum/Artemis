@@ -337,7 +337,6 @@ public class ExamRoomService {
      * </ul>
      *
      * @param rowsArrayNode The JSON node containing the row data.
-     *
      * @return The list of all exam seats it could parse from the JSON node, or null on error.
      */
     private static List<ExamSeatDTO> parseExamSeats(JsonNode rowsArrayNode) {
@@ -390,13 +389,16 @@ public class ExamRoomService {
      * @return A DTO that can be sent to the client, containing basic information about the state of the exam room DB.
      */
     public ExamRoomAdminOverviewDTO getExamRoomAdminOverviewDTO() {
-        final Integer numberOfStoredExamRooms = examRoomRepository.countAllExamRooms();
-        final Integer numberOfStoredExamSeats = examRoomRepository.findAll().stream().mapToInt(er -> er.getSeats().size()).sum();
-        final Integer numberOfStoredLayoutStrategies = examRoomRepository.countAllLayoutStrategies();
-        final Set<String> distinctLayoutStrategyNames = examRoomRepository.findDistinctLayoutStrategyNames();
+        final List<ExamRoom> examRooms = examRoomRepository.findAllExamRoomsWithEagerLayoutStrategies();
+
+        final Integer numberOfStoredExamRooms = examRooms.size();
+        final Integer numberOfStoredExamSeats = examRooms.stream().mapToInt(er -> er.getSeats().size()).sum();
+        final Integer numberOfStoredLayoutStrategies = examRooms.stream().mapToInt(er -> er.getLayoutStrategies().size()).sum();
+        final Set<String> distinctLayoutStrategyNames = examRooms.stream().flatMap(er -> er.getLayoutStrategies().stream()).map(LayoutStrategy::getName)
+                .collect(Collectors.toSet());
         final ExamRoomUniqueRoomsDTO uniqueRoomsDTO = this.countUniqueRoomsSeatsAndLayoutStrategies();
 
-        final Set<ExamRoomDTO> examRoomDTOS = examRoomRepository.findAllExamRoomsWithEagerLayoutStrategies().stream()
+        final Set<ExamRoomDTO> examRoomDTOS = examRooms.stream()
                 .map(examRoom -> new ExamRoomDTO(examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
                         examRoom.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .collect(Collectors.toSet());

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.repository;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -19,21 +20,12 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 @Repository
 public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long> {
 
-    @Query("SELECT COUNT(*) FROM ExamRoom")
-    Integer countAllExamRooms();
-
-    @Query("SELECT COUNT(*) FROM LayoutStrategy")
-    Integer countAllLayoutStrategies();
-
-    @Query("SELECT DISTINCT strategy.name FROM LayoutStrategy strategy")
-    Set<String> findDistinctLayoutStrategyNames();
-
     @Query("""
             SELECT er
             FROM ExamRoom er
             LEFT JOIN FETCH er.layoutStrategies
             """)
-    Set<ExamRoom> findAllExamRoomsWithEagerLayoutStrategies();
+    List<ExamRoom> findAllExamRoomsWithEagerLayoutStrategies();
 
     @Query("""
             WITH latestRooms AS (
