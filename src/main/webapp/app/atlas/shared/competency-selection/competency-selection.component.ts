@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef, inject } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faLightbulb, faQuestionCircle, faStar } from '@fortawesome/free-solid-svg-icons';
+import { HttpClient } from '@angular/common/http';
 import {
     CompetencyLearningObjectLink,
     CourseCompetency,
@@ -41,9 +42,11 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     private courseCompetencyService = inject(CourseCompetencyService);
     private changeDetector = inject(ChangeDetectorRef);
     private profileService = inject(ProfileService);
+    private http = inject(HttpClient);
 
     @Input() labelName: string;
     @Input() labelTooltip: string;
+    @Input() exerciseDescription?: string;
 
     @Output() valueChange = new EventEmitter();
 
@@ -54,10 +57,14 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     competencyLinks?: CompetencyLearningObjectLink[];
 
     isLoading = false;
+    isSuggesting = false;
     checkboxStates: Record<number, boolean>;
+    suggestedCompetencyIds = new Set<number>();
 
     getIcon = getIcon;
     faQuestionCircle = faQuestionCircle;
+    faStar = faStar;
+    faLightbulb = faLightbulb;
 
     _onChange = (_value: any) => {};
 
@@ -177,6 +184,60 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     }
 
     registerOnTouched(_fn: any): void {}
+
+    suggestCompetencies(): void {
+        if (!this.exerciseDescription?.trim()) {
+            return;
+        }
+
+        this.isSuggesting = true;
+        this.suggestedCompetencyIds.clear();
+
+        const requestBody = { description: this.exerciseDescription };
+
+        this.http
+            .post<{ competencies: any[] }>('/api/atlas/competencies/suggest', requestBody)
+            .pipe(
+                finalize(() => {
+                    this.isSuggesting = false;
+                    this.changeDetector.detectChanges();
+                }),
+            )
+            .subscribe({
+                next: (response) => {
+                    response.competencies.forEach((suggestion) => {
+                        const matchingLink = this.competencyLinks?.find((link) => link.competency?.id === Number(suggestion.id));
+                        if (matchingLink?.competency?.id) {
+                            this.suggestedCompetencyIds.add(matchingLink.competency.id);
+                        }
+                    });
+                    this.sortCompetenciesBySuggestion();
+                },
+                error: (error) => {
+                    // console.error('Error getting competency suggestions:', error);
+                },
+            });
+    }
+
+    isSuggested(competencyId: number): boolean {
+        return this.suggestedCompetencyIds.has(competencyId);
+    }
+
+    sortCompetenciesBySuggestion(): void {
+        if (this.competencyLinks) {
+            this.competencyLinks.sort((a, b) => {
+                const aIsSuggested = a.competency?.id ? this.isSuggested(a.competency.id) : false;
+                const bIsSuggested = b.competency?.id ? this.isSuggested(b.competency.id) : false;
+
+                // Sort suggested competencies to the top
+                if (aIsSuggested && !bIsSuggested) return -1;
+                if (!aIsSuggested && bIsSuggested) return 1;
+
+                // Keep original order for items with same suggestion status
+                return 0;
+            });
+        }
+    }
 
     setDisabledState?(isDisabled: boolean): void {
         this.disabled = isDisabled;

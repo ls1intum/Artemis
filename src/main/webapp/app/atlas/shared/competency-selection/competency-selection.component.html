@@ -1,15 +1,31 @@
 @if (isLoading || competencyLinks?.length) {
     <div>
-        @if (labelName) {
-            <label for="competency-selector">
-                {{ labelName }}
-            </label>
-        }
-        @if (labelTooltip) {
-            <fa-stack class="text-secondary icon-full-size" [ngbTooltip]="labelTooltip">
-                <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
-            </fa-stack>
-        }
+        <div class="d-flex align-items-center">
+            @if (labelName) {
+                <label for="competency-selector">
+                    {{ labelName }}
+                </label>
+            }
+            @if (labelTooltip) {
+                <fa-stack class="text-secondary icon-full-size" [ngbTooltip]="labelTooltip">
+                    <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
+                </fa-stack>
+            }
+            <button
+                type="button"
+                class="btn btn-outline-primary btn-sm ms-2"
+                [disabled]="isSuggesting || disabled || !exerciseDescription?.trim()"
+                (click)="suggestCompetencies()"
+                [ngbTooltip]="exerciseDescription ? 'Get AI suggestions based on exercise description' : 'Enter exercise description to get suggestions'"
+            >
+                @if (isSuggesting) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                } @else {
+                    <fa-icon [icon]="faLightbulb" class="me-1" />
+                }
+                Suggest
+            </button>
+        </div>
         @if (isLoading) {
             <div>
                 <div class="spinner-border" role="status">
@@ -28,9 +44,12 @@
                                 (ngModelChange)="toggleCompetency(competencyLink)"
                                 [disabled]="disabled"
                             />
-                            <label for="competency-{{ competencyLink.competency.id }}">
+                            <label for="competency-{{ competencyLink.competency.id }}" class="d-flex align-items-center">
                                 <fa-icon [icon]="getIcon(competencyLink.competency.taxonomy)" [fixedWidth]="true" />
-                                {{ competencyLink.competency.title }}
+                                <span>{{ competencyLink.competency.title }}</span>
+                                @if (isSuggested(competencyLink.competency.id)) {
+                                    <fa-icon [icon]="faStar" class="text-warning ms-2" [ngbTooltip]="'AI suggested competency'" />
+                                }
                             </label>
                             @if (checkboxStates[competencyLink.competency.id]) {
                                 <select

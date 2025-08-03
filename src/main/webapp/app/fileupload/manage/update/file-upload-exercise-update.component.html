@@ -52,6 +52,7 @@
                     id="competencies"
                     [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                     [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+                    [exerciseDescription]="fileUploadExercise.problemStatement || fileUploadExercise.title"
                     [(ngModel)]="fileUploadExercise.competencyLinks"
                     name="competencyLinks"
                 />

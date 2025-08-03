@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationType;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
@@ -146,6 +147,14 @@ public class CompetencyResource {
 
         final var persistedCompetency = competencyService.createCourseCompetency(competency, course);
 
+        // Notify AtlasML about the new competency
+        try {
+            atlasMLService.saveCompetency(persistedCompetency, OperationType.UPDATE);
+        }
+        catch (Exception e) {
+            log.warn("Failed to notify AtlasML about competency creation: {}", e.getMessage());
+        }
+
         return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/" + persistedCompetency.getId())).body(persistedCompetency);
     }
 
@@ -167,6 +176,16 @@ public class CompetencyResource {
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
         var createdCompetencies = competencyService.createCompetencies(competencies, course);
+
+        // Notify AtlasML about the new competencies
+        for (Competency createdCompetency : createdCompetencies) {
+            try {
+                atlasMLService.saveCompetency(createdCompetency, OperationType.UPDATE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about competency creation for id {}: {}", createdCompetency.getId(), e.getMessage());
+            }
+        }
 
         return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/")).body(createdCompetencies);
     }
@@ -308,6 +327,14 @@ public class CompetencyResource {
 
         var persistedCompetency = competencyService.updateCourseCompetency(existingCompetency, competency);
 
+        // Notify AtlasML about the competency update
+        try {
+            atlasMLService.saveCompetency(persistedCompetency, OperationType.UPDATE);
+        }
+        catch (Exception e) {
+            log.warn("Failed to notify AtlasML about competency update: {}", e.getMessage());
+        }
+
         return ResponseEntity.ok(persistedCompetency);
     }
 
@@ -326,6 +353,14 @@ public class CompetencyResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var competency = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
         checkCourseForCompetency(course, competency);
+
+        // Notify AtlasML about the competency deletion before actual deletion
+        try {
+            atlasMLService.saveCourseCompetency(competency, OperationType.DELETE);
+        }
+        catch (Exception e) {
+            log.warn("Failed to notify AtlasML about competency deletion: {}", e.getMessage());
+        }
 
         courseCompetencyService.deleteCourseCompetency(competency, course);
 
@@ -350,31 +385,6 @@ public class CompetencyResource {
         catch (Exception e) {
             log.error("Error while suggesting competencies", e);
             throw new BadRequestAlertException("Error suggesting competencies: " + e.getMessage(), ENTITY_NAME, "suggestionError");
-        }
-    }
-
-    /**
-     * POST atlas/competencies/save : saves competencies using AtlasML.
-     * Will be removed after testing.
-     *
-     * @return the ResponseEntity with status 200 (OK) if successful
-     */
-    @PostMapping("competencies/save")
-    @FeatureToggle(Feature.AtlasML)
-    public ResponseEntity<Object> saveCompetencies() {
-        log.debug("REST request to save competencies using AtlasML");
-
-        try {
-            // Using a simple test request - in a real scenario, you might want to accept parameters
-            String testId = "test-save-" + System.currentTimeMillis();
-            String testDescription = "Test competency save request";
-
-            atlasMLService.saveCompetencies(testId, testDescription, List.of(), List.of());
-            return ResponseEntity.ok().body("Competencies saved successfully");
-        }
-        catch (Exception e) {
-            log.error("Error while saving competencies", e);
-            return ResponseEntity.internalServerError().body("Error saving competencies: " + e.getMessage());
         }
     }
 

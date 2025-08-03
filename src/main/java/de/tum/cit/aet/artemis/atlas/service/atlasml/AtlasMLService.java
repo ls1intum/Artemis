@@ -24,11 +24,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationType;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * Service for communicating with the AtlasML microservice.
@@ -47,7 +51,7 @@ public class AtlasMLService {
 
     private final AtlasMLRestTemplateConfiguration config;
 
-    private final CompetencyRepository competencyRepository;
+    private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
 
     // API endpoints
     private static final String HEALTH_ENDPOINT = "/api/v1/health/";
@@ -58,11 +62,11 @@ public class AtlasMLService {
 
     public AtlasMLService(@Qualifier("atlasmlRestTemplate") RestTemplate atlasmlRestTemplate,
             @Qualifier("shortTimeoutAtlasmlRestTemplate") RestTemplate shortTimeoutAtlasmlRestTemplate, AtlasMLRestTemplateConfiguration config,
-            CompetencyRepository competencyRepository) {
+            CompetencyRepository competencyRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
         this.atlasmlRestTemplate = atlasmlRestTemplate;
         this.shortTimeoutAtlasmlRestTemplate = shortTimeoutAtlasmlRestTemplate;
         this.config = config;
-        this.competencyRepository = competencyRepository;
+        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
     }
 
     /**
@@ -115,7 +119,7 @@ public class AtlasMLService {
 
             // Handle empty array response
             if (responseBody != null && responseBody.trim().equals("[]")) {
-                return new SuggestCompetencyResponseDTO(List.of(), List.of());
+                return new SuggestCompetencyResponseDTO(List.of());
             }
 
             // Parse the response as SuggestCompetencyResponseDTO
@@ -149,7 +153,8 @@ public class AtlasMLService {
      */
     public void saveCompetencies(SaveCompetencyRequestDTO request) {
         try {
-            log.debug("Saving competencies for id: {}", request.id());
+            String requestId = request.competency() != null ? request.competency().id() : (request.exercise() != null ? request.exercise().id() : "unknown");
+            log.debug("Saving competencies for id: {}", requestId);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -160,71 +165,199 @@ public class AtlasMLService {
             ResponseEntity<String> response = atlasmlRestTemplate.exchange(config.getAtlasmlBaseUrl() + SAVE_ENDPOINT, HttpMethod.POST, entity, String.class);
 
             String responseBody = response.getBody();
-            log.debug("Received raw response for save request id {}: {}", request.id(), responseBody);
+            log.debug("Received raw response for save request id {}: {}", requestId, responseBody);
 
             // Check if the response indicates success (empty response or success message)
             if (response.getStatusCode().is2xxSuccessful()) {
-                log.debug("Received successful response for saving competencies for id: {}", request.id());
+                log.debug("Received successful response for saving competencies for id: {}", requestId);
             }
             else {
-                log.warn("Received non-successful response for saving competencies for id {}: {}", request.id(), responseBody);
+                log.warn("Received non-successful response for saving competencies for id {}: {}", requestId, responseBody);
             }
         }
         catch (HttpClientErrorException | HttpServerErrorException e) {
-            log.error("HTTP error while saving competencies for id {}: {}", request.id(), e.getMessage());
+            String requestId = request.competency() != null ? request.competency().id() : (request.exercise() != null ? request.exercise().id() : "unknown");
+            log.error("HTTP error while saving request for id {}: {}", requestId, e.getMessage());
             throw new AtlasMLServiceException("Failed to save competencies due to client error", e);
         }
         catch (ResourceAccessException e) {
-            log.error("Connection error while saving competencies for id {}: {}", request.id(), e.getMessage());
+            String requestId = request.competency() != null ? request.competency().id() : (request.exercise() != null ? request.exercise().id() : "unknown");
+            log.error("Connection error while saving request for id {}: {}", requestId, e.getMessage());
             throw new AtlasMLServiceException("Failed to save competencies due to connection issue", e);
         }
         catch (Exception e) {
-            log.error("Unexpected error while saving competencies for id {}", request.id(), e);
+            String requestId = request.competency() != null ? request.competency().id() : (request.exercise() != null ? request.exercise().id() : "unknown");
+            log.error("Unexpected error while saving request for id {}", requestId, e);
             throw new AtlasMLServiceException("Unexpected error while saving competencies", e);
         }
     }
 
     /**
-     * Saves competencies using domain objects.
+     * Saves a competency using domain object.
      *
-     * @param id                  the identifier for the request
-     * @param description         the description
-     * @param competencies        the list of competencies to save
-     * @param competencyRelations the list of competency relations to save
+     * @param competency    the competency to save
+     * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveCompetencies(String id, String description, List<Competency> competencies, List<CompetencyRelation> competencyRelations) {
+    public boolean saveCompetency(Competency competency, OperationType operationType) {
         try {
-            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromDomain(id, description, competencies, competencyRelations);
+            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromCompetency(competency, operationType);
             saveCompetencies(request);
             return true;
         }
         catch (Exception e) {
-            log.error("Failed to save competencies with domain objects for id {}", id, e);
+            log.error("Failed to {} competency with id {}", operationType.name().toLowerCase(), competency != null ? competency.getId() : "null", e);
             return false;
         }
     }
 
     /**
-     * Result class for competency suggestions with relations.
+     * Saves a course competency using domain object.
+     *
+     * @param courseCompetency the course competency to save
+     * @param operationType    the operation type (UPDATE or DELETE)
+     * @return true if the save operation was successful, false otherwise
+     */
+    public boolean saveCourseCompetency(CourseCompetency courseCompetency, OperationType operationType) {
+        try {
+            // Convert CourseCompetency to Competency for AtlasML
+            Competency competency = new Competency(courseCompetency);
+            competency.setId(courseCompetency.getId());
+
+            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromCompetency(competency, operationType);
+            saveCompetencies(request);
+            return true;
+        }
+        catch (Exception e) {
+            log.error("Failed to {} course competency with id {}", operationType.name().toLowerCase(), courseCompetency != null ? courseCompetency.getId() : "null", e);
+            return false;
+        }
+    }
+
+    /**
+     * Saves a competency using domain object with UPDATE operation type.
+     *
+     * @param competency the competency to save
+     * @return true if the save operation was successful, false otherwise
+     */
+    public boolean saveCompetency(Competency competency) {
+        return saveCompetency(competency, OperationType.UPDATE);
+    }
+
+    /**
+     * Saves an exercise with competencies.
+     *
+     * @param exerciseId    the exercise identifier
+     * @param title         the exercise title
+     * @param description   the exercise description
+     * @param competencyIds the list of competency IDs associated with the exercise
+     * @param operationType the operation type (UPDATE or DELETE)
+     * @return true if the save operation was successful, false otherwise
+     */
+    public boolean saveExercise(String exerciseId, String title, String description, List<String> competencyIds, OperationType operationType) {
+        try {
+            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromExercise(exerciseId, title, description, competencyIds, operationType);
+            saveCompetencies(request);
+            return true;
+        }
+        catch (Exception e) {
+            log.error("Failed to {} exercise with id {}", operationType.name().toLowerCase(), exerciseId, e);
+            return false;
+        }
+    }
+
+    /**
+     * Saves an exercise with competencies with UPDATE operation type.
+     *
+     * @param exerciseId    the exercise identifier
+     * @param title         the exercise title
+     * @param description   the exercise description
+     * @param competencyIds the list of competency IDs associated with the exercise
+     * @return true if the save operation was successful, false otherwise
+     */
+    public boolean saveExercise(String exerciseId, String title, String description, List<String> competencyIds) {
+        return saveExercise(exerciseId, title, description, competencyIds, OperationType.UPDATE);
+    }
+
+    /**
+     * Saves an exercise with its associated competencies by looking up the exercise-competency relationships.
+     *
+     * @param exercise      the exercise to save
+     * @param operationType the operation type (UPDATE or DELETE)
+     * @return true if the save operation was successful, false otherwise
+     */
+    public boolean saveExerciseWithCompetencies(Exercise exercise, OperationType operationType) {
+        try {
+            // Get all competency links for this exercise
+            List<CompetencyExerciseLink> links = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exercise.getId());
+
+            // Extract competency IDs
+            List<String> competencyIds = links.stream().map(link -> link.getCompetency().getId().toString()).toList();
+
+            // Ensure description is never null - use problemStatement or fallback to empty string
+            String description = exercise.getProblemStatement();
+            if (description == null || description.trim().isEmpty()) {
+                description = ""; // AtlasML API expects a non-null description
+            }
+
+            return saveExercise(exercise.getId().toString(), exercise.getTitle(), description, competencyIds, operationType);
+        }
+        catch (Exception e) {
+            log.error("Failed to {} exercise with competencies for exercise id {}", operationType.name().toLowerCase(), exercise.getId(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Saves an exercise with its associated competencies using exercise ID lookup.
+     *
+     * @param exerciseId    the exercise ID
+     * @param operationType the operation type (UPDATE or DELETE)
+     * @return true if the save operation was successful, false otherwise
+     */
+    public boolean saveExerciseWithCompetenciesById(Long exerciseId, OperationType operationType) {
+        try {
+            // Get all competency links for this exercise
+            List<CompetencyExerciseLink> links = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
+
+            if (links.isEmpty()) {
+                log.debug("No competency links found for exercise {}, skipping AtlasML notification", exerciseId);
+                return true;
+            }
+
+            // Extract competency IDs
+            List<String> competencyIds = links.stream().map(link -> link.getCompetency().getId().toString()).toList();
+
+            // Use the first link to get exercise details
+            Exercise exercise = links.get(0).getExercise();
+
+            // Ensure description is never null - use problemStatement or fallback to empty string
+            String description = exercise.getProblemStatement();
+            if (description == null || description.trim().isEmpty()) {
+                description = ""; // AtlasML API expects a non-null description
+            }
+
+            return saveExercise(exerciseId.toString(), exercise.getTitle(), description, competencyIds, operationType);
+        }
+        catch (Exception e) {
+            log.error("Failed to {} exercise with competencies for exercise id {}", operationType.name().toLowerCase(), exerciseId, e);
+            return false;
+        }
+    }
+
+    /**
+     * Result class for competency suggestions.
      */
     public static class CompetencySuggestionResult {
 
         private final List<Competency> competencies;
 
-        private final List<CompetencyRelation> relations;
-
-        public CompetencySuggestionResult(List<Competency> competencies, List<CompetencyRelation> relations) {
+        public CompetencySuggestionResult(List<Competency> competencies) {
             this.competencies = competencies;
-            this.relations = relations;
         }
 
         public List<Competency> getCompetencies() {
             return competencies;
-        }
-
-        public List<CompetencyRelation> getRelations() {
-            return relations;
         }
     }
 }

@@ -7,6 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * DTO for requesting competency suggestions from AtlasML.
  * Maps to the Python SuggestCompetencyRequest model.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record SuggestCompetencyRequestDTO(@JsonProperty("description") String description) {
 }

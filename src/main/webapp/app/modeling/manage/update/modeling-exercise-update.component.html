@@ -46,6 +46,7 @@
                     id="competencies"
                     [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                     [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+                    [exerciseDescription]="modelingExercise.problemStatement || modelingExercise.title"
                     [(ngModel)]="modelingExercise.competencyLinks"
                     name="competencyLinks"
                 />

@@ -6,15 +6,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 
 /**
  * DTO for competency suggestions response from AtlasML.
  * Maps to the Python SuggestCompetencyResponse model.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SuggestCompetencyResponseDTO(@JsonProperty("competencies") List<AtlasMLCompetencyDTO> competencies,
-        @JsonProperty("competency_relations") List<AtlasMLCompetencyRelationDTO> competencyRelations) {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record SuggestCompetencyResponseDTO(@JsonProperty("competencies") List<AtlasMLCompetencyDTO> competencies) {
 
     /**
      * Convert the AtlasML competencies to domain objects.
@@ -25,16 +23,5 @@ public record SuggestCompetencyResponseDTO(@JsonProperty("competencies") List<At
             return List.of();
         }
         return competencies.stream().map(AtlasMLCompetencyDTO::toDomain).toList();
-    }
-
-    /**
-     * Convert the AtlasML response to domain relation objects.
-     * Note: This creates basic relations without full competency objects.
-     */
-    public List<CompetencyRelation> toDomainCompetencyRelations() {
-        if (competencyRelations == null) {
-            return List.of();
-        }
-        return competencyRelations.stream().map(AtlasMLCompetencyRelationDTO::toDomain).toList();
     }
 }

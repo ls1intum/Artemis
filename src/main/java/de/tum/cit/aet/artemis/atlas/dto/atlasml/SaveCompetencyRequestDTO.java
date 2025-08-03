@@ -6,25 +6,35 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 
 /**
  * DTO for saving competencies request to AtlasML.
  * Maps to the Python SaveCompetencyRequest model.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SaveCompetencyRequestDTO(@JsonProperty("id") String id, @JsonProperty("description") String description,
-        @JsonProperty("competencies") List<AtlasMLCompetencyDTO> competencies, @JsonProperty("competency_relations") List<AtlasMLCompetencyRelationDTO> competencyRelations) {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record SaveCompetencyRequestDTO(@JsonProperty("competency") AtlasMLCompetencyDTO competency, @JsonProperty("exercise") AtlasMLExerciseDTO exercise,
+        @JsonProperty("operation_type") OperationType operationType) {
 
     /**
-     * Create a SaveCompetencyRequestDTO from domain objects.
+     * Operation type enum for AtlasML save operations.
      */
-    public static SaveCompetencyRequestDTO fromDomain(String id, String description, List<Competency> competencies, List<CompetencyRelation> competencyRelations) {
-        List<AtlasMLCompetencyDTO> atlasMLCompetencies = competencies != null ? competencies.stream().map(AtlasMLCompetencyDTO::fromDomain).toList() : List.of();
+    public enum OperationType {
+        UPDATE, DELETE
+    }
 
-        List<AtlasMLCompetencyRelationDTO> atlasMLRelations = competencyRelations != null ? competencyRelations.stream().map(AtlasMLCompetencyRelationDTO::fromDomain).toList()
-                : List.of();
+    /**
+     * Create a SaveCompetencyRequestDTO from domain objects for competency saving.
+     */
+    public static SaveCompetencyRequestDTO fromCompetency(Competency competency, OperationType operationType) {
+        AtlasMLCompetencyDTO atlasMLCompetency = competency != null ? AtlasMLCompetencyDTO.fromDomain(competency) : null;
+        return new SaveCompetencyRequestDTO(atlasMLCompetency, null, operationType);
+    }
 
-        return new SaveCompetencyRequestDTO(id, description, atlasMLCompetencies, atlasMLRelations);
+    /**
+     * Create a SaveCompetencyRequestDTO from domain objects for exercise saving.
+     */
+    public static SaveCompetencyRequestDTO fromExercise(String exerciseId, String title, String description, List<String> competencyIds, OperationType operationType) {
+        AtlasMLExerciseDTO atlasMLExercise = new AtlasMLExerciseDTO(exerciseId, title, description, competencyIds);
+        return new SaveCompetencyRequestDTO(null, atlasMLExercise, operationType);
     }
 }
