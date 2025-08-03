@@ -37,6 +37,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
@@ -1845,6 +1847,20 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         submissionRepository.save(submission);
 
         request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testStartParticipationForExamProgrammingExerciseAsTutorNotAllowed() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course, false);
+        exam = examRepository.save(exam);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+        ProgrammingExercise examExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+        examExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(examExercise.getBuildConfig()));
+        examExercise = exerciseRepository.save(examExercise);
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/exercise/exercises/" + examExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN, null);
+        assertThat(response.getContentAsString()).contains("Assignment repositories are not allowed for exam exercises. Please use the Test Run feature instead");
     }
 
     @Nested
