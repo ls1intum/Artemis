@@ -242,6 +242,16 @@ public class QuizQuestionProgressService {
         }
     }
 
+    /**
+     * Updates the existing progress entry for a given user and quiz question.
+     * If a DataIntegrityViolationException occurs during the update, an IllegalStateException is thrown.
+     *
+     * @param userId     The ID of the user whose progress is being updated
+     * @param question   The quiz question for which the progress is being updated
+     * @param data       The updated progress data for the quiz question
+     * @param answeredAt The time when the question was answered
+     * @throws IllegalStateException if the progress entry does not exist or a data integrity violation occurs
+     */
     private void updateExistingProgress(Long userId, QuizQuestion question, QuizQuestionProgressData data, ZonedDateTime answeredAt) {
         try {
             QuizQuestionProgress progress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId())
