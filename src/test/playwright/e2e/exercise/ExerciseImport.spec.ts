@@ -104,7 +104,7 @@ test.describe('Import exercises', () => {
         test(
             'Imports short answer quiz exercise',
             { tag: '@fast' },
-            async ({ login, page, courseManagementExercises, quizExerciseCreation, courseOverview, quizExerciseShortAnswerQuiz }) => {
+            async ({ login, page, courseManagementExercises, quizExerciseCreation, courseOverview, quizExerciseShortAnswerQuiz, exerciseResult }) => {
                 await login(instructor, `/course-management/${secondCourse.id}/exercises`);
                 await courseManagementExercises.importQuizExercise();
                 await courseManagementExercises.clickImportExercise(shortAnswerQuizExercise.id!);
@@ -137,7 +137,7 @@ test.describe('Import exercises', () => {
 
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
                 await page.reload();
-                await expect(page.getByText('Your score: 1/1 (100%)')).toBeVisible();
+                await exerciseResult.shouldShowScore(100);
             },
         );
 
