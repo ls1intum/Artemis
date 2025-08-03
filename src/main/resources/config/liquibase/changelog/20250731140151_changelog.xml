@@ -10,10 +10,10 @@
             DELETE FROM quiz_question_progress
             WHERE id NOT IN (
                 SELECT min_id FROM (
-                                       SELECT MIN(id) as min_id
-                                       FROM quiz_question_progress
-                                       GROUP BY user_id, quiz_question_id
-                                   ) AS t
+                   SELECT MIN(id) as min_id
+                   FROM quiz_question_progress
+                   GROUP BY user_id, quiz_question_id
+               ) AS t
             );
         </sql>
     </changeSet>
