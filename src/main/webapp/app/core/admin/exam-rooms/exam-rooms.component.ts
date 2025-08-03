@@ -11,7 +11,7 @@ import { faSort } from '@fortawesome/free-solid-svg-icons';
 // privately used interfaces, i.e., not sent from the server like this
 export interface ExamRoomDTOExtended extends ExamRoomDTO {
     maxCapacity: number;
-    layoutStrategyNames: string[];
+    layoutStrategyNames: string;
 }
 
 @Component({
@@ -183,7 +183,12 @@ export class ExamRoomsComponent {
         return examRoom!.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity ?? 0).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
     }
 
-    private getLayoutStrategyNames(examRoom: ExamRoomDTO): string[] {
-        return examRoom!.layoutStrategies?.map((layoutStrategy) => layoutStrategy.name).sort() ?? [];
+    private getLayoutStrategyNames(examRoom: ExamRoomDTO): string {
+        return (
+            examRoom!.layoutStrategies
+                ?.map((layoutStrategy) => layoutStrategy.name)
+                .sort()
+                .join('') ?? ''
+        );
     }
 }
