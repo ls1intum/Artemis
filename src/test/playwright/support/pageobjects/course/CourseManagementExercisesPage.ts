@@ -117,7 +117,9 @@ export class CourseManagementExercisesPage {
     }
 
     async startQuiz(quizID: number) {
-        await this.page.locator(`#instructor-quiz-start-${quizID}`).click();
+        const startButton = this.page.locator(`#instructor-quiz-start-${quizID}`);
+        await startButton.waitFor({ state: 'visible', timeout: 10000 });
+        await startButton.click();
     }
 
     async endQuiz(quizExercise: QuizExercise) {
