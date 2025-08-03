@@ -7,8 +7,9 @@
                 "uploadRoomData": "Prüfungsraumdaten hochladen",
                 "deleteAllExamRooms": "Lösche ALLE Prüfungsraumdaten",
                 "deleteExamRoomsSafe": "Lösche veraltete Prüfungsraumdaten",
-                "uploadSuccess": "Upload erfolgreich",
-                "uploadFailed": "Ups. Beim Verarbeiten ist etwas schiefgelaufen.",
+                "uploadFailed": "Ups. Beim Verarbeiten der Räume ist etwas schiefgelaufen.",
+                "deleting": "Löschen...",
+                "deletionFailed": "Ups. Beim Löschen der Räume ist etwas schiefgelaufen",
                 "uploadSummary": {
                     "title": "Upload-Zusammenfassung",
                     "file": "Dateiname:",
