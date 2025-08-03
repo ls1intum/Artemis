@@ -227,7 +227,12 @@ public class ParticipationResource {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
+        boolean triesToCreateAssignmentRepoForExamExercise = exercise.isExamExercise() && exercise instanceof ProgrammingExercise
+                && authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        if (triesToCreateAssignmentRepoForExamExercise) {
+            throw new AccessForbiddenAlertException("Assignment repositories are not allowed for exam exercises. Please use the Test Run feature instead.", ENTITY_NAME,
+                    "assignmentRepositoryNotAllowed");
+        }
         checkIfParticipationCanBeStartedElseThrow(exercise, user);
 
         // if this is a team-based exercise, set the participant to the team that the user belongs to

@@ -116,6 +116,7 @@
             "repoSelect": {
                 "assignmentRepo": "Assignment-Repository",
                 "createAssignmentRepo": "Assignment-Repository erstellen",
+                "createAssignmentRepoDisabledTooltip": "Das Assignment-Repository kann für Klausuraufgaben nicht erstellt werden. Bitte nutze stattdessen das Testlauf Feature um die Aufgabe auszuprobieren.",
                 "deleteAssignmentRepo": "Assignment-Repository löschen",
                 "templateRepo": "Template-Repository",
                 "solutionRepo": "Solution-Repository",
