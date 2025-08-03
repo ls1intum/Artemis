@@ -21,7 +21,7 @@ import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faArrowUp, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -64,6 +64,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     upDisabled = true;
     faArrowDown = faArrowDown;
     downDisabled = true;
+    faArrowsRotate = faArrowsRotate;
 
     stages?: IrisStageDTO[] = [];
     error?: IrisErrorMessageKey;
@@ -167,6 +168,22 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
                     .subscribe();
             }
         });
+    }
+
+    /**
+     * Handles the user request for a new suggestion
+     * This method is called when the user clicks the "New Suggestion" button
+     */
+    userRequestedNewSuggestion(): void {
+        this.chatService
+            .requestTutorSuggestion()
+            .pipe(
+                catchError((err) => {
+                    this.error = IrisErrorMessageKey.SEND_MESSAGE_FAILED;
+                    return of(undefined);
+                }),
+            )
+            .subscribe();
     }
 
     /**

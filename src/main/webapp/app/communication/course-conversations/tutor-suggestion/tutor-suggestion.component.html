@@ -20,7 +20,11 @@
                         </div>
                     </div>
                     <div class="iris-suggestion-buttons">
-                        <jhi-button id="search-submit" class="ms-1" [icon]="faArrowUp" (onClick)="switchSuggestion(true)" [disabled]="upDisabled" />
+                        @if (upDisabled && irisIsActive) {
+                            <jhi-button id="search-submit" class="ms-1" [icon]="faArrowsRotate" (onClick)="userRequestedNewSuggestion()" />
+                        } @else {
+                            <jhi-button id="search-submit" class="ms-1" [icon]="faArrowUp" (onClick)="switchSuggestion(true)" [disabled]="upDisabled" />
+                        }
                         <jhi-button id="search-submit" class="ms-1" [icon]="faArrowDown" (onClick)="switchSuggestion(false)" [disabled]="downDisabled" />
                     </div>
                 </div>
