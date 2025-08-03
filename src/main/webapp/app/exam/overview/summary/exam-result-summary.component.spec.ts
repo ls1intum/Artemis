@@ -40,6 +40,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -156,6 +157,7 @@ const gradeInfo: StudentExamWithGradeDTO = {
 function sharedSetup(url: string[]) {
     beforeEach(() => {
         return TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 ExamResultSummaryComponent,
                 MockComponent(ExamResultOverviewComponent),

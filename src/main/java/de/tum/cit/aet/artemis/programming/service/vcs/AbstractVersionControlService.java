@@ -7,6 +7,7 @@ import java.util.Objects;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.errors.LargeObjectException;
 import org.eclipse.jgit.internal.JGitText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,8 +50,19 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     @Override
-    public VcsRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
-            Integer attempt) throws VersionControlException {
+    public VcsRepositoryUri copyRepositoryWithoutHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
+            String targetRepositoryName, Integer attempt) throws VersionControlException {
+        return copyRepository(sourceProjectKey, sourceRepositoryName, sourceBranch, targetProjectKey, targetRepositoryName, attempt, false);
+    }
+
+    @Override
+    public VcsRepositoryUri copyRepositoryWithHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
+            String targetRepositoryName, Integer attempt) throws VersionControlException {
+        return copyRepository(sourceProjectKey, sourceRepositoryName, sourceBranch, targetProjectKey, targetRepositoryName, attempt, true);
+    }
+
+    private VcsRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
+            Integer attempt, boolean withHistory) throws VersionControlException {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
         String targetProjectKeyLowerCase = targetProjectKey.toLowerCase();
@@ -58,14 +70,13 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             targetProjectKeyLowerCase = targetProjectKeyLowerCase + attempt;
         }
         final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName;
-        // get the remote url of the source repo
         final var sourceRepoUri = getCloneRepositoryUri(sourceProjectKey, sourceRepositoryName);
-        // get the remote url of the target repo
         final var targetRepoUri = getCloneRepositoryUri(targetProjectKey, targetRepoSlug);
-        try (Repository targetRepo = gitService.copyBareRepository(sourceRepoUri, targetRepoUri, sourceBranch)) {
+        try (Repository targetRepo = withHistory ? gitService.copyBareRepositoryWithHistory(sourceRepoUri, targetRepoUri, sourceBranch)
+                : gitService.copyBareRepositoryWithoutHistory(sourceRepoUri, targetRepoUri, sourceBranch)) {
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
-        catch (IOException ex) {
+        catch (IOException | LargeObjectException ex) {
             Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUri);
             // clean up in case of an error
             try {
@@ -75,6 +86,11 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             catch (IOException ioException) {
                 // ignore
                 log.error("Could not delete directory of the failed cloned repository in: {}", localPath);
+            }
+            if (ex instanceof LargeObjectException) {
+                throw new VersionControlException(
+                        "Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName + " because a file in the repo is too large.",
+                        ex);
             }
             throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, ex);
         }

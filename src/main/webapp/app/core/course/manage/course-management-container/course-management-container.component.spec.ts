@@ -18,8 +18,7 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -38,8 +37,6 @@ import { AfterViewInit, Component, EventEmitter, TemplateRef, ViewChild } from '
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/core/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD } from 'app/app.constants';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
@@ -249,6 +246,10 @@ describe('CourseManagementContainerComponent', () => {
                     of(
                         new HttpResponse({
                             body: {
+                                numberOfStudents: 100,
+                                numberOfTutors: 10,
+                                numberOfEditors: 5,
+                                numberOfInstructors: 2,
                                 numberExams: 2,
                                 numberLectures: 3,
                                 numberProgrammingExercises: 5,
@@ -412,35 +413,18 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.isSidebarCollapsed()).toBeFalse();
     });
 
-    it('should get existing summary entries correctly', () => {
+    it('should fetch course deletion summary correctly', () => {
         component.course.set({
             ...course1,
-            numberOfStudents: 100,
-            numberOfTeachingAssistants: 10,
-            numberOfEditors: 5,
-            numberOfInstructors: 2,
             testCourse: true,
-            exercises: [
-                { type: ExerciseType.PROGRAMMING } as ProgrammingExercise,
-                { type: ExerciseType.PROGRAMMING } as ProgrammingExercise,
-                { type: ExerciseType.TEXT } as TextExercise,
-                { type: ExerciseType.QUIZ } as QuizExercise,
-            ],
         });
 
-        const summary = (component as any).getExistingSummaryEntries();
-
-        expect(summary['artemisApp.course.delete.summary.numberStudents']).toBe(100);
-        expect(summary['artemisApp.course.delete.summary.numberTutors']).toBe(10);
-        expect(summary['artemisApp.course.delete.summary.numberEditors']).toBe(5);
-        expect(summary['artemisApp.course.delete.summary.numberInstructors']).toBe(2);
-        expect(summary['artemisApp.course.delete.summary.isTestCourse']).toBeTrue();
-    });
-
-    it('should fetch course deletion summary correctly', () => {
-        component.course.set(course1);
-
         component.fetchCourseDeletionSummary().subscribe((summary: EntitySummary) => {
+            expect(summary['artemisApp.course.delete.summary.isTestCourse']).toBeTrue();
+            expect(summary['artemisApp.course.delete.summary.numberStudents']).toBe(100);
+            expect(summary['artemisApp.course.delete.summary.numberTutors']).toBe(10);
+            expect(summary['artemisApp.course.delete.summary.numberEditors']).toBe(5);
+            expect(summary['artemisApp.course.delete.summary.numberInstructors']).toBe(2);
             expect(summary['artemisApp.course.delete.summary.numberExams']).toBe(2);
             expect(summary['artemisApp.course.delete.summary.numberLectures']).toBe(3);
             expect(summary['artemisApp.course.delete.summary.numberProgrammingExercises']).toBe(5);
@@ -523,7 +507,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should set up conversation service if course has communication enabled', () => {
-        const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService').mockImplementation((currentCourse) => {
+        const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService').mockImplementation(() => {
             return new Observable((subscriber) => subscriber.complete());
         });
 

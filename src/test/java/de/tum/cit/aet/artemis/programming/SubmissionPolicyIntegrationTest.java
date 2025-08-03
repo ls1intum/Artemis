@@ -8,7 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -47,9 +47,9 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        userUtilService.addInstructor("other-instructor-group", TEST_PREFIX + "other-instructor");
+        userUtilService.addInstructor("other-instructor-group", TEST_PREFIX + "other-instructor1");
         userUtilService.addEditor("other-editor-group", TEST_PREFIX + "other-editor");
-        userUtilService.addStudent("other-student-group", TEST_PREFIX + "other-student");
+        userUtilService.addStudent("other-student-group", TEST_PREFIX + "other-student1");
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseId = programmingExercise.getId();
@@ -432,7 +432,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         assertThat(result).isNotNull();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             assertThat(result.getScore()).isEqualTo(15);
-            assertThat(result.getFeedbacks()).anyMatch(feedback -> StringUtils.startsWith(feedback.getText(), SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
+            assertThat(result.getFeedbacks()).anyMatch(feedback -> Strings.CS.startsWith(feedback.getText(), SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
         }
         else {
             assertThat(result.getScore()).isEqualTo(25);

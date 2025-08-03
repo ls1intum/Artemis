@@ -9,11 +9,7 @@ import { ChannelService } from 'app/communication/conversations/service/channel.
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import {
-    generateExampleChannelDTO,
-    generateExampleGroupChatDTO,
-    generateOneToOneChatDTO,
-} from '../../../../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { User } from 'app/core/user/user.model';
@@ -66,14 +62,8 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [NgbTooltipModule],
-                declarations: [
-                    ConversationMemberRowComponent,
-                    MockPipe(ArtemisTranslatePipe),
-                    MockComponent(FaIconComponent),
-                    MockComponent(ProfilePictureComponent),
-                    MockDirective(TranslateDirective),
-                ],
+                imports: [NgbTooltipModule, FaIconComponent],
+                declarations: [ConversationMemberRowComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ProfilePictureComponent), MockDirective(TranslateDirective)],
                 providers: [
                     MockProvider(AccountService),
                     MockProvider(NgbModal),

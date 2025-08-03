@@ -34,10 +34,10 @@ describe('PostingSummaryComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 PostingSummaryComponent,
                 MockPipe(ArtemisDatePipe),
-                MockComponent(FaIconComponent),
                 MockComponent(ProfilePictureComponent),
                 MockComponent(PostingContentComponent),
                 MockDirective(TranslateDirective),

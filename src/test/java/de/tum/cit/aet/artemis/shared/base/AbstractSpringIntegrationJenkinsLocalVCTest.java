@@ -14,6 +14,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
@@ -51,6 +52,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
@@ -95,6 +97,9 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     @MockitoSpyBean
     protected GroupNotificationScheduleService groupNotificationScheduleService;
+
+    @MockitoSpyBean
+    protected ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     protected Path localVCRepoPath;
@@ -159,7 +164,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
         // mocking them turned out to be not feasible with reasonable effort as this effects a lot of other test classes and leads to many other test failures.
         // not mocking for all tests also posed a problem due to many test failures in other classes.
         doCallRealMethod().when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
-        doCallRealMethod().when(gitService).getOrCheckoutRepository(any(VcsRepositoryUri.class), eq(true));
+        doCallRealMethod().when(gitService).getOrCheckoutRepository(any(VcsRepositoryUri.class), eq(true), anyBoolean());
     }
 
     @Override

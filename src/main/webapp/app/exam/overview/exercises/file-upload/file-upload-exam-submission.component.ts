@@ -14,7 +14,8 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/sha
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
@@ -44,6 +45,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
     private fileService = inject(FileService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
 
     exerciseType = ExerciseType.FILE_UPLOAD;
 
@@ -51,7 +53,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     studentSubmission = model.required<FileUploadSubmission>();
     exercise = input.required<FileUploadExercise>();
-    problemStatementHtml: string;
+    problemStatementHtml: SafeHtml;
 
     submittedFileName: string;
     submittedFileExtension: string;
@@ -72,7 +74,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      */
     ngOnInit() {
         // show submission answers in UI
-        this.problemStatementHtml = htmlForMarkdown(this.exercise()?.problemStatement);
+        this.problemStatementHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement);
         this.updateViewFromSubmission();
     }
 
@@ -80,7 +82,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      * Updates the problem statement html of the currently loaded file upload exercise which is part of the user's student exam.
      * @param newProblemStatementHtml is the updated problem statement html that should be displayed to the user.
      */
-    updateProblemStatement(newProblemStatementHtml: string): void {
+    updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
         this.problemStatementHtml = newProblemStatementHtml;
         this.changeDetectorReference.detectChanges();
     }

@@ -4,7 +4,6 @@ import { ProgrammingExerciseParticipationType } from 'app/programming/shared/ent
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
-import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -14,7 +13,7 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     selector: 'jhi-programming-exercise-group-cell',
     templateUrl: './programming-exercise-group-cell.component.html',
     styles: [':host{display: contents}'],
-    imports: [ProgrammingExerciseInstructorStatusComponent, TranslateDirective],
+    imports: [TranslateDirective],
 })
 export class ProgrammingExerciseGroupCellComponent implements OnInit {
     private profileService = inject(ProfileService);
@@ -27,7 +26,6 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
     onlineIdeEnabled = false;
 
     displayShortName = input(false);
-    displayRepositoryUri = input(false);
     displayTemplateUrls = input(false);
     displayEditorMode = input(false);
     exercise = input.required<ProgrammingExercise>();

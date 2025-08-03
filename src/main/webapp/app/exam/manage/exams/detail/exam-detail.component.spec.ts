@@ -75,6 +75,7 @@ describe('ExamDetailComponent', () => {
                 ]),
                 ExerciseDetailDirective,
                 MockComponent(NoDataComponent),
+                FaIconComponent,
             ],
             declarations: [
                 DetailOverviewListComponent,
@@ -82,7 +83,6 @@ describe('ExamDetailComponent', () => {
                 DummyComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 ExamChecklistComponent,

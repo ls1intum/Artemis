@@ -32,14 +32,6 @@
             },
             "reset": {
                 "pleaseSelectOperations": "Bitte wähle die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
-                "deleteBuildPlans": {
-                    "title": "Lösche Build Pläne der Studierenden (auf {{ ciPlatform }}).",
-                    "info": "Die Build-Pläne werden automatisch neu erstellt, sobald Studierende erneut abgeben."
-                },
-                "deleteRepositories": {
-                    "title": "Lösche Repositories der Studierenden (auf {{ vcPlatform }}).",
-                    "warning": "Archivierung der Übung vor Aktivierung dieser Option wird empfohlen."
-                },
                 "deleteParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
                 "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfe sorgfältig, ob dies die gewünschte Aktion ist, bevor du den Vorgang fortsetzt.",
                 "recreateBuildPlans": "Erstelle Build Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe alle vorherigen Änderungen.",
@@ -735,7 +727,9 @@
             },
             "artemisIntelligence": {
                 "consistencyCheckAlert": {
-                    "title": "Resultat der Konsistenzprüfung"
+                    "title": "Resultat der Konsistenzprüfung",
+                    "improvement": "Verbesserungsempfehlung",
+                    "inconsistencies": "Bitte überprüfe die FAQ auf inhaltliche Inkonsistenzen und passe es entsprechend an, damit es stimmig und klar verständlich ist."
                 }
             }
         },

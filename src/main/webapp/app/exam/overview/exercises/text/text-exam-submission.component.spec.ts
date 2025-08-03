@@ -11,6 +11,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 describe('TextExamSubmissionComponent', () => {
     let fixture: ComponentFixture<TextExamSubmissionComponent>;
@@ -91,9 +93,9 @@ describe('TextExamSubmissionComponent', () => {
         component.exercise().problemStatement = 'old problem statement';
         const newProblemStatement = 'new problem statement';
 
-        component.updateProblemStatement(newProblemStatement);
+        component.updateProblemStatement(TestBed.inject(ArtemisMarkdownService).safeHtmlForMarkdown(newProblemStatement));
 
-        expect(component.problemStatementHtml).toBe(newProblemStatement);
+        expect((component.problemStatementHtml as any).changingThisBreaksApplicationSecurity).toBe(htmlForMarkdown(newProblemStatement));
     });
 
     it('should trigger text editor events', fakeAsync(() => {
