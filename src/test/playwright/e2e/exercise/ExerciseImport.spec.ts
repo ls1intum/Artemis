@@ -17,6 +17,7 @@ import { Fixtures } from '../../fixtures/fixtures';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { QuizMode } from '../../support/constants';
 
 test.describe('Import exercises', () => {
     let course: Course;
@@ -33,7 +34,7 @@ test.describe('Import exercises', () => {
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
         textExercise = await exerciseAPIRequests.createTextExercise({ course });
         multipleChoiceQuizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate] });
-        shortAnswerQuizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [shortAnswerQuizTemplate] });
+        shortAnswerQuizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [shortAnswerQuizTemplate], quizMode: QuizMode.INDIVIDUAL });
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
         programmingExercise = await exerciseAPIRequests.createProgrammingExercise({ course });
         secondCourse = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
@@ -114,6 +115,7 @@ test.describe('Import exercises', () => {
                 exerciseResult,
                 navigationBar,
                 courseManagement,
+                quizExerciseParticipation,
             }) => {
                 await login(instructor, `/course-management/${secondCourse.id}/exercises`);
                 await courseManagementExercises.importQuizExercise();
@@ -127,10 +129,11 @@ test.describe('Import exercises', () => {
 
                 const importResponse = await quizExerciseCreation.import();
                 const exercise: QuizExercise = await importResponse.json();
-                await courseManagementExercises.startQuiz(exercise.id!);
                 const questionId = exercise.quizQuestions![0].id!;
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
-                await courseOverview.startExercise(exercise.id!);
+                await courseOverview.openRunningExercise(exercise.id!);
+                await quizExerciseParticipation.startIndividualQuizBatch();
+                await page.waitForSelector('.quiz-waiting-for-start-overlay', { state: 'hidden' });
                 await quizExerciseShortAnswerQuiz.typeAnswer(0, 1, questionId, 'give');
                 await quizExerciseShortAnswerQuiz.typeAnswer(1, 1, questionId, 'let');
                 await quizExerciseShortAnswerQuiz.typeAnswer(2, 1, questionId, 'run');
@@ -144,11 +147,10 @@ test.describe('Import exercises', () => {
 
                 await login(instructor, '/');
                 await navigationBar.openCourseManagement();
-                await courseManagement.openExercisesOfCourse(course.id!);
+                await courseManagement.openExercisesOfCourse(secondCourse.id!);
                 await courseManagementExercises.endQuiz(exercise);
 
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
-                await page.reload();
                 await exerciseResult.shouldShowScore(100);
             },
         );

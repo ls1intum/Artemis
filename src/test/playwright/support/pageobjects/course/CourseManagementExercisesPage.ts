@@ -123,7 +123,10 @@ export class CourseManagementExercisesPage {
     }
 
     async endQuiz(quizExercise: QuizExercise) {
-        await this.page.locator(`#quiz-set-end-${quizExercise.id}`).click();
+        const endButton = this.page.locator(`#quiz-set-end-${quizExercise.id}`);
+        await endButton.waitFor({ state: 'visible', timeout: 10000 });
+        await endButton.scrollIntoViewIfNeeded();
+        await endButton.click();
         await this.page.locator('#confirm-entity-name').fill(quizExercise.title!);
         await this.page.locator('#delete').click();
     }
