@@ -16,21 +16,7 @@ import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage
 import { AlertService } from 'app/shared/service/alert.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import {
-    faBook,
-    faCheckDouble,
-    faDownload,
-    faFileSignature,
-    faListAlt,
-    faPencilAlt,
-    faPlus,
-    faSort,
-    faTable,
-    faTrash,
-    faUndo,
-    faUsers,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { FormsModule } from '@angular/forms';
@@ -40,7 +26,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { ProgrammingExerciseGradingDirtyWarningComponent } from '../grading/warning/programming-exercise-grading-dirty-warning.component';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
-import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/reset/button/programming-exercise-reset-button.directive';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
@@ -65,7 +50,6 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
         ProgrammingExerciseGradingDirtyWarningComponent,
         ExerciseCategoriesComponent,
         FeatureToggleLinkDirective,
-        ProgrammingExerciseResetButtonDirective,
         FeatureToggleDirective,
         DeleteButtonDirective,
         ProgrammingAssessmentRepoExportButtonComponent,
@@ -100,7 +84,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faSort = faSort;
     faPlus = faPlus;
     faDownload = faDownload;
-    faUndo = faUndo;
     faBook = faBook;
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
