@@ -255,6 +255,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
         setUpShortAnswerMappingsForImport(saQuestion, spotMap, solutionMap);
     }
 
+    /**
+     * Sets up a map of new ShortAnswerSpot instances for the given short answer question.
+     * Creates new spots based on the original ones, maps them by their ID or tempID,
+     * and updates the question with the list of new spots.
+     *
+     * @param saQuestion the short answer question containing the original spots
+     * @return a map of IDs/tempIDs to new ShortAnswerSpot instances
+     */
     private Map<Long, ShortAnswerSpot> setUpShortAnswerSpotsForImport(ShortAnswerQuestion saQuestion) {
         Map<Long, ShortAnswerSpot> spotMap = new HashMap<>();
         for (ShortAnswerSpot oldSpot : saQuestion.getSpots()) {
@@ -266,6 +274,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
         return spotMap;
     }
 
+    /**
+     * Sets up a map of new ShortAnswerSolution instances for the given short answer question.
+     * Creates new solutions based on the original ones, maps them by their ID or tempID,
+     * and updates the question with the list of new solutions.
+     *
+     * @param saQuestion the short answer question containing the original solutions
+     * @return a map of IDs/tempIDs to new ShortAnswerSolution instances
+     */
     private Map<Long, ShortAnswerSolution> setUpShortAnswerSolutionsForImport(ShortAnswerQuestion saQuestion) {
         Map<Long, ShortAnswerSolution> solutionMap = new HashMap<>();
         for (ShortAnswerSolution oldSolution : saQuestion.getSolutions()) {
@@ -277,6 +293,15 @@ public class QuizExerciseImportService extends ExerciseImportService {
         return solutionMap;
     }
 
+    /**
+     * Sets up new ShortAnswerMapping instances for the given short answer question.
+     * Creates new mappings based on the original correct mappings, linking them to the new spots and solutions
+     * using the provided maps, and updates the question with the list of new mappings.
+     *
+     * @param saQuestion  the short answer question containing the original mappings
+     * @param spotMap     the map of IDs/tempIDs to new ShortAnswerSpot instances
+     * @param solutionMap the map of IDs/tempIDs to new ShortAnswerSolution instances
+     */
     private void setUpShortAnswerMappingsForImport(ShortAnswerQuestion saQuestion, Map<Long, ShortAnswerSpot> spotMap, Map<Long, ShortAnswerSolution> solutionMap) {
         List<ShortAnswerMapping> newMappings = new ArrayList<>();
         for (ShortAnswerMapping oldMapping : saQuestion.getCorrectMappings()) {
@@ -286,6 +311,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
         saQuestion.setCorrectMappings(newMappings);
     }
 
+    /**
+     * Creates a new ShortAnswerSpot instance based on the properties of the old spot.
+     * Copies relevant fields and associates it with the given question, initializing an empty set of mappings.
+     *
+     * @param oldSpot    the original ShortAnswerSpot to copy from
+     * @param saQuestion the short answer question to associate with the new spot
+     * @return the newly created ShortAnswerSpot
+     */
     private ShortAnswerSpot createNewShortAnswerSpot(ShortAnswerSpot oldSpot, ShortAnswerQuestion saQuestion) {
         ShortAnswerSpot newSpot = new ShortAnswerSpot();
         newSpot.setSpotNr(oldSpot.getSpotNr());
@@ -296,6 +329,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
         return newSpot;
     }
 
+    /**
+     * Creates a new ShortAnswerSolution instance based on the properties of the old solution.
+     * Copies relevant fields and associates it with the given question, initializing an empty set of mappings.
+     *
+     * @param oldSolution the original ShortAnswerSolution to copy from
+     * @param saQuestion  the short answer question to associate with the new solution
+     * @return the newly created ShortAnswerSolution
+     */
     private ShortAnswerSolution createNewShortAnswerSolution(ShortAnswerSolution oldSolution, ShortAnswerQuestion saQuestion) {
         ShortAnswerSolution newSolution = new ShortAnswerSolution();
         newSolution.setText(oldSolution.getText());
@@ -305,6 +346,17 @@ public class QuizExerciseImportService extends ExerciseImportService {
         return newSolution;
     }
 
+    /**
+     * Creates a new ShortAnswerMapping instance based on the properties of the old mapping.
+     * Copies the invalid flag, associates it with the given question, and links it to the corresponding
+     * new solution and spot using the provided maps if they exist.
+     *
+     * @param oldMapping  the original ShortAnswerMapping to copy from
+     * @param saQuestion  the short answer question to associate with the new mapping
+     * @param spotMap     the map of IDs/tempIDs to new ShortAnswerSpot instances
+     * @param solutionMap the map of IDs/tempIDs to new ShortAnswerSolution instances
+     * @return the newly created ShortAnswerMapping
+     */
     private ShortAnswerMapping createNewShortAnswerMapping(ShortAnswerMapping oldMapping, ShortAnswerQuestion saQuestion, Map<Long, ShortAnswerSpot> spotMap,
             Map<Long, ShortAnswerSolution> solutionMap) {
         ShortAnswerMapping newMapping = new ShortAnswerMapping();
