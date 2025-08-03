@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExamRoomsComponent } from './exam-rooms.component';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { By } from '@angular/platform-browser';
 
 describe('ExamRoomsComponent', () => {
     let component: ExamRoomsComponent;

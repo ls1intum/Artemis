@@ -1,12 +1,12 @@
 import { Component, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
-import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { ExamRoomAdminOverviewDTO, ExamRoomDTO, ExamRoomDeletionSummaryDTO, ExamRoomUploadInformationDTO } from 'app/core/admin/exam-rooms/exam-rooms.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
 
 // privately used interfaces, i.e., not sent from the server like this
@@ -26,17 +26,21 @@ export class ExamRoomsComponent {
 
     // Writeable signals
     selectedFile: WritableSignal<File | undefined> = signal(undefined);
-    uploading: WritableSignal<boolean> = signal(false);
-    uploadResult: WritableSignal<'success' | 'error' | undefined> = signal(undefined);
-    uploadInformation: WritableSignal<ExamRoomUploadInformationDTO | undefined> = signal(undefined);
+    actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'uploadError' | 'deleting' | 'deletionSuccess' | 'deletionError' | undefined> = signal(undefined);
+    actionInformation: WritableSignal<ExamRoomUploadInformationDTO | ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
     overview: WritableSignal<ExamRoomAdminOverviewDTO | undefined> = signal(undefined);
-    deletionSummary: WritableSignal<ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
 
     // Computed signals
     canUpload: Signal<boolean> = computed(() => !!this.selectedFile());
-    isUploading: Signal<boolean> = computed(() => this.uploading());
-    hasUploadSucceeded: Signal<boolean> = computed(() => this.uploadResult() === 'success');
-    hasUploadFailed: Signal<boolean> = computed(() => this.uploadResult() === 'error');
+    isUploading: Signal<boolean> = computed(() => this.actionStatus() === 'uploading');
+    hasUploadInformation: Signal<boolean> = computed(() => this.actionStatus() === 'uploadSuccess' && !!this.uploadInformation());
+    hasUploadFailed: Signal<boolean> = computed(() => this.actionStatus() === 'error');
+    isDeleting: Signal<boolean> = computed(() => this.actionStatus() === 'deleting');
+    hasDeletionInformation: Signal<boolean> = computed(() => this.actionStatus() === 'deletionSuccess' && !!this.deletionInformation());
+    hasDeletionFailed: Signal<boolean> = computed(() => this.actionStatus() === 'deletionFailed');
+    uploadInformation: Signal<ExamRoomUploadInformationDTO | undefined> = computed(() => this.actionInformation() as ExamRoomUploadInformationDTO);
+    deletionInformation: Signal<ExamRoomDeletionSummaryDTO | undefined> = computed(() => this.actionInformation() as ExamRoomDeletionSummaryDTO);
+    hasOverview: Signal<boolean> = computed(() => !!this.overview());
     hasExamRoomData: Signal<boolean> = computed(() => !!this.overview()?.examRoomDTOS?.length);
     examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => {
         return this.overview()?.examRoomDTOS.map(
@@ -51,19 +55,14 @@ export class ExamRoomsComponent {
 
     // Icons
     faSort = faSort;
-    faPlus = faPlus;
-    faTimes = faTimes;
-    faEye = faEye;
-    faWrench = faWrench;
-    faFilter = faFilter;
 
+    // Attributes for working with SortDirective
     sort_attribute: string = 'roomNumber';
     ascending: boolean = true;
 
     // Basically ngInit / constructor
     initEffect = effect(() => {
         this.loadExamRoomOverview();
-        // used for functionality with jhi-sort (SortDirective & SortService)
     });
 
     loadExamRoomOverview(): void {
@@ -96,60 +95,58 @@ export class ExamRoomsComponent {
         const formData = new FormData();
         formData.append('file', file);
 
-        this.uploading.set(true);
-        this.uploadResult.set(undefined);
+        this.actionStatus.set('uploading');
 
-        this.http
-            .post('/api/exam/admin/exam-rooms/upload', formData, {
-                reportProgress: true,
-                observe: 'events',
-            })
-            .subscribe({
-                next: (event: HttpEvent<any>) => {
-                    if (event.type === HttpEventType.Response) {
-                        this.uploadResult.set('success');
-                        this.selectedFile.set(undefined);
-                        this.uploadInformation.set(event.body);
-                    }
-                },
-                error: () => {
-                    this.uploading.set(false);
-                    this.uploadResult.set('error');
-                },
-                complete: () => {
-                    this.uploading.set(false);
-                    this.deletionSummary.set(undefined);
-                    this.loadExamRoomOverview();
-                },
-            });
+        this.http.post('/api/exam/admin/exam-rooms/upload', formData).subscribe({
+            next: (uploadInformation) => {
+                this.actionStatus.set('uploadSuccess');
+                this.selectedFile.set(undefined);
+                this.actionInformation.set(uploadInformation as ExamRoomUploadInformationDTO);
+            },
+            error: () => {
+                this.actionStatus.set('uploadError');
+            },
+            complete: () => {
+                this.loadExamRoomOverview();
+            },
+        });
     }
 
     clearExamRooms(): void {
         if (!confirm('Are you sure you want to delete ALL exam rooms? This action cannot be undone.')) {
             return;
         }
+
+        this.actionStatus.set('deleting');
+
         this.http.delete<void>('/api/exam/admin/exam-rooms').subscribe({
             next: () => {
+                this.actionStatus.set('deletionSuccess');
                 alert('All exam rooms deleted.');
             },
             error: (err) => {
+                this.actionStatus.set('deletionError');
                 alert('Failed to clear exam rooms: ' + err.message);
             },
             complete: () => {
-                this.turnOffUploadResult();
-                this.deletionSummary.set(undefined);
+                this.actionInformation.set(undefined); // since this purges everything, we don't need a summary
                 this.loadExamRoomOverview();
             },
         });
     }
 
     deleteOutdatedAndUnusedExamRooms(): void {
+        this.actionStatus.set('deleting');
+
         this.http.delete<ExamRoomDeletionSummaryDTO>('api/exam/admin/exam-rooms/outdated-and-unused').subscribe({
             next: (summary) => {
-                this.deletionSummary.set(summary);
+                this.actionInformation.set(summary as ExamRoomDeletionSummaryDTO);
+                this.actionStatus.set('deletionSuccess');
+            },
+            error: () => {
+                this.actionStatus.set('deletionError');
             },
             complete: () => {
-                this.uploadInformation.set(undefined);
                 this.loadExamRoomOverview();
             },
         });
@@ -158,11 +155,6 @@ export class ExamRoomsComponent {
     sortRows(): void {
         if (!this.hasExamRoomData()) return;
         this.sortService.sortByProperty(this.examRoomData()!, this.sort_attribute, this.ascending);
-    }
-
-    private turnOffUploadResult(): void {
-        this.uploadResult.set(undefined);
-        this.uploadInformation.set(undefined);
     }
 
     private getMaxCapacityOfExamRoom(examRoom: ExamRoomDTO): number {
