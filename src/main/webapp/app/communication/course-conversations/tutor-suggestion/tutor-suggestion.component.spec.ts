@@ -362,4 +362,86 @@ describe('TutorSuggestionComponent', () => {
             expect(requestTutorSuggestionSpy).not.toHaveBeenCalled();
         }));
     });
+
+    describe('switchSuggestion and updateArrowDisabled', () => {
+        beforeEach(() => {
+            // Simulate a list of suggestions (id: 1, 2, 3)
+            component.suggestions = [{ id: 1, sender: 'ARTIFACT' } as IrisMessage, { id: 2, sender: 'ARTIFACT' } as IrisMessage, { id: 3, sender: 'ARTIFACT' } as IrisMessage];
+        });
+
+        it('should not switch if suggestion or suggestions is undefined', () => {
+            component.suggestion = undefined;
+            component.suggestions = undefined as any;
+            const initialUp = component.upDisabled;
+            const initialDown = component.downDisabled;
+            component.switchSuggestion(true);
+            expect(component.suggestion).toBeUndefined();
+            expect(component.upDisabled).toBe(initialUp);
+            expect(component.downDisabled).toBe(initialDown);
+        });
+
+        it('should not switch if currentIndex is -1', () => {
+            component.suggestion = { id: 99, sender: 'ARTIFACT' } as IrisMessage;
+            component.switchSuggestion(true);
+            expect(component.suggestion.id).toBe(99);
+        });
+
+        it('should switch to next suggestion when up=true', () => {
+            component.suggestion = component.suggestions[0]; // id: 1
+            component.switchSuggestion(true);
+            expect(component.suggestion.id).toBe(2);
+            expect(component.downDisabled).toBeFalse(); // index 1
+            expect(component.upDisabled).toBeFalse();
+        });
+
+        it('should switch to previous suggestion when up=false', () => {
+            component.suggestion = component.suggestions[2]; // id: 3
+            component.switchSuggestion(false);
+            expect(component.suggestion.id).toBe(2);
+            expect(component.downDisabled).toBeFalse();
+            expect(component.upDisabled).toBeFalse();
+        });
+
+        it('should not switch when at first element and up=false', () => {
+            component.suggestion = component.suggestions[0];
+            component.switchSuggestion(false);
+            expect(component.suggestion.id).toBe(1);
+            expect(component.downDisabled).toBeTrue();
+            expect(component.upDisabled).toBeFalse();
+        });
+
+        it('should not switch when at last element and up=true', () => {
+            component.suggestion = component.suggestions[2];
+            component.switchSuggestion(true);
+            expect(component.suggestion.id).toBe(3);
+            expect(component.downDisabled).toBeFalse();
+            expect(component.upDisabled).toBeTrue();
+        });
+
+        it('should update arrow states for a single-element suggestions list', () => {
+            component.suggestions = [{ id: 10, sender: 'ARTIFACT' } as IrisMessage];
+            component.suggestion = component.suggestions[0];
+            component['updateArrowDisabled'](0);
+            expect(component.downDisabled).toBeTrue();
+            expect(component.upDisabled).toBeTrue();
+        });
+
+        it('should update arrow states for the first index', () => {
+            component['updateArrowDisabled'](0);
+            expect(component.downDisabled).toBeTrue();
+            expect(component.upDisabled).toBeFalse();
+        });
+
+        it('should update arrow states for a middle index', () => {
+            component['updateArrowDisabled'](1);
+            expect(component.downDisabled).toBeFalse();
+            expect(component.upDisabled).toBeFalse();
+        });
+
+        it('should update arrow states for the last index', () => {
+            component['updateArrowDisabled'](2);
+            expect(component.downDisabled).toBeFalse();
+            expect(component.upDisabled).toBeTrue();
+        });
+    });
 });

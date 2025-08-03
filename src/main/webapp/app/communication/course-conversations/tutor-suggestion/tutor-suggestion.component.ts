@@ -269,6 +269,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
         const newIndex = up ? currentIndex + 1 : currentIndex - 1;
 
         if (newIndex < 0 || newIndex >= this.suggestions.length) {
+            this.updateArrowDisabled(currentIndex);
             return;
         }
 
