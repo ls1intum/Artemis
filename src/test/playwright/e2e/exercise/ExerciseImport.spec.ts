@@ -104,7 +104,17 @@ test.describe('Import exercises', () => {
         test(
             'Imports short answer quiz exercise',
             { tag: '@fast' },
-            async ({ login, page, courseManagementExercises, quizExerciseCreation, courseOverview, quizExerciseShortAnswerQuiz, exerciseResult }) => {
+            async ({
+                login,
+                page,
+                courseManagementExercises,
+                quizExerciseCreation,
+                courseOverview,
+                quizExerciseShortAnswerQuiz,
+                exerciseResult,
+                navigationBar,
+                courseManagement,
+            }) => {
                 await login(instructor, `/course-management/${secondCourse.id}/exercises`);
                 await courseManagementExercises.importQuizExercise();
                 await courseManagementExercises.clickImportExercise(shortAnswerQuizExercise.id!);
@@ -132,7 +142,9 @@ test.describe('Import exercises', () => {
                 expect(submission.submitted).toBe(true);
                 expect(submitResponse.status()).toBe(200);
 
-                await login(instructor, `/course-management/${secondCourse.id}/exercises`);
+                await login(instructor, '/');
+                await navigationBar.openCourseManagement();
+                await courseManagement.openExercisesOfCourse(course.id!);
                 await courseManagementExercises.endQuiz(exercise);
 
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
