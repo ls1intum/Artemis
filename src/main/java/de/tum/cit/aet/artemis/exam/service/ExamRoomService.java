@@ -69,8 +69,15 @@ public class ExamRoomService {
         this.examRoomAssignmentRepository = examRoomAssignmentRepository;
     }
 
+    /**
+     * Looks through all JSON files contained in a given zip file (recursive search).
+     * Then it adds all exam rooms it could parse to the database, ignoring duplicates of the same room.
+     * The exam rooms' primary room numbers are the filenames of the JSON files containing their data.
+     *
+     * @param zipFile A zip file containing JSON files of exam room data.
+     * @return A small DTO that can be returned to the client, containing some metrics about the parsing process.
+     */
     public ExamRoomUploadInformationDTO parseAndStoreExamRoomDataFromZipFile(MultipartFile zipFile) {
-        // TODO: Delete old, unused entries
         final long startTime = System.nanoTime();
         log.info("Starting to parse rooms from {}...", zipFile.getOriginalFilename());
         Set<ExamRoom> examRooms = new HashSet<>();
@@ -84,21 +91,19 @@ public class ExamRoomService {
 
                 // validate file type
                 if (entry.isDirectory() || !entryName.endsWith(".json")) {
-                    log.debug("Skipping {} because it's not a json file", entryName);
                     continue;
                 }
 
                 // extract the filename - remove the folder path (if existent) and remove the trailing '.json'
                 // Math.max(0, entryName.lastIndexOf('/') + 1); === entryName.lastIndexOf('/') + 1;
-                int longRoomNumberStartIdx = entryName.lastIndexOf('/') + 1;
-                int longRoomNumberEndIdx = entryName.lastIndexOf(".json");
-                String longRoomNumber = entryName.substring(longRoomNumberStartIdx, longRoomNumberEndIdx);
+                int roomNumberStartIdx = entryName.lastIndexOf('/') + 1;
+                int roomNumberEndIdx = entryName.lastIndexOf(".json");
+                String roomNumber = entryName.substring(roomNumberStartIdx, roomNumberEndIdx);
 
-                log.debug("Parsing room {}...", longRoomNumber);
                 String jsonData = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
                 JsonNode jsonRoot = mapper.readTree(jsonData);
 
-                var examRoom = parseExamRoomJsonFile(longRoomNumber, jsonRoot);
+                var examRoom = parseExamRoomJsonFile(roomNumber, jsonRoot);
                 if (examRoom == null)
                     continue;
 
@@ -125,12 +130,32 @@ public class ExamRoomService {
         return result;
     }
 
-    private static ExamRoom parseExamRoomJsonFile(final String longRoomNumber, final JsonNode jsonRoot) throws IOException {
+    /**
+     * Parses an exam room from a JSON file and returns it.
+     * <p/>
+     * Expects this format:
+     * <ul>
+     * <li>number: {alternativeRoomNumber}</li>
+     * <li>name: {roomName}</li>
+     * <li>shortname: {alternativeName}</li>
+     * <li>building: {building}</li>
+     * <li>rows: {rowsJSON}</li>
+     * <li>layouts: {layoutsJSON}</li>
+     * </ul>
+     * <p>
+     * How exactly rowsJSON and layoutsJSON are expected to look like can be seen in the {@link #parseExamSeats} and
+     * the {@link #parseLayoutStrategies}, respectively.
+     *
+     * @param roomNumber The roomNumber of the exam room we want to create.
+     * @param jsonRoot   The root JSON node, containing the data as described above.
+     * @return The ExamRoom as stored in the JSON room data.
+     */
+    private static ExamRoom parseExamRoomJsonFile(final String roomNumber, final JsonNode jsonRoot) {
         /* Extract simple exam room fields */
         ExamRoom room = new ExamRoom();
-        room.setRoomNumber(longRoomNumber);
+        room.setRoomNumber(roomNumber);
         final String alternativeRoomNumber = jsonRoot.get("number").asText(null);
-        if (!longRoomNumber.equals(alternativeRoomNumber)) {
+        if (!roomNumber.equals(alternativeRoomNumber)) {
             room.setAlternativeRoomNumber(alternativeRoomNumber);
         }
 
@@ -147,18 +172,22 @@ public class ExamRoomService {
         // It is imperative that the seats are parsed before the layout strategies are parsed, as the size calculation
         // for relative layouts will only be done if the rooms have already been parsed
         JsonNode rowsArrayNode = jsonRoot.path("rows");
-        List<ExamSeatDTO> seats = parseExamSeats(longRoomNumber, rowsArrayNode);
-        if (seats == null)
+        List<ExamSeatDTO> seats = parseExamSeats(rowsArrayNode);
+        if (seats == null) {
+            log.warn("Skipping room {} because the seats are stored incorrectly", room.getRoomNumber());
             return null;
+        }
 
         room.setSeats(seats);
         /* Extract the seats - End */
 
         /* Extract the layouts */
         JsonNode layoutsObjectNode = jsonRoot.path("layouts");
-        List<LayoutStrategy> layouts = parseLayoutStrategies(longRoomNumber, layoutsObjectNode, room);
-        if (layouts == null)
+        List<LayoutStrategy> layouts = parseLayoutStrategies(layoutsObjectNode, room);
+        if (layouts == null) {
+            log.warn("Skipping room {} because the layouts are stored incorrectly", room.getRoomNumber());
             return null;
+        }
 
         room.setLayoutStrategies(layouts);
         /* Extract the layouts - End */
@@ -166,18 +195,35 @@ public class ExamRoomService {
         return room;
     }
 
-    private static List<LayoutStrategy> parseLayoutStrategies(String longRoomNumber, JsonNode layoutsObjectNode, ExamRoom room) {
+    /**
+     * Parses the layout strategies from the room data files.
+     * <p/>
+     * The expected format is:
+     * <ul>
+     * <li>{layout_name}:
+     * <ul>
+     * <li>{layout_type}: {layout_parameters_JSON}</li>
+     * </ul>
+     * </li>
+     * </ul>
+     * <p>
+     * The content of {@code layout_parameters_JSON} depends on the layout type.
+     *
+     * @param layoutsObjectNode The JSON object node containing the layout strategy data, with a format as described above.
+     * @param room              The exam room for which the parsed layout strategies are.
+     * @return A list of all layout strategies this room has to offer.
+     */
+    private static List<LayoutStrategy> parseLayoutStrategies(JsonNode layoutsObjectNode, ExamRoom room) {
         List<LayoutStrategy> layouts = new ArrayList<>();
 
         if (!layoutsObjectNode.isObject()) {
-            log.warn("Skipping room {} because the layouts are not correctly stored", longRoomNumber);
             return null;
         }
 
         // Iterate over all possible room layout names, e.g., "default" or "wide"
         for (Iterator<String> it = layoutsObjectNode.fieldNames(); it.hasNext();) {
-            String layoutName = it.next();
-            JsonNode layoutNode = layoutsObjectNode.path(layoutName);
+            final String layoutName = it.next();
+            final JsonNode layoutNode = layoutsObjectNode.path(layoutName);
 
             // We assume there's only a single layout type, e.g., "auto_layout" or "usable_seats"
             final String layoutType = layoutNode.fieldNames().next();
@@ -191,18 +237,17 @@ public class ExamRoomService {
                 // useable_seats is a common typo in the JSON files
                 case "usable_seats", "useable_seats" -> layoutStrategy.setType(LayoutStrategyType.FIXED_SELECTION);
                 default -> {
-                    log.warn("Unknown layout type '{}' in room {}", layoutType, longRoomNumber);
+                    log.warn("Unknown layout type '{}' in room {}", layoutType, room.getRoomNumber());
                     continue;
                 }
             }
             layoutStrategy.setParametersJson(String.valueOf(layoutDetailNode));
 
-            // pre-calculate the capacity if it's easy/efficient to do so.
-            // Right now this is only the case for the fixed_selection
+            // pre-calculate the capacity if it's easy/efficient to do so
             switch (layoutStrategy.getType()) {
                 case LayoutStrategyType.FIXED_SELECTION -> {
                     if (!layoutDetailNode.isArray()) {
-                        log.warn("Skipping layout '{}' of room {} because it's a fixed selection, but parameters aren't an array", layoutName, longRoomNumber);
+                        log.warn("Skipping layout '{}' of room {} because it's a fixed selection, but parameters aren't an array", layoutName, room.getRoomNumber());
                         continue;
                     }
 
@@ -210,7 +255,7 @@ public class ExamRoomService {
                 }
                 case LayoutStrategyType.RELATIVE_DISTANCE -> {
                     if (!layoutDetailNode.isObject()) {
-                        log.warn("Skipping layout '{}' of room {} because it's a relative selection, but parameters aren't an object", layoutName, longRoomNumber);
+                        log.warn("Skipping layout '{}' of room {} because it's a relative selection, but parameters aren't an object", layoutName, room.getRoomNumber());
                         continue;
                     }
 
@@ -224,33 +269,34 @@ public class ExamRoomService {
     }
 
     /**
-     * The layout we expect here is:
-     * "first_row": Integer,
-     * "xspace": float,
-     * "yspace": float
+     * Calculates how many seats can be used for a given {@link LayoutStrategyType#RELATIVE_DISTANCE} layout strategy.
+     * <p/>
+     * The layout we expect is:
+     * <ul>
+     * <li>"first_row": Integer</li>
+     * <li>"xspace": float</li>
+     * <li>"yspace": float</li>
+     * </ul>
+     * <p/>
+     * However, any or all of those can be omitted. If omitted, they will default to 0, which means no restrictions.
      *
      * @param layoutDetailNode The JSON node containing the expected relative layout information
-     *
-     * @return The number of exam seats that can be used with the given layout
+     * @return The number of exam seats that can be used with the given layout, or an empty optional if it couldn't
+     *         determine the size.
      */
     private static Optional<Integer> calculateSeatsFromRelativeDistanceLayout(JsonNode layoutDetailNode, ExamRoom examRoom) {
         // If we don't have exam seat information, we can't calculate the size
-        if (examRoom.getSeats().isEmpty())
-            return Optional.empty();
-
-        // TODO: first_row in some rooms is -1. I have not yet figured out what the real starting row is supposed to be
-        final int firstRow = layoutDetailNode.path("first_row").asInt(0);
-        final double xSpace = layoutDetailNode.path("xspace").asDouble(-1);
-        final double ySpace = layoutDetailNode.path("yspace").asDouble(-1);
-
-        // If any of the values aren't set, the layout's size can't be determined.
-        // One could define a default value, but that's not a concern right now
-        if (xSpace == -1 || ySpace == -1) {
+        if (examRoom.getSeats().isEmpty()) {
             return Optional.empty();
         }
 
+        // first_row in some rooms is -1. I assume this means the same as 0
+        final int firstRow = layoutDetailNode.path("first_row").asInt(0);
+        final double xSpace = layoutDetailNode.path("xspace").asDouble(0);
+        final double ySpace = layoutDetailNode.path("yspace").asDouble(0);
+
         List<ExamSeatDTO> examSeatsFilteredAndSorted = examRoom.getSeats().stream()
-                // Filter out all exam rooms that are before the "first row". The coords start at 0, the row number at 1
+                // Filter out all exam rooms that are before the "first row". The coords start at 0, the row numbers at 1
                 .filter(examSeatDTO -> examSeatDTO.getY() >= (firstRow - 1))
                 // Filter out all exam rooms that are not default usable
                 .filter(examSeatDTO -> examSeatDTO.getSeatCondition() == SeatCondition.USABLE)
@@ -269,17 +315,40 @@ public class ExamRoomService {
         return Optional.of(selectedSeats.size());
     }
 
-    private static List<ExamSeatDTO> parseExamSeats(String longRoomNumber, JsonNode rowsArrayNode) {
+    /**
+     * Parses exam seats from JSON data.
+     * <p/>
+     * The expected format is a JSON array of this format:
+     * <ul>
+     * <li>label: {rowName}</li>
+     * <li>seats: {seatsJSON}</li>
+     * </ul>
+     * <br/>
+     * {@code seatsJSON} is a JSON array of the following format:
+     * <ul>
+     * <li>label: {seatName}</li>
+     * <li>flag: {{@link SeatCondition}}</li>
+     * <li>position:
+     * <ul>
+     * <li>x: float</li>
+     * <li>y: float</li>
+     * </ul>
+     * </li>
+     * </ul>
+     *
+     * @param rowsArrayNode The JSON node containing the row data.
+     *
+     * @return The list of all exam seats it could parse from the JSON node, or null on error.
+     */
+    private static List<ExamSeatDTO> parseExamSeats(JsonNode rowsArrayNode) {
         List<ExamSeatDTO> seats = new ArrayList<>();
         if (!rowsArrayNode.isArray()) {
-            log.warn("Skipping room {} because the rows are incorrectly stored", longRoomNumber);
             return null;
         }
 
         for (JsonNode rowNode : rowsArrayNode) {
             JsonNode seatsArray = rowNode.path("seats");
             if (!seatsArray.isArray()) {
-                log.warn("Skipping room {} because the seats are incorrectly stored", longRoomNumber);
                 return null;
             }
 
@@ -315,9 +384,14 @@ public class ExamRoomService {
         return new ExamRoomUploadInformationDTO(uploadedFileName, uploadDuration, numberOfUploadedRooms, numberOfUploadedSeats, roomNames);
     }
 
+    /**
+     * Calculates information about the current state of the exam rooms in the database.
+     *
+     * @return A DTO that can be sent to the client, containing basic information about the state of the exam room DB.
+     */
     public ExamRoomAdminOverviewDTO getExamRoomAdminOverviewDTO() {
         final Integer numberOfStoredExamRooms = examRoomRepository.countAllExamRooms();
-        final Integer numberOfStoredExamSeats = this.countAllExamSeats();
+        final Integer numberOfStoredExamSeats = examRoomRepository.findAll().stream().mapToInt(er -> er.getSeats().size()).sum();
         final Integer numberOfStoredLayoutStrategies = examRoomRepository.countAllLayoutStrategies();
         final Set<String> distinctLayoutStrategyNames = examRoomRepository.findDistinctLayoutStrategyNames();
         final ExamRoomUniqueRoomsDTO uniqueRoomsDTO = this.countUniqueRoomsSeatsAndLayoutStrategies();
@@ -331,6 +405,9 @@ public class ExamRoomService {
                 uniqueRoomsDTO.numberOfUniqueSeats(), uniqueRoomsDTO.numberOfUniqueLayoutStrategies(), distinctLayoutStrategyNames, examRoomDTOS);
     }
 
+    /**
+     * Purges the DB of all exam room related data.
+     */
     public void deleteAllExamRooms() {
         final long startTime = System.nanoTime();
 
@@ -342,11 +419,7 @@ public class ExamRoomService {
         log.debug("Deleting all exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));
     }
 
-    public int countAllExamSeats() {
-        return examRoomRepository.findAll().stream().mapToInt(er -> er.getSeats().size()).sum();
-    }
-
-    public ExamRoomUniqueRoomsDTO countUniqueRoomsSeatsAndLayoutStrategies() {
+    private ExamRoomUniqueRoomsDTO countUniqueRoomsSeatsAndLayoutStrategies() {
         Set<ExamRoom> latestUniqueRooms = examRoomRepository.findAllLatestUniqueRoomsWithEagerLayoutStrategies();
         int uniqueSeats = latestUniqueRooms.stream().mapToInt(room -> room.getSeats().size()).sum();
         int uniqueLayoutStrategies = latestUniqueRooms.stream().mapToInt(room -> room.getLayoutStrategies().size()).sum();
@@ -354,6 +427,14 @@ public class ExamRoomService {
         return new ExamRoomUniqueRoomsDTO(latestUniqueRooms.size(), uniqueSeats, uniqueLayoutStrategies);
     }
 
+    /**
+     * Deletes all outdated and unused exam rooms.
+     * <p/>
+     * An exam room is outdated if another exam room with the same room-number and room-name exists, and that exam
+     * room's creation date is before the other's. An exam room is unused if there is no existing mapping to an exam.
+     *
+     * @return A summary containing some information about the deletion process.
+     */
     public ExamRoomDeletionSummaryDTO deleteAllOutdatedAndUnusedExamRooms() {
         final long startTime = System.nanoTime();
 

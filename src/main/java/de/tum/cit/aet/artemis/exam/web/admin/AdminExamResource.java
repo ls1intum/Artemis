@@ -44,12 +44,9 @@ public class AdminExamResource {
 
     private final ExamRoomService examRoomService;
 
-    private final ExamRoomRepository examRoomRepository;
-
     public AdminExamResource(ExamRepository examRepository, ExamRoomService examRoomService, ExamRoomRepository examRoomRepository) {
         this.examRepository = examRepository;
         this.examRoomService = examRoomService;
-        this.examRoomRepository = examRoomRepository;
     }
 
     /**
@@ -66,19 +63,19 @@ public class AdminExamResource {
     }
 
     /**
-     * POST /api/exam/admin/exam-rooms/upload: Upload a zip file containing room data to be parsed and added to Artemis.
+     * POST /exam-rooms/upload: Upload a zip file containing room data to be parsed and added to Artemis.
      *
      * @param zipFile The zip file to be uploaded. It needs to contain the `.json` files containing the room data in
      *                    the following format:
-     *                    filename : long room number
-     *                    "number" : short room number
-     *                    "name" : long room name
-     *                    "shortname" : short room name
+     *                    filename : room number
+     *                    "number" : alternative room number
+     *                    "name" : room name
+     *                    "shortname" : alternative room name
      *                    "building" : short enclosing building name
      *                    "rows" : list of rows
      *                    "layouts" : list of layouts
      *
-     * @return A DTO containing information about this upload process
+     * @return a response entity with status 200 and information about the upload process.
      */
     @PostMapping("exam-rooms/upload")
     public ResponseEntity<ExamRoomUploadInformationDTO> uploadRoomZip(@RequestParam("file") MultipartFile zipFile) {
@@ -91,6 +88,11 @@ public class AdminExamResource {
         return ResponseEntity.ok(uploadInformationDTO);
     }
 
+    /**
+     * GET /exam-rooms/admin-overview: Get overview over the exam room DB status.
+     *
+     * @return a response entity with status 200 and information about the exam room DB status.
+     */
     @GetMapping("exam-rooms/admin-overview")
     public ResponseEntity<ExamRoomAdminOverviewDTO> getExamRoomAdminOverview() {
         log.debug("REST request to get exam room admin overview");
@@ -99,14 +101,24 @@ public class AdminExamResource {
         return ResponseEntity.ok(examRoomAdminOverviewDTO);
     }
 
+    /**
+     * DELETE /exam-rooms: Deletes <strong>everything</strong> related to exam rooms.
+     *
+     * @return a response entity with status 204 and empty body.
+     */
     @DeleteMapping("exam-rooms")
     public ResponseEntity<Void> deleteAllExamRooms() {
         log.debug("REST request to delete ALL exam rooms");
 
         examRoomService.deleteAllExamRooms();
-        return ResponseEntity.noContent().build();  // HTTP 204 - No Content
+        return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Delete all outdated and unused exam rooms.
+     *
+     * @return a response entity with status 200 and a summary of the deletion process.
+     */
     @DeleteMapping("exam-rooms/outdated-and-unused")
     public ResponseEntity<ExamRoomDeletionSummaryDTO> deleteAllOutdatedAndUnusedExamRooms() {
         log.debug("REST request to delete all outdated and unused exam rooms");
