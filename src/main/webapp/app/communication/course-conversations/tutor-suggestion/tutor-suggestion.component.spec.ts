@@ -216,14 +216,7 @@ describe('TutorSuggestionComponent', () => {
 
     it('should call requestSuggestion when sessionId emits in ngOnChanges', fakeAsync(() => {
         const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
-        jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
-
-        jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
-        jest.spyOn(chatService, 'currentError').mockReturnValue(of());
-        jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
-        component['irisEnabled'] = true;
-        jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-        jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
+        setUpForRequestSuggestion();
         component.ngOnChanges();
         tick();
         expect(requestTutorSuggestionSpy).toHaveBeenCalled();
@@ -444,4 +437,97 @@ describe('TutorSuggestionComponent', () => {
             expect(component.upDisabled).toBeTrue();
         });
     });
+
+    describe('checkForNewAnswerAndRequestSuggestion', () => {
+        it('should return false if no post', () => {
+            componentRef.setInput('post', undefined as any);
+            expect((component as any).checkForNewAnswerAndRequestSuggestion()).toBeFalse();
+        });
+
+        it('should return false if post has no answers', () => {
+            componentRef.setInput('post', { id: 1, answers: [] } as any);
+            expect((component as any).checkForNewAnswerAndRequestSuggestion()).toBeFalse();
+        });
+
+        it('should return false if no suggestions', () => {
+            component.suggestions = [];
+            expect((component as any).checkForNewAnswerAndRequestSuggestion()).toBeFalse();
+        });
+
+        it('should return false if lastSuggestion or lastSuggestion.sentAt is missing', () => {
+            component.suggestions = [{} as any];
+            expect((component as any).checkForNewAnswerAndRequestSuggestion()).toBeFalse();
+        });
+
+        it('should return false if latest answer is before last suggestion', () => {
+            component.suggestions = [{ id: 10, sender: 'ARTIFACT', sentAt: dayjs('2024-07-01T10:00:00Z').toISOString() } as any];
+            componentRef.setInput('post', { id: 1, answers: [{ id: 1, creationDate: dayjs('2024-07-01T09:00:00Z').toISOString() }] } as any);
+            expect((component as any).checkForNewAnswerAndRequestSuggestion()).toBeFalse();
+        });
+
+        it('should return true if latest answer is after last suggestion', () => {
+            component.suggestions = [{ id: 10, sender: 'ARTIFACT', sentAt: dayjs('2024-07-01T10:00:00Z').toISOString() } as any];
+            componentRef.setInput('post', { id: 1, answers: [{ id: 1, creationDate: dayjs('2024-07-01T11:00:00Z').toISOString() }] } as any);
+            expect((component as any).checkForNewAnswerAndRequestSuggestion()).toBeTrue();
+        });
+
+        it('should compare latest answer when there are multiple answers', () => {
+            component.suggestions = [{ id: 10, sender: 'ARTIFACT', sentAt: dayjs('2024-07-01T10:00:00Z').toISOString() } as any];
+            componentRef.setInput('post', {
+                id: 1,
+                answers: [
+                    { id: 1, creationDate: dayjs('2024-07-01T09:00:00Z').toISOString() },
+                    { id: 2, creationDate: dayjs('2024-07-01T12:00:00Z').toISOString() },
+                    { id: 3, creationDate: dayjs('2024-07-01T11:00:00Z').toISOString() },
+                ],
+            } as any);
+            expect((component as any).checkForNewAnswerAndRequestSuggestion()).toBeTrue();
+        });
+    });
+
+    describe('requestSuggestion integration with checkForNewAnswerAndRequestSuggestion', () => {
+        beforeEach(() => {
+            componentRef.setInput('post', { id: 1, answers: [{ id: 1, creationDate: dayjs('2024-07-01T12:00:00Z').toISOString() }] } as any);
+            component.suggestions = [{ id: 10, sender: 'ARTIFACT', sentAt: dayjs('2024-07-01T10:00:00Z').toISOString() } as any];
+            jest.spyOn(component as any, 'checkForNewAnswerAndRequestSuggestion').mockReturnValue(true);
+            jest.spyOn(component['chatService'], 'currentSessionId').mockReturnValue(of(123));
+            jest.spyOn(component['chatService'], 'currentMessages').mockReturnValue(of([]));
+            jest.spyOn(component['chatService'], 'requestTutorSuggestion').mockReturnValue(of());
+            setUpForRequestSuggestion();
+        });
+
+        it('should call checkForNewAnswerAndRequestSuggestion in requestSuggestion', fakeAsync(() => {
+            const checkSpy = jest.spyOn(component as any, 'checkForNewAnswerAndRequestSuggestion');
+            (component as any).requestSuggestion();
+            tick();
+            expect(checkSpy).toHaveBeenCalled();
+        }));
+
+        it('should call requestTutorSuggestion if checkForNewAnswerAndRequestSuggestion returns true', fakeAsync(() => {
+            (component as any).checkForNewAnswerAndRequestSuggestion.mockReturnValue(true);
+            const reqSpy = jest.spyOn(component['chatService'], 'requestTutorSuggestion');
+            (component as any).requestSuggestion();
+            tick();
+            expect(reqSpy).toHaveBeenCalled();
+        }));
+
+        it('should not call requestTutorSuggestion if checkForNewAnswerAndRequestSuggestion returns false and last message from LLM/ARTIFACT', fakeAsync(() => {
+            (component as any).checkForNewAnswerAndRequestSuggestion.mockReturnValue(false);
+            jest.spyOn(component['chatService'], 'currentMessages').mockReturnValue(of([{ sender: 'LLM' } as any]));
+            const reqSpy = jest.spyOn(component['chatService'], 'requestTutorSuggestion');
+            (component as any).requestSuggestion();
+            tick();
+            expect(reqSpy).not.toHaveBeenCalled();
+        }));
+    });
+
+    function setUpForRequestSuggestion() {
+        jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
+        jest.spyOn(chatService, 'currentError').mockReturnValue(of());
+        jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+        component['irisEnabled'] = true;
+        jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+        jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
+    }
 });

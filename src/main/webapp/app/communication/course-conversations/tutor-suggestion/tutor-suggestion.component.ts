@@ -152,7 +152,9 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
 
         this.tutorSuggestionSubscription = waitForSessionAndMessages$.subscribe((messages) => {
             const lastMessage = messages[messages.length - 1];
-            const shouldRequest = messages.length === 0 || !(lastMessage?.sender === IrisSender.LLM || lastMessage?.sender === IrisSender.ARTIFACT);
+            const lastThreadMessageAfterLastSuggestion = this.checkForNewAnswerAndRequestSuggestion();
+            const shouldRequest =
+                lastThreadMessageAfterLastSuggestion || messages.length === 0 || !(lastMessage?.sender === IrisSender.LLM || lastMessage?.sender === IrisSender.ARTIFACT);
             if (shouldRequest) {
                 this.chatService
                     .requestTutorSuggestion()
@@ -280,5 +282,29 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     private updateArrowDisabled(currentIndex: number) {
         this.downDisabled = currentIndex === 0;
         this.upDisabled = currentIndex === this.suggestions.length - 1;
+    }
+
+    /**
+     * Checks if a new answer was added to the post after the last suggestion,
+     * and requests a new suggestion if needed.
+     */
+    private checkForNewAnswerAndRequestSuggestion(): boolean {
+        const post = this.post();
+        if (!post || !post.answers || post.answers.length === 0 || this.suggestions.length === 0) {
+            return false;
+        }
+
+        // Get latest answer
+        const latestAnswer = post.answers.reduce((latest, current) => {
+            return dayjs(current.creationDate).isAfter(dayjs(latest.creationDate)) ? current : latest;
+        });
+
+        // Get latest suggestion
+        const lastSuggestion = this.suggestions[this.suggestions.length - 1];
+        if (!lastSuggestion || !lastSuggestion.sentAt) {
+            return false;
+        }
+
+        return !!dayjs(latestAnswer.creationDate).isAfter(dayjs(lastSuggestion.sentAt));
     }
 }
