@@ -193,7 +193,8 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         this.isSuggesting = true;
         this.suggestedCompetencyIds.clear();
 
-        const requestBody = { description: this.exerciseDescription };
+        const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        const requestBody = { description: this.exerciseDescription, course_id: courseId?.toString() };
 
         this.http
             .post<{ competencies: any[] }>('/api/atlas/competencies/suggest', requestBody)

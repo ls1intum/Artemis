@@ -11,5 +11,5 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record AtlasMLExerciseDTO(@JsonProperty("id") String id, @JsonProperty("title") String title, @JsonProperty("description") String description,
-        @JsonProperty("competencies") List<String> competencies) {
+        @JsonProperty("competencies") List<String> competencies, @JsonProperty("course_id") String courseId) {
 }

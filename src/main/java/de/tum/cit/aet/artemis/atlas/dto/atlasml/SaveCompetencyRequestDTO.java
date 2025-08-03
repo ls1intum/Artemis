@@ -33,8 +33,9 @@ public record SaveCompetencyRequestDTO(@JsonProperty("competency") AtlasMLCompet
     /**
      * Create a SaveCompetencyRequestDTO from domain objects for exercise saving.
      */
-    public static SaveCompetencyRequestDTO fromExercise(String exerciseId, String title, String description, List<String> competencyIds, OperationType operationType) {
-        AtlasMLExerciseDTO atlasMLExercise = new AtlasMLExerciseDTO(exerciseId, title, description, competencyIds);
+    public static SaveCompetencyRequestDTO fromExercise(String exerciseId, String title, String description, List<String> competencyIds, String courseId,
+            OperationType operationType) {
+        AtlasMLExerciseDTO atlasMLExercise = new AtlasMLExerciseDTO(exerciseId, title, description, competencyIds, courseId);
         return new SaveCompetencyRequestDTO(null, atlasMLExercise, operationType);
     }
 }

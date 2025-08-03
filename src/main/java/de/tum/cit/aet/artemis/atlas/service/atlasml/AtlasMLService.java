@@ -251,12 +251,13 @@ public class AtlasMLService {
      * @param title         the exercise title
      * @param description   the exercise description
      * @param competencyIds the list of competency IDs associated with the exercise
+     * @param courseId      the course identifier
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveExercise(String exerciseId, String title, String description, List<String> competencyIds, OperationType operationType) {
+    public boolean saveExercise(String exerciseId, String title, String description, List<String> competencyIds, String courseId, OperationType operationType) {
         try {
-            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromExercise(exerciseId, title, description, competencyIds, operationType);
+            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromExercise(exerciseId, title, description, competencyIds, courseId, operationType);
             saveCompetencies(request);
             return true;
         }
@@ -273,10 +274,11 @@ public class AtlasMLService {
      * @param title         the exercise title
      * @param description   the exercise description
      * @param competencyIds the list of competency IDs associated with the exercise
+     * @param courseId      the course identifier
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveExercise(String exerciseId, String title, String description, List<String> competencyIds) {
-        return saveExercise(exerciseId, title, description, competencyIds, OperationType.UPDATE);
+    public boolean saveExercise(String exerciseId, String title, String description, List<String> competencyIds, String courseId) {
+        return saveExercise(exerciseId, title, description, competencyIds, courseId, OperationType.UPDATE);
     }
 
     /**
@@ -300,7 +302,8 @@ public class AtlasMLService {
                 description = ""; // AtlasML API expects a non-null description
             }
 
-            return saveExercise(exercise.getId().toString(), exercise.getTitle(), description, competencyIds, operationType);
+            String courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId().toString() : null;
+            return saveExercise(exercise.getId().toString(), exercise.getTitle(), description, competencyIds, courseId, operationType);
         }
         catch (Exception e) {
             log.error("Failed to {} exercise with competencies for exercise id {}", operationType.name().toLowerCase(), exercise.getId(), e);
@@ -337,7 +340,8 @@ public class AtlasMLService {
                 description = ""; // AtlasML API expects a non-null description
             }
 
-            return saveExercise(exerciseId.toString(), exercise.getTitle(), description, competencyIds, operationType);
+            String courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId().toString() : null;
+            return saveExercise(exerciseId.toString(), exercise.getTitle(), description, competencyIds, courseId, operationType);
         }
         catch (Exception e) {
             log.error("Failed to {} exercise with competencies for exercise id {}", operationType.name().toLowerCase(), exerciseId, e);
