@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
-import de.tum.cit.aet.artemis.exam.domain.room.SeatCondition;
 
 @Conditional(ExamEnabled.class)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

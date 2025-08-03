@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exam.domain.room;
+package de.tum.cit.aet.artemis.exam.dto.room;
 
 import org.springframework.context.annotation.Conditional;
 
