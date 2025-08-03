@@ -104,7 +104,7 @@ test.describe('Import exercises', () => {
         test(
             'Imports short answer quiz exercise',
             { tag: '@fast' },
-            async ({ login, page, courseManagementExercises, quizExerciseCreation, courseOverview, quizExerciseShortAnswer }) => {
+            async ({ login, page, courseManagementExercises, quizExerciseCreation, courseOverview, quizExerciseShortAnswerQuiz }) => {
                 await login(instructor, `/course-management/${secondCourse.id}/exercises`);
                 await courseManagementExercises.importQuizExercise();
                 await courseManagementExercises.clickImportExercise(shortAnswerQuizExercise.id!);
@@ -120,19 +120,19 @@ test.describe('Import exercises', () => {
                 await courseManagementExercises.startQuiz(exercise.id!);
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
                 await courseOverview.startExercise(exercise.id!);
-                await quizExerciseShortAnswer.typeText(exercise.id!, 0, 'give');
-                await quizExerciseShortAnswer.typeText(exercise.id!, 1, 'let');
-                await quizExerciseShortAnswer.typeText(exercise.id!, 2, 'run');
-                await quizExerciseShortAnswer.typeText(exercise.id!, 3, 'desert');
-                await quizExerciseShortAnswer.typeText(exercise.id!, 4, 'cry');
-                await quizExerciseShortAnswer.typeText(exercise.id!, 5, 'goodbye');
-                const submitResponse = await quizExerciseShortAnswer.submit();
+                await quizExerciseShortAnswerQuiz.typeText(exercise.id!, 0, 'give');
+                await quizExerciseShortAnswerQuiz.typeText(exercise.id!, 1, 'let');
+                await quizExerciseShortAnswerQuiz.typeText(exercise.id!, 2, 'run');
+                await quizExerciseShortAnswerQuiz.typeText(exercise.id!, 3, 'desert');
+                await quizExerciseShortAnswerQuiz.typeText(exercise.id!, 4, 'cry');
+                await quizExerciseShortAnswerQuiz.typeText(exercise.id!, 5, 'goodbye');
+                const submitResponse = await quizExerciseShortAnswerQuiz.submit();
                 const submission: QuizSubmission = await submitResponse.json();
                 expect(submission.submitted).toBe(true);
                 expect(submitResponse.status()).toBe(200);
 
                 await login(instructor, `/course-management/${secondCourse.id}/exercises`);
-                await courseManagementExercises.endQuiz(exercise.id!);
+                await courseManagementExercises.endQuiz(exercise);
 
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
                 await page.reload();
