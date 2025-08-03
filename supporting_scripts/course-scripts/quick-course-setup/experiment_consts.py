@@ -34,7 +34,7 @@ SPAMMY_BUILD_SCRIPT = """#!/usr/bin/env bash
 BUBBLE_SORT_JAVA_CORRECT = """
     package {0};
     import java.util.*;
-    public class BubbleSort implements SortStrategy {{
+    public class BubbleSort {{
         public void performSort(List<Date> input) {{
             for (int i = input.size() - 1; i >= 0; i--) {{
                 for (int j = 0; j < i; j++) {{
