@@ -56,7 +56,7 @@ export class ExamRoomsComponent {
     faSort = faSort;
 
     // Attributes for working with SortDirective
-    sort_attribute: string = 'roomNumber';
+    sort_attribute: 'roomNumber' | 'name' | 'building' | 'maxCapacity' = 'roomNumber';
     ascending: boolean = true;
 
     // Basically ngInit / constructor
