@@ -365,15 +365,15 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
         if (oldMapping.getSolution() != null) {
             Long solutionKey = oldMapping.getSolution().getId() != null ? oldMapping.getSolution().getId() : oldMapping.getSolution().getTempID();
-            if (solutionKey != null && solutionMap.containsKey(solutionKey)) {
-                newMapping.setSolution(solutionMap.get(solutionKey));
+            if (solutionKey != null) {
+                newMapping.setSolution(solutionMap.computeIfPresent(solutionKey, (k, v) -> v));
             }
         }
 
         if (oldMapping.getSpot() != null) {
             Long spotKey = oldMapping.getSpot().getId() != null ? oldMapping.getSpot().getId() : oldMapping.getSpot().getTempID();
-            if (spotKey != null && spotMap.containsKey(spotKey)) {
-                newMapping.setSpot(spotMap.get(spotKey));
+            if (spotKey != null) {
+                newMapping.setSpot(spotMap.computeIfPresent(spotKey, (k, v) -> v));
             }
         }
 
