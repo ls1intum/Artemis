@@ -115,7 +115,7 @@ public class AdminExamResource {
     }
 
     /**
-     * Delete all outdated and unused exam rooms.
+     * DELETE /exam-rooms/outdated-and-unused: Delete all outdated and unused exam rooms.
      *
      * @return a response entity with status 200 and a summary of the deletion process.
      */
