@@ -250,60 +250,82 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * @param saQuestion the short answer question to set up for import
      */
     private void setUpShortAnswerQuestionForImport(ShortAnswerQuestion saQuestion) {
-        Map<Long, ShortAnswerSpot> newSpotMap = new HashMap<>();
-        List<ShortAnswerSpot> newSpots = new ArrayList<>();
+        Map<Long, ShortAnswerSpot> spotMap = setUpShortAnswerSpotsForImport(saQuestion);
+        Map<Long, ShortAnswerSolution> solutionMap = setUpShortAnswerSolutionsForImport(saQuestion);
+        setUpShortAnswerMappingsForImport(saQuestion, spotMap, solutionMap);
+    }
+
+    private Map<Long, ShortAnswerSpot> setUpShortAnswerSpotsForImport(ShortAnswerQuestion saQuestion) {
+        Map<Long, ShortAnswerSpot> spotMap = new HashMap<>();
         for (ShortAnswerSpot oldSpot : saQuestion.getSpots()) {
-            ShortAnswerSpot newSpot = new ShortAnswerSpot();
-            newSpot.setSpotNr(oldSpot.getSpotNr());
-            newSpot.setWidth(oldSpot.getWidth());
-            newSpot.setInvalid(oldSpot.isInvalid());
-            newSpot.setQuestion(saQuestion);
-            newSpot.setMappings(new HashSet<>());
+            ShortAnswerSpot newSpot = createNewShortAnswerSpot(oldSpot, saQuestion);
             Long key = oldSpot.getId() != null ? oldSpot.getId() : oldSpot.getTempID();
-            newSpotMap.put(key, newSpot);
-            newSpots.add(newSpot);
+            spotMap.put(key, newSpot);
         }
-        saQuestion.setSpots(newSpots);
+        saQuestion.setSpots(new ArrayList<>(spotMap.values()));
+        return spotMap;
+    }
 
-        Map<Long, ShortAnswerSolution> newSolutionMap = new HashMap<>();
-        List<ShortAnswerSolution> newSolutions = new ArrayList<>();
+    private Map<Long, ShortAnswerSolution> setUpShortAnswerSolutionsForImport(ShortAnswerQuestion saQuestion) {
+        Map<Long, ShortAnswerSolution> solutionMap = new HashMap<>();
         for (ShortAnswerSolution oldSolution : saQuestion.getSolutions()) {
-            ShortAnswerSolution newSolution = new ShortAnswerSolution();
-            newSolution.setText(oldSolution.getText());
-            newSolution.setInvalid(oldSolution.isInvalid());
-            newSolution.setQuestion(saQuestion);
-            newSolution.setMappings(new HashSet<>());
+            ShortAnswerSolution newSolution = createNewShortAnswerSolution(oldSolution, saQuestion);
             Long key = oldSolution.getId() != null ? oldSolution.getId() : oldSolution.getTempID();
-            newSolutionMap.put(key, newSolution);
-            newSolutions.add(newSolution);
+            solutionMap.put(key, newSolution);
         }
-        saQuestion.setSolutions(newSolutions);
+        saQuestion.setSolutions(new ArrayList<>(solutionMap.values()));
+        return solutionMap;
+    }
 
-        List<ShortAnswerMapping> newShortAnswerMappings = new ArrayList<>();
+    private void setUpShortAnswerMappingsForImport(ShortAnswerQuestion saQuestion, Map<Long, ShortAnswerSpot> spotMap, Map<Long, ShortAnswerSolution> solutionMap) {
+        List<ShortAnswerMapping> newMappings = new ArrayList<>();
         for (ShortAnswerMapping oldMapping : saQuestion.getCorrectMappings()) {
-            ShortAnswerMapping newMapping = new ShortAnswerMapping();
-            newMapping.setInvalid(oldMapping.isInvalid());
-            newMapping.setQuestion(saQuestion);
-
-            Long solutionKey = null;
-            if (oldMapping.getSolution() != null) {
-                solutionKey = oldMapping.getSolution().getId() != null ? oldMapping.getSolution().getId() : oldMapping.getSolution().getTempID();
-            }
-            if (solutionKey != null) {
-                newMapping.setSolution(newSolutionMap.get(solutionKey));
-            }
-
-            Long spotKey = null;
-            if (oldMapping.getSpot() != null) {
-                spotKey = oldMapping.getSpot().getId() != null ? oldMapping.getSpot().getId() : oldMapping.getSpot().getTempID();
-            }
-            if (spotKey != null) {
-                newMapping.setSpot(newSpotMap.get(spotKey));
-            }
-
-            newShortAnswerMappings.add(newMapping);
+            ShortAnswerMapping newMapping = createNewShortAnswerMapping(oldMapping, saQuestion, spotMap, solutionMap);
+            newMappings.add(newMapping);
         }
-        saQuestion.setCorrectMappings(newShortAnswerMappings);
+        saQuestion.setCorrectMappings(newMappings);
+    }
+
+    private ShortAnswerSpot createNewShortAnswerSpot(ShortAnswerSpot oldSpot, ShortAnswerQuestion saQuestion) {
+        ShortAnswerSpot newSpot = new ShortAnswerSpot();
+        newSpot.setSpotNr(oldSpot.getSpotNr());
+        newSpot.setWidth(oldSpot.getWidth());
+        newSpot.setInvalid(oldSpot.isInvalid());
+        newSpot.setQuestion(saQuestion);
+        newSpot.setMappings(new HashSet<>());
+        return newSpot;
+    }
+
+    private ShortAnswerSolution createNewShortAnswerSolution(ShortAnswerSolution oldSolution, ShortAnswerQuestion saQuestion) {
+        ShortAnswerSolution newSolution = new ShortAnswerSolution();
+        newSolution.setText(oldSolution.getText());
+        newSolution.setInvalid(oldSolution.isInvalid());
+        newSolution.setQuestion(saQuestion);
+        newSolution.setMappings(new HashSet<>());
+        return newSolution;
+    }
+
+    private ShortAnswerMapping createNewShortAnswerMapping(ShortAnswerMapping oldMapping, ShortAnswerQuestion saQuestion, Map<Long, ShortAnswerSpot> spotMap,
+            Map<Long, ShortAnswerSolution> solutionMap) {
+        ShortAnswerMapping newMapping = new ShortAnswerMapping();
+        newMapping.setInvalid(oldMapping.isInvalid());
+        newMapping.setQuestion(saQuestion);
+
+        if (oldMapping.getSolution() != null) {
+            Long solutionKey = oldMapping.getSolution().getId() != null ? oldMapping.getSolution().getId() : oldMapping.getSolution().getTempID();
+            if (solutionKey != null && solutionMap.containsKey(solutionKey)) {
+                newMapping.setSolution(solutionMap.get(solutionKey));
+            }
+        }
+
+        if (oldMapping.getSpot() != null) {
+            Long spotKey = oldMapping.getSpot().getId() != null ? oldMapping.getSpot().getId() : oldMapping.getSpot().getTempID();
+            if (spotKey != null && spotMap.containsKey(spotKey)) {
+                newMapping.setSpot(spotMap.get(spotKey));
+            }
+        }
+
+        return newMapping;
     }
 
     /**
