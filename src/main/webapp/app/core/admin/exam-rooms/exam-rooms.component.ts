@@ -64,6 +64,9 @@ export class ExamRoomsComponent {
         this.loadExamRoomOverview();
     });
 
+    /**
+     * Makes a REST request to fetch a new exam room overview and displays it
+     */
     loadExamRoomOverview(): void {
         this.http.get<ExamRoomAdminOverviewDTO>('/api/exam/admin/exam-rooms/admin-overview').subscribe({
             next: (response) => {
@@ -75,7 +78,12 @@ export class ExamRoomsComponent {
         });
     }
 
-    onFileSelected(event: Event): void {
+    /**
+     * Event handler for a file selection that accepts only zip files
+     *
+     * @param event A file selection event
+     */
+    onFileSelectedAcceptZip(event: Event): void {
         const input = event.target as HTMLInputElement;
         if (input.files && input.files.length > 0) {
             const file = input.files[0];
@@ -87,6 +95,10 @@ export class ExamRoomsComponent {
         }
     }
 
+    /**
+     * Uploads the {@link selectedFile} if one is present.
+     * Afterward, it refreshes the exam room overview to immediately see any changes.
+     */
     upload(): void {
         const file = this.selectedFile();
         if (!file) return;
@@ -111,6 +123,9 @@ export class ExamRoomsComponent {
         });
     }
 
+    /**
+     * REST request to delete ALL exam room related data.
+     */
     clearExamRooms(): void {
         if (!confirm('Are you sure you want to delete ALL exam rooms? This action cannot be undone.')) {
             return;
@@ -134,6 +149,11 @@ export class ExamRoomsComponent {
         });
     }
 
+    /**
+     * REST request to delete all outdated and unused exams.
+     * An exam room is outdated if there exists a newer entry of the same (number, name) combination.
+     * An exam room is unused if it isn't connected to any exam.
+     */
     deleteOutdatedAndUnusedExamRooms(): void {
         this.actionStatus.set('deleting');
 
@@ -151,6 +171,9 @@ export class ExamRoomsComponent {
         });
     }
 
+    /**
+     * Redirection to {@link SortService} for sorting the table of exam rooms
+     */
     sortRows(): void {
         if (!this.hasExamRoomData()) return;
         this.sortService.sortByProperty(this.examRoomData()!, this.sort_attribute, this.ascending);
