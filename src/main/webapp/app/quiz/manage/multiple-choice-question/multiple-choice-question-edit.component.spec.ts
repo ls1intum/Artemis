@@ -8,11 +8,11 @@ import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/qu
 import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
 import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
 import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
-import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockResizeObserver } from 'src/test/javascript/spec/helpers/mocks/service/mock-resize-observer';
+import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
+import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
@@ -210,23 +210,23 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     it('should parse markdown when preparing for save in edit mode', () => {
         fixture.detectChanges();
-        component['markdownEditor'].inVisualMode = false;
-        const parseMarkdownSpy = jest.spyOn(component['markdownEditor'], 'parseMarkdown');
+        component['markdownEditor']().inVisualMode = false;
+        const parseMarkdownSpy = jest.spyOn(component['markdownEditor'](), 'parseMarkdown');
         component.prepareForSave();
         expect(parseMarkdownSpy).toHaveBeenCalledOnce();
     });
 
     it('should update markdown from the visual component when preparing for save in visual mode', () => {
         fixture.detectChanges();
-        component['markdownEditor'].inVisualMode = true;
+        component['markdownEditor']().inVisualMode = true;
         // if we don't mock this, we get heap out of memory, probably due to some infinite recursion
-        component['markdownEditor']['monacoEditor'] = {
+        component['markdownEditor']()['monacoEditor'] = {
             setText: jest.fn(),
         } as Partial<MonacoEditorComponent> as MonacoEditorComponent;
 
-        const parseQuestionStub = jest.spyOn(component['visualChild'], 'parseQuestion').mockReturnValue('parsed-question');
+        const parseQuestionStub = jest.spyOn(component['visualChild'](), 'parseQuestion').mockReturnValue('parsed-question');
         component.prepareForSave();
         expect(parseQuestionStub).toHaveBeenCalledOnce();
-        expect(component['markdownEditor']['_markdown']).toBe('parsed-question');
+        expect(component['markdownEditor']()['_markdown']).toBe('parsed-question');
     });
 });

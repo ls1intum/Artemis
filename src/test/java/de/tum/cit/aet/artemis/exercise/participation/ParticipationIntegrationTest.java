@@ -1002,7 +1002,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAllParticipationsForExercise_withLatestResults() throws Exception {
+    void getAllParticipationsForExercise_withLatestSubmissionResult() throws Exception {
         List<User> students = IntStream.range(1, 5).mapToObj(i -> userUtilService.getUserByLogin(TEST_PREFIX + "student" + i)).toList();
         participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
 
@@ -1031,7 +1031,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(receivedOnlyParticipation.getSubmissions()).isEmpty();
         assertThat(receivedOnlyParticipation.getSubmissionCount()).isZero();
 
-        assertThat(participationUtilService.getResultsForParticipation(receivedParticipationWithResult)).containsExactlyInAnyOrder(result2, result3);
+        assertThat(participationUtilService.getResultsForParticipation(receivedParticipationWithResult)).containsExactlyInAnyOrder(result3);
         assertThat(receivedParticipationWithResult.getSubmissions()).containsExactly(result1.getSubmission());
         assertThat(receivedParticipationWithResult.getSubmissionCount()).isEqualTo(1);
 
@@ -1071,7 +1071,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAllParticipationsForExercise_withLatestResults_multipleAssessments() throws Exception {
+    void getAllParticipationsForExercise_withLatestResult_multipleAssessments() throws Exception {
         var participation1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         var participation2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
         var participation3 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
@@ -1093,8 +1093,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var recievedParticipation2 = participations.stream().filter(participation -> participation.getParticipant().equals(participation2.getParticipant())).findAny();
         var recievedParticipation3 = participations.stream().filter(participation -> participation.getParticipant().equals(participation3.getParticipant())).findAny();
         assertThat(recievedParticipation1).hasValueSatisfying(participation -> assertThat(participationUtilService.getResultsForParticipation(participation)).hasSize(1));
-        assertThat(recievedParticipation2).hasValueSatisfying(participation -> assertThat(participationUtilService.getResultsForParticipation(participation)).hasSize(2));
-        assertThat(recievedParticipation3).hasValueSatisfying(participation -> assertThat(participationUtilService.getResultsForParticipation(participation)).hasSize(2));
+        assertThat(recievedParticipation2).hasValueSatisfying(participation -> assertThat(participationUtilService.getResultsForParticipation(participation)).hasSize(1));
+        assertThat(recievedParticipation3).hasValueSatisfying(participation -> assertThat(participationUtilService.getResultsForParticipation(participation)).hasSize(1));
     }
 
     @Test

@@ -4,10 +4,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -18,11 +21,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
@@ -77,11 +83,13 @@ public class ParticipationService {
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
+    private final ResultRepository resultRepository;
+
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService) {
+            SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
+            ResultRepository resultRepository) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
@@ -92,6 +100,7 @@ public class ParticipationService {
         this.teamRepository = teamRepository;
         this.uriService = uriService;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -689,6 +698,39 @@ public class ParticipationService {
         }
 
         return changedParticipations;
+    }
+
+    /**
+     * Finds all student participations for a given exercise with the latest submission and result, including the assessment note.
+     *
+     * @param exerciseId   the id of the exercise
+     * @param teamExercise true if the exercise is a team exercise, false otherwise
+     * @return a set of student participations with the latest submission and result, including the assessment note
+     */
+    public Set<StudentParticipation> findByExerciseIdWithLatestSubmissionResultAndAssessmentNote(long exerciseId, boolean teamExercise) {
+        Set<StudentParticipation> participations = teamExercise ? studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithTeamInformation(exerciseId)
+                : studentParticipationRepository.findByExerciseIdWithLatestSubmission(exerciseId);
+        Set<Long> submissionIds = participations.stream().flatMap(p -> p.getSubmissions().stream()).map(Submission::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+
+        if (submissionIds.isEmpty()) {
+            return participations;
+        }
+        Set<Result> results = resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(submissionIds);
+        Map<Long, Result> resultBySubmissionId = results.stream().collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity()));
+        for (StudentParticipation participation : participations) {
+            if (!participation.getSubmissions().isEmpty()) {
+                Submission latestSubmission = participation.getSubmissions().iterator().next();
+                Result latest = resultBySubmissionId.get(latestSubmission.getId());
+                if (latest != null) {
+                    latestSubmission.setResults(List.of(latest));
+                }
+                else {
+                    latestSubmission.setResults(Collections.emptyList());
+                }
+            }
+        }
+
+        return participations;
     }
 
 }
