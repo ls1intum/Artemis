@@ -1,0 +1,50 @@
+package de.tum.cit.aet.artemis.atlas.service.agent;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.client.RestTemplate;
+
+import de.tum.cit.aet.artemis.atlas.dto.AgentChatRequestDto;
+import de.tum.cit.aet.artemis.atlas.dto.AgentChatResponseDto;
+
+class AgentHttpClientTest {
+
+    private AgentHttpClient agentHttpClient;
+
+    @Mock
+    private RestTemplate restTemplate;
+
+    @Value("${agent.api.url}")
+    private String agentApiUrl = "http://localhost:8080/api/agent";
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        agentHttpClient = new AgentHttpClient(restTemplate);
+        agentHttpClient.setAgentApiUrl(agentApiUrl);
+    }
+
+    @Test
+    void testSendMessageToAgent() {
+        // Arrange
+        AgentChatRequestDto request = new AgentChatRequestDto("Hello, Agent!", 10L, "session1");
+        AgentChatResponseDto expectedResponse = new AgentChatResponseDto("Agent response to: Hello, Agent!", "session1");
+        String url = agentApiUrl + "/chat";
+        when(restTemplate.postForObject(url, request, AgentChatResponseDto.class)).thenReturn(expectedResponse);
+
+        // Act
+        AgentChatResponseDto actualResponse = agentHttpClient.sendMessageToAgent(request);
+
+        // Assert
+        assertEquals(expectedResponse, actualResponse);
+        verify(restTemplate, times(1)).postForObject(url, request, AgentChatResponseDto.class);
+    }
+}
