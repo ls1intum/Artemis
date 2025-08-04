@@ -16,7 +16,7 @@
     @if (studentExam) {
         <!-- exam participation -->
         @if (isVisible() && isActive() && !isOver() && examStartConfirmed) {
-            <div class="exam-background-wrapper hide-scrollbar-unless-scrolling" [ngClass]="{ 'py-2': testRunId }">
+            <div class="exam-background-wrapper" [ngClass]="{ 'py-2': testRunId }">
                 <jhi-exam-bar
                     [exam]="exam"
                     [studentExam]="studentExam"
