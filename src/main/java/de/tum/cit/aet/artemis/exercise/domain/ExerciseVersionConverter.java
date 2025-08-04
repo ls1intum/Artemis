@@ -27,22 +27,18 @@ public class ExerciseVersionConverter implements AttributeConverter<ExerciseVers
      */
     private static ObjectMapper createObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
-        // Register JavaTimeModule to handle ZonedDateTime
         mapper.registerModule(new JavaTimeModule());
-        // Configure to handle enums properly
         mapper.configure(SerializationFeature.WRITE_ENUMS_USING_TO_STRING, true);
         mapper.configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        // Don't write dates as timestamps
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         return mapper;
     }
 
     @Override
     public String convertToDatabaseColumn(ExerciseVersionContent exerciseVersionContent) {
-        if (exerciseVersionContent == null) {
+        if (exerciseVersionContent == null)
             return null;
-        }
         try {
             return objectMapper.writeValueAsString(exerciseVersionContent);
         }
@@ -53,15 +49,13 @@ public class ExerciseVersionConverter implements AttributeConverter<ExerciseVers
 
     @Override
     public ExerciseVersionContent convertToEntityAttribute(String jsonData) {
-        if (jsonData == null || jsonData.isEmpty()) {
+        if (jsonData == null || jsonData.isEmpty())
             return null;
-        }
         try {
             JavaType type = objectMapper.getTypeFactory().constructType(ExerciseVersionContent.class);
             if (jsonData.startsWith("\"") && jsonData.endsWith("\"")) {
                 jsonData = objectMapper.readValue(jsonData, String.class);
             }
-
             return objectMapper.readValue(jsonData, type);
         }
         catch (IOException e) {

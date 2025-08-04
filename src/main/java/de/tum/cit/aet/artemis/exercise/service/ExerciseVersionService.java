@@ -60,24 +60,18 @@ public class ExerciseVersionService {
      */
     public void createExerciseVersion(Exercise exercise, User user) {
         try {
-            // Create content for the current exercise state
             ExerciseVersionContent currentContent = createExerciseVersionContent(exercise);
 
-            // Check if a new version is needed by comparing with the latest version
             if (!isNewVersionNeeded(exercise.getId(), currentContent)) {
                 log.debug("No changes detected for exercise {} with id {}, skipping version creation", exercise.getTitle(), exercise.getId());
                 return;
             }
 
-            // Create and save the new version
             ExerciseVersion exerciseVersion = new ExerciseVersion();
             exerciseVersion.setExercise(exercise);
             exerciseVersion.setAuthor(user);
             exerciseVersion.setContent(currentContent);
-
-            // Save the exercise version
             exerciseVersionRepository.save(exerciseVersion);
-
             log.info("User {} has created exercise version for {} {} with id {}, version id {}", user.getLogin(), exercise.getClass().getSimpleName(), exercise.getTitle(),
                     exercise.getId(), exerciseVersion.getId());
         }
@@ -97,12 +91,10 @@ public class ExerciseVersionService {
                 .problemStatement(exercise.getProblemStatement()).startDate(exercise.getStartDate()).releaseDate(exercise.getReleaseDate()).dueDate(exercise.getDueDate())
                 .maxPoints(exercise.getMaxPoints()).bonusPoints(exercise.getBonusPoints()).difficulty(exercise.getDifficulty());
 
-        // Add programming exercise specific fields
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             addProgrammingExerciseFields(programmingExercise, builder);
         }
 
-        // Add quiz exercise specific fields
         if (exercise instanceof QuizExercise quizExercise) {
             addQuizExerciseFields(quizExercise, builder);
         }
@@ -118,7 +110,6 @@ public class ExerciseVersionService {
      */
     private void addProgrammingExerciseFields(ProgrammingExercise programmingExercise, ExerciseVersionContent.Builder builder) {
         try {
-            // Get template commit hash
             if (programmingExercise.getTemplateParticipation() != null && programmingExercise.getTemplateParticipation().getVcsRepositoryUri() != null) {
                 var templateCommitHash = gitService.getLastCommitHash(programmingExercise.getTemplateParticipation().getVcsRepositoryUri());
                 if (templateCommitHash != null) {
@@ -126,7 +117,6 @@ public class ExerciseVersionService {
                 }
             }
 
-            // Get solution commit hash
             if (programmingExercise.getSolutionParticipation() != null && programmingExercise.getSolutionParticipation().getVcsRepositoryUri() != null) {
                 var solutionCommitHash = gitService.getLastCommitHash(programmingExercise.getSolutionParticipation().getVcsRepositoryUri());
                 if (solutionCommitHash != null) {
@@ -134,7 +124,6 @@ public class ExerciseVersionService {
                 }
             }
 
-            // Get test commit hash
             if (programmingExercise.getTestRepositoryUri() != null) {
                 var testCommitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUri());
                 if (testCommitHash != null) {
@@ -166,19 +155,15 @@ public class ExerciseVersionService {
      * @return true if a new version is needed, false otherwise
      */
     private boolean isNewVersionNeeded(Long exerciseId, ExerciseVersionContent currentContent) {
-        // Get the latest version of the exercise
         Optional<ExerciseVersion> latestVersionOpt = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
 
-        // If no previous version exists, a new version is needed
         if (latestVersionOpt.isEmpty()) {
             return true;
         }
 
-        // Compare the current content with the latest version
         ExerciseVersion latestVersion = latestVersionOpt.get();
         ExerciseVersionContent latestContent = latestVersion.getContent();
 
-        // Deep comparison of the content
         return !currentContent.equals(latestContent);
     }
 }
