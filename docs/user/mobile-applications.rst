@@ -237,6 +237,11 @@ View Modeling Exercise Result
         Video tutorial for viewing modeling exercise results on TUM-Live.
     </iframe>
 
+Problems
+^^^^^^^^
+
+Please report any issues on the `GitHub repository <https://github.com/ls1intum/artemis-ios/issues>`__.
+
 Force Update Mechanism
 -------------------
 
@@ -253,11 +258,6 @@ The Artemis server provides two configurable version thresholds:
 * If the installed version is **below the recommended**, users will see an update prompt **each time the app is opened**, encouraging them to install the latest version.
 
 |force-update-android| |force-update-ios|
-
-Problems
-^^^^^^^^
-
-Please report any issues on the `GitHub repository <https://github.com/ls1intum/artemis-ios/issues>`__.
 
 .. |server-selection-overview-android| image:: native-applications/android/server_selection_overview.png
     :width: 300
