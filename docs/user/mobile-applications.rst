@@ -83,31 +83,6 @@ When logged in, users can navigate to the application settings to change their p
 
   .. image:: native-applications/android/settings_push.png
             :width: 300
-
-To manage course-wide notifications, click the **notification bell icon** within a course. This opens the **notification settings panel**, where you can view all available notification types and configure your preferences for each.
-
-|course-notification-settings|
-
-Force Update Mechanism
-^^^^^^^^^^^^^^^^^^^^^^
-
-The Android app supports a force update mechanism to ensure compatibility and security, especially when breaking changes are introduced.
-
-The Artemis server provides two configurable version thresholds:
-
-* ``min`` – the **minimum required version**. Users must update the app before continuing.
-* ``recommended`` – the **recommended version**. Users are prompted to update but can continue using the app if they choose.
-
-**Behavior on App Launch:**
-
-* If the installed version is **below the minimum**, users are redirected to the Play Store and **cannot use the app** until they update.
-
-|force-update-dialog|
-
-* If the installed version is **below the recommended**, users will see an update prompt **each time the app is opened**, encouraging them to install the latest version.
-
-|recommended-update-dialog|
-
 Problems
 ^^^^^^^^
 
@@ -262,6 +237,23 @@ View Modeling Exercise Result
         Video tutorial for viewing modeling exercise results on TUM-Live.
     </iframe>
 
+Force Update Mechanism
+-------------------
+
+The native apps supports a force update mechanism to ensure compatibility and security, especially when breaking changes are introduced.
+
+The Artemis server provides two configurable version thresholds:
+
+* ``min`` – the **minimum required version**. Users must update the app before continuing.
+* ``recommended`` – the **recommended version**. Users are prompted to update but can continue using the app if they choose.
+
+**Behavior on App Launch:**
+
+* If the installed version is **below the minimum**, users are redirected to the Play Store and **cannot use the app** until they update.
+* If the installed version is **below the recommended**, users will see an update prompt **each time the app is opened**, encouraging them to install the latest version.
+
+|force-update-android| |force-update-ios|
+
 Problems
 ^^^^^^^^
 
@@ -276,11 +268,8 @@ Please report any issues on the `GitHub repository <https://github.com/ls1intum/
 .. |custom-server-entered-ios| image:: native-applications/iOS/custom-server-entered-ios.PNG
     :width: 300
 
-.. |force-update-dialog| image:: native-applications/android/force_update.png
+.. |force-update-android| image:: native-applications/android/force_update.png
    :width: 300
 
-.. |recommended-update-dialog| image:: native-applications/android/recommended_update.png
+.. |force-update-ios| image:: native-applications/iOS/force_update.png
    :width: 300
-
-.. |course-notification-settings| image:: notifications/course_notification_settings.png
-   :width: 700
