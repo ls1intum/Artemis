@@ -257,4 +257,6 @@ For detailed information about the content sent with each notification, you can 
 .. |security-notifications| image:: notifications/notification-security.png
     :width: 800
 .. |user-settings| image:: notifications/user-settings.png
+    :width: 200
+.. |notification-security| image:: notifications/notification-security.png
     :width: 800
