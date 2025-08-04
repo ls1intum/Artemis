@@ -206,7 +206,7 @@ public class IrisSessionService {
             enabledTypes.add(IrisLectureChatSession.class);
         }
 
-        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId, enabledTypes).stream()
-                .map(dao -> new IrisChatSessionDTO(dao.session().getId(), dao.entityId(), dao.entityName(), dao.session().getCreationDate(), dao.session().getMode())).toList();
+        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId, enabledTypes).stream().map(dao -> new IrisChatSessionDTO(dao.session().getId(),
+                dao.entityId(), dao.entityName(), dao.session().getTitle(), dao.session().getCreationDate(), dao.session().getMode())).toList();
     }
 }

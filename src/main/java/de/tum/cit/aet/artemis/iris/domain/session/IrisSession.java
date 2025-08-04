@@ -53,6 +53,9 @@ public abstract class IrisSession extends DomainObject {
     @OneToMany(mappedBy = "session", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessage> messages = new ArrayList<>();
 
+    @Column(name = "title")
+    private String title;
+
     @Column(name = "creation_date")
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
@@ -67,6 +70,14 @@ public abstract class IrisSession extends DomainObject {
         var message = new IrisMessage();
         message.setSession(this);
         return message;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getTitle() {
+        return title;
     }
 
     public void setCreationDate(ZonedDateTime creationDate) {
