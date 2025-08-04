@@ -99,7 +99,7 @@ public class CourseScoreCalculationService {
      * @param exercises    the exercises which are included into max points calculation
      * @return the max and reachable max points for the given exercises
      */
-    private MaxAndReachablePointsDTO calculateMaxAndReachablePoints(GradingScale gradingScale, Set<Exercise> exercises) {
+    private MaxAndReachablePointsDTO calculateMaxAndReachablePoints(@Nullable GradingScale gradingScale, Set<Exercise> exercises) {
 
         if (exercises.isEmpty()) {
             return new MaxAndReachablePointsDTO(0, 0, 0);
@@ -224,7 +224,7 @@ public class CourseScoreCalculationService {
      * @param includeIrisCourseDashboardEnabled whether the enabled state of the course chat should be included in the CourseForDashboardDTO
      * @return the CourseForDashboardDTO containing all the mentioned items.
      */
-    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, GradingScale gradingScale, long userId, boolean includeIrisCourseDashboardEnabled) {
+    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, @Nullable GradingScale gradingScale, long userId, boolean includeIrisCourseDashboardEnabled) {
         Set<StudentParticipation> gradedStudentParticipations = new HashSet<>();
         for (Exercise exercise : course.getExercises()) {
             exercise.setCourse(course);
@@ -326,8 +326,8 @@ public class CourseScoreCalculationService {
      * @param plagiarismCases         the plagiarism verdicts for the student.
      * @return a StudentScoresDTO instance with the presentation score, relative and absolute points achieved by the given student.
      */
-    public StudentScoresDTO calculateCourseScoreForStudent(Course course, GradingScale gradingScale, Long studentId, Collection<StudentParticipation> participationsOfStudent,
-            MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases) {
+    public StudentScoresDTO calculateCourseScoreForStudent(Course course, @Nullable GradingScale gradingScale, Long studentId,
+            Collection<StudentParticipation> participationsOfStudent, MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases) {
 
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
 
@@ -347,7 +347,7 @@ public class CourseScoreCalculationService {
             // getResultForParticipation always sorts the results by completion date, maybe optimize with a flag
             // if input results are already sorted.
             var result = getResultForParticipation(participation, exercise.getDueDate());
-            if (result != null && Boolean.TRUE.equals(result.isRated())) {
+            if (result != null && result.isRated()) {
                 double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, result, plagiarismCasesForStudent.get(exercise.getId()));
                 pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
             }
@@ -419,7 +419,7 @@ public class CourseScoreCalculationService {
 
         var resultsList = new ArrayList<>(resultsSet);
 
-        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null).toList();
+        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> result.isRated() && result.getCompletionDate() != null).toList();
 
         if (ratedResultsWithCompletionDate.isEmpty()) {
             return emptyResult;
