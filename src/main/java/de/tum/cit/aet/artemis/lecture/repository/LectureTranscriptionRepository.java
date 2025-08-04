@@ -26,7 +26,4 @@ public interface LectureTranscriptionRepository extends ArtemisJpaRepository<Lec
     List<LectureTranscription> findByTranscriptionStatusAndJobIdIsNotNull(TranscriptionStatus status);
 
     Optional<LectureTranscription> findByJobId(String jobId);
-
-    void flush();
-
 }
