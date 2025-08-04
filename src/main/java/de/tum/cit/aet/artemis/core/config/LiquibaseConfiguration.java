@@ -34,7 +34,7 @@ import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
 
 @Profile(PROFILE_CORE)
 @Configuration
-@Lazy
+@Lazy(value = false)
 public class LiquibaseConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(LiquibaseConfiguration.class);

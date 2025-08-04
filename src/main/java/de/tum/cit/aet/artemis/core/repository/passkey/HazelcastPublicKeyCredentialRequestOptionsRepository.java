@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.repository.passkey;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -11,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 import org.springframework.stereotype.Repository;
@@ -19,8 +19,6 @@ import org.springframework.stereotype.Repository;
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
-
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 
 /**
  * A distributed implementation of {@link PublicKeyCredentialRequestOptionsRepository} using Hazelcast
@@ -79,7 +77,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
      * Sets the time-to-live for WebAuthn request options to 2 minutes.
      * </p>
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void init() {
         int AUTH_OPTIONS_TIME_TO_LIVE_IN_SECONDS = 120; // 2 minutes
 

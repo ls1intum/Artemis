@@ -9,18 +9,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jakarta.annotation.PostConstruct;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -64,7 +64,7 @@ public class BuildScriptProviderService {
      * Windfiles are ignored since they are only used for the windfile and are cached in {@link AeolusTemplateService}.
      * Each script is read, processed, and stored in the {@code scriptCache}. Errors during loading are logged.
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void cacheOnBoot() {
         var resources = this.resourceLoaderService.getFileResources(Path.of("templates", "aeolus"));
         for (var resource : resources) {

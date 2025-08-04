@@ -2,15 +2,15 @@ package de.tum.cit.aet.artemis.core.service.telemetry;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 @Lazy
@@ -42,7 +42,7 @@ public class TelemetryService {
      * <p>
      * If telemetry is disabled (as specified by the {@code useTelemetry} flag), the task will not be executed.
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void sendTelemetry() {
         if (!useTelemetry || profileService.isDevActive()) {
             return;

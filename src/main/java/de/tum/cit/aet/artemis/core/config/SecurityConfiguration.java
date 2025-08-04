@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
 @Configuration
 @EnableWebSecurity
-@Lazy
+@Lazy(value = false)
 @EnableMethodSecurity(securedEnabled = true)
 @Profile(PROFILE_CORE)
 public class SecurityConfiguration {

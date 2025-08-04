@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -14,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -81,7 +80,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.profileService = profileService;
     }
 
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void applicationReady() {
         // schedule the task after the application has started to avoid delaying the start of the application
         scheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(PROGRAMMING_EXERCISE_SCHEDULE_DELAY_SEC));
