@@ -14,9 +14,27 @@ Apart from :ref:`Exercises <exercises>` and :ref:`Exams <exams>`, Artemis can al
 Students
 ^^^^^^^^
 
-Students can see all published lectures of a course, grouped by date, when clicking on the tab labeled *Lectures*.
+Students can see all published lectures of a course, when clicking on the tab labeled *Lectures*.
 
-|lectures-overview|
+|general-menu|
+
+Lecture Organization and Navigation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The lecture overview provides an organized view of all course lectures with the following features:
+
+**Sidebar Navigation:** The sidebar displays lectures categorized by time periods:
+
+- **Future:** Upcoming lectures that haven't started yet
+- **Current:** Lectures that are currently active
+- **Past:** Completed lectures
+- **No Date:** Lectures without a specific date assigned
+
+|lecture-overview-collapse|
+
+**Grouping Principle:** When a section contains more than 5 lectures, Artemis may create weekly subsections to improve navigation. However, the exact grouping behavior depends on the lecture dates and distribution across weeks. Note that subsections may not always be visible as expandable subpoints in the current interface.
+
+|lecture-overview-current| |lecture-overview-past|
 
 Clicking on a lecture leads to the following page, where students can see the title, description, lecture units, and attachments.
 
@@ -179,8 +197,14 @@ Instructors can create competencies, which are desired learning objectives, and 
 See :ref:`Adaptive Learning <adaptive-learning>` for more information.
 
 
-.. |lectures-overview| image:: lectures/lectures-overview.png
-    :width: 1000
+.. |general-menu| image:: lectures/general-menu-lecture.png
+    :width: 200
+.. |lecture-overview-collapse| image:: lectures/lecture-overview-collapse.png
+    :width: 200
+.. |lecture-overview-past| image:: lectures/lecture-overview-past.png
+    :width: 200
+.. |lecture-overview-current| image:: lectures/lecture-overview-current.png
+    :width: 200
 .. |lecture-details| image:: lectures/lecture-details.png
     :width: 1000
 .. |lectures-management| image:: lectures/lectures-management.png
