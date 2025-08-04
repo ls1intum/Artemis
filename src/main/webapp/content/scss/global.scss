@@ -1174,7 +1174,6 @@ Hides the scrollbar, unless the user is currently using the scrollbar
 Note: This class assumes that the scrollbar is already present (e.g. overflow-y and a defined max-height)
 */
 .hide-scrollbar-unless-scrolling {
-    /* Hide scrollbar by default */
     &::-webkit-scrollbar {
         width: var(--scrollbar-width);
         opacity: 0;
@@ -1182,6 +1181,7 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     }
 
     &::-webkit-scrollbar-thumb {
+        width: var(--scrollbar-width);
         background-color: transparent;
         border-radius: var(--scrollbar-width);
         transition: background-color var(--scrollbar-transition-time);
@@ -1196,14 +1196,5 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     &:active::-webkit-scrollbar-thumb {
         width: var(--scrollbar-width);
         background-color: var(--scrollbar-color);
-    }
-
-    /* For Firefox */
-    scrollbar-width: thin;
-    scrollbar-color: transparent transparent;
-
-    &:hover,
-    &:active {
-        scrollbar-color: var(--scrollbar-color) transparent;
     }
 }
