@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 
 import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -30,7 +30,7 @@ export class TheiaService {
      * Starts the online IDE (Theia) in a new window using provided parameters
      */
     async startOnlineIDE(theiaPortalURL: string, theiaImage: string, repositoryUri: string, userName?: string, userEmail?: string): Promise<void> {
-        const artemisToken: string = (await this.accountService.getToolToken('SCORPIO').toPromise()) ?? '';
+        const artemisToken: string = (await firstValueFrom(this.accountService.getToolToken('SCORPIO'))) ?? '';
 
         let artemisUrl: string = '';
         if (window.location.protocol) {
