@@ -272,7 +272,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     void testUpdateExistingProgress() {
-        // Arrange
         ZonedDateTime newAnsweredTime = ZonedDateTime.now();
         QuizQuestionProgressData newProgressData = new QuizQuestionProgressData();
         newProgressData.setEasinessFactor(3.0);
@@ -282,10 +281,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         newProgressData.setBox(2);
         newProgressData.setLastScore(0.5);
 
-        // Act
         quizQuestionProgressService.updateExistingProgress(userId, quizQuestion, newProgressData, newAnsweredTime);
 
-        // Assert
         Optional<QuizQuestionProgress> updatedProgressOptional = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, quizQuestionId);
         assertThat(updatedProgressOptional).isPresent();
 
@@ -301,12 +298,10 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     void testUpdateExistingProgress_ProgressNotFound() {
-        // Arrange
         Long nonExistentUserId = 999L;
         ZonedDateTime newAnsweredTime = ZonedDateTime.now();
         QuizQuestionProgressData newProgressData = new QuizQuestionProgressData();
 
-        // Act & Assert
         assertThatThrownBy(() -> quizQuestionProgressService.updateExistingProgress(nonExistentUserId, quizQuestion, newProgressData, newAnsweredTime))
                 .isInstanceOf(IllegalStateException.class).hasMessage("Progress entry should exist but was not found.");
     }
