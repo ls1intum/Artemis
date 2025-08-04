@@ -245,7 +245,7 @@ Please report any issues on the `GitHub repository <https://github.com/ls1intum/
 Force Update Mechanism
 -------------------
 
-The native apps supports a force update mechanism to ensure compatibility and security, especially when breaking changes are introduced.
+The native apps support a force-update mechanism to ensure compatibility and security, especially when breaking changes are introduced.
 
 The Artemis server provides two configurable version thresholds:
 
@@ -254,7 +254,7 @@ The Artemis server provides two configurable version thresholds:
 
 **Behavior on App Launch:**
 
-* If the installed version is **below the minimum**, users are redirected to the Play Store and **cannot use the app** until they update.
+* If the installed version is **below the minimum**, users are redirected to the appropriate app store (Play Store or App Store) and **cannot use the app** until they update.
 * If the installed version is **below the recommended**, users will see an update prompt **each time the app is opened**, encouraging them to install the latest version.
 
 |force-update-android| |force-update-ios|

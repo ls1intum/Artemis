@@ -59,7 +59,7 @@ Here you can:
 #. Enable or disable each type of security-related email.
 #. Access related configuration pages via quick links (e.g., “View SSH Key Settings”).
 
-|notification-security|
+|security-notifications|
 
 Push Notifications
 ^^^^^^^^^^^^^^^^^^
@@ -258,5 +258,3 @@ For detailed information about the content sent with each notification, you can 
     :width: 800
 .. |user-settings| image:: notifications/user-settings.png
     :width: 200
-.. |notification-security| image:: notifications/notification-security.png
-    :width: 800

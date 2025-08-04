@@ -14,7 +14,7 @@ Apart from :ref:`Exercises <exercises>` and :ref:`Exams <exams>`, Artemis can al
 Students
 ^^^^^^^^
 
-Students can see all published lectures of a course, when clicking on the tab labeled *Lectures*.
+Students can see all published lectures of a course by clicking on the tab labeled *Lectures*.
 
 |general-menu|
 
