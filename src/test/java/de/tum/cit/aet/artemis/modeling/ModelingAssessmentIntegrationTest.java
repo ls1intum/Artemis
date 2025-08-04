@@ -460,7 +460,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     private void checkAssessmentNotFinished(Result storedResult, User assessor) {
-        assertThat(storedResult.isRated() == null || !storedResult.isRated()).as("rated has not been set").isTrue();
+        assertThat(storedResult.isRated()).as("rated has not been set").isFalse();
         assertThat(storedResult.getScore()).as("score has not been calculated").isNull();
         assertThat(storedResult.getAssessor()).as("Assessor has been set").isEqualTo(assessor);
         assertThat(storedResult.getCompletionDate()).as("completion date has not been set").isNull();
@@ -474,7 +474,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     private void checkAutomaticAssessment(Result storedResult) {
-        assertThat(storedResult.isRated() == null || !storedResult.isRated()).as("rated has not been set").isTrue();
+        assertThat(storedResult.isRated()).as("rated has not been set").isFalse();
         assertThat(storedResult.getScore()).as("score has not been calculated").isNull();
         assertThat(storedResult.getAssessor()).as("assessor has not been set").isNull();
         assertThat(storedResult.getCompletionDate()).as("completion date has not been set").isNull();

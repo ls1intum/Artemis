@@ -158,7 +158,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
-        if (Boolean.FALSE.equals(newManualResult.isRated())) {
+        if (!newManualResult.isRated()) {
             throw new BadRequestAlertException("Result is not rated", ENTITY_NAME, "resultNotRated");
         }
         if (newManualResult.getScore() == null) {
