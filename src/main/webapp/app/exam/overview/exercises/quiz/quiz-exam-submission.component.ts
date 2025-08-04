@@ -138,13 +138,12 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      * @param questionId
      */
     navigateToQuestion(questionId: number): void {
-        // get html element for question
         const element = document.getElementById('question' + questionId);
         if (element) {
             element.scrollIntoView({
                 behavior: 'smooth',
-                block: 'start',
-                inline: 'nearest',
+                block: 'nearest',
+                inline: 'start',
             });
         }
     }
