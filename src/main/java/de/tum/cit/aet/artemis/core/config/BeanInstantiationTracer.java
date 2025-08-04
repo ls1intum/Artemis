@@ -148,7 +148,7 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
             out.println("}");
         }
         catch (IOException e) {
-            log.error("Failed to write startupBeans.dot", e);
+            log.error("Failed to write {} ", filename, e);
         }
 
         log.debug("Maximum dependency chain length during deferred eager init: {}", maxCallStackSize.get());
