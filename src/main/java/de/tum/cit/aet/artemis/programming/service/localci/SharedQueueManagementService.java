@@ -113,6 +113,13 @@ public class SharedQueueManagementService {
         distributedDataAccessService.getBuildAgentInformation().forEach(agent -> resumeBuildAgent(agent.buildAgent().name()));
     }
 
+    /**
+     * Adjust the concurrent build size of a specific build agent.
+     *
+     * @param agentName          the name of the build agent to adjust concurrent build size for
+     * @param capacityAdjustment the capacity adjustment request containing the new size
+     * @return the ResponseEntity with the result of the adjustment
+     */
     public void adjustBuildAgentCapacity(String agentName, int newCapacity) {
         if (newCapacity <= 0) {
             throw new BadRequestAlertException("Concurrent build size must be at least 1", "buildAgent", "invalidCapacityBelowMinimum");
