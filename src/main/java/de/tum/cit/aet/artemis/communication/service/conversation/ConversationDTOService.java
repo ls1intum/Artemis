@@ -140,9 +140,10 @@ public class ConversationDTOService {
         var numberOfMembers = channel.getIsCourseWide() ? courseRepository.countCourseMembers(channel.getCourse().getId())
                 : conversationParticipantRepository.countByConversationId(channel.getId());
 
-        var tutorialGroupId = tutorialGroupCommunicationApi.map(api -> api.getTutorialGroupCommunicationDetails(channel.getId())).map(Pair::getFirst).orElse(null);
+        var tutorialGroupDetails = tutorialGroupCommunicationApi.map(api -> api.getTutorialGroupCommunicationDetails(channel.getId()));
 
-        var tutorialGroupTitle = tutorialGroupCommunicationApi.map(api -> api.getTutorialGroupCommunicationDetails(channel.getId())).map(Pair::getSecond).orElse(null);
+        var tutorialGroupId = tutorialGroupDetails.map(Pair::getFirst).orElse(null);
+        var tutorialGroupTitle = tutorialGroupDetails.map(Pair::getSecond).orElse(null);
 
         return channelDTO.withIsChannelModerator(isChannelModerator).withHasChannelModerationRights(hasChannelModerationRights).withIsMember(isMember)
                 .withNumberOfMembers(numberOfMembers).withTutorialGroupId(tutorialGroupId).withTutorialGroupTitle(tutorialGroupTitle);
@@ -168,9 +169,10 @@ public class ConversationDTOService {
         boolean isMember = channelAuthorizationService.isMember(channel, participantOptional);
         boolean hasChannelModerationRights = channelAuthorizationService.hasChannelModerationRights(channel, requestingUser, participantOptional);
 
-        var tutorialGroupId = tutorialGroupCommunicationApi.map(api -> api.getTutorialGroupCommunicationDetails(channel.getId())).map(Pair::getFirst).orElse(null);
+        var tutorialGroupDetails = tutorialGroupCommunicationApi.map(api -> api.getTutorialGroupCommunicationDetails(channel.getId()));
 
-        var tutorialGroupTitle = tutorialGroupCommunicationApi.map(api -> api.getTutorialGroupCommunicationDetails(channel.getId())).map(Pair::getSecond).orElse(null);
+        var tutorialGroupId = tutorialGroupDetails.map(Pair::getFirst).orElse(null);
+        var tutorialGroupTitle = tutorialGroupDetails.map(Pair::getSecond).orElse(null);
 
         return channelDTO.withIsChannelModerator(isChannelModerator).withHasChannelModerationRights(hasChannelModerationRights).withTutorialGroupId(tutorialGroupId)
                 .withTutorialGroupTitle(tutorialGroupTitle).withIsMember(isMember);

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.communication.dto;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -41,6 +43,25 @@ public record ConversationUserDTO(UserPublicInfoDTO publicInfo, Boolean isChanne
      */
     public ConversationUserDTO withChannelModerator(Boolean isChannelModerator) {
         return new ConversationUserDTO(this.publicInfo, isChannelModerator, this.isRequestingUser);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof ConversationUserDTO that))
+            return false;
+
+        // Compare only by user ID
+        Long thisId = this.publicInfo != null ? this.publicInfo.id() : null;
+        Long thatId = that.publicInfo != null ? that.publicInfo.id() : null;
+
+        return Objects.equals(thisId, thatId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(publicInfo != null ? publicInfo.id() : null);
     }
 
 }
