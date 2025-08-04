@@ -504,10 +504,10 @@ public class ConversationMessagingService extends PostingService {
         // Step 2: Fetch the base posts (with author & conversation)
         List<Post> posts = conversationMessageRepository.findByIdIn(ids);
         // Step 3: Fetch answer posts for those posts
-        List<AnswerPost> allAnswers = answerPostRepository.findByPostIds(ids);
+        List<AnswerPost> allAnswers = answerPostRepository.findAnswerPostsByPostIdIn(ids);
         Map<Long, Set<AnswerPost>> answersByPostId = allAnswers.stream().collect(Collectors.groupingBy(a -> a.getPost().getId(), Collectors.toSet()));
         // Step 4: Fetch reactions for those posts
-        List<Reaction> reactions = reactionRepository.findByPostIds(ids);
+        List<Reaction> reactions = reactionRepository.findByPostIdIn(ids);
         Map<Long, Set<Reaction>> reactionsByPostId = reactions.stream().collect(Collectors.groupingBy(r -> r.getPost().getId(), Collectors.toSet()));
         // Step 5: Fetch tags for those posts
         List<Object[]> tagsRaw = conversationMessageRepository.findTagsByPostIds(ids);

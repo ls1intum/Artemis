@@ -156,6 +156,5 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
         }
     }
 
-    @Query("SELECT a FROM AnswerPost a WHERE a.post.id IN :postIds")
-    List<AnswerPost> findByPostIds(@Param("postIds") List<Long> postIds);
+    List<AnswerPost> findAnswerPostsByPostIdIn(List<Long> postIds);
 }
