@@ -129,11 +129,26 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
      */
     @EventListener(DeferredEagerBeanInitializationCompletedEvent.class)
     public void logDeferredInitChainsExceedingThreshold() {
-        int i = 1;
-        for (List<String> chain : deferredInstantiationExceedingThresholdChains) {
-            List<String> reversed = new ArrayList<>(chain);
-            Collections.reverse(reversed);
-            log.debug("Deferred long bean instantiation chain {} (length {}): {}", i++, reversed.size(), String.join(" → ", reversed));
+        String filename = "deferredEagerBeanInstantiationViolations.dot";
+        try (PrintWriter out = new PrintWriter(filename)) {
+            out.println("digraph beans {");
+
+            int i = 1;
+            for (List<String> chain : deferredInstantiationExceedingThresholdChains) {
+                List<String> reversed = new ArrayList<>(chain);
+                Collections.reverse(reversed);
+
+                log.debug("Deferred long bean instantiation chain {} (length {}): {}", i++, reversed.size(), String.join(" → ", reversed));
+
+                for (int j = 0; j < reversed.size() - 1; j++) {
+                    out.printf("  \"%s\" -> \"%s\";%n", reversed.get(j), reversed.get(j + 1));
+                }
+            }
+
+            out.println("}");
+        }
+        catch (IOException e) {
+            log.error("Failed to write startupBeans.dot", e);
         }
 
         log.debug("Maximum dependency chain length during deferred eager init: {}", maxCallStackSize.get());
