@@ -25,5 +25,11 @@
 }
 
 .day-badge.selected-day {
-    background-color: #c1c4c6;
+    background-color: var(--calendar-day-badge-selected);
+    color: var(--black);
+}
+
+.day-badge.today-minimal.selected-day {
+    background-color: var(--calendar-day-badge-selected);
+    color: var(--primary);
 }

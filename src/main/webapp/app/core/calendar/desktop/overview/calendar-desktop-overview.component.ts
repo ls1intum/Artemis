@@ -14,7 +14,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
 import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
-import { CalendarEventFilterComponent } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
+import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 
 dayjs.extend(isoWeek);
 dayjs.extend(isSameOrBefore);
@@ -40,6 +40,7 @@ export class CalendarDesktopOverviewComponent implements OnInit {
     private courseId?: number;
     private currentLocale = signal(this.translateService.currentLang);
 
+    readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
     presentation = signal<'week' | 'month'>('month');

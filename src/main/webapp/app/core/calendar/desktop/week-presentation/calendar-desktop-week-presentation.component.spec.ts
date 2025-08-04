@@ -195,13 +195,13 @@ describe('CalendarWeekPresentationComponent', () => {
 
         let popover = document.querySelector('jhi-calendar-event-detail-popover');
         expect(popover).toBeTruthy();
-        expect(component.selectedEvent()?.id).toBe(events[0].id);
+        expect(component.isEventSelected()?.id).toBe(events[0].id);
 
         lectureEventCell.nativeElement.click();
         fixture.detectChanges();
 
         popover = document.querySelector('jhi-calendar-event-detail-popover');
         expect(popover).toBeTruthy();
-        expect(component.selectedEvent()?.id).toBe(events[1].id);
+        expect(component.isEventSelected()?.id).toBe(events[1].id);
     });
 });

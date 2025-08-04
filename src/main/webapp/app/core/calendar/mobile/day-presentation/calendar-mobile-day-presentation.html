@@ -1,0 +1,10 @@
+<div class="frame">
+    <div class="week-header">
+        @for (day of utils.getWeekOf(selectedDay()); track utils.identify(day)) {
+            <calendar-day-badge [day]="day" [minimalTodayIndication]="true" [isSelectedDay]="isSelected(day)" />
+        }
+    </div>
+    <div class="scroll-container" #scrollContainer [class.no-scroll]="isEventSelected()">
+        <calendar-events-per-day-presentation [days]="[selectedDay()]" (isEventSelected)="isEventSelected.set($event)" />
+    </div>
+</div>

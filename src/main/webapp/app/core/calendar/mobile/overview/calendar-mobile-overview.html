@@ -1,48 +1,28 @@
-<div class="frame" (touchstart)="onTouchStart($event)" (touchmove)="onTouchMove($event)" (touchend)="onTouchEnd()">
-    <div
-        class="mobile-month-section-swiping-content"
-        [ngStyle]="{
-            transform: onSwipeMonthTransform,
-            transition: transitionEnabled ? transition : 'none',
-        }"
-    >
-        @for (firstDayOfMonth of firstDaysOfVisibleMonths; track utils.identify(firstDayOfMonth)) {
-            <calendar-mobile-month-section
-                [firstDayOfMonth]="firstDayOfMonth"
-                [isDayAndWeekSelected]="isDayAndWeekSelected()"
-                (selectDay)="selectDay($event)"
-                (unselectDay)="unselectDay()"
-            />
-        }
-    </div>
-    @if (isDayAndWeekSelected()) {
-        <div class="mobile-week-section-frame">
-            <div
-                class="mobile-week-section-swiping-content"
-                [ngStyle]="{
-                    transform: onSwipeWeekTransform,
-                    transition: transitionEnabled ? transition : 'none',
-                }"
-            >
-                @for (firstDayOfWeek of firstDaysOfVisibleWeeks; track utils.identify(firstDayOfWeek)) {
-                    <div class="mobile-week-section">
-                        @for (day of utils.getWeekOf(firstDayOfWeek); track utils.identify(day)) {
-                            <calendar-day-badge [day]="day" [minimalTodayIndication]="true" [isSelectedDay]="isSelected(day)" />
-                        }
-                    </div>
+<div class="frame">
+    <div class="header">
+        <div class="title-close-button-row">
+            <div class="header-spacer">
+                @if (selectedDay()) {
+                    <button type="button" class="header-button" (click)="unselectDay()">
+                        <fa-icon [icon]="faXmark" />
+                    </button>
                 }
             </div>
+            <div class="month-title">{{ firstDayOfSelectedMonth().format('MMMM YYYY') }}</div>
+            <div class="header-spacer">
+                <calendar-event-filter [variant]="CalendarEventFilterComponentVariant.MOBILE" />
+            </div>
         </div>
-        <div
-            class="mobile-day-section-swiping-content"
-            [ngStyle]="{
-                transform: onSwipeDayTransform,
-                transition: transitionEnabled ? transition : 'none',
-            }"
-        >
-            @for (day of visibleDays; track utils.identify(day)) {
-                <div class="mobile-day-section"></div>
+        <div class="day-name-row">
+            @for (dayNameKey of utils.getWeekDayNameKeys(); track dayNameKey) {
+                <div class="weekday-label" jhiTranslate="{{ dayNameKey }}"></div>
             }
         </div>
+    </div>
+    @let day = selectedDay();
+    @if (day) {
+        <calendar-mobile-day-presentation [selectedDay]="day" />
+    } @else {
+        <calendar-mobile-month-presentation [firstDayOfMonth]="firstDayOfSelectedMonth()" (selectDay)="selectDay($event)" />
     }
 </div>

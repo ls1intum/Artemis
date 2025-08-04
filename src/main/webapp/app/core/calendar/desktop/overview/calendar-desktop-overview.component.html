@@ -2,7 +2,7 @@
     <div class="header">
         <span class="h3">{{ getMonthDescription() }}</span>
         <div class="spacer"></div>
-        <jhi-calendar-event-filter />
+        <calendar-event-filter [variant]="CalendarEventFilterComponentVariant.DESKTOP" />
         <button id="today-button" type="button" class="btn btn-outline-primary" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
         <div class="btn-group" role="group">
             <button

@@ -7,16 +7,14 @@ import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
-    selector: 'calendar-mobile-month-section',
+    selector: 'calendar-mobile-month-presentation',
     imports: [NgClass, CalendarDayBadgeComponent, TranslateDirective],
-    templateUrl: './calendar-mobile-month-section.html',
-    styleUrl: './calendar-mobile-month-section.scss',
+    templateUrl: './calendar-mobile-month-presentation.component.html',
+    styleUrl: './calendar-mobile-month-presentation.component.scss',
 })
-export class CalendarMobileMonthSection {
+export class CalendarMobileMonthPresentation {
     firstDayOfMonth = input.required<Dayjs>();
-    isDayAndWeekSelected = input.required<boolean>();
     selectDay = output<Dayjs>();
-    unselectDay = output<void>();
 
     readonly utils = utils;
 

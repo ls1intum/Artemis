@@ -1,0 +1,30 @@
+<div class="frame">
+    @for (week of utils.getWeeksOfMonthFor(firstDayOfMonth()); track utils.identify(week)) {
+        <div class="week-row">
+            @for (day of week; track utils.identify(day)) {
+                @if (utils.areDaysInSameMonth(day, firstDayOfMonth())) {
+                    <div class="day" (click)="selectDay.emit(day)">
+                        <calendar-day-badge [day]="day" />
+                        <div class="event-stack">
+                            @if (getEventsOfDay(day).length > 3) {
+                                <div class="event"></div>
+                                <div class="event"></div>
+                                <div class="ellipsis">
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                </div>
+                            } @else {
+                                @for (event of getEventsOfDay(day); track event.id) {
+                                    <div class="event"></div>
+                                }
+                            }
+                        </div>
+                    </div>
+                } @else {
+                    <div class="day-placeholder"></div>
+                }
+            }
+        </div>
+    }
+</div>

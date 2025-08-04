@@ -1,50 +1,52 @@
 .frame {
     display: flex;
     flex-direction: column;
-    height: 100dvh;
-    background-color: var(--white);
-    overflow: hidden;
-}
 
-.mobile-month-section-swiping-content {
-    width: 300vw;
-    display: flex;
-    flex-direction: row;
-}
-
-.mobile-week-section-frame {
-    overflow: hidden;
-    border-bottom: 1px solid var(--border-color);
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-
-    .mobile-week-section-swiping-content {
-        width: 300vw;
-        display: flex;
-        flex-direction: row;
-
-        .mobile-week-section {
-            width: 100vw;
-            display: flex;
-            flex-direction: row;
-            justify-content: space-around;
-            padding: 12px 12px;
-        }
-    }
-}
-
-.mobile-day-section-swiping-content {
-    width: 300vw;
-    flex: 1;
-    display: flex;
-    flex-direction: row;
-    min-height: 0;
-
-    .mobile-day-section {
-        width: 100vw;
+    .header {
         display: flex;
         flex-direction: column;
-        min-height: 0;
+        border-left: 1px solid var(--border-color);
+        border-right: 1px solid var(--border-color);
+        border-top: 1px solid var(--border-color);
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+
+        .title-close-button-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 12px 8px;
+
+            .header-spacer {
+                width: calc(100% / 7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .header-button {
+                all: unset;
+                cursor: pointer;
+            }
+
+            .month-title {
+                flex: 1;
+                font-size: 16px;
+                font-weight: 800;
+                text-align: center;
+            }
+        }
+
+        .day-name-row {
+            display: flex;
+            padding: 0px 12px 12px;
+            border-bottom: 1px solid var(--border-color);
+
+            .weekday-label {
+                flex: 1;
+                font-size: 14px;
+                font-weight: 500;
+                text-align: center;
+            }
+        }
     }
 }

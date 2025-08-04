@@ -44,6 +44,15 @@
     }
 }
 
+.filter-button {
+    all: unset;
+    cursor: pointer;
+
+    .filter-icon {
+        font-size: 12px;
+    }
+}
+
 .remove-button {
     cursor: pointer;
 }
