@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.agent;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.atlas.dto.AgentChatRequestDto;
@@ -23,7 +22,6 @@ class AgentHttpClientTest {
     @Mock
     private RestTemplate restTemplate;
 
-    @Value("${agent.api.url}")
     private String agentApiUrl = "http://localhost:8080/api/agent";
 
     @BeforeEach
@@ -45,7 +43,7 @@ class AgentHttpClientTest {
         AgentChatResponseDto actualResponse = agentHttpClient.sendMessageToAgent(request);
 
         // Assert
-        assertEquals(expectedResponse, actualResponse);
+        assertThat(actualResponse).isEqualTo(expectedResponse);
         verify(restTemplate, times(1)).postForObject(url, request, AgentChatResponseDto.class);
     }
 }
