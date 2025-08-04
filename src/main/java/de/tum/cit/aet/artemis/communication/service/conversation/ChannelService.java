@@ -113,14 +113,14 @@ public class ChannelService {
      */
     public Channel updateChannel(Long channelId, Long courseId, ChannelDTO channelDTO) {
         var channel = channelRepository.findByIdElseThrow(channelId);
-        if (channelDTO.getName() != null && !channelDTO.getName().equals(channel.getName())) {
-            channel.setName(channelDTO.getName().trim());
+        if (channelDTO.name() != null && !channelDTO.name().equals(channel.getName())) {
+            channel.setName(channelDTO.name().trim());
         }
-        if (channelDTO.getDescription() != null && !channelDTO.getDescription().equals(channel.getDescription())) {
-            channel.setDescription(channelDTO.getDescription().trim());
+        if (channelDTO.description() != null && !channelDTO.description().equals(channel.getDescription())) {
+            channel.setDescription(channelDTO.description().trim());
         }
-        if (channelDTO.getTopic() != null && !channelDTO.getTopic().equals(channel.getTopic())) {
-            channel.setTopic(channelDTO.getTopic().trim());
+        if (channelDTO.topic() != null && !channelDTO.topic().equals(channel.getTopic())) {
+            channel.setTopic(channelDTO.topic().trim());
         }
         this.channelIsValidOrThrow(courseId, channel);
 
@@ -420,7 +420,7 @@ public class ChannelService {
      * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
      */
     public Channel createFeedbackChannel(Course course, Long exerciseId, ChannelDTO channelDTO, List<String> feedbackDetailTexts, String testCaseName, User requestingUser) {
-        if (channelDTO.getName() != null && channelDTO.getName().trim().startsWith("$")) {
+        if (channelDTO.name() != null && channelDTO.name().trim().startsWith("$")) {
             throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");
         }
 

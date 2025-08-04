@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.service.conversation;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -11,6 +12,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -128,22 +130,22 @@ public class ConversationDTOService {
     @NotNull
     public ChannelDTO convertChannelToDTO(User requestingUser, Channel channel) {
         var channelDTO = new ChannelDTO(channel);
-        channelDTO.setIsChannelModerator(channelAuthorizationService.isChannelModerator(channel.getId(), requestingUser.getId()));
-        channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel.getId(), requestingUser));
+
+        boolean isChannelModerator = channelAuthorizationService.isChannelModerator(channel.getId(), requestingUser.getId());
+        boolean hasChannelModerationRights = channelAuthorizationService.hasChannelModerationRights(channel.getId(), requestingUser);
+
         var participantOptional = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), requestingUser.getId());
-        setDTOPropertiesBasedOnParticipant(channelDTO, participantOptional);
-        channelDTO.setIsMember(channelDTO.getIsMember() || channel.getIsCourseWide());
-        setDTOCreatorProperty(requestingUser, channel, channelDTO);
-        channelDTO.setNumberOfMembers(channel.getIsCourseWide() ? courseRepository.countCourseMembers(channel.getCourse().getId())
-                : conversationParticipantRepository.countByConversationId(channel.getId()));
-        if (tutorialGroupCommunicationApi.isPresent()) {
-            var tutorialGroupCommunicationDetails = tutorialGroupCommunicationApi.get().getTutorialGroupCommunicationDetails(channel.getId());
-            if (tutorialGroupCommunicationDetails != null) {
-                channelDTO.setTutorialGroupId(tutorialGroupCommunicationDetails.getFirst());
-                channelDTO.setTutorialGroupTitle(tutorialGroupCommunicationDetails.getSecond());
-            }
-        }
-        return channelDTO;
+        channelDTO = (ChannelDTO) setDTOPropertiesBasedOnParticipant(channelDTO, participantOptional);
+        boolean isMember = channelDTO.isMember() || channel.getIsCourseWide();
+        var numberOfMembers = channel.getIsCourseWide() ? courseRepository.countCourseMembers(channel.getCourse().getId())
+                : conversationParticipantRepository.countByConversationId(channel.getId());
+
+        var tutorialGroupId = tutorialGroupCommunicationApi.map(api -> api.getTutorialGroupCommunicationDetails(channel.getId())).map(Pair::getFirst).orElse(null);
+
+        var tutorialGroupTitle = tutorialGroupCommunicationApi.map(api -> api.getTutorialGroupCommunicationDetails(channel.getId())).map(Pair::getSecond).orElse(null);
+
+        return channelDTO.withIsChannelModerator(isChannelModerator).withHasChannelModerationRights(hasChannelModerationRights).withIsMember(isMember)
+                .withNumberOfMembers(numberOfMembers).withTutorialGroupId(tutorialGroupId).withTutorialGroupTitle(tutorialGroupTitle);
     }
 
     /**
@@ -156,25 +158,22 @@ public class ConversationDTOService {
      */
     @NotNull
     private ChannelDTO convertChannelToDTO(User requestingUser, Channel channel, ConversationSummary channelSummary) {
-        var channelDTO = new ChannelDTO(channel);
-        this.fillGeneralConversationDtoFields(channelDTO, requestingUser, channelSummary);
+        ChannelDTO channelDTO = new ChannelDTO(channel);
+        channelDTO = (ChannelDTO) this.fillGeneralConversationDtoFields(channelDTO, requestingUser, channelSummary);
 
         // channel-DTO specific fields
         var participantOptional = Optional.ofNullable(channelSummary.userConversationInfo().conversationParticipantSettingsView());
-        channelDTO.setIsChannelModerator(participantOptional.map(ConversationParticipantSettingsView::isModerator).orElse(false));
+        boolean isChannelModerator = participantOptional.map(ConversationParticipantSettingsView::isModerator).orElse(false);
 
-        channelDTO.setIsMember(channelAuthorizationService.isMember(channel, participantOptional));
-        channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel, requestingUser, participantOptional));
+        boolean isMember = channelAuthorizationService.isMember(channel, participantOptional);
+        boolean hasChannelModerationRights = channelAuthorizationService.hasChannelModerationRights(channel, requestingUser, participantOptional);
 
-        if (tutorialGroupCommunicationApi.isPresent()) {
-            var tutorialGroupCommunicationDetails = tutorialGroupCommunicationApi.get().getTutorialGroupCommunicationDetails(channel.getId());
-            if (tutorialGroupCommunicationDetails != null) {
-                channelDTO.setTutorialGroupId(tutorialGroupCommunicationDetails.getFirst());
-                channelDTO.setTutorialGroupTitle(tutorialGroupCommunicationDetails.getSecond());
-            }
-        }
+        var tutorialGroupId = tutorialGroupCommunicationApi.map(api -> api.getTutorialGroupCommunicationDetails(channel.getId())).map(Pair::getFirst).orElse(null);
 
-        return channelDTO;
+        var tutorialGroupTitle = tutorialGroupCommunicationApi.map(api -> api.getTutorialGroupCommunicationDetails(channel.getId())).map(Pair::getSecond).orElse(null);
+
+        return channelDTO.withIsChannelModerator(isChannelModerator).withHasChannelModerationRights(hasChannelModerationRights).withTutorialGroupId(tutorialGroupId)
+                .withTutorialGroupTitle(tutorialGroupTitle).withIsMember(isMember);
     }
 
     /**
@@ -192,11 +191,10 @@ public class ConversationDTOService {
                 .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(requestingUser.getId())).findFirst();
         Set<ConversationUserDTO> chatParticipants = getChatParticipantDTOs(requestingUser, course, conversationParticipants);
         var oneToOneChatDTO = new OneToOneChatDTO(oneToOneChat);
-        setDTOPropertiesBasedOnParticipant(oneToOneChatDTO, participantOfRequestingUser);
-        setDTOCreatorProperty(requestingUser, oneToOneChat, oneToOneChatDTO);
-        oneToOneChatDTO.setMembers(chatParticipants);
-        oneToOneChatDTO.setNumberOfMembers(conversationParticipants.size());
-        return oneToOneChatDTO;
+        oneToOneChatDTO = (OneToOneChatDTO) setDTOPropertiesBasedOnParticipant(oneToOneChatDTO, participantOfRequestingUser);
+        final boolean isCreator = oneToOneChat.getCreator() != null && oneToOneChat.getCreator().getId().equals(requestingUser.getId());
+
+        return oneToOneChatDTO.withMembers(chatParticipants).withNumberOfMembers(conversationParticipants.size()).withIsCreator(isCreator);
     }
 
     /**
@@ -210,12 +208,11 @@ public class ConversationDTOService {
     @NotNull
     private OneToOneChatDTO convertOneToOneChatToDto(User requestingUser, OneToOneChat oneToOneChat, ConversationSummary oneToOneChatSummary) {
         var oneToOneChatDTO = new OneToOneChatDTO(oneToOneChat);
-        this.fillGeneralConversationDtoFields(oneToOneChatDTO, requestingUser, oneToOneChatSummary);
+        oneToOneChatDTO = (OneToOneChatDTO) this.fillGeneralConversationDtoFields(oneToOneChatDTO, requestingUser, oneToOneChatSummary);
 
         // oneToOneChat-DTO specific fields
         Set<ConversationUserDTO> chatParticipants = getChatParticipantDTOs(requestingUser, oneToOneChat.getCourse(), getConversationParticipants(oneToOneChat));
-        oneToOneChatDTO.setMembers(chatParticipants);
-        return oneToOneChatDTO;
+        return oneToOneChatDTO.withMembers(chatParticipants);
     }
 
     /**
@@ -233,11 +230,9 @@ public class ConversationDTOService {
                 .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(requestingUser.getId())).findFirst();
         Set<ConversationUserDTO> chatParticipants = getChatParticipantDTOs(requestingUser, course, conversationParticipants);
         var groupChatDTO = new GroupChatDTO(groupChat);
-        setDTOPropertiesBasedOnParticipant(groupChatDTO, participantOfRequestingUser);
-        setDTOCreatorProperty(requestingUser, groupChat, groupChatDTO);
-        groupChatDTO.setMembers(chatParticipants);
-        groupChatDTO.setNumberOfMembers(conversationParticipants.size());
-        return groupChatDTO;
+        groupChatDTO = (GroupChatDTO) setDTOPropertiesBasedOnParticipant(groupChatDTO, participantOfRequestingUser);
+        final boolean isCreator = groupChat.getCreator() != null && groupChat.getCreator().getId().equals(requestingUser.getId());
+        return groupChatDTO.withMembers(chatParticipants).withNumberOfMembers(conversationParticipants.size()).withIsCreator(isCreator);
     }
 
     /**
@@ -251,12 +246,11 @@ public class ConversationDTOService {
     @NotNull
     private GroupChatDTO convertGroupChatToDto(User requestingUser, GroupChat groupChat, ConversationSummary groupChatSummary) {
         var groupChatDTO = new GroupChatDTO(groupChat);
-        this.fillGeneralConversationDtoFields(groupChatDTO, requestingUser, groupChatSummary);
+        groupChatDTO = (GroupChatDTO) this.fillGeneralConversationDtoFields(groupChatDTO, requestingUser, groupChatSummary);
 
         // groupChat-DTO specific fields
         Set<ConversationUserDTO> chatParticipants = getChatParticipantDTOs(requestingUser, groupChat.getCourse(), getConversationParticipants(groupChat));
-        groupChatDTO.setMembers(chatParticipants);
-        return groupChatDTO;
+        return groupChatDTO.withMembers(chatParticipants);
     }
 
     @NotNull
@@ -287,40 +281,30 @@ public class ConversationDTOService {
         }).collect(Collectors.toSet());
     }
 
-    private void setDTOPropertiesBasedOnParticipant(ConversationDTO conversationDTO, Optional<ConversationParticipant> participantOptional) {
-        conversationDTO.setIsMember(participantOptional.isPresent());
-        participantOptional.ifPresent(participant -> {
-            conversationDTO.setLastReadDate(participant.getLastRead());
-            conversationDTO.setUnreadMessagesCount(participant.getUnreadMessagesCount());
-        });
-        conversationDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
-        conversationDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
-        conversationDTO.setIsMuted(participantOptional.map(ConversationParticipant::getIsMuted).orElse(false));
+    private ConversationDTO setDTOPropertiesBasedOnParticipant(ConversationDTO conversationDTO, Optional<ConversationParticipant> participantOptional) {
+        boolean isMember = participantOptional.isPresent();
+        ZonedDateTime lastRead = participantOptional.map(ConversationParticipant::getLastRead).orElse(null);
+        var unreadMessagesCount = participantOptional.map(ConversationParticipant::getUnreadMessagesCount).orElse(null);
+        boolean isFavorite = participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false);
+        boolean isHidden = participantOptional.map(ConversationParticipant::getIsHidden).orElse(false);
+        boolean isMuted = participantOptional.map(ConversationParticipant::getIsMuted).orElse(false);
+        return conversationDTO.copyWith(null, null, null, null, lastRead, unreadMessagesCount, isFavorite, isHidden, isMuted, null, isMember, null);
     }
 
-    private void setDTOCreatorProperty(User requestingUser, Conversation conversation, ConversationDTO conversationDTO) {
-        if (conversation.getCreator() != null) {
-            conversationDTO.setIsCreator(conversation.getCreator().getId().equals(requestingUser.getId()));
-        }
-        else {
-            // Is the case for conversations created by the system such as tutorial group channels
-            conversationDTO.setIsCreator(false);
-        }
-    }
-
-    private void fillGeneralConversationDtoFields(ConversationDTO conversationDTO, User requestingUser, ConversationSummary conversationSummary) {
+    private ConversationDTO fillGeneralConversationDtoFields(ConversationDTO conversationDTO, User requestingUser, ConversationSummary conversationSummary) {
         var participantOptional = Optional.ofNullable(conversationSummary.userConversationInfo().conversationParticipantSettingsView());
 
-        conversationDTO.setIsMember(participantOptional.isPresent());
-        conversationDTO.setIsFavorite(participantOptional.map(ConversationParticipantSettingsView::isFavorite).orElse(false));
-        conversationDTO.setIsHidden(participantOptional.map(ConversationParticipantSettingsView::isHidden).orElse(false));
-        conversationDTO.setIsMuted(participantOptional.map(ConversationParticipantSettingsView::isMuted).orElse(false));
+        boolean isMember = participantOptional.isPresent();
+        boolean isFavorite = participantOptional.map(ConversationParticipantSettingsView::isFavorite).orElse(false);
+        boolean isHidden = participantOptional.map(ConversationParticipantSettingsView::isHidden).orElse(false);
+        boolean isMuted = participantOptional.map(ConversationParticipantSettingsView::isMuted).orElse(false);
+        ZonedDateTime lastRead = participantOptional.map(ConversationParticipantSettingsView::lastRead).orElse(null);
 
-        participantOptional.ifPresent(participant -> conversationDTO.setLastReadDate(participant.lastRead()));
+        var unreadMessagesCount = conversationSummary.userConversationInfo().unreadMessagesCount();
+        var numberOfMembers = conversationSummary.generalConversationInfo().numberOfParticipants();
 
-        conversationDTO.setUnreadMessagesCount(conversationSummary.userConversationInfo().unreadMessagesCount());
-        conversationDTO.setNumberOfMembers(conversationSummary.generalConversationInfo().numberOfParticipants());
+        final boolean isCreator = conversationSummary.conversation().getCreator() != null && conversationSummary.conversation().getCreator().getId().equals(requestingUser.getId());
 
-        setDTOCreatorProperty(requestingUser, conversationSummary.conversation(), conversationDTO);
+        return conversationDTO.copyWith(null, null, null, null, lastRead, unreadMessagesCount, isFavorite, isHidden, isMuted, isCreator, isMember, numberOfMembers);
     }
 }

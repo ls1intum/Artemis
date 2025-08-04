@@ -575,17 +575,13 @@ public class CourseTestService {
     }
 
     private void addConversationsToCourse(Course course3) throws Exception {
-        var channelDTO = new ChannelDTO();
-        channelDTO.setName("name test");
-        channelDTO.setIsPublic(true);
-        channelDTO.setIsAnnouncementChannel(false);
-        channelDTO.setDescription("general channel");
+        var channelDTO = new ChannelDTO().withName("name test").withIsPublic(true).withIsAnnouncementChannel(false).withDescription("general channel");
 
         var chat = request.postWithResponseBody("/api/communication/courses/" + course3.getId() + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         var user = userUtilService.getUserByLogin(userPrefix + "student1");
 
         var participant = new ConversationParticipant();
-        participant.setConversation(conversationRepository.findByIdElseThrow(chat.getId()));
+        participant.setConversation(conversationRepository.findByIdElseThrow(chat.id()));
         participant.setIsModerator(false);
         participant.setUser(user);
         conversationParticipantRepository.save(participant);
@@ -2298,7 +2294,7 @@ public class CourseTestService {
         var status = shouldPass ? HttpStatus.OK : HttpStatus.BAD_REQUEST;
         var foundUsers = request.getList("/api/core/courses/" + course.getId() + "/users/search", status, UserPublicInfoDTO.class, queryParameter);
         if (shouldPass) {
-            var foundUsersWithPrefix = foundUsers.stream().filter(user -> user.getLogin().startsWith(userPrefix)).toList();
+            var foundUsersWithPrefix = foundUsers.stream().filter(user -> user.login().startsWith(userPrefix)).toList();
             assertThat(foundUsersWithPrefix).hasSize(expectedSize);
             return foundUsersWithPrefix;
         }

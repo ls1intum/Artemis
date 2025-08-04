@@ -58,9 +58,9 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
                 HttpStatus.CREATED);
         // then
         assertThat(chat1).isNotNull();
-        assertParticipants(chat1.getId(), 2, "student1", "student2");
+        assertParticipants(chat1.id(), 2, "student1", "student2");
         assertThat(chat2).isNotNull();
-        assertParticipants(chat2.getId(), 2, "student1", "student3");
+        assertParticipants(chat2.id(), 2, "student1", "student3");
         // members of the created one to one chat are only notified in case the first message within the conversation is created
         verifyNoParticipantTopicWebsocketSent();
     }
@@ -75,12 +75,12 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         var sameChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student1"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
 
-        assertThat(chat.getId()).isNotNull();
-        assertThat(chat.getId()).isEqualTo(sameChat.getId());
-        assertThat(chat.getCreator().getLogin()).isEqualTo(TEST_PREFIX + "student1");
-        assertThat(sameChat.getCreator().getLogin()).isEqualTo(TEST_PREFIX + "student2");
-        assertParticipants(chat.getId(), 2, "student1", "student2");
-        assertParticipants(sameChat.getId(), 2, "student1", "student2");
+        assertThat(chat.id()).isNotNull();
+        assertThat(chat.id()).isEqualTo(sameChat.id());
+        assertThat(chat.creator().login()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(sameChat.creator().login()).isEqualTo(TEST_PREFIX + "student2");
+        assertParticipants(chat.id(), 2, "student1", "student2");
+        assertParticipants(sameChat.id(), 2, "student1", "student2");
 
         // members of the created one to one chat are only notified in case the first message within the conversation is created
         verifyNoParticipantTopicWebsocketSent();
@@ -129,8 +129,8 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
                 HttpStatus.CREATED);
         assertThat(chat).isNotNull();
         assertThat(chat2).isNotNull();
-        assertThat(chat.getId()).isEqualTo(chat2.getId());
-        assertParticipants(chat.getId(), 2, "student1", "student2");
+        assertThat(chat.id()).isEqualTo(chat2.id());
+        assertParticipants(chat.id(), 2, "student1", "student2");
 
         verifyNoParticipantTopicWebsocketSent();
     }
@@ -141,9 +141,9 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         // when
         var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
-        var post = this.postInConversation(chat.getId(), "student1");
+        var post = this.postInConversation(chat.id(), "student1");
         // then
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), "student1", "student2");
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.id(), "student1", "student2");
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
                 (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(post)));
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE, MetisCrudAction.NEW_MESSAGE);
@@ -161,7 +161,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
                 HttpStatus.CREATED);
 
         assertThat(chat).isNotNull();
-        assertParticipants(chat.getId(), 2, "student1", "student2");
+        assertParticipants(chat.id(), 2, "student1", "student2");
         verifyNoParticipantTopicWebsocketSent();
     }
 
@@ -178,8 +178,8 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
         assertThat(chat1).isNotNull();
         assertThat(chat2).isNotNull();
-        assertThat(chat1.getId()).isEqualTo(chat2.getId());
-        assertParticipants(chat1.getId(), 2, "student1", "student2");
+        assertThat(chat1.id()).isEqualTo(chat2.id());
+        assertParticipants(chat1.id(), 2, "student1", "student2");
         verifyNoParticipantTopicWebsocketSent();
     }
 
