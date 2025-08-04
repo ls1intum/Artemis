@@ -19,6 +19,7 @@ import { GitCloneMethod } from '../../support/pageobjects/exercises/programming/
 import { SshEncryptionAlgorithm } from '../../support/pageobjects/exercises/programming/GitClient';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { generate } from 'app/quiz/manage/util/temp-id';
+import { isElementInViewport } from '../util/playwright.util';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -348,18 +349,12 @@ test.describe('Exam participation', () => {
 
             await examParticipation.startParticipation(studentFour, course, exam);
             await expect(page.locator('#displayTime')).toBeVisible();
-            const isInViewport = await page.evaluate((selector) => {
-                const el = document.querySelector(selector);
-                if (!el) return false;
-                const rect = el.getBoundingClientRect();
-                return rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth;
-            }, '#displayTime');
-
-            expect(isInViewport).toBeTruthy();
-
+            expect(await isElementInViewport(page, '#displayTime')).toBeTruthy();
             await expect(page.locator('text="Time left:"')).toBeVisible();
+
             await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
             await page.locator('#stepwizard-4').click();
+            expect(await isElementInViewport(page, '#displayTime')).toBeTruthy();
 
             await expect(page.locator('#displayTime')).toBeVisible();
             await expect(page.locator('text="Time left:"')).toBeVisible();
