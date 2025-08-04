@@ -507,7 +507,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should set up conversation service if course has communication enabled', () => {
-        const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService').mockImplementation((currentCourse) => {
+        const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService').mockImplementation(() => {
             return new Observable((subscriber) => subscriber.complete());
         });
 
