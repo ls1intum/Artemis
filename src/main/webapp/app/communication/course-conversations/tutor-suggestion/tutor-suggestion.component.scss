@@ -22,8 +22,8 @@
 }
 
 .iris-logo {
-    //float: left;
-    margin-right: 15px;
+    display: flex;
+    gap: 11px;
 }
 
 .iris-suggestion-text {
@@ -36,7 +36,7 @@
     text-align: right;
     font-size: 0.75rem;
     color: #888;
-    margin-bottom: 2px;
+    margin-bottom: 8px;
 }
 
 .iris-tutor-suggestion-chat-container {
@@ -48,6 +48,7 @@
 .iris-suggestion-wrapper {
     display: flex;
     flex-direction: row;
+    gap: 10px;
 }
 
 .iris-suggestion-buttons {
@@ -55,4 +56,9 @@
     flex-direction: column;
     gap: 5px;
     margin-top: 5px;
+    padding: 5px;
+}
+
+.iris-text-content {
+    width: 100%;
 }
