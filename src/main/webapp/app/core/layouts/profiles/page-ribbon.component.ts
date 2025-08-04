@@ -8,7 +8,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     template: `
         <div class="box">
             @if (ribbonEnv) {
-                <div class="ribbon ribbon-top-left">
+                <div class="ribbon ribbon-top-left ribbon-rotate">
                     <span jhiTranslate="global.ribbon.{{ ribbonEnv }}">{{ ribbonEnv }}</span>
                 </div>
             }

@@ -256,44 +256,4 @@ public class QuizSubmissionResource {
         log.info("submitQuizForExam took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(updatedQuizSubmission);
     }
-
-    /**
-     * POST /exercises/:exerciseId/submissions/training : Submit a new quizSubmission for training mode.
-     *
-     * @param exerciseId     the id of the exercise associated with the quiz submission
-     * @param quizSubmission the quiz submission to submit
-     * @return the ResponseEntity with status 200 (OK) and the Result as its body
-     */
-    @PostMapping("exercises/{exerciseId}/submissions/training")
-    @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Result> submitForTraining(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
-        log.debug("REST request to submit QuizSubmission for training : {}", quizSubmission);
-
-        if (quizSubmission.getId() != null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idExists", "A new quizSubmission cannot already have an ID.")).body(null);
-        }
-
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        if (!authCheckService.isAllowedToSeeCourseExercise(quizExercise, user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this question.")).body(null);
-        }
-
-        if (!Boolean.TRUE.equals(quizExercise.isIsOpenForPractice()) || !quizExercise.isQuizEnded()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotOpenForPractice", "The question is not open for practice yet."))
-                    .body(null);
-        }
-
-        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-            submittedAnswer.setSubmission(quizSubmission);
-        }
-
-        Result result = quizSubmissionService.submitForTraining(quizSubmission, quizExercise, user);
-
-        return ResponseEntity.ok(result);
-    }
 }
