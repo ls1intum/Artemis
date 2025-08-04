@@ -5,10 +5,7 @@ import { LearnerProfileApiService } from 'app/core/user/settings/learner-profile
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { LearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/learner-profile-dto.model';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -18,7 +15,7 @@ import { FeedbackOnboardingModalComponent } from 'app/core/user/settings/learner
     selector: 'jhi-feedback-learner-profile',
     templateUrl: './feedback-learner-profile.component.html',
     styleUrls: ['../learner-profile.component.scss'],
-    imports: [TranslateDirective, NgClass, ArtemisTranslatePipe, FaIconComponent, HelpIconComponent, SegmentedToggleComponent],
+    imports: [TranslateDirective, NgClass, SegmentedToggleComponent],
 })
 export class FeedbackLearnerProfileComponent implements OnInit {
     private alertService = inject(AlertService);

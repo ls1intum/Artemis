@@ -138,6 +138,14 @@ export class ExamParticipationService {
             }),
         );
     }
+    public getRealExamSidebarData(courseId: number): Observable<Exam[]> {
+        const url = `api/exam/courses/${courseId}/real-exams-sidebar-data`;
+        return this.httpClient.get<Exam[]>(url).pipe(
+            map((exams: Exam[]) => {
+                return exams.map((exam) => ExamParticipationService.convertExamDateFromServer(exam)).filter((exam) => exam !== undefined) as Exam[];
+            }),
+        );
+    }
 
     public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/test-run/' + testRunId + '/conduction';
