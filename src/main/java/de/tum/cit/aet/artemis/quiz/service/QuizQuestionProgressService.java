@@ -252,7 +252,7 @@ public class QuizQuestionProgressService {
      * @param answeredAt The time when the question was answered
      * @throws IllegalStateException if the progress entry does not exist or a data integrity violation occurs
      */
-    public void updateExistingProgress(Long userId, QuizQuestion question, QuizQuestionProgressData data, ZonedDateTime answeredAt) {
+    public void updateExistingProgress(long userId, QuizQuestion question, QuizQuestionProgressData data, ZonedDateTime answeredAt) {
         try {
             QuizQuestionProgress progress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId())
                     .orElseThrow(() -> new IllegalStateException("Progress entry should exist but was not found."));
