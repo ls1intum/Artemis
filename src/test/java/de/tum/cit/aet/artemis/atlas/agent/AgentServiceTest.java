@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas.service.agent;
+package de.tum.cit.aet.artemis.atlas.agent;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.times;
@@ -12,6 +12,8 @@ import org.mockito.MockitoAnnotations;
 
 import de.tum.cit.aet.artemis.atlas.dto.AgentChatRequestDto;
 import de.tum.cit.aet.artemis.atlas.dto.AgentChatResponseDto;
+import de.tum.cit.aet.artemis.atlas.service.agent.AgentHttpClient;
+import de.tum.cit.aet.artemis.atlas.service.agent.AgentService;
 
 class AgentServiceTest {
 
