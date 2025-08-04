@@ -9,7 +9,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 public record BuildAgentCapacityAdjustmentDTO(@NotNull String buildAgentName, int newCapacity) {
 
     public BuildAgentCapacityAdjustmentDTO {
-        if (newCapacity <= 0)
+        if (newCapacity <= 0) {
             throw new BadRequestAlertException("New capacity must be greater than 0", "buildAgent", "invalidCapacityBelowMinimum");
+        }
     }
 }

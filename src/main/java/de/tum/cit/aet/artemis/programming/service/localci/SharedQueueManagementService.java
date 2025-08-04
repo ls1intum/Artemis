@@ -116,9 +116,8 @@ public class SharedQueueManagementService {
     /**
      * Adjust the concurrent build size of a specific build agent.
      *
-     * @param agentName          the name of the build agent to adjust concurrent build size for
-     * @param capacityAdjustment the capacity adjustment request containing the new size
-     * @return the ResponseEntity with the result of the adjustment
+     * @param agentName   the name of the build agent to adjust concurrent build size for
+     * @param newCapacity the new capacity for the build agent
      */
     public void adjustBuildAgentCapacity(String agentName, int newCapacity) {
         if (newCapacity <= 0) {
