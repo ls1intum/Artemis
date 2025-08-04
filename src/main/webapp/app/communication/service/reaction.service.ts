@@ -3,6 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
+import { ReactionDTO, toReactionDTO } from 'app/communication/shared/reaction-dto.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 type EntityResponseType = HttpResponse<Reaction>;
@@ -20,9 +21,8 @@ export class ReactionService {
      * @return the create reaction
      */
     create(courseId: number, reaction: Reaction): Observable<EntityResponseType> {
-        return this.http
-            .post<Reaction>(`${this.resourceUrl}${courseId}/postings/reactions`, this.toDTO(reaction), { observe: 'response' })
-            .pipe(map(this.convertPostingResponseDateFromServer));
+        const dto: ReactionDTO = toReactionDTO(reaction);
+        return this.http.post<Reaction>(`${this.resourceUrl}${courseId}/postings/reactions`, dto, { observe: 'response' }).pipe(map(this.convertPostingResponseDateFromServer));
     }
 
     /**
@@ -45,16 +45,5 @@ export class ReactionService {
             res.body.creationDate = convertDateFromServer(res.body.creationDate);
         }
         return res;
-    }
-
-    private toDTO(reaction: Reaction): any {
-        return {
-            id: reaction.id ?? null,
-            user: null, // user is set server-side
-            creationDate: null, // backend sets this
-            emojiId: reaction.emojiId,
-            postId: reaction.post?.id ?? null,
-            answerPostId: reaction.answerPost?.id ?? null,
-        };
     }
 }
