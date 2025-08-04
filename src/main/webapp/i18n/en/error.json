@@ -79,6 +79,11 @@
             "page.request": "The page request seems to be invalid. Please make sure that enough {{entityName}} entities exist, so that the request page can be created.",
             "presentations": {
                 "maxNumberOfPresentationsExceeded": "{{name}} already gave the maximum number of {{presentationsNumber}} presentation/s."
+            },
+            "buildAgent": {
+                "invalidAgentName": "Agent name cannot be null or empty",
+                "invalidCapacityBelowMinimum": "Concurrent build size must be at least 1",
+                "invalidCapacityExceedsMax": "Concurrent build size must not exceed maximum of {{maxCapacity}}"
             }
         },
         "idNull": "Invalid ID",

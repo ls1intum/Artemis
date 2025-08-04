@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+
 class BuildAgentCapacityAdjustmentDTOTest {
 
     @Test
@@ -25,13 +27,13 @@ class BuildAgentCapacityAdjustmentDTOTest {
 
     @Test
     void testInvalidCapacityZero() {
-        assertThatThrownBy(() -> new BuildAgentCapacityAdjustmentDTO("test-agent", 0)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> new BuildAgentCapacityAdjustmentDTO("test-agent", 0)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessage("New capacity must be greater than 0");
     }
 
     @Test
     void testInvalidCapacityNegative() {
-        assertThatThrownBy(() -> new BuildAgentCapacityAdjustmentDTO("test-agent", -1)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> new BuildAgentCapacityAdjustmentDTO("test-agent", -1)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessage("New capacity must be greater than 0");
     }
 

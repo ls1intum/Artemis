@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
@@ -114,17 +115,18 @@ public class SharedQueueManagementService {
 
     public void adjustBuildAgentCapacity(String agentName, int newCapacity) {
         if (newCapacity <= 0) {
-            throw new IllegalArgumentException("Concurrent build size must be at least 1");
+            throw new BadRequestAlertException("Concurrent build size must be at least 1", "buildAgent", "invalidCapacityBelowMinimum");
         }
 
         if (agentName == null || agentName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Agent name cannot be null or empty");
+            throw new BadRequestAlertException("Agent name cannot be null or empty", "buildAgent", "invalidAgentName");
         }
 
         BuildAgentInformation targetAgent = getBuildAgentByName(agentName);
 
         if (newCapacity > targetAgent.maxConcurrentBuildsAllowed()) {
-            throw new IllegalArgumentException("Concurrent build size must not exceed maximum of " + targetAgent.maxConcurrentBuildsAllowed());
+            throw new BadRequestAlertException("Concurrent build size must not exceed maximum of " + targetAgent.maxConcurrentBuildsAllowed(), "buildAgent",
+                    "invalidCapacityExceedsMax");
         }
 
         distributedDataAccessService.getAdjustBuildAgentCapacityTopic().publish(new BuildAgentCapacityAdjustmentDTO(agentName, newCapacity));
@@ -136,7 +138,7 @@ public class SharedQueueManagementService {
     private BuildAgentInformation getBuildAgentByName(String agentName) {
         List<BuildAgentInformation> buildAgents = distributedDataAccessService.getBuildAgentInformation();
         return buildAgents.stream().filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Build agent '" + agentName + "' not found"));
+                .orElseThrow(() -> new BadRequestAlertException("Build agent '" + agentName + "' not found", "buildAgent", "invalidAgentName"));
     }
 
     /**
