@@ -21,6 +21,7 @@
                         <div class="stepwizardquiz__step mb-3">
                             @if (question.type === DRAG_AND_DROP) {
                                 <span
+                                    id="stepwizard-{{ i }}"
                                     class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
                                     (click)="navigateToQuestion(question.id!)"
                                     [ngbTooltip]="!!dragAndDropMappings.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
@@ -31,6 +32,7 @@
                             }
                             @if (question.type === MULTIPLE_CHOICE) {
                                 <span
+                                    id="stepwizard-{{ i }}"
                                     class="btn btn-light btn-circle stepbutton stepwizardquiz-circle multiplechoicecolor-question"
                                     (click)="navigateToQuestion(question.id!)"
                                     [ngbTooltip]="!!selectedAnswerOptions.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
@@ -41,6 +43,7 @@
                             }
                             @if (question.type === SHORT_ANSWER) {
                                 <span
+                                    id="stepwizard-{{ i }}"
                                     class="btn btn-light btn-circle stepbutton stepwizardquiz-circle shortanswercolor-question"
                                     (click)="navigateToQuestion(question.id!)"
                                     [ngbTooltip]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
