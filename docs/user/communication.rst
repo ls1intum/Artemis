@@ -182,7 +182,7 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Forward Messages                                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Choose to also send replies into main thread         |                                      | |WIP|              | |UNAVAILABLE|       | |PLANNED|           |
+| Choose to also send replies into main thread         |                                      | |NOT PLANNED|      | |NOT PLANNED|       | |NOT PLANNED|       |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Resolve Messages                                     | At least tutor and authors           | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -245,6 +245,8 @@ Available features on each platform
 | Open Profile info by clicking profile picture        |                                      | |PLANNED|          | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Start a conversation from Profile                    |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
++------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
+| Draft messages                                       |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 |                                                                                                                                                              |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -329,7 +331,7 @@ Available features on each platform
 | | Notification overview for past                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |UNAVAILABLE|       |
 | | course specific notifications                      |                                      |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| | Notification settings (unsubscribe/subscribe       |                                      | |AVAILABLE|        | |AVAILABLE|         | |UNAVAILABLE|       |
+| | Notification settings (unsubscribe/subscribe       |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 | | to various course specific notification types)     |                                      |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 
@@ -540,6 +542,21 @@ Users can upload a profile picture in their account settings to enhance personal
     <iframe src="https://live.rbg.tum.de/w/artemisintro/61336?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Watch this video on TUM-Live.
     </iframe>
+
+Draft Messages
+^^^^^^^^^^^^^^^
+
+When composing a message or replying in a thread on the web, Artemis automatically saves your input as a **draft**. This ensures that unfinished messages are not lost when navigating between conversations or accidentally closing the tab.
+
+Draft messages are:
+
+* Stored locally in the browser (not synced across devices)
+* Associated with the user and the corresponding conversation or thread
+* Automatically restored when reopening the same context
+* Removed once the message is sent
+* Automatically deleted after 7 days if not submitted
+
+This feature helps avoid losing important drafts during interruptions and improves the overall communication workflow.
 
 Features for Moderators
 -----------------------
