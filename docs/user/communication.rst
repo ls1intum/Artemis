@@ -556,7 +556,9 @@ Draft messages are:
 * Removed once the message is sent
 * Automatically deleted after 7 days if not submitted
 
-This feature helps avoid losing important drafts during interruptions and improves the overall communication workflow.
+<iframe src="https://live.rbg.tum.de/w/artemisintro/61865?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
 
 Features for Moderators
 -----------------------
