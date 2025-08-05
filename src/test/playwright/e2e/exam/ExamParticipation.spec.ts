@@ -347,13 +347,14 @@ test.describe('Exam participation', () => {
             await examAPIRequests.generateMissingIndividualExams(exam);
             await examAPIRequests.prepareExerciseStartForExam(exam);
 
-            const remainingTimeSelector = '#displayTime';
             await examParticipation.startParticipation(studentFour, course, exam);
-            expect(await isElementInViewport(page, remainingTimeSelector)).toBeTruthy(); // the time should always be visible during the exam
+            await expect(page.locator('#displayTime')).toBeVisible();
+            expect(await isElementInViewport(page, '#displayTime')).toBeTruthy();
+            await expect(page.locator('text="Time left:"')).toBeVisible();
 
             await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
             await page.locator('#stepwizard-4').click();
-            expect(await isElementInViewport(page, remainingTimeSelector)).toBeTruthy();
+            expect(await isElementInViewport(page, '#displayTime')).toBeTruthy();
 
             await expect(page.locator('#displayTime')).toBeVisible();
             await expect(page.locator('text="Time left:"')).toBeVisible();
