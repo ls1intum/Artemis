@@ -129,6 +129,12 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         this.localStorageService.store('chatWarningDismissed', true);
     }
 
+    /**
+     * Generates a unique key for storing draft messages based on user ID, conversation ID, and post ID.
+     * Returns an empty string if any required IDs are missing.
+     *
+     * @returns A unique draft key string or empty string if required IDs are missing
+     */
     private getDraftKey(): string {
         const userId = this.currentUserId;
         const conversationId = this.activeConversation()?.id;
@@ -139,11 +145,20 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         return `${this.DRAFT_KEY_PREFIX}${userId}_${conversationId}_${postId}`;
     }
 
+    /**
+     * Saves the current draft content to local storage using the draft service.
+     *
+     * @param content - The content to save as a draft
+     */
     private saveDraft(content: string): void {
         const key = this.getDraftKey();
         this.draftService.saveDraft(key, content);
     }
 
+    /**
+     * Loads a draft from local storage and applies it to the posting content if found.
+     * Resets the form group after loading the draft.
+     */
     private loadDraft(): void {
         const key = this.getDraftKey();
         const draft = this.draftService.loadDraft(key);
@@ -153,6 +168,9 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         }
     }
 
+    /**
+     * Clears the current draft from local storage.
+     */
     private clearDraft(): void {
         const key = this.getDraftKey();
         this.draftService.clearDraft(key);
