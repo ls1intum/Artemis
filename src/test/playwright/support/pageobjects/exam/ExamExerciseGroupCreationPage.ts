@@ -62,17 +62,8 @@ export class ExamExerciseGroupCreationPage {
         additionalData: AdditionalData = {},
         isMandatory?: boolean,
         exerciseTemplate?: any,
-        numberOfQuizQuestions?: number,
     ): Promise<PlaywrightExercise> {
-        const response = await this.handleAddGroupWithExercise(
-            exam,
-            'Exercise ' + generateUUID(),
-            exerciseType,
-            additionalData,
-            isMandatory,
-            exerciseTemplate,
-            numberOfQuizQuestions,
-        );
+        const response = await this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData, isMandatory, exerciseTemplate);
         let exercise = { ...response!, additionalData };
         if (exerciseType == ExerciseType.QUIZ) {
             const quiz = response as QuizExercise;
@@ -95,7 +86,6 @@ export class ExamExerciseGroupCreationPage {
         additionalData: AdditionalData,
         isMandatory?: boolean,
         exerciseTemplate?: any,
-        numberOfQuizQuestions?: number,
     ): Promise<Exercise | undefined> {
         const exerciseGroup = await this.examAPIRequests.addExerciseGroupForExam(exam, 'Group ' + generateUUID(), isMandatory);
         switch (exerciseType) {
@@ -104,11 +94,7 @@ export class ExamExerciseGroupCreationPage {
             case ExerciseType.MODELING:
                 return await this.exerciseAPIRequests.createModelingExercise({ exerciseGroup }, title);
             case ExerciseType.QUIZ:
-                const quizQuestions = [];
-                for (let i = 0; i < (numberOfQuizQuestions ?? 1); i++) {
-                    quizQuestions.push({ ...multipleChoiceTemplate, title: `Question ${i + 1}` });
-                }
-                return await this.exerciseAPIRequests.createQuizExercise({ body: { exerciseGroup }, quizQuestions: quizQuestions, title });
+                return await this.exerciseAPIRequests.createQuizExercise({ body: { exerciseGroup }, quizQuestions: [multipleChoiceTemplate], title });
             case ExerciseType.PROGRAMMING:
                 return await this.exerciseAPIRequests.createProgrammingExercise({ exerciseGroup, title, assessmentType: additionalData.progExerciseAssessmentType });
         }

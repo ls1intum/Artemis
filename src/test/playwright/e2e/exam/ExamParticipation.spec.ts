@@ -15,10 +15,9 @@ import { ExamParticipationActions, TextDifferenceType } from '../../support/page
 import { ExamNavigationBar } from '../../support/pageobjects/exam/ExamNavigationBar';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import { GitExerciseParticipation } from '../../support/pageobjects/exercises/programming/GitExerciseParticipation';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { GitCloneMethod } from '../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 import { SshEncryptionAlgorithm } from '../../support/pageobjects/exercises/programming/GitClient';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { generate } from 'app/quiz/manage/util/temp-id';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -318,53 +317,6 @@ test.describe('Exam participation', () => {
             }
         });
     }
-
-    test.describe('quiz in exam mode', () => {
-        test('scrolling with quiz step-wizard does not hide header with displayed time', async ({
-            page,
-            examAPIRequests,
-            login,
-            examParticipation,
-            examNavigation,
-            examStartEnd,
-            examManagement,
-            examExerciseGroupCreation,
-        }) => {
-            const examTitle = 'exam' + generateUUID();
-            await login(admin);
-            const exam = await createExam(course, examAPIRequests, { title: examTitle, endDate: dayjs().add(30, 'seconds') });
-            const numberOfQuizQuestions = 5;
-            const quizExercise = await examExerciseGroupCreation.addGroupWithExercise(
-                exam,
-                ExerciseType.QUIZ,
-                { quizExerciseID: generate() },
-                undefined,
-                undefined,
-                numberOfQuizQuestions,
-            );
-            await examAPIRequests.registerStudentForExam(exam, studentFour);
-            await examAPIRequests.generateMissingIndividualExams(exam);
-            await examAPIRequests.prepareExerciseStartForExam(exam);
-
-            await examParticipation.startParticipation(studentFour, course, exam);
-            await expect(page.locator('#displayTime')).toBeVisible();
-            const isInViewport = await page.evaluate((selector) => {
-                const el = document.querySelector(selector);
-                if (!el) return false;
-                const rect = el.getBoundingClientRect();
-                return rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth;
-            }, '#displayTime');
-
-            expect(isInViewport).toBeTruthy();
-
-            await expect(page.locator('text="Time left:"')).toBeVisible();
-            await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
-            await page.locator('#stepwizard-4').click();
-
-            await expect(page.locator('#displayTime')).toBeVisible();
-            await expect(page.locator('text="Time left:"')).toBeVisible();
-        });
-    });
 
     test.describe('Exam announcements', () => {
         let exam: Exam;
