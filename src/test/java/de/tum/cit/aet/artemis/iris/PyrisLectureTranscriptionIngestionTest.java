@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -25,6 +26,8 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+
+@TestPropertySource(properties = { "artemis.nebula.base-url=http://mock-nebula", "artemis.nebula.secret-token=dummy-token" })
 
 class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest {
 
@@ -83,13 +86,6 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
-        lectureUnit.setLecture(lecture1);
-        lectureUnit = lectureUnitRepository.saveAndFlush(lectureUnit);
-        emptyLectureUnit.setLecture(lecture1);
-        emptyLectureUnit = lectureUnitRepository.saveAndFlush(emptyLectureUnit);
-
-        textUnit.setLecture(lecture1);
-        textUnit = lectureUnitRepository.saveAndFlush(textUnit);
         // Create transcription the new way, using the service
         String uniqueJobId = "test-job-id-" + UUID.randomUUID();
         lectureTranscriptionService.createEmptyTranscription(lecture1.getId(), lectureUnit.getId(), uniqueJobId);
