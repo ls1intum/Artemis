@@ -46,6 +46,8 @@ public class BuildAgentSshKeyService {
 
     /**
      * Generates the SSH key pair and writes the private key when the application is started and the build agents should use SSH for their git operations.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @PostConstruct
     public void applicationReady() throws IOException {

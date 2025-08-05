@@ -199,8 +199,10 @@ public class MetricsBean {
     }
 
     /**
-     * Event listener method that is invoked when the application is ready. It registers various health and metric
+     * PostConstruct that is invoked when the bean has been created. It registers various health and metric
      * contributors, and conditionally enables metrics based on active profiles.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * Specifically, this method performs the following actions:

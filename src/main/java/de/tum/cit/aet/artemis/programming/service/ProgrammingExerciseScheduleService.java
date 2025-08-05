@@ -80,6 +80,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.profileService = profileService;
     }
 
+    /**
+     * Schedules programming exercises on startup.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
+     */
     @PostConstruct
     public void applicationReady() {
         // schedule the task after the application has started to avoid delaying the start of the application

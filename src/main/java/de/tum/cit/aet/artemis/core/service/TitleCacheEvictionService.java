@@ -51,7 +51,9 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
     }
 
     /**
-     * Registers Hibernate event listeners for POST_UPDATE and POST_DELETE events when the application is ready.
+     * Registers Hibernate event listeners for POST_UPDATE and POST_DELETE events on bean creation.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * If the {@link EventListenerRegistry} is available, the listeners are appended and a debug message is logged.

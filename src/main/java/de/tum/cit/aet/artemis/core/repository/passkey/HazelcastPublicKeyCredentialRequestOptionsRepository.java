@@ -72,6 +72,8 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
 
     /**
      * Initializes the Hazelcast map configuration after dependency injection.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * Sets the time-to-live for WebAuthn request options to 2 minutes.

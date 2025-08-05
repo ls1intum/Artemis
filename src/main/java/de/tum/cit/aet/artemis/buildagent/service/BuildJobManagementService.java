@@ -96,6 +96,8 @@ public class BuildJobManagementService {
     /**
      * Add a listener to the canceledBuildJobsTopic that cancels the build job for the given buildJobId.
      * It gets broadcast to all nodes in the cluster. Only the node that is running the build job will cancel it.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @PostConstruct
     public void init() {

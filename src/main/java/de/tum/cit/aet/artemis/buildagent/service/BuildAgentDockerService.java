@@ -100,6 +100,8 @@ public class BuildAgentDockerService {
         this.taskScheduler = taskScheduler;
     }
 
+    // EventListener cannot be used here, as the bean is lazy
+    // https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation
     @PostConstruct
     public void applicationReady() {
         // Schedule the cleanup of dangling build containers once 10 seconds after the application has started and then every containerCleanupScheduleMinutes minutes

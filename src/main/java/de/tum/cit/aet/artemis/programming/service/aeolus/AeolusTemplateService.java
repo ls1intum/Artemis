@@ -67,6 +67,8 @@ public class AeolusTemplateService {
 
     /**
      * Loads all YAML scripts from the "templates/aeolus" directory into the cache when the bean has been created.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * Scripts are read, processed, and stored in the {@code templateCache}. Errors during loading are logged.

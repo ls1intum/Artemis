@@ -47,6 +47,8 @@ public class PlantUmlService {
 
     /**
      * Initializes themes and sets system properties for PlantUML security when the application is ready.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * Deletes temporary theme files to ensure updates, ensures themes are available, and configures PlantUML security settings.

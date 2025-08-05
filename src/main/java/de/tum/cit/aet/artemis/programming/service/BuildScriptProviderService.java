@@ -59,6 +59,8 @@ public class BuildScriptProviderService {
 
     /**
      * Loads all scripts from the resources/templates/aeolus directory into the cache.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * Windfiles are ignored since they are only used for the windfile and are cached in {@link AeolusTemplateService}.

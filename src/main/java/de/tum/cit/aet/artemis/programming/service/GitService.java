@@ -146,6 +146,8 @@ public class GitService extends AbstractGitService {
 
     /**
      * initialize the GitService, in particular which authentication mechanism should be used
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      * Artemis uses the following order for authentication:
      * 1. ssh key (if available)
      * 2. username + personal access token (if available)

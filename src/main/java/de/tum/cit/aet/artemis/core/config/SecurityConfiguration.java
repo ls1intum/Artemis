@@ -47,6 +47,10 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
+/**
+ * Configuration class defining authentication and authorization mechanism for all application endpoints
+ * We don't make it lazy as it definitely should be instantiated at startup and this happens anyway. So, no negative effect on startup performance.
+ */
 @Configuration
 @EnableWebSecurity
 @Lazy(value = false)

@@ -83,7 +83,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
         resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
         // this triggers the initialization of all required beans in the application context
-        // in production the DeferredEagerBeansInitializer would do this automatically
+        // in production the DeferredEagerBeanInitializer would do this automatically
         applicationContext.getBean(SharedQueueProcessingService.class);
     }
 

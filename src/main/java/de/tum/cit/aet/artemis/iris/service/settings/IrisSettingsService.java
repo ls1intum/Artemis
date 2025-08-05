@@ -94,8 +94,9 @@ public class IrisSettingsService {
     }
 
     /**
-     * Creates or updates the global IrisSettings object on beam creation.
-     *
+     * Creates or updates the global IrisSettings object on bean creation.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @Profile(PROFILE_CORE_AND_SCHEDULING)
     @PostConstruct

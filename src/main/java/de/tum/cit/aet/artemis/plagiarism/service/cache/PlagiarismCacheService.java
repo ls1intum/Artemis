@@ -28,6 +28,11 @@ public class PlagiarismCacheService {
         this.hazelcastInstance = hazelcastInstance;
     }
 
+    /**
+     * Gets the active plagiarism cases per course from hazelcast on bean creation.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
+     */
     @PostConstruct
     public void init() {
         this.activePlagiarismChecksPerCourse = hazelcastInstance.getSet(HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE);

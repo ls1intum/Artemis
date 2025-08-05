@@ -44,7 +44,9 @@ public class SlideUnhideScheduleService {
     }
 
     /**
-     * Method called when the application is ready.
+     * Method called when the bean has been created.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      * It loads all hidden slides and schedules tasks to unhide them at their expiration time.
      */
     @PostConstruct

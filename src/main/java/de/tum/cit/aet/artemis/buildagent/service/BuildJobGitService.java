@@ -72,6 +72,8 @@ public class BuildJobGitService extends AbstractGitService {
      * 1. ssh key (if available)
      * 2. username + personal access token (if available)
      * 3. username + password
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @PostConstruct
     public void init() {

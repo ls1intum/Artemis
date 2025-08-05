@@ -171,6 +171,8 @@ public class ScheduleService {
      * Initializes and schedules periodic logging and cleanup tasks for scheduled exercises,
      * participation tasks, and slide tasks. This method is triggered automatically when the application
      * is fully started.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * Every 15 seconds, this method:
