@@ -128,13 +128,32 @@ public class LocalVCPrePushHook implements PreReceiveHook {
             while (treeWalk.next()) {
                 FileMode mode = treeWalk.getFileMode(0);
                 if (FileMode.SYMLINK.equals(mode)) {
-                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("Symbolic links are not allowed: '%s'", treeWalk.getPathString()));
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("""
+                            Symbolic links are not allowed: '%s'.
+                            To fix this, remove the symbolic link and replace it with the actual file or directory.
+
+                            - macOS/Linux:
+                                * If it's a file symlink: run 'rm "%1$s"'
+                                * If it's a directory symlink: run 'rm -r "%1$s"'
+                            - Windows:
+                                * If it's a file symlink: run 'del "%1$s"'
+                                * If it's a directory symlink: run 'rmdir "%1$s"'
+
+                            After removing the symlink, replace it with the correct file or folder, add it with 'git add', and commit the changes.""", treeWalk.getPathString()));
                     break;
                 }
                 if (FileMode.GITLINK.equals(mode)) {
-                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("Git submodules are not allowed: '%s'", treeWalk.getPathString()));
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("""
+                            Git submodules are not allowed: '%s'.
+                            To remove the submodule from your repository:
+                            1. Run: 'git rm --cached "%1$s"'
+                            2. Delete the submodule directory: 'rm -rf "%1$s"' (macOS/Linux) or 'rmdir /s "%1$s"' (Windows)
+                            3. Edit the '.gitmodules' file and remove the corresponding section.
+                            4. Optionally, clean up '.git/config' if it contains a [submodule "%1$s"] section.
+                            5. Commit all changes.""", treeWalk.getPathString()));
                     break;
                 }
+
                 ObjectId objectId = treeWalk.getObjectId(0);
                 ObjectLoader loader = reader.open(objectId);
                 if (loader.getType() == Constants.OBJ_BLOB && loader.getSize() > MAX_BLOB_SIZE_BYTES) {
