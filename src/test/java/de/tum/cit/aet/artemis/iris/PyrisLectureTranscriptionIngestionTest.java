@@ -4,14 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -20,14 +18,10 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
-
-@TestPropertySource(properties = { "artemis.nebula.base-url=http://mock-nebula", "artemis.nebula.secret-token=dummy-token" })
 
 class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest {
 
@@ -61,9 +55,6 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
 
     private LectureUnit textUnit;
 
-    @Autowired
-    private LectureTranscriptionService lectureTranscriptionService;
-
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 2);
@@ -86,19 +77,13 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
-        // Create transcription the new way, using the service
-        String uniqueJobId = "test-job-id-" + UUID.randomUUID();
-        lectureTranscriptionService.createEmptyTranscription(lecture1.getId(), lectureUnit.getId(), uniqueJobId);
 
-        // Fetch and update it with the segments
-        LectureTranscription created = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId()).orElseThrow();
         LectureTranscriptionSegment segment1 = new LectureTranscriptionSegment(0.0, 12.0, "Welcome to today's lecture", 1);
         LectureTranscriptionSegment segment2 = new LectureTranscriptionSegment(0.0, 12.0, "Today we will talk about Artemis", 1);
-        created.setLanguage("en");
-        created.setSegments(List.of(segment1, segment2));
-        created.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
-        lectureTranscriptionRepository.save(created);
+        LectureTranscription transcription = new LectureTranscription("en", List.of(new LectureTranscriptionSegment[] { segment1, segment2 }), this.lectureUnit);
 
+        LectureTranscription transcriptionAttachmentUnit = new LectureTranscription("en", List.of(), this.lectureUnit);
+        lectureTranscriptionRepository.save(transcription);
     }
 
     @Test
