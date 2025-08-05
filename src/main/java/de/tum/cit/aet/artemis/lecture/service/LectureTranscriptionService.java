@@ -96,9 +96,8 @@ public class LectureTranscriptionService {
      *
      * @param jobId The Nebula job ID
      * @param dto   The completed transcription result returned from Nebula
-     * @return The updated LectureTranscription entity
      */
-    public LectureTranscription saveFinalTranscriptionResult(String jobId, LectureTranscriptionDTO dto) {
+    public void saveFinalTranscriptionResult(String jobId, LectureTranscriptionDTO dto) {
         LectureTranscription transcription = lectureTranscriptionRepository.findByJobId(jobId)
                 .orElseThrow(() -> new IllegalStateException("No transcription found for jobId: " + jobId));
 
@@ -106,7 +105,7 @@ public class LectureTranscriptionService {
         transcription.setSegments(dto.segments());
         transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
 
-        return lectureTranscriptionRepository.save(transcription);
+        lectureTranscriptionRepository.save(transcription);
     }
 
     /**
