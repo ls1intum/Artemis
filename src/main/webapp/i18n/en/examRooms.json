@@ -1,0 +1,45 @@
+{
+    "artemisApp": {
+        "examRooms": {
+            "adminOverview": {
+                "pageTitle": "Admin Exam Room Management",
+                "title": "Exam Room Management",
+                "uploadRoomData": "Upload Exam Room Data",
+                "deleteAllExamRooms": "Delete ALL Exam Rooms",
+                "deleteExamRoomsSafe": "Safe Delete",
+                "uploadFailed": "Oops. Something went wrong while saving the rooms",
+                "deleting": "Deleting...",
+                "deletionFailed": "Oops. Something went wrong while deleting the rooms",
+                "uploadSummary": {
+                    "title": "Upload Summary",
+                    "file": "Filename:",
+                    "duration": "Processing Time:",
+                    "roomsUploaded": "Uploaded Rooms:",
+                    "seatsUploaded": "Uploaded Seats:"
+                },
+                "deletionSummary": {
+                    "title": "Deletion Summary",
+                    "duration": "Processing Time:",
+                    "roomsDeleted": "Deleted Rooms:"
+                },
+                "examRoomOverview": {
+                    "missing": "Overview currently unavailable",
+                    "title": "Exam Room Overview",
+                    "totalExamRooms": "Total exam rooms:",
+                    "totalSeats": "Total seats:",
+                    "totalLayoutStrategies": "Total layout strategies:",
+                    "uniqueExamRooms": "Unique exam rooms:",
+                    "uniqueSeats": "Unique seats:",
+                    "uniqueLayoutStrategies": "Unique layout strategies:",
+                    "distinctLayoutStrategyNames": "All available layout strategies:",
+                    "examRoomsTitle": "All Available Exam Rooms",
+                    "roomNumber": "Room Number",
+                    "roomName": "Room Name",
+                    "building": "Building",
+                    "maxCapacity": "Maximum Capacity",
+                    "layoutStrategies": "Layout Strategies"
+                }
+            }
+        }
+    }
+}

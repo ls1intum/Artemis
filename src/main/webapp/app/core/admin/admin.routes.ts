@@ -170,6 +170,14 @@ const routes: Routes = [
             pageTitle: 'global.menu.admin.lectureTranscription',
         },
     },
+    {
+        path: 'exam-rooms',
+        loadComponent: () => import('app/core/admin/exam-rooms/exam-rooms.component').then((m) => m.ExamRoomsComponent),
+        data: {
+            authorities: [Authority.ADMIN],
+            pageTitle: 'global.menu.admin.examRooms',
+        },
+    },
     ...organizationMgmtRoute,
     ...userManagementRoute,
     ...systemNotificationManagementRoute,
