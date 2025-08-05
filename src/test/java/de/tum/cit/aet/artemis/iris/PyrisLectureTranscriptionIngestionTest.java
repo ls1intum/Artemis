@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -51,6 +53,9 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
 
     private LectureUnit textUnit;
 
+    @Autowired
+    private LectureTranscriptionService lectureTranscriptionService;
+
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 2);
@@ -75,9 +80,20 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
         activateIrisGlobally();
 
+        textUnit.setLecture(lecture1);
+        textUnit = lectureUnitRepository.saveAndFlush(textUnit);
+        // Create transcription the new way, using the service
+        String uniqueJobId = "test-job-id-" + UUID.randomUUID();
+        lectureTranscriptionService.createEmptyTranscription(lecture1.getId(), lectureUnit.getId(), uniqueJobId);
+
+        // Fetch and update it with the segments
+        LectureTranscription created = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId()).orElseThrow();
         LectureTranscriptionSegment segment1 = new LectureTranscriptionSegment(0.0, 12.0, "Welcome to today's lecture", 1);
         LectureTranscriptionSegment segment2 = new LectureTranscriptionSegment(0.0, 12.0, "Today we will talk about Artemis", 1);
-        LectureTranscription transcription = new LectureTranscription("en", List.of(new LectureTranscriptionSegment[] { segment1, segment2 }), this.lectureUnit);
+        created.setLanguage("en");
+        created.setSegments(List.of(segment1, segment2));
+        created.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+        lectureTranscriptionRepository.save(created);
 
         lectureTranscriptionRepository.save(transcription);
     }
