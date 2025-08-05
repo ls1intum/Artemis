@@ -32,12 +32,17 @@ public class LearnerProfile extends DomainObject {
     public static final String ENTITY_NAME = "learnerProfile";
 
     /**
-     * Minimum value allowed for profile fields representing values on a Likert scale.
+     * Minimum value allowed for profile fields.
      */
     public static final int MIN_PROFILE_VALUE = 1;
 
     /**
-     * Maximum value allowed for profile fields representing values on a Likert scale.
+     * Default value for profile fields representing values representing neutral.
+     */
+    public static final int DEFAULT_PROFILE_VALUE = 2;
+
+    /**
+     * Maximum value allowed for profile fields.
      */
     public static final int MAX_PROFILE_VALUE = 3;
 
@@ -52,12 +57,12 @@ public class LearnerProfile extends DomainObject {
     @Column(name = "feedback_detail")
     @Min(MIN_PROFILE_VALUE)
     @Max(MAX_PROFILE_VALUE)
-    private int feedbackDetail = 2;
+    private int feedbackDetail = DEFAULT_PROFILE_VALUE;
 
     @Column(name = "feedback_formality")
     @Min(MIN_PROFILE_VALUE)
     @Max(MAX_PROFILE_VALUE)
-    private int feedbackFormality = 2;
+    private int feedbackFormality = DEFAULT_PROFILE_VALUE;
 
     @Column(name = "has_setup_feedback_preferences")
     private boolean hasSetupFeedbackPreferences = false;
