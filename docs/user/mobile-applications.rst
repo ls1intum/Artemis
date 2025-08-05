@@ -83,6 +83,7 @@ When logged in, users can navigate to the application settings to change their p
 
   .. image:: native-applications/android/settings_push.png
             :width: 300
+
 Problems
 ^^^^^^^^
 
@@ -243,7 +244,7 @@ Problems
 Please report any issues on the `GitHub repository <https://github.com/ls1intum/artemis-ios/issues>`__.
 
 Force Update Mechanism
--------------------
+----------------------
 
 The native apps support a force-update mechanism to ensure compatibility and security, especially when breaking changes are introduced.
 
