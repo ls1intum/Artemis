@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -137,6 +138,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
         var variant = "default";
         var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
+        var postDTO = new PostDTO(post, null);
 
         var course = post.getCoursePostingBelongsTo();
         if (course == null) {
@@ -184,7 +186,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                 }
             }
             pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event, lectureIdOptional, textExerciseDTOOptional, submissionDTOOptional,
-                    programmingExerciseDTOOptional, post);
+                    programmingExerciseDTOOptional, postDTO);
         }
     }
 
