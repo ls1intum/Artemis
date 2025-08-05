@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
+import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.DEFAULT_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MAX_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MIN_PROFILE_VALUE;
+
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,18 +57,32 @@ public class LearnerProfileResource {
     }
 
     /**
-     * GET learner-profile : get the {@link LearnerProfile} of the current user.
-     * If no profile exists for the current user, a BadRequestAlertException is thrown.
+     * GET learner-profile : get the {@link LearnerProfile} of the current user if it exists, otherwise create a new profile.
      *
      * @return A ResponseEntity with a status matching the validity of the request containing the profile.
      */
     @GetMapping("learner-profile")
     @EnforceAtLeastStudent
-    public ResponseEntity<LearnerProfileDTO> getLearnerProfile() {
+    public ResponseEntity<LearnerProfileDTO> getOrCreateLearnerProfile() {
         User user = userRepository.getUser();
-        log.debug("REST request to get LearnerProfile of user {}", user.getLogin());
-        LearnerProfile profile = learnerProfileRepository.findByUserElseThrow(user);
-        return ResponseEntity.ok(LearnerProfileDTO.of(profile));
+        log.debug("REST request to get or create LearnerProfile of user {}", user.getLogin());
+
+        Optional<LearnerProfile> existingProfile = learnerProfileRepository.findByUser(user);
+        if (existingProfile.isPresent()) {
+            return ResponseEntity.ok(LearnerProfileDTO.of(existingProfile.get()));
+        }
+
+        LearnerProfile profile = new LearnerProfile();
+        profile.setUser(user);
+        profile.setFeedbackDetail(DEFAULT_PROFILE_VALUE);
+        profile.setFeedbackFormality(DEFAULT_PROFILE_VALUE);
+        profile.setHasSetupFeedbackPreferences(false);
+
+        user.setLearnerProfile(profile);
+        userRepository.save(user);
+
+        LearnerProfile persistedProfile = learnerProfileRepository.findByUserElseThrow(user);
+        return ResponseEntity.ok(LearnerProfileDTO.of(persistedProfile));
     }
 
     /**
@@ -82,13 +99,14 @@ public class LearnerProfileResource {
 
         LearnerProfile updateProfile = learnerProfileRepository.findByUserElseThrow(user);
 
-        validateProfileField(learnerProfileDTO.feedbackAlternativeStandard(), "FeedbackAlternativeStandard");
-        validateProfileField(learnerProfileDTO.feedbackFollowupSummary(), "FeedbackFollowupSummary");
-        validateProfileField(learnerProfileDTO.feedbackBriefDetailed(), "FeedbackBriefDetailed");
+        validateProfileField(learnerProfileDTO.feedbackDetail(), "FeedbackDetail");
+        validateProfileField(learnerProfileDTO.feedbackFormality(), "FeedbackFormality");
 
-        updateProfile.setFeedbackAlternativeStandard(learnerProfileDTO.feedbackAlternativeStandard());
-        updateProfile.setFeedbackFollowupSummary(learnerProfileDTO.feedbackFollowupSummary());
-        updateProfile.setFeedbackBriefDetailed(learnerProfileDTO.feedbackBriefDetailed());
+        updateProfile.setFeedbackDetail(learnerProfileDTO.feedbackDetail());
+        updateProfile.setFeedbackFormality(learnerProfileDTO.feedbackFormality());
+
+        // Set the flag to true when the user updates their preferences
+        updateProfile.setHasSetupFeedbackPreferences(true);
 
         LearnerProfile result = learnerProfileRepository.save(updateProfile);
         return ResponseEntity.ok(LearnerProfileDTO.of(result));
