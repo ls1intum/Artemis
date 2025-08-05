@@ -8,6 +8,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
 
+import jakarta.annotation.Nullable;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
@@ -50,7 +52,7 @@ public class JWTCookieService {
      * @param tool       the tool claim in the jwt
      * @return the login ResponseCookie containing the JWT
      */
-    public ResponseCookie buildLoginCookie(boolean rememberMe, ToolTokenType tool) {
+    public ResponseCookie buildLoginCookie(boolean rememberMe, @Nullable ToolTokenType tool) {
         return buildLoginCookie(tokenProvider.getTokenValidity(rememberMe), tool);
     }
 
@@ -61,7 +63,7 @@ public class JWTCookieService {
      * @param tool     the tool claim in the jwt
      * @return the login ResponseCookie containing the JWT
      */
-    public ResponseCookie buildLoginCookie(long duration, ToolTokenType tool) {
+    public ResponseCookie buildLoginCookie(long duration, @Nullable ToolTokenType tool) {
         String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), duration, tool);
         return buildJWTCookie(jwt, Duration.of(duration, ChronoUnit.MILLIS));
     }

@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
  * Adaption of the Spring Security WebAuthnAuthenticationProvider.
  * </p>
  * <p>
- * We need to adapt the AuthenticationProvider as we do not want to change the implementation of {@link de.tum.cit.aet.artemis.core.security.DomainUserDetailsService}, as this
+ * We need to adapt the AuthenticationProvider as we do not want to change the implementation of {@link ArtemisUserDetailsService}, as this
  * would us require to
  * <ul>
  * <li>use a less concrete method to retrieve users than {@link de.tum.cit.aet.artemis.core.repository.UserRepository#findOneWithGroupsAndAuthoritiesByEmailAndInternal} to support

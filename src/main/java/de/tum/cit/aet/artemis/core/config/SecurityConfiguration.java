@@ -11,6 +11,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -26,7 +27,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -36,7 +36,7 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
-import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
+import de.tum.cit.aet.artemis.core.security.ArtemisInternalAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
@@ -106,23 +106,28 @@ public class SecurityConfiguration {
      * Spring Security will attempt to authenticate with the providers in the order they're added. If an external provider is configured, it will be queried first;
      * the internal database is used as a fallback if external authentication fails or is not configured.
      *
-     * @param http                             The {@link HttpSecurity} to configure.
-     * @param userDetailsService               The {@link UserDetailsService} to use for internal authentication. See {@link DomainUserDetailsService} for the current
-     *                                             implementation.
-     * @param remoteUserAuthenticationProvider An optional {@link AuthenticationProvider} for external authentication (e.g., LDAP).
+     * @param http                                  The {@link HttpSecurity} to configure.
+     * @param artemisInternalAuthenticationProvider The {@link ArtemisInternalAuthenticationProvider} for internal authentication using the Artemis database.
+     * @param externalUserAuthenticationProvider    An optional {@link AuthenticationProvider} for external authentication (e.g., LDAP).
      * @return The {@link AuthenticationManager} to use for authenticating users.
      */
+    // TODO: this is probably not needed at all, because the configuration happens automatically by Spring Security
     @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http, UserDetailsService userDetailsService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider)
-            throws Exception {
+    @Primary
+    public AuthenticationManager authenticationManager(HttpSecurity http, ArtemisInternalAuthenticationProvider artemisInternalAuthenticationProvider,
+            @Qualifier("ldapAuthenticationProvider") Optional<AuthenticationProvider> externalUserAuthenticationProvider) throws Exception {
         var builder = http.getSharedObject(AuthenticationManagerBuilder.class);
-        // Configure the user details service for internal authentication using the Artemis database.
-        builder.userDetailsService(userDetailsService);
-        // Optionally configure an external authentication provider (e.g., {@link de.tum.cit.aet.artemis.service.connectors.ldap.LdapAuthenticationProvider}) for remote user
-        // authentication.
-        remoteUserAuthenticationProvider.ifPresent(builder::authenticationProvider);
+
+        // Optionally configure an external authentication provider (e.g., {@link LdapAuthenticationProvider}) for external user authentication.
+        externalUserAuthenticationProvider.ifPresent(builder::authenticationProvider);
+
+        // Configure the artemisInternalAuthenticationProvider for internal authentication using the Artemis database.
+        builder.authenticationProvider(artemisInternalAuthenticationProvider);
+
+        // TODO: why is the parent initialized automatically? we should try to prevent this first to avoid setting it to null here
+        builder.parentAuthenticationManager(null); // Ensure no parent authentication manager is set, which could cause issues with the authentication process.
         // Spring Security processes authentication providers in the order they're added. If an external provider is configured,
-        // it will be tried first. The internal database-backed provider serves as a fallback if external authentication is not available or fails.
+        // it will be tried second. The internal database-backed provider serves as a fallback if external authentication is not available or fails.
         return builder.build();
     }
 
@@ -258,12 +263,12 @@ public class SecurityConfiguration {
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
 
-        // Configure WebAuthn passkey if enabled
-        if(passkeyEnabled){
-        passkeyWebAuthnConfigurer.orElseThrow(()->new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
-        }
-
         // @formatter:on
+
+        // Configure WebAuthn passkey if enabled
+        if (passkeyEnabled) {
+            passkeyWebAuthnConfigurer.orElseThrow(() -> new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
+        }
 
         // Conditionally adds configuration for LTI if it is active.
         if (profileService.isLtiActive()) {
