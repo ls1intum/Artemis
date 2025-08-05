@@ -51,7 +51,7 @@ public class QuizTrainingResource {
         this.authCheckService = authCheckService;
     }
 
-    @GetMapping("courses/{courseId}/training")
+    @GetMapping("courses/{courseId}/training/leaderboard")
     @EnforceAtLeastStudent
     public ResponseEntity<List<LeaderboardEntryDTO>> getQuizTrainingLeaderboard(@PathVariable Long courseId) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);

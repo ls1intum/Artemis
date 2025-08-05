@@ -1,20 +1,43 @@
-import { Component, signal } from '@angular/core';
+import { Component, input } from '@angular/core';
+import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { LeaderboardEntry } from 'app/core/course/overview/course-training/leaderboard/leaderboard-types';
 
 @Component({
     selector: 'jhi-leaderboard',
-    imports: [],
+    imports: [FontAwesomeModule],
     templateUrl: './leaderboard.html',
     styleUrl: './leaderboard.scss',
 })
 export class Leaderboard {
-    // Simulate loading state (optional, remove if not needed)
-    isLoading = signal(false);
+    faArrowUp = faArrowUp;
+    faArrowDown = faArrowDown;
 
-    // Sample leaderboard data (replace with API call as needed)
-    /*leaderboard = signal<_LeaderboardEntry[]>([
-        { rank: 1, league: 'Gold', student: 'Alice Example', score: 120},
-        { rank: 2, league: 'Silver', student: 'Bob Sample', score: 112},
-        { rank: 3, league: 'Bronze', student: 'Carol Test', score: 100},
-        { rank: 4, league: 'Bronze', student: 'Moritz Spengler', score: 92}
-    ]);*/
+    currentUser = input<string>('');
+    leaderboard = input<LeaderboardEntry[]>([]);
+
+    // Computed properties for the highlight box
+    get currentUserRank(): number {
+        const user = this.leaderboard().find((entry) => entry.student === this.currentUser());
+        return user?.rank || 0;
+    }
+
+    get currentUserLeague(): number {
+        const user = this.leaderboard().find((entry) => entry.student === this.currentUser());
+        return user?.league || 0;
+    }
+
+    get currentUserStudent(): string {
+        return this.currentUser();
+    }
+
+    get currentUserScore(): number {
+        const user = this.leaderboard().find((entry) => entry.student === this.currentUser());
+        return user?.score || 0;
+    }
+
+    get currentUserActivity(): { correct: number; wrong: number } {
+        const user = this.leaderboard().find((entry) => entry.student === this.currentUser());
+        return user?.activity || { correct: 0, wrong: 0 };
+    }
 }

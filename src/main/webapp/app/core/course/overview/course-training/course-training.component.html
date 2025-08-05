@@ -1,7 +1,48 @@
-<div style="margin-bottom: 24px">
-    <jhi-button (onClick)="navigateToTraining()" [title]="'artemisApp.exercise.startTraining'" />
-</div>
+<div class="course-training-container">
+    <div class="left-content">
+        <div class="training-section">
+            <div class="button-container">
+                <jhi-button (onClick)="navigateToTraining()" [title]="'artemisApp.exercise.startTraining'" />
+            </div>
+            <div class="league-header">
+                <span class="bold-label">League:</span>
+                @if (league() === 'Bronze') {
+                    <div class="icon-container">
+                        <app-league-bronze-icon [league]="league()" />
+                        <span class="tooltip-text">Bronze</span>
+                    </div>
+                }
+                @if (league() === 'Silver') {
+                    <div class="icon-container">
+                        <app-league-silver-icon [league]="league()" />
+                        <span class="tooltip-text">Silver</span>
+                    </div>
+                }
+                @if (league() === 'Gold') {
+                    <div class="icon-container">
+                        <app-league-gold-icon [league]="league()" />
+                        <span class="tooltip-text">Gold</span>
+                    </div>
+                }
+            </div>
+            <div>
+                <span class="bold-label league-header">Total Points: {{ points() }}</span>
+            </div>
+            <div>
+                <span class="bold-label league-header">Badges: </span>
+            </div>
+        </div>
+    </div>
 
-<div>
-    <jhi-leaderboard />
+    <div class="right-content">
+        <div class="leaderboard-section">
+            <jhi-leaderboard [leaderboard]="_leaderboard()" [currentUser]="currentUser().name!" />
+        </div>
+
+        <div class="legend-section">
+            <h3>Legende</h3>
+            <p>The top 5 will advance into the upper league</p>
+            <p>The bottom 5 will decay into the lower league</p>
+        </div>
+    </div>
 </div>
