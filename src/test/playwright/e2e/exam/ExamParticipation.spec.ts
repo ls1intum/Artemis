@@ -321,12 +321,28 @@ test.describe('Exam participation', () => {
     }
 
     test.describe('quiz in exam mode', () => {
-        test('scrolling with quiz step-wizard does not hide header with displayed time', async ({ page, examAPIRequests, login, examParticipation, examExerciseGroupCreation }) => {
+        test('scrolling with quiz step-wizard does not hide header with displayed time', async ({
+            page,
+            examAPIRequests,
+            login,
+            examParticipation,
+            examNavigation,
+            examStartEnd,
+            examManagement,
+            examExerciseGroupCreation,
+        }) => {
             const examTitle = 'exam' + generateUUID();
             await login(admin);
             const exam = await createExam(course, examAPIRequests, { title: examTitle, endDate: dayjs().add(30, 'seconds') });
             const numberOfQuizQuestions = 5;
-            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: generate() }, undefined, undefined, numberOfQuizQuestions);
+            const quizExercise = await examExerciseGroupCreation.addGroupWithExercise(
+                exam,
+                ExerciseType.QUIZ,
+                { quizExerciseID: generate() },
+                undefined,
+                undefined,
+                numberOfQuizQuestions,
+            );
             await examAPIRequests.registerStudentForExam(exam, studentFour);
             await examAPIRequests.generateMissingIndividualExams(exam);
             await examAPIRequests.prepareExerciseStartForExam(exam);
@@ -335,9 +351,7 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentFour, course, exam);
             expect(await isElementInViewport(page, remainingTimeSelector)).toBeTruthy(); // the time should always be visible during the exam
 
-            await page.locator('#sidebar-navigation-item-0').click();
-            await page.waitForTimeout(500);
-            expect(await isElementInViewport(page, remainingTimeSelector)).toBeTruthy();
+            await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
             await page.locator('#stepwizard-4').click();
             expect(await isElementInViewport(page, remainingTimeSelector)).toBeTruthy();
 
