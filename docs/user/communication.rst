@@ -679,3 +679,9 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 1000
 .. |global-search| image:: communication/global-search.png
     :width: 1000
+.. |tutor-suggestions-view| image:: communication/tutor-suggestions-view.png
+    :width: 500
+.. |iris-chat-view| image:: communication/iris-chat-view.png
+    :width: 500
+.. |tutor-suggestions-history| image:: communication/tutor-suggestions-history.png
+    :width: 1000
