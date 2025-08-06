@@ -171,7 +171,9 @@ jobs:
 
           if (( INSTANTIATED_BEANS > MAX_INSTANTIATED_BEANS )); then
             echo "❌ $INSTANTIATED_BEANS > $MAX_INSTANTIATED_BEANS threshold"
+            echo "Please double-check that your introduced beans need to be instantiated at the application startup.
             STARTUP_VALIDATION_FAILED=true
+            exit 1;
           fi
 
           if (( LONGEST_CHAIN_LENGTH > MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH )); then
