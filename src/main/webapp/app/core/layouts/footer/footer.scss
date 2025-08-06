@@ -24,4 +24,11 @@
         margin-right: 5px;
         margin-bottom: 5px;
     }
+    .footer-git-responsive {
+        display: none;
+
+        @media (min-width: 740px) {
+            display: inline;
+        }
+    }
 }
