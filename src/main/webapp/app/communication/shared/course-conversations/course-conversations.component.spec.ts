@@ -537,7 +537,7 @@ examples.forEach((activeConversation) => {
                 expect(component['openThreadOnFocus']).toBe('true');
             });
 
-            it('should handle userMessageId parameter', () => {
+            it('should handle messageId parameter', () => {
                 const queryParams = {
                     messageId: '789',
                 };
@@ -548,7 +548,7 @@ examples.forEach((activeConversation) => {
                 expect(component['postInThread']).toEqual({ id: 789 });
             });
 
-            it('should clear postInThread when no userMessageId is present', () => {
+            it('should clear postInThread when no messageId is present', () => {
                 const queryParams = {};
                 activatedRoute.queryParams = of(queryParams);
 
