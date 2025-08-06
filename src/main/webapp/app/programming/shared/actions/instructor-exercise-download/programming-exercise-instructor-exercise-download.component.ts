@@ -39,13 +39,15 @@ export class ProgrammingExerciseInstructorExerciseDownloadComponent {
 
     exportExercise() {
         if (this.exerciseId) {
-            this.programmingExerciseService.exportInstructorExercise(this.exerciseId).subscribe(
-                (response) => {
+            this.programmingExerciseService.exportInstructorExercise(this.exerciseId).subscribe({
+                next: (response) => {
                     downloadZipFileFromResponse(response);
                     this.alertService.success('artemisApp.programmingExercise.export.successMessageExercise');
                 },
-                () => this.alertService.error('error.exportFailed'),
-            );
+                error: () => {
+                    this.alertService.error('error.exportFailed');
+                },
+            });
         }
     }
 }

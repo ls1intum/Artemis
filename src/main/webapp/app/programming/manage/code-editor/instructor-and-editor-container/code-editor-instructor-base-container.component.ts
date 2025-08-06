@@ -18,6 +18,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { isExamExercise } from 'app/shared/util/utils';
 /**
  * Enumeration specifying the loading state
  */
@@ -71,6 +72,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
 
     // State variables
     loadingState = LOADING_STATE.CLEAR;
+
+    protected isCreateAssignmentRepoDisabled: boolean;
 
     /**
      * Initialize the route params subscription.
@@ -126,6 +129,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                 .subscribe({
                     next: () => {
                         this.loadingState = LOADING_STATE.CLEAR;
+                        this.isCreateAssignmentRepoDisabled = this.loadingState !== this.LOADING_STATE.CLEAR || isExamExercise(this.exercise);
                     },
                     error: (err: Error) => {
                         this.loadingState = LOADING_STATE.FETCHING_FAILED;

@@ -1,4 +1,3 @@
-import { HttpClientModule } from '@angular/common/http';
 import { EventEmitter } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -49,7 +48,7 @@ describe('ExamParticipationCoverComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientModule, FormsModule, FaIconComponent],
+            imports: [FormsModule, FaIconComponent],
             declarations: [
                 ExamParticipationCoverComponent,
                 MockPipe(ArtemisTranslatePipe),

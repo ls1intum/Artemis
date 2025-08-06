@@ -75,7 +75,7 @@ describe('ModelingExerciseUpdateComponent', () => {
         route.data = of({ modelingExercise: modelingExercise });
         route.snapshot = {
             paramMap: {
-                get: (key: string) => 'mockValue',
+                get: () => 'mockValue',
             },
         } as any;
 
