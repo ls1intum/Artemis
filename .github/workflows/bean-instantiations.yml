@@ -197,7 +197,7 @@ jobs:
             echo "❌ Startup dependency chain length $LONGEST_CHAIN_LENGTH > $MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH threshold"
             echo "Chains exceeding threshold:"
             grep -E "$STARTUP_DEEP_CHAIN_PATTERN" $LOG_FILE || echo "  (No detailed chains found in log)"
-            echo "🔧 These chains violate the threshold MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH. Please refactor them to break these chains.
+            echo "🔧 These chains violate the threshold MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH. Please refactor them to break these chains."
             echo "You can find a visualization of the bean instantiation graph in startupBeans.dot when starting the application locally."
             echo "You can visualize the file on http://webgraphviz.com/"
           else
@@ -282,7 +282,7 @@ jobs:
             echo "❌ Deferred dependency chain length $DEFERRED_CHAIN_LENGTH > $MAX_DEFERRED_CHAIN_LENGTH threshold"
             echo "Chains exceeding threshold:"
             grep -E "$DEFERRED_LONG_CHAIN_PATTERN" $LOG_FILE || echo "  (No detailed chains found in log)"
-            echo "🔧 These chains violate the threshold MAX_DEFERRED_CHAIN_LENGTH. Please refactor them to break these chains.
+            echo "🔧 These chains violate the threshold MAX_DEFERRED_CHAIN_LENGTH. Please refactor them to break these chains."
             echo "You can find a visualization of the bean instantiation graph in deferredEagerBeanInstantiationViolations.dot when starting the application locally."
             echo "You can visualize the file on http://webgraphviz.com/"
           else
