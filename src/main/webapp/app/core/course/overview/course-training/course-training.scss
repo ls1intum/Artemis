@@ -1,0 +1,106 @@
+.course-training-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    height: 100%;
+    padding: 20px 0 20px 20px;
+    box-sizing: border-box;
+    min-width: min-content;
+    overflow-x: auto;
+}
+
+.left-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: min-content;
+}
+
+.training-section {
+    justify-content: center;
+    align-items: flex-start;
+    padding: 24px;
+    flex-shrink: 0;
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-height: 400px;
+    white-space: normal;
+}
+
+.right-content {
+    flex: 3.5;
+    display: flex;
+    gap: 24px;
+    max-height: 100%;
+    overflow-y: auto;
+    padding-right: 40px;
+    min-width: min-content;
+}
+
+.leaderboard-section {
+    flex: 2.5;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-width: min-content;
+}
+
+.legend-section {
+    flex: 1;
+    padding: 24px;
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    min-height: 400px;
+    min-width: min-content;
+}
+
+.league-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.button-container {
+    margin-bottom: 24px;
+}
+
+.icon-container {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.icon-container .tooltip-text {
+    visibility: hidden;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    padding: 5px 10px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.icon-container:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.bold-label {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 1rem;
+}

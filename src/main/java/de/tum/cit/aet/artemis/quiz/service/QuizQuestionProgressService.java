@@ -29,9 +29,13 @@ public class QuizQuestionProgressService {
 
     private final QuizQuestionRepository quizQuestionRepository;
 
-    public QuizQuestionProgressService(QuizQuestionProgressRepository quizQuestionProgressRepository, QuizQuestionRepository quizQuestionRepository) {
+    private final QuizTrainingLeaderboardService quizTrainingLeaderboardService;
+
+    public QuizQuestionProgressService(QuizQuestionProgressRepository quizQuestionProgressRepository, QuizQuestionRepository quizQuestionRepository,
+            QuizTrainingLeaderboardService quizTrainingLeaderboardService) {
         this.quizQuestionProgressRepository = quizQuestionProgressRepository;
         this.quizQuestionRepository = quizQuestionRepository;
+        this.quizTrainingLeaderboardService = quizTrainingLeaderboardService;
     }
 
     /**
@@ -222,7 +226,7 @@ public class QuizQuestionProgressService {
      * @param answer     The submitted answer for the question
      * @param answeredAt The time when the question was answered
      */
-    public void saveProgressFromTraining(QuizQuestion question, Long userId, SubmittedAnswer answer, ZonedDateTime answeredAt) {
+    public void saveProgressFromTraining(QuizQuestion question, Long userId, SubmittedAnswer answer, ZonedDateTime answeredAt, long courseId) {
         QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
         QuizQuestionProgressData data = existingProgress.getProgressJson() != null ? existingProgress.getProgressJson() : new QuizQuestionProgressData();
 
@@ -233,6 +237,9 @@ public class QuizQuestionProgressService {
         updateProgressWithNewAttempt(data, score, answeredAt);
         updateProgressCalculations(data, score, existingProgress);
         existingProgress.setProgressJson(data);
+
+        quizTrainingLeaderboardService.updateLeaderboardScore(userId, courseId, Set.of(data));
+
         quizQuestionProgressRepository.save(existingProgress);
     }
 
