@@ -313,8 +313,8 @@ Generic styles
         height: 100dvh;
         padding-bottom: var(--footer-height-prod) !important;
     }
-    &.footer-height-dev {
-        padding-bottom: var(--footer-height-dev);
+    &.footer-height-prod {
+        padding-bottom: var(--footer-height-prod);
     }
 }
 
@@ -1102,7 +1102,7 @@ body.transparent-background {
     overflow-y: auto;
 
     &.content-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height));
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height));
     }
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;

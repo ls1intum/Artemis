@@ -41,10 +41,10 @@ $exam-test-run-offset: 38px;
         height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height);
 
         &.sidebar-height-testRun-dev {
-            height: calc(100vh - var(--sidebar-footer-height-dev) - $management-header-height);
+            height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height);
 
             @media (max-width: 1349px) {
-                height: calc(100vh - var(--sidebar-footer-height-dev) - $management-header-height - 40px) !important;
+                height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height - 40px) !important;
             }
 
             @media (max-width: 768px) {

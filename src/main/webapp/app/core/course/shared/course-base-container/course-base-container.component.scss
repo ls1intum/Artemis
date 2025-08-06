@@ -23,7 +23,7 @@
     height: calc(100vh - var(--sidebar-footer-height-prod) - var(--spacing-modules));
 
     &.sidenav-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--spacing-modules));
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--spacing-modules));
     }
 
     @media (max-width: 768px) {
@@ -42,7 +42,7 @@
         height: calc(100vh - var(--sidebar-footer-height-prod) - var(--spacing-modules));
 
         &.sidenav-height-dev {
-            height: calc(100vh - var(--sidebar-footer-height-dev) - var(--spacing-modules));
+            height: calc(100vh - var(--sidebar-footer-height-prod) - var(--spacing-modules));
         }
 
         @media (max-width: 768px) {
@@ -67,7 +67,7 @@
         }
 
         &.sidenav-height-dev {
-            height: calc(100vh - var(--sidebar-footer-height-dev));
+            height: calc(100vh - var(--sidebar-footer-height-prod));
         }
 
         @media (max-width: 768px) {

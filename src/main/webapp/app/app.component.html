@@ -2,7 +2,7 @@
 <div
     id="page-wrapper"
     class="page-wrapper"
-    [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer, 'no-padding': isShownViaLti }"
+    [ngClass]="{ 'footer-height-prod': !isProduction || isTestServer, 'no-padding': isShownViaLti }"
     [ngStyle]="{ 'overflow-y': !isTestRunExam && isExamStarted ? 'hidden' : 'auto' }"
     cdkScrollable
 >
@@ -26,7 +26,7 @@
     @if (showSkeleton && !isShownViaLti) {
         <div>
             @if (isTestRunExam || !isExamStarted) {
-                <jhi-footer [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }" />
+                <jhi-footer [ngClass]="{ 'footer-height-prod': !isProduction || isTestServer }" />
             }
         </div>
     }

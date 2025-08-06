@@ -8,8 +8,8 @@
     padding: 0.25rem 1rem;
     width: 100%;
     z-index: 20;
-    &.footer-height-dev {
-        height: var(--footer-height-dev);
+    &.footer-height-prod {
+        height: var(--footer-height-prod);
     }
     @media (max-width: 768px) {
         height: var(--footer-height-prod) !important;
