@@ -1,6 +1,7 @@
 export class LeaderboardEntry {
     public rank?: number;
     public league?: number;
+    public studentLeague?: number;
     public student?: string;
     public score?: number;
     public answeredCorrectly?: number;

@@ -31,7 +31,7 @@ export class CourseTrainingComponent {
         const entries = this.leaderboardEntries();
 
         const userEntry = entries.find((entry) => entry.student === user.name);
-        const league = userEntry?.league ?? 0;
+        const league = userEntry?.studentLeague ?? 0;
         if (league === 1) {
             return 'Gold';
         }
@@ -46,7 +46,7 @@ export class CourseTrainingComponent {
     });
     points = computed(() => {
         const user = this.currentUser();
-        const entries = this._leaderboard();
+        const entries = this.leaderboardEntries();
 
         const userEntry = entries.find((entry) => entry.student === user.name);
         return userEntry?.score ?? 0;

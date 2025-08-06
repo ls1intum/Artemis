@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizTrainingLeaderboard;
@@ -39,13 +40,16 @@ public class QuizTrainingLeaderboardService {
 
     private final QuizQuestionRepository quizQuestionRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public QuizTrainingLeaderboardService(QuizTrainingLeaderboardRepository quizTrainingLeaderboardRepository, CourseRepository courseRepository, UserRepository userRepository,
-            QuizQuestionProgressRepository quizQuestionProgressRepository, QuizQuestionRepository quizQuestionRepository) {
+            QuizQuestionProgressRepository quizQuestionProgressRepository, QuizQuestionRepository quizQuestionRepository, AuthorizationCheckService authorizationCheckService) {
         this.quizTrainingLeaderboardRepository = quizTrainingLeaderboardRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.quizQuestionProgressRepository = quizQuestionProgressRepository;
         this.quizQuestionRepository = quizQuestionRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     public long getLeagueForUser(Long userId, Long courseId) {
@@ -55,22 +59,40 @@ public class QuizTrainingLeaderboardService {
     }
 
     public List<LeaderboardEntryDTO> getLeaderboard(long userId, long courseId) {
-        long leagueId = getLeagueForUser(userId, courseId);
+        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
+        long studentLeagueId;
+        if (authorizationCheckService.isOnlyStudentInCourse(course, user)) {
+            studentLeagueId = getLeagueForUser(userId, courseId);
+        }
+        else {
+            studentLeagueId = 0;
+        }
+        // Replace this with the league selected by the user in the UI
+        long leagueId;
+        if (studentLeagueId == 0) {
+            leagueId = 3;
+        }
+        else {
+            leagueId = studentLeagueId;
+        }
+
         List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueIdAndCourseIdOrderByScoreDesc(leagueId, courseId);
         List<LeaderboardEntryDTO> leaderboard = new ArrayList<>();
         int rank = 1;
         for (QuizTrainingLeaderboard leaderboardEntry : leaderboardEntries) {
             String username = leaderboardEntry.getUser() != null ? leaderboardEntry.getUser().getName() : "Unknown User";
-            leaderboard.add(new LeaderboardEntryDTO(rank++, leagueId, username, leaderboardEntry.getScore(), leaderboardEntry.getAnsweredCorrectly(),
+            leaderboard.add(new LeaderboardEntryDTO(rank++, leagueId, studentLeagueId, username, leaderboardEntry.getScore(), leaderboardEntry.getAnsweredCorrectly(),
                     leaderboardEntry.getAnsweredWrong(), leaderboardEntry.getTotalQuestions()));
         }
         return leaderboard;
     }
 
-    public void updateLeaderboardScore(long userId, long courseId, Set<QuizQuestionProgressData> answeredQuestions, int totalAvailableQuestions) {
+    public void updateLeaderboardScore(long userId, long courseId, Set<QuizQuestionProgressData> answeredQuestions) {
         int delta = calculateScoreDelta(answeredQuestions);
         int correctAnswers = calculateCorrectAnswers(answeredQuestions);
         int wrongAnswers = calculateWrongAnswers(answeredQuestions);
+        int totalAvailableQuestions = quizQuestionRepository.countOfQuizQuestionsAvailableForPractice(courseId);
 
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -173,7 +195,7 @@ public class QuizTrainingLeaderboardService {
         }
     }
 
-    @Scheduled(cron = "0 25 10 * * WED")
+    @Scheduled(cron = "0 0 3 * * MON")
     public void weeklyLeaderboardRebuild() {
         List<Course> allCourses = courseRepository.findAll();
         for (Course course : allCourses) {
