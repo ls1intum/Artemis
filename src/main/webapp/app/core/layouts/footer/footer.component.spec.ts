@@ -70,7 +70,7 @@ describe('FooterComponent', () => {
         beforeEach(() => {
             component.gitBranch = 'main';
             component.gitCommitId = 'abc123';
-            component.gitTimestamp = dayJs('2023-04-01T12:00:00Z');
+            component.gitTimestamp = dayJs.utc('2023-04-01T12:00:00Z');
             component.gitCommitUser = 'user123';
             component.isProduction = false;
             component.isTestServer = false;
@@ -82,7 +82,7 @@ describe('FooterComponent', () => {
 
             expect(footerGit.textContent).toContain('main'); // for git branch
             expect(footerGit.textContent).toContain('abc123'); // for git commit ID
-            expect(footerGit.textContent).toContain('2023-04-01 14:00'); // for git timestamp
+            expect(footerGit.textContent).toContain('2023-04-01 12:00'); // for git timestamp
             expect(footerGit.textContent).toContain('user123'); // for git commit user
         });
     });
