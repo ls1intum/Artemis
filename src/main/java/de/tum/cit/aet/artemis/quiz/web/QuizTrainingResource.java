@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -25,13 +26,13 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
-import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizTrainingAnswerDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
+import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingService;
 
 @Profile(PROFILE_CORE)
@@ -39,6 +40,8 @@ import de.tum.cit.aet.artemis.quiz.service.QuizTrainingService;
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizTrainingResource {
+
+    private static final Logger log = LoggerFactory.getLogger(QuizTrainingResource.class);
 
     private final QuizTrainingLeaderboardService quizTrainingLeaderboardService;
 
@@ -52,8 +55,9 @@ public class QuizTrainingResource {
 
     private final QuizTrainingService quizTrainingService;
 
-    public QuizTrainingResource(UserRepository userRepository, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
-            QuizQuestionProgressService quizQuestionProgressService, QuizTrainingService quizTrainingService) {
+    public QuizTrainingResource(QuizTrainingLeaderboardService quizTrainingLeaderboardService, UserRepository userRepository, CourseRepository courseRepository,
+            AuthorizationCheckService authCheckService, QuizQuestionProgressService quizQuestionProgressService, QuizTrainingService quizTrainingService) {
+        this.quizTrainingLeaderboardService = quizTrainingLeaderboardService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -103,11 +107,22 @@ public class QuizTrainingResource {
 
         return ResponseEntity.ok(result);
     }
-  
-  @GetMapping("courses/{courseId}/training/leaderboard")
+
+    /**
+     * Retrieves the leaderboard for quiz training in a specific course.
+     *
+     * <p>
+     * This endpoint returns a list of leaderboard entries for the given course,
+     * showing the ranking of users based on their quiz training performance.
+     * </p>
+     *
+     * @param courseId the id of the course for which the leaderboard is requested
+     * @return the ResponseEntity containing a list of LeaderboardEntryDTO objects representing the leaderboard
+     */
+    @GetMapping("courses/{courseId}/training/leaderboard")
     @EnforceAtLeastStudent
     public ResponseEntity<List<LeaderboardEntryDTO>> getQuizTrainingLeaderboard(@PathVariable Long courseId) {
-        log.info("REST request to get quiz questions for course with id : {}", courseId);
+        log.info("REST request to get leaderboard for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
