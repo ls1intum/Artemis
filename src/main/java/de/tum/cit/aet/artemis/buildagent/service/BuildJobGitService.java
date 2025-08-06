@@ -9,6 +9,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 
@@ -26,10 +27,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.service.AbstractGitService;
@@ -73,8 +72,10 @@ public class BuildJobGitService extends AbstractGitService {
      * 1. ssh key (if available)
      * 2. username + personal access token (if available)
      * 3. username + password
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void init() {
         if (useSsh()) {
             log.info("BuildJobGitService will use ssh keys as authentication method to interact with remote git repositories.");

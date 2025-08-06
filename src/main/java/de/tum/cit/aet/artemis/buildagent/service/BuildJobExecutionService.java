@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -29,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.service.parser.CustomFeedbackParser;
 import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
@@ -96,8 +95,10 @@ public class BuildJobExecutionService {
     /**
      * This method is responsible for cleaning up temporary directories that were used for checking out repositories.
      * It is triggered when the application is ready and runs asynchronously.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     @Async
     public void initAsync() {
         final ZonedDateTime currentTime = ZonedDateTime.now();
