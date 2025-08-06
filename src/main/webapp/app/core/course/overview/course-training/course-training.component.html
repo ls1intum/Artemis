@@ -36,7 +36,7 @@
 
     <div class="right-content">
         <div class="leaderboard-section">
-            <jhi-leaderboard [leaderboard]="_leaderboard()" [currentUser]="currentUser().name!" />
+            <jhi-leaderboard [leaderboard]="leaderboardEntries()" [currentUser]="currentUser().name!" />
         </div>
 
         <div class="legend-section">

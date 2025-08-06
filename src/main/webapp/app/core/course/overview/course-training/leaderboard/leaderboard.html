@@ -52,8 +52,8 @@
                         <td class="user-name">{{ entry.student }}</td>
                         <td class="not-user-column">{{ entry.score }}</td>
                         <td class="not-user-column">
-                            <span> <fa-icon [icon]="faArrowUp" class="correct-icon" /> {{ entry.activity.correct }} </span>
-                            <span> <fa-icon [icon]="faArrowDown" class="wrong-icon" /> {{ entry.activity.wrong }} </span>
+                            <span> <fa-icon [icon]="faArrowUp" class="correct-icon" /> {{ entry.answeredCorrectly }} </span>
+                            <span> <fa-icon [icon]="faArrowDown" class="wrong-icon" /> {{ entry.answeredWrong }} </span>
                         </td>
                     </tr>
                 }

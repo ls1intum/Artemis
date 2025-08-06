@@ -173,7 +173,7 @@ public class QuizTrainingLeaderboardService {
         }
     }
 
-    @Scheduled(cron = "0 0 3 * * MON")
+    @Scheduled(cron = "0 25 10 * * WED")
     public void weeklyLeaderboardRebuild() {
         List<Course> allCourses = courseRepository.findAll();
         for (Course course : allCourses) {

@@ -38,6 +38,11 @@ export class Leaderboard {
 
     get currentUserActivity(): { correct: number; wrong: number } {
         const user = this.leaderboard().find((entry) => entry.student === this.currentUser());
-        return user?.activity || { correct: 0, wrong: 0 };
+        return user
+            ? {
+                  correct: user.answeredCorrectly ?? 0,
+                  wrong: user.answeredWrong ?? 0,
+              }
+            : { correct: 0, wrong: 0 };
     }
 }
