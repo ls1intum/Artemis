@@ -308,14 +308,6 @@ Generic styles
     overflow-y: auto;
     overflow-x: hidden;
     background-color: var(--bs-body-bg);
-    padding-bottom: var(--header-footer-combined-height);
-    @media (max-width: 768px) {
-        height: 100dvh;
-        padding-bottom: var(--header-footer-combined-height) !important;
-    }
-    &.header-footer-combined-height {
-        padding-bottom: var(--header-footer-combined-height);
-    }
 }
 
 .main-container {
@@ -809,7 +801,7 @@ Course Info Bar
      * block element (such as a paragraph) for improved readability.
      *
      * Example (Markdown):
-     * 
+     *
      * - First item
      * - Second item
      * More text after the list.
