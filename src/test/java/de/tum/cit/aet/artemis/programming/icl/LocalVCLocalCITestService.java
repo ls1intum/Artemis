@@ -241,9 +241,9 @@ public class LocalVCLocalCITestService {
     public String buildLocalVCUri(@Nullable String username, @Nullable String password, @NotNull String projectKey, @NotNull String repositorySlug) {
         String userInfo = null;
 
-        if (!StringUtils.hasText(username)) {
+        if (StringUtils.hasText(username)) {
             userInfo = username;
-            if (!StringUtils.hasText(password)) {
+            if (StringUtils.hasText(password)) {
                 userInfo += ":" + password;
             }
         }
