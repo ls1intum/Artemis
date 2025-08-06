@@ -1,18 +1,18 @@
 :host {
     display: block;
     position: fixed;
-    height: var(--footer-height-prod);
+    height: var(--header-footer-combined-height);
     left: 0;
     bottom: 0;
     background-color: var(--footer-bg);
     padding: 0.25rem 1rem;
     width: 100%;
     z-index: 20;
-    &.footer-height-prod {
-        height: var(--footer-height-prod);
+    &.header-footer-combined-height {
+        height: var(--header-footer-combined-height);
     }
     @media (max-width: 768px) {
-        height: var(--footer-height-prod) !important;
+        height: var(--header-footer-combined-height) !important;
     }
 
     .footer-text {
