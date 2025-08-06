@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
-import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDto;
+import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 
 /**
  * An IrisMessage represents a single message in an IrisSession.
@@ -64,11 +64,11 @@ public class IrisMessage extends DomainObject {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "accessed_memories", columnDefinition = "json")
-    private List<MemirisMemoryDto> accessedMemories = new ArrayList<>();
+    private List<MemirisMemoryDTO> accessedMemories = new ArrayList<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "created_memories", columnDefinition = "json")
-    private List<MemirisMemoryDto> createdMemories = new ArrayList<>();
+    private List<MemirisMemoryDTO> createdMemories = new ArrayList<>();
 
     @Transient
     private Integer messageDifferentiator; // is supposed to be only a part of the dto and helps the client application to differentiate messages it should add to the message store
@@ -122,19 +122,19 @@ public class IrisMessage extends DomainObject {
         }
     }
 
-    public List<MemirisMemoryDto> getAccessedMemories() {
+    public List<MemirisMemoryDTO> getAccessedMemories() {
         return accessedMemories;
     }
 
-    public void setAccessedMemories(List<MemirisMemoryDto> accessedMemories) {
+    public void setAccessedMemories(List<MemirisMemoryDTO> accessedMemories) {
         this.accessedMemories = accessedMemories;
     }
 
-    public List<MemirisMemoryDto> getCreatedMemories() {
+    public List<MemirisMemoryDTO> getCreatedMemories() {
         return createdMemories;
     }
 
-    public void setCreatedMemories(List<MemirisMemoryDto> createdMemories) {
+    public void setCreatedMemories(List<MemirisMemoryDTO> createdMemories) {
         this.createdMemories = createdMemories;
     }
 
