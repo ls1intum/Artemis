@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -233,7 +234,35 @@ public class QuizQuestionProgressService {
         updateProgressWithNewAttempt(data, score, answeredAt);
         updateProgressCalculations(data, score, existingProgress);
         existingProgress.setProgressJson(data);
-        quizQuestionProgressRepository.save(existingProgress);
+        try {
+            quizQuestionProgressRepository.save(existingProgress);
+        }
+        catch (DataIntegrityViolationException e) {
+            updateExistingProgress(userId, question, data, answeredAt);
+        }
+    }
+
+    /**
+     * Updates the existing progress entry for a given user and quiz question.
+     * If a DataIntegrityViolationException occurs during the update, an IllegalStateException is thrown.
+     *
+     * @param userId     The ID of the user whose progress is being updated
+     * @param question   The quiz question for which the progress is being updated
+     * @param data       The updated progress data for the quiz question
+     * @param answeredAt The time when the question was answered
+     * @throws IllegalStateException if the progress entry does not exist or a data integrity violation occurs
+     */
+    public void updateExistingProgress(long userId, QuizQuestion question, QuizQuestionProgressData data, ZonedDateTime answeredAt) {
+        try {
+            QuizQuestionProgress progress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId())
+                    .orElseThrow(() -> new IllegalStateException("Progress entry should exist but was not found."));
+            progress.setLastAnsweredAt(answeredAt);
+            progress.setProgressJson(data);
+            quizQuestionProgressRepository.save(progress);
+        }
+        catch (DataIntegrityViolationException e) {
+            throw new IllegalStateException("Error when trying to update existing progress", e);
+        }
     }
 
 }
