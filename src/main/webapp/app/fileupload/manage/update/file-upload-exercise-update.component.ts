@@ -32,8 +32,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
-import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
@@ -60,8 +58,6 @@ import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-
         CompetencySelectionComponent,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
-        CustomMinDirective,
-        CustomMaxDirective,
         FaIconComponent,
         NgbTooltip,
         PresentationScoreComponent,

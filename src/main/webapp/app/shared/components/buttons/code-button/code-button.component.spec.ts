@@ -466,7 +466,7 @@ describe('CodeButtonComponent', () => {
         const documentRemoveChildSpy = jest.spyOn(document.body, 'removeChild');
         const formSubmitSpy = jest.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
 
-        const getToolTokenSpy = jest.spyOn(accountService, 'getToolToken');
+        const getToolTokenSpy = jest.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
 
         fixture.componentRef.setInput('exercise', { buildConfig: { theiaImage: 'theia-image' } } as any);
         component.activeParticipation = { repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' } as any;

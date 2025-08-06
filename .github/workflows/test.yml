@@ -58,7 +58,7 @@ concurrency:
 # Keep in sync with codeql-analysis.yml and build.yml
 env:
   CI: true
-  node: 22
+  node: 24
   java: 21
   # Run all tests for non-draft pull-requests or the default branch. Otherwise, only module-affected tests are run.
   RUN_ALL_TESTS: ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft == false) || github.event.repository.default_branch == github.ref_name }}

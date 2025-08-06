@@ -15,11 +15,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
@@ -224,8 +226,8 @@ public class PyrisJobService {
      * @throws AccessForbiddenException if the token is invalid or not provided
      */
     public <Job extends PyrisJob> Job getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest request, Class<Job> jobClass) {
-        var authHeader = request.getHeader("Authorization");
-        if (!authHeader.startsWith("Bearer ")) {
+        var authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (!authHeader.startsWith(Constants.BEARER_PREFIX)) {
             throw new AccessForbiddenException("No valid token provided");
         }
         var token = authHeader.substring(7);

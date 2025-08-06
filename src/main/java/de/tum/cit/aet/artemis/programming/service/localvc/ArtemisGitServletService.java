@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
@@ -12,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -42,6 +45,22 @@ public class ArtemisGitServletService extends GitServlet {
      * Initialize the ArtemisGitServlet by setting the repository resolver and adding filters for fetch and push requests.
      * Sets the pre/post receive/upload hooks.
      * <p>
+     * For a git push the following HTTP requests are sent:
+     * <ol>
+     * <li>GET /info/refs?service=git-receive-pack (without Authentication header)</li>
+     * <li>GET /info/refs?service=git-receive-pack (without Authentication header)</li>
+     * <li>POST /git-receive-pack (with Authentication header)</li>
+     * </ol>
+     * </p>
+     * <p>
+     * For a git pull / clone the following HTTP requests are sent:
+     * <ol>
+     * <li>GET /info/refs?service=git-upload-pack (without Authentication header)</li>
+     * <li>GET /info/refs?service=git-upload-pack (with Authentication header)</li>
+     * <li>POST /git-upload-pack (with Authentication header)</li>
+     * </ol>
+     * </p>
+     * <p>
      * For general information on the different hooks and git packs see the git documentation:
      * <p>
      * <a href="https://git-scm.com/docs/git-receive-pack">https://git-scm.com/docs/git-receive-pack</a>
@@ -66,30 +85,41 @@ public class ArtemisGitServletService extends GitServlet {
 
         this.setReceivePackFactory((request, repository) -> {
             ReceivePack receivePack = new ReceivePack(repository);
-            // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
-            User user = null;
-            try {
-                String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
-                user = localVCServletService.getUserByAuthHeader(authorizationHeader);
-
+            // we only need to set the PreReceiveHook and PostReceiveHook for authorized POST requests, as only these trigger onPreReceive or onPostReceive.
+            if (isAuthorizedPostRequest(request)) {
+                try {
+                    String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+                    User user = localVCServletService.getUserByAuthHeader(authorizationHeader);
+                    // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
+                    receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
+                    // Add a hook that triggers the creation of a new submission after the push went through successfully.
+                    receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, user));
+                }
+                catch (LocalVCAuthException exception) {
+                    log.error("Error while retrieving user from request header: {}", exception.getMessage());
+                }
             }
-            catch (LocalVCAuthException exception) {
-                log.error("Error while retrieving user from request header: {}", exception.getMessage());
-            }
-
-            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
-            // Add a hook that triggers the creation of a new submission after the push went through successfully.
-            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, user));
             return receivePack;
         });
 
         this.setUploadPackFactory((request, repository) -> {
             UploadPack uploadPack = new UploadPack(repository);
-
-            // Add the custom pre-upload hook, to distinguish between clone and pull operations
-            uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(localVCServletService, request));
+            // we only need to set the LocalVCFetchPreUploadHook for authorized POST requests, as only these trigger onBeginNegotiateRound
+            if (isAuthorizedPostRequest(request)) {
+                // Add the custom pre-upload hook, to distinguish between clone and pull operations
+                uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(localVCServletService, request));
+            }
             return uploadPack;
         });
     }
 
+    /**
+     * Checks if the request is an authorized POST request.
+     *
+     * @param request the HTTP request
+     * @return true if the request is a POST request with an Authorization header, false otherwise
+     */
+    private static boolean isAuthorizedPostRequest(HttpServletRequest request) {
+        return HttpMethod.POST.name().equals(request.getMethod()) && request.getHeader(HttpHeaders.AUTHORIZATION) != null;
+    }
 }
