@@ -13,7 +13,6 @@ import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
  * Workaround for https://github.com/help-me-mom/ng-mocks/issues/8634.
  */
 export function mockCodeEditorMonacoViewChildren() {
-    MockInstance.scope('case');
     MockInstance(CodeEditorMonacoComponent, () => ({
         editor: signal<any>({}),
         inlineFeedbackComponents: signal<any[]>([]),
@@ -22,7 +21,6 @@ export function mockCodeEditorMonacoViewChildren() {
 }
 
 export function mockThemeSwitcherComponentViewChildren() {
-    MockInstance.scope('case');
     MockInstance(ThemeSwitchComponent, () => ({
         popover: signal<any>({}),
     }));
