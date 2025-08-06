@@ -212,11 +212,12 @@ public class PyrisPipelineService {
         var api = learningMetricsApi.orElseThrow(() -> new AtlasNotPresentException(LearningMetricsApi.class));
 
         // @formatter:off
+        var lastMessageId = !session.getMessages().isEmpty() ? session.getMessages().getLast().getId() : null;
         executePipeline(
             "course-chat",
             variant,
             eventVariant,
-            pyrisJobService.addCourseChatJob(courseId, session.getId(), session.getMessages().getLast().getId()), executionDto -> {
+            pyrisJobService.addCourseChatJob(courseId, session.getId(), lastMessageId), executionDto -> {
                 var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
                 var user = userRepository.findByIdElseThrow(studentId);
                 if (!featureToggleService.isFeatureEnabled(Feature.Memiris)) {
