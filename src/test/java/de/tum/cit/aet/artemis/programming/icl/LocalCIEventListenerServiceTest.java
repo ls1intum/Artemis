@@ -20,7 +20,7 @@ import com.hazelcast.map.IMap;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDetailsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 
 class LocalCIEventListenerServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
@@ -67,7 +67,7 @@ class LocalCIEventListenerServiceTest extends AbstractProgrammingIntegrationLoca
 
         buildAgentInformation.put(memberAddress, updatedInfo);
         await().until(() -> buildAgentInformation.get(memberAddress).status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED);
-        verify(mailService, timeout(1000)).sendBuildAgentSelfPausedEmailToAdmin(any(User.class), eq(buildAgent.buildAgent().name()), eq(consecutiveFailedBuildJobs));
+        verify(mailService, timeout(1000)).sendBuildAgentSelfPausedEmailToAdmin(any(MailUserDTO.class), eq(buildAgent.buildAgent().name()), eq(consecutiveFailedBuildJobs));
     }
 
 }
