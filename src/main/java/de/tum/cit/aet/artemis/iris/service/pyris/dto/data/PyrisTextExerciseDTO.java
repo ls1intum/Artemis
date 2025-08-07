@@ -24,29 +24,9 @@ public record PyrisTextExerciseDTO(long id, String title, PyrisCourseDTO course,
                 exercise.getTitle(),
                 new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember()),
                 exercise.getProblemStatement(),
-                Optional.empty(),
+                Optional.ofNullable(exercise.getExampleSolution()),
                 Optional.ofNullable(exercise.getStartDate()).map(ChronoZonedDateTime::toInstant).orElse(null),
                 Optional.ofNullable(exercise.getDueDate()).map(ChronoZonedDateTime::toInstant).orElse(null)
-        );
-        // @formatter:on
-    }
-
-    /**
-     * Create a new PyrisTextExerciseDTO from the given TextExercise
-     *
-     * @param exercise the exercise
-     * @return the dto
-     */
-    public static PyrisTextExerciseDTO ofWithExampleSolution(TextExercise exercise) {
-        // @formatter:off
-        return new PyrisTextExerciseDTO(
-            exercise.getId(),
-            exercise.getTitle(),
-            new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember()),
-            exercise.getProblemStatement(),
-            Optional.ofNullable(exercise.getExampleSolution()),
-            Optional.ofNullable(exercise.getStartDate()).map(ChronoZonedDateTime::toInstant).orElse(null),
-            Optional.ofNullable(exercise.getDueDate()).map(ChronoZonedDateTime::toInstant).orElse(null)
         );
         // @formatter:on
     }
