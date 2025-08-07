@@ -134,17 +134,18 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     /**
+     * TODO This is duplicated with {@link QuizParticipationComponent#navigateToQuestion}, extract to a shared component
+     *
      * By clicking on the bubble of the progress navigation towards the corresponding question of the quiz is triggered
      * @param questionId
      */
     navigateToQuestion(questionId: number): void {
-        // get html element for question
         const element = document.getElementById('question' + questionId);
         if (element) {
             element.scrollIntoView({
                 behavior: 'smooth',
-                block: 'start',
-                inline: 'nearest',
+                block: 'nearest',
+                inline: 'start',
             });
         }
     }
