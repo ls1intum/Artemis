@@ -37,6 +37,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 
@@ -89,12 +90,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
@@ -157,12 +156,14 @@ public class GitService extends AbstractGitService {
 
     /**
      * initialize the GitService, in particular which authentication mechanism should be used
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      * Artemis uses the following order for authentication:
      * 1. ssh key (if available)
      * 2. username + personal access token (if available)
      * 3. username + password
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void init() {
         if (useSsh()) {
             log.info("GitService will use ssh keys as authentication method to interact with remote git repositories");
