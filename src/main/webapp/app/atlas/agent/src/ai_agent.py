@@ -1,17 +1,16 @@
-import os
 from openai import AzureOpenAI
-
+from config import AgentConfig
 
 class AIAgent:
     def __init__(self, model_name: str = "gpt-4o", azure_endpoint: str = None, api_version: str = None):
-        api_key = os.getenv("OPENAI_API_KEY")
+        api_key = AgentConfig.OPENAI_API_KEY
         if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable is required")
 
         self.client = AzureOpenAI(
             api_key=api_key,
-            api_version=api_version or os.getenv("OPENAI_API_VERSION", "2025-01-01-preview"),
-            azure_endpoint=azure_endpoint or os.getenv("AZURE_OPENAI_ENDPOINT", "https://ase-se01.openai.azure.com/")
+            api_version=AgentConfig.AZURE_API_VERSION,
+            azure_endpoint=AgentConfig.AZURE_ENDPOINT
         )
         self.model_name = model_name
         self.memory = []

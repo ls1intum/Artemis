@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi import HTTPException
 from pydantic import BaseModel
-from agent.ai_agent import AIAgent
+from ai_agent import AIAgent
 import logging
 app = FastAPI(title="Conversational AI Agent")
 agent = AIAgent(model_name="gpt-4o")
