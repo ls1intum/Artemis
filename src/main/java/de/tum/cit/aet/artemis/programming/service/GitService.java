@@ -80,7 +80,6 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.BundleWriter;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -1757,57 +1756,4 @@ public class GitService extends AbstractGitService {
         });
     }
 
-    /**
-     * Exports a complete repository bundle (including full history and metadata) directly to memory.
-     * This method uses JGit's BundleWriter to create a Git bundle containing all repository data.
-     * Unlike exportRepositorySnapshot(), this exports the complete repository with all branches, tags, and history.
-     *
-     * @param repositoryUri the URI of the repository to export
-     * @param filename      the desired filename for the export (without extension)
-     * @return InputStreamResource containing the bundled repository content
-     * @throws GitAPIException if the git operation fails
-     * @throws IOException     if IO operations fail
-     */
-    public InputStreamResource exportRepositoryBundle(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
-        Repository repository = getBareRepository(repositoryUri, false);
-
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            BundleWriter bundleWriter = new BundleWriter(repository);
-
-            // Include all refs (branches, tags, etc.) in the bundle
-            List<Ref> refs = repository.getRefDatabase().getRefsByPrefix("");
-            for (Ref ref : refs) {
-                String refName = ref.getName();
-
-                // Include all branches, tags, and other refs
-                if (ref.getObjectId() != null) {
-                    bundleWriter.include(refName, ref.getObjectId());
-                }
-            }
-
-            if (refs.isEmpty()) {
-                // If no refs exist, try to include HEAD
-                ObjectId headId = repository.resolve("HEAD");
-                if (headId != null) {
-                    bundleWriter.include("HEAD", headId);
-                }
-            }
-
-            bundleWriter.writeBundle(null, outputStream);
-
-            byte[] bundleData = outputStream.toByteArray();
-            return new InputStreamResource(new ByteArrayInputStream(bundleData)) {
-
-                @Override
-                public String getFilename() {
-                    return filename + ".bundle";
-                }
-
-                @Override
-                public long contentLength() {
-                    return bundleData.length;
-                }
-            };
-        }
-    }
 }

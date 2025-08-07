@@ -28,7 +28,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,7 +52,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.HttpStatusException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -631,48 +629,4 @@ public class ProgrammingExerciseExportImportResource {
                 .body(resource);
     }
 
-    /**
-     * GET /programming-exercises/:exerciseId/export-repository-bundle/:repositoryType : Export complete repository bundle (including history)
-     * This endpoint exports the complete repository as a Git bundle containing all branches, tags, and history.
-     *
-     * @param exerciseId     The id of the programming exercise
-     * @param repositoryType The type of repository to export (TEMPLATE, SOLUTION, TESTS)
-     * @return ResponseEntity with the bundled repository content
-     * @throws IOException if something during the bundle creation went wrong
-     */
-    @GetMapping("programming-exercises/{exerciseId}/export-repository-bundle/{repositoryType}")
-    @EnforceAtLeastInstructor
-    @FeatureToggle(Feature.Exports)
-    public ResponseEntity<Resource> exportRepositoryBundle(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
-
-        long start = System.nanoTime();
-
-        VcsRepositoryUri repositoryUri = programmingExercise.getRepositoryURL(repositoryType);
-        if (repositoryUri == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "Failed to export repository because the repository URI is not defined.")).body(null);
-        }
-
-        try {
-            String filename = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getTitle() + "-" + repositoryType.getName()
-                    + "-bundle";
-            filename = FileUtil.sanitizeFilename(filename);
-
-            InputStreamResource bundleResource = gitService.exportRepositoryBundle(repositoryUri, filename);
-
-            log.info("Successfully exported complete repository bundle for programming exercise {} with title {} in {} ms", programmingExercise.getId(),
-                    programmingExercise.getTitle(), (System.nanoTime() - start) / 1000000);
-
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + bundleResource.getFilename() + "\"").body(bundleResource);
-        }
-        catch (GitAPIException | GitException e) {
-            log.error("Failed to export repository bundle: {}", e.getMessage());
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError", "Failed to export repository bundle: " + e.getMessage()))
-                    .body(null);
-        }
-    }
 }
