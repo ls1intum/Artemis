@@ -571,8 +571,8 @@ Example tutor–Iris conversation:
 
 |iris-chat-view|
 
-If the tutor's question leads to a refined understanding of the discussion, Iris may automatically regenerate and update the Tutor Suggestions. Additionally tutors can trigger a automated regeneration. Button allows tutors to view previously generated suggestions.
-
+If the tutor's question leads to a refined understanding of the discussion, Iris may automatically regenerate and update the Tutor Suggestions. Additionally, tutors can trigger an automated regeneration.
+A “View history” button lets them inspect previously generated suggestions.
 Viewing previous suggestions:
 
 |tutor-suggestions-history|
