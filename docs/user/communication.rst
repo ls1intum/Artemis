@@ -550,7 +550,7 @@ When composing a message or replying in a thread on the WebApp, Artemis automati
 
 Draft messages are:
 
-* Stored locally in the browser (not synced across devices)
+* Stored locally (not synced across devices)
 * Associated with the user and the corresponding conversation or thread
 * Automatically restored when reopening the same context
 * Removed once the message is sent
