@@ -10,14 +10,14 @@ import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 
 @Component({
-    selector: 'calendar-events-per-day-presentation',
+    selector: 'calendar-events-per-day-section',
     imports: [ArtemisTranslatePipe, NgClass, NgStyle, CalendarEventDetailPopoverComponent, NgbPopover],
-    templateUrl: './calendar-events-per-day-presentation.component.html',
-    styleUrl: './calendar-events-per-day-presentation.component.scss',
+    templateUrl: './calendar-events-per-day-section.component.html',
+    styleUrl: './calendar-events-per-day-section.component.scss',
 })
-export class CalendarEventsPerDayPresentation {
+export class CalendarEventsPerDaySectionComponent {
     static readonly PIXELS_PER_REM = 16;
-    static readonly HOUR_SEGMENT_HEIGHT_IN_PIXEL = 3.5 * CalendarEventsPerDayPresentation.PIXELS_PER_REM;
+    static readonly HOUR_SEGMENT_HEIGHT_IN_PIXEL = 3.5 * CalendarEventsPerDaySectionComponent.PIXELS_PER_REM;
 
     private eventService = inject(CalendarEventService);
     private dayToEventAndPositionMap = computed(() => this.computeDayToEventAndPositionMap(this.eventService.eventMap(), this.days()));
@@ -98,7 +98,7 @@ export class CalendarEventsPerDayPresentation {
     }
 
     private calculatePositionsForEventGroup(group: CalendarEvent[]): CalendarEventAndPosition[] {
-        const pixelsPerMinute = CalendarEventsPerDayPresentation.HOUR_SEGMENT_HEIGHT_IN_PIXEL / 60;
+        const pixelsPerMinute = CalendarEventsPerDaySectionComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL / 60;
 
         const widthAndLeftOffsetFunction = this.getWidthAndLeftOffsetFunction(group.length);
 

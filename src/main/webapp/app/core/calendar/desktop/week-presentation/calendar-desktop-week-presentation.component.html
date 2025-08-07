@@ -11,6 +11,6 @@
         }
     </div>
     <div class="scroll-container" #scrollContainer [class.no-scroll]="isEventSelected()">
-        <calendar-events-per-day-presentation [days]="weekDays()" (isEventSelected)="isEventSelected.set($event)" />
+        <calendar-events-per-day-section [days]="weekDays()" (isEventSelected)="isEventSelected.set($event)" />
     </div>
 </div>

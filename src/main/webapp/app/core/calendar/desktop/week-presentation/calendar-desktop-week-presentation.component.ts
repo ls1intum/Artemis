@@ -5,11 +5,11 @@ import { Dayjs } from 'dayjs/esm';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
-import { CalendarEventsPerDayPresentation } from 'app/core/calendar/shared/calendar-events-per-day-presentation/calendar-events-per-day-presentation.component';
+import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
 
 @Component({
     selector: 'calendar-desktop-week-presentation',
-    imports: [CalendarDayBadgeComponent, ArtemisTranslatePipe, NgbPopover, NgStyle, NgClass, CalendarEventsPerDayPresentation],
+    imports: [CalendarDayBadgeComponent, ArtemisTranslatePipe, NgbPopover, NgStyle, NgClass, CalendarEventsPerDaySectionComponent],
     templateUrl: './calendar-desktop-week-presentation.component.html',
     styleUrl: './calendar-desktop-week-presentation.component.scss',
 })
@@ -24,7 +24,7 @@ export class CalendarDesktopWeekPresentationComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         const container = this.scrollContainer();
         if (container) {
-            container.nativeElement.scrollTop = 7.5 * CalendarEventsPerDayPresentation.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
+            container.nativeElement.scrollTop = 7.5 * CalendarEventsPerDaySectionComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
         }
     }
 

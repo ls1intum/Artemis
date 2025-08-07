@@ -2,11 +2,11 @@ import { Component, input, signal } from '@angular/core';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
-import { CalendarEventsPerDayPresentation } from 'app/core/calendar/shared/calendar-events-per-day-presentation/calendar-events-per-day-presentation.component';
+import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
 
 @Component({
     selector: 'calendar-mobile-day-presentation',
-    imports: [CalendarDayBadgeComponent, CalendarEventsPerDayPresentation],
+    imports: [CalendarDayBadgeComponent, CalendarEventsPerDaySectionComponent],
     templateUrl: './calendar-mobile-day-presentation.html',
     styleUrl: './calendar-mobile-day-presentation.scss',
 })
