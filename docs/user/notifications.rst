@@ -43,10 +43,10 @@ Security-related Email Notifications
 
 In addition to course-specific notifications, Artemis can send email alerts for important **account security events**:
 
-* New Login – Notifies you when a new login to your account occurs.
-* New Passkey Added – Alerts you when a new passkey is registered.
-* VCS Token Expired – Informs you when your VCS (Version Control System) token expires.
-* SSH Key Expired – Warns you when your SSH key is no longer valid.
+* **New Login** – Notifies you when a new login to your account occurs.
+* **New Passkey Added** – Alerts you when a new passkey is registered.
+* **VCS Token Expired** – Informs you when your VCS (Version Control System) token expires.
+* **SSH Key Expired** – Warns you when your SSH key is no longer valid.
 
 These notifications are enabled by default to protect your account. You can manage your preferences under:
 
