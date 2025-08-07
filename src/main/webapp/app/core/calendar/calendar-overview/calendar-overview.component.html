@@ -1,6 +1,5 @@
-<div class="desktop-container">
-    <calendar-desktop-overview />
-</div>
-<div class="mobile-container">
+@if (isMobile()) {
     <calendar-mobile-overview />
-</div>
+} @else {
+    <calendar-desktop-overview />
+}
