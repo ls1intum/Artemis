@@ -61,12 +61,12 @@ public class QuizTrainingResource {
     }
 
     /**
-     * Retrieves all the quiz questions belonging to a course that are released for practice
+     * GET /courses/:courseId/training-questions: Get a list of 10 quiz questions for the training session that have been selected by the spaced repetition algorithm.
      *
-     * @param courseId the id of the course whose quiz questions should be retrieved
-     * @return a set of quiz questions from the specified course that are released for practice
+     * @param courseId the id of the course containing the quiz questions
+     * @return the ResponseEntity with status 200 (OK) and a list of QuizQuestionWithSolutionDTOs as its body
      */
-    @GetMapping("courses/{courseId}/training/questions")
+    @GetMapping("courses/{courseId}/training-questions")
     @EnforceAtLeastStudent
     public ResponseEntity<List<QuizQuestionWithSolutionDTO>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
@@ -80,14 +80,14 @@ public class QuizTrainingResource {
     }
 
     /**
-     * POST /courses/:courseId/training/:quizQuestionId/submit: Submit a new quizQuestion for training mode.
+     * POST /courses/:courseId/training-questions/:quizQuestionId/submit: Submit a new quizQuestion for training mode.
      *
      * @param courseId        the id of the course containing the quiz question
      * @param quizQuestionId  the id of the quiz question which is being answered
      * @param submittedAnswer the submitted answer by the user for the quiz question
      * @return the ResponseEntity with status 200 (OK) and the result of the evaluated submitted answer as its body
      */
-    @PostMapping("courses/{courseId}/training/{quizQuestionId}/submit")
+    @PostMapping("courses/{courseId}/training-questions/{quizQuestionId}/submit")
     @EnforceAtLeastStudent
     public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable Long courseId, @PathVariable Long quizQuestionId,
             @Valid @RequestBody QuizTrainingAnswerDTO submittedAnswer) {
