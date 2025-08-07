@@ -51,6 +51,14 @@ public class FaqProcessingService {
         return response;
     }
 
+    /**
+     * Executes the FAQ consistency check operation by sending a request to the Nebula service.
+     *
+     * @param user        the user for whom the consistency check is executed
+     * @param course      the course for which the FAQs are being checked
+     * @param toBeChecked the faqAnswer that needs to be checked for consistency
+     * @return a response containing the results of the consistency check
+     */
     public FaqConsistencyResponse executeConsistencyCheck(User user, Course course, String toBeChecked) {
         List<FaqDTO> faqDTOs = faqRepository.findAllByCourseIdAndFaqState(course.getId(), FaqState.ACCEPTED).stream().map(FaqDTO::new).toList();
         FaqConsistencyDTO faqConsistencyDTO = new FaqConsistencyDTO(toBeChecked, faqDTOs);

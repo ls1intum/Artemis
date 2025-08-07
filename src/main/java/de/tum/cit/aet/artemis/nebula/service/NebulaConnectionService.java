@@ -45,6 +45,9 @@ public class NebulaConnectionService {
     @Value("${artemis.nebula.url}")
     private String nebulaUrl;
 
+    @Value("${artemis.nebula.secret-token}")
+    private String nebulaSecretToken;
+
     public NebulaConnectionService(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
@@ -59,6 +62,7 @@ public class NebulaConnectionService {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + nebulaSecretToken);
             HttpEntity<FaqRewritingDTO> request = new HttpEntity<>(faqRewritingDTO, headers);
             ResponseEntity<FaqRewritingResponse> response = restTemplate.exchange(nebulaUrl + "/faq/rewrite-faq", HttpMethod.POST, request, FaqRewritingResponse.class);
             return response.getBody();
