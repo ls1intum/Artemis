@@ -2,7 +2,7 @@ import { Component, inject, input, output } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
-import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
@@ -20,6 +20,7 @@ export class CalendarMobileMonthPresentation {
     selectDay = output<Dayjs>();
 
     readonly utils = utils;
+    readonly CalendarEventType = CalendarEventType;
 
     getEventsOfDay(day: Dayjs): CalendarEvent[] {
         const key = day.format('YYYY-MM-DD');

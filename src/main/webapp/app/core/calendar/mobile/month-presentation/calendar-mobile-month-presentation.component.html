@@ -16,7 +16,15 @@
                                 </div>
                             } @else {
                                 @for (event of getEventsOfDay(day); track event.id) {
-                                    <div class="event"></div>
+                                    <div
+                                        class="event"
+                                        [ngClass]="{
+                                            'exam-event': event.isOfType(CalendarEventType.Exam),
+                                            'lecture-event': event.isOfType(CalendarEventType.Lecture),
+                                            'tutorial-event': event.isOfType(CalendarEventType.Tutorial),
+                                            'exercise-event': event.isOfExerciseType(),
+                                        }"
+                                    ></div>
                                 }
                             }
                         </div>

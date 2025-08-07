@@ -25,13 +25,29 @@
             flex-direction: column;
             gap: 4px;
             height: 26px;
+            padding: 0 0.125rem;
         }
 
         .event {
             height: 6px;
             width: 44px;
             border-radius: 4px;
-            background-color: var(--body-bg);
+        }
+
+        .exam-event {
+            background-color: var(--pastel-teal);
+        }
+
+        .lecture-event {
+            background-color: var(--pastel-blue);
+        }
+
+        .tutorial-event {
+            background-color: var(--pastel-purple);
+        }
+
+        .exercise-event {
+            background-color: var(--pastel-cyan);
         }
 
         .ellipsis {
