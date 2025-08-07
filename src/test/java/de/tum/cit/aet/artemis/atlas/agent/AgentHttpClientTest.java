@@ -22,7 +22,7 @@ class AgentHttpClientTest {
     @Mock
     private RestTemplate restTemplate;
 
-    private String agentApiUrl = "http://localhost:8080/api/agent";
+    private final String agentApiUrl = "http://localhost:8080/api/agent";
 
     @BeforeEach
     void setUp() {
