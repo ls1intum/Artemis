@@ -77,7 +77,10 @@
         <!-- TODO for a follow-up: Much of this template relies on method calls in the template. We should avoid this for performance reasons -->
         <div class="row m-0">
             <div class="col-md-auto ps-0">
-                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard" [ngClass]="{ 'sticky-top-quiz': mode === 'preview' }">
+                <div
+                    class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard hide-scrollbar-unless-scrolling"
+                    [ngClass]="{ 'sticky-top-quiz': mode === 'preview' }"
+                >
                     @for (question of quizExercise.quizQuestions; track question; let index = $index) {
                         <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
                             @switch (question.type) {
