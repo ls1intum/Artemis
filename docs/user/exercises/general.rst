@@ -25,9 +25,7 @@ Users can reach the exercise overview by clicking on the tab labeled *Exercises*
 
 |general-menu-exercise|
 
-The exercise overview provides an organized view of all course exercises with the following features:
-
-**Sidebar Navigation:** The sidebar displays exercises categorized by time periods:
+The exercise overview provides an organized view of all course exercises. The sidebar displays exercises categorized by time periods to help students navigate course content efficiently:
 
 - **Future:** Upcoming exercises that haven't been released yet (start date is in the future)
 - **Due Soon:** Exercises that are currently active and due within the next 3 days
@@ -37,7 +35,7 @@ The exercise overview provides an organized view of all course exercises with th
 
 |sidebar-collapse-exercise|
 
-**Grouping Principle:** When a section contains more than 5 exercises, Artemis may create weekly subsections to improve navigation. However, the exact grouping behavior depends on the exercise dates and distribution across weeks. Note that subsections may not always be visible as expandable subpoints in the current interface.
+When a section(e.g No date) contains more than 5 exercises, Artemis may create weekly subsections to improve navigation, though the exact grouping depends on exercise dates and distribution across weeks.
 
 |exercise-overview-current| |exercise-overview-past|
 

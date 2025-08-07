@@ -19,20 +19,18 @@ Students can see all published lectures of a course by clicking on the tab label
 |general-menu|
 
 Lecture Organization and Navigation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""
 
-The lecture overview provides an organized view of all course lectures with the following features:
-
-**Sidebar Navigation:** The sidebar displays lectures categorized by time periods:
+The lecture overview provides an organized view of all course lectures. The sidebar displays lectures categorized by time periods to help students navigate course content efficiently:
 
 - **Future:** Upcoming lectures that haven't started yet
-- **Current:** Lectures that are currently active
-- **Past:** Completed lectures
-- **No Date:** Lectures without a specific date assigned
+- **Current:** Lectures active in the current week
+- **Past:** Lectures whose end date has passed
+- **No Date:** Lectures without specific dates assigned
 
 |lecture-overview-collapse|
 
-**Grouping Principle:** When a section contains more than 5 lectures, Artemis may create weekly subsections to improve navigation. However, the exact grouping behavior depends on the lecture dates and distribution across weeks. Note that subsections may not always be visible as expandable subpoints in the current interface.
+When a section(e.g No date) contains more than 5 lectures, Artemis may create weekly subsections to improve navigation, though the exact grouping depends on lecture dates and distribution across weeks.
 
 |lecture-overview-current| |lecture-overview-past|
 

@@ -251,14 +251,12 @@ The native apps support a force-update mechanism to ensure compatibility and sec
 The Artemis server provides two configurable version thresholds:
 
 * ``min`` – the **minimum required version**. Users must update the app before continuing.
-* ``recommended`` – the **recommended version**. Users are prompted to update but can continue using the app if they choose.
+* ``recommended`` – the **recommended version**. Users are prompted to update each time the app is opened, but can continue using the app if they choose.
 
-**Behavior on App Launch:**
 
-* If the installed version is **below the minimum**, users are redirected to the appropriate app store (Play Store or App Store) and **cannot use the app** until they update.
-* If the installed version is **below the recommended**, users will see an update prompt **each time the app is opened**, encouraging them to install the latest version.
+|force-update-android|
 
-|force-update-android| |force-update-ios|
+|force-update-ios|
 
 .. |server-selection-overview-android| image:: native-applications/android/server_selection_overview.png
     :width: 300
