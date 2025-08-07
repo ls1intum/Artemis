@@ -28,25 +28,25 @@
             padding: 0 0.125rem;
         }
 
-        .event {
+        .event-cell {
             height: 6px;
             width: 44px;
             border-radius: 4px;
         }
 
-        .exam-event {
+        .exam-event-cell {
             background-color: var(--pastel-teal);
         }
 
-        .lecture-event {
+        .lecture-event-cell {
             background-color: var(--pastel-blue);
         }
 
-        .tutorial-event {
+        .tutorial-event-cell {
             background-color: var(--pastel-purple);
         }
 
-        .exercise-event {
+        .exercise-event-cell {
             background-color: var(--pastel-cyan);
         }
 
@@ -62,7 +62,7 @@
             width: 4px;
             height: 4px;
             border-radius: 50%;
-            background-color: var(--black);
+            background-color: var(--border-color);
         }
 
         .day-placeholder {

@@ -1,5 +1,5 @@
 import { Component, inject, input, output } from '@angular/core';
-import { NgClass } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
@@ -9,7 +9,7 @@ import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-
 
 @Component({
     selector: 'calendar-mobile-month-presentation',
-    imports: [NgClass, CalendarDayBadgeComponent, TranslateDirective],
+    imports: [NgClass, CalendarDayBadgeComponent, TranslateDirective, NgTemplateOutlet],
     templateUrl: './calendar-mobile-month-presentation.component.html',
     styleUrl: './calendar-mobile-month-presentation.component.scss',
 })
