@@ -396,6 +396,79 @@ describe('TutorSuggestionComponent', () => {
             tick();
             expect(requestTutorSuggestionSpy).not.toHaveBeenCalled();
         }));
+
+        // --- Additional tests for requestSuggestion branch coverage ---
+        it('should not request suggestion if irisEnabled is false', fakeAsync(() => {
+            component['irisEnabled'] = false;
+            const spy = jest.spyOn(chatService, 'requestTutorSuggestion');
+            component['requestSuggestion']();
+            tick();
+            expect(spy).not.toHaveBeenCalled();
+        }));
+
+        it('should not proceed if post is null', fakeAsync(() => {
+            componentRef.setInput('post', null as any);
+            const spy = jest.spyOn(chatService, 'requestTutorSuggestion');
+            component['requestSuggestion']();
+            tick();
+            expect(spy).not.toHaveBeenCalled();
+        }));
+
+        it('should not request suggestion if last message is ARTIFACT and no new answer', fakeAsync(() => {
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(of([{ id: 2, sender: 'ARTIFACT' } as IrisMessage]));
+            jest.spyOn(component as any, 'checkForNewAnswerAndRequestSuggestion').mockReturnValue(false);
+            const spy = jest.spyOn(chatService, 'requestTutorSuggestion');
+            component['irisEnabled'] = true;
+            component['requestSuggestion']();
+            tick();
+            expect(spy).not.toHaveBeenCalled();
+        }));
+
+        it('should process first non-empty emission and request suggestion', fakeAsync(() => {
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([{ id: 1, sender: 'USER' } as IrisMessage])));
+            const spy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            component['irisEnabled'] = true;
+            component['requestSuggestion']();
+            tick();
+            expect(spy).toHaveBeenCalled();
+        }));
+
+        it('should recover from error in messages stream and still call suggestion', fakeAsync(() => {
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(
+                concat(
+                    throwError(() => new Error('fail')),
+                    of([{ id: 1, sender: 'USER' } as IrisMessage]),
+                ),
+            );
+            const spy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            component['irisEnabled'] = true;
+            component['requestSuggestion']();
+            tick();
+            expect(spy).toHaveBeenCalled();
+        }));
+
+        it('should emit SESSION_LOAD_FAILED on message fetch error', fakeAsync(() => {
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(throwError(() => new Error('fetch error')));
+            jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            component['irisEnabled'] = true;
+            component['requestSuggestion']();
+            tick();
+            expect(component['error']).toBe(IrisErrorMessageKey.SESSION_LOAD_FAILED);
+        }));
+
+        it('should not request suggestion if messages are only from LLM', fakeAsync(() => {
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(of([{ id: 1, sender: 'LLM' } as IrisMessage]));
+            const spy = jest.spyOn(chatService, 'requestTutorSuggestion');
+            component['irisEnabled'] = true;
+            component['requestSuggestion']();
+            tick();
+            expect(spy).not.toHaveBeenCalled();
+        }));
     });
 
     describe('switchSuggestion and updateArrowDisabled', () => {
