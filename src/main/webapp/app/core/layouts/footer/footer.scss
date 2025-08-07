@@ -1,6 +1,7 @@
 :host {
     display: block;
     position: fixed;
+    height: var(--footer-height-prod);
     left: 0;
     bottom: 0;
     background-color: var(--footer-bg);
@@ -17,6 +18,7 @@
         margin-right: 5px;
         margin-bottom: 5px;
     }
+
     .footer-git-responsive {
         display: none;
 
