@@ -1174,6 +1174,9 @@ Hides the scrollbar, unless the user is currently using the scrollbar
 Note: This class assumes that the scrollbar is already present (e.g. overflow-y and a defined max-height)
 */
 .hide-scrollbar-unless-scrolling {
+    /* required for Firefox and Safari, otherwise elments are hidden when scrollbar is not in use */
+    scrollbar-gutter: stable;
+
     /* Firefox scrollbar styling */
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
