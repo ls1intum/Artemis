@@ -1,14 +1,14 @@
 <div class="frame">
     <div class="navigate-section">
-        <button type="button" class="navigate-button chevron-button">
+        <button type="button" class="navigate-button chevron-button" (click)="goToPrevious()">
             <div class="chevron">
                 <fa-icon [icon]="faChevronLeft" />
             </div>
         </button>
-        <button type="button" class="navigate-button today-button">
+        <button type="button" class="navigate-button today-button" (click)="goToToday()">
             <span class="today-label">today</span>
         </button>
-        <button type="button" class="navigate-button chevron-button">
+        <button type="button" class="navigate-button chevron-button" (click)="goToNext()">
             <div class="chevron">
                 <fa-icon [icon]="faChevronRight" />
             </div>

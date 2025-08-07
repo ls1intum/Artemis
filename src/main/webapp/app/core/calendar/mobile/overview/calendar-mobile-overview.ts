@@ -33,4 +33,39 @@ export class CalendarMobileOverviewComponent {
     unselectDay() {
         this.selectedDay.set(undefined);
     }
+
+    goToPrevious(): void {
+        if (this.selectedDay()) {
+            this.selectedDay.update((oldDay) => oldDay!.subtract(1, 'day'));
+            if (!this.selectedDay()!.isSame(this.firstDayOfSelectedMonth(), 'month')) {
+                this.firstDayOfSelectedMonth.update((oldDay) => oldDay.subtract(1, 'month'));
+            }
+        } else {
+            this.firstDayOfSelectedMonth.update((oldDay) => oldDay.subtract(1, 'month'));
+        }
+        //this.loadEventsForCurrentMonth();
+    }
+
+    goToNext(): void {
+        if (this.selectedDay()) {
+            this.selectedDay.update((oldDay) => oldDay!.add(1, 'day'));
+            if (!this.selectedDay()!.isSame(this.firstDayOfSelectedMonth(), 'month')) {
+                this.firstDayOfSelectedMonth.update((oldDay) => oldDay.add(1, 'month'));
+            }
+        } else {
+            this.firstDayOfSelectedMonth.update((oldDay) => oldDay.add(1, 'month'));
+        }
+        //this.loadEventsForCurrentMonth();
+    }
+
+    goToToday(): void {
+        const today = dayjs();
+        if (this.selectedDay()) {
+            this.selectedDay.set(today);
+            this.firstDayOfSelectedMonth.set(today.startOf('month'));
+        } else {
+            this.firstDayOfSelectedMonth.set(today.startOf('month'));
+        }
+        //this.loadEventsForCurrentMonth();
+    }
 }
