@@ -23,7 +23,7 @@
                                 <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.requiredValidationError"></div>
                             }
                             @if (nameControl?.errors?.maxlength) {
-                                <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.maxLengthValidationError" [translateValues]="{ max: '30' }"></div>
+                                <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.maxLengthValidationError" [translateValues]="{ max: '20' }"></div>
                             }
                             @if (!nameControl?.errors?.required && !nameControl?.errors?.maxlength && nameControl?.errors?.pattern) {
                                 <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.regexValidationError"></div>
