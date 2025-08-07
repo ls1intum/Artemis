@@ -71,11 +71,6 @@ export class DraftService {
         }
     }
 
-    /**
-     * Clears a draft message from local storage.
-     *
-     * @param key - The unique key for the draft to clear
-     */
     clearDraft(key: string): void {
         if (key && key !== '') {
             this.localStorageService.clear(key);

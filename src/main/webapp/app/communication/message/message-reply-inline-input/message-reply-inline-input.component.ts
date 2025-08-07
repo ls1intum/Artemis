@@ -145,20 +145,11 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         return `${this.DRAFT_KEY_PREFIX}${userId}_${conversationId}_${postId}`;
     }
 
-    /**
-     * Saves the current draft content to local storage using the draft service.
-     *
-     * @param content - The content to save as a draft
-     */
     private saveDraft(content: string): void {
         const key = this.getDraftKey();
         this.draftService.saveDraft(key, content);
     }
 
-    /**
-     * Loads a draft from local storage and applies it to the posting content if found.
-     * Resets the form group after loading the draft.
-     */
     private loadDraft(): void {
         const key = this.getDraftKey();
         const draft = this.draftService.loadDraft(key);
@@ -168,9 +159,6 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         }
     }
 
-    /**
-     * Clears the current draft from local storage.
-     */
     private clearDraft(): void {
         const key = this.getDraftKey();
         this.draftService.clearDraft(key);
