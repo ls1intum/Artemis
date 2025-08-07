@@ -1,0 +1,4 @@
+artemis:
+    nebula:
+        url: "http://nebula.fake"
+        secret-token: "secret-token"

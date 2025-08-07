@@ -8,7 +8,7 @@ class NebulaApiArchitectureTest extends AbstractModuleAccessArchitectureTest {
 
     @Override
     public String getModulePackage() {
-        return ARTEMIS_PACKAGE + ".iris";
+        return ARTEMIS_PACKAGE + ".nebula";
     }
 
     @Override

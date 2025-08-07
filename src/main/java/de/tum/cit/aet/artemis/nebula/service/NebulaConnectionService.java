@@ -18,12 +18,12 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorException;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyDTO;
 import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponse;
 import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingDTO;
 import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponse;
+import de.tum.cit.aet.artemis.nebula.exception.NebulaConnectorException;
 import de.tum.cit.aet.artemis.nebula.exception.NebulaException;
 import de.tum.cit.aet.artemis.nebula.exception.NebulaForbiddenException;
 import de.tum.cit.aet.artemis.nebula.exception.NebulaInternalErrorException;
@@ -72,7 +72,7 @@ public class NebulaConnectionService {
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to fetch response from Nebula", e);
-            throw new PyrisConnectorException("Could not fetch response from Nebula");
+            throw new NebulaConnectorException("Could not fetch response from Nebula");
         }
     }
 
@@ -94,7 +94,7 @@ public class NebulaConnectionService {
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to fetch response from Nebula", e);
-            throw new PyrisConnectorException("Could not fetch response from Nebula");
+            throw new NebulaConnectorException("Could not fetch response from Nebula");
         }
     }
 
@@ -111,7 +111,7 @@ public class NebulaConnectionService {
             return objectMapper.readTree(ex.getResponseBodyAsString()).required("detail").required("errorMessage").asText();
         }
         catch (JsonProcessingException | IllegalArgumentException e) {
-            log.error("Failed to parse error message from Pyris", e);
+            log.error("Failed to parse error message from Nebula", e);
             return "";
         }
     }
