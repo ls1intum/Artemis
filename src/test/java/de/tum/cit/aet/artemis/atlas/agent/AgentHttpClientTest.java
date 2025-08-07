@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.agent;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,7 +45,7 @@ class AgentHttpClientTest {
         AgentChatResponseDto actualResponse = agentHttpClient.sendMessageToAgent(request);
 
         // Assert
-        assertEquals(expectedResponse, actualResponse);
+        assertThat(actualResponse).isEqualTo(expectedResponse);
         verify(restTemplate, times(1)).postForObject(url, request, AgentChatResponseDto.class);
     }
 }
