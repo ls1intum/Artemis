@@ -6,7 +6,7 @@ import { CalendarMobileMonthPresentation } from 'app/core/calendar/mobile/month-
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarMobileDayPresentation } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 
@@ -20,6 +20,8 @@ export class CalendarMobileOverviewComponent {
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly utils = utils;
     readonly faXmark = faXmark;
+    readonly faChevronRight = faChevronRight;
+    readonly faChevronLeft = faChevronLeft;
 
     firstDayOfSelectedMonth = signal<Dayjs>(dayjs().startOf('month'));
     selectedDay = signal<Dayjs | undefined>(undefined);

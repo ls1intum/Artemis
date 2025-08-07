@@ -1,9 +1,24 @@
 <div class="frame">
+    <div class="navigate-section">
+        <button type="button" class="navigate-button chevron-button">
+            <div class="chevron">
+                <fa-icon [icon]="faChevronLeft" />
+            </div>
+        </button>
+        <button type="button" class="navigate-button today-button">
+            <span class="today-label">today</span>
+        </button>
+        <button type="button" class="navigate-button chevron-button">
+            <div class="chevron">
+                <fa-icon [icon]="faChevronRight" />
+            </div>
+        </button>
+    </div>
     <div class="header">
         <div class="title-close-button-row">
             <div class="header-spacer">
                 @if (selectedDay()) {
-                    <button type="button" class="header-button" (click)="unselectDay()">
+                    <button type="button" class="no-style-button" (click)="unselectDay()">
                         <fa-icon [icon]="faXmark" />
                     </button>
                 }
