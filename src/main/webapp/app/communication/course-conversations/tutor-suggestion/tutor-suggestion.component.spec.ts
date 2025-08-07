@@ -283,12 +283,39 @@ describe('TutorSuggestionComponent', () => {
             expect(requestTutorSuggestionSpy).toHaveBeenCalled();
         }));
 
+        it('should request suggestion if messages array is empty', fakeAsync(() => {
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
+            const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            component['requestSuggestion']();
+            tick();
+            expect(requestTutorSuggestionSpy).toHaveBeenCalled();
+        }));
+
+        it('should not request suggestion if post is undefined', fakeAsync(() => {
+            componentRef.setInput('post', undefined as any);
+            const spy = jest.spyOn(chatService, 'requestTutorSuggestion');
+            component['requestSuggestion']();
+            tick();
+            expect(spy).not.toHaveBeenCalled();
+        }));
+
         it('should request suggestion when second message emission contains LLM message', fakeAsync(() => {
             jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
             jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
             const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
             component['requestSuggestion']();
             tick();
+            expect(requestTutorSuggestionSpy).toHaveBeenCalled();
+        }));
+
+        it('should set error and still request suggestion if currentMessages fails', fakeAsync(() => {
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(throwError(() => new Error('fail')));
+            const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            component['requestSuggestion']();
+            tick();
+            expect(component['error']).toBe(IrisErrorMessageKey.SESSION_LOAD_FAILED);
             expect(requestTutorSuggestionSpy).toHaveBeenCalled();
         }));
 
@@ -300,6 +327,21 @@ describe('TutorSuggestionComponent', () => {
             component['requestSuggestion']();
             tick();
             expect(requestTutorSuggestionSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should not request suggestion if last message is from LLM and no new answer', fakeAsync(() => {
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(
+                of([
+                    { id: 1, sender: 'USER' },
+                    { id: 2, sender: 'LLM' },
+                ] as IrisMessage[]),
+            );
+            jest.spyOn(component as any, 'checkForNewAnswerAndRequestSuggestion').mockReturnValue(false);
+            const spy = jest.spyOn(chatService, 'requestTutorSuggestion');
+            component['requestSuggestion']();
+            tick();
+            expect(spy).not.toHaveBeenCalled();
         }));
 
         it('should not request suggestion if last message is from LLM or ARTIFACT', fakeAsync(() => {
