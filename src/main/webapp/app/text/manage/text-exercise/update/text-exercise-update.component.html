@@ -166,17 +166,7 @@
             <div class="col">
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
-                    <input
-                        required
-                        type="number"
-                        class="form-control"
-                        [customMin]="1"
-                        [customMax]="9999"
-                        name="points"
-                        #points="ngModel"
-                        id="field_points"
-                        [(ngModel)]="textExercise.maxPoints"
-                    />
+                    <input required type="number" class="form-control" min="1" max="9999" name="points" #points="ngModel" id="field_points" [(ngModel)]="textExercise.maxPoints" />
                     @if (points?.invalid && (points?.dirty || points?.touched) && points?.errors) {
                         <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
                     }
@@ -189,8 +179,8 @@
                         type="number"
                         [required]="textExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
                         class="form-control"
-                        [customMin]="0"
-                        [customMax]="9999"
+                        min="0"
+                        max="9999"
                         name="bonusPoints"
                         id="field_bonusPoints"
                         [(ngModel)]="textExercise.bonusPoints"
@@ -209,7 +199,7 @@
         @if (!isExamMode) {
             <jhi-exercise-feedback-suggestion-options [exercise]="textExercise" [dueDate]="textExercise.dueDate" />
             <jhi-feature-overlay [enabled]="isPlagiarismEnabled" placement="right">
-                <jhi-exercise-update-plagiarism [exercise]="textExercise" />
+                <jhi-exercise-update-plagiarism [(exercise)]="textExercise" />
             </jhi-feature-overlay>
         }
         <jhi-presentation-score-checkbox [exercise]="textExercise" />

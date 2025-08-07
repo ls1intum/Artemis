@@ -84,6 +84,9 @@ public class LocalVCLocalCITestService {
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCRepoPath;
+
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
@@ -173,9 +176,9 @@ public class LocalVCLocalCITestService {
      * @return the configured LocalRepository that contains Git handles to the remote and local repository.
      */
     public LocalRepository createAndConfigureLocalRepository(String projectKey, String repositorySlug) throws GitAPIException, IOException, URISyntaxException {
-        Path localRepositoryFolder = createRepositoryFolderInTempDirectory(projectKey, repositorySlug);
+        Path localRepositoryFolder = createRepositoryFolder(projectKey, repositorySlug);
         LocalRepository repository = new LocalRepository(defaultBranch);
-        repository.configureRepos("localRepo", localRepositoryFolder);
+        repository.configureRepos(localVCRepoPath, "localRepo", localRepositoryFolder);
         return repository;
     }
 
@@ -188,10 +191,9 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug the repository slug of the repository.
      * @return the path to the repository folder.
      */
-    private Path createRepositoryFolderInTempDirectory(String projectKey, String repositorySlug) throws IOException {
-        String tempDir = System.getProperty("java.io.tmpdir");
+    private Path createRepositoryFolder(String projectKey, String repositorySlug) throws IOException {
 
-        Path projectFolder = Path.of(tempDir, projectKey);
+        Path projectFolder = localVCRepoPath.resolve(projectKey);
 
         // Create the project folder if it does not exist.
         if (!Files.exists(projectFolder)) {
@@ -411,14 +413,13 @@ public class LocalVCLocalCITestService {
             log.info("Submission with commit hash: {}", submission.getCommitHash());
         }
         await().until(() -> {
-            // get the latest valid submission (!ILLEGAL and with results) of the participation
+            // get the latest valid submission (with results) of the participation
             SecurityContextHolder.getContext().setAuthentication(auth);
-            var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId);
+            var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId);
             return submission.orElseThrow().getLatestResult() != null;
         });
-        // get the latest valid submission (!ILLEGAL and with results) of the participation
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId)
-                .orElseThrow();
+        // get the latest valid submission (with results) of the participation
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).orElseThrow();
         if (expectedCommitHash != null) {
             assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);
         }
@@ -485,7 +486,7 @@ public class LocalVCLocalCITestService {
      * @param programmingExercise the programming exercise.
      * @param localVCBasePath     the base path for the local repositories taken from the artemis.version-control.local-vcs-repo-path environment variable.
      */
-    public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, String localVCBasePath) {
+    public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, Path localVCBasePath) {
         LocalVCRepositoryUri templateRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri());
         assertThat(templateRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
         LocalVCRepositoryUri solutionRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri());

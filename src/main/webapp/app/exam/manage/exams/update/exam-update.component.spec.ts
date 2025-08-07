@@ -35,6 +35,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
     template: '',
@@ -115,6 +116,7 @@ describe('ExamUpdateComponent', () => {
                     }),
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: ProfileService, useClass: MockProfileService },
+                    MockProvider(CalendarEventService),
                 ],
             }).compileComponents();
 
@@ -209,6 +211,9 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should update', fakeAsync(() => {
+            const calendarEventService = TestBed.inject(CalendarEventService);
+            const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+
             const navigateSpy = jest.spyOn(router, 'navigate');
             fixture.detectChanges();
 
@@ -229,6 +234,7 @@ describe('ExamUpdateComponent', () => {
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(component.isSaving).toBeFalse();
+            expect(refreshSpy).toHaveBeenCalledOnce();
         }));
 
         it('should calculate the working time for real exams correctly', () => {
@@ -534,6 +540,32 @@ describe('ExamUpdateComponent', () => {
 
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(3);
             expect(component.isValidNumberOfCorrectionRounds).toBeFalse();
+        });
+
+        it('should correctly validate number of exercises', () => {
+            fixture.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBeUndefined();
+            expect(component.isValidNumberOfExercises).toBeTrue();
+
+            examWithoutExercises.numberOfExercisesInExam = 0;
+            fixture.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(0);
+            expect(component.isValidNumberOfExercises).toBeFalse();
+
+            examWithoutExercises.numberOfExercisesInExam = 1;
+            fixture.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(1);
+            expect(component.isValidNumberOfExercises).toBeTrue();
+
+            examWithoutExercises.numberOfExercisesInExam = -20;
+            fixture.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(-20);
+            expect(component.isValidNumberOfExercises).toBeFalse();
+
+            examWithoutExercises.numberOfExercisesInExam = 40;
+            fixture.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(40);
+            expect(component.isValidNumberOfExercises).toBeTrue();
         });
     });
 

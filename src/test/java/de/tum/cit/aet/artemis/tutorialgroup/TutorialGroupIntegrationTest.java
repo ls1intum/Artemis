@@ -439,7 +439,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         request.get(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroup.getId()), HttpStatus.NOT_FOUND, TutorialGroup.class);
         assertTutorialGroupChannelDoesNotExist(persistedTutorialGroup);
         persistedTutorialGroup.getRegistrations().forEach(registration -> verify(websocketMessagingService, timeout(2000).times(1))
-                .sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"), (Object) any()));
+                .sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"), any()));
     }
 
     @Test

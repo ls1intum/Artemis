@@ -1,8 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
-import { NavigationEnd } from '@angular/router';
-import { Subscription, interval, lastValueFrom } from 'rxjs';
+import { Subscription, combineLatest, filter, interval, lastValueFrom } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
@@ -53,10 +52,11 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     public course?: Course;
     private parentParamSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
+    private studentExamTestExamInitialFetchSubscription?: Subscription;
     private studentExamTestExamUpdateSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
     private studentExams: StudentExam[];
-    private studentExamsForRealExams = new Map<number, StudentExam>();
+    studentExamsForRealExams = new Map<number, StudentExam>();
     public expandAttemptsMap = new Map<number, boolean>();
     public realExamsOfCourse: Exam[] = [];
     public testExamsOfCourse: Exam[] = [];
@@ -96,27 +96,29 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.prepareSidebarData();
-
-        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.course = course;
-            this.updateExams();
-        });
-
-        this.studentExamTestExamUpdateSubscription = this.examParticipationService
+        this.studentExamTestExamInitialFetchSubscription = this.examParticipationService
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId)
             .subscribe((response: StudentExam[]) => {
                 this.studentExams = response!;
                 this.prepareSidebarData();
             });
 
-        this.router.events.subscribe((event) => {
-            if (event instanceof NavigationEnd) {
-                this.examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId).subscribe((response: StudentExam[]) => {
-                    this.studentExams = response!;
-                    this.prepareSidebarData();
-                });
-            }
-        });
+        this.studentExamTestExamUpdateSubscription = combineLatest([
+            this.examParticipationService.shouldUpdateTestExamsObservable,
+            this.examParticipationService.currentlyLoadedStudentExam,
+        ])
+            .pipe(filter(([shouldUpdate, studentExam]) => shouldUpdate === true && !!studentExam && studentExam.exam?.course?.id === this.courseId))
+            .subscribe(([_, latestExam]) => {
+                const index = this.studentExams?.findIndex((se) => se?.id === latestExam?.id);
+                if (index !== -1 && this.studentExams) {
+                    this.studentExams[index] = latestExam;
+                } else {
+                    this.studentExams = [...(this.studentExams || []), latestExam];
+                }
+                this.prepareSidebarData();
+
+                this.examParticipationService.setShouldUpdateTestExams(false);
+            });
 
         if (this.course?.exams) {
             // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
@@ -151,13 +153,11 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
             this.testExamsOfCourse = exams.filter((exam) => exam.testExam);
             // get student exams for real exams
-            const studentExamPromisesForRealExams = this.realExamsOfCourse.map((realExam) =>
-                lastValueFrom(this.examParticipationService.getOwnStudentExam(this.courseId, realExam.id!)).then((studentExam) => {
-                    this.studentExamsForRealExams.set(realExam.id!, studentExam);
-                }),
-            );
-            // Ensure that we prepare sidebardata after all studentexams are loaded
-            Promise.all(studentExamPromisesForRealExams).then(() => {
+            lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId)).then((studentExams) => {
+                studentExams.forEach((exam) => {
+                    const studentExam = cloneDeep(exam) as StudentExam;
+                    this.studentExamsForRealExams.set(studentExam.id!, studentExam);
+                });
                 this.prepareSidebarData();
             });
         }
@@ -173,6 +173,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         if (this.courseUpdatesSubscription) {
             this.courseUpdatesSubscription.unsubscribe();
         }
+        this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
         this.studentExamTestExamUpdateSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.unsubscribeFromExamStateSubscription();

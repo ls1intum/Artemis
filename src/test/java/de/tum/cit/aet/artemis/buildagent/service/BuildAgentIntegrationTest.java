@@ -18,7 +18,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
@@ -51,6 +53,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
+    @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs}")
+    private int pauseAfterConsecutiveFailures;
+
     private IQueue<BuildJobQueueItem> buildJobQueue;
 
     private IMap<String, BuildJobQueueItem> processingJobs;
@@ -65,6 +70,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
     private ITopic<String> resumeBuildAgentTopic;
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
     @BeforeAll
     void init() {
         processingJobs = this.hazelcastInstance.getMap("processingJobs");
@@ -74,6 +82,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
         pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
         resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
+        // this triggers the initialization of all required beans in the application context
+        // in production the DeferredEagerBeanInitializer would do this automatically
+        applicationContext.getBean(SharedQueueProcessingService.class);
     }
 
     @BeforeEach
@@ -364,6 +375,43 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
+        });
+    }
+
+    @Test
+    void testBuildAgentPausesAfterConsecutiveFailures() {
+        // run 1 successful job to ensure no previous jobs failed already
+        var queueItem = createBaseBuildJobQueueItemForTrigger();
+
+        buildJobQueue.add(queueItem);
+
+        await().until(() -> {
+            var resultQueueItem = resultQueue.poll();
+            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
+                    && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
+        });
+
+        // then 5 failings jobs
+        StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
+        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        when(startContainerCmd.exec()).thenThrow(new RuntimeException("Container start failed"));
+
+        for (int i = 0; i < pauseAfterConsecutiveFailures; i++) {
+            buildJobQueue.add(createBaseBuildJobQueueItemForTrigger());
+        }
+
+        await().until(() -> resultQueue.size() >= pauseAfterConsecutiveFailures);
+
+        await().until(() -> {
+            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            return buildAgent != null && buildAgent.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
+        });
+
+        // resume and wait for unpause not interfere with other tests
+        resumeBuildAgentTopic.publish(buildAgentShortName);
+        await().until(() -> {
+            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            return buildAgent.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
         });
     }
 }

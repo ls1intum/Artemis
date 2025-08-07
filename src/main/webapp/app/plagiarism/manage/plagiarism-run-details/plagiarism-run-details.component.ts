@@ -1,5 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
-import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
+import { Component, OnChanges, SimpleChanges, inject, input, output } from '@angular/core';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { Range, round } from 'app/shared/util/utils';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
@@ -12,6 +11,7 @@ import { DatePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
+import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 
 interface SimilarityRangeComparisonStateDTO {
     confirmed: number;
@@ -31,12 +31,12 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
     /**
      * Result of the automated plagiarism detection
      */
-    @Input() plagiarismResult?: TextPlagiarismResult;
+    readonly plagiarismResult = input<PlagiarismResult>();
     /**
      * Statistics for the automated plagiarism detection result
      */
-    @Input() plagiarismResultStats?: PlagiarismResultStats;
-    @Output() similaritySelected: EventEmitter<Range> = new EventEmitter<Range>();
+    readonly plagiarismResultStats = input<PlagiarismResultStats>();
+    readonly similaritySelected = output<Range>();
 
     yScaleMax = 5;
     totalDetectedPlagiarisms: number;
@@ -84,7 +84,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
      * to show the number of confirmed, denied and open plagiarism cases
      * @param comparisons the pairs identified by the detection tool
      */
-    private setBucketDTOs(comparisons: PlagiarismComparison<any>[]): void {
+    private setBucketDTOs(comparisons: PlagiarismComparison[]): void {
         this.bucketDTOs = [];
         // we use this array as minimum similarities for the filtering
         const steps = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90];

@@ -89,8 +89,8 @@ public class ParticipationFilterService {
             submission.setResults(new ArrayList<>(results));
         }
 
-        // add submission to participation or set it to null
-        participation.setSubmissions(optionalSubmission.map(Set::of).orElse(null));
+        // add submission to participation or set it to empty set if no submission is available
+        participation.setSubmissions(optionalSubmission.map(Set::of).orElse(Set.of()));
 
         // remove inner exercise from participation
         participation.setExercise(null);

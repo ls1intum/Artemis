@@ -182,8 +182,8 @@
                         type="number"
                         required
                         class="form-control"
-                        [customMin]="1"
-                        [customMax]="9999"
+                        min="1"
+                        max="9999"
                         name="points"
                         id="field_points"
                         [(ngModel)]="modelingExercise.maxPoints"
@@ -201,8 +201,8 @@
                         type="number"
                         [required]="modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
                         class="form-control"
-                        [customMin]="0"
-                        [customMax]="9999"
+                        min="0"
+                        max="9999"
                         name="bonusPoints"
                         id="field_bonusPoints"
                         [(ngModel)]="modelingExercise.bonusPoints"
@@ -239,6 +239,7 @@
                 <option value="SyntaxTree" jhiTranslate="artemisApp.DiagramType.SyntaxTree"></option>
                 <option value="Flowchart" jhiTranslate="artemisApp.DiagramType.Flowchart"></option>
                 <option value="BPMN" jhiTranslate="artemisApp.DiagramType.BPMN"></option>
+                <option value="Sfc" jhiTranslate="artemisApp.DiagramType.Sfc"></option>
             </select>
         </div>
         @if (semiAutomaticAssessmentAvailable) {

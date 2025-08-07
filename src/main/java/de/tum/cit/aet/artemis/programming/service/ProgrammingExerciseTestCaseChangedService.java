@@ -28,15 +28,16 @@ public class ProgrammingExerciseTestCaseChangedService {
 
     private final ResultRepository resultRepository;
 
-    private final ProgrammingMessagingService programmingMessagingService;
+    private final ProgrammingTestCaseChangedUserNotificationService programmingTestCaseChangedUserNotificationService;
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
     public ProgrammingExerciseTestCaseChangedService(ProgrammingExerciseRepository programmingExerciseRepository, ResultRepository resultRepository,
-            ProgrammingMessagingService programmingMessagingService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
+            ProgrammingTestCaseChangedUserNotificationService programmingTestCaseChangedUserNotificationService,
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.resultRepository = resultRepository;
-        this.programmingMessagingService = programmingMessagingService;
+        this.programmingTestCaseChangedUserNotificationService = programmingTestCaseChangedUserNotificationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
     }
 
@@ -96,6 +97,6 @@ public class ProgrammingExerciseTestCaseChangedService {
         programmingExercise.setTestCasesChanged(testCasesChanged);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         // Send a websocket message about the new state to the client.
-        programmingMessagingService.notifyUserAboutTestCaseChanged(testCasesChanged, updatedProgrammingExercise);
+        programmingTestCaseChangedUserNotificationService.notifyUserAboutTestCaseChanged(testCasesChanged, updatedProgrammingExercise);
     }
 }

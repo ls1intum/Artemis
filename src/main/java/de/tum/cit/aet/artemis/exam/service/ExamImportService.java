@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
@@ -62,7 +62,7 @@ public class ExamImportService {
 
     private final CourseRepository courseRepository;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -79,7 +79,7 @@ public class ExamImportService {
     public ExamImportService(Optional<TextExerciseImportApi> textExerciseImportApi, ModelingExerciseImportService modelingExerciseImportService,
             ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository, ExerciseGroupRepository exerciseGroupRepository,
             QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise, CourseRepository courseRepository,
-            ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, Optional<FileUploadImportApi> fileUploadImportApi,
             GradingCriterionRepository gradingCriterionRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService) {
         this.textExerciseImportApi = textExerciseImportApi;
@@ -90,7 +90,7 @@ public class ExamImportService {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseImportService = importQuizExercise;
         this.courseRepository = courseRepository;
-        this.programmingExerciseService = programmingExerciseService1;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.fileUploadImportApi = fileUploadImportApi;
@@ -192,7 +192,7 @@ public class ExamImportService {
         // Iterate over all programming exercises
         return programmingExercises.stream().mapToInt(exercise -> {
             // Method to check, if the project already exists.
-            boolean projectExists = programmingExerciseService.preCheckProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, courseShortName);
+            boolean projectExists = programmingExerciseValidationService.preCheckProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, courseShortName);
             if (projectExists) {
                 // If the project already exists the short name and title are removed. It has to be set in the client again
                 exercise.setShortName("");
@@ -308,7 +308,8 @@ public class ExamImportService {
                     // Fetching the tasks separately, as putting it in the query above leads to Hibernate duplicating the tasks.
                     var templateTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(originalProgrammingExercise.getId());
                     originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
-
+                    Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(originalProgrammingExercise.getId());
+                    originalProgrammingExercise.setGradingCriteria(gradingCriteria);
                     prepareProgrammingExerciseForExamImport((ProgrammingExercise) exerciseToCopy);
                     yield Optional
                             .of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, (ProgrammingExercise) exerciseToCopy, false, false, false));
@@ -352,10 +353,6 @@ public class ExamImportService {
         newExercise.setDueDate(null);
         newExercise.setAssessmentDueDate(null);
         newExercise.setExampleSolutionPublicationDate(null);
-
-        // Fetch grading criterion into exercise. For course exercises, this is performed before sending the exercise to the client.
-        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(newExercise.getId());
-        newExercise.setGradingCriteria(gradingCriteria);
 
         newExercise.forceNewProjectKey();
     }

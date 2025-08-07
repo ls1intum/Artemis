@@ -189,7 +189,16 @@
                 "forwardedMessageDeleted": "This message has been deleted",
                 "showLess": "Show less",
                 "showMore": "Show more"
-            }
+            },
+            "newMessages": "New",
+            "newMessagesButton": "Jump to first unread message"
+        },
+        "communicationDisabled": {
+            "title": "Welcome to Communication!",
+            "description": "The communication features are currently disabled.\nEnabling them allows users to communicate in private or public channels, which can only be created by instructors and tutors. Students can interact with each other and ask questions, while moderators can provide course information and answer content-related inquiries.\nAdditionally, direct messages and group chats can be enabled. Once activated, all users can start direct messages or private group chats and invite others. A group chat is limited to ten members.\n You can enable or disable the features anytime in the settings.",
+            "buttonLabelWithoutDirectMessages": "Enable communication (no direct messages)",
+            "buttonLabelWithDirectMessages": "Enable communication (with direct messages)",
+            "enableError": "An error occurred while enabling communication. Please try again."
         }
     }
 }

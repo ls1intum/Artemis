@@ -13,8 +13,13 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -180,7 +185,7 @@ public class ParticipationUtilService {
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
-            studentParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
+            studentParticipation = studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
         }
         else {
             studentParticipation = storedParticipation.get();
@@ -259,8 +264,7 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login,
-                false);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
         if (storedParticipation.isEmpty()) {
             User user = userUtilService.getUserByLogin(login);
             StudentParticipation participation = new StudentParticipation();
@@ -268,10 +272,10 @@ public class ParticipationUtilService {
             participation.setParticipant(user);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
             assertThat(storedParticipation).isPresent();
         }
-        return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
+        return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
     }
 
     /**
@@ -282,8 +286,7 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation createAndSaveParticipationForExerciseInTheFuture(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login,
-                false);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
         storedParticipation.ifPresent(studentParticipation -> studentParticipationRepo.delete(studentParticipation));
         User user = userUtilService.getUserByLogin(login);
         StudentParticipation participation = new StudentParticipation();
@@ -291,9 +294,9 @@ public class ParticipationUtilService {
         participation.setParticipant(user);
         participation.setExercise(exercise);
         studentParticipationRepo.save(participation);
-        storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+        storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
         assertThat(storedParticipation).isPresent();
-        return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
+        return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
     }
 
     /**
@@ -304,7 +307,7 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation addTeamParticipationForExercise(Exercise exercise, long teamId) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId);
         if (storedParticipation.isEmpty()) {
             Team team = teamRepo.findById(teamId).orElseThrow();
             StudentParticipation participation = new StudentParticipation();
@@ -312,10 +315,10 @@ public class ParticipationUtilService {
             participation.setParticipant(team);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId);
+            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId);
             assertThat(storedParticipation).isPresent();
         }
-        return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
+        return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
     }
 
     /**
@@ -337,7 +340,7 @@ public class ParticipationUtilService {
         participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
         participationVCSAccessTokenService.createParticipationVCSAccessToken(userUtilService.getUserByLogin(login), participation);
-        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
     }
 
     /**
@@ -359,7 +362,7 @@ public class ParticipationUtilService {
         participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
-        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
     }
 
     /**
@@ -383,7 +386,7 @@ public class ParticipationUtilService {
         participation.setRepositoryUri(String.format(localRepoPath.toString() + "%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
-        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
     }
 
     /**
@@ -948,7 +951,7 @@ public class ParticipationUtilService {
     public void mockCreationOfExerciseParticipation(String templateRepoName, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
             throws URISyntaxException {
         var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
+        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
                 any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
@@ -963,7 +966,8 @@ public class ParticipationUtilService {
     public void mockCreationOfExerciseParticipation(VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
             throws URISyntaxException {
         var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(), any(String.class), any(String.class), any(String.class), any(Integer.class));
+        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), any(), any(String.class), any(String.class), any(String.class),
+                any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
 
@@ -975,5 +979,54 @@ public class ParticipationUtilService {
     private void mockCreationOfExerciseParticipationInternal(ContinuousIntegrationService continuousIntegrationService) {
         doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any());
+    }
+
+    /**
+     * Gets all Results of all submissions for the given Participation.
+     *
+     * @return A Set of Results that belong to the Participation's submissions
+     */
+    public Set<Result> getResultsForParticipation(Participation participation) {
+        return Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
+                .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).collect(Collectors.toSet());
+    }
+
+    /**
+     * Sets up a programming submission with two results: one completed and one draft.
+     *
+     * @param programmingExercise The programming exercise
+     * @param student             The student
+     * @return The configured programming submission with two results
+     */
+    public ProgrammingSubmission setupSubmissionWithTwoResults(ProgrammingExercise programmingExercise, User student) {
+        // Create student participation and submission
+        StudentParticipation participation = addStudentParticipationForProgrammingExercise(programmingExercise, student.getLogin());
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setParticipation(participation);
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now().minusHours(1).minusMinutes(30));
+        submission = submissionRepository.save(submission);
+        participation.addSubmission(submission);
+        addSubmission(participation, submission);
+
+        // Create results for both correction rounds
+        Result firstResult = generateResultWithScore(submission, student, 80.0);
+        firstResult.setRated(true);
+        firstResult.setCompletionDate(ZonedDateTime.now().minusMinutes(45));
+        firstResult = resultRepository.save(firstResult);
+        submission.addResult(firstResult);
+
+        Result secondResult = generateResult(submission, student);
+        secondResult.setRated(false); // Second correction not completed
+        secondResult.setCompletionDate(null);
+        secondResult.setScore(null); // Draft results should have null score
+        secondResult = resultRepository.save(secondResult);
+        submission.addResult(secondResult);
+        submission = submissionRepository.save(submission);
+
+        // Verify submission has both results: one completed, one draft
+        assertThat(submission.getResults()).hasSize(2);
+
+        return submission;
     }
 }

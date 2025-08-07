@@ -6,11 +6,11 @@
                 <span class="split-pane-header-selected-file">{{ getActiveFile() }}</span>
             </div>
         }
-        <div>{{ studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}</div>
+        <div>{{ studentLogin() || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}</div>
     </div>
     @if (showFiles) {
         <ul (mouseleave)="toggleShowFiles(true, false)" class="split-pane-header-files">
-            @for (file of files; track file; let idx = $index) {
+            @for (file of files(); track file; let idx = $index) {
                 <li
                     class="split-pane-header-file"
                     ngbDropdownItem

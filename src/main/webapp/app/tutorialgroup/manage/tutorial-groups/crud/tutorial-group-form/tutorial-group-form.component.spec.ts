@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { TutorialGroupFormComponent, TutorialGroupFormData } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -60,13 +60,12 @@ describe('TutorialGroupFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule, FaIconComponent],
             declarations: [
                 TutorialGroupFormComponent,
                 ScheduleFormComponent,
                 MarkdownEditorStubComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisDateRangePipe),
             ],
@@ -95,7 +94,7 @@ describe('TutorialGroupFormComponent', () => {
         validTeachingAssistant = new User();
         validTeachingAssistant.login = 'testLogin';
         component = fixture.componentInstance;
-        component.course = course;
+        fixture.componentRef.setInput('course', course);
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
@@ -160,7 +159,7 @@ describe('TutorialGroupFormComponent', () => {
         }));
 
         it('should correctly set form values in edit mode', () => {
-            component.isEditMode = true;
+            fixture.componentRef.setInput('isEditMode', true);
             runOnPushChangeDetection(fixture);
             const formData: TutorialGroupFormData = {
                 title: validTitle,
@@ -179,7 +178,7 @@ describe('TutorialGroupFormComponent', () => {
                     location: validLocation,
                 },
             };
-            component.formData = formData;
+            fixture.componentRef.setInput('formData', formData);
             component.ngOnChanges();
 
             const groupFormControlNames: Array<keyof TutorialGroupFormData> = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
@@ -230,7 +229,7 @@ describe('TutorialGroupFormComponent', () => {
         }));
 
         it('should correctly set form values in edit mode', () => {
-            component.isEditMode = true;
+            fixture.componentRef.setInput('isEditMode', true);
             runOnPushChangeDetection(fixture);
             const formData: TutorialGroupFormData = {
                 title: validTitle,
@@ -243,7 +242,7 @@ describe('TutorialGroupFormComponent', () => {
                 schedule: undefined,
             };
 
-            component.formData = formData;
+            fixture.componentRef.setInput('formData', formData);
             component.ngOnChanges();
 
             const formControlNames: Array<keyof TutorialGroupFormData> = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];

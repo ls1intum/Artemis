@@ -17,7 +17,6 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -104,8 +103,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     Optional<Result> findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
-
-    Optional<Result> findFirstBySubmissionParticipationIdAndAssessmentTypeOrderByCompletionDateDesc(long participationId, AssessmentType assessmentType);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
     Optional<Result> findResultWithFeedbacksAndTestCasesById(long resultId);
@@ -299,8 +296,16 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
+    /**
+     * Use this method only for exams!
+     * Given an exerciseId and the tutorId, return the number of locked assessments that have been finished, for that exerciseId and each correctionRound
+     *
+     * @param exerciseId id of the exam exercise
+     * @param tutorId    id of the tutor
+     * @return a list that contains the count of locked assessments for each studentParticipation of the exercise
+     */
     @Query("""
-            SELECT r
+            SELECT COUNT(r.id)
             FROM StudentParticipation p
                 JOIN p.submissions s
                 JOIN s.results r
@@ -309,8 +314,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND s.submitted = TRUE
                 AND r.completionDate IS NULL
                 AND r.assessor.id <> :tutorId
+            GROUP BY p.id
             """)
-    List<Result> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("tutorId") long tutorId);
+    List<Long> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("tutorId") long tutorId);
 
     /**
      * count the number of finished assessments of an exam with given examId
@@ -372,7 +378,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND p.student.id = :studentId
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
@@ -387,7 +392,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND p.team.id = :teamId
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
@@ -403,7 +407,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
                 AND r.rated = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
@@ -419,7 +422,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
                 AND r.rated = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
@@ -476,24 +478,18 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return an array of the number of assessments for the exercise for a given correction round
      */
     default DueDateStat[] countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds, User tutor) {
-        if (exercise.isExamExercise()) {
-            DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
+        if (!exercise.isExamExercise()) {
+            return null;
+        }
+        DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
 
-            // numberOfCorrectionRounds can be 0 for test exams
-            if (numberOfCorrectionRounds == 0) {
-                return correctionRoundsDataStats;
-            }
-
-            var resultsLockedByOtherTutors = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(exercise.getId(), tutor.getId());
-
-            correctionRoundsDataStats[0] = new DueDateStat(resultsLockedByOtherTutors.stream().filter(result -> result.isRated() == null).count(), 0L);
-            // so far the number of correctionRounds is limited to 2
-            if (numberOfCorrectionRounds == 2) {
-                correctionRoundsDataStats[1] = new DueDateStat(resultsLockedByOtherTutors.stream().filter(result -> result.isRated() != null).count(), 0L);
-            }
+        boolean testExamNumberOfCorrectionRounds = numberOfCorrectionRounds == 0;
+        if (testExamNumberOfCorrectionRounds) {
             return correctionRoundsDataStats;
         }
-        return null;
+
+        List<Long> resultsCountLockedByOtherTutors = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(exercise.getId(), tutor.getId());
+        return convertDatabaseResponseToDueDateStats(resultsCountLockedByOtherTutors, numberOfCorrectionRounds);
     }
 
     /**
@@ -574,10 +570,10 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         long inTime = 0;
         long late = 0;
         for (var ratedCount : ratedCounts) {
-            if (Boolean.TRUE.equals(ratedCount.rated())) {
+            if (ratedCount.rated()) {
                 inTime = ratedCount.count();
             }
-            else if (Boolean.FALSE.equals(ratedCount.rated())) {
+            else {
                 late = ratedCount.count();
             }
             // we are not interested in results with rated is null even if the database would return such
@@ -840,16 +836,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Query("""
             SELECT r
             FROM Result r
-                LEFT JOIN FETCH r.submission
-            WHERE r.submission.participation.id = :participationId
-                AND r.completionDate IS NOT NULL
-            ORDER BY r.id DESC
-            """)
-    List<Result> findLatestResultsForParticipation(@Param("participationId") Long participationId, Pageable pageable);
-
-    @Query("""
-            SELECT r
-            FROM Result r
                  LEFT JOIN FETCH r.feedbacks f
                  LEFT JOIN FETCH f.testCase
             WHERE r.submission.id = :submissionId
@@ -872,5 +858,50 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                )
             """)
     Set<Result> findLatestResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
+
+    /**
+     * Finds the latest results for the given submission IDs, including the assessment note.
+     *
+     * @param submissionIds the submission IDs for which to find the latest results
+     * @return a set of latest results with assessment notes
+     */
+    @Query("""
+            SELECT r
+            FROM Result r
+            LEFT JOIN FETCH r.assessmentNote
+            WHERE r.submission.id IN :submissionIds
+            AND r.id = (
+                 SELECT MAX(r2.id)
+                 FROM Result r2
+                 WHERE r2.submission.id = r.submission.id
+               )
+            """)
+    Set<Result> findLatestResultsWithAssessmentNoteBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
+
+    @Query("""
+              SELECT r
+              FROM Submission s
+                JOIN s.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase tc
+              WHERE s.id = :submissionId
+                AND r.id = (
+                  SELECT MAX(r2.id)
+                  FROM Submission s2
+                    JOIN s2.results r2
+                  WHERE s2.id = :submissionId
+                    AND (
+                      r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                      OR (
+                        r2.completionDate IS NOT NULL
+                        AND (
+                          s2.participation.exercise.assessmentDueDate IS NULL
+                          OR s2.participation.exercise.assessmentDueDate < :dateTime
+                        )
+                      )
+                    )
+                )
+            """)
+    Optional<Result> findLatestResultWithFeedbacksBySubmissionId(@Param("submissionId") long submissionId, @Param("dateTime") ZonedDateTime dateTime);
 
 }

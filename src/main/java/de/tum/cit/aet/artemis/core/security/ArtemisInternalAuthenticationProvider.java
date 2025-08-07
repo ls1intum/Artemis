@@ -15,16 +15,20 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
-import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 
 @Profile(PROFILE_CORE)
 @Component
 @Lazy
 @ConditionalOnProperty(value = "artemis.user-management.use-external", havingValue = "false")
-public class ArtemisInternalAuthenticationProvider extends ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
+public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticationProvider {
 
-    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, PasswordService passwordService, UserCreationService userCreationService) {
-        super(userRepository, passwordService, userCreationService);
+    private final PasswordService passwordService;
+
+    private final UserRepository userRepository;
+
+    public ArtemisInternalAuthenticationProvider(PasswordService passwordService, UserRepository userRepository) {
+        this.passwordService = passwordService;
+        this.userRepository = userRepository;
     }
 
     @Override

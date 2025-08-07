@@ -74,6 +74,10 @@ export class MetisConversationService implements OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.cleanupSubscriptions();
+    }
+
+    private cleanupSubscriptions() {
         if (this.subscribedConversationMembershipTopic) {
             this.websocketService.unsubscribe(this.subscribedConversationMembershipTopic);
             this.subscribedConversationMembershipTopic = undefined;
@@ -132,6 +136,11 @@ export class MetisConversationService implements OnDestroy {
         this._activeConversation$.next(this.activeConversation);
         this.isCodeOfConductPresented = false;
         this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
+    }
+
+    public disableConversationService() {
+        this.cleanupSubscriptions();
+        this._isServiceSetup$.next(false);
     }
 
     /**
@@ -379,7 +388,6 @@ export class MetisConversationService implements OnDestroy {
             if (event instanceof NavigationEnd) {
                 // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation
                 if (this.activeConversation) {
-                    this.activeConversation.lastReadDate = dayjs();
                     this.activeConversation.unreadMessagesCount = 0;
                     this.hasUnreadMessagesCheck();
                 }

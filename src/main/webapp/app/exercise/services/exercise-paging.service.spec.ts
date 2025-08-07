@@ -26,7 +26,7 @@ describe('Exercise Paging Service', () => {
             ],
         });
         httpMock = TestBed.inject(HttpTestingController);
-        const httpClient = TestBed.get(HttpClient);
+        const httpClient = TestBed.inject(HttpClient);
         service = new DummyPagingService(httpClient);
     });
 

@@ -52,6 +52,8 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.exception.GitException;
@@ -222,7 +224,17 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @return the path to the exported exercise
      * @throws IOException if an error occurs while accessing the file system
      */
-    public Path exportProgrammingExerciseForDownload(ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
+    public Path exportProgrammingExerciseForDownload(@NotNull ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
+        // Reset grading criterion ids to null, such that Hibernate can persist them.
+        if (exercise.getGradingCriteria() != null) {
+            for (GradingCriterion gradingCriterion : exercise.getGradingCriteria()) {
+                gradingCriterion.setId(null);
+                for (GradingInstruction gradingInstruction : gradingCriterion.getStructuredGradingInstructions()) {
+                    gradingInstruction.setId(null);
+                }
+            }
+        }
+
         List<Path> pathsToBeZipped = new ArrayList<>();
         var exportDir = exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, true, Optional.empty(), new ArrayList<>(), pathsToBeZipped);
         // Setup path to store the zip file for the exported programming exercise
@@ -538,16 +550,16 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         Path zipPath = uniquePath.resolve("zip");
 
         try {
-            gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), clonePath, true);
+            gitService.getOrCheckoutRepositoryWithLocalPath(exercise.getVcsTestRepositoryUri(), clonePath, true, false);
             if (!clonePath.toFile().exists()) {
                 Files.createDirectories(clonePath);
             }
             String assignmentPath = RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(exercise.getProgrammingLanguage());
             FileUtils.deleteDirectory(clonePath.resolve(assignmentPath).toFile());
-            gitService.getOrCheckoutRepository(exercise.getVcsSolutionRepositoryUri(), clonePath.resolve(assignmentPath), true);
+            gitService.getOrCheckoutRepositoryWithLocalPath(exercise.getVcsSolutionRepositoryUri(), clonePath.resolve(assignmentPath), true, false);
             for (AuxiliaryRepository auxRepo : exercise.getAuxiliaryRepositoriesForBuildPlan()) {
                 FileUtils.deleteDirectory(clonePath.resolve(auxRepo.getCheckoutDirectory()).toFile());
-                gitService.getOrCheckoutRepository(auxRepo.getVcsRepositoryUri(), clonePath.resolve(auxRepo.getCheckoutDirectory()), true);
+                gitService.getOrCheckoutRepositoryWithLocalPath(auxRepo.getVcsRepositoryUri(), clonePath.resolve(auxRepo.getCheckoutDirectory()), true, false);
             }
 
             return Optional.of(gitService.zipFiles(clonePath, zippedRepoName, zipPath.toString(), contentFilter).toFile());
@@ -655,7 +667,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         Path localRepoPath;
 
         // Checkout the repository
-        try (Repository repository = gitService.getOrCheckoutRepository(repositoryUri, repositoryDir, false)) {
+        try (Repository repository = gitService.getOrCheckoutRepositoryWithLocalPath(repositoryUri, repositoryDir, false, false)) {
             gitService.resetToOriginHead(repository);
             localRepoPath = repository.getLocalPath();
         }
@@ -712,9 +724,9 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         try {
-            var repositoryDir = fileService.getTemporaryUniquePathWithoutPathCreation(workingDir, 5);
+            var tempRepositoryPath = fileService.getTemporaryUniquePathWithoutPathCreation(workingDir, 5);
             // Checkout the repository
-            Repository repository = gitService.getOrCheckoutRepository(participation, repositoryDir.toString());
+            Repository repository = gitService.getOrCheckoutRepository(participation, tempRepositoryPath, false);
             if (repository == null) {
                 log.warn("Cannot checkout repository for participation id: {}", participation.getId());
                 return null;

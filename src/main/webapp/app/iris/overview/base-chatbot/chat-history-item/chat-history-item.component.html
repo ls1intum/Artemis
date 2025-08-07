@@ -1,0 +1,21 @@
+<div
+    class="chat-history-item"
+    [ngClass]="{ 'chat-history-item-selected': active() }"
+    (click)="onItemClick()"
+    role="button"
+    tabindex="0"
+    (keydown.space)="onItemClick()"
+    (keydown.enter)="onItemClick()"
+>
+    <div class="chat-history-text">
+        {{ session().creationDate | date: 'dd.MM.yy HH:mm' }}
+    </div>
+    @if (relatedEntityName() && icon() && tooltipKey()) {
+        <div class="related-entity-info">
+            <div class="related-entity-name">
+                {{ relatedEntityName() }}
+            </div>
+            <fa-icon [icon]="icon()!" [ngbTooltip]="tooltipKey()! | artemisTranslate" />
+        </div>
+    }
+</div>
