@@ -69,16 +69,16 @@ public class ReactionService {
      * @return created reaction that was persisted
      */
     public Reaction createReaction(Long courseId, ReactionDTO reactionDTO) {
-        validateReactionAssociation(reactionDTO);
-
         Reaction reaction = new Reaction();
         reaction.setEmojiId(reactionDTO.emojiId());
 
-        if (reactionDTO.postId() != null) {
-            reaction.setPost(postRepository.findByIdElseThrow(reactionDTO.postId()));
+        Post post = postRepository.findById(reactionDTO.relatedPostId()).orElse(null);
+        if (post != null) {
+            reaction.setPost(post);
         }
-        if (reactionDTO.answerPostId() != null) {
-            reaction.setAnswerPost(answerPostRepository.findByIdElseThrow(reactionDTO.answerPostId()));
+        else {
+            AnswerPost answerPost = answerPostRepository.findByIdElseThrow(reactionDTO.relatedPostId());
+            reaction.setAnswerPost(answerPost);
         }
 
         final Course course = courseRepository.findByIdElseThrow(courseId);
@@ -92,12 +92,11 @@ public class ReactionService {
         // set user to current user
         reaction.setUser(user);
 
-        // Associate and persist
-        Posting posting = reaction.getPost() != null ? reaction.getPost() : reaction.getAnswerPost();
+        Posting posting = getPostingType(reaction);
 
         Reaction savedReaction;
-        if (posting instanceof Post post) {
-            savedReaction = createReactionForPost(reaction, post, user, course);
+        if (posting instanceof Post p) {
+            savedReaction = createReactionForPost(reaction, p, user, course);
         }
         else {
             savedReaction = createReactionForAnswer(reaction, (AnswerPost) posting, user, course);
@@ -117,9 +116,9 @@ public class ReactionService {
         final Course course = courseRepository.findByIdElseThrow(courseId);
         Reaction reaction = reactionRepository.findByIdElseThrow(reactionId);
 
-        Course reactionCourse = getReactionCourse(reaction);
-        if (reactionCourse == null || !reactionCourse.getId().equals(courseId)) {
-            throw new BadRequestAlertException("Reaction does not belong to the given course", "reaction", "wrongCourse");
+        Course reactionCourse = getReactionCourseElseThrow(reaction);
+        if (!reactionCourse.getId().equals(courseId)) {
+            throw new BadRequestAlertException("Reaction does not belong to the given course", METIS_REACTION_ENTITY_NAME, "wrongCourse");
         }
 
         // check if user that wants to delete reaction is user that created the reaction
@@ -215,22 +214,24 @@ public class ReactionService {
         return savedReaction;
     }
 
-    private Course getReactionCourse(Reaction reaction) {
+    private Posting getPostingType(Reaction reaction) {
+        return reaction.getPost() != null ? reaction.getPost() : reaction.getAnswerPost();
+    }
+
+    /**
+     * Returns the course for the given reaction, throws if not found.
+     *
+     * @param reaction the reaction entity
+     * @return the associated course
+     * @throws BadRequestAlertException if no course can be found
+     */
+    private Course getReactionCourseElseThrow(Reaction reaction) {
         if (reaction.getPost() != null) {
             return reaction.getPost().getCoursePostingBelongsTo();
         }
         if (reaction.getAnswerPost() != null) {
             return reaction.getAnswerPost().getCoursePostingBelongsTo();
         }
-        return null;
-    }
-
-    private void validateReactionAssociation(ReactionDTO reactionDTO) {
-        if (reactionDTO.postId() != null && reactionDTO.answerPostId() != null) {
-            throw new BadRequestAlertException("Reaction cannot be associated with both a post and an answerPost", METIS_REACTION_ENTITY_NAME, "invalidAssociation");
-        }
-        if (reactionDTO.postId() == null && reactionDTO.answerPostId() == null) {
-            throw new BadRequestAlertException("Reaction must be associated with a post or an answerPost", METIS_REACTION_ENTITY_NAME, "noTarget");
-        }
+        throw new BadRequestAlertException("Reaction could not be found", METIS_REACTION_ENTITY_NAME, "Reaction not found");
     }
 }

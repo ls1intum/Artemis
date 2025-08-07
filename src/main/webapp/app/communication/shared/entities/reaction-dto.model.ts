@@ -1,22 +1,27 @@
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { User } from 'app/core/user/user.model';
 
+/**
+ * Data Transfer Object for Reaction.
+ */
 export interface ReactionDTO {
-    id?: number | null;
-    user?: User | null;
-    creationDate?: string | null;
-    emojiId: string | null;
-    postId?: number | null;
-    answerPostId?: number | null;
+    id?: number;
+    user?: User;
+    creationDate?: string;
+    emojiId?: string;
+    relatedPostId?: number;
 }
 
+/**
+ * Converts a Reaction entity to a ReactionDTO for API communication.
+ * @param reaction The Reaction entity to convert.
+ */
 export function toReactionDTO(reaction: Reaction): ReactionDTO {
     return {
-        id: reaction.id ?? null,
-        user: null,
-        creationDate: null,
-        emojiId: reaction.emojiId ?? null,
-        postId: reaction.post?.id ?? null,
-        answerPostId: reaction.answerPost?.id ?? null,
+        id: reaction.id ?? undefined,
+        user: reaction.user ?? undefined,
+        creationDate: reaction.creationDate ? reaction.creationDate.toISOString() : undefined,
+        emojiId: reaction.emojiId,
+        relatedPostId: reaction.post?.id ?? reaction.answerPost?.id,
     };
 }

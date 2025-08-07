@@ -127,7 +127,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             return;
         }
 
-        // Act: Send valid reaction
         ReactionDTO createdReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, ReactionDTO.class,
                 HttpStatus.CREATED);
 
@@ -252,8 +251,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
 
         // student 2 reacts again on this answer post
-        reactionToSaveOnAnswerPost = createReactionDTOOnAnswerPost(answerPostReactedOn);
-        reactionToSaveOnAnswerPost = new ReactionDTO(null, reactionToSaveOnAnswerPost.user(), null, "cry", null, answerPostReactedOn.getId());
+        // change the emojiId to react differently
+        reactionToSaveOnAnswerPost = createCryReactionDTOOnAnswerPost(answerPostReactedOn);
 
         ReactionDTO createdSecondReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost,
                 ReactionDTO.class, HttpStatus.CREATED);
@@ -274,7 +273,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         checkCreatedReaction(reactionToSave, createdFirstReaction);
         assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
         // Second reaction with a different emoji
-        ReactionDTO secondReactionToSave = new ReactionDTO(null, reactionToSave.user(), null, "cry", null, answerPostId);
+        ReactionDTO secondReactionToSave = createCryReactionDTOOnAnswerPost(answerPostReactedOn);
         ReactionDTO createdSecondReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", secondReactionToSave, ReactionDTO.class,
                 HttpStatus.CREATED);
         checkCreatedReaction(secondReactionToSave, createdSecondReaction);
@@ -530,6 +529,13 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         return new ReactionDTO(reaction);
     }
 
+    private ReactionDTO createCryReactionDTOOnAnswerPost(AnswerPost answerPostReactedOn) {
+        Reaction reaction = new Reaction();
+        reaction.setEmojiId("cry");
+        reaction.setAnswerPost(answerPostReactedOn);
+        return new ReactionDTO(reaction);
+    }
+
     private void checkCreatedReaction(ReactionDTO expectedReaction, ReactionDTO createdReaction) {
         // check if post was created with id
         assertThat(createdReaction).isNotNull();
@@ -540,10 +546,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(createdReaction.creationDate()).isNotNull();
 
         // check if association to post or answer post is correct
-
-        assertThat(createdReaction.postId()).isEqualTo(expectedReaction.postId());
-        assertThat(createdReaction.answerPostId()).isEqualTo(expectedReaction.answerPostId());
-
+        assertThat(createdReaction.relatedPostId()).isEqualTo(expectedReaction.relatedPostId());
     }
 
     private static List<Arguments> courseConfigurationProvider() {

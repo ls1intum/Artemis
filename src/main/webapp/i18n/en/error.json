@@ -111,6 +111,8 @@
         "teamExercise": {
             "cannotStart": "Team exercise cannot be started without assigned team."
         },
-        "assignmentRepositoryNotAllowed": "Assignment repositories are not supported for exam exercises. Please use the test run feature instead to try out the exercise."
+        "assignmentRepositoryNotAllowed": "Assignment repositories are not supported for exam exercises. Please use the test run feature instead to try out the exercise.",
+        "wrongCourse": "The reaction does not belong to the selected course.",
+        "notFound": "The reaction could not be found."
     }
 }
