@@ -6,11 +6,12 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgTemplateOutlet } from '@angular/common';
 
 @Component({
     selector: 'jhi-affected-students-modal',
     templateUrl: './feedback-affected-students-modal.component.html',
-    imports: [CodeButtonComponent, TranslateDirective],
+    imports: [CodeButtonComponent, TranslateDirective, NgTemplateOutlet],
     providers: [FeedbackAnalysisService],
 })
 export class AffectedStudentsModalComponent {

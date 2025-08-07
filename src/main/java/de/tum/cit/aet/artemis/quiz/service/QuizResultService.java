@@ -146,7 +146,7 @@ public class QuizResultService {
                 participation.setInitializationState(InitializationState.FINISHED);
 
                 Optional<Result> existingRatedResult = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).filter(Objects::nonNull)
-                        .filter(result -> Boolean.TRUE.equals(result.isRated())).findFirst();
+                        .filter(Result::isRated).findFirst();
 
                 if (existingRatedResult.isPresent()) {
                     // A rated result already exists; no need to create a new one
