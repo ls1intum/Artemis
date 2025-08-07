@@ -546,7 +546,7 @@ Users can upload a profile picture in their account settings to enhance personal
 Draft Messages
 ^^^^^^^^^^^^^^^
 
-When composing a message or replying in a thread on the web, Artemis automatically saves your input as a **draft**. This ensures that unfinished messages are not lost when navigating between conversations or accidentally closing the tab.
+When composing a message or replying in a thread on the WebApp, Artemis automatically saves your input as a **draft**. This ensures that unfinished messages are not lost when navigating between conversations or accidentally closing the tab.
 
 Draft messages are:
 
