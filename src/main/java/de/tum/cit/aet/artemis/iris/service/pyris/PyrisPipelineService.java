@@ -240,17 +240,17 @@ public class PyrisPipelineService {
      * - The messages of the session
      * - The user that created the session
      *
-     * @param variant                 the variant of the pipeline
-     * @param session                 the chat session
-     * @param eventVariant            the event variant if this function triggers a pipeline execution due to a specific event
-     * @param lectureIdOptional       the optional lecture ID if this is due to a specific event
-     * @param textExerciseDTOOptional the optional text exercise DTO if this is due to a specific event
-     * @param submissionDTO           the optional submission DTO if this is due to a specific event
-     * @param exerciseDTO             the optional programming exercise DTO if this is due to a specific event
-     * @param postDTO                 the post DTO containing the post
+     * @param variant                the variant of the pipeline
+     * @param session                the chat session
+     * @param eventVariant           the event variant if this function triggers a pipeline execution due to a specific event
+     * @param lectureId              the optional lecture ID if this is due to a specific event
+     * @param textExerciseDTO        the optional text exercise DTO if this is due to a specific event
+     * @param submissionDTO          the optional submission DTO if this is due to a specific event
+     * @param programmingExerciseDTO the optional programming exercise DTO if this is due to a specific event
+     * @param postDTO                the post DTO containing the post
      */
-    public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureIdOptional,
-            Optional<PyrisTextExerciseDTO> textExerciseDTOOptional, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> exerciseDTO,
+    public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureId,
+            Optional<PyrisTextExerciseDTO> textExerciseDTO, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTO,
             PostDTO postDTO) {
         var post = postDTO.post();
         var course = post.getCoursePostingBelongsTo();
@@ -272,10 +272,10 @@ public class PyrisPipelineService {
                     new PyrisUserDTO(user),
                     executionDto.settings(),
                     executionDto.initialStages(),
-                    textExerciseDTOOptional,
+                    textExerciseDTO,
                     submissionDTO,
-                    exerciseDTO,
-                    lectureIdOptional
+                    programmingExerciseDTO,
+                    lectureId
                 );
             },
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)

@@ -223,7 +223,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
         pipelineDone.set(false);
         irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
-            assertThat(dto.exercise()).contains(dummyExerciseDTO);
+            assertThat(dto.programmingExerciseDTO()).contains(dummyExerciseDTO);
             pipelineDone.set(true);
         });
 

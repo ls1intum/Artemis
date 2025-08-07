@@ -181,7 +181,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                     }
                     case TEXT -> {
                         TextExercise textExercise = (TextExercise) exercise;
-                        textExerciseDTOOptional = Optional.of(PyrisTextExerciseDTO.ofWithExampleSolution(textExercise));
+                        textExerciseDTOOptional = Optional.of(PyrisTextExerciseDTO.of(textExercise));
                     }
                 }
             }
