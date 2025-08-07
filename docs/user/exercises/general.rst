@@ -40,11 +40,11 @@ When a section(e.g No date) contains more than 5 exercises, Artemis may create w
 |exercise-overview-current| |exercise-overview-past|
 
 .. |general-menu-exercise| image:: general/general-menu-exercise.png
-    :width: 200
+    :width: 250
 .. |sidebar-collapse-exercise| image:: general/sidebar-collapse-exercise.png
-    :width: 200
+    :width: 250
 .. |exercise-overview-current| image:: general/exercise-overview-current.png
-    :width: 200
+    :width: 250
 .. |exercise-overview-past| image:: general/exercise-overview-past.png
-    :width: 200
+    :width: 250
 

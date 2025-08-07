@@ -196,13 +196,13 @@ See :ref:`Adaptive Learning <adaptive-learning>` for more information.
 
 
 .. |general-menu| image:: lectures/general-menu-lecture.png
-    :width: 200
+    :width: 250
 .. |lecture-overview-collapse| image:: lectures/lecture-overview-collapse.png
-    :width: 200
+    :width: 250
 .. |lecture-overview-past| image:: lectures/lecture-overview-past.png
-    :width: 200
+    :width: 250
 .. |lecture-overview-current| image:: lectures/lecture-overview-current.png
-    :width: 200
+    :width: 250
 .. |lecture-details| image:: lectures/lecture-details.png
     :width: 1000
 .. |lectures-management| image:: lectures/lectures-management.png
