@@ -21,7 +21,7 @@ class AIAgent:
         Handles a single user prompt, updates conversation memory, and returns agent reply.
         """
         if not user_input or not user_input.strip():
-         raise ValueError("User input cannot be empty")
+            raise ValueError("User input cannot be empty")
         # Append user message to memory
         self.memory.append({"role": "user", "content": user_input})
         try:
@@ -39,7 +39,7 @@ class AIAgent:
         except Exception as e:
             # Remove the user message if API call fails
             self.memory.pop()
-            raise RuntimeError(f"Failed to get response from OpenAI: {str(e)}")
+            raise RuntimeError(f"Failed to get response from OpenAI: {str(e)}") from e
 
         # Save agent reply in memory
         self.memory.append({"role": "assistant", "content": reply})

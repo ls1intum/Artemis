@@ -12,13 +12,13 @@ class ChatRequest(BaseModel):
 @app.post("/chat")
 async def chat_endpoint(req: ChatRequest):
         try:
-         logger.info(f"Received chat request: {req.message[:50]}...")
-         # If handle_prompt is CPU-intensive, consider running in thread pool
-         reply = agent.handle_prompt(req.message)
-         return {"reply": reply}
+            logger.info(f"Received chat request: {req.message[:50]}...")
+            # If handle_prompt is CPU-intensive, consider running in thread pool
+            reply = agent.handle_prompt(req.message)
+            return {"reply": reply}
         except Exception as e:
-         logger.error(f"Error processing chat request: {e}")
-         raise HTTPException(status_code=500, detail="Internal server error")
+            logger.error(f"Error processing chat request: {e}")
+            raise HTTPException(status_code=500, detail="Internal server error") from e
 
 # Keep CLI only if needed for local testing:
 if __name__ == "__main__":
