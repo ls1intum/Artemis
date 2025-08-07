@@ -19,6 +19,7 @@ import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/ca
 })
 export class CalendarDesktopMonthPresentationComponent {
     private popover?: NgbPopover;
+    private eventMap = inject(CalendarEventService).eventMap;
 
     firstDayOfCurrentMonth = input.required<Dayjs>();
     selectedEvent = signal<CalendarEvent | undefined>(undefined);
@@ -26,7 +27,6 @@ export class CalendarDesktopMonthPresentationComponent {
     readonly utils = utils;
     readonly CalendarEventType = CalendarEventType;
     readonly weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
-    readonly eventMap = inject(CalendarEventService).eventMap;
 
     getEventsOf(day: Dayjs): CalendarEvent[] {
         const key = day.format('YYYY-MM-DD');

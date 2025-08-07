@@ -23,7 +23,7 @@
                     </button>
                 }
             </div>
-            <div class="month-title">{{ firstDayOfSelectedMonth().format('MMMM YYYY') }}</div>
+            <div class="month-title">{{ firstDayOfCurrentMonth().format('MMMM YYYY') }}</div>
             <div class="header-spacer">
                 <calendar-event-filter [variant]="CalendarEventFilterComponentVariant.MOBILE" />
             </div>
@@ -38,6 +38,6 @@
     @if (day) {
         <calendar-mobile-day-presentation [selectedDay]="day" />
     } @else {
-        <calendar-mobile-month-presentation [firstDayOfMonth]="firstDayOfSelectedMonth()" (selectDay)="selectDay($event)" />
+        <calendar-mobile-month-presentation [firstDayOfMonth]="firstDayOfCurrentMonth()" (selectDay)="selectDay($event)" />
     }
 </div>
