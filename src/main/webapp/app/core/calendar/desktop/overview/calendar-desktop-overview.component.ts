@@ -5,8 +5,6 @@ import { finalize } from 'rxjs/operators';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import 'dayjs/esm/locale/en';
 import 'dayjs/esm/locale/de';
-import isoWeek from 'dayjs/esm/plugin/isoWeek';
-import isSameOrBefore from 'dayjs/esm/plugin/isSameOrBefore';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,9 +13,6 @@ import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/des
 import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
-
-dayjs.extend(isoWeek);
-dayjs.extend(isSameOrBefore);
 
 @Component({
     selector: 'calendar-desktop-overview',
