@@ -137,12 +137,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @MockitoSpyBean
     protected BuildAgentConfiguration buildAgentConfiguration;
 
-    /**
-     * This is the mock(DockerClient.class).
-     * Subclasses can use this to dynamically mock methods of the DockerClient.
-     */
-    protected DockerClient dockerClient;
-
     @MockitoSpyBean
     protected ResourceLoaderService resourceLoaderService;
 
