@@ -39,8 +39,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSerializedDTO;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -58,11 +58,8 @@ public abstract class PushNotificationService {
 
     private final RestTemplate restTemplate;
 
-    private final CourseNotificationPushProxyService courseNotificationPushProxyService;
-
-    protected PushNotificationService(RestTemplate restTemplate, CourseNotificationPushProxyService courseNotificationPushProxyService) {
+    protected PushNotificationService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-        this.courseNotificationPushProxyService = courseNotificationPushProxyService;
     }
 
     /**
@@ -118,7 +115,8 @@ public abstract class PushNotificationService {
             return;
         }
 
-        var notificationData = courseNotificationPushProxyService.fromCourseNotification(courseNotification);
+        var serializedNotification = new CourseNotificationSerializedDTO(courseNotification);
+        var notificationData = new PushNotificationDataDTO(serializedNotification);
 
         encryptAndSendPushNotifications(notificationData, userDeviceConfigurations);
     }
