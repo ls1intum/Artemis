@@ -7,7 +7,7 @@ import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -84,7 +84,7 @@ describe('CalendarMobileOverviewComponent', () => {
     describe('navigation buttons', () => {
         let dayToSelect: Dayjs;
         let firstDayOfCurrentMonth: Dayjs;
-        let today: dayjs;
+        let today: Dayjs;
 
         beforeEach(() => {
             dayToSelect = dayjs('2025-05-15');

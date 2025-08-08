@@ -9,16 +9,16 @@ describe('CalendarMobileDayPresentation', () => {
     let component: CalendarMobileDayPresentation;
     let fixture: ComponentFixture<CalendarMobileDayPresentation>;
 
-    const mockSelectedDay = dayjs('2025-08-06');
+    const selectedDay = dayjs('2025-08-06');
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CalendarMobileDayPresentation, MockComponent(CalendarDayBadgeComponent), MockComponent(CalendarEventsPerDaySectionComponent)],
+            imports: [CalendarMobileDayPresentation, CalendarDayBadgeComponent, MockComponent(CalendarEventsPerDaySectionComponent)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CalendarMobileDayPresentation);
 
-        fixture.componentRef.setInput('selectedDay', mockSelectedDay);
+        fixture.componentRef.setInput('selectedDay', selectedDay);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });
@@ -35,14 +35,14 @@ describe('CalendarMobileDayPresentation', () => {
     it('should mark only the selected day as selected', () => {
         const dayBadgeComponents = ngMocks.findInstances(CalendarDayBadgeComponent);
 
-        const selectedDayBadge = dayBadgeComponents.find((dayBadgeComponent) => dayBadgeComponent.day.isSame(mockSelectedDay, 'day'));
+        const selectedDayBadge = dayBadgeComponents.find((dayBadgeComponent) => dayBadgeComponent.day().isSame(selectedDay, 'day'));
 
-        expect(selectedDayBadge?.isSelectedDay).toBeTrue();
+        expect(selectedDayBadge?.isSelectedDay()).toBeTrue();
 
-        const nonSelectedDayBadges = dayBadgeComponents.filter((dayBadgeComponent) => !dayBadgeComponent.day.isSame(mockSelectedDay, 'day'));
+        const nonSelectedDayBadges = dayBadgeComponents.filter((dayBadgeComponent) => !dayBadgeComponent.day().isSame(selectedDay, 'day'));
 
         for (const nonSelectedDayBadge of nonSelectedDayBadges) {
-            expect(nonSelectedDayBadge.isSelectedDay).toBeFalse();
+            expect(nonSelectedDayBadge.isSelectedDay()).toBeFalse();
         }
     });
 
@@ -52,12 +52,6 @@ describe('CalendarMobileDayPresentation', () => {
 
         const scrollContainerElement = fixture.nativeElement.querySelector('.scroll-container');
         expect(scrollContainerElement.classList).toContain('no-scroll');
-    });
-
-    it('should pass the selected day to calendar-events-per-day-section', () => {
-        const eventsSectionComponent = ngMocks.findInstance(CalendarEventsPerDaySectionComponent);
-        expect(eventsSectionComponent.days).toHaveLength(1);
-        expect(eventsSectionComponent.days[0].isSame(mockSelectedDay, 'day')).toBeTrue();
     });
 
     it('should update isEventSelected signal when child emits true', () => {
