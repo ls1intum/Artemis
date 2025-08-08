@@ -245,6 +245,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam1 = examRepository.save(exam1);
 
         exam2 = examUtilService.addExam(course1);
+        exam2.setTitle("Real exam 2");  // Change the name to avoid confusion with 'exam1'
+        exam2 = examRepository.save(exam2);
         exam2 = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
 
         studentExam1 = examUtilService.addStudentExam(exam1);
@@ -2236,13 +2238,16 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithStudentExamsAfterConductionAndEvaluation() throws Exception {
+        final var baseTime = ZonedDateTime.now();  // use a base time rather than repeated 'ZonedDateTime.now()' calls
+        // to prevent potential time-related flakiness
+
         StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
 
         final StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam2, studentExam.getUser().getLogin(), studentExam);
 
         // now we change to the point of time when the student exam needs to be submitted
         // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
-        exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
+        exam2.setStartDate(baseTime.minusMinutes(3));
         exam2 = examRepository.save(exam2);
 
         // submitExam
@@ -2251,7 +2256,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamWithSubmissions.getId() + "/summary", HttpStatus.OK,
                 StudentExam.class);
 
-        exam2.setEndDate(ZonedDateTime.now());
+        exam2.setEndDate(baseTime);
         exam2 = examRepository.save(exam2);
 
         // Add results to all exercise submissions (evaluation)
@@ -2267,7 +2272,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
             participationUtilService.addResultToSubmission(participation, latestSubmission.orElseThrow());
         }
-        exam2.setPublishResultsDate(ZonedDateTime.now());
+        exam2.setPublishResultsDate(baseTime);
         exam2 = examRepository.save(exam2);
         exam2 = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam2.getId());
 
@@ -2285,8 +2290,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         request.delete("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
-
-        deleteExamWithInstructor(exam1);
     }
 
     @Test
