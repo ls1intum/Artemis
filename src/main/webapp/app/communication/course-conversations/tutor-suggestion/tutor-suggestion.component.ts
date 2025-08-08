@@ -31,7 +31,7 @@ import { faArrowDown, faArrowUp, faArrowsRotate } from '@fortawesome/free-solid-
     standalone: true,
     selector: 'jhi-tutor-suggestion',
     templateUrl: './tutor-suggestion.component.html',
-    styleUrl: './tutor-suggestion.component.scss',
+    styleUrls: ['./tutor-suggestion.component.scss'],
     imports: [IrisLogoComponent, AsPipe, FormsModule, TranslateDirective, IrisBaseChatbotComponent, ButtonComponent],
 })
 export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
