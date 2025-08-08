@@ -949,14 +949,14 @@ public class LocalVCServletService {
         revCommit = repository.parseCommit(objectId);
 
         // Get the branch name.
-        Git git = new Git(repository);
-        // Look in the 'refs/heads' namespace for a ref that points to the commit.
-        // The returned map contains at most one entry where the key is the commit id and the value denotes the branch which points to it.
-        Map<ObjectId, String> objectIdBranchNameMap = git.nameRev().addPrefix("refs/heads").add(objectId).call();
-        if (!objectIdBranchNameMap.isEmpty()) {
-            branch = objectIdBranchNameMap.get(objectId);
+        try (Git git = new Git(repository)) {
+            // Look in the 'refs/heads' namespace for a ref that points to the commit.
+            // The returned map contains at most one entry where the key is the commit id and the value denotes the branch which points to it.
+            Map<ObjectId, String> objectIdBranchNameMap = git.nameRev().addPrefix("refs/heads").add(objectId).call();
+            if (!objectIdBranchNameMap.isEmpty()) {
+                branch = objectIdBranchNameMap.get(objectId);
+            }
         }
-        git.close();
 
         if (revCommit == null || branch == null) {
             throw new VersionControlException("Something went wrong retrieving the revCommit or the branch.");

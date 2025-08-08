@@ -362,8 +362,9 @@ public class GitService extends AbstractGitService {
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-                Git git = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
-                git.close();
+                try (Git ignored = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).call()) {
+                    // Git instance automatically closed by try-with-resources
+                }
             }
             catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
                 // cleanup the folder to avoid problems in the future.
