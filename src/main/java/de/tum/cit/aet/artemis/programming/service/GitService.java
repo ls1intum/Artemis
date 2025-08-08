@@ -39,6 +39,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.api.ArchiveCommand;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
@@ -56,6 +57,7 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.archive.ZipFormat;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
@@ -89,14 +91,12 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
-import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -167,6 +167,8 @@ public class GitService extends AbstractGitService {
             log.info("GitService will use username + password as authentication method to interact with remote git repositories");
             CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
         }
+
+        ArchiveCommand.registerFormat("zip", new ZipFormat());
     }
 
     @PreDestroy
@@ -1365,69 +1367,6 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Get the content of a git repository that contains a participation, as zip or directory.
-     *
-     * @param repo            Local Repository Object.
-     * @param repositoryDir   path where the repo is located on disk
-     * @param hideStudentName option to hide the student name for the zip file or directory
-     * @param zipOutput       If true the method returns a zip file otherwise a directory.
-     * @return path to zip file or directory.
-     * @throws IOException if the zipping or copying process failed.
-     */
-    public Path getRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName, boolean zipOutput) throws IOException, UncheckedIOException {
-        var exercise = repo.getParticipation().getProgrammingExercise();
-        var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
-
-        String repoName = FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
-        if (hideStudentName) {
-            repoName += "-student-submission.git";
-        }
-        else {
-            // The zip filename is either the student login, team short name or some default string.
-            var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
-
-            repoName += "-" + studentTeamOrDefault;
-        }
-        repoName = participation.addPracticePrefixIfTestRun(repoName);
-
-        if (zipOutput) {
-            return zipFiles(repo.getLocalPath(), repoName, repositoryDir, null);
-        }
-        else {
-            Path targetDir = Path.of(repositoryDir, repoName);
-
-            FileUtils.copyDirectory(repo.getLocalPath().toFile(), targetDir.toFile());
-            return targetDir;
-        }
-
-    }
-
-    /**
-     * Zips the contents of a folder, files are filtered according to the contentFilter.
-     * Content filtering is added with the intention of optionally excluding ".git" directory from the result.
-     *
-     * @param contentRootPath the root path of the content to zip
-     * @param zipFilename     the name of the zipped file
-     * @param zipDir          path of folder where the zip should be located on disk
-     * @param contentFilter   path filter to exclude some files, can be null to include everything
-     * @return path to the zip file
-     * @throws IOException if the zipping process failed.
-     */
-    public Path zipFiles(Path contentRootPath, String zipFilename, String zipDir, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
-        // Strip slashes from name
-        var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
-
-        if (!zipFilenameWithoutSlash.endsWith(".zip")) {
-            zipFilenameWithoutSlash += ".zip";
-        }
-
-        Path zipFilePath = Path.of(zipDir, zipFilenameWithoutSlash);
-        Files.createDirectories(Path.of(zipDir));
-        return zipFileService.createZipFileWithFolderContent(zipFilePath, contentRootPath, contentFilter);
-    }
-
-    /**
      * Checks if repo was already checked out and is present on disk
      *
      * @param repoUri URL of the remote repository.
@@ -1502,5 +1441,27 @@ public class GitService extends AbstractGitService {
             var commitInfo = CommitInfoDTO.of(commit);
             commitInfos.add(commitInfo);
         });
+    }
+
+    /**
+     *
+     * @param contentRootPath the root path of the content to zip
+     * @param zipFilename     the name of the zipped file
+     * @param zipDir          path of folder where the zip should be located on disk
+     * @param contentFilter   path filter to exclude some files, can be null to include everything
+     * @return path to the zip file
+     * @throws IOException if the zipping process failed.
+     */
+    public Path zipFiles(Path contentRootPath, String zipFilename, String zipDir, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
+        // Strip whitespace from name
+        var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
+
+        if (!zipFilenameWithoutSlash.endsWith(".zip")) {
+            zipFilenameWithoutSlash += ".zip";
+        }
+
+        Path zipFilePath = Path.of(zipDir, zipFilenameWithoutSlash);
+        Files.createDirectories(Path.of(zipDir));
+        return zipFileService.createZipFileWithFolderContent(zipFilePath, contentRootPath, contentFilter);
     }
 }
