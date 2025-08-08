@@ -96,9 +96,8 @@
                                                     <a class="start-testrun btn btn-primary btn-sm me-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
                                                         @if (!testRun.started) {
                                                             <span jhiTranslate="artemisApp.course.startDate"></span>
-                                                        }
-                                                        @if (testRun.started) {
-                                                            <span jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly"></span>
+                                                        } @else {
+                                                            <span jhiTranslate="artemisApp.examParticipation.continue"></span>
                                                         }
                                                     </a>
                                                 } @else {

@@ -98,6 +98,11 @@ $exam-height-offset: 88px;
 
 // === END BOOTSTRAP ===
 
+// Scrollbar
+$scrollbar-width: 5px;
+$scrollbar-color: $gray-500;
+$scrollbar-transition-time: 0.3s;
+
 // Navigation Tab Bar
 $tab-bar-color: $gray-700;
 $tab-bar-color-hover: $gray-600;
@@ -477,6 +482,7 @@ $exam-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $exam-participation-footer-connected-background: #d1ecf1;
 $exam-participation-footer-disconnected-background: #fff2cc;
 $exam-text-exam-summary-background: #f8f9fa;
+$exam-update-footer-offset: 42px; // height of the update footer (connection status)
 
 // Assessment
 $textblock-assessment-span-hover-background: $gray-300;
