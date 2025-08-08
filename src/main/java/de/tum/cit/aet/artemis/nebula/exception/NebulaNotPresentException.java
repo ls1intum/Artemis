@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.nebula.config;
+package de.tum.cit.aet.artemis.nebula.exception;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.NEBULA_ENABLED_PROPERTY_NAME;
 
