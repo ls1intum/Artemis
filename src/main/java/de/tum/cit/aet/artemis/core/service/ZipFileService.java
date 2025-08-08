@@ -135,18 +135,12 @@ public class ZipFileService {
         }
     }
 
-    /**
-     * Common method to add filtered paths to a ZipOutputStream
-     */
     private void addPathsToZipStream(ZipOutputStream zipOutputStream, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter) {
-        var filteredPaths = paths.filter(path -> Files.isReadable(path) && !Files.isDirectory(path));
-        if (extraFilter != null) {
-            filteredPaths = filteredPaths.filter(extraFilter);
-        }
-        filteredPaths.filter(path -> !IGNORED_ZIP_FILE_NAMES.contains(path)).forEach(path -> {
-            ZipEntry zipEntry = new ZipEntry(pathsRoot.relativize(path).toString());
-            copyToZipFile(zipOutputStream, path, zipEntry);
-        });
+        paths.filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).filter(path -> extraFilter == null || extraFilter.test(path))
+                .filter(path -> !IGNORED_ZIP_FILE_NAMES.contains(path.getFileName())).forEach(path -> {
+                    ZipEntry zipEntry = new ZipEntry(pathsRoot.relativize(path).toString());
+                    copyToZipFile(zipOutputStream, path, zipEntry);
+                });
     }
 
     /**

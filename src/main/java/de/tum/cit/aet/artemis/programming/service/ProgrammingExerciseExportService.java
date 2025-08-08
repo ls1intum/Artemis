@@ -241,7 +241,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         List<Path> pathsToBeZipped = new ArrayList<>();
-        var exportDir = exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, true, Optional.empty(), new ArrayList<>(), pathsToBeZipped);
+        Path exportDir = exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, true, Optional.empty(), new ArrayList<>(), pathsToBeZipped);
         // Setup path to store the zip file for the exported programming exercise
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId()
@@ -421,7 +421,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return gitRepositoryExportService.exportRepositoryWithFullHistoryToMemory(programmingExercise.getRepositoryURL(repositoryType), zippedRepoName);
         }
         catch (IOException | GitAPIException ex) {
-            var error = "Failed to export instructor repository " + repositoryType.getName() + " for programming exercise '" + programmingExercise.getTitle() + "' (id: "
+            String error = "Failed to export instructor repository " + repositoryType.getName() + " for programming exercise '" + programmingExercise.getTitle() + "' (id: "
                     + programmingExercise.getId() + ")";
             log.error("{}: {}", error, ex.getMessage());
             exportErrors.add(error);
@@ -991,7 +991,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return gitRepositoryExportService.exportRepositoryWithFullHistoryToMemory(auxiliaryRepository.getVcsRepositoryUri(), zippedRepoName);
         }
         catch (IOException | GitAPIException ex) {
-            var error = "Failed to export auxiliary repository " + auxiliaryRepository.getName() + " for programming exercise '" + programmingExercise.getTitle() + "' (id: "
+            String error = "Failed to export auxiliary repository " + auxiliaryRepository.getName() + " for programming exercise '" + programmingExercise.getTitle() + "' (id: "
                     + programmingExercise.getId() + ")";
             log.error("{}: {}", error, ex.getMessage());
             exportErrors.add(error);
@@ -1016,11 +1016,11 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         try {
-            var courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+            String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
             String repoName = FileUtil.sanitizeFilename(courseShortName + "-" + programmingExercise.getTitle() + "-" + participation.getId());
 
             // The zip filename is either the student login, team short name or some default string.
-            var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + participation.getId());
+            String studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + participation.getId());
             repoName += "-" + studentTeamOrDefault;
             repoName = participation.addPracticePrefixIfTestRun(repoName);
 
@@ -1028,8 +1028,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return gitRepositoryExportService.exportRepositorySnapshot(participation.getVcsRepositoryUri(), repoName);
         }
         catch (IOException | GitAPIException ex) {
-            var error = "Failed to export student repository for participation " + participation.getId() + " in programming exercise '" + programmingExercise.getTitle() + "' (id: "
-                    + programmingExercise.getId() + ")";
+            String error = "Failed to export student repository for participation " + participation.getId() + " in programming exercise '" + programmingExercise.getTitle()
+                    + "' (id: " + programmingExercise.getId() + ")";
             log.error("{}: {}", error, ex.getMessage());
             exportErrors.add(error);
             return null;

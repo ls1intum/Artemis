@@ -9,9 +9,15 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -65,16 +71,15 @@ public class GitRepositoryExportService {
      */
     public Path getRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName, boolean zipOutput) throws IOException, UncheckedIOException {
         var exercise = repo.getParticipation().getProgrammingExercise();
-        var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
+        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
         String repoName = FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
             repoName += "-student-submission.git";
         }
         else {
-            // The zip filename is either the student login, team short name or some default string.
-            var studentTeamOrDefault = java.util.Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
+            var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
 
             repoName += "-" + studentTeamOrDefault;
         }
@@ -101,10 +106,16 @@ public class GitRepositoryExportService {
      * @param contentFilter   path filter to exclude some files, can be null to include everything
      * @return path to the zip file
      * @throws IOException if the zipping process failed.
+     * @example
+     *          // Exclude .git directory
+     *          Predicate<Path> excludeGit = path -> !path.toString().contains(".git");
+     *
+     *          // Include everything
+     *          Predicate<Path> includeAll = null;
      */
     public Path zipFiles(Path contentRootPath, String zipFilename, String zipDir, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
-        // Strip slashes from name
-        var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
+        // Strip whitespace from name
+        String zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
 
         if (!zipFilenameWithoutSlash.endsWith(".zip")) {
             zipFilenameWithoutSlash += ".zip";
@@ -124,9 +135,15 @@ public class GitRepositoryExportService {
      * @param contentFilter   path filter to exclude some files, can be null to include everything
      * @return InputStreamResource containing the zipped content
      * @throws IOException if the zipping process failed.
+     * @example
+     *          // Exclude .git directory
+     *          Predicate<Path> excludeGit = path -> !path.toString().contains(".git");
+     *
+     *          // Include everything
+     *          Predicate<Path> includeAll = null;
      */
     public InputStreamResource zipDirectoryToMemory(Path contentRootPath, String zipFilename, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
-        var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
+        String zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
 
         if (!zipFilenameWithoutSlash.endsWith(".zip")) {
             zipFilenameWithoutSlash += ".zip";
@@ -134,18 +151,52 @@ public class GitRepositoryExportService {
 
         var byteArrayResource = zipFileService.createZipFileWithFolderContentInMemory(contentRootPath, zipFilenameWithoutSlash, contentFilter);
 
-        return new InputStreamResource(new ByteArrayInputStream(byteArrayResource.getByteArray())) {
+        return createInputStreamResource(byteArrayResource.getByteArray(), byteArrayResource.getFilename().replace(".zip", ""));
+    }
+
+    /**
+     * Creates an InputStreamResource from byte array data with proper filename and content length.
+     *
+     * @param zipData  the byte array containing the zip data
+     * @param filename the filename for the resource (without .zip extension)
+     * @return InputStreamResource with the zip data
+     */
+    private InputStreamResource createInputStreamResource(byte[] zipData, String filename) {
+        return new InputStreamResource(new ByteArrayInputStream(zipData)) {
 
             @Override
             public String getFilename() {
-                return byteArrayResource.getFilename();
+                return filename + ".zip";
             }
 
             @Override
             public long contentLength() {
-                return byteArrayResource.getByteArray().length;
+                return zipData.length;
             }
         };
+    }
+
+    /**
+     * Creates a JGit archive of the repository's working tree for a given treeish.
+     *
+     * @param repository the repository to archive
+     * @param treeish    the treeish to archive (e.g., "HEAD", "refs/heads/main")
+     * @return byte array containing the archive data
+     * @throws GitAPIException if the git operation fails
+     * @throws IOException     if IO operations fail
+     */
+    private byte[] createJGitArchive(Repository repository, String treeish) throws GitAPIException, IOException {
+        ObjectId treeId = repository.resolve(treeish);
+        if (treeId == null) {
+            log.debug("Could not resolve tree for '{}', repository might be empty", treeish);
+            return new byte[0];
+        }
+
+        ByteArrayOutputStream archiveData = new ByteArrayOutputStream();
+        try (Git git = new Git(repository)) {
+            git.archive().setFormat("zip").setTree(treeId).setOutputStream(archiveData).call();
+        }
+        return archiveData.toByteArray();
     }
 
     /**
@@ -159,31 +210,9 @@ public class GitRepositoryExportService {
      * @throws IOException     if IO operations fail
      */
     public InputStreamResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
-        // Get the bare repository
         Repository repository = gitService.getBareRepository(repositoryUri, false);
-
-        try (Git git = new Git(repository)) {
-            // Create a ByteArrayOutputStream to hold the archive data
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-            // Use ArchiveCommand to create a zip archive directly to memory
-            git.archive().setFormat("zip").setTree(git.getRepository().resolve("HEAD")).setOutputStream(outputStream).call();
-
-            // Create an InputStreamResource from the output
-            byte[] zipData = outputStream.toByteArray();
-            return new InputStreamResource(new ByteArrayInputStream(zipData)) {
-
-                @Override
-                public String getFilename() {
-                    return filename + ".zip";
-                }
-
-                @Override
-                public long contentLength() {
-                    return zipData.length;
-                }
-            };
-        }
+        byte[] zipData = createJGitArchive(repository, "HEAD");
+        return createInputStreamResource(zipData, filename);
     }
 
     /**
@@ -198,7 +227,6 @@ public class GitRepositoryExportService {
         String branch = null;
 
         try {
-            // Try to get origin head first
             branch = gitService.getOriginHead(repository);
         }
         catch (Exception e) {
@@ -227,10 +255,10 @@ public class GitRepositoryExportService {
         // If still no branch, try to find any branch
         if (branch == null) {
             try {
-                Map<String, Ref> branches = repository.getAllRefs();
-                for (Map.Entry<String, Ref> entry : branches.entrySet()) {
-                    if (entry.getKey().startsWith("refs/heads/")) {
-                        branch = entry.getKey().substring("refs/heads/".length());
+                Collection<Ref> branches = repository.getRefDatabase().getRefs();
+                for (Ref ref : branches) {
+                    if (ref.getName().startsWith("refs/heads/")) {
+                        branch = ref.getName().substring("refs/heads/".length());
                         break;
                     }
                 }
@@ -277,26 +305,17 @@ public class GitRepositoryExportService {
 
             // Step 2: Add the working tree snapshot using ArchiveCommand
             try {
-                ObjectId treeId = repository.resolve(treeish);
-                if (treeId != null) {
-                    try (ByteArrayOutputStream archiveStream = new ByteArrayOutputStream()) {
-                        try (Git git = new Git(repository)) {
-                            git.archive().setTree(treeId).setFormat("zip").setOutputStream(archiveStream).call();
-                        }
-
-                        // Extract the archive contents and add them to our main zip
-                        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(archiveStream.toByteArray()))) {
-                            ZipEntry entry;
-                            while ((entry = zipInputStream.getNextEntry()) != null) {
-                                zipOutputStream.putNextEntry(new ZipEntry(entry.getName()));
-                                zipInputStream.transferTo(zipOutputStream);
-                                zipOutputStream.closeEntry();
-                            }
+                byte[] archiveData = createJGitArchive(repository, treeish);
+                if (archiveData.length > 0) {
+                    // Extract the archive contents and add them to our main zip
+                    try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(archiveData))) {
+                        ZipEntry entry;
+                        while ((entry = zipInputStream.getNextEntry()) != null) {
+                            zipOutputStream.putNextEntry(new ZipEntry(entry.getName()));
+                            zipInputStream.transferTo(zipOutputStream);
+                            zipOutputStream.closeEntry();
                         }
                     }
-                }
-                else {
-                    log.debug("Could not resolve tree for branch '{}', repository might be empty", branch);
                 }
             }
             catch (Exception e) {
@@ -307,18 +326,7 @@ public class GitRepositoryExportService {
             zipOutputStream.finish();
             byte[] zipData = outputStream.toByteArray();
 
-            return new InputStreamResource(new ByteArrayInputStream(zipData)) {
-
-                @Override
-                public String getFilename() {
-                    return filename + ".zip";
-                }
-
-                @Override
-                public long contentLength() {
-                    return zipData.length;
-                }
-            };
+            return createInputStreamResource(zipData, filename);
         }
     }
 
@@ -332,29 +340,29 @@ public class GitRepositoryExportService {
      * @throws IOException if an I/O error occurs
      */
     private void addDirectoryToZip(ZipOutputStream zipOutputStream, Path rootPath, Path pathToAdd, String prefix) throws IOException {
-        Files.walk(pathToAdd).forEach(path -> {
-            try {
-                String relativePath = rootPath.relativize(path).toString().replace("\\", "/");
-                String zipEntryName = prefix + "/" + relativePath;
+        try (Stream<Path> paths = Files.walk(pathToAdd)) {
+            paths.forEach(path -> {
+                try {
+                    String relativePath = rootPath.relativize(path).toString().replace("\\", "/");
+                    String zipEntryName = prefix + "/" + relativePath;
 
-                if (Files.isDirectory(path)) {
-                    // Add directory entry (with trailing slash)
-                    if (!zipEntryName.endsWith("/")) {
-                        zipEntryName += "/";
+                    if (Files.isDirectory(path)) {
+                        if (!zipEntryName.endsWith("/")) {
+                            zipEntryName += "/";
+                        }
+                        zipOutputStream.putNextEntry(new ZipEntry(zipEntryName));
                     }
-                    zipOutputStream.putNextEntry(new ZipEntry(zipEntryName));
+                    else if (Files.isRegularFile(path)) {
+                        zipOutputStream.putNextEntry(new ZipEntry(zipEntryName));
+                        FileUtils.copyFile(path.toFile(), zipOutputStream);
+                    }
+                    zipOutputStream.closeEntry();
                 }
-                else if (Files.isRegularFile(path)) {
-                    // Add file entry
-                    zipOutputStream.putNextEntry(new ZipEntry(zipEntryName));
-                    FileUtils.copyFile(path.toFile(), zipOutputStream);
+                catch (IOException e) {
+                    throw new UncheckedIOException("Failed to add path to zip: " + path, e);
                 }
-                zipOutputStream.closeEntry();
-            }
-            catch (IOException e) {
-                throw new UncheckedIOException("Failed to add path to zip: " + path, e);
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -369,8 +377,8 @@ public class GitRepositoryExportService {
      */
     public Map<File, FileType> listFilesAndFolders(Repository repo, boolean omitBinaries) {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-        java.util.Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
-        Map<File, FileType> files = new java.util.HashMap<>();
+        Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
+        Map<File, FileType> files = new HashMap<>();
 
         while (itr.hasNext()) {
             File nextFile = new File(itr.next(), repo);
@@ -401,10 +409,10 @@ public class GitRepositoryExportService {
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
-    public java.util.Collection<File> getFiles(Repository repo) {
+    public Collection<File> getFiles(Repository repo) {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-        java.util.Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), filter, filter);
-        java.util.Collection<File> files = new java.util.ArrayList<>();
+        Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), filter, filter);
+        Collection<File> files = new ArrayList<>();
 
         while (itr.hasNext()) {
             files.add(new File(itr.next(), repo));

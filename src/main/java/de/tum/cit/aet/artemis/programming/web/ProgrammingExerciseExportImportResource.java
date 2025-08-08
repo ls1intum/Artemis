@@ -414,7 +414,7 @@ public class ProgrammingExerciseExportImportResource {
         long start = System.nanoTime();
 
         if (auxiliaryRepository.getVcsRepositoryUri() == null) {
-            return ResponseEntity.badRequest()
+            return ResponseEntity.unprocessableEntity()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "repositoryNotConfigured", "The auxiliary repository is not configured correctly."))
                     .body(null);
         }
@@ -423,7 +423,7 @@ public class ProgrammingExerciseExportImportResource {
                 Collections.synchronizedList(new ArrayList<>()));
 
         if (resource == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+            return ResponseEntity.internalServerError().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
@@ -524,14 +524,14 @@ public class ProgrammingExerciseExportImportResource {
 
         // TODO: in case we do not find participations for the given ids, we should inform the user in the client, that the student did not participate in the exercise.
         if (exportedStudentParticipations.isEmpty()) {
-            return ResponseEntity.badRequest()
+            return ResponseEntity.notFound()
                     .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
-                    .body(null);
+                    .build();
         }
 
         File zipFile = programmingExerciseExportService.exportStudentRepositoriesToZipFile(programmingExercise.getId(), exportedStudentParticipations, repositoryExportOptions);
         if (zipFile == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+            return ResponseEntity.internalServerError().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
@@ -571,7 +571,7 @@ public class ProgrammingExerciseExportImportResource {
         RepositoryType repositoryType = includeTests ? RepositoryType.TESTS : RepositoryType.SOLUTION;
         VcsRepositoryUri repositoryUri = programmingExercise.getRepositoryURL(repositoryType);
         if (repositoryUri == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+            return ResponseEntity.internalServerError().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "Failed to export repository because the repository URI is not defined.")).body(null);
         }
 
@@ -582,6 +582,11 @@ public class ProgrammingExerciseExportImportResource {
 
             InputStreamResource zipResource = gitRepositoryExportService.exportRepositorySnapshot(repositoryUri, zippedRepoName);
 
+            if (zipResource == null) {
+                return ResponseEntity.internalServerError()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exportFailed", "Failed to export repository")).body(null);
+            }
+
             log.info("Successfully exported repository for programming exercise {} with title {} in {} ms", programmingExercise.getId(), programmingExercise.getTitle(),
                     (System.nanoTime() - start) / 1000000);
 
@@ -590,7 +595,7 @@ public class ProgrammingExerciseExportImportResource {
         }
         catch (GitAPIException e) {
             log.error("Failed to export repository: {}", e.getMessage());
-            return ResponseEntity.badRequest()
+            return ResponseEntity.internalServerError()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError", "Failed to export repository: " + e.getMessage())).body(null);
         }
     }

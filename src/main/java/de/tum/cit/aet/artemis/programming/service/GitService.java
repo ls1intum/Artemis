@@ -1454,7 +1454,7 @@ public class GitService extends AbstractGitService {
      * @throws IOException if the zipping process failed.
      */
     public Path zipFiles(Path contentRootPath, String zipFilename, String zipDir, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
-        // Strip slashes from name
+        // Strip whitespace from name
         var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
 
         if (!zipFilenameWithoutSlash.endsWith(".zip")) {
