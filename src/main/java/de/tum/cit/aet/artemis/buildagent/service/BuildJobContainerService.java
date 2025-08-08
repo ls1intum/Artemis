@@ -525,15 +525,13 @@ public class BuildJobContainerService {
                     @Override
                     public void onNext(Frame item) {
                         String payload = new String(item.getPayload());
-                        String[] logLines = payload.split(System.lineSeparator());
+                        String[] logLines = payload.split("(?<=\\R)");
                         ZonedDateTime now = ZonedDateTime.now();
-                        boolean hasNewLine = payload.contains(System.lineSeparator());
 
                         if (buildJobId != null) {
                             for (String line : logLines) {
-                                if (!line.trim().isEmpty()) {
-                                    String buildLog = line + (hasNewLine ? System.lineSeparator() : "");
-                                    BuildLogDTO buildLogEntry = new BuildLogDTO(now, buildLog);
+                                if (!line.isEmpty()) {
+                                    BuildLogDTO buildLogEntry = new BuildLogDTO(now, line);
                                     buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
                                 }
                             }
