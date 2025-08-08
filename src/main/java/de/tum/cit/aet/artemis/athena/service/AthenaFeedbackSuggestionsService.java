@@ -194,7 +194,6 @@ public class AthenaFeedbackSuggestionsService {
                 .orElse(null);
         log.info("--------------------------------");
         log.info("--------------------------------");
-        log.info("--------------------------------");
         log.info("Course Competencies: {}", competencies);
         log.info("--------------------------------");
         log.info("--------------------------------");
@@ -217,10 +216,12 @@ public class AthenaFeedbackSuggestionsService {
     public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isGraded)
             throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
+        Submission latestSubmission = getLatestSubmission((StudentParticipation) submission.getParticipation());
+        SubmissionBaseDTO latestSubmissionDTO = latestSubmission != null ? athenaDTOConverterService.ofSubmission(exercise.getId(), latestSubmission) : null;
         List<CourseCompetencyDTO> competencies = courseCompetencyApi.map(api -> api.findAllByExerciseId(exercise.getId()).stream().map(CourseCompetencyDTO::of).toList())
                 .orElse(null);
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
-                isGraded, null, competencies);
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
+                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, latestSubmissionDTO, competencies);
         ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
@@ -243,10 +244,12 @@ public class AthenaFeedbackSuggestionsService {
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
+        Submission latestSubmission = getLatestSubmission((StudentParticipation) submission.getParticipation());
+        SubmissionBaseDTO latestSubmissionDTO = latestSubmission != null ? athenaDTOConverterService.ofSubmission(exercise.getId(), latestSubmission) : null;
         List<CourseCompetencyDTO> competencies = courseCompetencyApi.map(api -> api.findAllByExerciseId(exercise.getId()).stream().map(CourseCompetencyDTO::of).toList())
                 .orElse(null);
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
-                isGraded, null, competencies);
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
+                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, latestSubmissionDTO, competencies);
         ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
