@@ -85,8 +85,6 @@ public class IrisRequestMockProvider {
         mockServer = MockRestServiceServer.createServer(restTemplate);
         shortTimeoutMockServer = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
         closeable = MockitoAnnotations.openMocks(this);
-        System.setProperty("artemis.nebula.base-url", "http://mock-nebula");
-        System.setProperty("artemis.nebula.secret-token", "dummy-token");
     }
 
     public void reset() throws Exception {
