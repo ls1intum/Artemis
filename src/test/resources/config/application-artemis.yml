@@ -75,6 +75,9 @@ artemis:
         destination: http://localhost:8081
     plagiarism-checks:
         plagiarism-results-limit: 100
+    nebula:
+        base-url: http://nebula.fake
+        secret-token: secret-token
 
 info:
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service

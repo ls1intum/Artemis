@@ -42,7 +42,7 @@ public class NebulaConnectionService {
     @Value("${server.url}")
     private String artemisBaseUrl;
 
-    @Value("${artemis.nebula.url}")
+    @Value("${artemis.nebula.base-url}")
     private String nebulaUrl;
 
     @Value("${artemis.nebula.secret-token}")

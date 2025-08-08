@@ -91,7 +91,7 @@ artemis:
     url: http://host.docker.internal:8000
     secret-token: abcdef12345
   nebula:
-    url: http://host.docker.internal:8000
+    base-url: http://host.docker.internal:8000
     secret-token: abcdef12345
 
 
