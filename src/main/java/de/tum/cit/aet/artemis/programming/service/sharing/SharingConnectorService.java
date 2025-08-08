@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 
 /**
@@ -30,7 +31,7 @@ import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
  * @see <a href="https://sharing-codeability.uibk.ac.at/sharing/codeability-sharing-platform/-/wikis/technical/Plugin-Interface">Plugin Tutorial</a>
  */
 @Service
-@Profile("sharing")
+@Profile(Constants.PROFILE_SHARING)
 @Lazy
 public class SharingConnectorService {
 
@@ -41,9 +42,6 @@ public class SharingConnectorService {
      */
     public static final String UNKNOWN_INSTALLATION_NAME = "unknown installation name";
 
-    /**
-     * a maximum check length for validation limiting
-     */
     private static final int MAX_API_KEY_LENGTH = 200;
 
     public static class HealthStatus {
@@ -128,7 +126,7 @@ public class SharingConnectorService {
     private final TaskScheduler taskScheduler;
 
     /**
-     * installation name used to differentiate in Sharing Platform
+     * installation name forwarded in config for Sharing Platform, used to differentiate in Sharing Platform
      *
      * @return the name of this artemis installation (as shown in Sharing Platform)
      */
@@ -136,9 +134,6 @@ public class SharingConnectorService {
         return installationName;
     }
 
-    /**
-     * rest template for connector request
-     */
     private final RestTemplate restTemplate;
 
     public SharingConnectorService(RestTemplate restTemplate, TaskScheduler taskScheduler) {

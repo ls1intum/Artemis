@@ -74,7 +74,7 @@ public class ExerciseSharingService {
     /**
      * just a limit to the maximal accepted token length
      */
-    protected static final int MAX_EXPORTTOKEN_LENGTH = 300;
+    private static final int MAX_EXPORTTOKEN_LENGTH = 300;
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseSharingService.class);
 
@@ -84,11 +84,11 @@ public class ExerciseSharingService {
     private String repoDownloadClonePath;
 
     @Value("${server.url}")
-    protected String artemisServerUrl;
+    private String artemisServerUrl;
 
-    protected final ProfileService profileService;
+    private final ProfileService profileService;
 
-    protected final RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 

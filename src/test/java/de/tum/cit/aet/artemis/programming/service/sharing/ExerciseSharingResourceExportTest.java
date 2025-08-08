@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -43,6 +44,8 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     }
 
     public static final String TEST_CALLBACK_URL = "http://testing/xyz1";
+
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
 
     @Autowired
     private SharingPlatformMockProvider sharingPlatformMockProvider;
@@ -65,9 +68,8 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     @BeforeEach
     void setupExercise() throws Exception {
 
-        var course1 = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-
-        programmingExercise1 = exerciseUtilService.getFirstExerciseWithType(course1, ProgrammingExercise.class);
+        programmingExercise1 = ExerciseUtilService.getFirstExerciseWithType(programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases(),
+                ProgrammingExercise.class);
 
         programmingExerciseUtilService.createGitRepository();
     }
@@ -87,8 +89,6 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
         String content = result.getResponse().getContentAsString();
         assertThat(content).startsWith("An error occurred while exporting the exercise");
     }
-
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")

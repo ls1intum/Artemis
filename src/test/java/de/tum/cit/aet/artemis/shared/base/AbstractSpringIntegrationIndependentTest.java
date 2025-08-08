@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRe
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
@@ -74,9 +73,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     protected CompetencyProgressApi competencyProgressApi;
 
     @MockitoBean
-    protected ProgrammingLanguageFeatureService programmingLanguageFeatureService;
-
-    @MockitoBean
     protected VersionControlService versionControlService;
 
     @MockitoBean
@@ -88,8 +84,8 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi, programmingLanguageFeatureService,
-                versionControlService, continuousIntegrationService, continuousIntegrationTriggerService);
+        Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi, versionControlService, continuousIntegrationService,
+                continuousIntegrationTriggerService);
         super.resetSpyBeans();
     }
 

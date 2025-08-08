@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.web.SharingSupportResource;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -67,12 +68,11 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
  * this class tests all import features of the ExerciseSharingResource class
  */
-class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndependentTest {
+class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "exercisesharingimporttests";
 
@@ -285,9 +285,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
 
         // finally, cleanup the cache
-        exerciseSharingService.getRepositoryCache().asMap().forEach((key, value) -> {
-            exerciseSharingService.getRepositoryCache().invalidate(key);
-        });
+        exerciseSharingService.getRepositoryCache().asMap().forEach((key, value) -> exerciseSharingService.getRepositoryCache().invalidate(key));
         exerciseSharingService.getRepositoryCache().cleanUp();
     }
 
