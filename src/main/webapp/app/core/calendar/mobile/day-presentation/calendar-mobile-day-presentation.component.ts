@@ -7,10 +7,10 @@ import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/c
 @Component({
     selector: 'calendar-mobile-day-presentation',
     imports: [CalendarDayBadgeComponent, CalendarEventsPerDaySectionComponent],
-    templateUrl: './calendar-mobile-day-presentation.html',
-    styleUrl: './calendar-mobile-day-presentation.scss',
+    templateUrl: './calendar-mobile-day-presentation.component.html',
+    styleUrl: './calendar-mobile-day-presentation.component.scss',
 })
-export class CalendarMobileDayPresentation {
+export class CalendarMobileDayPresentationComponent {
     readonly utils = utils;
 
     selectedDay = input.required<Dayjs>();

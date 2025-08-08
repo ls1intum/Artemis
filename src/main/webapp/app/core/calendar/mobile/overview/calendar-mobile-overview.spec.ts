@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CalendarMobileOverviewComponent } from './calendar-mobile-overview';
-import { CalendarMobileMonthPresentation } from 'app/core/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
-import { CalendarMobileDayPresentation } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation';
+import { CalendarMobileMonthPresentationComponent } from 'app/core/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
+import { CalendarMobileDayPresentationComponent } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { CalendarEventFilterComponent } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { ActivatedRoute } from '@angular/router';
@@ -30,8 +30,8 @@ describe('CalendarMobileOverviewComponent', () => {
             imports: [CalendarMobileOverviewComponent],
             declarations: [
                 FaIconComponent,
-                MockComponent(CalendarMobileMonthPresentation),
-                MockComponent(CalendarMobileDayPresentation),
+                MockComponent(CalendarMobileMonthPresentationComponent),
+                MockComponent(CalendarMobileDayPresentationComponent),
                 MockComponent(CalendarEventFilterComponent),
                 MockDirective(TranslateDirective),
             ],
@@ -72,8 +72,8 @@ describe('CalendarMobileOverviewComponent', () => {
         component.selectedDay.set(undefined);
         fixture.detectChanges();
 
-        const monthView = fixture.debugElement.query(By.directive(CalendarMobileMonthPresentation));
-        const dayView = fixture.debugElement.query(By.directive(CalendarMobileDayPresentation));
+        const monthView = fixture.debugElement.query(By.directive(CalendarMobileMonthPresentationComponent));
+        const dayView = fixture.debugElement.query(By.directive(CalendarMobileDayPresentationComponent));
 
         expect(monthView).toBeTruthy();
         expect(dayView).toBeFalsy();
@@ -84,8 +84,8 @@ describe('CalendarMobileOverviewComponent', () => {
         component.selectedDay.set(someDay);
         fixture.detectChanges();
 
-        const monthView = fixture.debugElement.query(By.directive(CalendarMobileMonthPresentation));
-        const dayView = fixture.debugElement.query(By.directive(CalendarMobileDayPresentation));
+        const monthView = fixture.debugElement.query(By.directive(CalendarMobileMonthPresentationComponent));
+        const dayView = fixture.debugElement.query(By.directive(CalendarMobileDayPresentationComponent));
 
         expect(dayView).toBeTruthy();
         expect(monthView).toBeFalsy();

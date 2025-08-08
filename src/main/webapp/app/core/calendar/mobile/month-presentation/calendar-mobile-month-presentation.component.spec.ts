@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { CalendarMobileMonthPresentation } from './calendar-mobile-month-presentation.component';
+import { CalendarMobileMonthPresentationComponent } from './calendar-mobile-month-presentation.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
@@ -10,8 +10,8 @@ import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core
 import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';
 
 describe('CalendarMobileMonthPresentation', () => {
-    let fixture: ComponentFixture<CalendarMobileMonthPresentation>;
-    let component: CalendarMobileMonthPresentation;
+    let fixture: ComponentFixture<CalendarMobileMonthPresentationComponent>;
+    let component: CalendarMobileMonthPresentationComponent;
     let mockMap: Map<string, CalendarEvent[]>;
 
     const referenceDate = dayjs('2025-05-15 10:30');
@@ -50,7 +50,7 @@ describe('CalendarMobileMonthPresentation', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CalendarMobileMonthPresentation],
+            imports: [CalendarMobileMonthPresentationComponent],
             declarations: [MockComponent(CalendarDayBadgeComponent), MockDirective(TranslateDirective)],
             providers: [
                 {
@@ -60,7 +60,7 @@ describe('CalendarMobileMonthPresentation', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CalendarMobileMonthPresentation);
+        fixture = TestBed.createComponent(CalendarMobileMonthPresentationComponent);
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('firstDayOfMonth', dayjs('2025-05-01'));

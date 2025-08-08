@@ -13,7 +13,7 @@ import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-
     templateUrl: './calendar-mobile-month-presentation.component.html',
     styleUrl: './calendar-mobile-month-presentation.component.scss',
 })
-export class CalendarMobileMonthPresentation {
+export class CalendarMobileMonthPresentationComponent {
     private eventMap = inject(CalendarEventService).eventMap;
 
     firstDayOfMonth = input.required<Dayjs>();
