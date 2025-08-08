@@ -802,41 +802,21 @@ Course Info Bar
         display: inline;
     }
 
+    /**
+     * Adds extra space below ordered and unordered lists
+     * within markdown previews. The margin is applied to the end of the list,
+     * ensuring vertical separation when a list is followed by another
+     * block element (such as a paragraph) for improved readability.
+     *
+     * Example (Markdown):
+     *
+     * - First item
+     * - Second item
+     * More text after the list.
+     */
     ol,
     ul {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-    }
-
-    ol {
-        counter-reset: item;
-    }
-
-    ol > li,
-    ul > li {
-        position: relative;
-        padding-left: 1em;
-        margin-bottom: 0.5em;
-        line-height: 1;
-        text-indent: 0;
-    }
-
-    ol > li::before {
-        content: counter(item) '.';
-        counter-increment: item;
-        position: absolute;
-        left: 0;
-        top: 0;
-        font-weight: normal;
-    }
-
-    ul > li::before {
-        content: '•';
-        position: absolute;
-        left: 0;
-        top: 0;
-        font-weight: bold;
+        margin-bottom: 0.75em;
     }
 }
 
@@ -1187,4 +1167,49 @@ $transition-in-between-delay: 0.05s;
 
 .min-h-100 {
     min-height: 100%;
+}
+
+/*
+Hides the scrollbar, unless the user is currently using the scrollbar
+Note: This class assumes that the scrollbar is already present (e.g. overflow-y and a defined max-height)
+*/
+.hide-scrollbar-unless-scrolling {
+    /* required for Firefox and Safari, otherwise elments are hidden when scrollbar is not in use */
+    scrollbar-gutter: stable;
+
+    /* Firefox scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color var(--scrollbar-transition-time);
+
+    /* On hover/active, show the scrollbar in Firefox */
+    &:hover,
+    &:active {
+        scrollbar-color: var(--scrollbar-color) transparent;
+    }
+
+    /* WebKit scrollbar styling (Chrome, Safari, etc.) */
+    &::-webkit-scrollbar {
+        width: var(--scrollbar-width);
+        opacity: 0;
+        transition: opacity var(--scrollbar-transition-time);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        width: var(--scrollbar-width);
+        background-color: transparent;
+        border-radius: var(--scrollbar-width);
+        transition: background-color var(--scrollbar-transition-time);
+    }
+
+    &::-webkit-scrollbar-track {
+        background-color: transparent;
+    }
+
+    /* Show scrollbar on hover/active scrolling */
+    &:hover::-webkit-scrollbar-thumb,
+    &:active::-webkit-scrollbar-thumb {
+        width: var(--scrollbar-width);
+        background-color: var(--scrollbar-color);
+    }
 }

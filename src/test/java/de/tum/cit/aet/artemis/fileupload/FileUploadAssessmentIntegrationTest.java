@@ -196,7 +196,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         Result result = request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
-        assertThat(result.isRated()).isNull();
+        assertThat(result.isRated()).isFalse();
         assertThat(((StudentParticipation) result.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
 

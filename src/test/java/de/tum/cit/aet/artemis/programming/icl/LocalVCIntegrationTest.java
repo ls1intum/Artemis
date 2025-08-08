@@ -31,6 +31,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
@@ -108,7 +109,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         someRepository.resetLocalRepo();
     }
 
-    @Disabled
     @Test
     void testFetchPush_usingVcsAccessToken() {
         var programmingParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -270,22 +270,22 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         String solutionRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, solutionRepositorySlug);
         String testsRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, testsRepositorySlug);
 
-        // Force push to assignment repository (should not be possible)
+        // Force push to assignment repository is allowed for instructors
         RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, assignmentRepoUri, instructor1Login, projectKey1, assignmentRepositorySlug);
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
 
-        // Force push to template repository (should not be possible)
+        // Force push to template repository is allowed for instructors
         remoteRefUpdate = setupAndTryForcePush(templateRepository, templateRepoUri, instructor1Login, projectKey1, templateRepositorySlug);
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
 
-        // Force push to solution repository (should not be possible)
+        // Force push to solution repository is allowed for instructors
         remoteRefUpdate = setupAndTryForcePush(solutionRepository, solutionRepoUri, instructor1Login, projectKey1, solutionRepositorySlug);
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
 
-        // Force push to rests repository (should not be possible)
+        // Force push to rests repository is allowed for instructors
         remoteRefUpdate = setupAndTryForcePush(testsRepository, testsRepoUri, instructor1Login, projectKey1, testsRepositorySlug);
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
     }
 
     private RemoteRefUpdate setupAndTryForcePush(LocalRepository originalRepository, String repositoryUri, String login, String projectKey, String repositorySlug)
@@ -351,5 +351,24 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // assert that the folder names are correct
         assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1);
         assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2);
+    }
+
+    @Disabled
+    @Test
+    void testFilesLargerThan10MbAreRejected() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        Path largeFile = assignmentRepository.workingCopyGitRepoFile.toPath().resolve("large-file.txt");
+        FileUtils.writeByteArrayToFile(largeFile.toFile(), new byte[11 * 1024 * 1024]); // 11 MB
+
+        assignmentRepository.workingCopyGitRepo.add().addFilepattern("large-file.txt").call();
+        GitService.commit(assignmentRepository.workingCopyGitRepo).setMessage("Add large file").call();
+
+        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+        PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRemote(repositoryUri)
+                .setRefSpecs(new RefSpec("refs/heads/" + defaultBranch + ":refs/heads/" + defaultBranch)).call().iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("File 'large-file.txt' exceeds 10MB size limit (11.00 MB)");
     }
 }

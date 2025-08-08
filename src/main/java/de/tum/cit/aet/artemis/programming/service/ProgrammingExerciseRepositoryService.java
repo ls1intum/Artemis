@@ -127,7 +127,7 @@ public class ProgrammingExerciseRepositoryService {
         final Path repositoryTypeTemplateDir = getTemplateDirectoryForRepositoryType(repositoryType);
 
         final VcsRepositoryUri repoUri = programmingExercise.getRepositoryURL(repositoryType);
-        final Repository repo = gitService.getOrCheckoutRepository(repoUri, false);
+        final Repository repo = gitService.getOrCheckoutRepository(repoUri, false, true);
 
         // Get path, files and prefix for the programming-language dependent files. They are copied first.
         final Path generalTemplatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage())
@@ -244,7 +244,7 @@ public class ProgrammingExerciseRepositoryService {
             versionControlService.orElseThrow().createRepository(projectKey, repositoryName);
             repo.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(programmingExercise.getProjectKey(), repositoryName).toString());
 
-            final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true);
+            final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true, true);
             gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
         }
     }
@@ -283,7 +283,7 @@ public class ProgrammingExerciseRepositoryService {
         versionControlService.orElseThrow().createRepository(programmingExercise.getProjectKey(), repositoryName);
         repo.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(programmingExercise.getProjectKey(), repositoryName).toString());
 
-        final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true);
+        final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true, true);
         gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
     }
 
@@ -865,7 +865,7 @@ public class ProgrammingExerciseRepositoryService {
      */
     private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException {
         final var repositoryUri = versionControlService.orElseThrow().getCloneRepositoryUri(projectKey, repositoryName);
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, true);
         FileUtil.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, "Template adjusted by Artemis", true, user);

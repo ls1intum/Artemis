@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, catchError, map, throwError } from 'rxjs';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import timezone from 'dayjs/plugin/timezone';
+import timezone from 'dayjs/esm/plugin/timezone';
 import { CalendarEvent, CalendarEventDTO, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 import { AlertService } from 'app/shared/service/alert.service';

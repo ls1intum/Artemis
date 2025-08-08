@@ -41,6 +41,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { FileService } from 'app/shared/service/file.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('FileUploadSubmissionComponent', () => {
     let comp: FileUploadSubmissionComponent;
@@ -53,7 +54,7 @@ describe('FileUploadSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgxDatatableModule],
+            imports: [NgxDatatableModule, FaIconComponent],
             declarations: [
                 FileUploadSubmissionComponent,
                 MockComponent(ComplaintsForTutorComponent),
@@ -209,8 +210,7 @@ describe('FileUploadSubmissionComponent', () => {
         tick();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
+        expect(submitButton.componentInstance.disabled).toBeTrue();
 
         tick();
         fixture.destroy();
@@ -229,8 +229,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         expect(comp.isLate).toBeTrue();
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
+        expect(submitButton.componentInstance.disabled).toBeFalse();
 
         tick();
         fixture.destroy();
@@ -247,9 +246,9 @@ describe('FileUploadSubmissionComponent', () => {
         comp.result = result;
         fixture.detectChanges();
 
+        expect(comp.isLate).toBeTrue();
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
+        expect(submitButton.componentInstance.disabled).toBeTrue();
 
         tick();
         fixture.destroy();

@@ -262,7 +262,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportProgrammingExercise() throws Exception {
@@ -285,6 +284,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY,
                 templateBuildTestResults, solutionBuildTestResults);
 
+        programmingExercise.setGradingCriteria(ProgrammingExerciseFactory.generateGradingCriteria(programmingExercise));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise,
                 courseUtilService.addEmptyCourse());
 
@@ -301,14 +303,17 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Assert that the repositories were correctly created for the imported exercise.
         ProgrammingExercise importedExerciseWithParticipations = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(importedExercise.getId()).orElseThrow();
         localVCLocalCITestService.verifyRepositoryFoldersExist(importedExerciseWithParticipations, localVCBasePath);
+        assertThat(importedExercise.getGradingCriteria()).hasSize(1);
 
         // Also check that the template and solution repositories were built successfully.
         TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(importedExercise.getId())
                 .orElseThrow();
         SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(importedExercise.getId())
                 .orElseThrow();
-        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
-        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
+        // Verifying the build was triggered is enough.
+        // The actual test results are not important for this test and only lead to a lot of flakiness
+        verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
+        verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
     }
 

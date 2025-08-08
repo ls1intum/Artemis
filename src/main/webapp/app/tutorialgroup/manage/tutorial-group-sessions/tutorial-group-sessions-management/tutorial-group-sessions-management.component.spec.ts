@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -46,6 +46,7 @@ describe('TutorialGroupSessionsManagement', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 TutorialGroupSessionsManagementComponent,
                 TutorialGroupSessionRowStubComponent,
@@ -53,7 +54,6 @@ describe('TutorialGroupSessionsManagement', () => {
                 LoadingIndicatorContainerStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(RemoveSecondsPipe),
-                MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
             ],
             providers: [

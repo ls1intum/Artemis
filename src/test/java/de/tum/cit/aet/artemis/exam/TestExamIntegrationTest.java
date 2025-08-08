@@ -24,10 +24,14 @@ import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -48,6 +52,12 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     ChannelRepository channelRepository;
+
+    @Autowired
+    private ExamService examService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     private Course course1;
 
@@ -269,5 +279,26 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         examUtilService.addStudentExamForTestExam(testExam1, student1);
 
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.INTERNAL_SERVER_ERROR, StudentExam.class);
+    }
+
+    /**
+     * Tests that students see their first correction points when the second correction is incomplete.
+     * This test prevents Issue #4793
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStudentSeesFirstCorrectionPointsWhenSecondCorrectionIncomplete() throws Exception {
+        // Setup test data
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Exam exam = examUtilService.setupExamWithTwoCorrectionRounds();
+        ProgrammingExercise programmingExercise = examUtilService.setupProgrammingExerciseWithSecondCorrection(exam);
+        StudentExam studentExam = examUtilService.setupStudentExamWithSubmission(exam, programmingExercise, student);
+        participationUtilService.setupSubmissionWithTwoResults(programmingExercise, student);
+
+        StudentExamWithGradeDTO studentGrade = examService.getStudentExamGradesForSummary(student, studentExam, false);
+        assertThat(studentGrade).isNotNull();
+        assertThat(studentGrade.studentExam().getUser().getId()).isEqualTo(student.getId());
+        // Verify the student sees the correct points from the first correction (8.0), not 0
+        assertThat(studentGrade.studentResult().overallPointsAchieved()).isEqualTo(8.0);
     }
 }
