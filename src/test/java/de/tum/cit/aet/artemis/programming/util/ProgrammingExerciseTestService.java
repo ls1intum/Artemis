@@ -139,6 +139,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.AutomaticProgrammingExerciseCleanupService;
+import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
@@ -179,6 +180,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private GitService gitService;
+
+    @Autowired
+    private GitRepositoryExportService gitRepositoryExportService;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -1536,7 +1540,7 @@ public class ProgrammingExerciseTestService {
                     return new ByteArrayInputStream(mockZipData);
                 }
             };
-            doReturn(mockResource).when(gitService).exportRepositoryWithFullHistoryToMemory(eq(auxiliaryRepository.getVcsRepositoryUri()), anyString());
+            doReturn(mockResource).when(gitRepositoryExportService).exportRepositoryWithFullHistoryToMemory(eq(auxiliaryRepository.getVcsRepositoryUri()), anyString());
         }
         catch (Exception e) {
             throw new RuntimeException("Failed to setup export mock", e);

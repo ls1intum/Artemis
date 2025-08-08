@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration.isBinaryFile;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -85,7 +84,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -1465,41 +1463,4 @@ public class GitService extends AbstractGitService {
         Files.createDirectories(Path.of(zipDir));
         return zipFileService.createZipFileWithFolderContent(zipFilePath, contentRootPath, contentFilter);
     }
-
-    /**
-     * Exports a repository snapshot directly to memory without creating temporary files.
-     * This method uses JGit's ArchiveCommand to create a zip archive of the repository's HEAD state.
-     *
-     * @param repositoryUri the URI of the repository to export
-     * @param filename      the desired filename for the export (without extension)
-     * @return InputStreamResource containing the zipped repository content
-     * @throws GitAPIException if the git operation fails
-     * @throws IOException     if IO operations fail
-     */
-    public InputStreamResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
-        Repository repository = getOrCheckoutRepository(repositoryUri, false, false);
-        try (Git git = new Git(repository)) {
-            var zipFilenameWithoutSlash = filename.replaceAll("\\s", "");
-
-            if (!zipFilenameWithoutSlash.endsWith(".zip")) {
-                zipFilenameWithoutSlash += ".zip";
-            }
-
-            var byteArrayResource = zipFileService.createZipFileWithFolderContentInMemory(repository.getLocalPath(), zipFilenameWithoutSlash, null);
-
-            return new InputStreamResource(new ByteArrayInputStream(byteArrayResource.getByteArray())) {
-
-                @Override
-                public String getFilename() {
-                    return byteArrayResource.getFilename();
-                }
-
-                @Override
-                public long contentLength() {
-                    return byteArrayResource.getByteArray().length;
-                }
-            };
-        }
-    }
-
 }
