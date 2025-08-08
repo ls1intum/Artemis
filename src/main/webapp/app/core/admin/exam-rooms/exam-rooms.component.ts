@@ -30,7 +30,7 @@ export class ExamRoomsComponent {
     overview: WritableSignal<ExamRoomAdminOverviewDTO | undefined> = signal(undefined);
 
     // Computed signals
-    canUpload: Signal<boolean> = computed(() => !!this.selectedFile());
+    canUpload: Signal<boolean> = computed(() => !!this.selectedFile() && !this.isUploading());
     isUploading: Signal<boolean> = computed(() => this.actionStatus() === 'uploading');
     hasUploadInformation: Signal<boolean> = computed(() => this.actionStatus() === 'uploadSuccess' && !!this.uploadInformation());
     hasUploadFailed: Signal<boolean> = computed(() => this.actionStatus() === 'uploadError');
