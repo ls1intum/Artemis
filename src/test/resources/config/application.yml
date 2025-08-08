@@ -304,8 +304,7 @@ aeolus:
     url: http://mock-aeolus-url:8090
 
 nebula:
-    base-url: http://mockenabula:8000
-    secret-token: "nebula-secret"
+
 
 # Eureka configuration
 eureka:
