@@ -9,14 +9,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.sshd.server.session.ServerSession;
-import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -121,13 +118,6 @@ class LocalVCServletServiceTest {
         testRepositoryUri = mock(LocalVCRepositoryUri.class);
         // Use lenient() to avoid unnecessary stubbing errors for tests that don't use this mock
         lenient().when(testRepositoryUri.getRelativeRepositoryPath()).thenReturn(java.nio.file.Path.of("test/repo"));
-
-        // Setup mock repositories map to avoid NullPointerException in getCommitHash tests
-        Map<String, Repository> mockRepositories = new HashMap<>();
-        // Add a mock repository for the test repository URI
-        Repository mockRepository = mock(Repository.class);
-        mockRepositories.put("test/repo", mockRepository);
-        ReflectionTestUtils.setField(localVCServletService, "repositories", mockRepositories);
 
         // Setup the VcsAccessLogService as an Optional containing the mock
         ReflectionTestUtils.setField(localVCServletService, "vcsAccessLogService", Optional.of(vcsAccessLogService));
