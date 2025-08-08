@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -131,11 +130,6 @@ public class LocalVCServletService {
 
     public static final String BUILD_USER_NAME = "buildjob_user";
 
-    // Cache the retrieved repositories for quicker access.
-    // The resolveRepository method is called multiple times per request.
-    // Key: repositoryPath --> Value: Repository
-    private final Map<String, Repository> repositories = new HashMap<>();
-
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
@@ -158,8 +152,7 @@ public class LocalVCServletService {
     }
 
     /**
-     * Resolves the repository for the given path by first trying to use a cached one.
-     * If the cache does not hit, it creates a JGit repository and opens the local repository.
+     * Resolves the repository for the given path by creating a JGit repository and opening the local repository.
      *
      * @param repositoryPath the path of the repository, as parsed out of the URL (everything after /git).
      * @return the opened repository instance.
@@ -177,28 +170,18 @@ public class LocalVCServletService {
             throw new RepositoryNotFoundException(repositoryPath);
         }
 
-        if (repositories.containsKey(repositoryPath)) {
-            log.debug("Retrieving cached local repository {}", repositoryPath);
-            Repository repository = repositories.get(repositoryPath);
-            repository.incrementOpen();
+        log.debug("Opening local repository {}", repositoryPath);
+        try {
+            Repository repository = FileRepositoryBuilder.create(repositoryDir.toFile());
+            // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
+            repository.getConfig().setBoolean("http", null, "receivepack", true);
+
             log.debug("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
             return repository;
         }
-        else {
-            log.debug("Opening local repository {}", repositoryPath);
-            try (Repository repository = FileRepositoryBuilder.create(repositoryDir.toFile())) {
-                // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
-                repository.getConfig().setBoolean("http", null, "receivepack", true);
-
-                this.repositories.put(repositoryPath, repository);
-                repository.incrementOpen();
-                log.debug("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
-                return repository;
-            }
-            catch (IOException e) {
-                log.error("Unable to open local repository {}", repositoryPath);
-                throw new RepositoryNotFoundException(repositoryPath, e);
-            }
+        catch (IOException e) {
+            log.error("Unable to open local repository {}", repositoryPath);
+            throw new RepositoryNotFoundException(repositoryPath, e);
         }
     }
 
@@ -352,9 +335,12 @@ public class LocalVCServletService {
      */
     private String getCommitHash(LocalVCRepositoryUri localVCRepositoryUri) {
         try {
-            return getLatestCommitHash(repositories.get(localVCRepositoryUri.getRelativeRepositoryPath().toString()));
+            String repositoryPath = localVCRepositoryUri.getRelativeRepositoryPath().toString();
+            try (Repository repository = resolveRepository(repositoryPath)) {
+                return getLatestCommitHash(repository);
+            }
         }
-        catch (GitAPIException e) {
+        catch (GitAPIException | RepositoryNotFoundException | NullPointerException e) {
             log.warn("Failed to obtain commit hash for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(), e.getMessage());
         }
         return "";
