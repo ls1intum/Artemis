@@ -225,4 +225,5 @@ data-exports/
 /legal
 /src/test/resources/config/application-local.yml
 startupBeans.dot
+deferredEagerBeanInstantiationViolations.dot
 /junit.xml
