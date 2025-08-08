@@ -17,7 +17,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -42,6 +41,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ResponseActions;
@@ -50,7 +50,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -60,19 +59,20 @@ import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.web.SharingSupportResource;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
+import de.tum.cit.aet.artemis.programming.service.localci.LocalCIProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
  * this class tests all import features of the ExerciseSharingResource class
  */
-class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndependentTest {
+class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "exercisesharingimporttests";
 
@@ -107,6 +107,9 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
     @Autowired
     @Qualifier("sharingRestTemplate")
     private RestTemplate restTemplate;
+
+    @MockitoBean
+    protected LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     private MockRestServiceServer mockServer;
 
@@ -285,9 +288,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
 
         // finally, cleanup the cache
-        exerciseSharingService.getRepositoryCache().asMap().forEach((key, value) -> {
-            exerciseSharingService.getRepositoryCache().invalidate(key);
-        });
+        exerciseSharingService.getRepositoryCache().asMap().forEach((key, value) -> exerciseSharingService.getRepositoryCache().invalidate(key));
         exerciseSharingService.getRepositoryCache().cleanUp();
     }
 
@@ -302,7 +303,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         responseActions.andRespond(MockRestResponseCreators.withSuccess(zippedBytes, MediaType.APPLICATION_OCTET_STREAM));
     }
 
-    private ProgrammingExercise getAndTestExerciseDetails(SharingInfoDTO sharingInfo) throws Exception, JsonProcessingException, UnsupportedEncodingException {
+    private ProgrammingExercise getAndTestExerciseDetails(SharingInfoDTO sharingInfo) throws Exception {
         // get Exercise Details
 
         MvcResult resultED = requestUtilService
@@ -343,8 +344,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
             e.setExampleSubmissions(Set.of());
             e.setAttachments(Set.of());
             e.setPlagiarismCases(Set.of());
-            if (e instanceof ProgrammingExercise) {
-                ProgrammingExercise pe = (ProgrammingExercise) e;
+            if (e instanceof ProgrammingExercise pe) {
                 pe.setAuxiliaryRepositories(List.of());
                 pe.setTemplateParticipation(null);
                 pe.setSolutionParticipation(null);

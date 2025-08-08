@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
-import org.springframework.context.annotation.Profile;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -13,6 +11,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * @param course      the course context for the exercise
  * @param sharingInfo the original sharing information from the sharing platform
  */
-@Profile("sharing")
+
 public record SharingSetupInfo(ProgrammingExercise exercise, Course course, SharingInfoDTO sharingInfo) {
 }

@@ -59,7 +59,7 @@ public class SharingSupportResource {
     @GetMapping(SHARINGCONFIG_RESOURCE_PATH)
     public ResponseEntity<SharingPluginConfig> getConfig(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestHeader("Authorization") Optional<String> sharingApiKey,
             @RequestParam String apiBaseUrl, @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestParam Optional<String> installationName) {
-        if (sharingApiKey.isPresent() && sharingConnectorService.validate(sharingApiKey.get())) {
+        if (sharingApiKey.isPresent() && sharingConnectorService.validateApiKey(sharingApiKey.get())) {
             log.info("Delivered Sharing Config ");
             URL parsedApiBaseUrl;
             try {

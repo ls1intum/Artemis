@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -59,7 +58,6 @@ import com.google.common.cache.LoadingCache;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
@@ -73,9 +71,11 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportServi
 public class ExerciseSharingService {
 
     /**
-     * just a limit to the maximal accepted token length
+     * just a limit to the maximal accepted token length.
+     *
      */
-    protected static final int MAX_EXPORTTOKEN_LENGTH = 300;
+    // also needed in tests.
+    static final int MAX_EXPORT_TOKEN_LENGTH = 300;
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseSharingService.class);
 
@@ -85,11 +85,9 @@ public class ExerciseSharingService {
     private String repoDownloadClonePath;
 
     @Value("${server.url}")
-    protected String artemisServerUrl;
+    private String artemisServerUrl;
 
-    protected final ProfileService profileService;
-
-    protected final RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
@@ -98,16 +96,15 @@ public class ExerciseSharingService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     /**
-     * just a local instance of an object Mapper that ignores unknown properties, in case the Sharing Platform extends its meta data format.
+     * just a local instance of an object mapper which ignores unknown properties, in case the Sharing Platform extends its metadata format.
      */
     private final ObjectMapper objectMapperAllowingUnknownProperties;
 
     public ExerciseSharingService(ProgrammingExerciseExportService programmingExerciseExportService, SharingConnectorService sharingConnectorService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProfileService profileService, @Qualifier("sharingRestTemplate") RestTemplate restTemplate) {
+            ProgrammingExerciseRepository programmingExerciseRepository, @Qualifier("sharingRestTemplate") RestTemplate restTemplate) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.sharingConnectorService = sharingConnectorService;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.profileService = profileService;
         this.restTemplate = restTemplate;
 
         this.objectMapperAllowingUnknownProperties = new ObjectMapper();
@@ -129,7 +126,7 @@ public class ExerciseSharingService {
         if (isInvalidToken(basketToken)) {
             return Optional.empty();
         }
-        String basketRequestURL = correctLocalHostInDocker(apiBaseUrl).concat("/basket/").concat(basketToken);
+        String basketRequestURL = apiBaseUrl.concat("/basket/").concat(basketToken);
         try {
             ShoppingBasket shoppingBasket = restTemplate.getForObject(basketRequestURL, ShoppingBasket.class);
             return Optional.ofNullable(shoppingBasket);
@@ -149,7 +146,7 @@ public class ExerciseSharingService {
      *
      * @param sharingInfo  the sharing info
      * @param itemPosition the item position
-     * @return the exercise as a a zip stream
+     * @return the exercise as a zip stream
      * @throws SharingException if exercise cannot be loaded
      */
     public Optional<SharingMultipartZipFile> getBasketItem(SharingInfoDTO sharingInfo, int itemPosition) throws SharingException {
@@ -166,7 +163,7 @@ public class ExerciseSharingService {
     }
 
     /**
-     * simple loading cache for pathes to zip-files with 1 hour timeout.
+     * simple loading cache for paths to zip-files with 1-hour timeout.
      */
     private final LoadingCache<Pair<SharingInfoDTO, Integer>, Path> repositoryCache = CacheBuilder.newBuilder().maximumSize(100).expireAfterAccess(1, TimeUnit.HOURS)
             .removalListener(notification -> {
@@ -190,7 +187,7 @@ public class ExerciseSharingService {
                     SharingInfoDTO sharingInfo = sharingInfoAndPos.getLeft();
                     int itemPosition = sharingInfoAndPos.getRight();
                     try {
-                        String exercisesZipUrl = correctLocalHostInDocker(sharingInfo.apiBaseURL()) + "/basket/{basketToken}/repository/" + itemPosition + "?format={format}";
+                        String exercisesZipUrl = sharingInfo.apiBaseURL() + "/basket/{basketToken}/repository/" + itemPosition + "?format={format}";
                         Resource zipInputResource = restTemplate.getForObject(exercisesZipUrl, Resource.class,
                                 Map.of("basketToken", sharingInfo.basketToken(), "format", "artemis"));
                         if (zipInputResource == null) {
@@ -220,29 +217,13 @@ public class ExerciseSharingService {
         return repositoryCache;
     }
 
-    public Optional<SharingMultipartZipFile> getCachedBasketItem(SharingInfoDTO sharingInfo) throws IOException, SharingException {
+    public Optional<SharingMultipartZipFile> getCachedBasketItem(SharingInfoDTO sharingInfo) throws SharingException {
         int itemPosition = sharingInfo.exercisePosition();
         return getBasketItem(sharingInfo, itemPosition);
     }
 
     /**
-     * Replaces a url to localhost with
-     * host.docker.internal if started inside docker. In this case most localhost urls must be retargeted to host.docker.internal.
-     *
-     * @param url the url to be corrected
-     * @return a url, that points to host.docker.internal if previously directed to localhost.
-     */
-    private String correctLocalHostInDocker(String url) {
-        if (profileService.isProfileActive("docker")) {
-            if (url.contains("//localhost")) {
-                return url.replace("//localhost", "//host.docker.internal");
-            }
-        }
-        return url;
-    }
-
-    /**
-     * Retrieves the Exercise-Details file from a Sharing basket, parses it, and returns it as an ProgrammingExercise-Object.
+     * Retrieves the Exercise-Details file from a Sharing basket, parses it, and returns it as a ProgrammingExercise-Object.
      *
      * @param sharingInfo of the basket to extract the problem statement from
      * @return The content of the Exercise-Details file
@@ -273,44 +254,39 @@ public class ExerciseSharingService {
      * @throws IOException if a reading error occurs
      */
     public Optional<String> getEntryFromBasket(Pattern matchingPattern, SharingInfoDTO sharingInfo) throws IOException {
-        InputStream repositoryStream;
-        try {
-            Optional<SharingMultipartZipFile> cachedBasketItem = this.getCachedBasketItem(sharingInfo);
-            if (cachedBasketItem.isEmpty()) {
+        try (SharingMultipartZipFile zipFile = this.getCachedBasketItem(sharingInfo).orElse(null)) {
+            if (zipFile == null) {
                 return Optional.empty();
             }
-            repositoryStream = cachedBasketItem.get().getInputStream();
+            try (ZipInputStream zippedRepositoryStream = new ZipInputStream(zipFile.getInputStream())) {
+
+                ZipEntry entry;
+                while ((entry = zippedRepositoryStream.getNextEntry()) != null) {
+                    Matcher matcher = matchingPattern.matcher(entry.getName());
+                    if (matcher.find()) {
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        byte[] buffer = new byte[COPY_BUFFER_SIZE];
+                        int bytesRead;
+                        while ((bytesRead = zippedRepositoryStream.read(buffer)) != -1) {
+                            baos.write(buffer, 0, bytesRead);
+                        }
+                        String entryContent = new String(baos.toByteArray(), StandardCharsets.UTF_8);
+                        zippedRepositoryStream.closeEntry();
+                        return Optional.of(entryContent);
+                    }
+                    zippedRepositoryStream.closeEntry();
+                }
+                return Optional.empty(); // Not found
+            }
         }
-        catch (IOException | SharingException e) {
+        catch (SharingException e) {
             log.error("Cannot read input Template for {}", sharingInfo.basketToken(), e);
             return Optional.empty();
-        }
-
-        try (ZipInputStream zippedRepositoryStream = new ZipInputStream(repositoryStream)) {
-
-            ZipEntry entry;
-            while ((entry = zippedRepositoryStream.getNextEntry()) != null) {
-                Matcher matcher = matchingPattern.matcher(entry.getName());
-                if (matcher.find()) {
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    byte[] buffer = new byte[COPY_BUFFER_SIZE];
-                    int bytesRead;
-                    while ((bytesRead = zippedRepositoryStream.read(buffer)) != -1) {
-                        baos.write(buffer, 0, bytesRead);
-                    }
-                    String entryContent = baos.toString(StandardCharsets.UTF_8);
-                    baos.close();
-                    zippedRepositoryStream.closeEntry();
-                    return Optional.of(entryContent);
-                }
-                zippedRepositoryStream.closeEntry();
-            }
-            return Optional.empty(); // Not found
         }
     }
 
     /**
-     * Creates Zip file for exercise and returns a URL pointing to Sharing
+     * Creates a zip-file for exercise and returns a URL pointing to Sharing
      * with a callback URL addressing the generated Zip file for download via the Sharing Platform
      *
      * @param exerciseId the ID of the exercise to export
@@ -333,10 +309,10 @@ public class ExerciseSharingService {
 
             // remove the 'repoDownloadClonePath' part and 'zip' extension
             String token = Path.of(repoDownloadClonePath).relativize(zipFilePath).toString().replace(".zip", "");
-            // we encode the zip-file path as a Base64-Token
-            // in order to simplify the token, we strip trailing "="
-            // since we cannot guarantee that the sharing platfrom connects to the same jvm instance, we have to find the file with the token on the (shared) file system.
-            String tokenInB64 = Base64.getEncoder().encodeToString(token.getBytes()).replaceAll("=+$", "");
+            // We encode the zip-file path as a Base64-Token
+            // to simplify the token, we strip trailing "=".
+            // We cannot guarantee that the sharing platform connects to the same jvm instance, we have to find the file with the token on the (shared) file system.
+            String tokenInB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(token.getBytes(StandardCharsets.UTF_8));
             String tokenIntegrity = createHMAC(tokenInB64);
 
             URL apiBaseUrl = sharingConnectorService.getSharingApiBaseUrlOrNull();
@@ -381,7 +357,8 @@ public class ExerciseSharingService {
             mac.init(secretKeySpec);
             byte[] hmacBytes = mac.doFinal(base64token.getBytes(StandardCharsets.UTF_8));
 
-            return Base64.getEncoder().encodeToString(hmacBytes);
+            // URL-safe Base64 avoids '+' and '=' in query params
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(hmacBytes);
         }
         catch (NoSuchAlgorithmException | InvalidKeyException e) {
             log.error("Cannot calculate MAC", e);
@@ -400,15 +377,16 @@ public class ExerciseSharingService {
     public boolean validate(String base64token, String sec) {
         // we have to take care that the base64 encoded token may contain a + sign, which may be converted to a space
         // not sure whether this may be an effect of our testing environment
-        if (isInvalidToken(base64token) || StringUtils.isEmpty(sec))
+        if (isInvalidToken(base64token) || StringUtils.isEmpty(sec)) {
             return false;
+        }
         String sanitizedSec = sec.replace(' ', '+');
         String computedHMAC = createHMAC(base64token);
         return MessageDigest.isEqual(computedHMAC.getBytes(StandardCharsets.UTF_8), sanitizedSec.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
-     * loads the stored file from file system (via the b64 token).
+     * loads the stored file from the file system (via the b64 token).
      *
      * @param b64Token the base64 encoded token
      * @return the file referenced by the token
@@ -419,20 +397,14 @@ public class ExerciseSharingService {
             return Optional.empty();
         }
 
-        // Before sending the token to the sharing platform, we removed the trailing padding-characters "=". Now we add them again for padding to 4bytes code.
-        // remark: the decoding would also work without trailing "=" :-) However since this is not documented in the API, we stick to the safe side.
-        StringBuilder restoredB64Token = new StringBuilder(b64Token);
-        while (restoredB64Token.length() % 4 != 0) {
-            restoredB64Token.append("=");
-        }
-        String decodedToken = new String(Base64.getDecoder().decode(restoredB64Token.toString()));
+        String decodedToken = new String(Base64.getUrlDecoder().decode(b64Token), StandardCharsets.UTF_8);
         // with the HMAC key of the token, we ensure it has not been changed client-side after construction,
         // therefore, we know that `decodedToken` points to a safe path
         return Optional.of(Paths.get(repoDownloadClonePath, decodedToken + ".zip"));
     }
 
     private boolean isInvalidToken(String token) {
-        return StringUtils.isEmpty(token) || token.length() >= MAX_EXPORTTOKEN_LENGTH || !token.matches("^[a-zA-Z0-9_-]+$");
+        return StringUtils.isEmpty(token) || token.length() >= MAX_EXPORT_TOKEN_LENGTH || !token.matches("^[a-zA-Z0-9_-]+$");
     }
 
     /**

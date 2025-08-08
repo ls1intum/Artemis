@@ -48,9 +48,9 @@
                         <div>
                             <span jhiTranslate="artemisApp.sharing.expiresAt" [translateValues]="{ expirationDate: formattedExpiryDate }"></span>
                         </div>
-                        @if (!isInstructor) {
+                        @if (!isInstructorOrEditor) {
                             <div class="p-2">
-                                <strong jhiTranslate="artemisApp.sharing.loginAsInstructor"></strong>
+                                <strong jhiTranslate="artemisApp.sharing.loginAsInstructorOrEditor"></strong>
                             </div>
                         }
                     </div>

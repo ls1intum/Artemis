@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -26,7 +26,7 @@ import { take } from 'rxjs';
     selector: 'jhi-sharing',
     templateUrl: './sharing.component.html',
     styleUrls: ['./sharing.scss'],
-    imports: [RouterModule, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgStyle],
+    imports: [RouterLink, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgStyle],
     standalone: true,
 })
 export class SharingComponent implements OnInit {
@@ -44,7 +44,7 @@ export class SharingComponent implements OnInit {
 
     selectedCourse: Course;
 
-    isInstructor = false;
+    isInstructorOrEditor = false;
 
     // Icons
     faPlus = faPlus;
@@ -158,7 +158,7 @@ export class SharingComponent implements OnInit {
         });
         this.userRouteAccessService.checkLogin([Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN], this.router.url).then((isLoggedIn) => {
             if (isLoggedIn) {
-                this.isInstructor = true;
+                this.isInstructorOrEditor = true;
                 this.loadAll();
             }
         });

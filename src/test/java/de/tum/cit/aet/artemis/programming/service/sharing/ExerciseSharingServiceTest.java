@@ -53,7 +53,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     void shouldReturnFalseForExceedingTokenAndSecurityString() {
-        String extraHugeToken = "Something" + "x".repeat(ExerciseSharingService.MAX_EXPORTTOKEN_LENGTH);
+        String extraHugeToken = "Something" + "x".repeat(ExerciseSharingService.MAX_EXPORT_TOKEN_LENGTH);
         assertThat(exerciseSharingService.validate(extraHugeToken, "")).isFalse();
         assertThat(exerciseSharingService.getExportedExerciseByToken(extraHugeToken)).isEmpty();
     }
