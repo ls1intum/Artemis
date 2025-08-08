@@ -91,7 +91,6 @@ public class LocalVCPrePushHook implements PreReceiveHook {
         }
 
         try (Git git = new Git(repository)) {
-
             // Prevent deletion of branches.
             Ref ref = git.getRepository().exactRef(command.getRefName());
             if (ref != null && command.getNewId().equals(ObjectId.zeroId())) {

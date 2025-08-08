@@ -175,7 +175,7 @@ describe('CourseSidebarComponent', () => {
         };
         component.itemsDrop = mockDropdown as unknown as NgbDropdown;
 
-        jest.spyOn(component, 'applyThreshold').mockImplementation((threshold, height) => {
+        jest.spyOn(component, 'applyThreshold').mockImplementation(() => {
             component.anyItemHidden.set(false);
             component.hiddenItems.set([]);
         });
