@@ -398,7 +398,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
         var exercise = exerciseOrEmpty.get();
         String zippedRepoName = getZippedRepoName(exercise, repositoryType.getName());
-        var repositoryUri = exercise.getRepositoryURL(repositoryType);
+        var repositoryUri = exercise.getRepositoryURI(repositoryType);
         return exportRepository(repositoryUri, repositoryType.getName(), zippedRepoName, exercise, workingDir, outputDir, null, exportErrors);
     }
 
@@ -448,7 +448,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return exportSolutionAndTestStudentRepositoryForExercise(zippedRepoName, exercise, uniquePath, gitDirFilter, exportErrors);
         }
         else {
-            var repositoryUri = exercise.getRepositoryURL(repositoryType);
+            var repositoryUri = exercise.getRepositoryURI(repositoryType);
             return exportRepository(repositoryUri, repositoryType.getName(), zippedRepoName, exercise, uniquePath, uniquePath, gitDirFilter, exportErrors);
         }
     }

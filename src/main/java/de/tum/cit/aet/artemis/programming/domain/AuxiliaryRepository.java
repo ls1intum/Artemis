@@ -151,9 +151,9 @@ public class AuxiliaryRepository extends DomainObject {
     }
 
     /**
-     * Gets a URL of the repositoryUri if there is one
+     * Gets a URI of the repositoryUri if there is one
      *
-     * @return a URL object of the repositoryUri or null if there is no repositoryUri
+     * @return a LocalVCRepositoryUri object of the repositoryUri or null if there is no repositoryUri
      */
     @JsonIgnore
     public LocalVCRepositoryUri getVcsRepositoryUri() {

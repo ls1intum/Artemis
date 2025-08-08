@@ -1746,20 +1746,20 @@ public class ProgrammingExerciseTestService {
             // Mock template repo
             Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.workingCopyGitRepoFile.toPath(), null);
             createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
-            doReturn(templateRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class),
+            doReturn(templateRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.TEMPLATE)), any(Path.class),
                     anyBoolean(), anyBoolean());
             doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
             // Mock solution repo
             Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null);
             createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
-            doReturn(solutionRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class),
+            doReturn(solutionRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.SOLUTION)), any(Path.class),
                     anyBoolean(), anyBoolean());
 
             // Mock tests repo
             Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null);
             createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
-            doReturn(testsRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean(),
+            doReturn(testsRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.TESTS)), any(Path.class), anyBoolean(),
                     anyBoolean());
         }
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-instructor-exercise";
@@ -1805,7 +1805,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
-        LocalVCRepositoryUri vcsUrl = exercise.getRepositoryURL(repoType);
+        LocalVCRepositoryUri vcsUrl = exercise.getRepositoryURI(repoType);
         Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null);
 
         createAndCommitDummyFileInLocalRepository(localRepo, fileName);
@@ -1838,18 +1838,18 @@ public class ProgrammingExerciseTestService {
 
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.workingCopyGitRepoFile.toPath(), null);
-        doReturn(templateRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean(),
+        doReturn(templateRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean(),
                 anyBoolean());
 
         // Mock solution repo
         Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null);
-        doReturn(solutionRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean(),
+        doReturn(solutionRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.SOLUTION)), any(Path.class), anyBoolean(),
                 anyBoolean());
 
         // Mock tests repo
         Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
-        doReturn(testsRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean(),
+        doReturn(testsRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.TESTS)), any(Path.class), anyBoolean(),
                 anyBoolean());
 
         request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
@@ -1936,19 +1936,19 @@ public class ProgrammingExerciseTestService {
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
-        doReturn(templateRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean(),
+        doReturn(templateRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean(),
                 anyBoolean());
 
         // Mock solution repo
         Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
-        doReturn(solutionRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean(),
+        doReturn(solutionRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.SOLUTION)), any(Path.class), anyBoolean(),
                 anyBoolean());
 
         // Mock tests repo
         Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
-        doReturn(testsRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean(),
+        doReturn(testsRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.TESTS)), any(Path.class), anyBoolean(),
                 anyBoolean());
     }
 

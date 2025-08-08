@@ -249,8 +249,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         mockConnectorRequestsForSetup(exercise, false, true, false);
         exercise.setChannelName("exercise-pe");
         exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-        LocalVCRepositoryUri assignmentUri = exercise.getRepositoryURL(repositoryType);
-        LocalVCRepositoryUri testUri = exercise.getRepositoryURL(RepositoryType.TESTS);
+        LocalVCRepositoryUri assignmentUri = exercise.getRepositoryURI(repositoryType);
+        LocalVCRepositoryUri testUri = exercise.getRepositoryURI(RepositoryType.TESTS);
         Repository assignmentRepository = gitService.getOrCheckoutRepository(assignmentUri, true, true);
         Repository testRepository = gitService.getOrCheckoutRepository(testUri, true, true);
         moveAssignmentSourcesOf(assignmentRepository.getLocalPath(), testRepository.getLocalPath());

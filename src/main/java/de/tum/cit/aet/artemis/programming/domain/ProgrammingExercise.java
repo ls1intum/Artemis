@@ -152,9 +152,9 @@ public class ProgrammingExercise extends Exercise {
     private ProgrammingExerciseBuildConfig buildConfig;
 
     /**
-     * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
+     * Convenience getter. The actual URI is stored in the {@link TemplateProgrammingExerciseParticipation}
      *
-     * @return The URL of the template repository as a String
+     * @return The URI of the template repository as a String
      */
     @JsonIgnore
     public String getTemplateRepositoryUri() {
@@ -171,9 +171,9 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Convenience getter. The actual URL is stored in the {@link SolutionProgrammingExerciseParticipation}
+     * Convenience getter. The actual URI is stored in the {@link SolutionProgrammingExerciseParticipation}
      *
-     * @return The URL of the solution repository as a String
+     * @return The URI of the solution repository as a String
      */
     @JsonIgnore
     public String getSolutionRepositoryUri() {
@@ -418,9 +418,9 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Gets a URL of the templateRepositoryUri if there is one
+     * Gets a URI of the templateRepositoryUri if there is one
      *
-     * @return a URL object of the templateRepositoryUri or null if there is no templateRepositoryUri
+     * @return a LocalVCRepositoryUri object of the templateRepositoryUri or null if there is no templateRepositoryUri
      */
     @JsonIgnore
     public LocalVCRepositoryUri getVcsTemplateRepositoryUri() {
@@ -439,9 +439,9 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Gets a URL of the solutionRepositoryUri if there is one
+     * Gets a URI of the solutionRepositoryUri if there is one
      *
-     * @return a URL object of the solutionRepositoryUri or null if there is no solutionRepositoryUri
+     * @return a LocalVCRepositoryUri object of the solutionRepositoryUri or null if there is no solutionRepositoryUri
      */
     @JsonIgnore
     public LocalVCRepositoryUri getVcsSolutionRepositoryUri() {
@@ -460,9 +460,9 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Gets a URL of the testRepositoryURL if there is one
+     * Gets a URI of the testRepositoryURI if there is one
      *
-     * @return a URL object of the testRepositoryURl or null if there is no testRepositoryUri
+     * @return a LocalVCRepository object of the testRepositoryUri or null if there is no testRepositoryUri
      */
     @JsonIgnore
     public LocalVCRepositoryUri getVcsTestRepositoryUri() {
@@ -482,16 +482,16 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Returns the repository uri for the given repository type.
      *
-     * @param repositoryType The repository type for which the url should be returned
+     * @param repositoryType The repository type for which the uri should be returned
      * @return The repository uri
      */
     @JsonIgnore
-    public LocalVCRepositoryUri getRepositoryURL(RepositoryType repositoryType) {
+    public LocalVCRepositoryUri getRepositoryURI(RepositoryType repositoryType) {
         return switch (repositoryType) {
             case TEMPLATE -> this.getVcsTemplateRepositoryUri();
             case SOLUTION -> this.getVcsSolutionRepositoryUri();
             case TESTS -> this.getVcsTestRepositoryUri();
-            default -> throw new UnsupportedOperationException("Can retrieve URL for repository type " + repositoryType);
+            default -> throw new UnsupportedOperationException("Cannot retrieve URI for repository type " + repositoryType);
         };
     }
 
