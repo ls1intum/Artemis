@@ -25,7 +25,12 @@ public class JGitConfig {
     public void disablePackedGitMMap() {
         log.debug("Applying JGit configuration: disable packed git mmap");
         WindowCacheConfig cfg = new WindowCacheConfig();
-        // this should prevent issues when deleting repositories on NFS filesystems
+        // This should prevent issues when deleting repositories on NFS filesystems
+        // In production we encountered a JGit exception when deleting repositories indicating that .pack files in the repository still have a lock.
+        // Further investigation showed that the Artemis app itself holds this lock.
+        // This is caused by JGit holding the .pack files in a global WindowCache.
+        // This is only cleared when the GC runs which is non-deterministic.
+        // So, we disable this performance optimization which does not negatively affect performance in our use case.
         cfg.setPackedGitMMAP(false);
         cfg.install();
     }
