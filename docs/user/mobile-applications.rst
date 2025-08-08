@@ -243,6 +243,21 @@ Problems
 
 Please report any issues on the `GitHub repository <https://github.com/ls1intum/artemis-ios/issues>`__.
 
+Force Update Mechanism
+----------------------
+
+The native apps support a force-update mechanism to ensure compatibility and security, especially when breaking changes are introduced.
+
+The Artemis server provides two configurable version thresholds:
+
+* ``min`` – the **minimum required version**. Users must update the app before continuing.
+* ``recommended`` – the **recommended version**. Users are prompted to update each time the app is opened, but can continue using the app if they choose.
+
+
+|force-update-android|
+
+|force-update-ios|
+
 .. |server-selection-overview-android| image:: native-applications/android/server_selection_overview.png
     :width: 300
 
@@ -252,3 +267,8 @@ Please report any issues on the `GitHub repository <https://github.com/ls1intum/
 .. |custom-server-entered-ios| image:: native-applications/iOS/custom-server-entered-ios.PNG
     :width: 300
 
+.. |force-update-android| image:: native-applications/android/force_update.png
+   :width: 300
+
+.. |force-update-ios| image:: native-applications/iOS/force_update.png
+   :width: 300
