@@ -1,6 +1,8 @@
 // CSS-only Fireworks Animation
 // Adapted from Heather Allen at https://codepen.io/hmaw/pen/qBEMLxV
 
+@use 'sass:math';
+
 $particles: 10;
 $width: 500;
 $height: 500;
@@ -10,7 +12,7 @@ $box-shadow2: ();
 @for $i from 0 through $particles {
     $box-shadow:
         $box-shadow,
-        random($width) - calc($width / 2) + px random($height) - calc($height / 1.2) + px hsl(random(360), 100%, 50%);
+        math.random($width) - calc($width / 2) + px math.random($height) - calc($height / 1.2) + px hsl(math.random(360), 100%, 50%);
     $box-shadow2:
         $box-shadow2,
         0 0 #fff;
