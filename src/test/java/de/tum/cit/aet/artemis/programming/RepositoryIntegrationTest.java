@@ -1134,20 +1134,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         return programmingExercise;
     }
 
-    @Disabled
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testStashChanges() throws Exception {
-        // Make initial commit and save files afterwards
-        initialCommitAndSaveFiles(HttpStatus.OK);
-        Repository localRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.workingCopyGitRepoFile.toPath(), null);
-
-        // Stash changes
-        gitService.stashChanges(localRepo);
-        // Local repo has no unsubmitted changes
-        assertThat(studentFilePath).hasContent("initial commit");
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFindStudentParticipation() {
@@ -1163,18 +1149,5 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         fileSubmission.setFileContent(fileContent);
         fileSubmissions.add(fileSubmission);
         return fileSubmissions;
-    }
-
-    private void initialCommitAndSaveFiles(HttpStatus expectedStatus) throws Exception {
-        assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
-        // Do initial commit
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions("initial commit"), expectedStatus);
-        // Check repo
-        assertThat(studentFilePath).hasContent("initial commit");
-
-        // Save file, without commit
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), expectedStatus);
-        // Check repo
-        assertThat(studentFilePath).hasContent("updatedFileContent");
     }
 }

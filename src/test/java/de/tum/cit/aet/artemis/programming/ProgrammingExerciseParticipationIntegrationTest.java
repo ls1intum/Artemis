@@ -8,7 +8,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -20,6 +19,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -38,24 +40,29 @@ import org.springframework.util.MultiValueMap;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 
-class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
+class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "programmingexerciseparticipation";
 
@@ -66,6 +73,24 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     private ProgrammingExercise programmingExercise;
 
     private Participation programmingExerciseParticipation;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
+
+    @Autowired
+    private ParticipationTestRepository participationRepository;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private StudentExamService studentExamService;
+
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -466,14 +491,14 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestResultWithFeedbacksForSolutionParticipationAsTutorShouldReturnForbidden() throws Exception {
-        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult(TEST_PREFIX + "student1");
+        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult();
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetLatestResultWithFeedbacksForSolutionParticipationAsTutor() throws Exception {
-        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult(TEST_PREFIX + "tutor1");
+        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
         assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
@@ -482,7 +507,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLatestResultWithFeedbacksForSolutionParticipationAsInstructor() throws Exception {
-        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult(TEST_PREFIX + "instructor1");
+        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
         assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
@@ -669,7 +694,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetProgrammingExerciseStudentParticipationNoParam() throws Exception {
-        String body = request.get("/api/programming/programming-exercise-participations", HttpStatus.BAD_REQUEST, String.class);
+        request.get("/api/programming/programming-exercise-participations", HttpStatus.BAD_REQUEST, String.class);
     }
 
     @Test
@@ -677,19 +702,10 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetProgrammingExerciseStudentParticipationByRepoNameNotFound() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        // Generate a random URI that is not in the database
-        URI repoUrl;
-        Optional<ProgrammingExerciseStudentParticipation> foundParticipation;
-        do {
-            repoUrl = new URI(participation.getRepositoryUri());
-            repoUrl = new URI(repoUrl.getScheme(), repoUrl.getUserInfo(), repoUrl.getHost(), repoUrl.getPort(), "/" + UUID.randomUUID().toString(), repoUrl.getQuery(),
-                    repoUrl.getFragment());
-            foundParticipation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl.toString());
-        }
-        while (foundParticipation.isPresent());
+        String repoUrl = generateRandomRepoUrl(participation, true);
 
-        var repoName = extractRepoName(repoUrl.toString());
-        String body = request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.NOT_FOUND, String.class);
+        var repoName = extractRepoName(repoUrl);
+        request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
@@ -697,22 +713,32 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetProgrammingExerciseStudentParticipationByInvalidRepoName() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        // Generate a random URI that is not in the database
-        URI repoUrl;
-        Optional<ProgrammingExerciseStudentParticipation> foundParticipation;
-        do {
-            repoUrl = new URI(participation.getRepositoryUri());
-
-            // test a repoName which does not match the expected pattern of <project_key>-<repo-type>
-            // generate random string without a dash
-            String invalidRepoName = UUID.randomUUID().toString().replace("-", "");
-            repoUrl = new URI(repoUrl.getScheme(), repoUrl.getUserInfo(), repoUrl.getHost(), repoUrl.getPort(), "/" + invalidRepoName, repoUrl.getQuery(), repoUrl.getFragment());
-            foundParticipation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl.toString());
-        }
-        while (foundParticipation.isPresent());
+        String repoUrl = generateRandomRepoUrl(participation, false);
 
         var repoName = extractRepoName(repoUrl.toString());
-        String body = request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.BAD_REQUEST, String.class);
+        request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.BAD_REQUEST, String.class);
+    }
+
+    private @NotNull String generateRandomRepoUrl(ProgrammingExerciseStudentParticipation participation, boolean valid) {
+        String baseRepoPath = participation.getRepositoryUri();
+        String repoUrl;
+        Optional<ProgrammingExerciseStudentParticipation> foundParticipation;
+        do {
+            // Generate random segments for the path
+            String randomKey = UUID.randomUUID().toString().replace("-", "").substring(0, 6);
+            String randomName = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+
+            // Extract base path up to /git/ directory
+            String basePath = baseRepoPath.substring(0, baseRepoPath.indexOf("/git/") + 4);
+
+            // Format: /path/to/git/PROJECT_KEY/repo_name.git
+            String repoName = valid ? String.format("%s-%s", randomKey, randomName) : randomName;
+            repoUrl = String.format("%s/%s/%s.git", basePath, randomKey, repoName);
+
+            foundParticipation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl);
+        }
+        while (foundParticipation.isPresent());
+        return repoUrl;
     }
 
     @Test
@@ -721,7 +747,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
 
         var repoName = extractRepoName(participation.getRepositoryUri());
-        String body = request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -735,12 +761,37 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         var repoName = extractRepoName(participation.getRepositoryUri());
-        String body = request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.FORBIDDEN, String.class);
     }
 
-    String extractRepoName(String repoUrl) {
-        // <server.url>/git/<project_key>/<repo-name>.git
-        return repoUrl.substring(repoUrl.lastIndexOf("/") + 1, repoUrl.length() - 4);
+    /**
+     * Extracts the repository name from a Git repository URL ending in ".git".
+     *
+     * <p>
+     * Assumes the URL format:
+     * {@code http(s)://<host>/git/<project_key>/<repo-name>.git}
+     * </p>
+     *
+     * @param repoUrl the full URL of the Git repository (e.g., "http://localhost:7990/git/PROJ/my-repo.git")
+     * @return the repository name without the ".git" suffix (e.g., "my-repo")
+     * @throws IllegalArgumentException if the input does not end with ".git" or contains no slashes
+     *
+     *                                      <p>
+     *                                      <b>Examples:</b>
+     *                                      </p>
+     *
+     *                                      <pre>
+     * extractRepoName("http://localhost:7990/git/PROJ/proj-repo.git") → "proj-repo"
+     * extractRepoName("https://example.com/git/ABC/abc-repo.git") → "abc-repo"
+     *                                      </pre>
+     */
+    private String extractRepoName(String repoUrl) {
+        if (repoUrl == null || !repoUrl.endsWith(".git") || !repoUrl.contains("/")) {
+            throw new IllegalArgumentException("Invalid Git repository URL: " + repoUrl);
+        }
+
+        int lastSlash = repoUrl.lastIndexOf('/');
+        return repoUrl.substring(lastSlash + 1, repoUrl.length() - 4); // remove ".git"
     }
 
     @Test
@@ -845,7 +896,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldThrowWithInvalidAuxiliaryRepositoryId() throws Exception {
-            request.getList(PATH_PREFIX + "AUXILIARY?repositoryId=" + 128, HttpStatus.NOT_FOUND, CommitInfoDTO.class);
+            long maxId = auxiliaryRepositoryRepository.findAll().stream().mapToLong(DomainObject::getId).max().orElse(0);
+            request.getList(PATH_PREFIX + "AUXILIARY?repositoryId=" + (maxId + 1), HttpStatus.NOT_FOUND, CommitInfoDTO.class);
         }
     }
 
@@ -860,7 +912,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author", "authorEmail");
         var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
         doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
-        doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).checkoutRepositoryAtCommit(participation.getVcsRepositoryUri(), commitHash, true);
         doReturn(Map.of()).when(gitService).listFilesAndFolders(any());
         doReturn(Map.of()).when(gitService).listFilesAndFolders(any(), anyBoolean());
         doNothing().when(gitService).switchBackToDefaultBranchHead(any());
@@ -894,8 +945,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             doReturn(Map.of()).when(gitService).listFilesAndFolders(any());
             doReturn(Map.of()).when(gitService).listFilesAndFolders(any(), anyBoolean());
             doNothing().when(gitService).switchBackToDefaultBranchHead(any());
-            doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).checkoutRepositoryAtCommit(any(VcsRepositoryUri.class), any(String.class),
-                    any(Boolean.class));
             doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(any());
             PATH_PREFIX = "/api/programming/programming-exercise/" + participation.getProgrammingExercise().getId() + "/files-content-commit-details/" + COMMIT_HASH;
         }
@@ -999,11 +1048,10 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         return (TemplateProgrammingExerciseParticipation) programmingExerciseParticipation;
     }
 
-    private SolutionProgrammingExerciseParticipation addSolutionParticipationWithResult(String login) {
+    private SolutionProgrammingExerciseParticipation addSolutionParticipationWithResult() {
         programmingExerciseParticipation = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise)
                 .getSolutionParticipation();
         Result result = this.programmingExerciseUtilService.addSolutionSubmissionWithResult(programmingExercise);
-        ;
         result.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(null);
 
         participationUtilService.addVariousVisibilityFeedbackToResult(result);

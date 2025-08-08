@@ -4,8 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 
-import org.springframework.web.util.UriComponentsBuilder;
-
 /**
  * Represents a Version Control System (VCS) repository URI with capabilities to manipulate and extract information from it.
  * This class supports handling both local file references and remote repository URIs.
@@ -36,22 +34,6 @@ public class VcsRepositoryUri {
     }
 
     /**
-     * Initializes a new instance of the {@link VcsRepositoryUri} class from a repository name
-     * and builds an url to format <code>{server.url}/git/{project-key}/{repo-name}.git</code> with <code>repo-name</code> consisting of <code>{project-key}-{repo-type}</code>
-     *
-     * @param vcBaseUrl      The base URL of the version control system
-     * @param repositoryName containing the project key at the beginning
-     */
-    public VcsRepositoryUri(String vcBaseUrl, String repositoryName) throws URISyntaxException {
-        if (!repositoryName.matches("[a-zA-Z0-9]+-[a-zA-Z0-9-]+")) {
-            throw new IllegalArgumentException("Repository name must be in the format <project-key>-<repo-type>");
-        }
-
-        var projectKey = repositoryName.split("-")[0];
-        this.uri = UriComponentsBuilder.fromUriString(vcBaseUrl).pathSegment("git", projectKey.toUpperCase(), repositoryName + ".git").build().toUri();
-    }
-
-    /**
      * Initializes a new instance of the {@link VcsRepositoryUri} class from a file reference, e.g. C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950
      * The file's URI is extracted and stored.
      *
@@ -59,17 +41,6 @@ public class VcsRepositoryUri {
      */
     public VcsRepositoryUri(java.io.File file) {
         this.uri = file.toURI();
-    }
-
-    /**
-     * Associates a username with the current VCS repository URI and returns the instance for chaining.
-     *
-     * @param username The username to be associated with the URI.
-     * @return The instance of {@link VcsRepositoryUri} with the username set.
-     */
-    public VcsRepositoryUri withUser(final String username) {
-        this.username = username;
-        return this;
     }
 
     /**

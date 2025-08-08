@@ -41,12 +41,12 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.OracleGenerator;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
@@ -377,17 +377,17 @@ public class ProgrammingExerciseCreationUpdateService {
      * This method calls the StructureOracleGenerator, generates the string out of the JSON representation of the structure oracle of the programming exercise and returns true if
      * the file was updated or generated, false otherwise. This can happen if the contents of the file have not changed.
      *
-     * @param solutionRepoUri The URL of the solution repository.
-     * @param exerciseRepoUri The URL of the exercise repository.
-     * @param testRepoUri     The URL of the tests' repository.
+     * @param solutionRepoUri The LocalVC URI of the solution repository.
+     * @param exerciseRepoUri The LocalVC URI of the exercise repository.
+     * @param testRepoUri     The LocalVC URI of the tests' repository.
      * @param testsPath       The path to the tests' folder, e.g. the path inside the repository where the structure oracle file will be saved in.
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
      * @throws IOException     If the URLs cannot be converted to actual {@link Path paths}
      * @throws GitAPIException If the checkout fails
      */
-    public boolean generateStructureOracleFile(VcsRepositoryUri solutionRepoUri, VcsRepositoryUri exerciseRepoUri, VcsRepositoryUri testRepoUri, String testsPath, User user)
-            throws IOException, GitAPIException {
+    public boolean generateStructureOracleFile(LocalVCRepositoryUri solutionRepoUri, LocalVCRepositoryUri exerciseRepoUri, LocalVCRepositoryUri testRepoUri, String testsPath,
+            User user) throws IOException, GitAPIException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoUri, true, true);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoUri, true, true);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoUri, true, true);

@@ -26,12 +26,10 @@ public class TeamFactory {
      * @param loginPrefix        The prefix that will be added in front of every user's login together with the shortName
      * @param numberOfStudents   The number of students to generate for the Team
      * @param owner              The owner of the Team
-     * @param creatorLogin       The login of the user that creates the Teams
      * @param registrationPrefix The prefix that will be added in front of every student's registration number together with the shortName
      * @return The generated Team
      */
-    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String creatorLogin,
-            String registrationPrefix) {
+    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String registrationPrefix) {
         List<User> students = UserFactory.generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, new String[] { "tumuser", "testgroup" },
                 Set.of(new Authority(Role.STUDENT.getAuthority())), numberOfStudents, shortName + registrationPrefix);
 
@@ -58,6 +56,6 @@ public class TeamFactory {
      * @return The generated Team
      */
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
-        return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner, null, "R");
+        return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner, "R");
     }
 }

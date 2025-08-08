@@ -12,7 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,13 +45,13 @@ import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -71,7 +71,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    private URI localVCBaseUri;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCRepoPath;
@@ -90,7 +90,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     private final LocalRepository localAuxiliaryRepo = new LocalRepository(defaultBranch);
 
-    private VcsRepositoryUri auxRepoUri;
+    private LocalVCRepositoryUri auxRepoUri;
 
     @BeforeEach
     void setup() throws Exception {
@@ -114,8 +114,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
         // add the auxiliary repository
         auxiliaryRepositoryRepository.deleteAll();
-        auxRepoUri = new VcsRepositoryUri(
-                localVCBaseUrl + "/git/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-auxiliary.git");
+        auxRepoUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), programmingExercise.getProjectKey().toLowerCase() + "-auxiliary");
         // programmingExercise.setTestRepositoryUri(auxRepoUri.toString());
         var newAuxiliaryRepo = new AuxiliaryRepository();
         newAuxiliaryRepo.setName("AuxiliaryRepo");

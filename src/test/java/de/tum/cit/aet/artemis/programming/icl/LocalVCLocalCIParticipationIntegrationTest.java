@@ -66,7 +66,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         assertThat(participation).isNotNull();
         assertThat(participation.isPracticeMode()).isFalse();
         assertThat(participation.getStudent()).contains(user);
-        LocalVCRepositoryUri studentAssignmentRepositoryUri = new LocalVCRepositoryUri(projectKey, projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1", localVCBaseUri);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, projectKey, projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1");
         assertThat(studentAssignmentRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
 
         var vcsAccessToken = request.get("/api/core/account/participation-vcs-access-token?participationId=" + participation.getId(), HttpStatus.OK, String.class);

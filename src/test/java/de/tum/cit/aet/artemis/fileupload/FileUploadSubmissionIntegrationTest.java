@@ -459,6 +459,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
         fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(finishedFileUploadExercise, fileUploadSubmission,
                 TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", feedbacks);
+        assertThat(fileUploadSubmission.getLatestResult()).isNotNull();
         exerciseUtilService.updateResultCompletionDate(fileUploadSubmission.getLatestResult().getId(), null);
 
         FileUploadSubmission submission = request.get("/api/fileupload/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
@@ -698,6 +699,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission receivedSubmission = request.get("/api/fileupload/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
 
         assertThat(receivedSubmission.getId()).isEqualTo(submissionID);
+        assertThat(receivedSubmission.getLatestResult()).isNotNull();
         assertThat(receivedSubmission.getLatestResult().getAssessor()).as("latest result has assessor").isEqualTo(assessor);
     }
 

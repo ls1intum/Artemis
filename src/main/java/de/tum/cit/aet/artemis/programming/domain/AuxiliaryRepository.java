@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
-import java.net.URISyntaxException;
 import java.util.Objects;
 
 import jakarta.persistence.Column;
@@ -18,6 +17,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Entity
 @Table(name = "programming_exercise_auxiliary_repositories")
@@ -150,20 +151,20 @@ public class AuxiliaryRepository extends DomainObject {
     }
 
     /**
-     * Gets a URL of the repositoryUri if there is one
+     * Gets a URI of the repositoryUri if there is one
      *
-     * @return a URL object of the repositoryUri or null if there is no repositoryUri
+     * @return a LocalVCRepositoryUri object of the repositoryUri or null if there is no repositoryUri
      */
     @JsonIgnore
-    public VcsRepositoryUri getVcsRepositoryUri() {
+    public LocalVCRepositoryUri getVcsRepositoryUri() {
         String repositoryUri = getRepositoryUri();
         if (repositoryUri == null || repositoryUri.isEmpty()) {
             return null;
         }
         try {
-            return new VcsRepositoryUri(repositoryUri);
+            return new LocalVCRepositoryUri(repositoryUri);
         }
-        catch (URISyntaxException e) {
+        catch (LocalVCInternalException e) {
             log.error("Malformed URI {} could not be used to instantiate VcsRepositoryUri.", getRepositoryUri(), e);
         }
         return null;

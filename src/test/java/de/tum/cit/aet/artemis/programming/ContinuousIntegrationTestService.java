@@ -86,7 +86,8 @@ public class ContinuousIntegrationTestService {
         String currentLocalFileName = "currentFileName";
         String currentLocalFileContent = "testContent";
         String currentLocalFolderName = "currentFolderName";
-        localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
+        String login = testPrefix + "student1";
+        localRepo.configureRepos(localVCRepoPath, "testLocalRepo-" + login, "testOriginRepo-" + login);
         // add file to the repository folder
         Path filePath = Path.of(localRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);
         File file = Files.createFile(filePath).toFile();
@@ -98,7 +99,8 @@ public class ContinuousIntegrationTestService {
 
         var localRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, localVCRepoPath));
         // create a participation
-        participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, testPrefix + "student1", localRepoUri.getURI());
+
+        participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, login, localRepoUri.getURI());
         assertThat(programmingExercise).as("Exercise was correctly set").isEqualTo(participation.getProgrammingExercise());
 
         // mock return of git path

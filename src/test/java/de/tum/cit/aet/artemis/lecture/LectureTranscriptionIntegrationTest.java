@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -43,9 +42,6 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private LectureUtilService lectureUtilService;
-
-    @Autowired
-    private LectureUnitRepository lectureUnitRepository;
 
     private Lecture lecture;
 

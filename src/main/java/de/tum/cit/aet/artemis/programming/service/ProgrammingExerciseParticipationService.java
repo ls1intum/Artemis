@@ -41,12 +41,12 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
@@ -223,12 +223,12 @@ public class ProgrammingExerciseParticipationService {
     /**
      * Replaces all files except the .git folder of the target repository with the files from the source repository
      *
-     * @param targetURL the repository where all files should be replaced
-     * @param sourceURL the repository that should be used as source for all files
+     * @param targetUri the repository where all files should be replaced
+     * @param sourceUri the repository that should be used as source for all files
      */
-    public void resetRepository(VcsRepositoryUri targetURL, VcsRepositoryUri sourceURL) throws GitAPIException, IOException {
-        Repository targetRepo = gitService.getOrCheckoutRepository(targetURL, true, true);
-        Repository sourceRepo = gitService.getOrCheckoutRepository(sourceURL, true, true);
+    public void resetRepository(LocalVCRepositoryUri targetUri, LocalVCRepositoryUri sourceUri) throws GitAPIException, IOException {
+        Repository targetRepo = gitService.getOrCheckoutRepository(targetUri, true, true);
+        Repository sourceRepo = gitService.getOrCheckoutRepository(sourceUri, true, true);
 
         // Replace everything but the files corresponding to git (such as the .git folder or the .gitignore file)
         FilenameFilter filter = (dir, name) -> !dir.isDirectory() || !name.contains(".git");
@@ -398,9 +398,7 @@ public class ProgrammingExerciseParticipationService {
         }
         Submission latestSubmission = latestSubmissionOptional.get();
         Optional<Result> latestResultOptional = resultRepository.findLatestResultWithFeedbacksBySubmissionId(latestSubmission.getId(), ZonedDateTime.now());
-        latestResultOptional.ifPresentOrElse(latestResult -> {
-            latestSubmission.setResults(List.of(latestResult));
-        }, () -> latestSubmission.setResults(List.of()));
+        latestResultOptional.ifPresentOrElse(latestResult -> latestSubmission.setResults(List.of(latestResult)), () -> latestSubmission.setResults(List.of()));
         participation.setSubmissions(Set.of(latestSubmission));
         return participation;
     }
