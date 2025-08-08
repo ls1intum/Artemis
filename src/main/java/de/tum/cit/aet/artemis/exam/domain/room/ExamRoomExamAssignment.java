@@ -7,8 +7,8 @@ import jakarta.persistence.Table;
 
 import org.springframework.context.annotation.Conditional;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -18,16 +18,16 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 @Entity
 @Table(name = "exam_room_assignment")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ExamRoomAssignment extends DomainObject {
+public class ExamRoomExamAssignment extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "exam_room_id", nullable = false)
-    @JsonManagedReference
+    @JsonBackReference
     private ExamRoom examRoom;
 
     @ManyToOne
     @JoinColumn(name = "exam_id", nullable = false)
-    @JsonManagedReference
+    @JsonBackReference
     private Exam exam;
 
     /* Getters & Setters */

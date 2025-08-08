@@ -22,10 +22,10 @@
                 <constraints nullable="true"/>
             </column>
             <!-- Columns required from AbstractAuditingEntity - End -->
-            <column name="room_number" type="varchar(50)">
+            <column name="room_number" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="alternative_room_number" type="varchar(50)">
+            <column name="alternative_room_number" type="varchar(255)">
                 <constraints nullable="true"/>
             </column>
             <column name="name" type="varchar(255)">

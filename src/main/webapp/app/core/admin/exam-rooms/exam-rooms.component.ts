@@ -15,7 +15,7 @@ export interface ExamRoomDTOExtended extends ExamRoomDTO {
 }
 
 @Component({
-    selector: 'app-exam-room-repository',
+    selector: 'jhi-exam-rooms',
     templateUrl: './exam-rooms.component.html',
     imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent],
 })
@@ -157,7 +157,7 @@ export class ExamRoomsComponent {
     deleteOutdatedAndUnusedExamRooms(): void {
         this.actionStatus.set('deleting');
 
-        this.http.delete<ExamRoomDeletionSummaryDTO>('api/exam/admin/exam-rooms/outdated-and-unused').subscribe({
+        this.http.delete<ExamRoomDeletionSummaryDTO>('/api/exam/admin/exam-rooms/outdated-and-unused').subscribe({
             next: (summary) => {
                 this.actionInformation.set(summary as ExamRoomDeletionSummaryDTO);
                 this.actionStatus.set('deletionSuccess');

@@ -361,7 +361,7 @@ public class ExamRoomService {
                 seat.setLabel(seatName);
                 seat.setX(seatNode.path("position").path("x").asDouble());
                 seat.setY(seatNode.path("position").path("y").asDouble());
-                seat.setSeatCondition(SeatCondition.SeatConditionFromFlag(seatNode.path("flag").asText()));
+                seat.setSeatCondition(SeatCondition.seatConditionFromFlag(seatNode.path("flag").asText()));
                 seats.add(seat);
             }
         }

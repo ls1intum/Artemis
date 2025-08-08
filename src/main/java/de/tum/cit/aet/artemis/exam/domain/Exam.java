@@ -24,17 +24,17 @@ import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
-import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomAssignment;
+import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
 
 @Entity
 @Table(name = "exam")
@@ -163,8 +163,8 @@ public class Exam extends DomainObject {
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonBackReference
-    private Set<ExamRoomAssignment> examRoomAssignments = new HashSet<>();
+    @JsonManagedReference
+    private Set<ExamRoomExamAssignment> examRoomExamAssignments = new HashSet<>();
 
     @Transient
     private Long numberOfExamUsersTransient;
@@ -422,12 +422,12 @@ public class Exam extends DomainObject {
         this.examUsers = examUsers;
     }
 
-    public Set<ExamRoomAssignment> getExamRoomAssignments() {
-        return examRoomAssignments;
+    public Set<ExamRoomExamAssignment> getExamRoomAssignments() {
+        return examRoomExamAssignments;
     }
 
-    public void setExamRoomAssignments(Set<ExamRoomAssignment> examRoomAssignments) {
-        this.examRoomAssignments = examRoomAssignments;
+    public void setExamRoomAssignments(Set<ExamRoomExamAssignment> examRoomExamAssignments) {
+        this.examRoomExamAssignments = examRoomExamAssignments;
     }
 
     public void addExamUser(ExamUser examUser) {

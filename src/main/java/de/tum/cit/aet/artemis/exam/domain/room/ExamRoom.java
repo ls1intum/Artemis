@@ -18,7 +18,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.context.annotation.Conditional;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
@@ -33,31 +32,35 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 public class ExamRoom extends AbstractAuditingEntity {
 
     /**
-     * The room number, e.g. 123.EG.01, or 123.456.78.9
+     * The room number, e.g., '123.EG.01' or '123.456.78.9'.
      */
-    @Column(name = "room_number", nullable = false, length = 50)
+    @Column(name = "room_number", nullable = false, length = 255)
     private String roomNumber;
 
     /**
-     * An alternative room number, if it exists. Used to improve auto-complete.
+     * An alternative room number, if it exists, e.g., '00.02.001' or 'BC2 0.01.17@8102'.
+     * <p/>
+     * Used to improve auto-complete.
      */
-    @Column(name = "alternative_room_number", nullable = true, length = 50)
+    @Column(name = "alternative_room_number", nullable = true, length = 255)
     private String alternativeRoomNumber;
 
     /**
-     * The name of the exam room.
+     * The name of the exam room, e.g. 'Wilhelm-Nusselt-Hörsaal' or 'Friedrich L. Bauer Hörsaal"
      */
     @Column(name = "name", nullable = false, length = 255)
     private String name;
 
     /**
-     * An alternative name for the exam room, doesn't need to exist. Used to improve auto-complete.
+     * An alternative name for the exam room, if it exists, e.g., 'N1179' or 'HS1'.
+     * <p/>
+     * Used to improve auto-complete.
      */
     @Column(name = "alternative_name", nullable = true, length = 255)
     private String alternativeName;
 
     /**
-     * The building where the exam room resides inside.
+     * The building where the exam room resides inside, e.g., 'N1', 'Z1', or 'Galileo'.
      */
     @Column(name = "building", nullable = false, length = 255)
     private String building;
@@ -71,16 +74,21 @@ public class ExamRoom extends AbstractAuditingEntity {
 
     /**
      * All layout strategies for this exam room.
+     * <p/>
+     * A layout strategy describes how students can be distributed throughout this exam room.
      */
     @OneToMany(mappedBy = "examRoom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonManagedReference
     private List<LayoutStrategy> layoutStrategies = new ArrayList<>();
 
+    /**
+     * All exams this exam room is used in.
+     */
     @OneToMany(mappedBy = "examRoom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonBackReference
-    private Set<ExamRoomAssignment> examRoomAssignments = new HashSet<>();
+    @JsonManagedReference
+    private Set<ExamRoomExamAssignment> examRoomExamAssignments = new HashSet<>();
 
     /* Getters & Setters */
     public String getName() {
@@ -139,12 +147,12 @@ public class ExamRoom extends AbstractAuditingEntity {
         this.layoutStrategies = layoutStrategies;
     }
 
-    public Set<ExamRoomAssignment> getExamRoomAssignments() {
-        return examRoomAssignments;
+    public Set<ExamRoomExamAssignment> getExamRoomAssignments() {
+        return examRoomExamAssignments;
     }
 
-    public void setExamRoomAssignments(Set<ExamRoomAssignment> examRoomAssignments) {
-        this.examRoomAssignments = examRoomAssignments;
+    public void setExamRoomAssignments(Set<ExamRoomExamAssignment> examRoomExamAssignments) {
+        this.examRoomExamAssignments = examRoomExamAssignments;
     }
 
     /* Getters & Setters End */

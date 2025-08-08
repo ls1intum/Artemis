@@ -22,12 +22,12 @@ public class ExamSeatDTO {
     private SeatCondition seatCondition = SeatCondition.USABLE;
 
     /**
-     * The x-coordinate of the seat in the respective exam room.
+     * The x-coordinate of the seat in the respective exam room. x >= 0.
      */
     private float x;
 
     /**
-     * The y-coordinate of the seat in the respective exam room
+     * The y-coordinate of the seat in the respective exam room. y >= 0.
      */
     private float y;
 
