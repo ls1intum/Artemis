@@ -1,12 +1,10 @@
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { User } from 'app/core/user/user.model';
 
 /**
  * Data Transfer Object for Reaction.
  */
 export interface ReactionDTO {
     id?: number;
-    user?: User;
     creationDate?: string;
     emojiId?: string;
     relatedPostId?: number;
@@ -19,7 +17,6 @@ export interface ReactionDTO {
 export function toReactionDTO(reaction: Reaction): ReactionDTO {
     return {
         id: reaction.id ?? undefined,
-        user: reaction.user ?? undefined,
         creationDate: reaction.creationDate ? reaction.creationDate.toISOString() : undefined,
         emojiId: reaction.emojiId,
         relatedPostId: reaction.post?.id ?? reaction.answerPost?.id,

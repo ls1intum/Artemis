@@ -94,6 +94,7 @@ public class ReactionService {
 
         Posting posting = getPostingType(reaction);
 
+        // we query the repository dependent on the type of posting and update this posting
         Reaction savedReaction;
         if (posting instanceof Post p) {
             savedReaction = createReactionForPost(reaction, p, user, course);
@@ -214,6 +215,12 @@ public class ReactionService {
         return savedReaction;
     }
 
+    /**
+     * Determines and returns the associated posting for the given Reaction.
+     *
+     * @param reaction reaction to inspect
+     * @return the associated Post or AnswerPost of the Reaction, or null if neither is set
+     */
     private Posting getPostingType(Reaction reaction) {
         return reaction.getPost() != null ? reaction.getPost() : reaction.getAnswerPost();
     }

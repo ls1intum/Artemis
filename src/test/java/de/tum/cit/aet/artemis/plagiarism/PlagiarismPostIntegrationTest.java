@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
-import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
+import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -47,7 +47,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     private PostTestRepository postRepository;
 
     @Autowired
-    private ConversationMessagingService conversationMessagingService;
+    private ConversationMessageRepository conversationMessageRepository;
 
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
@@ -121,7 +121,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(notCreatedPost).isNull();
         long[] conversationIds = new long[] { exerciseChannel.getId() };
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, null, null);
-        assertThat(postsBelongingToExercise).hasSameSizeAs(conversationMessagingService.findMessages(postContextFilter, Pageable.unpaged(), 1));
+        assertThat(postsBelongingToExercise).hasSameSizeAs(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), 1));
 
         // conversation participants should not be notified
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
