@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 
 /**
@@ -30,7 +31,7 @@ import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
  * @see <a href="https://sharing-codeability.uibk.ac.at/sharing/codeability-sharing-platform/-/wikis/technical/Plugin-Interface">Plugin Tutorial</a>
  */
 @Service
-@Profile("sharing")
+@Profile(Constants.PROFILE_SHARING)
 @Lazy
 public class SharingConnectorService {
 
@@ -41,9 +42,6 @@ public class SharingConnectorService {
      */
     public static final String UNKNOWN_INSTALLATION_NAME = "unknown installation name";
 
-    /**
-     * a maximum check length for validation limiting
-     */
     private static final int MAX_API_KEY_LENGTH = 200;
 
     public static class HealthStatus {
@@ -92,6 +90,9 @@ public class SharingConnectorService {
             this.lastConnect = Instant.now();
         }
 
+        /**
+         * resets the last connect time
+         */
         public void resetLastConnect() {
             this.lastConnect = null;
         }
@@ -110,7 +111,7 @@ public class SharingConnectorService {
     /**
      * installation name forwarded in config for Sharing Platform
      */
-    private String installationName = null;
+    private String installationName = UNKNOWN_INSTALLATION_NAME; // to be set after first contact with sharing platform
 
     @Value("${artemis.sharing.apikey:#{null}}")
     private String sharingApiKey;
@@ -128,7 +129,7 @@ public class SharingConnectorService {
     private final TaskScheduler taskScheduler;
 
     /**
-     * installation name used to differentiate in Sharing Platform
+     * installation name forwarded in config for Sharing Platform, used to differentiate in Sharing Platform
      *
      * @return the name of this artemis installation (as shown in Sharing Platform)
      */
@@ -136,9 +137,6 @@ public class SharingConnectorService {
         return installationName;
     }
 
-    /**
-     * rest template for connector request
-     */
     private final RestTemplate restTemplate;
 
     public SharingConnectorService(RestTemplate restTemplate, TaskScheduler taskScheduler) {
@@ -182,6 +180,7 @@ public class SharingConnectorService {
             log.warn("Failed to determine hostname", e);
             this.installationName = UNKNOWN_INSTALLATION_NAME;
         }
+        // this defines the export action in the sharing platform, by defining a filter to select all exercises in Artemis format.
         SharingPluginConfig.Action action = new SharingPluginConfig.Action("Import", "/sharing/import", actionName,
                 "metadata.format.stream().anyMatch(entry->entry=='artemis' || entry=='Artemis').get()");
         lastHealthStati.add(new HealthStatus("Delivered Sharing Config Status to " + apiBaseUrl));
@@ -189,6 +188,13 @@ public class SharingConnectorService {
         return new SharingPluginConfig("Artemis Sharing Connector", new SharingPluginConfig.Action[] { action });
     }
 
+    /**
+     * validates the api key transferred from sharing platform.
+     *
+     * @param apiKey the key to check
+     * @return true if the api key (resp. the bearer token) is valid.
+     *
+     */
     public boolean validateApiKey(String apiKey) {
         if (apiKey == null || apiKey.length() > MAX_API_KEY_LENGTH) {
             // this is just in case, somebody tries an attack

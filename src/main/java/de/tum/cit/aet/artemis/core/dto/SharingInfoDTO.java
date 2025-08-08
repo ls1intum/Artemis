@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.core.dto;
 import java.util.Map;
 import java.util.Objects;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -13,22 +15,24 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SharingInfoDTO(
 
-        String basketToken,
+        @NotNull String basketToken,
 
-        String returnURL,
+        @NotNull String returnURL,
 
-        String apiBaseURL,
+        @NotNull String apiBaseURL,
 
-        String checksum,
+        @NotNull String checksum,
 
-        int exercisePosition) {
+        @NotNull int exercisePosition) {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
+        }
         SharingInfoDTO that = (SharingInfoDTO) o;
         return exercisePosition == that.exercisePosition && Objects.equals(basketToken, that.basketToken) && Objects.equals(returnURL, that.returnURL)
                 && Objects.equals(apiBaseURL, that.apiBaseURL);

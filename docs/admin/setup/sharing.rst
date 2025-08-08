@@ -20,6 +20,8 @@ For more details, visit the `help menu <https://search.sharing-codeability.uibk.
 
 To facilitate the exchange of programming exercises among instructors, the sharing platform offers a connector to Artemis, enabling any Artemis instance to integrate with the platform for seamless sharing.
 
+The `Sharing Platform` is open source. The source code can be found at https://sharing-codeability.uibk.ac.at/development/sharing/codeability-sharing-platform .
+
 Prerequisites
 -------------
 

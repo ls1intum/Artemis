@@ -12,11 +12,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
+
 /**
  * Health indicator that shows the status of the Sharing Platform connector.
  */
 @Component
-@Profile("sharing")
+@Profile(Constants.PROFILE_SHARING)
 @Lazy
 public class SharingHealthIndicator implements HealthIndicator {
 

@@ -7,7 +7,7 @@
             "courseToImport": "Course to import Exercise into",
             "noExercisesFound": "No imported exercises found?",
             "exerciseToImport": "Please select exercise to import",
-            "loginAsInstructor": "Please ensure to log in as instructor!",
+            "loginAsInstructorOrEditor": "Please ensure to log in as instructor or editor!",
             "error": {
                 "loadingStatus": "Sharing profile is not activated",
                 "statusError": "Status of Sharing Platform cannot be determined",

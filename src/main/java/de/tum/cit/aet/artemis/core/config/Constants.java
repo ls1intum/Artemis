@@ -276,7 +276,7 @@ public final class Constants {
     public static final String PROFILE_LOCALVC = "localvc";
 
     /**
-     * The name of the Spring profile used to choose the local CI system instead of Jenkins, or GitLabCI.
+     * The name of the Spring profile used to choose the local CI system.
      */
     public static final String PROFILE_LOCALCI = "localci";
 
