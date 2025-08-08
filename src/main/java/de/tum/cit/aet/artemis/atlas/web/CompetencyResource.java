@@ -28,8 +28,12 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationType;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -42,6 +46,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
 @Conditional(AtlasEnabled.class)
@@ -71,9 +77,11 @@ public class CompetencyResource {
 
     private final CourseCompetencyService courseCompetencyService;
 
+    private final AtlasMLService atlasMLService;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyService competencyService, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencyService courseCompetencyService) {
+            CourseCompetencyService courseCompetencyService, AtlasMLService atlasMLService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
@@ -81,6 +89,7 @@ public class CompetencyResource {
         this.competencyService = competencyService;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.courseCompetencyService = courseCompetencyService;
+        this.atlasMLService = atlasMLService;
     }
 
     /**
@@ -138,6 +147,14 @@ public class CompetencyResource {
 
         final var persistedCompetency = competencyService.createCourseCompetency(competency, course);
 
+        // Notify AtlasML about the new competency
+        try {
+            atlasMLService.saveCompetency(persistedCompetency, OperationType.UPDATE);
+        }
+        catch (Exception e) {
+            log.warn("Failed to notify AtlasML about competency creation: {}", e.getMessage());
+        }
+
         return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/" + persistedCompetency.getId())).body(persistedCompetency);
     }
 
@@ -159,6 +176,16 @@ public class CompetencyResource {
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
         var createdCompetencies = competencyService.createCompetencies(competencies, course);
+
+        // Notify AtlasML about the new competencies
+        for (Competency createdCompetency : createdCompetencies) {
+            try {
+                atlasMLService.saveCompetency(createdCompetency, OperationType.UPDATE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about competency creation for id {}: {}", createdCompetency.getId(), e.getMessage());
+            }
+        }
 
         return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/")).body(createdCompetencies);
     }
@@ -300,6 +327,14 @@ public class CompetencyResource {
 
         var persistedCompetency = competencyService.updateCourseCompetency(existingCompetency, competency);
 
+        // Notify AtlasML about the competency update
+        try {
+            atlasMLService.saveCompetency(persistedCompetency, OperationType.UPDATE);
+        }
+        catch (Exception e) {
+            log.warn("Failed to notify AtlasML about competency update: {}", e.getMessage());
+        }
+
         return ResponseEntity.ok(persistedCompetency);
     }
 
@@ -319,9 +354,38 @@ public class CompetencyResource {
         var competency = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
         checkCourseForCompetency(course, competency);
 
+        // Notify AtlasML about the competency deletion before actual deletion
+        try {
+            atlasMLService.saveCourseCompetency(competency, OperationType.DELETE);
+        }
+        catch (Exception e) {
+            log.warn("Failed to notify AtlasML about competency deletion: {}", e.getMessage());
+        }
+
         courseCompetencyService.deleteCourseCompetency(competency, course);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
+    }
+
+    /**
+     * POST atlas/competencies/suggest : suggests competencies using AtlasML.
+     *
+     * @param request the request containing the description for competency suggestions
+     * @return the ResponseEntity with status 200 (OK) and with body the suggested competencies
+     */
+    @PostMapping("competencies/suggest")
+    @FeatureToggle(Feature.AtlasML)
+    public ResponseEntity<SuggestCompetencyResponseDTO> suggestCompetencies(@RequestBody SuggestCompetencyRequestDTO request) {
+        log.debug("REST request to suggest competencies using AtlasML with description: {}", request.description());
+
+        try {
+            SuggestCompetencyResponseDTO result = atlasMLService.suggestCompetencies(request);
+            return ResponseEntity.ok(result);
+        }
+        catch (Exception e) {
+            log.error("Error while suggesting competencies", e);
+            throw new BadRequestAlertException("Error suggesting competencies: " + e.getMessage(), ENTITY_NAME, "suggestionError");
+        }
     }
 
     private void checkCompetencyAttributesForCreation(Competency competency) {

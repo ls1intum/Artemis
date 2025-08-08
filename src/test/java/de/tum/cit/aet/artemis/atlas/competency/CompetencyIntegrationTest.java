@@ -9,13 +9,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 
 class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
@@ -361,5 +365,43 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
         super.shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates();
+    }
+
+    @Nested
+    class AtlasMLFeatureToggle {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldAllowAtlasMLSuggestWhenFeatureEnabled() throws Exception {
+            request.post("/api/atlas/competencies/suggest", null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldAllowAtlasMLSaveWhenFeatureEnabled() throws Exception {
+            request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/save").contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(MockMvcResultMatchers.status().isOk());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldBlockAtlasMLSuggestWhenFeatureDisabled() throws Exception {
+            featureToggleService.disableFeature(Feature.AtlasML);
+
+            request.post("/api/atlas/competencies/suggest", null, HttpStatus.FORBIDDEN);
+
+            featureToggleService.enableFeature(Feature.AtlasML);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldBlockAtlasMLSaveWhenFeatureDisabled() throws Exception {
+            featureToggleService.disableFeature(Feature.AtlasML);
+
+            request.post("/api/atlas/competencies/save", null, HttpStatus.FORBIDDEN);
+
+            // Re-enable the feature for other tests
+            featureToggleService.enableFeature(Feature.AtlasML);
+        }
     }
 }
