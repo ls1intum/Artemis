@@ -493,8 +493,9 @@ public class LocalVCServletService {
     }
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
-        var urlSuffix = request.getRequestURL().toString().replace("/info/refs", "");
-        return new LocalVCRepositoryUri(localVCBaseUri, Path.of(urlSuffix));
+        String path = request.getRequestURI();
+        String normalizedPath = path.replaceFirst("/(info/refs|git-(upload|receive)-pack)$", "");
+        return new LocalVCRepositoryUri(localVCBaseUri, Path.of(normalizedPath));
     }
 
     private LocalVCRepositoryUri parseRepositoryUri(Path repositoryPath) {
