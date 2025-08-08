@@ -1,13 +1,12 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -63,11 +63,44 @@ public class ExamRoomService {
 
     private final ExamRoomAssignmentRepository examRoomAssignmentRepository;
 
-    public ExamRoomService(ExamRoomRepository examRoomRepository, LayoutStrategyRepository layoutStrategyRepository, ExamRoomAssignmentRepository examRoomAssignmentRepository) {
+    private final ObjectMapper objectMapper;
+
+    public ExamRoomService(ExamRoomRepository examRoomRepository, LayoutStrategyRepository layoutStrategyRepository, ExamRoomAssignmentRepository examRoomAssignmentRepository,
+            ObjectMapper objectMapper) {
         this.examRoomRepository = examRoomRepository;
         this.layoutStrategyRepository = layoutStrategyRepository;
         this.examRoomAssignmentRepository = examRoomAssignmentRepository;
+        this.objectMapper = objectMapper;
     }
+
+    /* Multiple records that will be used internally for Jackson deserialization */
+    // @formatter:off
+    private record ExamRoomInput(
+        @JsonProperty("number") String alternativeNumber,
+        @JsonProperty("name") String name,
+        @JsonProperty("shortname") String alternativeName,
+        @JsonProperty("building") String building,
+        @JsonProperty("rows") List<RowInput> rows,
+        @JsonProperty("layouts") Map<String, JsonNode> layouts
+    ) {}
+
+    private record RowInput(
+        @JsonProperty("label") String label,
+        @JsonProperty("seats") List<SeatInput> seats
+    ) {}
+
+    private record SeatInput(
+        @JsonProperty("label") String label,
+        @JsonProperty("flag") String condition,
+        @JsonProperty("position") PositionInput position
+    ) {}
+
+    private record PositionInput(
+        @JsonProperty("x") float x,
+        @JsonProperty("y") float y
+    ) {}
+    // @formatter:on
+    /* End of the Jackson records */
 
     /**
      * Looks through all JSON files contained in a given zip file (recursive search).
@@ -84,7 +117,6 @@ public class ExamRoomService {
 
         try (ZipInputStream zis = new ZipInputStream(zipFile.getInputStream())) {
             ZipEntry entry;
-            ObjectMapper mapper = new ObjectMapper();
 
             while ((entry = zis.getNextEntry()) != null) {
                 String entryName = entry.getName();
@@ -100,10 +132,9 @@ public class ExamRoomService {
                 int roomNumberEndIdx = entryName.lastIndexOf(".json");
                 String roomNumber = entryName.substring(roomNumberStartIdx, roomNumberEndIdx);
 
-                String jsonData = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
-                JsonNode jsonRoot = mapper.readTree(jsonData);
+                ExamRoomInput examRoomInput = objectMapper.readValue(zis.readAllBytes(), ExamRoomInput.class);
 
-                var examRoom = parseExamRoomJsonFile(roomNumber, jsonRoot);
+                var examRoom = parseExamRoomFromRoomNumberAndExamRoomInput(roomNumber, examRoomInput);
                 if (examRoom == null)
                     continue;
 
@@ -131,48 +162,38 @@ public class ExamRoomService {
     }
 
     /**
-     * Parses an exam room from a JSON file and returns it.
-     * <p/>
-     * Expects this format:
-     * <ul>
-     * <li>number: {alternativeRoomNumber}</li>
-     * <li>name: {roomName}</li>
-     * <li>shortname: {alternativeName}</li>
-     * <li>building: {building}</li>
-     * <li>rows: {rowsJSON}</li>
-     * <li>layouts: {layoutsJSON}</li>
-     * </ul>
-     * <p>
-     * How exactly rowsJSON and layoutsJSON are expected to look like can be seen in the {@link #parseExamSeats} and
-     * the {@link #parseLayoutStrategies}, respectively.
+     * Parses an exam room from a Jackson deserialized JSON file.
      *
-     * @param roomNumber The roomNumber of the exam room we want to create.
-     * @param jsonRoot   The root JSON node, containing the data as described above.
+     * @param roomNumber    The roomNumber of the exam room we want to create.
+     * @param examRoomInput The Jackson parsed exam room input
      * @return The ExamRoom as stored in the JSON room data.
      */
-    private static ExamRoom parseExamRoomJsonFile(final String roomNumber, final JsonNode jsonRoot) {
+    private static ExamRoom parseExamRoomFromRoomNumberAndExamRoomInput(final String roomNumber, final ExamRoomInput examRoomInput) {
+        if (examRoomInput == null) {
+            return null;
+        }
+
         /* Extract simple exam room fields */
         ExamRoom room = new ExamRoom();
         room.setRoomNumber(roomNumber);
-        final String alternativeRoomNumber = jsonRoot.get("number").asText(null);
+        final String alternativeRoomNumber = examRoomInput.alternativeNumber;
         if (!roomNumber.equals(alternativeRoomNumber)) {
             room.setAlternativeRoomNumber(alternativeRoomNumber);
         }
 
-        room.setName(jsonRoot.path("name").asText());
-        final String alternativeName = jsonRoot.path("shortname").asText(null);
+        room.setName(examRoomInput.name);
+        final String alternativeName = examRoomInput.alternativeName;
         if (!room.getName().equals(alternativeName)) {
             room.setAlternativeName(alternativeName);
         }
 
-        room.setBuilding(jsonRoot.path("building").asText());
+        room.setBuilding(examRoomInput.building);
         /* Extract simple exam room fields - End */
 
         /* Extract the seats */
         // It is imperative that the seats are parsed before the layout strategies are parsed, as the size calculation
         // for relative layouts will only be done if the rooms have already been parsed
-        JsonNode rowsArrayNode = jsonRoot.path("rows");
-        List<ExamSeatDTO> seats = parseExamSeats(rowsArrayNode);
+        List<ExamSeatDTO> seats = parseExamSeats(examRoomInput.rows);
         if (seats == null) {
             log.warn("Skipping room {} because the seats are stored incorrectly", room.getRoomNumber());
             return null;
@@ -182,13 +203,7 @@ public class ExamRoomService {
         /* Extract the seats - End */
 
         /* Extract the layouts */
-        JsonNode layoutsObjectNode = jsonRoot.path("layouts");
-        List<LayoutStrategy> layouts = parseLayoutStrategies(layoutsObjectNode, room);
-        if (layouts == null) {
-            log.warn("Skipping room {} because the layouts are stored incorrectly", room.getRoomNumber());
-            return null;
-        }
-
+        List<LayoutStrategy> layouts = parseLayoutStrategies(examRoomInput.layouts, room);
         room.setLayoutStrategies(layouts);
         /* Extract the layouts - End */
 
@@ -196,35 +211,58 @@ public class ExamRoomService {
     }
 
     /**
-     * Parses the layout strategies from the room data files.
-     * <p/>
-     * The expected format is:
-     * <ul>
-     * <li>{layout_name}:
-     * <ul>
-     * <li>{layout_type}: {layout_parameters_JSON}</li>
-     * </ul>
-     * </li>
-     * </ul>
-     * <p>
-     * The content of {@code layout_parameters_JSON} depends on the layout type.
+     * Parses exam seats from Jackson deserialized data.
      *
-     * @param layoutsObjectNode The JSON object node containing the layout strategy data, with a format as described above.
-     * @param room              The exam room for which the parsed layout strategies are.
-     * @return A list of all layout strategies this room has to offer.
+     * @param rows The list of Jackson parsed row inputs
+     * @return The list of all exam seats it could parse from the JSON node, or null on error.
      */
-    private static List<LayoutStrategy> parseLayoutStrategies(JsonNode layoutsObjectNode, ExamRoom room) {
-        List<LayoutStrategy> layouts = new ArrayList<>();
-
-        if (!layoutsObjectNode.isObject()) {
+    private static List<ExamSeatDTO> parseExamSeats(List<RowInput> rows) {
+        if (rows == null) {
             return null;
         }
 
-        // Iterate over all possible room layout names, e.g., "default" or "wide"
-        for (Iterator<String> it = layoutsObjectNode.fieldNames(); it.hasNext();) {
-            final String layoutName = it.next();
-            final JsonNode layoutNode = layoutsObjectNode.path(layoutName);
+        List<ExamSeatDTO> seats = new ArrayList<>();
 
+        for (RowInput rowInput : rows) {
+            if (rowInput == null) {
+                return null;
+            }
+
+            final String rowLabel = rowInput.label == null ? "" : rowInput.label;
+            for (SeatInput seatInput : rowInput.seats) {
+                if (seatInput == null) {
+                    return null;
+                }
+
+                final String seatLabel = seatInput.label == null ? "" : seatInput.label;
+                final String seatName = rowLabel.isEmpty() ? seatLabel : (rowLabel + ", " + seatLabel);
+
+                ExamSeatDTO seat = new ExamSeatDTO();
+                seat.setLabel(seatName);
+                seat.setX(seatInput.position.x);
+                seat.setY(seatInput.position.y);
+                seat.setSeatCondition(SeatCondition.seatConditionFromFlag(seatInput.condition));
+                seats.add(seat);
+            }
+        }
+
+        return seats;
+    }
+
+    /**
+     * Parses the layout strategies from the room data files.
+     * <p/>
+     * The content of the JSON nodes depends on the layout type.
+     *
+     * @param layoutNamesToLayoutNode Mapping of layout names to layout JSON nodes
+     * @param room                    The exam room for which the parsed layout strategies are.
+     * @return A list of all layout strategies this room has to offer.
+     */
+    private static List<LayoutStrategy> parseLayoutStrategies(Map<String, JsonNode> layoutNamesToLayoutNode, ExamRoom room) {
+        List<LayoutStrategy> layouts = new ArrayList<>();
+
+        // Iterate over all possible room layout names, e.g., "default" or "wide"
+        layoutNamesToLayoutNode.forEach((layoutName, layoutNode) -> {
             // We assume there's only a single layout type, e.g., "auto_layout" or "usable_seats"
             final String layoutType = layoutNode.fieldNames().next();
             final JsonNode layoutDetailNode = layoutNode.path(layoutType);
@@ -238,17 +276,17 @@ public class ExamRoomService {
                 case "usable_seats", "useable_seats" -> layoutStrategy.setType(LayoutStrategyType.FIXED_SELECTION);
                 default -> {
                     log.warn("Unknown layout type '{}' in room {}", layoutType, room.getRoomNumber());
-                    continue;
+                    return;
                 }
             }
             layoutStrategy.setParametersJson(String.valueOf(layoutDetailNode));
 
-            // pre-calculate the capacity if it's easy/efficient to do so
+            // pre-calculate the capacity
             switch (layoutStrategy.getType()) {
                 case LayoutStrategyType.FIXED_SELECTION -> {
                     if (!layoutDetailNode.isArray()) {
                         log.warn("Skipping layout '{}' of room {} because it's a fixed selection, but parameters aren't an array", layoutName, room.getRoomNumber());
-                        continue;
+                        return;
                     }
 
                     layoutStrategy.setCapacity(layoutDetailNode.size());
@@ -256,7 +294,7 @@ public class ExamRoomService {
                 case LayoutStrategyType.RELATIVE_DISTANCE -> {
                     if (!layoutDetailNode.isObject()) {
                         log.warn("Skipping layout '{}' of room {} because it's a relative selection, but parameters aren't an object", layoutName, room.getRoomNumber());
-                        continue;
+                        return;
                     }
 
                     calculateSeatsFromRelativeDistanceLayout(layoutDetailNode, room).ifPresent(layoutStrategy::setCapacity);
@@ -264,7 +302,8 @@ public class ExamRoomService {
             }
 
             layouts.add(layoutStrategy);
-        }
+        });
+
         return layouts;
     }
 
@@ -313,59 +352,6 @@ public class ExamRoomService {
         }
 
         return Optional.of(selectedSeats.size());
-    }
-
-    /**
-     * Parses exam seats from JSON data.
-     * <p/>
-     * The expected format is a JSON array of this format:
-     * <ul>
-     * <li>label: {rowName}</li>
-     * <li>seats: {seatsJSON}</li>
-     * </ul>
-     * <br/>
-     * {@code seatsJSON} is a JSON array of the following format:
-     * <ul>
-     * <li>label: {seatName}</li>
-     * <li>flag: {{@link SeatCondition}}</li>
-     * <li>position:
-     * <ul>
-     * <li>x: float</li>
-     * <li>y: float</li>
-     * </ul>
-     * </li>
-     * </ul>
-     *
-     * @param rowsArrayNode The JSON node containing the row data.
-     * @return The list of all exam seats it could parse from the JSON node, or null on error.
-     */
-    private static List<ExamSeatDTO> parseExamSeats(JsonNode rowsArrayNode) {
-        List<ExamSeatDTO> seats = new ArrayList<>();
-        if (!rowsArrayNode.isArray()) {
-            return null;
-        }
-
-        for (JsonNode rowNode : rowsArrayNode) {
-            JsonNode seatsArray = rowNode.path("seats");
-            if (!seatsArray.isArray()) {
-                return null;
-            }
-
-            String rowLabel = rowNode.path("label").asText();
-
-            for (JsonNode seatNode : seatsArray) {
-                String seatLabel = seatNode.path("label").asText();
-                String seatName = rowLabel.isEmpty() ? seatLabel : (seatLabel + ", " + rowLabel);
-
-                ExamSeatDTO seat = new ExamSeatDTO();
-                seat.setLabel(seatName);
-                seat.setX(seatNode.path("position").path("x").asDouble());
-                seat.setY(seatNode.path("position").path("y").asDouble());
-                seat.setSeatCondition(SeatCondition.seatConditionFromFlag(seatNode.path("flag").asText()));
-                seats.add(seat);
-            }
-        }
-        return seats;
     }
 
     private static ExamRoomUploadInformationDTO getExamRoomUploadInformationDTO(MultipartFile zipFile, long startTime, Set<ExamRoom> examRooms) {
