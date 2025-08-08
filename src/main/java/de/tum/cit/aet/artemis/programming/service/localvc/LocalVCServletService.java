@@ -493,8 +493,8 @@ public class LocalVCServletService {
     }
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
-        var urlString = request.getRequestURL().toString().replace("/info/refs", "");
-        return new LocalVCRepositoryUri(localVCBaseUri, Path.of(urlString));
+        var urlSuffix = request.getRequestURL().toString().replace("/info/refs", "");
+        return new LocalVCRepositoryUri(localVCBaseUri, Path.of(urlSuffix));
     }
 
     private LocalVCRepositoryUri parseRepositoryUri(Path repositoryPath) {

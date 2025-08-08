@@ -711,7 +711,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @return The checked out repository as a zip file or directory
      * @throws IOException if zip file creation failed
      */
-    // TODO: we should check check out the repo in memory and not clone it into the file system and additionally do multiple remote operations
+    // TODO: we should check out the repo in memory and not clone it into the file system and additionally do multiple remote operations
     public Path getRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
             final RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, boolean zipOutput) throws IOException, UncheckedIOException {
         if (participation.getVcsRepositoryUri() == null) {

@@ -121,8 +121,7 @@ public class RepositoryService {
      */
     public Map<String, String> getFilesContentAtCommit(ProgrammingExercise programmingExercise, String commitId, RepositoryType repositoryType,
             ProgrammingExerciseParticipation participation) throws IOException {
-        log.debug("Using local VCS for getting files at commit {} for participation {}", commitId, participation.getId());
-        // If local VCS is active, operate directly on the bare repository
+        log.debug("Getting files at commit {} for participation {}", commitId, participation.getId());
         var repoUri = repositoryType == RepositoryType.TESTS ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
         try (Repository repository = gitService.getBareRepository(repoUri, false)) {
             return getFilesContentFromBareRepository(repository, commitId);

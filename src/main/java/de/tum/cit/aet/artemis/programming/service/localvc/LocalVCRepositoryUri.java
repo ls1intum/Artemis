@@ -52,7 +52,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
 
     /**
      * Initializes a new instance of the {@link LocalVCRepositoryUri} class from a repository name
-     * and builds an url to format <code>{server.url}/git/{project-key}/{repo-name}.git</code> with <code>repo-name</code> consisting of <code>{project-key}-{repo-type}</code>
+     * and builds a url to format {@code {server.url}/git/{project-key}/{repo-name}.git} with {@code repo-name} consisting of {@code {projectKey}-{repoType}}
      *
      * @param localVcBaseUri The base URI of the local version control system
      * @param repositoryName containing the project key at the beginning, e.g. {project-key}-{repo-name}
@@ -63,7 +63,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
 
     private static String extractProjectKey(String repositoryName) {
         if (!repositoryName.matches("[a-zA-Z0-9]+-[a-zA-Z0-9-]+")) {
-            throw new IllegalArgumentException("Repository name must be in the format <project-key>-<repo-type>");
+            throw new IllegalArgumentException("Repository name must be in the format <projectKey>-<repoType>");
         }
         return repositoryName.split("-")[0];
     }
