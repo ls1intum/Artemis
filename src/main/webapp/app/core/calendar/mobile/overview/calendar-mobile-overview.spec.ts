@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { CalendarMobileOverviewComponent } from './calendar-mobile-overview';
 import { CalendarMobileMonthPresentationComponent } from 'app/core/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
 import { CalendarMobileDayPresentationComponent } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
@@ -11,27 +12,27 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
 
 describe('CalendarMobileOverviewComponent', () => {
     let fixture: ComponentFixture<CalendarMobileOverviewComponent>;
     let component: CalendarMobileOverviewComponent;
-    let calendarEventServiceMock: any;
 
     let dayToSelect: Dayjs;
     let firstDayOfCurrentMonth: Dayjs;
     let today: Dayjs;
 
     beforeEach(async () => {
-        calendarEventServiceMock = {
-            loadEventsForCurrentMonth: jest.fn().mockReturnValue(of(null)),
+        const calendarEventServiceMock = {
+            eventMap: signal(new Map<string, CalendarEvent[]>()),
+            loadEventsForCurrentMonth: jest.fn().mockReturnValue(of([])),
         };
 
         await TestBed.configureTestingModule({
-            imports: [CalendarMobileOverviewComponent],
+            imports: [CalendarMobileOverviewComponent, CalendarMobileDayPresentationComponent],
             declarations: [
                 FaIconComponent,
                 MockComponent(CalendarMobileMonthPresentationComponent),
-                MockComponent(CalendarMobileDayPresentationComponent),
                 MockComponent(CalendarEventFilterComponent),
                 MockDirective(TranslateDirective),
             ],
