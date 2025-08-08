@@ -23,6 +23,7 @@
         .event-stack {
             display: flex;
             flex-direction: column;
+            width: 100%;
             gap: 4px;
             height: 26px;
             padding: 0 0.125rem;
@@ -30,7 +31,7 @@
 
         .event-cell {
             height: 6px;
-            width: 44px;
+            width: 100%;
             border-radius: 4px;
         }
 
