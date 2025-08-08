@@ -41,7 +41,7 @@
 
 .iris-tutor-suggestion-chat-container {
     max-height: 300px;
-    background: #ffffff;
+    background: var(--iris-chat-history-background);
     display: flex;
 }
 

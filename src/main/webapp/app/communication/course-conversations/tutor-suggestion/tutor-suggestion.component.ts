@@ -28,6 +28,7 @@ import { faArrowDown, faArrowUp, faArrowsRotate } from '@fortawesome/free-solid-
  * It fetches the messages from the chat service and displays the suggestion
  */
 @Component({
+    standalone: true,
     selector: 'jhi-tutor-suggestion',
     templateUrl: './tutor-suggestion.component.html',
     styleUrl: './tutor-suggestion.component.scss',
