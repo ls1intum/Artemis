@@ -132,8 +132,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
                             To fix this, remove the symbolic link and replace it with the actual file or directory.
 
                             - macOS/Linux:
-                                * If it's a file symlink: run 'rm "%1$s"'
-                                * If it's a directory symlink: run 'rm -r "%1$s"'
+                                 * run 'rm "%1$s"'
                             - Windows:
                                 * If it's a file symlink: run 'del "%1$s"'
                                 * If it's a directory symlink: run 'rmdir "%1$s"'
