@@ -21,7 +21,7 @@ def add_user_to_course(session: requests.Session, course_id: int, user_group: st
     url: str = f"{SERVER_URL}/core/courses/{course_id}/{user_group}/{user_name}"
     response: requests.Response = session.post(url)
     if response.status_code == 200:
-        logging.info(f"Added user {user_name} to group {user_group}")
+        logging.debug(f"Added user {user_name} to group {user_group}")
     else:
         logging.error(f"Could not add user {user_name} to group {user_group}")
 
@@ -41,7 +41,7 @@ def authenticate_user(username: str, password: str, session: requests.Session = 
     response: requests.Response = session.post(url, json=payload, headers=headers)
 
     if response.status_code == 200:
-        logging.info(f"Authentication successful for user {username}")
+        logging.debug(f"Authentication successful for user {username}")
     else:
         raise Exception(
             f"Authentication failed for user {username}. Status code: {response.status_code}\n Response content: {response.text}")

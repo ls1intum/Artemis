@@ -2,6 +2,8 @@ import json
 import pytest
 from uuid import uuid4
 from requests import Session
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import time
 import configparser
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -17,10 +19,13 @@ from admin_operations import (
     get_submissions_for_exercise,
     get_all_results,
     log_build_agent_summaries,
+    get_build_agents,
 )
-from experiment_config import JAVA_HAPPY_PATH, JAVA_TIMEOUT_BUILD, JAVA_FAILING_BUILD, C_HAPPY_PATH, ExperimentConfig
+from experiment_config import JAVA_HAPPY_PATH, JAVA_SPAMMY_BUILD, JAVA_TIMEOUT_BUILD, JAVA_FAILING_BUILD, C_HAPPY_PATH, JAVA_ALLOCATE_MEMORY, ExperimentConfig
 from student_operations import participate_programming_exercise
 import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -38,6 +43,24 @@ PASSWORD_PATTERN: str = secrets.get(
 )
 
 
+def configure_session_for_high_concurrency(session: Session, pool_connections=50, pool_maxsize=100):
+    """Configure a session for high concurrency with larger connection pools."""
+    # Configure HTTP adapter with larger connection pool
+    adapter = HTTPAdapter(
+        pool_connections=pool_connections,  # Number of connection pools
+        pool_maxsize=pool_maxsize,         # Max connections per pool
+        max_retries=Retry(
+            total=5,
+            backoff_factor=0.3,
+            status_forcelist=[500, 502, 503, 504]
+        )
+    )
+
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
+
+
 class ExperimentRunner:
     """Class to handle experiment operations and session management."""
     def __init__(self):
@@ -45,6 +68,7 @@ class ExperimentRunner:
         self.user_sessions = {}
         self.course_id = None
         self.exercise_id = None
+        self.polling_data = []
 
     def __enter__(self):
         return self
@@ -63,6 +87,7 @@ class ExperimentRunner:
 
     def authenticate_single_user(self, user_index: int) -> tuple[int, Session]:
         session = Session()
+        configure_session_for_high_concurrency(session)
         username = USER_NAME_PATTERN.format(user_index)
         password = PASSWORD_PATTERN.format(user_index)
 
@@ -76,7 +101,7 @@ class ExperimentRunner:
     def authenticate_users(self, user_count: int, max_workers=4) -> Dict[int, Session]:
         user_sessions = {}
         test_user_range = range(1, user_count + 1)
-        
+
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             try:
                 future_to_user = {
@@ -118,7 +143,7 @@ class ExperimentRunner:
     def run_parallel_student_operations(
         self,
         operation: Callable,
-        max_workers: int = 10,
+        max_workers: int = 20,
         *args,
         **kwargs,
     ) -> Dict[int, Any]:
@@ -126,7 +151,7 @@ class ExperimentRunner:
         results = {}
 
         logging.info(f"Starting parallel operation for {len(self.user_sessions)} students...")
-        
+
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             try:
                 future_to_user = {
@@ -159,51 +184,76 @@ class ExperimentRunner:
 
         return results
 
+    def _collect_polling_data_point(self, start_time: float):
+        current_time = time.time()
+        elapsed_time = current_time - start_time
+
+        submissions = get_submissions_for_exercise(self.admin_session, self.exercise_id)
+        results = get_all_results(submissions)
+        running_jobs = get_running_build_jobs_for_course(self.admin_session, self.course_id)
+        queued_jobs = get_queued_build_jobs_for_course(self.admin_session, self.course_id)
+        build_agents = get_build_agents(self.admin_session)
+
+        build_agent_data = []
+        for agent in build_agents:
+            agent_info = {
+                'name': agent.get('buildAgent', {}).get('displayName', 'Unknown'),
+                'status': agent.get('status', 'Unknown'),
+                'numberOfCurrentBuildJobs': agent.get('numberOfCurrentBuildJobs', 0)
+            }
+            build_agent_data.append(agent_info)
+
+        data_point = {
+            'timestamp': current_time,
+            'elapsed_time_seconds': elapsed_time,
+            'submissions_count': len(submissions),
+            'results_count': len(results),
+            'running_jobs_count': len(running_jobs),
+            'queued_jobs_count': len(queued_jobs),
+            'build_agents': build_agent_data
+        }
+        self.polling_data.append(data_point)
+        return data_point
+
+    def get_current_results(self):
+        submissions = get_submissions_for_exercise(self.admin_session, self.exercise_id)
+        results = get_all_results(submissions)
+        return results
+
     def poll_job_completions(
         self,
+        start_time: float,
+        expected_submissions: int,
         timeout_seconds: int = 600,
         interval_seconds: int = 10,
     ) -> List[Dict[str, Any]]:
-        """Poll for job completions."""
+        """Poll for job completions and collect data for plotting."""
         logging.info(f"Polling job completions for exercise {self.exercise_id}...")
-        start_time = time.time()
+        self._collect_polling_data_point(start_time)
 
-        logging.info("Waiting for submissions to be created...")
-        while time.time() - start_time < timeout_seconds:
-            submissions = get_submissions_for_exercise(self.admin_session, self.exercise_id)
-            if len(submissions) > 0:
-                logging.info(
-                    f"Found {len(submissions)} submissions, starting to poll for results..."
-                )
-                break
-            logging.debug("No submissions found yet, waiting...")
-            time.sleep(interval_seconds)
 
         while time.time() - start_time < timeout_seconds:
-            submissions = get_submissions_for_exercise(self.admin_session, self.exercise_id)
-            results = get_all_results(submissions)
-            logging.info(
-                f"Current submissions: {len(submissions)}, current results: {len(results)}"
-            )
+            poll_start = time.time()
+            data_point = self._collect_polling_data_point(start_time)
 
-            running_jobs = get_running_build_jobs_for_course(self.admin_session, self.course_id)
             logging.info(
-                f"Currently running jobs for course {self.course_id}: {len(running_jobs)}"
+                f"[T+{data_point['elapsed_time_seconds']:.0f}s] "
+                f"Submissions: {data_point['submissions_count']}, Results: {data_point['results_count']}, "
+                f"Running: {data_point['running_jobs_count']}, Queued: {data_point['queued_jobs_count']}, "
             )
-
-            queued_jobs = get_queued_build_jobs_for_course(self.admin_session, self.course_id)
-            logging.info(
-                f"Currently queued jobs for course {self.course_id}: {len(queued_jobs)}"
-            )
-
             log_build_agent_summaries(self.admin_session)
+            if data_point['submissions_count'] == expected_submissions and data_point["queued_jobs_count"] == 0 and data_point and data_point['running_jobs_count'] == 0:
+                logging.info("No jobs processing or queued anymore. Returning results")
+                return self.get_current_results()
 
-            if len(results) == len(submissions):
+            if data_point['results_count'] == expected_submissions:
                 logging.info(
-                    f"All submissions have results. Returning {len(results)} results."
+                    f"All submissions have results. Returning {data_point['results_count']} results."
                 )
-                return results
-            time.sleep(interval_seconds)
+                return self.get_current_results()
+            poll_duration = time.time() - poll_start
+            # make the polling interval roughly constant by adjusting it for total duration taken to fetch data
+            time.sleep(max(interval_seconds - poll_duration, 0))
 
         submissions = get_submissions_for_exercise(self.admin_session, self.exercise_id)
         results = get_all_results(submissions)
@@ -263,9 +313,10 @@ class ExperimentRunner:
         )
         return exercise
 
-    def setup_experiment(self, experiment_config: ExperimentConfig, number_of_students: int, experiment_id: str):
+    def setup_experiment(self, experiment_config: ExperimentConfig, number_of_students: int, experiment_id: str = str(uuid4())):
         """Set up the entire experiment."""
         self.admin_session = Session()
+        configure_session_for_high_concurrency(self.admin_session)
         login_as_admin(self.admin_session)
 
         course = self.create_course(
@@ -280,30 +331,100 @@ class ExperimentRunner:
 
         return course
 
-    def run_experiment(self, experiment_config, number_of_commits: int = 1):
+    def run_experiment(self, experiment_config: ExperimentConfig, number_of_commits: int = 1):
         """Run the experiment with students participating."""
+        initial_sleep = 10
         start_time = time.time()
-        self.run_parallel_student_operations(
-            participate_programming_exercise,
-            exercise_id=self.exercise_id,
-            files_to_commit=experiment_config.commit_files,
-            commits=number_of_commits,
-        )
+        self._collect_polling_data_point(start_time)
+        time.sleep(initial_sleep) # Avoid instantly starting the submissions
 
-        results = self.poll_job_completions(
-            timeout_seconds=60 * 20,
-            interval_seconds=15,
-        )
-        end_time = time.time()
-        logging.info(f"Experiment completed in {end_time - start_time:.2f} seconds")
-        stats = get_build_job_statistics_for_course(self.admin_session, self.course_id)
+        # Start student operations in a separate thread
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            student_operations_future = executor.submit(
+                self.run_parallel_student_operations,
+                participate_programming_exercise,
+                exercise_id=self.exercise_id,
+                files_to_commit=experiment_config.commit_files,
+                commits=number_of_commits,
+            )
+            
+            results = self.poll_job_completions(
+                start_time=start_time,
+                expected_submissions=len(self.user_sessions) * number_of_commits,
+                timeout_seconds=60 * 30,
+                interval_seconds=10,
+            )
+            
+            try:
+                student_operations_future.result(timeout=10)
+                logging.debug(f"Student operations completed successfully")
+            except Exception as e:
+                logging.error(f"Student operations encountered an error: {e}")
         
-        logging.info(
-            f"Results collected: {len(results)} results for {len(self.user_sessions)} students."
-        )
-        logging.info(f"Build job statistics for course {self.course_id}: {stats}")
 
+        
+
+        logging.info(f"Results collected: {len(results)} results for {len(self.user_sessions)} students.")
+        end_time = time.time()
+        logging.info(f"Experiment completed in {(end_time - start_time - initial_sleep):.2f} seconds")
+
+        start_ms = int(start_time * 1000)
+        end_ms = int(end_time * 1000 + 30 * 1000) # + 30 seconds for visualization
+        base_url = "https://grafana.gchq.ase.in.tum.de/d/aeefmxka3vgg0a/artemis-dev-cluster-artemis-node-overview"
+        params = f"?orgId=1&from={start_ms}&to={end_ms}"
+        grafana_link = f"{base_url}{params}"
+
+
+        timestamp = time.strftime('%Y%m%d_%H%M%S')
+        filename = f"test_reports/polling_data_{timestamp}-{experiment_config.identifier}-{len(self.user_sessions)}x{number_of_commits}.json"
+        self.save_polling_data(filename=filename, grafana_link=grafana_link)
+        self._generate_experiment_plots(filename=filename)
+
+        logging.info(
+            f"Grafana: {grafana_link}"
+        )
+        stats = get_build_job_statistics_for_course(self.admin_session, self.course_id)
+        logging.info(f"Build job statistics for course {self.course_id}: {stats}")
         return results, stats
+
+    def save_polling_data(self, filename: str, grafana_link: str = None):
+        """Save the collected polling data to a JSON file."""
+        import os
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        
+        with open(filename, 'w') as f:
+            json.dump(self.polling_data, f, indent=2)
+        
+        if grafana_link:
+            with open(filename + "_grafana", 'a') as f:
+                f.write(f"\nGrafana link: {grafana_link}\n")
+        logging.info(f"Polling data saved to {filename}")
+        return filename
+
+    def _generate_experiment_plots(self, filename:str):
+        """Automatically generate plots for the experiment data."""
+        try:
+            import subprocess
+            import os  
+            plot_script = "plot_experiment_data.py"
+            if os.path.exists(plot_script):
+                logging.info(f"Generating plots for {filename}...")
+                result = subprocess.run(
+                    ["python", plot_script, filename], 
+                    capture_output=True, 
+                    text=True,
+                    cwd=os.getcwd()
+                )
+                
+                if result.returncode == 0:
+                    logging.info("Plots generated successfully!")
+                else:
+                    logging.error(f"Failed to generate plots: {result.stderr} {result.stdout}")
+            else:
+                logging.warning(f"Plot script {plot_script} not found")
+                
+        except Exception as e:
+            logging.error(f"Error generating plots: {e}")
 
 def assertStatsForPassingJobs(stats, number_of_students, number_of_commits):
     assert stats is not None, "Should have build statistics"
@@ -318,30 +439,42 @@ def experiment_runner():
     with ExperimentRunner() as runner:
         yield runner
 
-def test_java_failing_builds_high_load(experiment_runner: ExperimentRunner):
-    experiment_id = str(uuid4())
+def test_java_failing_builds_medium_load(experiment_runner: ExperimentRunner):
     number_of_students = 100
-    number_of_commits = 5
+    number_of_commits = 1
     
     logging.info(f"Running Java failing build test with {number_of_students} students")
 
-    experiment_runner.setup_experiment(JAVA_FAILING_BUILD, number_of_students, experiment_id)
+    experiment_runner.setup_experiment(JAVA_FAILING_BUILD, number_of_students)
     results, stats = experiment_runner.run_experiment(JAVA_FAILING_BUILD, number_of_commits)
     
-    # Specific assertions for failing builds
     assert len(results) == number_of_students * number_of_commits, "All submissions should have results"
-    assert stats is not None, "Should have build statistics"
+    for result in results:
+        assert result.get('rated') is True, "All results should be rated"
+        assert result.get('successful') is False, "All results should be unsuccessful"
+        assert result.get('score') == 0, "All results should have a score of 0"
+    # a failure in build script does not count failed
+    # assert stats.get('failedBuilds', 0) == number_of_students * number_of_commits, "All build jobs should have failed"
+
+def test_timeout_builds(experiment_runner: ExperimentRunner):
+    number_of_students = 30
+    number_of_commits = 1
+
+    logging.info(f"Running Java timeout build test with {number_of_students} students")
+
+    experiment_runner.setup_experiment(JAVA_TIMEOUT_BUILD, number_of_students)
+    stats = experiment_runner.run_experiment(JAVA_TIMEOUT_BUILD, number_of_commits)
+    assert stats.get('timeOutBuilds', 0) == number_of_students * number_of_commits, "All build jobs should have timed out"
 
 
 def test_java_happy_path_medium_load(experiment_runner: ExperimentRunner):
     """Test Java happy path with medium load."""
-    experiment_id = str(uuid4())
     number_of_students = 250
     number_of_commits = 1
     
     logging.info(f"Running Java happy path test with {number_of_students} students")
     
-    course = experiment_runner.setup_experiment(JAVA_HAPPY_PATH, number_of_students, experiment_id)
+    course = experiment_runner.setup_experiment(JAVA_HAPPY_PATH, number_of_students)
     results, stats = experiment_runner.run_experiment(JAVA_HAPPY_PATH, number_of_commits)
     
     assert len(results) == number_of_students * number_of_commits, "All submissions should have results"
@@ -353,12 +486,11 @@ def test_java_happy_path_medium_load(experiment_runner: ExperimentRunner):
 
 def test_c_happy_path_high_load(experiment_runner: ExperimentRunner):
     """Test C happy path with medium load."""
-    experiment_id = str(uuid4())
     number_of_students = 500
     number_of_commits = 1
 
     logging.info(f"Running C happy path test with {number_of_students} students")
-    course = experiment_runner.setup_experiment(C_HAPPY_PATH, number_of_students, experiment_id)
+    experiment_runner.setup_experiment(C_HAPPY_PATH, number_of_students)
     results, stats = experiment_runner.run_experiment(C_HAPPY_PATH, number_of_commits)
 
     assert len(results) == number_of_students * number_of_commits, "All submissions should have results"
@@ -366,4 +498,27 @@ def test_c_happy_path_high_load(experiment_runner: ExperimentRunner):
         assert result.get('rated') is True, "All results should be rated"
         assert result.get('score') > 0, "All results should have a positive partial score"
         assert result.get('successful') is True, "All result have full score"
+    assertStatsForPassingJobs(stats, number_of_students, number_of_commits)
+
+def test_memory_hog(experiment_runner: ExperimentRunner):
+    number_of_students = 100
+    number_of_commits = 1
+    logging.info(f"Running Java memory hog test with {number_of_students} students")
+    experiment_runner.setup_experiment(JAVA_ALLOCATE_MEMORY, number_of_students)
+    results, stats = experiment_runner.run_experiment(JAVA_ALLOCATE_MEMORY, number_of_commits)
+
+    assert len(results) == number_of_students * number_of_commits, "All submissions should have results"
+    for result in results:
+        assert result.get('rated') is True, "All results should be rated"
+        assert result.get('score') > 0, "All results should have a positive partial score"
+        assert result.get('successful') is True, "All result have full score"
+    assertStatsForPassingJobs(stats, number_of_students, number_of_commits)
+
+def test_spammy_log(experiment_runner: ExperimentRunner):
+    number_of_students = 500
+    number_of_commits = 1
+    logging.info(f"Running Java spammy log test with {number_of_students} students")
+    
+    experiment_runner.setup_experiment(JAVA_SPAMMY_BUILD, number_of_students)
+    results, stats = experiment_runner.run_experiment(JAVA_SPAMMY_BUILD, number_of_commits)
     assertStatsForPassingJobs(stats, number_of_students, number_of_commits)

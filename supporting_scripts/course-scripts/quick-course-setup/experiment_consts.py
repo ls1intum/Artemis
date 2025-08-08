@@ -31,6 +31,32 @@ SPAMMY_BUILD_SCRIPT = """#!/usr/bin/env bash
         main "${@}"
     """
 
+SPAMMY_BUILD_GRADLE = """
+    #!/usr/bin/env bash
+    set -e
+
+    spam_logs() {
+        log_line="This is a test log message meant to spam the output."
+        for ((i = 1; i <= 100000; i++)); do
+            printf "Log line %d: %s\n" "$i" "$log_line"
+        done
+    echo "✅ Finished printing log lines."
+    }
+
+    gradle_build() {
+        echo '⚙️ Executing Gradle build...'
+        chmod +x ./gradlew
+        ./gradlew clean test
+    }
+
+    main() {
+        spam_logs
+        gradle_build
+    }
+
+    main "$@"
+"""
+
 BUBBLE_SORT_JAVA_CORRECT = """
     package {0};
     import java.util.*;
