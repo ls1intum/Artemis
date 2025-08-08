@@ -524,10 +524,19 @@ public class BuildJobContainerService {
 
                     @Override
                     public void onNext(Frame item) {
-                        String text = new String(item.getPayload());
-                        BuildLogDTO buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), text);
+                        String payload = new String(item.getPayload());
+                        String[] logLines = payload.split(System.lineSeparator());
+                        ZonedDateTime now = ZonedDateTime.now();
+                        boolean hasNewLine = payload.contains(System.lineSeparator());
+
                         if (buildJobId != null) {
-                            buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
+                            for (String line : logLines) {
+                                if (!line.trim().isEmpty()) {
+                                    String buildLog = line + (hasNewLine ? System.lineSeparator() : "");
+                                    BuildLogDTO buildLogEntry = new BuildLogDTO(now, buildLog);
+                                    buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
+                                }
+                            }
                         }
                     }
 
