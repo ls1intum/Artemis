@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseResetDialogComponent } from 'app/programming/manage/reset/dialog/programming-exercise-reset-dialog.component';
@@ -96,7 +96,18 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         });
 
         it('should not be called when there is an error in the reset response', fakeAsync(() => {
-            const errorResponse = throwError({ status: 500 });
+            const errorResponse = throwError(
+                () =>
+                    new HttpErrorResponse({
+                        status: 500,
+                    }),
+            );
+            comp.programmingExerciseResetOptions = {
+                deleteBuildPlans: false,
+                deleteRepositories: false,
+                deleteParticipationsSubmissionsAndResults: true,
+                recreateBuildPlans: false,
+            };
             jest.spyOn(programmingExerciseService, 'reset').mockReturnValue(errorResponse);
             jest.spyOn(comp, 'handleResetResponse').mockImplementation();
 
@@ -114,9 +125,9 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
             comp.confirmText = 'Programming Exercise';
             comp.resetInProgress = false;
             comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: true,
+                deleteBuildPlans: false,
                 deleteRepositories: false,
-                deleteParticipationsSubmissionsAndResults: false,
+                deleteParticipationsSubmissionsAndResults: true,
                 recreateBuildPlans: false,
             };
         });
@@ -136,7 +147,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         });
 
         it('should return false when confirmation text is filled correctly, but no option is selected', () => {
-            comp.programmingExerciseResetOptions.deleteBuildPlans = false;
+            comp.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults = false;
             expect(comp.canSubmit).toBeFalse();
         });
 
@@ -160,8 +171,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
 
         it.each`
             option
-            ${'deleteBuildPlans'}
-            ${'deleteRepositories'}
             ${'deleteParticipationsSubmissionsAndResults'}
             ${'recreateBuildPlans'}
         `('should return true when $option is set to true', ({ option }) => {

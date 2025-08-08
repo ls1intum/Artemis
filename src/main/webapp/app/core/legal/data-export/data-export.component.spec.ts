@@ -15,7 +15,7 @@ import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('DataExportComponent', () => {
@@ -85,7 +85,7 @@ describe('DataExportComponent', () => {
     });
 
     it('should call alert service when requesting fails', () => {
-        jest.spyOn(dataExportService, 'requestDataExport').mockReturnValue(throwError({ status: 500 }));
+        jest.spyOn(dataExportService, 'requestDataExport').mockReturnValue(throwError(() => ({ status: 500 })));
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         component.requestExport();
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.dataExport.requestError');
@@ -134,7 +134,14 @@ describe('DataExportComponent', () => {
     });
 
     it('should call alert service when requesting for another user fails', () => {
-        jest.spyOn(dataExportService, 'requestDataExportForAnotherUser').mockReturnValue(throwError({ status: 500 }));
+        jest.spyOn(dataExportService, 'requestDataExportForAnotherUser').mockReturnValue(
+            throwError(
+                () =>
+                    new HttpErrorResponse({
+                        status: 500,
+                    }),
+            ),
+        );
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         component.requestExportForAnotherUser('ge12abc');
         expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.dataExport.requestForUserError', { login: 'ge12abc' });

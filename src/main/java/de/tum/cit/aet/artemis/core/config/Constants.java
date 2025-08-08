@@ -496,6 +496,10 @@ public final class Constants {
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
+    public static final String JWT_COOKIE_NAME = "jwt";
+
+    public static final String BEARER_PREFIX = "Bearer ";
+
     private Constants() {
     }
 }
