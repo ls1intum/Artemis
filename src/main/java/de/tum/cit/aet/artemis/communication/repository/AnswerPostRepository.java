@@ -155,6 +155,4 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
             throw new AccessForbiddenException("AnswerPost", answerPostIds);
         }
     }
-
-    List<AnswerPost> findAnswerPostsByPostIdIn(List<Long> postIds);
 }
