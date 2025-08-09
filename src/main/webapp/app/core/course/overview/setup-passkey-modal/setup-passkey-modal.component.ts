@@ -8,6 +8,7 @@ import { addNewPasskey } from 'app/core/user/settings/passkey-settings/util/cred
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 export const EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY = 'earliestSetupPasskeyReminderDate';
 
@@ -24,6 +25,7 @@ export class SetupPasskeyModalComponent {
     private webauthnApiService = inject(WebauthnApiService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
+    private localStorageService = inject(LocalStorageService);
 
     async setupPasskey() {
         await addNewPasskey(this.accountService.userIdentity, this.webauthnApiService, this.alertService);
@@ -34,7 +36,7 @@ export class SetupPasskeyModalComponent {
     remindMeIn30Days() {
         const currentDate = new Date();
         const futureDate = new Date(currentDate.setDate(currentDate.getDate() + 30));
-        localStorage.setItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, futureDate.toISOString());
+        this.localStorageService.store<Date>(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, futureDate);
         this.closeModal();
     }
 

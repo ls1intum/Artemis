@@ -1,12 +1,14 @@
-import { ErrorHandler, Injectable } from '@angular/core';
+import { ErrorHandler, Injectable, inject } from '@angular/core';
 import { browserTracingIntegration, captureException, dedupeIntegration, init } from '@sentry/angular';
 import type { Integration } from '@sentry/core';
 import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class SentryErrorHandler extends ErrorHandler {
     private environment: string;
+    private localStorageService = inject(LocalStorageService);
 
     /**
      * Initialize Sentry with profile information.
@@ -58,21 +60,14 @@ export class SentryErrorHandler extends ErrorHandler {
         super.handleError(error);
     }
 
-    /**
-     * Extracts the date part from an ISO 8601 formatted string.
-     *
-     * @param isoString The ISO 8601 formatted string (e.g., "YYYY-MM-DDTHH:mm:ss.sssZ").
-     * @return The date part of the ISO string (e.g., "YYYY-MM-DD").
-     */
-    private getDatePartFromISOString(isoString: string | null): string {
-        return isoString ? isoString.split('T')[0] : '';
+    private isSameDay(firstDay: Date, secondDay: Date): boolean {
+        return firstDay.getFullYear() === secondDay.getFullYear() && firstDay.getMonth() === secondDay.getMonth() && firstDay.getDate() === secondDay.getDate();
     }
 
     private hasBeenReportedToday() {
-        const lastReported = localStorage.getItem('webauthnNotSupportedTimestamp');
-        const dateToday = this.getDatePartFromISOString(new Date().toISOString());
-        const dateLastReported = this.getDatePartFromISOString(lastReported);
-        return lastReported && dateLastReported === dateToday;
+        const lastReported = this.localStorageService.retrieveDate('webauthnNotSupportedTimestamp');
+        const today = new Date();
+        return lastReported && this.isSameDay(lastReported, today);
     }
 
     /**
@@ -87,7 +82,7 @@ export class SentryErrorHandler extends ErrorHandler {
                 return;
             }
 
-            localStorage.setItem('webauthnNotSupportedTimestamp', new Date().toISOString());
+            this.localStorageService.store<Date>('webauthnNotSupportedTimestamp', new Date());
             captureException(new Error('Browser does not support WebAuthn - no Passkey authentication possible'), {
                 tags: {
                     feature: 'Passkey Authentication',

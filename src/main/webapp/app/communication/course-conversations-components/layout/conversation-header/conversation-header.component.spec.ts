@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
 import { Location } from '@angular/common';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -23,8 +24,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { SimpleChanges, input, runInInjectionContext } from '@angular/core';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { HttpResponse } from '@angular/common/http';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
@@ -65,7 +64,7 @@ examples.forEach((activeConversation) => {
                     { provide: MetisService, useClass: MockMetisService },
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: MetisConversationService, useClass: MockMetisConversationService },
-                    { provide: LocalStorageService, useClass: MockSyncStorage },
+                    LocalStorageService,
                 ],
             }).compileComponents();
         }));

@@ -3,6 +3,7 @@ import { CourseLearnerProfileComponent } from 'app/core/user/settings/learner-pr
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { LearnerProfileApiService } from 'app/core/user/settings/learner-profile/learner-profile-api.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseLearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/course-learner-profile-dto.model';
@@ -11,8 +12,6 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { SessionStorageService } from 'ngx-webstorage';
 
 describe('CourseLearnerProfileComponent', () => {
     let fixture: ComponentFixture<CourseLearnerProfileComponent>;
@@ -55,7 +54,7 @@ describe('CourseLearnerProfileComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             providers: [
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),

@@ -1,14 +1,14 @@
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/angular';
-import { AppComponent } from '../../../main/webapp/app/app.component';
+import { AppComponent } from 'app/app.component';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { ProfileService } from '../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
-import { ArtemisTranslatePipe } from '../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
-import { MockSyncStorage } from '../spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../spec/helpers/mocks/service/mock-translate.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
@@ -47,8 +47,8 @@ describe('JhiMainComponent', () => {
         const { fixture, container: renderedContainer } = await render(AppComponent, {
             declarations: [AlertOverlayComponent, PageRibbonComponent],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
                 { provide: ProfileService, useValue: mockProfileService }, // Provide the mock ProfileService

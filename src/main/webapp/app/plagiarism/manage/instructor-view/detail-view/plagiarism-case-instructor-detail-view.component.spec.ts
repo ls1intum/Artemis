@@ -6,14 +6,12 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Observable, ReplaySubject, of } from 'rxjs';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { MetisService } from 'app/communication/service/metis.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
@@ -49,8 +47,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },

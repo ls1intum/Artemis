@@ -1,10 +1,9 @@
 import { TestBed, inject } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
-import { SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
@@ -21,7 +20,7 @@ describe('Language Helper', () => {
             providers: [
                 JhiLanguageHelper,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: Router, useClass: MockRouter },
                 MockProvider(LocaleConversionService),
                 MockProvider(Title),

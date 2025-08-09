@@ -47,6 +47,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
 import { canCreateNewMessageInConversation } from 'app/communication/conversations/conversation-permissions.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 interface PostGroup {
     author: User | undefined;
@@ -70,6 +71,7 @@ interface PostGroup {
     ],
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
+    private sessionStorageService = inject(SessionStorageService);
     metisService = inject(MetisService);
     metisConversationService = inject(MetisConversationService);
     cdr = inject(ChangeDetectorRef);
@@ -140,6 +142,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     layoutService: LayoutService = inject(LayoutService);
     accountService: AccountService = inject(AccountService);
+
     constructor() {
         effect(() => {
             this.focusOnPostId = this.focusPostId();
@@ -257,13 +260,16 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private scrollToStoredId() {
-        let savedScrollId;
+        let savedScrollId: number | undefined;
         if (this.focusOnPostId) {
-            savedScrollId = this.focusOnPostId + '';
+            savedScrollId = this.focusOnPostId;
         } else {
-            savedScrollId = sessionStorage.getItem(this.sessionStorageKey + this._activeConversation?.id) ?? '';
+            const activeConversationId = this._activeConversation?.id;
+            savedScrollId = activeConversationId ? this.sessionStorageService.retrieve<number>(this.sessionStorageKey + activeConversationId) : undefined;
         }
-        requestAnimationFrame(() => this.goToLastSelectedElement(parseInt(savedScrollId, 10), this.isOpenThreadOnFocus));
+        if (savedScrollId) {
+            requestAnimationFrame(() => this.goToLastSelectedElement(savedScrollId, this.isOpenThreadOnFocus));
+        }
     }
 
     private onActiveConversationChange() {
@@ -627,8 +633,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private setupScrollDebounce(): void {
         this.scrollSubject.pipe(debounceTime(this.scrollDebounceTime), takeUntil(this.ngUnsubscribe)).subscribe((postId) => {
-            if (this._activeConversation?.id) {
-                sessionStorage.setItem(this.sessionStorageKey + this._activeConversation.id, postId.toString());
+            const activeConversationId = this._activeConversation?.id;
+            if (activeConversationId) {
+                this.sessionStorageService.store<number>(this.sessionStorageKey + activeConversationId, postId);
             }
         });
     }

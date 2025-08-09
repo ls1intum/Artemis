@@ -1,31 +1,23 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { LocalStorageService, provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('CourseAccessStorageService', () => {
     let service: CourseAccessStorageService;
-    let localStorage: LocalStorageService;
+    let localStorageService: LocalStorageService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [
-                CourseAccessStorageService,
-                provideNgxWebstorage(withNgxWebstorageConfig({ separator: ':', caseSensitive: true }), withLocalStorage(), withSessionStorage()),
-                {
-                    provide: LocalStorageService,
-                    useClass: MockLocalStorageService,
-                },
-            ],
+            providers: [CourseAccessStorageService],
         });
         service = TestBed.inject(CourseAccessStorageService);
-        localStorage = TestBed.inject(LocalStorageService);
+        localStorageService = TestBed.inject(LocalStorageService);
     });
 
     it('should store accessed course', () => {
         const courseId = 123;
         service.onCourseAccessed(courseId, CourseAccessStorageService.STORAGE_KEY, CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW);
-        const courseAccessMap = localStorage.retrieve('artemis.courseAccess');
+        const courseAccessMap = localStorageService.retrieve<{ [key: number]: number }>(CourseAccessStorageService.STORAGE_KEY);
         expect(courseAccessMap).toHaveProperty(courseId.toString());
     });
 

@@ -8,8 +8,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileStatus, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
-import { LocalStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { captureException } from '@sentry/angular';
 
 // Mock @sentry/angular module
@@ -82,12 +80,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [GitDiffReportComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffLineStatComponent)],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
-                provideHttpClient(),
-                provideHttpClientTesting(),
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffReportComponent);
         comp = fixture.componentInstance;

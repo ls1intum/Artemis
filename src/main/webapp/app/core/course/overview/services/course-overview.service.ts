@@ -20,6 +20,7 @@ import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCat
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -74,6 +75,7 @@ export class CourseOverviewService {
     private participationService = inject(ParticipationService);
     private translate = inject(TranslateService);
     private conversationService = inject(ConversationService);
+    private localStorageService = inject(LocalStorageService);
 
     readonly faBullhorn = faBullhorn;
     readonly faHashtag = faHashtag;
@@ -474,12 +476,12 @@ export class CourseOverviewService {
     }
 
     getSidebarCollapseStateFromStorage(storageId: string): boolean {
-        const storedCollapseState: string | null = localStorage.getItem('sidebar.collapseState.' + storageId);
-        return storedCollapseState ? JSON.parse(storedCollapseState) : false;
+        const storedCollapseState: boolean | undefined = this.localStorageService.retrieve<boolean>('sidebar.collapseState.' + storageId);
+        return storedCollapseState !== undefined ? storedCollapseState : false;
     }
 
     setSidebarCollapseState(storageId: string, isCollapsed: boolean) {
-        localStorage.setItem('sidebar.collapseState.' + storageId, JSON.stringify(isCollapsed));
+        this.localStorageService.store<boolean>('sidebar.collapseState.' + storageId, isCollapsed);
     }
 
     calculateUsedWorkingTime(studentExam: StudentExam): number {

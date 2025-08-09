@@ -21,6 +21,7 @@ export default tseslint.config(
             '.venv/',
             '.jhipster/',
             'build/',
+            'local/',
             'coverage/',
             'docker/',
             'docs/',

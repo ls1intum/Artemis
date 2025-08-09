@@ -81,6 +81,7 @@ export class LoginService {
         this.accountService.authenticate(undefined);
         this.alertService.closeAll();
         this.router.navigateByUrl('/');
+        this.authServerProvider.clearCaches().subscribe();
     }
 
     lastLogoutWasForceful(): boolean {
