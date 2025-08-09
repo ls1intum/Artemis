@@ -22,31 +22,27 @@ export class DraftService {
     }
 
     loadDraft(key: string): string | undefined {
-        if (!key) {
-            return undefined;
+        if (!key) return undefined;
+
+        const stored = this.localStorageService.retrieve<DraftData | string>(key);
+
+        if (!stored) return undefined;
+
+        if (typeof stored === 'string') {
+            const trimmed = stored.trim();
+            return trimmed ? trimmed : undefined;
         }
 
-        const raw = this.localStorageService.retrieve<string>(key);
-        if (raw) {
-            try {
-                const draftData: DraftData = JSON.parse(raw);
-                if (this.isDraftData(draftData)) {
-                    // Check expiry
-                    if (Date.now() - draftData.timestamp > DRAFT_EXPIRY_MS) {
-                        this.clearDraft(key);
-                        return undefined;
-                    }
-                    if (draftData.content.trim()) {
-                        return draftData.content;
-                    }
-                }
-            } catch {
-                // fallback for old drafts (plain string)
-                if (typeof raw === 'string' && raw.trim()) {
-                    return raw;
-                }
+        if (this.isDraftData(stored)) {
+            if (Date.now() - stored.timestamp > DRAFT_EXPIRY_MS) {
+                this.clearDraft(key);
+                return undefined;
             }
+            const trimmed = stored.content?.trim();
+            return trimmed ? trimmed : undefined;
         }
+
+        return undefined;
     }
 
     private isDraftData(value: any): value is DraftData {
@@ -60,7 +56,7 @@ export class DraftService {
     }
 }
 
-interface DraftData {
+export interface DraftData {
     content: string;
     timestamp: number;
 }
