@@ -2,13 +2,15 @@ package de.tum.cit.aet.artemis.communication.dto;
 
 import java.time.ZonedDateTime;
 
+import jakarta.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ReactionDTO(Long id, AuthorDTO user, ZonedDateTime creationDate, String emojiId, Long relatedPostId) {
+public record ReactionDTO(Long id, AuthorDTO user, ZonedDateTime creationDate, @NotNull String emojiId, @NotNull Long relatedPostId) {
 
     /**
      * Maps a Reaction entity to a ReactionDTO for data transfer to clients.
@@ -16,7 +18,7 @@ public record ReactionDTO(Long id, AuthorDTO user, ZonedDateTime creationDate, S
      * @param reaction the Reaction entity to map from
      */
     public ReactionDTO(Reaction reaction) {
-        this(reaction.getId(), AuthorDTO.fromUser(reaction.getUser()), reaction.getCreationDate(), reaction.getEmojiId(), getRelatedPostId(reaction));
+        this(reaction.getId(), AuthorDTO.fromUser(reaction.getUser()), reaction.getCreationDate(), reaction.getEmojiId(), relatedPostIdOrThrow(reaction));
     }
 
     /**
@@ -26,14 +28,11 @@ public record ReactionDTO(Long id, AuthorDTO user, ZonedDateTime creationDate, S
      * @return the ID of the associated Post or AnswerPost
      * @throws BadRequestAlertException if neither association exists
      */
-    static Long getRelatedPostId(Reaction reaction) {
-        if (reaction.getPost() != null) {
+    private static Long relatedPostIdOrThrow(Reaction reaction) {
+        if (reaction.getPost() != null)
             return reaction.getPost().getId();
-        }
-        if (reaction.getAnswerPost() != null) {
+        if (reaction.getAnswerPost() != null)
             return reaction.getAnswerPost().getId();
-        }
-        throw new BadRequestAlertException("The reaction could not be found.", "reaction", "notFound");
-
+        throw new BadRequestAlertException("Reaction must be associated with a Post or AnswerPost.", "reaction", "missingAssociation");
     }
 }

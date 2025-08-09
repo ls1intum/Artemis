@@ -18,7 +18,7 @@ export function toReactionDTO(reaction: Reaction): ReactionDTO {
     return {
         id: reaction.id ?? undefined,
         creationDate: reaction.creationDate ? reaction.creationDate.toISOString() : undefined,
-        emojiId: reaction.emojiId,
-        relatedPostId: reaction.post?.id ?? reaction.answerPost?.id,
+        emojiId: reaction.emojiId ?? undefined,
+        relatedPostId: reaction.post?.id ?? reaction.answerPost?.id ?? undefined,
     };
 }

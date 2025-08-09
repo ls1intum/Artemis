@@ -113,6 +113,7 @@
         },
         "assignmentRepositoryNotAllowed": "Assignment-Repositories werden für Klausuraufgaben nicht unterstützt. Bitte nutze stattdessen das Testlauf-Feature, um die Aufgabe auszuprobieren.",
         "wrongCourse": "Die Reaktion gehört nicht zum ausgewählten Kurs.",
-        "notFound": "Die Reaktion konnte nicht gefunden werden."
+        "reactionNotFound": "Die Reaktion konnte nicht gefunden werden.",
+        "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein."
     }
 }
