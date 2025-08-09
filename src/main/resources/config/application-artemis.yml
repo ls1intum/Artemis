@@ -88,11 +88,11 @@ artemis:
   apollon:
     conversion-service-url: http://localhost:8080
   iris:
-    url: http://host.docker.internal:8000
+    url: http://localhost:8080
     secret-token: abcdef12345
   nebula:
-    base-url: http://host.docker.internal:8000
-    secret-token: abcdef12345
+    base-url: http://localhost:8080
+    secret-token: nebula-secret
 
 
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html

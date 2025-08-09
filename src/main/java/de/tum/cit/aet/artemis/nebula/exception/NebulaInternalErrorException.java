@@ -5,6 +5,6 @@ import java.util.Map;
 public class NebulaInternalErrorException extends NebulaException {
 
     public NebulaInternalErrorException(String pyrisErrorMessage) {
-        super("artemisApp.errors.internalNebulaError", Map.of("nebulaErrorMessage", pyrisErrorMessage));
+        super("artemisApp.nebula.internalNebulaError", Map.of("nebulaErrorMessage", pyrisErrorMessage));
     }
 }

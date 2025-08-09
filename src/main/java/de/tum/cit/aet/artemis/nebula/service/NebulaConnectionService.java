@@ -60,9 +60,7 @@ public class NebulaConnectionService {
      */
     public FaqRewritingResponse executeFaqRewriting(FaqRewritingDTO faqRewritingDTO) {
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Bearer " + nebulaSecretToken);
+            HttpHeaders headers = createNebulaHeader();
             HttpEntity<FaqRewritingDTO> request = new HttpEntity<>(faqRewritingDTO, headers);
             ResponseEntity<FaqRewritingResponse> response = restTemplate.exchange(nebulaUrl + "/faq/rewrite-faq", HttpMethod.POST, request, FaqRewritingResponse.class);
             return response.getBody();
@@ -83,8 +81,7 @@ public class NebulaConnectionService {
      */
     public FaqConsistencyResponse executeFaqConsistencyCheck(FaqConsistencyDTO faqConsistencyDTO) {
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpHeaders headers = createNebulaHeader();
             HttpEntity<FaqConsistencyDTO> request = new HttpEntity<>(faqConsistencyDTO, headers);
             ResponseEntity<FaqConsistencyResponse> response = restTemplate.exchange(nebulaUrl + "/faq/check-consistency", HttpMethod.POST, request, FaqConsistencyResponse.class);
             return response.getBody();
@@ -114,6 +111,13 @@ public class NebulaConnectionService {
             log.error("Failed to parse error message from Nebula", e);
             return "";
         }
+    }
+
+    private HttpHeaders createNebulaHeader() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", nebulaSecretToken);
+        return headers;
     }
 
 }

@@ -5,6 +5,6 @@ import java.util.Map;
 public class NebulaForbiddenException extends NebulaException {
 
     public NebulaForbiddenException() {
-        super("artemisApp.exerciseChatbot.errors.unauthorized", Map.of());
+        super("artemisApp.nebula.errors.unauthorized", Map.of());
     }
 }

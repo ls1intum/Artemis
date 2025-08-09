@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.nebula;
+package de.tum.cit.aet.artemis.nebula.architecture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
