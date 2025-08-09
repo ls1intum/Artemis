@@ -1006,7 +1006,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void unlockFeedbackRequestAfterAssessment() throws Exception {
-        programmingExercise.setAllowFeedbackRequests(true);
+        programmingExercise.setAllowManualFeedbackRequests(true);
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.save(programmingExercise);
 
