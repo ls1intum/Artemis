@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.connector.NebulaRequestMockProvider;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 public abstract class AbstractNebulaIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -21,10 +21,10 @@ public abstract class AbstractNebulaIntegrationTest extends AbstractSpringIntegr
     protected FaqRepository faqRepository;
 
     @Autowired
-    protected CourseRepository courseRepository;
+    protected CourseTestRepository courseRepository;
 
     @Autowired
-    protected UserRepository userRepository;
+    protected UserTestRepository userRepository;
 
     private static final long TIMEOUT_MS = 200;
 

@@ -20,9 +20,9 @@ import de.tum.cit.aet.artemis.nebula.service.FaqProcessingService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 @Profile(PROFILE_IRIS)
-class PyrisRewritingIntegrationTest extends AbstractNebulaIntegrationTest {
+class NebulaFaqIntegrationTest extends AbstractNebulaIntegrationTest {
 
-    private static final String TEST_PREFIX = "nebularewritingtest";
+    private static final String TEST_PREFIX = "nebulafaqintegrationtest";
 
     @Autowired
     private UserUtilService userUtilService;
@@ -39,8 +39,6 @@ class PyrisRewritingIntegrationTest extends AbstractNebulaIntegrationTest {
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 2);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        // Wichtig: Stelle sicher, dass in AbstractNebulaIntegrationTest der Provider in @BeforeEach aktiviert wird:
-        // nebulaRequestMockProvider.enableMockingOfRequests();
     }
 
     @Test
@@ -48,7 +46,8 @@ class PyrisRewritingIntegrationTest extends AbstractNebulaIntegrationTest {
     void callRewritingPipeline_shouldSucceed() throws Exception {
         var requestDTO = new FaqRewritingDTO("test", null);
         nebulaRequestMockProvider.mockFaqRewritingRequestReturning(req -> null);
-        request.postWithoutResponseBody("/api/nebula/faq/" + course.getId() + "/rewrite-text", requestDTO, HttpStatus.OK);
+
+        request.postWithoutResponseBody("/api/nebula/courses/" + course.getId() + "/rewrite-text", requestDTO, HttpStatus.OK);
 
         verify(faqProcessingService, atLeastOnce()).executeRewriting(any(), any(), any());
     }
@@ -58,7 +57,7 @@ class PyrisRewritingIntegrationTest extends AbstractNebulaIntegrationTest {
     void callConsistencyPipeline_shouldSucceed() throws Exception {
         var requestDTO = new FaqConsistencyDTO("test", null);
         nebulaRequestMockProvider.mockFaqConsistencyRequestReturning(req -> null);
-        request.postWithoutResponseBody("/api/nebula/faq/" + course.getId() + "/check-consistency", requestDTO, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/nebula/courses/" + course.getId() + "/consistency-check", requestDTO, HttpStatus.OK);
         verify(faqProcessingService, atLeastOnce()).executeConsistencyCheck(any(), any(), any());
     }
 }
