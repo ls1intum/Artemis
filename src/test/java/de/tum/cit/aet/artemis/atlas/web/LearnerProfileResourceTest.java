@@ -73,14 +73,26 @@ class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetLearnerProfile_ProfileNotFound() throws Exception {
+    void testGetLearnerProfile_CreatesNewProfileWhenNotFound() throws Exception {
         // Delete the profile to simulate a user without a profile
         learnerProfileRepository.delete(testProfile);
         testUser.setLearnerProfile(null);
         userTestRepository.save(testUser);
 
-        // Should throw an exception when profile doesn't exist
-        request.get("/api/atlas/learner-profile", HttpStatus.NOT_FOUND, LearnerProfileDTO.class);
+        // Should create a new profile when one doesn't exist
+        LearnerProfileDTO response = request.get("/api/atlas/learner-profile", HttpStatus.OK, LearnerProfileDTO.class);
+
+        assertThat(response).isNotNull();
+        assertThat(response.feedbackAlternativeStandard()).isEqualTo(2);
+        assertThat(response.feedbackFollowupSummary()).isEqualTo(2);
+        assertThat(response.feedbackBriefDetailed()).isEqualTo(2);
+
+        // Verify a new profile was created in the database
+        LearnerProfile newProfile = learnerProfileRepository.findByUserElseThrow(testUser);
+        assertThat(newProfile.getId()).isNotNull();
+        assertThat(newProfile.getFeedbackAlternativeStandard()).isEqualTo(2);
+        assertThat(newProfile.getFeedbackFollowupSummary()).isEqualTo(2);
+        assertThat(newProfile.getFeedbackBriefDetailed()).isEqualTo(2);
     }
 
     @Test
