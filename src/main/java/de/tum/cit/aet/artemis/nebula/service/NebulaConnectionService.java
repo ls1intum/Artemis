@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.nebula.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -48,7 +49,7 @@ public class NebulaConnectionService {
     @Value("${artemis.nebula.secret-token}")
     private String nebulaSecretToken;
 
-    public NebulaConnectionService(RestTemplate restTemplate, ObjectMapper objectMapper) {
+    public NebulaConnectionService(@Qualifier("nebulaRestTemplate") RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
     }

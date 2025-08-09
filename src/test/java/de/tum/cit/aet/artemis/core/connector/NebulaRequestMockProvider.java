@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.connector;
 
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 
@@ -41,6 +42,9 @@ public class NebulaRequestMockProvider {
     @Value("${artemis.nebula.base-url}")
     private String nebulaBaseUrl;
 
+    @Value("${artemis.nebula.secret-token}")
+    private String nebulaSecretToken;
+
     @Autowired
     private ObjectMapper mapper;
 
@@ -69,7 +73,7 @@ public class NebulaRequestMockProvider {
     }
 
     public void mockFaqRewritingRequestReturning(Function<FaqRewritingDTO, FaqRewritingResponse> responder) {
-        mockPostJson("/faq/rewrite-text", FaqRewritingDTO.class, responder, HttpStatus.OK, ExpectedCount.once());
+        mockPostJson("/faq/rewrite-faq", FaqRewritingDTO.class, responder, HttpStatus.OK, ExpectedCount.once());
     }
 
     private String buildUrl(String path) {
@@ -77,7 +81,7 @@ public class NebulaRequestMockProvider {
     }
 
     private <Req, Res> void mockPostJson(String path, Class<Req> requestType, Function<Req, Res> responder, HttpStatus status, ExpectedCount count) {
-        mockServer.expect(count, requestTo(buildUrl(path))).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+        mockServer.expect(count, requestTo(buildUrl(path))).andExpect(method(HttpMethod.POST)).andExpect(header("Authorization", nebulaSecretToken)).andRespond(request -> {
             var mockRequest = (MockClientHttpRequest) request;
             var reqBody = mapper.readValue(mockRequest.getBodyAsString(), requestType);
             var resBody = responder.apply(reqBody);
