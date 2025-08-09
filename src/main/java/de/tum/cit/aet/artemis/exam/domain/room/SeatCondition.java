@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exam.domain.room;
 
+import java.util.Locale;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 /**
@@ -15,7 +17,7 @@ public enum SeatCondition {
             throw new IllegalArgumentException("Seat condition flag can not be null");
         }
 
-        return switch (flag.toUpperCase()) {
+        return switch (flag.strip().toUpperCase(Locale.ROOT)) {
             case "", "USABLE" -> USABLE;
             case "T", "NO_TABLE" -> NO_TABLE;
             case "D", "DEFECT" -> DEFECT;
