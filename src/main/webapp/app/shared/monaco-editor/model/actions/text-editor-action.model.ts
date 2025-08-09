@@ -7,11 +7,10 @@ import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorCompletionItem } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
-import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { WritableSignal } from '@angular/core';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
-import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { ConsistencyCheckResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence-results';
 
 export abstract class TextEditorAction implements Disposable {
     id: string;
@@ -307,20 +306,33 @@ export abstract class TextEditorAction implements Disposable {
      * @param courseId The ID of the course to use for rewriting the text (for tracking purposes).
      * @param resultSignal used to write inconsistencies to the UI
      */
-    rewriteMarkdown(
-        editor: TextEditor,
-        artemisIntelligence: ArtemisIntelligenceService,
-        variant: RewritingVariant,
-        courseId: number,
-        resultSignal: WritableSignal<RewriteResult>,
-    ): void {
+    rewriteMarkdown(editor: TextEditor, artemisIntelligence: ArtemisIntelligenceService, courseId: number): void {
         const text = editor.getFullText();
         if (text) {
-            artemisIntelligence.rewrite(text, variant, courseId).subscribe({
+            artemisIntelligence.rewrite(text, courseId).subscribe({
                 next: (rewriteResult) => {
-                    if (rewriteResult.result) {
-                        this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), rewriteResult.result!);
-                        resultSignal.set(rewriteResult);
+                    if (rewriteResult.rewrittenText) {
+                        this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), rewriteResult.rewrittenText!);
+                    }
+                },
+            });
+        }
+    }
+
+    /**
+     * Checks the FAQ consistency of the given text using Artemis Intelligence.
+     * @param editor The editor to check the FAQ consistency for.
+     * @param artemisIntelligence The Artemis Intelligence service to use for checking the FAQ consistency.
+     * @param courseId The ID of the course to use for checking the FAQ consistency (for tracking purposes).
+     * @param resultSignal used to write inconsistencies to the UI
+     */
+    checkForFaqConsistency(editor: TextEditor, artemisIntelligence: ArtemisIntelligenceService, courseId: number, resultSignal: WritableSignal<ConsistencyCheckResult>): void {
+        const text = editor.getFullText();
+        if (text) {
+            artemisIntelligence.faqConsistencyCheck(courseId, text).subscribe({
+                next: (consistencyCheckResult: ConsistencyCheckResult) => {
+                    if (consistencyCheckResult) {
+                        resultSignal.set(consistencyCheckResult);
                     }
                 },
             });

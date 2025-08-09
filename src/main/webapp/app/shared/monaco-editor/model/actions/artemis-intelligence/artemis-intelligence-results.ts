@@ -1,6 +1,9 @@
 export interface RewriteResult {
-    result: string | undefined;
+    rewrittenText: string;
+}
+
+export interface ConsistencyCheckResult {
     inconsistencies: string[] | undefined;
-    suggestions: string[] | undefined;
     improvement: string | undefined;
+    faqIds: number[] | undefined;
 }
