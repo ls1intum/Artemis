@@ -1,7 +1,13 @@
 <div class="upload-container">
     <h2><span jhiTranslate="artemisApp.examRooms.adminOverview.title"></span></h2>
     <input id="roomDataFileSelect" type="file" style="display: none" (change)="onFileSelectedAcceptZip($event)" accept=".zip" />
-    <label jhiTranslate="artemisApp.examRooms.adminOverview.uploadRoomData" for="roomDataFileSelect" class="btn btn-outline-primary"></label>
+    <label for="roomDataFileSelect" class="btn btn-outline-primary">
+        @if (!hasSelectedFile()) {
+            {{ 'artemisApp.examRooms.adminOverview.uploadRoomData' | artemisTranslate }}
+        } @else {
+            {{ selectedFileName() }}
+        }
+    </label>
     <button jhiTranslate="entity.action.save" class="btn btn-primary" (click)="upload()" [disabled]="!canUpload()"></button>
     <p></p>
     <p></p>

@@ -27,26 +27,6 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             """)
     List<ExamRoom> findAllExamRoomsWithEagerLayoutStrategies();
 
-    @Query("""
-            WITH latestRooms AS (
-                SELECT
-                    roomNumber AS roomNumber,
-                    name AS name,
-                    MAX(createdDate) AS maxCreatedDate
-                FROM ExamRoom
-                GROUP BY roomNumber, name
-            )
-            SELECT er
-            FROM ExamRoom er
-            JOIN latestRooms lr
-                ON er.roomNumber = lr.roomNumber
-                AND er.name = lr.name
-                AND er.createdDate = lr.maxCreatedDate
-            LEFT JOIN FETCH er.layoutStrategies
-            ORDER BY er.roomNumber, er.name
-            """)
-    Set<ExamRoom> findAllLatestUniqueRoomsWithEagerLayoutStrategies();
-
     /**
      * Finds and returns all IDs of outdated and unused exam rooms.
      * An exam room is outdated if there exists a newer entry of the same (number, name) combination.
@@ -70,7 +50,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 ON examRoom.roomNumber = latestRoom.roomNumber
                 AND examRoom.name = latestRoom.name
                 AND examRoom.createdDate < latestRoom.maxCreatedDate
-            WHERE examRoom.id NOT IN (SELECT DISTINCT examRoom.id FROM ExamRoomAssignment)
+            WHERE examRoom.id NOT IN ( SELECT DISTINCT examRoom.id FROM ExamRoomExamAssignment )
             """)
     Set<Long> findAllIdsOfOutdatedAndUnusedExamRooms();
 }

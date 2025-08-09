@@ -3,12 +3,14 @@ package de.tum.cit.aet.artemis.exam.service;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -113,7 +115,11 @@ public class ExamRoomService {
     public ExamRoomUploadInformationDTO parseAndStoreExamRoomDataFromZipFile(MultipartFile zipFile) {
         final long startTime = System.nanoTime();
         log.info("Starting to parse rooms from {}...", zipFile.getOriginalFilename());
-        Set<ExamRoom> examRooms = new HashSet<>();
+        // We want to discard any duplicate rooms. Having duplicate rooms is only possible if you also nest the same
+        // .json file in one or more subfolders. Doing this is either a (malicious) mistake, or perhaps a backup file,
+        // and will thus be ignored. In this equality we only consider the room number, the name, and the building,
+        // as it would be a mistake to store the same room twice and risk a potential creation date collision later on.
+        Set<ExamRoom> examRooms = new TreeSet<>(Comparator.comparing(ExamRoom::getRoomNumber).thenComparing(ExamRoom::getName).thenComparing(ExamRoom::getBuilding));
 
         try (ZipInputStream zis = new ZipInputStream(zipFile.getInputStream())) {
             ZipEntry entry;
@@ -382,7 +388,7 @@ public class ExamRoomService {
         final Integer numberOfStoredLayoutStrategies = examRooms.stream().mapToInt(er -> er.getLayoutStrategies().size()).sum();
         final Set<String> distinctLayoutStrategyNames = examRooms.stream().flatMap(er -> er.getLayoutStrategies().stream()).map(LayoutStrategy::getName)
                 .collect(Collectors.toSet());
-        final ExamRoomUniqueRoomsDTO uniqueRoomsDTO = this.countUniqueRoomsSeatsAndLayoutStrategies();
+        final ExamRoomUniqueRoomsDTO uniqueRoomsDTO = this.countUniqueRoomsSeatsAndLayoutStrategies(examRooms);
 
         final Set<ExamRoomDTO> examRoomDTOS = examRooms.stream()
                 .map(examRoom -> new ExamRoomDTO(examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
@@ -407,8 +413,17 @@ public class ExamRoomService {
         log.debug("Deleting all exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));
     }
 
-    private ExamRoomUniqueRoomsDTO countUniqueRoomsSeatsAndLayoutStrategies() {
-        Set<ExamRoom> latestUniqueRooms = examRoomRepository.findAllLatestUniqueRoomsWithEagerLayoutStrategies();
+    private ExamRoomUniqueRoomsDTO countUniqueRoomsSeatsAndLayoutStrategies(List<ExamRoom> examRooms) {
+        record ExamRoomKey(String roomNumber, String name, String building) {
+        }
+
+        Collection<ExamRoom> latestUniqueRooms = examRooms.stream().collect(Collectors.toMap(
+                // key
+                er -> new ExamRoomKey(er.getRoomNumber(), er.getName(), er.getBuilding()),
+                // value (the exam room itself)
+                Function.identity(),
+                // merging function
+                (er1, er2) -> er1.getLastModifiedDate().isAfter(er2.getLastModifiedDate()) ? er1 : er2)).values();
         int uniqueSeats = latestUniqueRooms.stream().mapToInt(room -> room.getSeats().size()).sum();
         int uniqueLayoutStrategies = latestUniqueRooms.stream().mapToInt(room -> room.getLayoutStrategies().size()).sum();
 

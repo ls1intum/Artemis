@@ -7,6 +7,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 // privately used interfaces, i.e., not sent from the server like this
 export interface ExamRoomDTOExtended extends ExamRoomDTO {
@@ -17,7 +18,7 @@ export interface ExamRoomDTOExtended extends ExamRoomDTO {
 @Component({
     selector: 'jhi-exam-rooms',
     templateUrl: './exam-rooms.component.html',
-    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent],
+    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ExamRoomsComponent {
     private http: HttpClient = inject(HttpClient);
@@ -30,7 +31,9 @@ export class ExamRoomsComponent {
     overview: WritableSignal<ExamRoomAdminOverviewDTO | undefined> = signal(undefined);
 
     // Computed signals
-    canUpload: Signal<boolean> = computed(() => !!this.selectedFile() && !this.isUploading());
+    hasSelectedFile: Signal<boolean> = computed(() => !!this.selectedFile());
+    selectedFileName: Signal<string | undefined> = computed(() => this.selectedFile()?.name);
+    canUpload: Signal<boolean> = computed(() => this.hasSelectedFile() && !this.isUploading());
     isUploading: Signal<boolean> = computed(() => this.actionStatus() === 'uploading');
     hasUploadInformation: Signal<boolean> = computed(() => this.actionStatus() === 'uploadSuccess' && !!this.uploadInformation());
     hasUploadFailed: Signal<boolean> = computed(() => this.actionStatus() === 'uploadError');
