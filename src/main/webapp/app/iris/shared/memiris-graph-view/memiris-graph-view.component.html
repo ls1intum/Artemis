@@ -1,0 +1,48 @@
+<div class="graph-container">
+    <div class="graph-wrapper">
+        <div class="graph-controls btn-group-vertical" role="group">
+            <button class="btn btn-primary" (click)="zoomIn()">
+                <fa-icon [icon]="faPlus" />
+            </button>
+            <button class="btn btn-primary" (click)="zoomOut()">
+                <fa-icon [icon]="faMinus" />
+            </button>
+            <button class="btn btn-primary" (click)="resetView()">
+                <fa-icon [icon]="faArrowsToEye" />
+            </button>
+        </div>
+
+        @if (loading()) {
+            <div class="loading-indicator">
+                <jhi-loading-indicator-container [isLoading]="true" />
+            </div>
+        } @else if (!nodes || nodes.length === 0) {
+            <div class="empty-state">
+                <fa-icon [icon]="faHexagonNodes" class="empty-state-icon" />
+                <h3>No Data Available</h3>
+                <p>There are no memories or learnings to display.</p>
+            </div>
+        } @else {
+            <svg #svgContainer class="memiris-graph-svg"></svg>
+        }
+    </div>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color memory"></div>
+            <span>{{ 'artemisApp.memiris.memory.singular' | artemisTranslate }}</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color learning"></div>
+            <span>{{ 'artemisApp.memiris.learning.singular' | artemisTranslate }}</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line memory-memory"></div>
+            <span>{{ 'artemisApp.memiris.connection.memory-memory' | artemisTranslate }}</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-line memory-learning"></div>
+            <span>{{ 'artemisApp.memiris.connection.memory-learning' | artemisTranslate }}</span>
+        </div>
+    </div>
+</div>
