@@ -16,7 +16,6 @@ public class LocalCiBuildAgentNotLocalOrRedisDataCondition implements Condition 
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
         final Collection<String> activeProfiles = Arrays.asList(context.getEnvironment().getActiveProfiles());
         return (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) && !activeProfiles.contains("LOCAL_LOCALCI_DATA")
-                && !activeProfiles.contains("redis") // REMOVE only for local testing
-        ;
+                && !activeProfiles.contains("redis");
     }
 }

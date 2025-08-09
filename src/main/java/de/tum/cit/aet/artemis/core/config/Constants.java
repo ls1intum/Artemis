@@ -284,6 +284,8 @@ public final class Constants {
      */
     public static final String PROFILE_LOCALCI = "localci";
 
+    public static final String PROFILE_LOCALCI_AND_LOCAL_DATA = PROFILE_LOCALCI + " & LOCALCIDATA";
+
     /**
      * The name of the Spring profile used to process build jobs in a local CI setup.
      */
