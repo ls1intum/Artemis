@@ -6,6 +6,33 @@ import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core
 
 dayjs.extend(isoWeek);
 
+export function getWeeksOfMonthFor(dayInMonth: Dayjs): Dayjs[][] {
+    const start = dayInMonth.startOf('month').startOf('isoWeek');
+    const end = dayInMonth.endOf('month').endOf('isoWeek');
+    const weeks: Dayjs[][] = [];
+    let date = start;
+    while (date.isBefore(end)) {
+        const week: Dayjs[] = [];
+        for (let i = 0; i < 7; i++) {
+            week.push(date.clone());
+            date = date.add(1, 'day');
+        }
+        weeks.push(week);
+    }
+    return weeks;
+}
+
+export function getWeekOf(day: Dayjs): Dayjs[] {
+    const start = day.startOf('isoWeek');
+    const week: Dayjs[] = [];
+    let currentDay = start;
+    for (let i = 0; i < 7; i++) {
+        week.push(currentDay.clone());
+        currentDay = currentDay.add(1, 'day');
+    }
+    return week;
+}
+
 export function getWeekDayNameKey(day: Dayjs): string {
     const keys = getWeekDayNameKeys();
     return keys[day.isoWeekday() - 1];

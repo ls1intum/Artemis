@@ -5,41 +5,37 @@ import { finalize } from 'rxjs/operators';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import 'dayjs/esm/locale/en';
 import 'dayjs/esm/locale/de';
-import isoWeek from 'dayjs/esm/plugin/isoWeek';
-import isSameOrBefore from 'dayjs/esm/plugin/isSameOrBefore';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CalendarMonthPresentationComponent } from 'app/core/calendar/overview/calendar-month-presentation/calendar-month-presentation.component';
-import { CalendarWeekPresentationComponent } from 'app/core/calendar/overview/calendar-week-presentation/calendar-week-presentation.component';
+import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
+import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
-import { CalendarEventFilterComponent } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
-
-dayjs.extend(isoWeek);
-dayjs.extend(isSameOrBefore);
+import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 
 @Component({
-    selector: 'jhi-calendar-desktop',
+    selector: 'calendar-desktop-overview',
     imports: [
-        CalendarMonthPresentationComponent,
-        CalendarWeekPresentationComponent,
+        CalendarDesktopMonthPresentationComponent,
+        CalendarDesktopWeekPresentationComponent,
         CalendarEventFilterComponent,
         NgClass,
         FaIconComponent,
         TranslateDirective,
         TranslateDirective,
     ],
-    templateUrl: './calendar-overview.component.html',
-    styleUrl: './calendar-overview.component.scss',
+    templateUrl: './calendar-desktop-overview.component.html',
+    styleUrl: './calendar-desktop-overview.component.scss',
 })
-export class CalendarOverviewComponent implements OnInit {
+export class CalendarDesktopOverviewComponent implements OnInit {
     private calendarEventService = inject(CalendarEventService);
     private translateService = inject(TranslateService);
     private activatedRoute = inject(ActivatedRoute);
     private courseId?: number;
     private currentLocale = signal(this.translateService.currentLang);
 
+    readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
     presentation = signal<'week' | 'month'>('month');

@@ -12,13 +12,14 @@ import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 
 @Component({
-    selector: 'calendar-desktop-month',
+    selector: 'calendar-desktop-month-presentation',
     imports: [NgClass, NgTemplateOutlet, NgbPopover, FaIconComponent, ArtemisTranslatePipe, TranslateDirective, CalendarDayBadgeComponent, CalendarEventDetailPopoverComponent],
-    templateUrl: './calendar-month-presentation.component.html',
-    styleUrls: ['./calendar-month-presentation.component.scss'],
+    templateUrl: './calendar-desktop-month-presentation.component.html',
+    styleUrls: ['./calendar-desktop-month-presentation.component.scss'],
 })
-export class CalendarMonthPresentationComponent {
+export class CalendarDesktopMonthPresentationComponent {
     private popover?: NgbPopover;
+    private eventMap = inject(CalendarEventService).eventMap;
 
     firstDayOfCurrentMonth = input.required<Dayjs>();
     selectedEvent = signal<CalendarEvent | undefined>(undefined);
@@ -26,7 +27,6 @@ export class CalendarMonthPresentationComponent {
     readonly utils = utils;
     readonly CalendarEventType = CalendarEventType;
     readonly weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
-    readonly eventMap = inject(CalendarEventService).eventMap;
 
     getEventsOf(day: Dayjs): CalendarEvent[] {
         const key = day.format('YYYY-MM-DD');

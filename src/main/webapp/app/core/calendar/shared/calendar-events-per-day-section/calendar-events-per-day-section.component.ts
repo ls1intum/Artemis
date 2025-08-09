@@ -1,42 +1,39 @@
-import { AfterViewInit, Component, ElementRef, computed, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { NgClass, NgStyle } from '@angular/common';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { Dayjs } from 'dayjs/esm';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
-import { CalendarEventAndPosition, PositionInfo } from 'app/core/calendar/shared/entities/calendar-event-and-position.model';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { Dayjs } from 'dayjs/esm';
+import { CalendarEventAndPosition, PositionInfo } from 'app/core/calendar/shared/entities/calendar-event-and-position.model';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
-import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 
 @Component({
-    selector: 'calendar-desktop-week',
-    imports: [CalendarDayBadgeComponent, ArtemisTranslatePipe, NgbPopover, NgStyle, NgClass, CalendarEventDetailPopoverComponent],
-    templateUrl: './calendar-week-presentation.component.html',
-    styleUrl: './calendar-week-presentation.component.scss',
+    selector: 'calendar-events-per-day-section',
+    imports: [ArtemisTranslatePipe, NgClass, NgStyle, CalendarEventDetailPopoverComponent, NgbPopover],
+    templateUrl: './calendar-events-per-day-section.component.html',
+    styleUrl: './calendar-events-per-day-section.component.scss',
 })
-export class CalendarWeekPresentationComponent implements AfterViewInit {
-    private eventService = inject(CalendarEventService);
+export class CalendarEventsPerDaySectionComponent {
+    static readonly PIXELS_PER_REM = 16;
+    static readonly HOUR_SEGMENT_HEIGHT_IN_PIXEL = 3.5 * CalendarEventsPerDaySectionComponent.PIXELS_PER_REM;
 
-    firstDayOfCurrentWeek = input.required<Dayjs>();
+    private eventService = inject(CalendarEventService);
+    private dayToEventAndPositionMap = computed(() => this.computeDayToEventAndPositionMap(this.eventService.eventMap(), this.days()));
+    private popover?: NgbPopover;
+
+    days = input.required<Dayjs[]>();
+    isEventSelected = output<boolean>();
     selectedEvent = signal<CalendarEvent | undefined>(undefined);
-    scrollContainer = viewChild<ElementRef>('scrollContainer');
 
     readonly utils = utils;
     readonly CalendarEventType = CalendarEventType;
-    readonly weekDays = computed(() => this.computeWeekDaysFrom(this.firstDayOfCurrentWeek()));
 
-    private popover?: NgbPopover;
-    private dayToEventAndPositionMap = computed(() => this.computeDayToEventAndPositionMap(this.eventService.eventMap(), this.weekDays()));
-    private static readonly PIXELS_PER_REM = 16;
-    private static readonly HOUR_SEGMENT_HEIGHT_IN_PIXEL = 3.5 * CalendarWeekPresentationComponent.PIXELS_PER_REM;
-
-    ngAfterViewInit(): void {
-        const container = this.scrollContainer();
-        if (container) {
-            container.nativeElement.scrollTop = 7.5 * CalendarWeekPresentationComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
-        }
+    constructor() {
+        effect(() => {
+            this.isEventSelected.emit(this.selectedEvent() !== undefined);
+        });
     }
 
     getEventsAndPositionsFor(day: Dayjs): CalendarEventAndPosition[] {
@@ -58,10 +55,6 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
         this.popover?.close();
         this.popover = undefined;
         this.selectedEvent.set(undefined);
-    }
-
-    private computeWeekDaysFrom(firstDayOfWeek: Dayjs): Dayjs[] {
-        return Array.from({ length: 7 }, (_, index) => firstDayOfWeek.add(index, 'day'));
     }
 
     private computeDayToEventAndPositionMap(eventMap: Map<string, CalendarEvent[]>, days: Dayjs[]): Map<string, CalendarEventAndPosition[]> {
@@ -105,7 +98,7 @@ export class CalendarWeekPresentationComponent implements AfterViewInit {
     }
 
     private calculatePositionsForEventGroup(group: CalendarEvent[]): CalendarEventAndPosition[] {
-        const pixelsPerMinute = CalendarWeekPresentationComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL / 60;
+        const pixelsPerMinute = CalendarEventsPerDaySectionComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL / 60;
 
         const widthAndLeftOffsetFunction = this.getWidthAndLeftOffsetFunction(group.length);
 

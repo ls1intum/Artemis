@@ -28,21 +28,37 @@ describe('CalendarDayBadgeComponent', () => {
         expect(badge.textContent.trim()).toBe('4');
     });
 
-    it('should apply the "today" class when the day is today', () => {
+    it('should apply the "selected-day" class when the day is selected', () => {
+        fixture.componentRef.setInput('day', dayjs());
+        fixture.componentRef.setInput('isSelectedDay', true);
+        fixture.detectChanges();
+
+        const badge = fixture.debugElement.query(By.css('.day-badge')).nativeElement;
+        expect(badge.classList).toContain('selected-day');
+    });
+
+    it('should apply the "today-normal" class when day is today', () => {
         fixture.componentRef.setInput('day', dayjs());
         fixture.detectChanges();
 
         const badge = fixture.debugElement.query(By.css('.day-badge')).nativeElement;
-        expect(badge.classList).toContain('today');
-        expect(badge.classList).not.toContain('other');
+        expect(badge.classList).toContain('today-normal');
     });
 
-    it('should apply the "other" class when the day is not today', () => {
+    it('should apply the "today-minimal" class when day is today', () => {
+        fixture.componentRef.setInput('day', dayjs());
+        fixture.componentRef.setInput('minimalTodayIndication', true);
+        fixture.detectChanges();
+
+        const badge = fixture.debugElement.query(By.css('.day-badge')).nativeElement;
+        expect(badge.classList).toContain('today-minimal');
+    });
+
+    it('should apply the "not-today" class when day is not today', () => {
         fixture.componentRef.setInput('day', dayjs().add(1, 'day'));
         fixture.detectChanges();
 
         const badge = fixture.debugElement.query(By.css('.day-badge')).nativeElement;
-        expect(badge.classList).toContain('other');
-        expect(badge.classList).not.toContain('today');
+        expect(badge.classList).toContain('not-today');
     });
 });

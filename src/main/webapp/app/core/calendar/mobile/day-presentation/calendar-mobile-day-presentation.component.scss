@@ -1,0 +1,30 @@
+.frame {
+    height: 25rem;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+
+    .week-header {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 12px 12px;
+        border-bottom: 1px solid var(--border-color);
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .scroll-container {
+        height: 22rem;
+        overflow: auto;
+    }
+
+    .no-scroll {
+        overflow: hidden;
+    }
+}

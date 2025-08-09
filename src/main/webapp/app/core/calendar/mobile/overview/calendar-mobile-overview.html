@@ -1,0 +1,43 @@
+<div class="frame">
+    <div class="navigate-section">
+        <button type="button" class="navigate-button chevron-button" (click)="goToPrevious()">
+            <div class="chevron">
+                <fa-icon [icon]="faChevronLeft" />
+            </div>
+        </button>
+        <button type="button" class="navigate-button today-button" (click)="goToToday()">
+            <span class="today-label" jhiTranslate="artemisApp.calendar.todayButtonLabel"></span>
+        </button>
+        <button type="button" class="navigate-button chevron-button" (click)="goToNext()">
+            <div class="chevron">
+                <fa-icon [icon]="faChevronRight" />
+            </div>
+        </button>
+    </div>
+    <div class="header">
+        <div class="title-close-button-row">
+            <div class="header-spacer">
+                @if (selectedDay()) {
+                    <button type="button" class="no-style-button" (click)="unselectDay()">
+                        <fa-icon [icon]="faXmark" />
+                    </button>
+                }
+            </div>
+            <div class="month-title">{{ firstDayOfCurrentMonth().format('MMMM YYYY') }}</div>
+            <div class="header-spacer">
+                <calendar-event-filter [variant]="CalendarEventFilterComponentVariant.MOBILE" />
+            </div>
+        </div>
+        <div class="day-name-row">
+            @for (dayNameKey of utils.getWeekDayNameKeys(); track dayNameKey) {
+                <div class="weekday-label" jhiTranslate="{{ dayNameKey }}"></div>
+            }
+        </div>
+    </div>
+    @let day = selectedDay();
+    @if (day) {
+        <calendar-mobile-day-presentation [selectedDay]="day" />
+    } @else {
+        <calendar-mobile-month-presentation [firstDayOfMonth]="firstDayOfCurrentMonth()" (selectDay)="selectDay($event)" />
+    }
+</div>
