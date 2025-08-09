@@ -138,7 +138,7 @@ export class LectureUnitService {
 
     getLectureUnitName(lectureUnit: LectureUnit) {
         if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-            return (<AttachmentVideoUnit>lectureUnit)?.attachment?.name;
+            return lectureUnit.name;
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             return (<ExerciseUnit>lectureUnit)?.exercise?.title;
         } else {
