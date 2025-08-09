@@ -62,8 +62,7 @@ def get_all_results(submissions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         results.extend(get_results(submission))
     return results
 
-def log_build_agent_summaries(session: Session): 
-    build_agents = get_build_agents(session)
+def log_build_agent_summaries(build_agents: List[Dict[str, Any]]) -> None: 
     for agent in sorted(build_agents, key=lambda x: x.get('buildAgent', {}).get('displayName', '')):
         logging.info(get_build_agent_summary_str(agent))
 

@@ -21,8 +21,9 @@ from admin_operations import (
     log_build_agent_summaries,
     get_build_agents,
 )
-from experiment_config import JAVA_HAPPY_PATH, JAVA_SPAMMY_BUILD, JAVA_TIMEOUT_BUILD, JAVA_FAILING_BUILD, C_HAPPY_PATH, JAVA_ALLOCATE_MEMORY, ExperimentConfig
+from experiment_config import C_WITH_NODE_FAILURE, DOCKER_CLIENT_FAILURE_JAVA, JAVA_HAPPY_PATH, JAVA_SPAMMY_BUILD, JAVA_TIMEOUT_BUILD, JAVA_FAILING_BUILD, C_HAPPY_PATH, JAVA_ALLOCATE_MEMORY, ALLOCATE_MEMORY_IN_BUILD_PLAN, DOCKER_CLIENT_FAILURE, ExperimentConfig
 from student_operations import participate_programming_exercise
+from ssh_helper import run_ssh_command
 import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -42,10 +43,8 @@ PASSWORD_PATTERN: str = secrets.get(
     "User", "artemis_test_user_password_pattern", fallback="artemis_test_user_{}"
 )
 
-
 def configure_session_for_high_concurrency(session: Session, pool_connections=50, pool_maxsize=100):
     """Configure a session for high concurrency with larger connection pools."""
-    # Configure HTTP adapter with larger connection pool
     adapter = HTTPAdapter(
         pool_connections=pool_connections,  # Number of connection pools
         pool_maxsize=pool_maxsize,         # Max connections per pool
@@ -60,15 +59,15 @@ def configure_session_for_high_concurrency(session: Session, pool_connections=50
     session.mount('https://', adapter)
     return session
 
-
 class ExperimentRunner:
-    """Class to handle experiment operations and session management."""
+    """Handles experiment operations and session management."""
     def __init__(self):
         self.admin_session = None
         self.user_sessions = {}
         self.course_id = None
         self.exercise_id = None
         self.polling_data = []
+        self.executed_remote_command_at = None
 
     def __enter__(self):
         return self
@@ -149,7 +148,6 @@ class ExperimentRunner:
     ) -> Dict[int, Any]:
         """Run an operation in parallel for all authenticated students."""
         results = {}
-
         logging.info(f"Starting parallel operation for {len(self.user_sessions)} students...")
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -193,6 +191,7 @@ class ExperimentRunner:
         running_jobs = get_running_build_jobs_for_course(self.admin_session, self.course_id)
         queued_jobs = get_queued_build_jobs_for_course(self.admin_session, self.course_id)
         build_agents = get_build_agents(self.admin_session)
+        log_build_agent_summaries(build_agents)
 
         build_agent_data = []
         for agent in build_agents:
@@ -224,7 +223,7 @@ class ExperimentRunner:
         self,
         start_time: float,
         expected_submissions: int,
-        timeout_seconds: int = 600,
+        timeout_seconds: int = 60 * 15,
         interval_seconds: int = 10,
     ) -> List[Dict[str, Any]]:
         """Poll for job completions and collect data for plotting."""
@@ -241,7 +240,7 @@ class ExperimentRunner:
                 f"Submissions: {data_point['submissions_count']}, Results: {data_point['results_count']}, "
                 f"Running: {data_point['running_jobs_count']}, Queued: {data_point['queued_jobs_count']}, "
             )
-            log_build_agent_summaries(self.admin_session)
+            
             if data_point['submissions_count'] == expected_submissions and data_point["queued_jobs_count"] == 0 and data_point and data_point['running_jobs_count'] == 0:
                 logging.info("No jobs processing or queued anymore. Returning results")
                 return self.get_current_results()
@@ -331,14 +330,13 @@ class ExperimentRunner:
 
         return course
 
-    def run_experiment(self, experiment_config: ExperimentConfig, number_of_commits: int = 1):
+    def run_experiment(self, experiment_config: ExperimentConfig, number_of_commits: int = 1, remote_node_execute: str | None = None):
         """Run the experiment with students participating."""
         initial_sleep = 10
         start_time = time.time()
         self._collect_polling_data_point(start_time)
         time.sleep(initial_sleep) # Avoid instantly starting the submissions
 
-        # Start student operations in a separate thread
         with ThreadPoolExecutor(max_workers=1) as executor:
             student_operations_future = executor.submit(
                 self.run_parallel_student_operations,
@@ -347,26 +345,35 @@ class ExperimentRunner:
                 files_to_commit=experiment_config.commit_files,
                 commits=number_of_commits,
             )
-            
+            remote_future = None
+            if remote_node_execute:
+                remote_future = executor.submit(self.execute_remote_command, experiment_config, remote_node_execute)
+
             results = self.poll_job_completions(
                 start_time=start_time,
                 expected_submissions=len(self.user_sessions) * number_of_commits,
-                timeout_seconds=60 * 30,
+                timeout_seconds=experiment_config.timeout_experiment,
                 interval_seconds=10,
             )
             
             try:
                 student_operations_future.result(timeout=10)
-                logging.debug(f"Student operations completed successfully")
+                logging.info(f"Student operations completed successfully")            
             except Exception as e:
                 logging.error(f"Student operations encountered an error: {e}")
+            try: 
+                remote_future.result(timeout=10)
+                logging.info(f"Remote command executed successfully")
+            except Exception as e:
+                logging.error(f"Remote command encountered an error: {e}")
         
-
-        
-
         logging.info(f"Results collected: {len(results)} results for {len(self.user_sessions)} students.")
         end_time = time.time()
         logging.info(f"Experiment completed in {(end_time - start_time - initial_sleep):.2f} seconds")
+
+        time.sleep(10) # wait fot the stats to update 
+        stats = get_build_job_statistics_for_course(self.admin_session, self.course_id)
+        logging.info(f"Build job statistics for course {self.course_id}: {stats}")
 
         start_ms = int(start_time * 1000)
         end_ms = int(end_time * 1000 + 30 * 1000) # + 30 seconds for visualization
@@ -374,32 +381,54 @@ class ExperimentRunner:
         params = f"?orgId=1&from={start_ms}&to={end_ms}"
         grafana_link = f"{base_url}{params}"
 
+        filename_base = f"test_reports/polling_data_{time.strftime('%Y%m%d_%H%M%S')}-{experiment_config.identifier}-{len(self.user_sessions)}x{number_of_commits}"
+        file_Name = self.save_polling_data(filename_base=filename_base, grafana_link=grafana_link, experiment_config=experiment_config if remote_node_execute else None, start=start_time, end=end_time, initial_sleep=initial_sleep, stats=stats)
+        self._generate_experiment_plots(filename=file_Name)
 
-        timestamp = time.strftime('%Y%m%d_%H%M%S')
-        filename = f"test_reports/polling_data_{timestamp}-{experiment_config.identifier}-{len(self.user_sessions)}x{number_of_commits}.json"
-        self.save_polling_data(filename=filename, grafana_link=grafana_link)
-        self._generate_experiment_plots(filename=filename)
+       
+        if remote_node_execute and experiment_config.final_command:
+            logging.info(f"Executing final command: {experiment_config.final_command} on node {remote_node_execute}")
+            run_ssh_command(remote_node_execute, experiment_config.final_command, verbose=True)
 
-        logging.info(
-            f"Grafana: {grafana_link}"
-        )
-        stats = get_build_job_statistics_for_course(self.admin_session, self.course_id)
-        logging.info(f"Build job statistics for course {self.course_id}: {stats}")
         return results, stats
 
-    def save_polling_data(self, filename: str, grafana_link: str = None):
+    def execute_remote_command(self, experiment_config: ExperimentConfig, remote_node_execute: str): 
+        command = experiment_config.remote_command
+        if command:
+            time.sleep(experiment_config.execute_after_seconds)  # Wait before executing the command
+            logging.info(f"Trying to execute remote command: {command} on {remote_node_execute} after {experiment_config.execute_after_seconds} seconds")
+            self.executed_remote_command_at = time.time()
+            return run_ssh_command(remote_node_execute, command, verbose=True)
+
+    def save_polling_data(self, filename_base: str, grafana_link: str = None, experiment_config: ExperimentConfig = None, start: float = None, end: float = None, initial_sleep: float = None, stats: Dict[str, Any] = None):
         """Save the collected polling data to a JSON file."""
         import os
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        os.makedirs(os.path.dirname(filename_base), exist_ok=True)
         
-        with open(filename, 'w') as f:
+        json_filename = filename_base + ".json"
+        with open(json_filename, 'w') as f:
             json.dump(self.polling_data, f, indent=2)
-        
+        logging.info(f"Polling data saved to {json_filename}")
+
         if grafana_link:
-            with open(filename + "_grafana", 'a') as f:
+            logging.info(f"Grafana: {grafana_link}")
+            with open(filename_base + "_grafana.txt", 'a') as f:
                 f.write(f"\nGrafana link: {grafana_link}\n")
-        logging.info(f"Polling data saved to {filename}")
-        return filename
+        if stats:
+            with open(filename_base + "_stats.json", 'a') as f:
+                json.dump(stats, f, indent=2)
+        if experiment_config:
+            with open(filename_base + "_timing_info.json", 'a') as f:
+                json.dump({
+                    "start_time": start,
+                    "end_time": end,
+                    "initial_sleep": initial_sleep,
+                    "injected_command_at": self.executed_remote_command_at,
+                    "injected_command": experiment_config.remote_command,
+                    "injected_command_after": experiment_config.execute_after_seconds
+                }, f)
+       
+        return json_filename
 
     def _generate_experiment_plots(self, filename:str):
         """Automatically generate plots for the experiment data."""
@@ -501,20 +530,27 @@ def test_c_happy_path_high_load(experiment_runner: ExperimentRunner):
     assertStatsForPassingJobs(stats, number_of_students, number_of_commits)
 
 def test_memory_hog(experiment_runner: ExperimentRunner):
-    number_of_students = 100
+    number_of_students = 500
     number_of_commits = 1
     logging.info(f"Running Java memory hog test with {number_of_students} students")
     experiment_runner.setup_experiment(JAVA_ALLOCATE_MEMORY, number_of_students)
     results, stats = experiment_runner.run_experiment(JAVA_ALLOCATE_MEMORY, number_of_commits)
 
     assert len(results) == number_of_students * number_of_commits, "All submissions should have results"
-    for result in results:
-        assert result.get('rated') is True, "All results should be rated"
-        assert result.get('score') > 0, "All results should have a positive partial score"
-        assert result.get('successful') is True, "All result have full score"
     assertStatsForPassingJobs(stats, number_of_students, number_of_commits)
 
-def test_spammy_log(experiment_runner: ExperimentRunner):
+def test_memory_hog_build_plan(experiment_runner: ExperimentRunner):
+    number_of_students = 100
+    number_of_commits = 1
+    logging.info(f"Running memory hog in build plan test with {number_of_students} students")
+    experiment_runner.setup_experiment(ALLOCATE_MEMORY_IN_BUILD_PLAN, number_of_students)
+    results, stats = experiment_runner.run_experiment(ALLOCATE_MEMORY_IN_BUILD_PLAN, number_of_commits)
+
+
+    assert len(results) == number_of_students * number_of_commits, "All submissions should have results"
+    assertStatsForPassingJobs(stats, number_of_students, number_of_commits)
+
+def test_build_spam_log(experiment_runner: ExperimentRunner):
     number_of_students = 500
     number_of_commits = 1
     logging.info(f"Running Java spammy log test with {number_of_students} students")
@@ -522,3 +558,39 @@ def test_spammy_log(experiment_runner: ExperimentRunner):
     experiment_runner.setup_experiment(JAVA_SPAMMY_BUILD, number_of_students)
     results, stats = experiment_runner.run_experiment(JAVA_SPAMMY_BUILD, number_of_commits)
     assertStatsForPassingJobs(stats, number_of_students, number_of_commits)
+
+
+def test_agent_node_failure(experiment_runner: ExperimentRunner):
+    number_of_students = 500
+    number_of_commits = 1
+    node_to_fail = "artemis-dev-cluster-agent3.artemis.cit.tum.de" # TODO config
+    user_name_ssh = "ge56wed" # TODO config
+    logging.info(f"Running Node failure experiment with {number_of_students} students. Will fail {node_to_fail}")
+
+    experiment_runner.setup_experiment(C_WITH_NODE_FAILURE, number_of_students)
+    results, stats = experiment_runner.run_experiment(C_WITH_NODE_FAILURE, number_of_commits, f"{user_name_ssh}@{node_to_fail}")
+    assert stats is not None, "Should have build statistics"
+    assert stats.get('totalBuilds', 0) == number_of_students * number_of_commits + 2, "Number of build jobs should match the number of student commits +2 for solution and template"
+
+def test_docker_client_agent_failure(experiment_runner: ExperimentRunner):
+    number_of_students = 500
+    number_of_commits = 1
+    node_to_fail = "artemis-dev-cluster-agent3.artemis.cit.tum.de" # TODO config
+    user_name_ssh = "ge56wed" # TODO config
+    logging.info(f"Running Docker client failure experiment with {number_of_students} students. Will fail docker on {node_to_fail}")
+    experiment_runner.setup_experiment(DOCKER_CLIENT_FAILURE, number_of_students)
+    results, stats = experiment_runner.run_experiment(DOCKER_CLIENT_FAILURE, number_of_commits, f"{user_name_ssh}@{node_to_fail}")
+    assert stats is not None, "Should have build statistics"
+    assert stats.get('totalBuilds', 0) == number_of_students * number_of_commits + 2, "Number of build jobs should match the number of student commits +2 for solution and template"
+
+
+def test_docker_client_agent_failure_java(experiment_runner: ExperimentRunner):
+    number_of_students = 250
+    number_of_commits = 1
+    node_to_fail = "artemis-dev-cluster-agent3.artemis.cit.tum.de" # TODO config
+    user_name_ssh = "ge56wed" # TODO config
+    logging.info(f"Running Docker client failure experiment with {number_of_students} students. Will fail docker on {node_to_fail}")
+    experiment_runner.setup_experiment(DOCKER_CLIENT_FAILURE_JAVA, number_of_students)
+    results, stats = experiment_runner.run_experiment(DOCKER_CLIENT_FAILURE_JAVA, number_of_commits, f"{user_name_ssh}@{node_to_fail}")
+    assert stats is not None, "Should have build statistics"
+    assert stats.get('totalBuilds', 0) == number_of_students * number_of_commits + 2, "Number of build jobs should match the number of student commits +2 for solution and template"

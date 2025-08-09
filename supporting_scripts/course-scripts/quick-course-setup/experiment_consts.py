@@ -17,20 +17,6 @@ FAILING_BUILD_SCRIPT = """#!/usr/bin/env bash
         exit 1
     """
 
-SPAMMY_BUILD_SCRIPT = """#!/usr/bin/env bash
-        set -e
-        main () {
-            while true; do
-            for i in {1..1000}; do
-                echo "📣 Log line $i: This is a test log message meant to spam the output."
-            done
-            echo "🔁 Completed 1000 log lines. Restarting..."
-            sleep 0.1
-            done
-        }
-        main "${@}"
-    """
-
 SPAMMY_BUILD_GRADLE = """
     #!/usr/bin/env bash
     set -e
@@ -75,6 +61,30 @@ BUBBLE_SORT_JAVA_CORRECT = """
     }}
     """
 
+
+WRITE_FILE_JAVA = """
+    package {0};
+    import java.util.*;
+    public class BubbleSort {{
+        public void performSort(List<Date> input) {{
+            File dir = new File("ci_io_test");
+            if (!dir.exists()) {{
+                dir.mkdirs();
+            }}
+            for (int i = 0; i < 1000; i++) {{
+                File file = new File(dir, "file_" + i + ".txt");
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {{
+                    for (int j = 0; j < 1000; j++) {{
+                        writer.write("This is line " + j + " of file " + i + "\\n");
+                    }}
+                }} catch (IOException e) {{
+                    e.printStackTrace();
+                }}
+            }}
+        }}
+    }}
+    """
+
 SORT_STRATEGY_JAVA = """
     package {0};
 
@@ -86,9 +96,6 @@ SORT_STRATEGY_JAVA = """
     }}
 """
 
-
-
-
 BUBBLE_SORT_JAVA_INCORRECT = """
     package {0};
     import java.util.*;
@@ -98,7 +105,6 @@ BUBBLE_SORT_JAVA_INCORRECT = """
         }}
     }}
     """
-
 
 BUBBLE_SORT_JAVA_INFINITE_LOOP = """
     package {0};
@@ -112,7 +118,6 @@ BUBBLE_SORT_JAVA_INFINITE_LOOP = """
     }}
     """
 
-
 BUBBLE_SORT_JAVA_ALLOCATE_MEMORY = """
     package {0};
     import java.util.*;
@@ -122,7 +127,6 @@ BUBBLE_SORT_JAVA_ALLOCATE_MEMORY = """
         public void performSort(final List<Date> input) {{
             while (true) {{
                 memoryHog.add(new byte[10 * 1024 * 1024]); // 10 MB chunks
-                System.out.println("Allocated another 10MB");
             }}
         }}
     }}
@@ -177,3 +181,43 @@ C_FACT_BUILD_SCRIPT = """#!/usr/bin/env bash
 
     main "${@}"
     """
+
+MEMORY_ALLOCATE_BUILD_SCRIPT = """#!/usr/bin/env bash
+    set -e
+    main () {
+        while true; do
+            echo "📣 Allocating memory..."
+            allocate_memory
+            sleep 1
+        done
+    }
+
+    allocate_memory () {
+        local allocated=0
+        while [[ $allocated -lt 100 ]]; do
+            echo "📦 Allocating 1MB..."
+            dd if=/dev/zero of=/dev/null bs=1M count=1 &
+            allocated=$((allocated + 1))
+        done
+    }
+
+    main "${@}"
+    """
+
+C_CORRECT = """
+    #include <stdio.h>
+    #include <stdlib.h>
+    int main(void) {
+        int x = 6;
+        int y = 10;
+        printf("%d\\n", x * x + 5 * y - 4);
+        return EXIT_SUCCESS;
+    }
+""" 
+
+START_ARTEMIS_COMMAND = "sudo systemctl start artemis.service"
+STOP_ARTEMIS_COMMAND = "sudo systemctl stop artemis.service"
+
+START_DOCKER_COMMAND = "sudo systemctl start docker.service"
+STOP_DOCKER_SOCKET_COMMAND = "sudo systemctl stop docker.socket"
+STOP_DOCKER_SERVICE_COMMAND = "sudo systemctl stop docker.service"
