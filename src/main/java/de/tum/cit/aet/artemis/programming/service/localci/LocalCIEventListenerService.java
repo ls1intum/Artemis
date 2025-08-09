@@ -134,11 +134,11 @@ public class LocalCIEventListenerService {
     }
 
     /**
-     * Processes the queued results from the distributed build result queue every 10 seconds.
+     * Processes the queued results from the distributed build result queue every minute.
      * This is a fallback mechanism to ensure that no results are left unprocessed in the queue e.g. if listener events are lost
      * under high system load or network hiccups
      */
-    @Scheduled(fixedDelay = 10 * 1000)
+    @Scheduled(fixedDelay = 60 * 1000)
     public void processQueuedResults() {
         log.debug("Processing {} queued results from the distributed build result queue", distributedDataAccessService.getResultQueueSize());
         while ((distributedDataAccessService.getDistributedBuildResultQueue().peek()) != null) {
