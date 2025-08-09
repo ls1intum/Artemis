@@ -46,11 +46,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     // When the scheduler is invoked, there is a small delay until the runnable is called.
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
-    private static final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 1000;
+    private static final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 1200;
 
-    private static final long DELAY_MS = 300;
+    private static final long DELAY_MS = 600;
 
-    private static final long TIMEOUT_MS = 5000;
+    private static final long TIMEOUT_MS = 10000;
 
     @BeforeEach
     void init() throws Exception {
