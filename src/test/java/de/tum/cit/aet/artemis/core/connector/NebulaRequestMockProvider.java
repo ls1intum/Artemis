@@ -72,8 +72,6 @@ public class NebulaRequestMockProvider {
         mockPostJson("/faq/rewrite-text", FaqRewritingDTO.class, responder, HttpStatus.OK, ExpectedCount.once());
     }
 
-    /* ===================== Generische Helfer ===================== */
-
     private String buildUrl(String path) {
         return UriComponentsBuilder.fromHttpUrl(nebulaBaseUrl).path(path).toUriString();
     }
@@ -91,20 +89,6 @@ public class NebulaRequestMockProvider {
             }
             return creator.createResponse(request);
         });
-    }
-
-    private void mockPostError(String path, HttpStatus status, Object errorBody) {
-        mockServer.expect(ExpectedCount.once(), requestTo(buildUrl(path))).andExpect(method(HttpMethod.POST))
-                .andRespond(MockRestResponseCreators.withStatus(status).contentType(MediaType.APPLICATION_JSON).body(errorBody != null ? toJson(errorBody) : ""));
-    }
-
-    private String toJson(Object o) {
-        try {
-            return mapper.writeValueAsString(o);
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
 }
