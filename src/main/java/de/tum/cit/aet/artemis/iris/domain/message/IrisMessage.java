@@ -20,6 +20,8 @@ import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 
 /**
  * An IrisMessage represents a single message in an IrisSession.
@@ -58,6 +61,14 @@ public class IrisMessage extends DomainObject {
     @OrderColumn(name = "iris_message_content_order")
     @OneToMany(mappedBy = "message", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessageContent> content = new ArrayList<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "accessed_memories", columnDefinition = "json")
+    private List<MemirisMemoryDTO> accessedMemories = new ArrayList<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "created_memories", columnDefinition = "json")
+    private List<MemirisMemoryDTO> createdMemories = new ArrayList<>();
 
     @Transient
     private Integer messageDifferentiator; // is supposed to be only a part of the dto and helps the client application to differentiate messages it should add to the message store
@@ -109,6 +120,22 @@ public class IrisMessage extends DomainObject {
             c.setMessage(this);
             this.content.add(c);
         }
+    }
+
+    public List<MemirisMemoryDTO> getAccessedMemories() {
+        return accessedMemories;
+    }
+
+    public void setAccessedMemories(List<MemirisMemoryDTO> accessedMemories) {
+        this.accessedMemories = accessedMemories;
+    }
+
+    public List<MemirisMemoryDTO> getCreatedMemories() {
+        return createdMemories;
+    }
+
+    public void setCreatedMemories(List<MemirisMemoryDTO> createdMemories) {
+        this.createdMemories = createdMemories;
     }
 
     @JsonProperty
