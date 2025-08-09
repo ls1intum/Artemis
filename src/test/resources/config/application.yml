@@ -303,7 +303,6 @@ jhipster:
 aeolus:
     url: http://mock-aeolus-url:8090
 
-nebula:
 
 
 # Eureka configuration
