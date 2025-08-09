@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategyType;
+import de.tum.cit.aet.artemis.exam.domain.room.SeatCondition;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
@@ -43,14 +44,12 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUniqueRoomsDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
-import de.tum.cit.aet.artemis.exam.dto.room.SeatCondition;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomAssignmentRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 import de.tum.cit.aet.artemis.exam.repository.LayoutStrategyRepository;
 
 /*
  * Service implementation for managing exam rooms.
- * This is decoupled from everything that has to do with exam room assignments.
  */
 @Conditional(ExamEnabled.class)
 @Lazy
@@ -244,11 +243,8 @@ public class ExamRoomService {
                 final String seatLabel = seatInput.label == null ? "" : seatInput.label;
                 final String seatName = rowLabel.isEmpty() ? seatLabel : (rowLabel + ", " + seatLabel);
 
-                ExamSeatDTO seat = new ExamSeatDTO();
-                seat.setLabel(seatName);
-                seat.setX(seatInput.position.x);
-                seat.setY(seatInput.position.y);
-                seat.setSeatCondition(SeatCondition.seatConditionFromFlag(seatInput.condition));
+                ExamSeatDTO seat = new ExamSeatDTO(seatName, SeatCondition.seatConditionFromFlag(seatInput.condition), seatInput.position.x, seatInput.position.y);
+
                 seats.add(seat);
             }
         }
@@ -343,16 +339,16 @@ public class ExamRoomService {
 
         List<ExamSeatDTO> examSeatsFilteredAndSorted = examRoom.getSeats().stream()
                 // Filter out all exam rooms that are before the "first row". The coords start at 0, the row numbers at 1
-                .filter(examSeatDTO -> examSeatDTO.getY() >= (firstRow - 1))
+                .filter(examSeatDTO -> examSeatDTO.y() >= (firstRow - 1))
                 // Filter out all exam rooms that are not default usable
-                .filter(examSeatDTO -> examSeatDTO.getSeatCondition() == SeatCondition.USABLE)
+                .filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE)
                 // Sort by X, then by Y to ensure stable processing later
-                .sorted(Comparator.comparingDouble(ExamSeatDTO::getY).thenComparingDouble(ExamSeatDTO::getX)).toList();
+                .sorted(Comparator.comparingDouble(ExamSeatDTO::y).thenComparingDouble(ExamSeatDTO::x)).toList();
 
         List<ExamSeatDTO> selectedSeats = new ArrayList<>();
         for (ExamSeatDTO examSeatDTO : examSeatsFilteredAndSorted) {
             boolean isFarEnough = selectedSeats.stream()
-                    .noneMatch(existing -> Math.abs(existing.getY() - examSeatDTO.getY()) <= ySpace && Math.abs(existing.getX() - examSeatDTO.getX()) <= xSpace);
+                    .noneMatch(existing -> Math.abs(existing.y() - examSeatDTO.y()) <= ySpace && Math.abs(existing.x() - examSeatDTO.x()) <= xSpace);
             if (isFarEnough) {
                 selectedSeats.add(examSeatDTO);
             }

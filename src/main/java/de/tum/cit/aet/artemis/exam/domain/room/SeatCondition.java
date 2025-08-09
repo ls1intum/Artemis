@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exam.dto.room;
+package de.tum.cit.aet.artemis.exam.domain.room;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
