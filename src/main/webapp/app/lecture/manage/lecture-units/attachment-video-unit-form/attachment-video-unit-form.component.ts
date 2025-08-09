@@ -172,10 +172,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
 
-    readonly shouldShowTranscriptCheckbox = computed(() => {
-        const url = this.videoSourceSignal();
-        return typeof url === 'string' && url.includes('.m3u8');
-    });
+    readonly shouldShowTranscriptCheckbox = computed(() => !!this.playlistUrl());
 
     isFormValid = computed(() => {
         return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
