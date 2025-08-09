@@ -96,7 +96,14 @@ public class LocalVCPostPushHook implements PostReceiveHook {
                     "Something went wrong while processing your push. Your changes were saved, but we could not test your submission. Please try again and if this issue persists, contact the course administrators.");
         }
         catch (VersionControlException e) {
-            receivePack.sendError(wrongBranchMessage);
+            boolean isBranchingAllowed = localVCServletService.isBranchingAllowedForRepository(repository);
+            if (isBranchingAllowed) {
+                String message = "Your push will not be shown in Artemis, because you are currently pushing changes on a custom (non-default) branch. Your changes are still saved correctly.";
+                receivePack.sendMessage(message);
+            }
+            else {
+                receivePack.sendError(wrongBranchMessage);
+            }
         }
     }
 }
