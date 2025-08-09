@@ -280,7 +280,7 @@ public final class Constants {
     public static final String PROFILE_LOCALVC = "localvc";
 
     /**
-     * The name of the Spring profile used to choose the local CI system.
+     * The name of the Spring profile used to choose the local CI system instead of Jenkins, or GitLabCI.
      */
     public static final String PROFILE_LOCALCI = "localci";
 
@@ -368,6 +368,11 @@ public final class Constants {
      * The name of the Spring profile used for Theia as an external online IDE.
      */
     public static final String PROFILE_THEIA = "theia";
+
+    /**
+     * the sharing profile
+     */
+    public static final String PROFILE_SHARING = "sharing";
 
     /**
      * The name of the profile for integration independent tests

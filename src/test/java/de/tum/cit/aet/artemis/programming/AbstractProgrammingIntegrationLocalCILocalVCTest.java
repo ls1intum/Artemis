@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.programming;
 
+import org.junit.jupiter.api.AfterEach;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.hazelcast.core.HazelcastInstance;
 
@@ -19,6 +22,7 @@ import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasicService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIEventListenerService;
@@ -87,6 +91,8 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
     @Autowired
     protected StaticCodeAnalysisService staticCodeAnalysisService;
 
+    @MockitoBean
+    protected ProgrammingLanguageFeatureService programmingLanguageFeatureService;
     // External Services
 
     // Util Services
@@ -111,4 +117,12 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
 
     @Autowired
     protected ParticipationUtilService participationUtilService;
+
+    @AfterEach
+    @Override
+    protected void resetSpyBeans() {
+        Mockito.reset(programmingLanguageFeatureService);
+        super.resetSpyBeans();
+    }
+
 }
