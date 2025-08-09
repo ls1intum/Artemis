@@ -79,6 +79,11 @@
             "page.request": "Die Seitenanforderung scheint ungültig zu sein. Stelle bitte sicher, dass genügend {{entityName}}-Entitäten vorhanden sind, damit die Anforderungsseite erstellt werden kann.",
             "presentations": {
                 "maxNumberOfPresentationsExceeded": "{{name}} hielt bereits die maximale Anzahl von {{presentationsNumber}} Präsentation/en."
+            },
+            "buildAgent": {
+                "invalidAgentName": "Agentenname darf nicht leer sein",
+                "invalidCapacityBelowMinimum": "Die maximale Anzahl an parallelen Builds muss mindestens 1 sein",
+                "invalidCapacityExceedsMax": "Die maximale Anzahl an parallelen Builds darf nicht größer als {{maxCapacity}} sein"
             }
         },
         "idNull": "Ungültige ID",

@@ -17,6 +17,9 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -105,6 +108,9 @@ public abstract class AbstractArtemisBuildAgentTest {
             Thread.sleep(100);
             return null;
         }).when(startContainerCmd).exec();
+
+        ThreadPoolExecutor testExecutor = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+        when(buildAgentConfiguration.getBuildExecutor()).thenReturn(testExecutor);
 
         when(buildAgentConfiguration.getDockerClient()).thenReturn(dockerClientMock);
         dockerClient = dockerClientMock;
