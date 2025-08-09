@@ -12,6 +12,10 @@ import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angul
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { HttpClient } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('AttachmentVideoUnitFormComponent', () => {
     let attachmentVideoUnitFormComponentFixture: ComponentFixture<AttachmentVideoUnitFormComponent>;
@@ -21,7 +25,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule), FontAwesomeTestingModule],
             declarations: [AttachmentVideoUnitFormComponent, FormDateTimePickerComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencySelectionComponent)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [provideHttpClient(), { provide: TranslateService, useClass: MockTranslateService }, provideHttpClientTesting()],
         }).compileComponents();
 
         attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
@@ -111,11 +115,13 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: exampleVideoUrl,
                 urlHelper: null,
+                generateTranscript: false,
             },
             fileProperties: {
                 file: fakeFile,
                 fileName: exampleFileName,
             },
+            playlistUrl: undefined,
         });
 
         submitFormSpy.mockRestore();
@@ -249,11 +255,13 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: exampleVideoUrl,
                 urlHelper: null,
+                generateTranscript: false,
             },
             fileProperties: {
                 file: undefined,
                 fileName: undefined,
             },
+            playlistUrl: undefined,
         });
 
         submitFormSpy.mockRestore();
@@ -304,11 +312,13 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: '',
                 urlHelper: null,
+                generateTranscript: false,
             },
             fileProperties: {
                 file: fakeFile,
                 fileName: exampleFileName,
             },
+            playlistUrl: undefined,
         });
 
         submitFormSpy.mockRestore();
@@ -349,5 +359,73 @@ describe('AttachmentVideoUnitFormComponent', () => {
         return attachmentVideoUnitFormComponentFixture.whenStable().then(() => {
             expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toEqual(expectedUrl);
         });
+    });
+
+    it('should enable generateTranscript checkbox when playlist is available', () => {
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        const originalUrl = 'https://live.rbg.tum.de/w/test/26';
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(originalUrl);
+
+        const httpMock = TestBed.inject(HttpClient);
+        const spy = jest.spyOn(httpMock, 'get').mockReturnValue(of('https://live.rbg.tum.de/playlist.m3u8'));
+
+        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+
+        expect(spy).toHaveBeenCalled();
+        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.playlistUrl()).toContain('playlist.m3u8');
+    });
+
+    it('should disable generateTranscript checkbox when playlist is unavailable', () => {
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        const originalUrl = 'https://live.rbg.tum.de/w/test/26';
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(originalUrl);
+
+        const httpMock = TestBed.inject(HttpClient);
+        const spy = jest.spyOn(httpMock, 'get').mockReturnValue(throwError(() => new Error('Not found')));
+
+        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+
+        expect(spy).toHaveBeenCalled();
+        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();
+        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
+        expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')?.value).toBeFalse();
+    });
+    it('should show transcript checkbox only when playlistUrl is set', () => {
+        // Initially hidden
+        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeFalse();
+
+        // Simulate playlist found
+        attachmentVideoUnitFormComponent.playlistUrl.set('https://live.rbg.tum.de/playlist.m3u8');
+        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeTrue();
+
+        // Simulate playlist removed
+        attachmentVideoUnitFormComponent.playlistUrl.set(undefined);
+        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeFalse();
+    });
+
+    it('should update checkbox visibility after successful playlist fetch', () => {
+        const originalUrl = 'https://live.rbg.tum.de/w/test/26';
+        const http = TestBed.inject(HttpClient);
+        jest.spyOn(http, 'get').mockReturnValue(of('https://live.rbg.tum.de/playlist.m3u8'));
+
+        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+
+        expect(attachmentVideoUnitFormComponent.playlistUrl()).toContain('playlist.m3u8');
+        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeTrue();
+    });
+
+    it('should hide checkbox and reset generateTranscript after failed playlist fetch', () => {
+        const originalUrl = 'https://live.rbg.tum.de/w/test/26';
+        attachmentVideoUnitFormComponent.form.get('generateTranscript')!.setValue(true);
+
+        const http = TestBed.inject(HttpClient);
+        jest.spyOn(http, 'get').mockReturnValue(throwError(() => new Error('Not found')));
+
+        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+
+        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
+        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeFalse();
+        expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')!.value).toBeFalse();
     });
 });

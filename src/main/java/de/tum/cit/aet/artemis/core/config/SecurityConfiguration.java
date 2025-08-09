@@ -252,6 +252,7 @@ public class SecurityConfiguration {
                     .requestMatchers("/swagger-ui/**").permitAll();
                     // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
                     if (profileService.isLocalVCActive()) {
+
                         requests.requestMatchers("/git/**").permitAll();
                     }
 
