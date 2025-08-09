@@ -135,7 +135,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
         var topic = ConversationService.getConversationParticipantTopicName(exampleCourseId) + receivingUser.getId();
         verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
                 argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).action().equals(crudAction)
-                        && ((ConversationWebsocketDTO) argument).conversation().getId().equals(conversationId)));
+                        && ((ConversationWebsocketDTO) argument).conversation().id().equals(conversationId)));
 
     }
 
@@ -176,12 +176,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
     }
 
     ChannelDTO createChannel(boolean isPublicChannel, String name) throws Exception {
-        var channelDTO = new ChannelDTO();
-        channelDTO.setName(name);
-        channelDTO.setIsPublic(isPublicChannel);
-        channelDTO.setIsAnnouncementChannel(false);
-        channelDTO.setDescription("general channel");
-        channelDTO.setIsCourseWide(false);
+        var channelDTO = new ChannelDTO().withName(name).withIsPublic(isPublicChannel).withIsAnnouncementChannel(false).withDescription("general channel").withIsCourseWide(false);
 
         var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         resetWebsocketMock();
@@ -189,12 +184,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
     }
 
     ChannelDTO createCourseWideChannel(String name) throws Exception {
-        var channelDTO = new ChannelDTO();
-        channelDTO.setName(name);
-        channelDTO.setIsPublic(true);
-        channelDTO.setIsCourseWide(true);
-        channelDTO.setIsAnnouncementChannel(false);
-        channelDTO.setDescription("course wide channel");
+        var channelDTO = new ChannelDTO().withName(name).withIsPublic(true).withIsCourseWide(true).withIsAnnouncementChannel(false).withDescription("course wide channel");
 
         var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         resetWebsocketMock();
@@ -285,7 +275,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
         var moderatorParticipant = new ConversationParticipant();
         moderatorParticipant.setIsModerator(true);
         moderatorParticipant.setUser(newModerator);
-        moderatorParticipant.setConversation(this.channelRepository.findById(channel.getId()).orElseThrow());
+        moderatorParticipant.setConversation(this.channelRepository.findById(channel.id()).orElseThrow());
         conversationParticipantRepository.save(moderatorParticipant);
     }
 

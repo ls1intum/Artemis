@@ -1,29 +1,18 @@
 package de.tum.cit.aet.artemis.communication.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Stores general information about a conversation that is not related to a user
  */
-// TODO: convert to record
-public class GeneralConversationInfo {
-
-    private final long conversationId;
-
-    private int numberOfParticipants;
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record GeneralConversationInfo(long conversationId, int numberOfParticipants) {
 
     public GeneralConversationInfo(long conversationId, long numberOfParticipants) {
-        this.conversationId = conversationId;
-        this.numberOfParticipants = (int) numberOfParticipants;
+        this(conversationId, (int) numberOfParticipants);
     }
 
-    public long getConversationId() {
-        return conversationId;
-    }
-
-    public int getNumberOfParticipants() {
-        return numberOfParticipants;
-    }
-
-    public void setNumberOfParticipants(int numberOfParticipants) {
-        this.numberOfParticipants = numberOfParticipants;
+    public GeneralConversationInfo withNumberOfParticipants(int newNumberOfParticipants) {
+        return new GeneralConversationInfo(this.conversationId, newNumberOfParticipants);
     }
 }

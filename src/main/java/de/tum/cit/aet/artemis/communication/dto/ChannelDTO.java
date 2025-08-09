@@ -1,203 +1,203 @@
 package de.tum.cit.aet.artemis.communication.dto;
 
+import java.time.ZonedDateTime;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.ChannelSubType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-// TODO: use record in the future
-public class ChannelDTO extends ConversationDTO {
+public record ChannelDTO(
+        // Fields from ConversationDTO (duplicated)
+        String type, Long id, ZonedDateTime creationDate, ZonedDateTime lastMessageDate, ConversationUserDTO creator, ZonedDateTime lastReadDate, Long unreadMessagesCount,
+        Boolean isFavorite, Boolean isHidden, Boolean isMuted, Boolean isCreator, Boolean isMember, Integer numberOfMembers,
 
-    private String name;
+        // Specific ChannelDTO fields
+        String name, String description, String topic, boolean isPublic, boolean isAnnouncementChannel, boolean isArchived, boolean isCourseWide,
+        boolean hasChannelModerationRights, boolean isChannelModerator, Long tutorialGroupId, String tutorialGroupTitle, ChannelSubType subType, Long subTypeReferenceId)
+        implements ConversationDTO {
 
-    private String description;
-
-    private String topic;
-
-    private boolean isPublic = false; // default value
-
-    private boolean isAnnouncementChannel = false; // default value
-
-    private boolean isArchived = false; // default value
-
-    private boolean isCourseWide = false; // default value
-
-    // property not taken from entity
     /**
-     * A course instructor has channel moderation rights but is not necessarily a moderator of the channel
+     * Constructor from Channel entity
      */
-    private boolean hasChannelModerationRights = false; // default value
-
-    // property not taken from entity
-    /**
-     * Member of the channel that is also a moderator of the channel
-     */
-    private boolean isChannelModerator = false; // default value
-
-    // property not taken from entity
-    /**
-     * The id of the tutorial group that is associated with the channel, if any
-     */
-    private Long tutorialGroupId;
-
-    // property not taken from entity
-    /**
-     * The name of the tutorial group that is associated with the channel, if any
-     */
-    private String tutorialGroupTitle;
-
-    // property not taken from entity
-    /**
-     * Determines the subtype of the channel depending on whether the channel is associated with an exercise/lecture/exam or not
-     */
-    private ChannelSubType subType;
-
-    // property not taken from entity
-    /**
-     * Contains the lecture/exercise/exam id if the channel is associated with a lecture/exercise/exam, else null
-     */
-    private Long subTypeReferenceId;
-
     public ChannelDTO(Channel channel) {
-        super(channel, "channel");
-        this.setSubTypeWithReferenceFromChannel(channel);
-        this.name = channel.getName();
-        this.description = channel.getDescription();
-        this.isPublic = channel.getIsPublic();
-        this.topic = channel.getTopic();
-        this.isArchived = channel.getIsArchived();
-        this.isAnnouncementChannel = channel.getIsAnnouncementChannel();
-        this.isCourseWide = channel.getIsCourseWide();
+        this("channel", channel.getId(), channel.getCreationDate(), channel.getLastMessageDate(),
+                channel.getCreator() != null ? new ConversationUserDTO(channel.getCreator()) : null, null, // lastReadDate - not from entity
+                null, // unreadMessagesCount - not from entity
+                null, // isFavorite - not from entity
+                null, // isHidden - not from entity
+                null, // isMuted - not from entity
+                null, // isCreator - not from entity
+                null, // isMember - not from entity
+                null, // numberOfMembers - not from entity
+                channel.getName(), channel.getDescription(), channel.getTopic(), channel.getIsPublic(), channel.getIsAnnouncementChannel(), channel.getIsArchived(),
+                channel.getIsCourseWide(), false, // hasChannelModerationRights - default value
+                false, // isChannelModerator - default value
+                null,  // tutorialGroupId - not from entity
+                null,  // tutorialGroupTitle - not from entity
+                determineSubType(channel), determineSubTypeReferenceId(channel));
     }
 
+    /**
+     * Default constructor with default values
+     */
     public ChannelDTO() {
-        this.setType("channel");
+        this("channel", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, false, // isPublic default
+                false, // isAnnouncementChannel default
+                false, // isArchived default
+                false, // isCourseWide default
+                false, // hasChannelModerationRights default
+                false, // isChannelModerator default
+                null, null, null, null);
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
-    public boolean getIsPublic() {
-        return isPublic;
-    }
-
-    public void setIsPublic(boolean isPublic) {
-        this.isPublic = isPublic;
-    }
-
-    public boolean getIsAnnouncementChannel() {
-        return isAnnouncementChannel;
-    }
-
-    public void setIsAnnouncementChannel(boolean announcementChannel) {
-        isAnnouncementChannel = announcementChannel;
-    }
-
-    public boolean getIsArchived() {
-        return isArchived;
-    }
-
-    public void setIsArchived(boolean archived) {
-        isArchived = archived;
-    }
-
-    public boolean getHasChannelModerationRights() {
-        return hasChannelModerationRights;
-    }
-
-    public void setHasChannelModerationRights(boolean hasChannelModerationRights) {
-        this.hasChannelModerationRights = hasChannelModerationRights;
-    }
-
-    public boolean getIsChannelModerator() {
-        return isChannelModerator;
-    }
-
-    public void setIsChannelModerator(boolean isChannelModerator) {
-        this.isChannelModerator = isChannelModerator;
-    }
-
-    public Long getTutorialGroupId() {
-        return tutorialGroupId;
-    }
-
-    public void setTutorialGroupId(Long tutorialGroupId) {
-        this.tutorialGroupId = tutorialGroupId;
-    }
-
-    public String getTutorialGroupTitle() {
-        return tutorialGroupTitle;
-    }
-
-    public void setTutorialGroupTitle(String tutorialGroupTitle) {
-        this.tutorialGroupTitle = tutorialGroupTitle;
-    }
-
-    public ChannelSubType getSubType() {
-        return subType;
-    }
-
-    public Long getSubTypeReferenceId() {
-        return subTypeReferenceId;
-    }
-
-    public boolean getIsCourseWide() {
-        return isCourseWide;
-    }
-
-    public void setIsCourseWide(boolean courseWide) {
-        isCourseWide = courseWide;
-    }
-
+    /**
+     * Implementation of copyWith from ConversationDTO interface
+     * Creates a new instance with the specified fields changed.
+     * If a parameter is null, the current value is retained.
+     */
     @Override
-    public String toString() {
-        return "ChannelDTO{" + "subType='" + subType + '\'' + ", name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic="
-                + isPublic + ", isAnnouncementChannel=" + isAnnouncementChannel + ", isArchived=" + isArchived + ", isCourseWide=" + isCourseWide + ", isChannelModerator="
-                + isChannelModerator + ", hasChannelModerationRights=" + hasChannelModerationRights + ", tutorialGroupId=" + tutorialGroupId + ", tutorialGroupTitle="
-                + tutorialGroupTitle + "}" + super.toString();
+    public ChannelDTO copyWith(Long id, ZonedDateTime creationDate, ZonedDateTime lastMessageDate, ConversationUserDTO creator, ZonedDateTime lastReadDate,
+            Long unreadMessagesCount, Boolean isFavorite, Boolean isHidden, Boolean isMuted, Boolean isCreator, Boolean isMember, Integer numberOfMembers) {
+        return new ChannelDTO(this.type(), // type should remain constant for Channel
+                id != null ? id : this.id(), creationDate != null ? creationDate : this.creationDate(), lastMessageDate != null ? lastMessageDate : this.lastMessageDate(),
+                creator != null ? creator : this.creator(), lastReadDate != null ? lastReadDate : this.lastReadDate(),
+                unreadMessagesCount != null ? unreadMessagesCount : this.unreadMessagesCount(), isFavorite != null ? isFavorite : this.isFavorite(),
+                isHidden != null ? isHidden : this.isHidden(), isMuted != null ? isMuted : this.isMuted(), isCreator != null ? isCreator : this.isCreator(),
+                isMember != null ? isMember : this.isMember(), numberOfMembers != null ? numberOfMembers : this.numberOfMembers(),
+                // Preserve all channel-specific fields
+                this.name(), this.description(), this.topic(), this.isPublic(), this.isAnnouncementChannel(), this.isArchived(), this.isCourseWide(),
+                this.hasChannelModerationRights(), this.isChannelModerator(), this.tutorialGroupId(), this.tutorialGroupTitle(), this.subType(), this.subTypeReferenceId());
     }
 
-    private void setSubTypeWithReferenceFromChannel(Channel channel) {
+    // Individual with methods for each ChannelDTO-specific field
+
+    public ChannelDTO withName(String name) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers(), name, description(), topic(), isPublic(), isAnnouncementChannel(), isArchived(), isCourseWide(), hasChannelModerationRights(),
+                isChannelModerator(), tutorialGroupId(), tutorialGroupTitle(), subType(), subTypeReferenceId());
+    }
+
+    public ChannelDTO withDescription(String description) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers(), name(), description, topic(), isPublic(), isAnnouncementChannel(), isArchived(), isCourseWide(), hasChannelModerationRights(),
+                isChannelModerator(), tutorialGroupId(), tutorialGroupTitle(), subType(), subTypeReferenceId());
+    }
+
+    public ChannelDTO withTopic(String topic) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers(), name(), description(), topic, isPublic(), isAnnouncementChannel(), isArchived(), isCourseWide(), hasChannelModerationRights(),
+                isChannelModerator(), tutorialGroupId(), tutorialGroupTitle(), subType(), subTypeReferenceId());
+    }
+
+    public ChannelDTO withNumberOfMembers(Integer numberOfMembers) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers, name(), description(), topic(), isPublic(), isAnnouncementChannel(), isArchived(), isCourseWide(), hasChannelModerationRights(),
+                isChannelModerator(), tutorialGroupId(), tutorialGroupTitle(), subType(), subTypeReferenceId());
+    }
+
+    public ChannelDTO withIsMember(Boolean isMember) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember, numberOfMembers(), name(), description(), topic(), isPublic(), isAnnouncementChannel(), isArchived(), isCourseWide(), hasChannelModerationRights(),
+                isChannelModerator(), tutorialGroupId(), tutorialGroupTitle(), subType(), subTypeReferenceId());
+    }
+
+    public ChannelDTO withIsPublic(boolean isPublic) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers(), name(), description(), topic(), isPublic, isAnnouncementChannel(), isArchived(), isCourseWide(), hasChannelModerationRights(),
+                isChannelModerator(), tutorialGroupId(), tutorialGroupTitle(), subType(), subTypeReferenceId());
+    }
+
+    public ChannelDTO withIsAnnouncementChannel(boolean isAnnouncementChannel) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers(), name(), description(), topic(), isPublic(), isAnnouncementChannel, isArchived(), isCourseWide(), hasChannelModerationRights(),
+                isChannelModerator(), tutorialGroupId(), tutorialGroupTitle(), subType(), subTypeReferenceId());
+    }
+
+    public ChannelDTO withIsArchived(boolean isArchived) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers(), name(), description(), topic(), isPublic(), isAnnouncementChannel(), isArchived, isCourseWide(), hasChannelModerationRights(),
+                isChannelModerator(), tutorialGroupId(), tutorialGroupTitle(), subType(), subTypeReferenceId());
+    }
+
+    public ChannelDTO withIsCourseWide(boolean isCourseWide) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers(), name(), description(), topic(), isPublic(), isAnnouncementChannel(), isArchived(), isCourseWide, hasChannelModerationRights(),
+                isChannelModerator(), tutorialGroupId(), tutorialGroupTitle(), subType(), subTypeReferenceId());
+    }
+
+    public ChannelDTO withHasChannelModerationRights(boolean hasChannelModerationRights) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers(), name(), description(), topic(), isPublic(), isAnnouncementChannel(), isArchived(), isCourseWide(), hasChannelModerationRights,
+                isChannelModerator(), tutorialGroupId(), tutorialGroupTitle(), subType(), subTypeReferenceId());
+    }
+
+    public ChannelDTO withIsChannelModerator(boolean isChannelModerator) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers(), name(), description(), topic(), isPublic(), isAnnouncementChannel(), isArchived(), isCourseWide(), hasChannelModerationRights(),
+                isChannelModerator, tutorialGroupId(), tutorialGroupTitle(), subType(), subTypeReferenceId());
+    }
+
+    public ChannelDTO withTutorialGroupId(Long tutorialGroupId) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers(), name(), description(), topic(), isPublic(), isAnnouncementChannel(), isArchived(), isCourseWide(), hasChannelModerationRights(),
+                isChannelModerator(), tutorialGroupId, tutorialGroupTitle(), subType(), subTypeReferenceId());
+    }
+
+    public ChannelDTO withTutorialGroupTitle(String tutorialGroupTitle) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers(), name(), description(), topic(), isPublic(), isAnnouncementChannel(), isArchived(), isCourseWide(), hasChannelModerationRights(),
+                isChannelModerator(), tutorialGroupId(), tutorialGroupTitle, subType(), subTypeReferenceId());
+    }
+
+    public ChannelDTO withSubType(ChannelSubType subType) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers(), name(), description(), topic(), isPublic(), isAnnouncementChannel(), isArchived(), isCourseWide(), hasChannelModerationRights(),
+                isChannelModerator(), tutorialGroupId(), tutorialGroupTitle(), subType, subTypeReferenceId());
+    }
+
+    public ChannelDTO withSubTypeReferenceId(Long subTypeReferenceId) {
+        return new ChannelDTO(type(), id(), creationDate(), lastMessageDate(), creator(), lastReadDate(), unreadMessagesCount(), isFavorite(), isHidden(), isMuted(), isCreator(),
+                isMember(), numberOfMembers(), name(), description(), topic(), isPublic(), isAnnouncementChannel(), isArchived(), isCourseWide(), hasChannelModerationRights(),
+                isChannelModerator(), tutorialGroupId(), tutorialGroupTitle(), subType(), subTypeReferenceId);
+    }
+
+    /**
+     * Determines the subtype of the channel based on associated entities
+     */
+    private static ChannelSubType determineSubType(Channel channel) {
         if (channel.getExercise() != null) {
-            this.subType = ChannelSubType.EXERCISE;
-            this.subTypeReferenceId = channel.getExercise().getId();
+            return ChannelSubType.EXERCISE;
         }
         else if (channel.getLecture() != null) {
-            this.subType = ChannelSubType.LECTURE;
-            this.subTypeReferenceId = channel.getLecture().getId();
+            return ChannelSubType.LECTURE;
         }
         else if (channel.getExam() != null) {
-            this.subType = ChannelSubType.EXAM;
-            this.subTypeReferenceId = channel.getExam().getId();
+            return ChannelSubType.EXAM;
         }
         else if (channel.getTopic() != null && channel.getTopic().contains("FeedbackDiscussion")) {
-            this.subType = ChannelSubType.FEEDBACK_DISCUSSION;
+            return ChannelSubType.FEEDBACK_DISCUSSION;
         }
         else {
-            this.subType = ChannelSubType.GENERAL;
+            return ChannelSubType.GENERAL;
         }
+    }
+
+    /**
+     * Determines the subtype reference ID based on associated entities
+     */
+    private static Long determineSubTypeReferenceId(Channel channel) {
+        if (channel.getExercise() != null) {
+            return channel.getExercise().getId();
+        }
+        else if (channel.getLecture() != null) {
+            return channel.getLecture().getId();
+        }
+        else if (channel.getExam() != null) {
+            return channel.getExam().getId();
+        }
+        return null;
     }
 
     /**
@@ -215,5 +215,40 @@ public class ChannelDTO extends ConversationDTO {
         channel.setIsAnnouncementChannel(this.isAnnouncementChannel);
         channel.setIsCourseWide(this.isCourseWide);
         return channel;
+    }
+
+    // Convenience getter methods to match original naming convention
+    public boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public boolean getIsAnnouncementChannel() {
+        return isAnnouncementChannel;
+    }
+
+    public boolean getIsArchived() {
+        return isArchived;
+    }
+
+    public boolean getIsCourseWide() {
+        return isCourseWide;
+    }
+
+    public boolean getHasChannelModerationRights() {
+        return hasChannelModerationRights;
+    }
+
+    public boolean getIsChannelModerator() {
+        return isChannelModerator;
+    }
+
+    @Override
+    public String toString() {
+        return "ChannelDTO{" + "subType='" + subType + '\'' + ", name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic="
+                + isPublic + ", isAnnouncementChannel=" + isAnnouncementChannel + ", isArchived=" + isArchived + ", isCourseWide=" + isCourseWide + ", isChannelModerator="
+                + isChannelModerator + ", hasChannelModerationRights=" + hasChannelModerationRights + ", tutorialGroupId=" + tutorialGroupId + ", tutorialGroupTitle="
+                + tutorialGroupTitle + "} " + "ConversationDTO{" + "type='" + type + '\'' + ", id=" + id + ", creationDate=" + creationDate + ", lastMessageDate=" + lastMessageDate
+                + ", unreadMessageCount=" + unreadMessagesCount + ", lastReadDate=" + lastReadDate + ", isMember=" + isMember + ", isFavorite=" + isFavorite + ", isHidden="
+                + isHidden + ", isCreator=" + isCreator + ", numberOfMembers=" + numberOfMembers + ", creator=" + (creator != null ? creator.publicInfo().name() : "") + '}';
     }
 }

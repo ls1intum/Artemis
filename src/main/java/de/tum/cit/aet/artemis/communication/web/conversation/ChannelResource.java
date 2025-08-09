@@ -132,7 +132,7 @@ public class ChannelResource extends ConversationManagementResource {
             channelDTOs = filterVisibleChannelsForNonInstructors(channelDTOs);
         }
 
-        return ResponseEntity.ok(channelDTOs.sorted(Comparator.comparing(ChannelDTO::getName)).toList());
+        return ResponseEntity.ok(channelDTOs.sorted(Comparator.comparing(ChannelDTO::name)).toList());
     }
 
     /**
@@ -227,14 +227,14 @@ public class ChannelResource extends ConversationManagementResource {
         channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser);
 
         var channelToCreate = new Channel();
-        channelToCreate.setName(channelDTO.getName());
+        channelToCreate.setName(channelDTO.name());
         channelToCreate.setIsPublic(channelDTO.getIsPublic());
         channelToCreate.setIsAnnouncementChannel(channelDTO.getIsAnnouncementChannel());
         channelToCreate.setIsArchived(false);
-        channelToCreate.setDescription(channelDTO.getDescription());
+        channelToCreate.setDescription(channelDTO.description());
         channelToCreate.setIsCourseWide(channelDTO.getIsCourseWide());
 
-        if (channelDTO.getName() != null && channelDTO.getName().trim().startsWith("$")) {
+        if (channelDTO.name() != null && channelDTO.name().trim().startsWith("$")) {
             throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");
         }
 
@@ -279,7 +279,7 @@ public class ChannelResource extends ConversationManagementResource {
         }
         channelAuthorizationService.isAllowedToUpdateChannel(originalChannel, requestingUser);
 
-        if (channelDTO.getName() != null && channelDTO.getName().trim().startsWith("$")) {
+        if (channelDTO.name() != null && channelDTO.name().trim().startsWith("$")) {
             throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");
         }
 
@@ -584,7 +584,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     private Stream<ChannelDTO> filterVisibleChannelsForNonInstructors(Stream<ChannelDTO> channelDTOs) {
-        return channelDTOs.filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
+        return channelDTOs.filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.isMember());
     }
 
     private void checkChannelMembership(Channel channel, @NotNull User user) {

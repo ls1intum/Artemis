@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.communication.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 
 /**
@@ -9,6 +11,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
  * @param userConversationInfo    user related information, like the number of unread messages
  * @param generalConversationInfo general information about the conversation, like number of participants
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ConversationSummary(Conversation conversation, UserConversationInfo userConversationInfo, GeneralConversationInfo generalConversationInfo) {
 
 }
