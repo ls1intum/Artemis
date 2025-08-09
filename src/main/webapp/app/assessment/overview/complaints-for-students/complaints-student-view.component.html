@@ -4,7 +4,7 @@
             <p>
                 @if (!isExamMode && remainingNumberOfComplaints >= 0) {
                     <span
-                        [jhiTranslate]="'artemisApp.complaint.' + (exercise.teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
+                        [jhiTranslate]="'artemisApp.complaint.' + (exercise().teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
                         [translateValues]="{ maxComplaintNumber: course?.maxComplaints ?? 0, allowedComplaints: remainingNumberOfComplaints }"
                     ></span>
                 }
@@ -51,16 +51,16 @@
             <div class="row">
                 <jhi-complaint-form
                     class="flex-grow-1"
-                    [exercise]="exercise"
-                    [resultId]="result!.id!"
-                    [examId]="exam?.id!"
+                    [exercise]="exercise()"
+                    [resultId]="result()!.id!"
+                    [examId]="exam()?.id!"
                     [complaintType]="formComplaintType"
                     [isCurrentUserSubmissionAuthor]="isCorrectUserToFileAction"
                     (onSubmit)="loadPotentialComplaint()"
                 />
             </div>
         }
-        <div #complaintScrollpoint></div>
+        <div id="complaintScrollpoint"></div>
         @if (complaint) {
             <div class="row">
                 <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint" [maxComplaintTextLimit]="course?.maxComplaintTextLimit!" />

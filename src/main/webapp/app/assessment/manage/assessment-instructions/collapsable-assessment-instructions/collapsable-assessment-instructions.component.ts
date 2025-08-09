@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input } from '@angular/core';
+import { AfterViewInit, Component, input, model } from '@angular/core';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -14,11 +14,11 @@ import { AssessmentInstructionsComponent } from '../assessment-instructions/asse
     imports: [FaIconComponent, TranslateDirective, AssessmentInstructionsComponent],
 })
 export class CollapsableAssessmentInstructionsComponent implements AfterViewInit {
-    @Input() isAssessmentTraining = false;
-    @Input() showAssessmentInstructions = true;
-    @Input() exercise: Exercise;
-    @Input() collapsed = false;
-    @Input() readOnly: boolean;
+    readonly isAssessmentTraining = input(false);
+    readonly showAssessmentInstructions = input(true);
+    readonly exercise = input.required<Exercise>();
+    collapsed = model(false);
+    readonly readOnly = input.required<boolean>();
 
     // Icons
     faChevronRight = faChevronRight;

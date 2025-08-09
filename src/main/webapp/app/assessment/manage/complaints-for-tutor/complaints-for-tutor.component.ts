@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, OnInit, inject, input, model, output } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
@@ -32,15 +32,15 @@ export class ComplaintsForTutorComponent implements OnInit {
     private router = inject(Router);
     private location = inject(Location);
 
-    @Input() complaint: Complaint;
-    @Input() isTestRun = false;
-    @Input() isAssessor = false;
-    @Input() zeroIndent = true;
-    @Input() exercise: Exercise | undefined;
-    @Input() submission: Submission | undefined;
+    readonly complaint = model.required<Complaint>();
+    readonly isTestRun = input(false);
+    readonly isAssessor = input(false);
+    readonly zeroIndent = input(true);
+    readonly exercise = input<Exercise>();
+    readonly submission = input<Submission>();
     // Indicates that the assessment should be updated after a complaint. Includes the corresponding complaint
     // that should be sent to the server along with the assessment update.
-    @Output() updateAssessmentAfterComplaint = new EventEmitter<AssessmentAfterComplaint>();
+    readonly updateAssessmentAfterComplaint = output<AssessmentAfterComplaint>();
     complaintText?: string;
     handled: boolean;
     complaintResponse: ComplaintResponse = new ComplaintResponse();
@@ -54,24 +54,24 @@ export class ComplaintsForTutorComponent implements OnInit {
     maxComplaintResponseTextLimit: number;
 
     ngOnInit(): void {
-        this.course = getCourseFromExercise(this.exercise!);
+        this.course = getCourseFromExercise(this.exercise()!);
 
         this.maxComplaintResponseTextLimit = this.course?.maxComplaintResponseTextLimit ?? 0;
-        if (this.exercise?.exerciseGroup) {
+        if (this.exercise()?.exerciseGroup) {
             // Exams should always allow at least 2000 characters
             this.maxComplaintResponseTextLimit = Math.max(2000, this.maxComplaintResponseTextLimit);
         }
 
-        if (this.complaint) {
-            this.complaintText = this.complaint.complaintText;
-            this.handled = this.complaint.accepted !== undefined;
+        if (this.complaint()) {
+            this.complaintText = this.complaint().complaintText;
+            this.handled = this.complaint().accepted !== undefined;
             if (this.handled) {
-                this.complaintResponse = this.complaint.complaintResponse!;
+                this.complaintResponse = this.complaint().complaintResponse!;
                 this.lockedByCurrentUser = false;
                 this.showLockDuration = false;
             } else {
                 if (this.isAllowedToRespond) {
-                    if (this.complaint.complaintResponse) {
+                    if (this.complaint().complaintResponse) {
                         this.complaintResponseUpdate = new ComplaintResponseUpdateDTO();
                         this.complaintResponseUpdate.action = ComplaintAction.REFRESH_LOCK;
                         this.refreshLock();
@@ -88,7 +88,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     private createLock() {
         this.isLoading = true;
         this.complaintResponseService
-            .createLock(this.complaint.id!)
+            .createLock(this.complaint().id!)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -97,7 +97,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             .subscribe({
                 next: (response) => {
                     this.complaintResponse = response.body!;
-                    this.complaint = this.complaintResponse.complaint!;
+                    this.complaint.set(this.complaintResponse.complaint!);
                     this.lockedByCurrentUser = true;
                     this.showLockDuration = true;
                     this.alertService.success('artemisApp.locks.acquired');
@@ -109,15 +109,15 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     private refreshLock() {
-        this.complaintResponse = this.complaint.complaintResponse!;
+        this.complaintResponse = this.complaint().complaintResponse!;
         this.showLockDuration = true;
         // if a lock exists we have to check if it affects the currently logged-in user
-        this.isLockedForLoggedInUser = this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(this.complaintResponse, this.exercise!);
+        this.isLockedForLoggedInUser = this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(this.complaintResponse, this.exercise()!);
         if (!this.isLockedForLoggedInUser) {
             // update the lock
             this.isLoading = true;
             this.complaintResponseService
-                .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaint.id!)
+                .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaint().id!)
                 .pipe(
                     finalize(() => {
                         this.isLoading = false;
@@ -126,7 +126,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                 .subscribe({
                     next: (response) => {
                         this.complaintResponse = response.body!;
-                        this.complaint = this.complaintResponse.complaint!;
+                        this.complaint.set(this.complaintResponse.complaint!);
                         this.lockedByCurrentUser = true;
                         this.alertService.success('artemisApp.locks.acquired');
                     },
@@ -140,11 +140,11 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun);
+        assessmentNavigateBack(this.location, this.router, this.exercise(), this.submission(), this.isTestRun());
     }
 
     removeLock() {
-        this.complaintResponseService.removeLock(this.complaint.id!).subscribe({
+        this.complaintResponseService.removeLock(this.complaint().id!).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.locks.lockRemoved');
                 this.navigateBack();
@@ -170,11 +170,11 @@ export class ComplaintsForTutorComponent implements OnInit {
             return;
         }
 
-        this.complaintResponse.complaint = this.complaint;
+        this.complaintResponse.complaint = this.complaint();
         this.complaintResponse.complaint.complaintResponse = undefined; // breaking circular structure
         this.complaintResponse.complaint!.accepted = acceptComplaint;
 
-        if (acceptComplaint && this.complaint.complaintType === ComplaintType.COMPLAINT) {
+        if (acceptComplaint && this.complaint().complaintType === ComplaintType.COMPLAINT) {
             // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
             // The complaint is sent along with the assessment update by the parent to avoid additional requests.
             this.isLoading = true;
@@ -212,13 +212,13 @@ export class ComplaintsForTutorComponent implements OnInit {
             .subscribe({
                 next: (response) => {
                     this.handled = true;
-                    if (this.complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
+                    if (this.complaint().complaintType === ComplaintType.MORE_FEEDBACK) {
                         this.alertService.success('artemisApp.moreFeedbackResponse.created');
                     } else {
                         this.alertService.success('artemisApp.complaintResponse.created');
                     }
                     this.complaintResponse = response.body!;
-                    this.complaint = this.complaintResponse.complaint!;
+                    this.complaint.set(this.complaintResponse.complaint!);
                     this.isLockedForLoggedInUser = false;
                     this.showLockDuration = false;
                     this.lockedByCurrentUser = false;
@@ -246,7 +246,7 @@ export class ComplaintsForTutorComponent implements OnInit {
      * For exam test runs, the original assessor is allowed to respond to complaints.
      */
     get isAllowedToRespond(): boolean {
-        return isAllowedToRespondToComplaintAction(this.isTestRun, this.isAssessor, this.complaint, this.exercise);
+        return isAllowedToRespondToComplaintAction(this.isTestRun(), this.isAssessor(), this.complaint(), this.exercise());
     }
 
     /**
