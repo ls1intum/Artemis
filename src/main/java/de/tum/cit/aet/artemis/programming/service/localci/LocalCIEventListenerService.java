@@ -57,16 +57,20 @@ public class LocalCIEventListenerService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final LocalCIResultProcessingService localCIResultProcessingService;
+
     private final UserService userService;
 
     private final MailService mailService;
 
     public LocalCIEventListenerService(DistributedDataAccessService distributedDataAccessService, LocalCIQueueWebsocketService localCIQueueWebsocketService,
-            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, UserService userService, MailService mailService) {
+            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, LocalCIResultProcessingService localCIResultProcessingService,
+            UserService userService, MailService mailService) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
         this.buildJobRepository = buildJobRepository;
         this.programmingMessagingService = programmingMessagingService;
+        this.localCIResultProcessingService = localCIResultProcessingService;
         this.userService = userService;
         this.mailService = mailService;
     }
@@ -126,6 +130,19 @@ public class LocalCIEventListenerService {
             log.error("Build job with id {} is in an unknown state", buildJob.getBuildJobId());
             // If the build job is in an unknown state, set it to missing and update the build start date
             buildJobRepository.updateBuildJobStatus(buildJob.getBuildJobId(), BuildStatus.MISSING);
+        }
+    }
+
+    /**
+     * Processes the queued results from the distributed build result queue every 10 seconds.
+     * This is a fallback mechanism to ensure that no results are left unprocessed in the queue e.g. if listener events are lost
+     * under high system load or network hiccups
+     */
+    @Scheduled(fixedDelay = 10 * 1000)
+    public void processQueuedResults() {
+        log.debug("Processing {} queued results from the distributed build result queue", distributedDataAccessService.getResultQueueSize());
+        while ((distributedDataAccessService.getDistributedBuildResultQueue().peek()) != null) {
+            localCIResultProcessingService.processResult();
         }
     }
 
