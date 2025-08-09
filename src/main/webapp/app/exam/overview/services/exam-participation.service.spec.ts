@@ -264,6 +264,13 @@ describe('ExamParticipationService', () => {
         expect(req.request.url).toBe('api/exam/courses/1/exams/1/student-exams/submit');
         req.flush(null);
     });
+    it('should fetch sidebar data successfully', async () => {
+        const returnedFromService = [studentExam];
+        service.getRealExamSidebarData(1).subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+    });
 
     it('should throw error if submission is not in time', async () => {
         const errorHeaders = new HttpHeaders({ 'x-null-error': 'submissionNotInTime' });

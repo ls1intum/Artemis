@@ -347,7 +347,7 @@ public class CourseScoreCalculationService {
             // getResultForParticipation always sorts the results by completion date, maybe optimize with a flag
             // if input results are already sorted.
             var result = getResultForParticipation(participation, exercise.getDueDate());
-            if (result != null && Boolean.TRUE.equals(result.isRated())) {
+            if (result != null && result.isRated()) {
                 double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, result, plagiarismCasesForStudent.get(exercise.getId()));
                 pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
             }
@@ -419,7 +419,7 @@ public class CourseScoreCalculationService {
 
         var resultsList = new ArrayList<>(resultsSet);
 
-        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null).toList();
+        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> result.isRated() && result.getCompletionDate() != null).toList();
 
         if (ratedResultsWithCompletionDate.isEmpty()) {
             return emptyResult;

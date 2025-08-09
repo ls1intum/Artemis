@@ -38,13 +38,13 @@ class CourseGroupStubComponent {
     @Input()
     exportFileName: string;
     @Input()
-    userSearch: (loginOrName: string) => Observable<HttpResponse<User[]>>;
+    userSearch: () => Observable<HttpResponse<User[]>>;
     @Input()
-    addUserToGroup: (login: string) => Observable<any> = () => of({});
+    addUserToGroup: () => Observable<any> = () => of({});
     @Input()
-    removeUserFromGroup: (login: string) => Observable<any> = () => of({});
+    removeUserFromGroup: () => Observable<any> = () => of({});
     @Input()
-    handleUsersSizeChange: (filteredUsersSize: number) => void = () => {};
+    handleUsersSizeChange: () => void = () => {};
 
     @Output()
     importFinish: EventEmitter<void> = new EventEmitter();
