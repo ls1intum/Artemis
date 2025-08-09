@@ -163,7 +163,7 @@ public class Exam extends DomainObject {
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonManagedReference
+    @JsonManagedReference("examRoomExamAssignments_exam")
     private Set<ExamRoomExamAssignment> examRoomExamAssignments = new HashSet<>();
 
     @Transient

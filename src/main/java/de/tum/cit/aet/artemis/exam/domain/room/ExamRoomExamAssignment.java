@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.exam.domain.room;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Conditional;
 
@@ -16,18 +18,20 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 @Conditional(ExamEnabled.class)
 @Entity
-@Table(name = "exam_room_assignment")
+@Table(name = "exam_room_exam_assignment")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamRoomExamAssignment extends DomainObject {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exam_room_id", nullable = false)
-    @JsonBackReference
+    @NotNull
+    @JsonBackReference("examRoomExamAssignments_room")
     private ExamRoom examRoom;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exam_id", nullable = false)
-    @JsonBackReference
+    @NotNull
+    @JsonBackReference("examRoomExamAssignments_exam")
     private Exam exam;
 
     /* Getters & Setters */

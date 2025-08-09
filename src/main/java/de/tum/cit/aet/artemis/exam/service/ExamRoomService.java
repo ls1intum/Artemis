@@ -119,6 +119,7 @@ public class ExamRoomService {
         // .json file in one or more subfolders. Doing this is either a (malicious) mistake, or perhaps a backup file,
         // and will thus be ignored. In this equality we only consider the room number, the name, and the building,
         // as it would be a mistake to store the same room twice and risk a potential creation date collision later on.
+        // All 3 fields are explicitly not nullable.
         Set<ExamRoom> examRooms = new TreeSet<>(Comparator.comparing(ExamRoom::getRoomNumber).thenComparing(ExamRoom::getName).thenComparing(ExamRoom::getBuilding));
 
         try (ZipInputStream zis = new ZipInputStream(zipFile.getInputStream())) {
@@ -236,7 +237,7 @@ public class ExamRoomService {
 
             final String rowLabel = rowInput.label == null ? "" : rowInput.label;
             for (SeatInput seatInput : rowInput.seats) {
-                if (seatInput == null) {
+                if (seatInput == null || seatInput.position == null) {
                     return null;
                 }
 
@@ -423,7 +424,7 @@ public class ExamRoomService {
                 // value (the exam room itself)
                 Function.identity(),
                 // merging function
-                (er1, er2) -> er1.getLastModifiedDate().isAfter(er2.getLastModifiedDate()) ? er1 : er2)).values();
+                (er1, er2) -> er1.getCreatedDate().isAfter(er2.getCreatedDate()) ? er1 : er2)).values();
         int uniqueSeats = latestUniqueRooms.stream().mapToInt(room -> room.getSeats().size()).sum();
         int uniqueLayoutStrategies = latestUniqueRooms.stream().mapToInt(room -> room.getLayoutStrategies().size()).sum();
 

@@ -87,7 +87,7 @@ public class ExamRoom extends AbstractAuditingEntity {
      */
     @OneToMany(mappedBy = "examRoom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonManagedReference
+    @JsonManagedReference("examRoomExamAssignments_room")
     private Set<ExamRoomExamAssignment> examRoomExamAssignments = new HashSet<>();
 
     /* Getters & Setters */
