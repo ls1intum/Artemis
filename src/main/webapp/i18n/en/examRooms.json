@@ -6,7 +6,7 @@
                 "title": "Exam Room Management",
                 "uploadRoomData": "Upload Exam Room Data",
                 "deleteAllExamRooms": "Delete ALL Exam Rooms",
-                "deleteExamRoomsSafe": "Safe Delete",
+                "deleteExamRoomsSafe": "Delete obsolete Exam Rooms",
                 "uploadFailed": "Oops. Something went wrong while saving the rooms",
                 "deleting": "Deleting...",
                 "deletionFailed": "Oops. Something went wrong while deleting the rooms",
