@@ -282,12 +282,10 @@ public abstract class RepositoryResource {
             repositoryService.commitChanges(repository, user);
             var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
 
-            // Trigger a build, and process the result. Only implemented for local CI.
+            // Trigger a build, and process the result.
             // For Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
-            if (profileService.isLocalCIActive()) {
-                localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog);
-            }
+            localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
