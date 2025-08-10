@@ -525,7 +525,7 @@ public class BuildJobContainerService {
                     @Override
                     public void onNext(Frame item) {
                         String payload = new String(item.getPayload());
-                        String[] logLines = payload.split("(?<=\\R)");
+                        String[] logLines = splitBehindNewLines(payload);
                         ZonedDateTime now = ZonedDateTime.now();
 
                         if (buildJobId != null) {
@@ -583,5 +583,10 @@ public class BuildJobContainerService {
             }
             return null;
         }
+    }
+
+    private String[] splitBehindNewLines(String input) {
+        String newlineLookBehindPattern = "(?<=\\R)";
+        return input.split(newlineLookBehindPattern);
     }
 }
