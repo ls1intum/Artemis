@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
-import de.tum.cit.aet.artemis.assessment.dto.dashboard.ResultCountDTO;
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -210,20 +209,19 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     /**
      * counts the number of assessments of a course, which are either rated or not rated
      *
-     * @param exerciseIds - the exercises of the course
-     * @return a list with 3 elements: count of rated (in time) and unrated (late) assessments of a course and count of assessments without rating (null)
+     * @param exerciseIds - the ids of the exercises of the course (should be filtered to only include exercises with manual assessment)
+     * @return the number of assessments for the course
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ResultCountDTO(r.rated, COUNT(r))
+            SELECT COUNT(r)
             FROM Result r
                 JOIN r.submission s
                 JOIN s.participation p
             WHERE r.completionDate IS NOT NULL
                 AND r.assessor IS NOT NULL
                 AND p.exercise.id IN :exerciseIds
-            GROUP BY r.rated
             """)
-    List<ResultCountDTO> countAssessmentsByExerciseIdsAndRated(@Param("exerciseIds") Set<Long> exerciseIds);
+    long countAssessmentsByExerciseIdsAndRated(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Load a result from the database by its id together with the associated submission and the list of feedback items.
@@ -551,8 +549,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @param exerciseId - the exercise we are interested in
      * @return a number of assessments for the exercise
      */
-    default DueDateStat countNumberOfFinishedAssessmentsForExercise(long exerciseId) {
-        return new DueDateStat(countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(exerciseId), 0L);
+    default long countNumberOfFinishedAssessmentsForExercise(long exerciseId) {
+        return countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(exerciseId);
     }
 
     /**
@@ -561,24 +559,12 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @param exerciseIds - the exercise ids of the course we are interested in
      * @return a number of assessments for the course
      */
-    default DueDateStat countNumberOfAssessments(Set<Long> exerciseIds) {
+    default long countNumberOfAssessments(Set<Long> exerciseIds) {
         // avoid invoking the query for empty sets, because this can lead to performance issues
         if (exerciseIds == null || exerciseIds.isEmpty()) {
-            return new DueDateStat(0, 0);
+            return 0;
         }
-        var ratedCounts = countAssessmentsByExerciseIdsAndRated(exerciseIds);
-        long inTime = 0;
-        long late = 0;
-        for (var ratedCount : ratedCounts) {
-            if (ratedCount.rated()) {
-                inTime = ratedCount.count();
-            }
-            else {
-                late = ratedCount.count();
-            }
-            // we are not interested in results with rated is null even if the database would return such
-        }
-        return new DueDateStat(inTime, late);
+        return countAssessmentsByExerciseIdsAndRated(exerciseIds);
     }
 
     @Query("""

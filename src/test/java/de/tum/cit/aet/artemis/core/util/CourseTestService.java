@@ -1292,8 +1292,7 @@ public class CourseTestService {
             long numberOfInTimeSubmissions = course.getId().equals(testCourses.getFirst().getId()) ? 5 : 0; // course 1 has 5 submissions, course 2 has 0 submissions
             assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(numberOfInTimeSubmissions);
             assertThat(stats.getNumberOfSubmissions().late()).as("Number of latte submissions is correct").isZero();
-            assertThat(stats.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isZero();
-            assertThat(stats.getTotalNumberOfAssessments().late()).as("Number of late assessments is correct").isZero();
+            assertThat(stats.getTotalNumberOfAssessments()).as("Number of assessments is correct").isZero();
             assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
             assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
             assertThat(stats.getTutorLeaderboardEntries()).as("Number of tutor leaderboard entries is correct").hasSize(5);

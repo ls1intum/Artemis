@@ -59,10 +59,10 @@ public class TutorLeaderboardService {
         if (!exerciseIdsOfCourse.isEmpty()) {
             tutorLeaderboardAssessmentDTOS = resultRepository.findTutorLeaderboardAssessmentByCourseId(exerciseIdsOfCourse);
         }
-        var tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByCourseId(course.getId());
-        var tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId(course.getId());
-        var tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId(course.getId());
-        var tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(course.getId());
+        var tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByCourseId(exerciseIdsOfCourse);
+        var tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId(exerciseIdsOfCourse);
+        var tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId(exerciseIdsOfCourse);
+        var tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(exerciseIdsOfCourse);
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessmentDTOS, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
                 tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, false);
     }

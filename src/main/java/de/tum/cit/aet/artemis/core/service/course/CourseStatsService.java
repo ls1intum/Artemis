@@ -235,8 +235,7 @@ public class CourseStatsService {
         var spanSize = this.determineTimeSpanSizeForActiveStudents(course, endDate, 17);
         var activeStudents = getActiveStudents(exerciseIds, 0, spanSize, endDate);
 
-        DueDateStat assessments = resultRepository.countNumberOfAssessments(exerciseIds);
-        long numberOfAssessments = assessments.inTime() + assessments.late();
+        long numberOfAssessments = resultRepository.countNumberOfAssessments(exerciseIds);
 
         long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIds)
                 + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIds);
@@ -277,7 +276,8 @@ public class CourseStatsService {
      * @return a DTO containing the statistics
      */
     public StatsForDashboardDTO getStatsForDashboardDTO(Course course) {
-        Set<Long> courseExerciseIds = exerciseRepository.findAllIdsByCourseId(course.getId());
+        Set<Long> courseExerciseIds = exerciseRepository.findExerciseIdsByCourseId(course.getId());
+        Set<Long> courseExerciseIdsWithManualAssessments = exerciseRepository.findExerciseIdsWithManualAssessmentByCourseId(course.getId());
 
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
 
@@ -285,12 +285,9 @@ public class CourseStatsService {
         numberOfInTimeSubmissions += programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(courseExerciseIds);
 
         final long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(courseExerciseIds);
-        DueDateStat totalNumberOfAssessments = resultRepository.countNumberOfAssessments(courseExerciseIds);
-        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
+        long numberOfAssessments = resultRepository.countNumberOfAssessments(courseExerciseIdsWithManualAssessments);
+        stats.setTotalNumberOfAssessments(numberOfAssessments);
 
-        // no examMode here, so it's the same as totalNumberOfAssessments
-        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = { totalNumberOfAssessments };
-        stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
         stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
 
         final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(course.getId());
@@ -307,7 +304,7 @@ public class CourseStatsService {
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByCourseId(course.getId());
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
 
-        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, courseExerciseIds);
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, courseExerciseIdsWithManualAssessments);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
         stats.setNumberOfRatings(ratingRepository.countByResult_Submission_Participation_Exercise_Course_Id(course.getId()));
         return stats;
