@@ -182,9 +182,9 @@ public class CourseStatsResource {
     @GetMapping("courses/{courseId}/statistics-lifetime-overview")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseLiveTime(@PathVariable Long courseId) {
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
-        var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
         if (course.getStartDate() == null) {
             throw new IllegalArgumentException("Course does not contain start date");
         }

@@ -221,7 +221,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.assessor IS NOT NULL
                 AND p.exercise.id IN :exerciseIds
             """)
-    long countAssessmentsByExerciseIdsAndRated(@Param("exerciseIds") Set<Long> exerciseIds);
+    long countAssessmentsForExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Load a result from the database by its id together with the associated submission and the list of feedback items.
@@ -556,7 +556,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     /**
      * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
      *
-     * @param exerciseIds - the exercise ids of the course we are interested in
+     * @param exerciseIds - the exercise ids of the course we are interested in (should be filtered to only include exercises with manual assessment)
      * @return a number of assessments for the course
      */
     default long countNumberOfAssessments(Set<Long> exerciseIds) {
@@ -564,7 +564,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         if (exerciseIds == null || exerciseIds.isEmpty()) {
             return 0;
         }
-        return countAssessmentsByExerciseIdsAndRated(exerciseIds);
+        return countAssessmentsForExerciseIds(exerciseIds);
     }
 
     @Query("""

@@ -30,15 +30,11 @@ export enum SwitchTimeSpanDirection {
     imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, LineChartModule, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CourseDetailLineChartComponent extends ActiveStudentsChart implements OnChanges {
-    private service = inject(CourseManagementService);
+    private courseManagementService = inject(CourseManagementService);
     private translateService = inject(TranslateService);
 
-    @Input()
-    course: Course;
-    @Input()
-    numberOfStudentsInCourse: number;
-    @Input()
-    initialStats: number[] | undefined;
+    @Input() course: Course;
+    @Input() numberOfStudentsInCourse: number;
     loading = true;
 
     displayedNumberOfWeeks: number = 8;
@@ -110,7 +106,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     private reloadChart() {
         this.loading = true;
         this.createLabels();
-        this.service.getStatisticsData(this.course.id!, this.currentPeriod, this.displayedNumberOfWeeks).subscribe((res: number[]) => {
+        this.courseManagementService.getStatisticsData(this.course.id!, this.currentPeriod, this.displayedNumberOfWeeks).subscribe((res: number[]) => {
             this.processDataAndCreateChart(res);
             this.data = [...this.dataCopy];
         });
@@ -201,13 +197,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         this.showLifetimeOverview = false;
         this.loading = true;
         this.createLabels();
-
-        if (!this.initialStats) {
-            this.reloadChart();
-        } else {
-            this.processDataAndCreateChart(this.initialStats.slice(Math.max(this.initialStats.length - this.displayedNumberOfWeeks, 0)));
-            this.data = [...this.dataCopy];
-        }
+        this.reloadChart();
     }
 
     /**
@@ -256,7 +246,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
      * Fetches and caches the data for the lifetime overview from the server and creates the chart
      */
     private fetchLifetimeOverviewData(): void {
-        this.service.getStatisticsForLifetimeOverview(this.course.id!).subscribe((res: number[]) => {
+        this.courseManagementService.getStatisticsForLifetimeOverview(this.course.id!).subscribe((res: number[]) => {
             this.overviewStats = res;
             this.processDataAndCreateChart(this.overviewStats);
             this.data = [...this.dataCopy];

@@ -991,7 +991,7 @@ public class ExamService {
      * @return a examStatisticsDTO filled with all statistics regarding the exam
      */
     public ExamChecklistDTO getStatsForChecklist(Exam exam, boolean isInstructor) {
-        log.info("getStatsForChecklist invoked for exam {}", exam.getId());
+        log.debug("getStatsForChecklist invoked for exam {}", exam.getId());
         int numberOfCorrectionRoundsInExam = exam.getNumberOfCorrectionRoundsInExam();
         long start = System.nanoTime();
 

@@ -751,7 +751,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
      * @param date the date to get the week for
      * @return the calendar week of the given date
      */
-    default Integer getWeekOfDate(ZonedDateTime date) {
+    static Integer getWeekOfDate(ZonedDateTime date) {
         LocalDate localDate = date.toLocalDate();
         TemporalField weekOfYear = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
         return localDate.get(weekOfYear);
@@ -765,7 +765,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
      * @param outcome A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
      * @param result  the list in which the converted outcome should be inserted
      */
-    default void sortDataIntoHours(List<StatisticsEntry> outcome, List<Integer> result) {
+    static void sortDataIntoHours(List<StatisticsEntry> outcome, List<Integer> result) {
         for (StatisticsEntry entry : outcome) {
             int hourIndex = ((ZonedDateTime) entry.getDay()).getHour();
             int amount = Math.toIntExact(entry.getAmount());
@@ -783,7 +783,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
      * @param result    the list in which the converted outcome should be inserted
      * @param startDate the startDate of the result list
      */
-    default void sortDataIntoDays(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
+    static void sortDataIntoDays(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
         for (StatisticsEntry entry : outcome) {
             ZonedDateTime date = (ZonedDateTime) entry.getDay();
             int amount = Math.toIntExact(entry.getAmount());
@@ -802,7 +802,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
      * @param result    the list in which the converted outcome should be inserted, should be initialized with enough values
      * @param startDate the startDate of the result list
      */
-    default void sortDataIntoWeeks(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
+    static void sortDataIntoWeeks(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
         for (StatisticsEntry entry : outcome) {
             ZonedDateTime date = (ZonedDateTime) entry.getDay();
             int amount = Math.toIntExact(entry.getAmount());

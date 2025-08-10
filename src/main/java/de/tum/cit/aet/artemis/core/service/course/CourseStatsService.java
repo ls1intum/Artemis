@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.core.service.course;
 import static de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT;
 import static de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.getWeekOfDate;
+import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoWeeks;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.DayOfWeek;
@@ -20,6 +22,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -58,6 +62,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Profile(PROFILE_CORE)
 @Lazy
 public class CourseStatsService {
+
+    private static final Logger log = LoggerFactory.getLogger(CourseStatsService.class);
 
     private final CourseRepository courseRepository;
 
@@ -144,10 +150,13 @@ public class CourseStatsService {
             // avoid database call if there are no exercises to reduce performance issues
             return List.of();
         }
+        long start = System.currentTimeMillis();
         List<StatisticsEntry> outcome = courseRepository.getActiveStudents(exerciseIds, startDate, endDate);
+        log.info("courseRepository.getActiveStudents took {} ms for exercises with ids {} between start {} and end {}", System.currentTimeMillis() - start, exerciseIds, startDate,
+                endDate);
         List<StatisticsEntry> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
         List<Integer> result = new ArrayList<>(Collections.nCopies(length, 0));
-        statisticsRepository.sortDataIntoWeeks(distinctOutcome, result, startDate);
+        sortDataIntoWeeks(distinctOutcome, result, startDate);
         return result;
     }
 
@@ -161,7 +170,7 @@ public class CourseStatsService {
      */
 
     private List<StatisticsEntry> removeDuplicateActiveUserRows(List<StatisticsEntry> activeUserRows, ZonedDateTime startDate) {
-        int startIndex = statisticsRepository.getWeekOfDate(startDate);
+        int startIndex = getWeekOfDate(startDate);
         Map<Integer, Set<String>> usersByDate = new HashMap<>();
         for (StatisticsEntry listElement : activeUserRows) {
             // listElement.date has the form "2021-05-04", to convert it to ZonedDateTime, it needs a time
@@ -169,7 +178,7 @@ public class CourseStatsService {
             var zone = startDate.getZone();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
             ZonedDateTime date = LocalDateTime.parse(dateOfElement, formatter).atZone(zone);
-            int index = statisticsRepository.getWeekOfDate(date);
+            int index = getWeekOfDate(date);
             /*
              * The database stores entries in UTC, so it can happen that entries lay in the calendar week one week before the calendar week of the startDate If startDate lays in a
              * calendar week other than the first one, we simply check whether the calendar week of the entry equals to the calendar week of startDate - 1. If startDate lays in the
@@ -183,9 +192,9 @@ public class CourseStatsService {
         }
         List<StatisticsEntry> returnList = new ArrayList<>();
         usersByDate.forEach((date, users) -> {
-            int year = date < statisticsRepository.getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
+            int year = date < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
             ZonedDateTime firstDateOfYear = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone());
-            ZonedDateTime start = statisticsRepository.getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(date - 1) : firstDateOfYear.plusWeeks(date);
+            ZonedDateTime start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(date - 1) : firstDateOfYear.plusWeeks(date);
             StatisticsEntry listElement = new StatisticsEntry(start, users.size());
             returnList.add(listElement);
         });
@@ -201,18 +210,20 @@ public class CourseStatsService {
      */
     public CourseManagementDetailViewDTO getStatsForDetailView(Course course, GradingScale gradingScale) {
 
-        var numberOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getStudentGroupName()));
-        var numberOfTeachingAssistantsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
-        var numberOfEditorsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName()));
-        var numberOfInstructorsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName()));
+        // TODO: remove all data that is not needed for the course management detail view
 
-        Set<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
-        if (exercises == null || exercises.isEmpty()) {
-            return new CourseManagementDetailViewDTO(numberOfStudentsInCourse, numberOfTeachingAssistantsInCourse, numberOfEditorsInCourse, numberOfInstructorsInCourse, 0.0, 0L,
-                    0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0.0, 0.0, List.of(), 0.0);
+        // var numberOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getStudentGroupName()));
+        // var numberOfTeachingAssistantsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
+        // var numberOfEditorsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName()));
+        // var numberOfInstructorsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName()));
+
+        Set<Exercise> courseExercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
+        Set<Long> courseExerciseIdsWithManualAssessments = exerciseRepository.findExerciseIdsWithManualAssessmentByCourseId(course.getId());
+        if (courseExercises == null || courseExercises.isEmpty()) {
+            return new CourseManagementDetailViewDTO(0, 0, 0, 0, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0.0, 0.0, List.of(), 0.0);
         }
         // For the average score we need to only consider scores which are included completely or as bonus
-        Set<Exercise> includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
+        Set<Exercise> includedExercises = courseExercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
         Double averageScoreForCourse = participantScoreRepository.findAvgRatedScore(includedExercises);
         averageScoreForCourse = averageScoreForCourse != null ? averageScoreForCourse : 0.0;
@@ -229,40 +240,51 @@ public class CourseStatsService {
                     + (100.0 - gradingScale.getPresentationsWeight()) / 100.0 * averageScoreForCourse;
         }
 
-        Set<Long> exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
+        Set<Long> exerciseIds = courseExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
 
-        var endDate = this.determineEndDateForActiveStudents(course);
-        var spanSize = this.determineTimeSpanSizeForActiveStudents(course, endDate, 17);
-        var activeStudents = getActiveStudents(exerciseIds, 0, spanSize, endDate);
+        // var endDate = this.determineEndDateForActiveStudents(course);
+        // var spanSize = this.determineTimeSpanSizeForActiveStudents(course, endDate, 17);
+        // var activeStudents = getActiveStudents(exerciseIds, 0, spanSize, endDate);
 
-        long numberOfAssessments = resultRepository.countNumberOfAssessments(exerciseIds);
+        long numberOfAssessments = resultRepository.countNumberOfAssessments(courseExerciseIdsWithManualAssessments);
 
         long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIds)
                 + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIds);
         long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(exerciseIds);
 
         long numberOfSubmissions = numberOfInTimeSubmissions + numberOfLateSubmissions;
+        // TODO: this number can be wrong in the client (over 100%)
         var currentPercentageAssessments = calculatePercentage(numberOfAssessments, numberOfSubmissions);
 
-        long currentAbsoluteComplaints = complaintResponseRepository
-                .countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), COMPLAINT);
-        long currentMaxComplaints = complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(course.getId(), COMPLAINT);
-        var currentPercentageComplaints = calculatePercentage(currentAbsoluteComplaints, currentMaxComplaints);
+        long currentAbsoluteComplaints = 0;
+        long currentMaxComplaints = 0;
+        double currentPercentageComplaints = 0.0;
 
-        long currentAbsoluteMoreFeedbacks = complaintResponseRepository
-                .countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), MORE_FEEDBACK);
-        long currentMaxMoreFeedbacks = complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(course.getId(), MORE_FEEDBACK);
-        var currentPercentageMoreFeedbacks = calculatePercentage(currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks);
+        if (course.getComplaintsEnabled()) {
+            currentAbsoluteComplaints = complaintResponseRepository
+                    .countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), COMPLAINT);
+            currentMaxComplaints = complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(course.getId(), COMPLAINT);
+            currentPercentageComplaints = calculatePercentage(currentAbsoluteComplaints, currentMaxComplaints);
+        }
 
+        long currentAbsoluteMoreFeedbacks = 0;
+        long currentMaxMoreFeedbacks = 0;
+        double currentPercentageMoreFeedbacks = 0;
+
+        if (course.getRequestMoreFeedbackEnabled()) {
+            currentAbsoluteMoreFeedbacks = complaintResponseRepository
+                    .countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), MORE_FEEDBACK);
+            currentMaxMoreFeedbacks = complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(course.getId(), MORE_FEEDBACK);
+            currentPercentageMoreFeedbacks = calculatePercentage(currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks);
+        }
         var currentAbsoluteAverageScore = roundScoreSpecifiedByCourseSettings((averageScoreForCourse / 100.0) * currentMaxAverageScore, course);
         var currentPercentageAverageScore = currentMaxAverageScore > 0.0 ? roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course) : 0.0;
 
         double currentTotalLlmCostInEur = llmTokenUsageTraceRepository.calculateTotalLlmCostInEurForCourse(course.getId());
 
-        return new CourseManagementDetailViewDTO(numberOfStudentsInCourse, numberOfTeachingAssistantsInCourse, numberOfEditorsInCourse, numberOfInstructorsInCourse,
-                currentPercentageAssessments, numberOfAssessments, numberOfSubmissions, currentPercentageComplaints, currentAbsoluteComplaints, currentMaxComplaints,
-                currentPercentageMoreFeedbacks, currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks, currentPercentageAverageScore, currentAbsoluteAverageScore,
-                currentMaxAverageScore, activeStudents, currentTotalLlmCostInEur);
+        return new CourseManagementDetailViewDTO(0, 0, 0, 0, currentPercentageAssessments, numberOfAssessments, numberOfSubmissions, currentPercentageComplaints,
+                currentAbsoluteComplaints, currentMaxComplaints, currentPercentageMoreFeedbacks, currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks,
+                currentPercentageAverageScore, currentAbsoluteAverageScore, currentMaxAverageScore, List.of(), currentTotalLlmCostInEur);
     }
 
     private double calculatePercentage(double positive, double total) {

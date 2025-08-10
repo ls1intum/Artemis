@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core;
 
+import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoWeeks;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -142,7 +143,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
             expectedResultYear.add(i != 15 ? 0 : 123);
         }
 
-        statisticsRepository.sortDataIntoWeeks(outcome, resultYear, startDate);
+        sortDataIntoWeeks(outcome, resultYear, startDate);
 
         assertThat(resultYear).as("Bucket 15 now has value for the entry date (123)").isEqualTo(expectedResultYear);
     }
