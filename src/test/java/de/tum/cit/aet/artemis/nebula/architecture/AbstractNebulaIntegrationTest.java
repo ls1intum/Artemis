@@ -1,26 +1,46 @@
 package de.tum.cit.aet.artemis.nebula.architecture;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Conditional;
 
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.connector.NebulaRequestMockProvider;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.nebula.service.NebulaConnectionService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-public abstract class AbstractNebulaIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+@Conditional(NebulaEnabled.class)
+public abstract class AbstractNebulaIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
-    // External Repositories
+    @Autowired
+    @Qualifier("nebulaRequestMockProvider")
+    protected NebulaRequestMockProvider nebulaRequestMockProvider;
+
     @Autowired
     protected FaqRepository faqRepository;
 
     @Autowired
-    protected CourseRepository courseRepository;
+    protected CourseTestRepository courseTestRepository;
 
     @Autowired
-    protected UserRepository userRepository;
+    protected UserTestRepository userTestRepository;
 
-    // External Services
     @Autowired
     protected NebulaConnectionService nebulaConnectionService;
+
+    @BeforeEach
+    void setup() {
+        nebulaRequestMockProvider.enableMockingOfRequests();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        nebulaRequestMockProvider.reset();
+    }
+
 }

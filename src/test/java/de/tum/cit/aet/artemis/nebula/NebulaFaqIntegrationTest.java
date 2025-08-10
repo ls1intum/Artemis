@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.nebula.architecture.AbstractNebulaIntegrationTest;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyDTO;
 import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponse;
