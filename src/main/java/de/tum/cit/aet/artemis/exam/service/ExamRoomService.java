@@ -140,7 +140,7 @@ public class ExamRoomService {
 
                 ExamRoomInput examRoomInput = objectMapper.readValue(zis.readAllBytes(), ExamRoomInput.class);
 
-                var examRoom = parseExamRoomFromRoomNumberAndExamRoomInput(roomNumber, examRoomInput);
+                var examRoom = convertRoomNumberAndExamRoomInputToExamRoom(roomNumber, examRoomInput);
                 if (examRoom == null)
                     continue;
 
@@ -168,13 +168,14 @@ public class ExamRoomService {
     }
 
     /**
-     * Parses an exam room from a Jackson deserialized JSON file.
+     * Converts {@link ExamRoomInput}, which is automatically deserialized from Jackson,
+     * and together with {@code roomNumber} generate an {@link ExamRoom}.
      *
      * @param roomNumber    The roomNumber of the exam room we want to create.
      * @param examRoomInput The Jackson parsed exam room input
      * @return The ExamRoom as stored in the JSON room data.
      */
-    private static ExamRoom parseExamRoomFromRoomNumberAndExamRoomInput(final String roomNumber, final ExamRoomInput examRoomInput) {
+    private static ExamRoom convertRoomNumberAndExamRoomInputToExamRoom(final String roomNumber, final ExamRoomInput examRoomInput) {
         if (examRoomInput == null) {
             return null;
         }
@@ -199,7 +200,7 @@ public class ExamRoomService {
         /* Extract the seats */
         // It is imperative that the seats are parsed before the layout strategies are parsed, as the size calculation
         // for relative layouts will only be done if the rooms have already been parsed
-        List<ExamSeatDTO> seats = parseExamSeats(examRoomInput.rows);
+        List<ExamSeatDTO> seats = convertRowInputsToExamSeatDTOs(examRoomInput.rows);
         if (seats == null) {
             log.warn("Skipping room {} because the seats are stored incorrectly", room.getRoomNumber());
             return null;
@@ -209,7 +210,7 @@ public class ExamRoomService {
         /* Extract the seats - End */
 
         /* Extract the layouts */
-        List<LayoutStrategy> layouts = parseLayoutStrategies(examRoomInput.layouts, room);
+        List<LayoutStrategy> layouts = convertLayoutInputsToLayoutStrategies(examRoomInput.layouts, room);
         room.setLayoutStrategies(layouts);
         /* Extract the layouts - End */
 
@@ -217,12 +218,12 @@ public class ExamRoomService {
     }
 
     /**
-     * Parses exam seats from Jackson deserialized data.
+     * Converts {@link RowInput}s into {@link ExamSeatDTO}s
      *
      * @param rows The list of Jackson parsed row inputs
-     * @return The list of all exam seats it could parse from the JSON node, or null on error.
+     * @return The list of all exam seats it could convert from the {@code rows}
      */
-    private static List<ExamSeatDTO> parseExamSeats(List<RowInput> rows) {
+    private static List<ExamSeatDTO> convertRowInputsToExamSeatDTOs(List<RowInput> rows) {
         if (rows == null) {
             return null;
         }
@@ -253,7 +254,8 @@ public class ExamRoomService {
     }
 
     /**
-     * Parses the layout strategies from the room data files.
+     * Converts {@code layoutNamesToLayoutNode} to {@link List<LayoutStrategy>},
+     * and associates each {@link LayoutStrategy} with the {@code room}.
      * <p/>
      * The content of the JSON nodes depends on the layout type.
      *
@@ -261,7 +263,7 @@ public class ExamRoomService {
      * @param room                    The exam room for which the parsed layout strategies are.
      * @return A list of all layout strategies this room has to offer.
      */
-    private static List<LayoutStrategy> parseLayoutStrategies(Map<String, JsonNode> layoutNamesToLayoutNode, ExamRoom room) {
+    private static List<LayoutStrategy> convertLayoutInputsToLayoutStrategies(Map<String, JsonNode> layoutNamesToLayoutNode, ExamRoom room) {
         List<LayoutStrategy> layouts = new ArrayList<>();
 
         // Iterate over all possible room layout names, e.g., "default" or "wide"
