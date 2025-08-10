@@ -1,7 +1,7 @@
 import { Component, effect, input } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { RouterLink } from '@angular/router';
 import { NgStyle } from '@angular/common';
 import { getContrastingTextColor } from 'app/shared/util/color.utils';
@@ -17,7 +17,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 export class LtiCourseCardComponent {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     course = input.required<Course>();
-    CachingStrategy = CachingStrategy;
     courseColor: string;
     contentColor: string;
 

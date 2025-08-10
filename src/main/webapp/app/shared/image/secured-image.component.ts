@@ -1,22 +1,15 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
-import { BehaviorSubject, Observable, isObservable, of } from 'rxjs';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { DomSanitizer } from '@angular/platform-browser';
-import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
-import { base64StringToBlob } from 'app/shared/util/blob-util';
 import { AsyncPipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 
 // Status that is emitted to the client to describe the loading status of the picture
 export const enum ImageLoadingStatus {
     SUCCESS = 'success',
     ERROR = 'error',
     LOADING = 'loading',
-}
-
-export enum CachingStrategy {
-    LOCAL_STORAGE = 'LOCAL_STORAGE',
-    SESSION_STORAGE = 'SESSION_STORAGE',
-    NONE = 'NONE',
 }
 
 /**
@@ -41,7 +34,7 @@ export enum CachingStrategy {
 })
 export class SecuredImageComponent implements OnChanges, OnInit {
     private domSanitizer = inject(DomSanitizer);
-    private cacheableImageService = inject(CacheableImageService);
+    private http = inject(HttpClient);
     element = inject(ElementRef);
 
     // This part just creates an rxjs stream from the src
@@ -49,7 +42,6 @@ export class SecuredImageComponent implements OnChanges, OnInit {
     // or even when the component gets destroyed
     @Input() mobileDragAndDrop = false;
     @Input() src: string;
-    @Input() cachingStrategy = CachingStrategy.SESSION_STORAGE;
     @Input() alt = '';
     private srcSubject?: BehaviorSubject<string>;
     dataUrl: Observable<string>;
@@ -92,22 +84,10 @@ export class SecuredImageComponent implements OnChanges, OnInit {
      */
     private loadImage(url: string): Observable<any> {
         return of(undefined).pipe(
-            // Load the image from the server with the active caching strategy.
+            // Load the image from the server, let the browser cache it.
             switchMap(() => {
-                let res;
-                if (this.cachingStrategy === CachingStrategy.SESSION_STORAGE) {
-                    res = this.cacheableImageService.loadCachedSessionStorage(url);
-                } else if (this.cachingStrategy === CachingStrategy.LOCAL_STORAGE) {
-                    res = this.cacheableImageService.loadCachedLocalStorage(url);
-                } else {
-                    res = this.cacheableImageService.loadWithoutCache(url);
-                }
-                // If the result is cached, it will not be an observable but a normal object - in this case it needs to be wrapped into an observable.
-                return isObservable(res) ? res : of(res);
-            }),
-            // The image will be loaded as a base64 string, so it needs to be converted to a blob before it can be used.
-            map((base64String: string) => {
-                return base64StringToBlob(base64String, 'application/json');
+                // TODO: implement properly with browser's caching strategy
+                return this.http.get(url, { responseType: 'blob', withCredentials: true });
             }),
             // We need to declare the blob as safe, otherwise angular will complain about the inserted element.
             map((blob: Blob) => {

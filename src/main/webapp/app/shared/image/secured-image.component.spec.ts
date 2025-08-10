@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { MockCacheableImageService } from 'test/helpers/mocks/service/mock-cacheable-image.service';
 import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
-import { CachingStrategy, ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -56,54 +56,6 @@ describe('SecuredImageComponent', () => {
         loadCachedLocalStorageStub.mockRestore();
         loadWithoutCacheStub.mockRestore();
         endLoadingProcessStub.mockRestore();
-    });
-
-    it('should not use cache if cache strategy is set to none', () => {
-        comp.cachingStrategy = CachingStrategy.NONE;
-        loadWithoutCacheStub.mockReturnValue(of(base64String));
-
-        // @ts-ignore
-        comp.src = src;
-        comp.ngOnInit();
-        triggerChanges(comp);
-        fixture.detectChanges();
-
-        expect(endLoadingProcessStub).toHaveBeenCalledWith(ImageLoadingStatus.SUCCESS);
-        expect(loadWithoutCacheStub).toHaveBeenCalledWith(src);
-        expect(loadCachedSessionStorageStub).not.toHaveBeenCalled();
-        expect(loadCachedLocalStorageStub).not.toHaveBeenCalled();
-    });
-
-    it('should use the local storage as a cache if selected as the storage strategy', () => {
-        comp.cachingStrategy = CachingStrategy.LOCAL_STORAGE;
-        loadCachedLocalStorageStub.mockReturnValue(of(base64String));
-
-        // @ts-ignore
-        comp.src = src;
-        comp.ngOnInit();
-        triggerChanges(comp);
-        fixture.detectChanges();
-
-        expect(endLoadingProcessStub).toHaveBeenCalledWith(ImageLoadingStatus.SUCCESS);
-        expect(loadWithoutCacheStub).not.toHaveBeenCalled();
-        expect(loadCachedSessionStorageStub).not.toHaveBeenCalled();
-        expect(loadCachedLocalStorageStub).toHaveBeenCalledWith(src);
-    });
-
-    it('should use the session storage as a cache if selected as the storage strategy', () => {
-        comp.cachingStrategy = CachingStrategy.SESSION_STORAGE;
-        loadCachedSessionStorageStub.mockReturnValue(of(base64String));
-
-        // @ts-ignore
-        comp.src = src;
-        comp.ngOnInit();
-        triggerChanges(comp);
-        fixture.detectChanges();
-
-        expect(endLoadingProcessStub).toHaveBeenCalledWith(ImageLoadingStatus.SUCCESS);
-        expect(loadWithoutCacheStub).not.toHaveBeenCalled();
-        expect(loadCachedSessionStorageStub).toHaveBeenCalledWith(src);
-        expect(loadCachedLocalStorageStub).not.toHaveBeenCalled();
     });
 
     it('should use the session storage as a cache as the default storage strategy', () => {

@@ -76,7 +76,6 @@
         "simple-statistics": "7.8.8",
         "smoothscroll-polyfill": "0.4.4",
         "split.js": "1.6.5",
-        "ts-cacheable": "1.0.10",
         "tslib": "2.8.1",
         "turndown": "7.2.0",
         "uuid": "11.1.0",

@@ -3,7 +3,7 @@
         <a class="stretched-link" [routerLink]="['/course-management', course.id]"></a>
         <div class="card-header-left">
             @if (course.courseIconPath) {
-                <jhi-secured-image class="header-item" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIconPath" />
+                <jhi-secured-image class="header-item" [src]="course.courseIconPath" />
             }
             <div class="card-date">
                 @if (course.startDate && course.endDate) {
