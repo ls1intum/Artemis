@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationType;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
@@ -59,6 +60,8 @@ public class AtlasMLService {
     private static final String SUGGEST_ENDPOINT = "/api/v1/competency/suggest";
 
     private static final String SAVE_ENDPOINT = "/api/v1/competency/save";
+
+    private static final String SUGGEST_RELATIONS_ENDPOINT = "/api/v1/competency/relations/suggest/%s";
 
     public AtlasMLService(@Qualifier("atlasmlRestTemplate") RestTemplate atlasmlRestTemplate,
             @Qualifier("shortTimeoutAtlasmlRestTemplate") RestTemplate shortTimeoutAtlasmlRestTemplate, AtlasMLRestTemplateConfiguration config,
@@ -143,6 +146,42 @@ public class AtlasMLService {
         }
         catch (Exception e) {
             throw new AtlasMLServiceException("Unexpected error while suggesting competencies", e);
+        }
+    }
+
+    /**
+     * Suggest randomly generated competency relations for a course from AtlasML.
+     *
+     * @param courseId the course identifier
+     * @return response DTO containing suggested relations
+     */
+    public SuggestCompetencyRelationsResponseDTO suggestCompetencyRelations(String courseId) {
+        try {
+            log.debug("Requesting competency relation suggestions for courseId: {}", courseId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Test");
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+            String url = config.getAtlasmlBaseUrl() + String.format(SUGGEST_RELATIONS_ENDPOINT, courseId);
+            ResponseEntity<String> response = atlasmlRestTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+
+            String responseBody = response.getBody();
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(responseBody, SuggestCompetencyRelationsResponseDTO.class);
+        }
+        catch (HttpClientErrorException e) {
+            throw new AtlasMLServiceException("Failed to suggest competency relations due to client error", e);
+        }
+        catch (HttpServerErrorException e) {
+            throw new AtlasMLServiceException("Failed to suggest competency relations due to server error", e);
+        }
+        catch (ResourceAccessException e) {
+            throw new AtlasMLServiceException("Failed to suggest competency relations due to connection issue", e);
+        }
+        catch (Exception e) {
+            throw new AtlasMLServiceException("Unexpected error while suggesting competency relations", e);
         }
     }
 

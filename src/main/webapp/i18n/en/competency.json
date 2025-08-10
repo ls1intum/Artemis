@@ -298,6 +298,13 @@
                         "competency": "This node represents a Competency",
                         "prerequisite": "This node represents a Prerequisite"
                     }
+                },
+                "suggestions": {
+                    "fetch": "AI suggestions",
+                    "title": "Suggestions",
+                    "empty": "No suggestions",
+                    "aiBadge": "AI",
+                    "aiTooltip": "Suggested by AI"
                 }
             },
             "featureExplanation": {

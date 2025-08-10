@@ -1,5 +1,5 @@
-<div class="course-competency-relation-form-container row m-0 p-3 align-items-end">
-    <div class="form-group col m-0 ps-0">
+<div class="course-competency-relation-form-container row gx-2 m-0 p-3 align-items-end">
+    <div class="form-group col m-0 ps-0 pe-2">
         <label for="head" jhiTranslate="artemisApp.courseCompetency.relations.form.headCourseCompetencyLabel"></label>
         <select
             [ngClass]="{ 'border-danger': showCircularDependencyError() }"
@@ -15,7 +15,7 @@
             }
         </select>
     </div>
-    <div class="form-group col m-0">
+    <div class="form-group col m-0 pe-2">
         <label for="type" jhiTranslate="artemisApp.courseCompetency.relations.form.relationTypeLabel"></label>
         <select [ngClass]="{ 'border-danger': showCircularDependencyError() }" class="form-select mt-1" id="type" name="type" [(ngModel)]="relationType">
             <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.relationTypeDefaultOption"></option>
@@ -40,7 +40,10 @@
             }
         </select>
     </div>
-    <div class="col-2 pe-0 d-flex justify-content-end">
+    <div class="col-3 ps-2 pe-0 d-flex justify-content-end gap-2">
+        <button class="btn btn-warning d-flex align-items-center" type="button" (click)="fetchSuggestions()" [disabled]="isLoadingSuggestions()" ngbTooltip="Get AI Suggestions">
+            <fa-icon [icon]="faLightbulb" style="color: white" />
+        </button>
         @if (exactRelationAlreadyExists()) {
             <button (click)="deleteRelation()" class="btn btn-danger">
                 @if (isLoading()) {
@@ -68,3 +71,27 @@
         <small class="p-0 mt-2 text-danger" jhiTranslate="artemisApp.courseCompetency.relations.form.cyclicDependencyError"></small>
     }
 </div>
+
+@if (suggestedRelations().length) {
+    <div class="p-3 pt-0">
+        <div class="list-group">
+            @for (s of suggestedRelations(); track s) {
+                <button type="button" class="list-group-item list-group-item-action" (click)="applySuggestion(s)">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ getCompetencyTitleById(s.head_id) }}</strong>
+                            <span class="mx-1">→</span>
+                            <strong>{{ getCompetencyTitleById(s.tail_id) }}</strong>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <small class="badge bg-secondary" [title]="'artemisApp.courseCompetency.relations.suggestions.aiTooltip' | artemisTranslate">
+                                {{ 'artemisApp.courseCompetency.relations.suggestions.aiBadge' | artemisTranslate }}
+                            </small>
+                            <small>{{ 'artemisApp.courseCompetency.relations.relationTypes.' + getUiRelationTypeKey(s) | artemisTranslate }}</small>
+                        </div>
+                    </div>
+                </button>
+            }
+        </div>
+    </div>
+}

@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationType;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
@@ -385,6 +386,27 @@ public class CompetencyResource {
         catch (Exception e) {
             log.error("Error while suggesting competencies", e);
             throw new BadRequestAlertException("Error suggesting competencies: " + e.getMessage(), ENTITY_NAME, "suggestionError");
+        }
+    }
+
+    /**
+     * GET courses/:courseId/competencies/relations/suggest : suggests competency relations using AtlasML.
+     *
+     * @param courseId the course identifier
+     * @return the ResponseEntity with status 200 (OK) and with body the suggested competency relations
+     */
+    @GetMapping("courses/{courseId}/competencies/relations/suggest")
+    @EnforceAtLeastStudentInCourse
+    @FeatureToggle(Feature.AtlasML)
+    public ResponseEntity<SuggestCompetencyRelationsResponseDTO> suggestCompetencyRelations(@PathVariable long courseId) {
+        log.debug("REST request to suggest competency relations using AtlasML for course: {}", courseId);
+        try {
+            SuggestCompetencyRelationsResponseDTO result = atlasMLService.suggestCompetencyRelations(String.valueOf(courseId));
+            return ResponseEntity.ok(result);
+        }
+        catch (Exception e) {
+            log.error("Error while suggesting competency relations", e);
+            throw new BadRequestAlertException("Error suggesting competency relations: " + e.getMessage(), ENTITY_NAME, "suggestionError");
         }
     }
 

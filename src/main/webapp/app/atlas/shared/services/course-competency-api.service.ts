@@ -8,6 +8,10 @@ import {
     UpdateCourseCompetencyRelationDTO,
 } from 'app/atlas/shared/entities/competency.model';
 
+interface SuggestCompetencyRelationsResponseDTO {
+    relations: { tail_id: string; head_id: string; relation_type: string }[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class CourseCompetencyApiService extends BaseApiHttpService {
     private readonly basePath = `atlas/courses/$courseId/course-competencies`;
@@ -42,5 +46,9 @@ export class CourseCompetencyApiService extends BaseApiHttpService {
 
     async getCourseCompetenciesByCourseId(courseId: number): Promise<CourseCompetency[]> {
         return await this.get<CompetencyRelationDTO[]>(`${this.getPath(courseId)}`);
+    }
+
+    async getSuggestedCompetencyRelations(courseId: number): Promise<SuggestCompetencyRelationsResponseDTO> {
+        return await this.get<SuggestCompetencyRelationsResponseDTO>(`atlas/courses/${courseId}/competencies/relations/suggest`);
     }
 }

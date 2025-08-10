@@ -295,6 +295,13 @@
                         "competency": "Dieser Knoten repräsentiert eine Kompetenz",
                         "prerequisite": "Dieser Knoten repräsentiert eine Voraussetzung"
                     }
+                },
+                "suggestions": {
+                    "fetch": "KI-Vorschläge",
+                    "title": "Vorschläge",
+                    "empty": "Keine Vorschläge",
+                    "aiBadge": "KI",
+                    "aiTooltip": "Von KI vorgeschlagen"
                 }
             },
             "featureExplanation": {
