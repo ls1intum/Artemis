@@ -120,3 +120,20 @@ def get_build_job_statistics_for_course(session: Session, course_id: int) -> Dic
         logging.error(f"Failed to get build job statistics for course {course_id}: {response.text}")
         return {}
     return response.json()
+
+def get_server_info(session: Session) -> Dict[str, Any]:
+    """Get Artemis server info."""
+    url = f"{SERVER_URL}/management/info"
+    url = url.replace("/api", "") # hack to remove /api prefix without introducing extra config values for it
+    response = session.get(url)
+    if response.status_code != 200:
+        logging.error(f"Failed to get server info: {response.text}")
+        return {}
+    return response.json()
+
+def get_server_artemis_version_info(session: Session) -> Dict[str, Any]:
+    """Get Artemis server version info."""
+    info = get_server_info(session)
+    branch = info.get("git", {}).get("branch", "unknownBranch")
+    build = info.get("git", {}).get("build", "").get("version", "unknownVersion")
+    return f"{branch}-{build}".replace("/", "-")

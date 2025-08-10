@@ -11,7 +11,6 @@ class ExperimentConfig:
     execute_after_seconds: int
     timeout_experiment: int
     final_command: str | None = None
-
     def __init__(self, programming_language: str, project_type: str, package_name:str, build_script: str, commit_files: dict[str, str], identifier: str, remote_command: str | None = None, execute_after_seconds: int = 0, timeout_experiment: int = 60 * 15, final_command: str | None = None):
         self.programming_language = programming_language
         self.project_type = project_type
@@ -44,7 +43,8 @@ JAVA_SPAMMY_BUILD = ExperimentConfig(
     commit_files={
         "src/experiment/BubbleSort.java": BUBBLE_SORT_JAVA_CORRECT.format("experiment")
     },
-    identifier="java_spammy_build"
+    identifier="java_spammy_build",
+    timeout_experiment=60 * 30
 )
 
 JAVA_TIMEOUT_BUILD = ExperimentConfig(
