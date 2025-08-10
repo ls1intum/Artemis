@@ -340,7 +340,7 @@ public class LocalVCServletService {
                 return getLatestCommitHash(repository);
             }
         }
-        catch (GitAPIException | RepositoryNotFoundException | NullPointerException e) {
+        catch (GitAPIException | RepositoryNotFoundException e) {
             log.warn("Failed to obtain commit hash for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(), e.getMessage());
         }
         return "";

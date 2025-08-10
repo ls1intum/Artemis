@@ -96,7 +96,7 @@ class LocalVCServletServiceTest {
     private LocalVCRepositoryUri testRepositoryUri;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         testUser = new User();
         testUser.setId(1L);
         testUser.setLogin("testuser");
@@ -121,6 +121,8 @@ class LocalVCServletServiceTest {
 
         // Setup the VcsAccessLogService as an Optional containing the mock
         ReflectionTestUtils.setField(localVCServletService, "vcsAccessLogService", Optional.of(vcsAccessLogService));
+
+        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", java.nio.file.Path.of("/tmp/test-repos"));
     }
 
     @Test
