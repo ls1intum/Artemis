@@ -40,8 +40,6 @@ artemis:
             links:
                 en: '<link>'
                 de: '<link>'
-        passkey:
-            enabled: false
     version-control:
         user: fake-username-vc # The git user. This is required for build agents
         password: fake-password # The git password. This is required for build agents
