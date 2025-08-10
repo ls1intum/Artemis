@@ -7,7 +7,7 @@ $management-header-height: 230px;
     position: sticky;
     bottom: 0;
     left: 0;
-    z-index: 10;
+    z-index: 30; // connection status bar should be above the quiz question sidebar
     background: var(--update-footer-background);
     display: flex;
     justify-content: flex-end;
@@ -54,26 +54,26 @@ $management-header-height: 230px;
     overflow-y: auto;
 
     &.content-exam-height-testRun {
-        height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height);
+        height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height);
 
         &.content-exam-height-testRun-dev {
-            height: calc(100vh - var(--sidebar-footer-height-dev) - $management-header-height);
+            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height);
 
             @media (max-width: 1349px) {
-                height: calc(100vh - var(--sidebar-footer-height-dev) - $management-header-height - 40px) !important;
+                height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 40px) !important;
             }
 
             @media (max-width: 768px) {
-                height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height - 20px) !important;
+                height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 20px) !important;
             }
         }
 
         @media (max-width: 1349px) {
-            height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height - 40px) !important;
+            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 40px) !important;
         }
 
         @media (max-width: 768px) {
-            height: calc(100vh - var(--sidebar-footer-height-prod) - $management-header-height - 20px) !important;
+            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 20px) !important;
         }
     }
 }

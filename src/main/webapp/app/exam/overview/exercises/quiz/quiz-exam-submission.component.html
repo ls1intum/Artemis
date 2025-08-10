@@ -12,16 +12,17 @@
 </div>
 <hr />
 
-<div class="w-auto m-0 pb-5">
-    @if (quizConfiguration().quizQuestions && !examTimeline()) {
-        <div class="position-fixed d-flex align-items-center justify-content-center">
-            <div class="p-0 col-md-auto quiz-navigation sticky-top">
-                <div class="stepwizardquiz col-6">
+<!-- TODO this is duplicated with quiz-participation.component.html, we should add a shared component merging bought approaches instead of copy pasting things -->
+<div class="row m-0">
+    @if (quizConfiguration().quizQuestions) {
+        @if (!examTimeline()) {
+            <div class="col-md-auto ps-0">
+                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard sticky-top-quiz hide-scrollbar-unless-scrolling">
                     @for (question of quizConfiguration().quizQuestions; track question; let i = $index) {
-                        <div class="stepwizardquiz__step mb-3">
+                        <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
                             @if (question.type === DRAG_AND_DROP) {
                                 <span
-                                    class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
+                                    class="btn btn-light btn-circle draganddropcolor-question"
                                     (click)="navigateToQuestion(question.id!)"
                                     [ngbTooltip]="!!dragAndDropMappings.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                                     [ngClass]="!!dragAndDropMappings.get(question.id!)?.length ? 'changed-question' : ''"
@@ -31,7 +32,7 @@
                             }
                             @if (question.type === MULTIPLE_CHOICE) {
                                 <span
-                                    class="btn btn-light btn-circle stepbutton stepwizardquiz-circle multiplechoicecolor-question"
+                                    class="btn btn-light btn-circle multiplechoicecolor-question"
                                     (click)="navigateToQuestion(question.id!)"
                                     [ngbTooltip]="!!selectedAnswerOptions.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                                     [ngClass]="!!selectedAnswerOptions.get(question.id!)?.length ? 'changed-question' : ''"
@@ -41,7 +42,7 @@
                             }
                             @if (question.type === SHORT_ANSWER) {
                                 <span
-                                    class="btn btn-light btn-circle stepbutton stepwizardquiz-circle shortanswercolor-question"
+                                    class="btn btn-light btn-circle shortanswercolor-question"
                                     (click)="navigateToQuestion(question.id!)"
                                     [ngbTooltip]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                                     [ngClass]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? 'changed-question' : ''"
@@ -55,10 +56,9 @@
                     }
                 </div>
             </div>
-        </div>
-    }
-    @if (quizConfiguration().quizQuestions) {
-        <div class="ms-5">
+        }
+
+        <div class="col p-0 quiz-content mb-3">
             @for (question of quizConfiguration().quizQuestions; track question; let i = $index) {
                 <div>
                     <!-- TODO: Map vs Array consistency -->

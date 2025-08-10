@@ -1,6 +1,6 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.853, "CLASS": 116]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.853, "CLASS": 117]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.924, "CLASS":  0],
@@ -17,7 +17,7 @@ ext {
         "lti"           :          ["INSTRUCTION": 0.888, "CLASS":  2],
         "modeling"      :          ["INSTRUCTION": 0.938, "CLASS":  0],
         "plagiarism"    :          ["INSTRUCTION": 0.901, "CLASS":  2],
-        "programming"   :          ["INSTRUCTION": 0.785, "CLASS": 18],
+        "programming"   :          ["INSTRUCTION": 0.785, "CLASS": 20],
         "quiz"          :          ["INSTRUCTION": 0.901, "CLASS":  2],
         "text"          :          ["INSTRUCTION": 0.947, "CLASS":  1],
         "tutorialgroup" :          ["INSTRUCTION": 0.915, "CLASS":  1],

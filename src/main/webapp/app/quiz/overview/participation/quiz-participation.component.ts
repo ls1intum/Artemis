@@ -962,12 +962,16 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * TODO this is duplicated with {@link QuizExamSubmissionComponent#navigateToQuestion}, extract to a shared component
+     *
      * By clicking on the bubble of the progress navigation towards the corresponding question of the quiz is triggered
      * @param questionIndex
      */
     navigateToQuestion(questionIndex: number): void {
         document.getElementById('question' + questionIndex)!.scrollIntoView({
             behavior: 'smooth',
+            block: 'nearest',
+            inline: 'start',
         });
     }
 

@@ -3,8 +3,8 @@
         "git": {
             "title": "Git-Informationen",
             "branch": "Branch",
-            "commit": "Commit-Hash",
-            "timestamp": "Commit-Datum",
+            "commit": "Hash",
+            "timestamp": "Datum",
             "username": "Letzter Committer"
         }
     }
