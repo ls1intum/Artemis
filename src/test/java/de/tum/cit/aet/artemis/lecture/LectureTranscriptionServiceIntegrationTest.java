@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -122,7 +122,6 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
         when(transcriptionRepository.findByJobId(jobId)).thenReturn(Optional.of(existing));
 
-        // ctor order in your record: (lectureUnitId, language, segments)
         var dto = new LectureTranscriptionDTO(null, "en", java.util.List.of());
 
         service.saveFinalTranscriptionResult(jobId, dto);
@@ -151,7 +150,6 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         var lecture = new Lecture();
         lecture.setId(lectureId);
 
-        // LectureUnit is abstract → mock it with deep stubs so getLecture().getId() works
         LectureUnit unit = mock(LectureUnit.class, RETURNS_DEEP_STUBS);
         when(unit.getId()).thenReturn(unitId);
         when(unit.getLecture()).thenReturn(lecture);
@@ -189,7 +187,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
         when(lectureUnitRepository.findByIdElseThrow(unitId)).thenReturn(unit);
 
-        assertThrows(IllegalArgumentException.class, () -> service.createEmptyTranscription(lectureId, unitId, "job-z"));
+        assertThatThrownBy(() -> service.createEmptyTranscription(lectureId, unitId, "job-z")).isInstanceOf(IllegalArgumentException.class);
 
         verifyNoInteractions(transcriptionRepository);
     }
