@@ -140,9 +140,18 @@ public class LocalCIEventListenerService {
      */
     @Scheduled(fixedDelay = 60 * 1000)
     public void processQueuedResults() {
-        log.debug("Processing {} queued results from the distributed build result queue", distributedDataAccessService.getResultQueueSize());
-        while ((distributedDataAccessService.getDistributedBuildResultQueue().peek()) != null) {
-            localCIResultProcessingService.processResult();
+        final int initialSize = distributedDataAccessService.getResultQueueSize();
+        log.debug("Processing up to {} queued results from the distributed build result queue", initialSize);
+        for (int i = 0; i < initialSize; i++) {
+            if (distributedDataAccessService.getDistributedBuildResultQueue().peek() == null) {
+                break;
+            }
+            try {
+                localCIResultProcessingService.processResult();
+            }
+            catch (Exception ex) {
+                log.warn("Processing a queued result failed. Continuing with remaining items", ex);
+            }
         }
     }
 
