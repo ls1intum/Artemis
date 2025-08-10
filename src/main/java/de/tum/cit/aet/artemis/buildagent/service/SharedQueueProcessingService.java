@@ -304,7 +304,7 @@ public class SharedQueueProcessingService {
      */
     private void removeOfflineNodes() {
         Set<String> memberAddresses = distributedDataAccessService.getClusterMemberAddresses();
-        for (String key : distributedDataAccessService.getDistributedBuildAgentInformation().keySet()) {
+        for (String key : distributedDataAccessService.getBuildAgentInformationMap().keySet()) {
             if (!memberAddresses.contains(key)) {
                 removeBuildAgentInformationForNode(key);
                 removeProcessingJobsForNode(key);
