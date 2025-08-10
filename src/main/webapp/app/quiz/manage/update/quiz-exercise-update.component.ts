@@ -666,4 +666,39 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     handleQuestionChanged() {
         this.cacheValidation();
     }
+
+    /**
+     * Generate enhanced description for AtlasML suggestions by including quiz questions
+     * @returns Enhanced description combining title and quiz questions
+     */
+    getEnhancedDescriptionForSuggestions(): string {
+        if (!this.quizExercise) {
+            return '';
+        }
+
+        let description = this.quizExercise.title || '';
+
+        // Add quiz questions if they exist
+        if (this.quizExercise.quizQuestions && this.quizExercise.quizQuestions.length > 0) {
+            const questionTexts = this.quizExercise.quizQuestions
+                .map((question) => {
+                    const questionTitle = question.title || '';
+                    const questionText = question.text || '';
+                    return `${questionTitle} ${questionText}`.trim();
+                })
+                .filter((text) => text.length > 0)
+                .join(' ');
+
+            if (questionTexts) {
+                description = `${description} ${questionTexts}`.trim();
+            }
+        }
+
+        // Fallback to problem statement if available
+        if (!description && this.quizExercise.problemStatement) {
+            description = this.quizExercise.problemStatement;
+        }
+
+        return description;
+    }
 }

@@ -33,6 +33,8 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -54,6 +56,8 @@ public class AtlasMLService {
 
     private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
 
+    private final FeatureToggleService featureToggleService;
+
     // API endpoints
     private static final String HEALTH_ENDPOINT = "/api/v1/health/";
 
@@ -65,11 +69,12 @@ public class AtlasMLService {
 
     public AtlasMLService(@Qualifier("atlasmlRestTemplate") RestTemplate atlasmlRestTemplate,
             @Qualifier("shortTimeoutAtlasmlRestTemplate") RestTemplate shortTimeoutAtlasmlRestTemplate, AtlasMLRestTemplateConfiguration config,
-            CompetencyRepository competencyRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
+            CompetencyRepository competencyRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository, FeatureToggleService featureToggleService) {
         this.atlasmlRestTemplate = atlasmlRestTemplate;
         this.shortTimeoutAtlasmlRestTemplate = shortTimeoutAtlasmlRestTemplate;
         this.config = config;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
+        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -191,6 +196,12 @@ public class AtlasMLService {
      * @param request the save request containing competencies and relations
      */
     public void saveCompetencies(SaveCompetencyRequestDTO request) {
+        // Check if AtlasML feature is enabled
+        if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
+            log.debug("AtlasML feature is disabled, skipping save operation");
+            return;
+        }
+
         try {
             String requestId = request.competency() != null ? request.competency().id() : (request.exercise() != null ? request.exercise().id() : "unknown");
             log.debug("Saving competencies for id: {}", requestId);
@@ -239,6 +250,12 @@ public class AtlasMLService {
      * @return true if the save operation was successful, false otherwise
      */
     public boolean saveCompetency(Competency competency, OperationType operationType) {
+        // Check if AtlasML feature is enabled
+        if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
+            log.debug("AtlasML feature is disabled, skipping competency save operation");
+            return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
+        }
+
         try {
             SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromCompetency(competency, operationType);
             saveCompetencies(request);
@@ -258,6 +275,12 @@ public class AtlasMLService {
      * @return true if the save operation was successful, false otherwise
      */
     public boolean saveCourseCompetency(CourseCompetency courseCompetency, OperationType operationType) {
+        // Check if AtlasML feature is enabled
+        if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
+            log.debug("AtlasML feature is disabled, skipping course competency save operation");
+            return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
+        }
+
         try {
             // Convert CourseCompetency to Competency for AtlasML
             Competency competency = new Competency(courseCompetency);
@@ -295,6 +318,12 @@ public class AtlasMLService {
      * @return true if the save operation was successful, false otherwise
      */
     public boolean saveExercise(String exerciseId, String title, String description, List<String> competencyIds, String courseId, OperationType operationType) {
+        // Check if AtlasML feature is enabled
+        if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
+            log.debug("AtlasML feature is disabled, skipping exercise save operation");
+            return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
+        }
+
         try {
             SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromExercise(exerciseId, title, description, competencyIds, courseId, operationType);
             saveCompetencies(request);
@@ -328,6 +357,12 @@ public class AtlasMLService {
      * @return true if the save operation was successful, false otherwise
      */
     public boolean saveExerciseWithCompetencies(Exercise exercise, OperationType operationType) {
+        // Check if AtlasML feature is enabled
+        if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
+            log.debug("AtlasML feature is disabled, skipping exercise with competencies save operation");
+            return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
+        }
+
         try {
             // Get all competency links for this exercise
             List<CompetencyExerciseLink> links = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exercise.getId());
@@ -358,6 +393,12 @@ public class AtlasMLService {
      * @return true if the save operation was successful, false otherwise
      */
     public boolean saveExerciseWithCompetenciesById(Long exerciseId, OperationType operationType) {
+        // Check if AtlasML feature is enabled
+        if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
+            log.debug("AtlasML feature is disabled, skipping exercise with competencies save operation");
+            return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
+        }
+
         try {
             // Get all competency links for this exercise
             List<CompetencyExerciseLink> links = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
