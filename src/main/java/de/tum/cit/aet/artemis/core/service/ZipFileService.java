@@ -10,12 +10,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import jakarta.annotation.Nullable;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -150,18 +147,5 @@ public class ZipFileService {
             extractZipFileRecursively(path);
         }
 
-    }
-
-    private void copyToZipFile(ZipOutputStream zipOutputStream, Path path, ZipEntry zipEntry) {
-        try {
-            if (Files.exists(path)) {
-                zipOutputStream.putNextEntry(zipEntry);
-                FileUtils.copyFile(path.toFile(), zipOutputStream);
-                zipOutputStream.closeEntry();
-            }
-        }
-        catch (IOException e) {
-            log.error("Create zip file error", e);
-        }
     }
 }
