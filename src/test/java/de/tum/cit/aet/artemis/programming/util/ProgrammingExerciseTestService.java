@@ -1540,7 +1540,7 @@ public class ProgrammingExerciseTestService {
                     return new ByteArrayInputStream(mockZipData);
                 }
             };
-            doReturn(mockResource).when(gitRepositoryExportService).exportRepositoryWithHistory(eq(auxiliaryRepository.getVcsRepositoryUri()), anyString());
+            doReturn(mockResource).when(gitRepositoryExportService).exportRepositoryWithFullHistoryToMemory(eq(auxiliaryRepository.getVcsRepositoryUri()), anyString());
         }
         catch (Exception e) {
             throw new RuntimeException("Failed to setup export mock", e);
