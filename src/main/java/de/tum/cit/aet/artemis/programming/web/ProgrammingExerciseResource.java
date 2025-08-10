@@ -190,8 +190,7 @@ public class ProgrammingExerciseResource {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ChannelRepository channelRepository,
             Optional<AthenaApi> athenaApi, Environment environment, RepositoryCheckoutService repositoryCheckoutService, Optional<SlideApi> slideApi,
-            Optional<AtlasMLService> atlasMLService, 
-            ProgrammingExerciseDeletionService programmingExerciseDeletionService) {
+            Optional<AtlasMLService> atlasMLService, ProgrammingExerciseDeletionService programmingExerciseDeletionService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
 
