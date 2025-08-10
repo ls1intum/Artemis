@@ -144,7 +144,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         var files = java.util.Map.of("test.txt", "test content");
         byte[] mockZipData = createTestZipFile(files);
         InputStreamResource mockZipResource = createMockZipResource(mockZipData, "mock-repo.zip");
-        doReturn(mockZipResource).when(gitRepositoryExportService).exportRepositoryWithFullHistoryToMemory(any(), anyString());
+        doReturn(mockZipResource).when(gitRepositoryExportService).exportRepositoryWithHistory(any(), anyString());
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);
@@ -207,7 +207,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void testExportRepositoryWithFullHistory(@TempDir Path tempDir) throws Exception {
+    void testExportRepositoryWithHistory(@TempDir Path tempDir) throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         course.setInstructorGroupName(instructor.getGroups().iterator().next());
@@ -232,7 +232,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         byte[] mockZipData = createTestZipFile(files);
         InputStreamResource mockZipResource = createMockZipResource(mockZipData, "mock-repo-with-git.zip");
-        doReturn(mockZipResource).when(gitRepositoryExportService).exportRepositoryWithFullHistoryToMemory(any(), anyString());
+        doReturn(mockZipResource).when(gitRepositoryExportService).exportRepositoryWithHistory(any(), anyString());
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);

@@ -418,7 +418,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     public InputStreamResource exportInstructorRepositoryForExerciseInMemory(ProgrammingExercise programmingExercise, RepositoryType repositoryType, List<String> exportErrors) {
         String zippedRepoName = getZippedRepoName(programmingExercise, repositoryType.getName());
         try {
-            return gitRepositoryExportService.exportRepositoryWithFullHistoryToMemory(programmingExercise.getRepositoryURL(repositoryType), zippedRepoName);
+            return gitRepositoryExportService.exportRepositoryWithHistory(programmingExercise.getRepositoryURL(repositoryType), zippedRepoName);
         }
         catch (IOException | GitAPIException ex) {
             String error = "Failed to export instructor repository " + repositoryType.getName() + " for programming exercise '" + programmingExercise.getTitle() + "' (id: "
@@ -988,7 +988,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             List<String> exportErrors) {
         String zippedRepoName = getZippedRepoName(programmingExercise, auxiliaryRepository.getRepositoryName());
         try {
-            return gitRepositoryExportService.exportRepositoryWithFullHistoryToMemory(auxiliaryRepository.getVcsRepositoryUri(), zippedRepoName);
+            return gitRepositoryExportService.exportRepositoryWithHistory(auxiliaryRepository.getVcsRepositoryUri(), zippedRepoName);
         }
         catch (IOException | GitAPIException ex) {
             String error = "Failed to export auxiliary repository " + auxiliaryRepository.getName() + " for programming exercise '" + programmingExercise.getTitle() + "' (id: "

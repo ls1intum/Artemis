@@ -3,9 +3,10 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration.isBinaryFile;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -127,79 +128,6 @@ public class GitRepositoryExportService {
     }
 
     /**
-     * Zips the contents of a directory directly to memory without creating temporary files.
-     * Content filtering is added with the intention of optionally excluding ".git" directory from the result.
-     *
-     * @param contentRootPath the root path of the content to zip
-     * @param zipFilename     the name of the zipped file (for metadata)
-     * @param contentFilter   path filter to exclude some files, can be null to include everything
-     * @return InputStreamResource containing the zipped content
-     * @throws IOException if the zipping process failed.
-     * @example
-     *          // Exclude .git directory
-     *          Predicate<Path> excludeGit = path -> !path.toString().contains(".git");
-     *
-     *          // Include everything
-     *          Predicate<Path> includeAll = null;
-     */
-    public InputStreamResource zipDirectoryToMemory(Path contentRootPath, String zipFilename, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
-        String zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
-
-        if (!zipFilenameWithoutSlash.endsWith(".zip")) {
-            zipFilenameWithoutSlash += ".zip";
-        }
-
-        var byteArrayResource = zipFileService.createZipFileWithFolderContentInMemory(contentRootPath, zipFilenameWithoutSlash, contentFilter);
-
-        return createInputStreamResource(byteArrayResource.getByteArray(), byteArrayResource.getFilename().replace(".zip", ""));
-    }
-
-    /**
-     * Creates an InputStreamResource from byte array data with proper filename and content length.
-     *
-     * @param zipData  the byte array containing the zip data
-     * @param filename the filename for the resource (without .zip extension)
-     * @return InputStreamResource with the zip data
-     */
-    private InputStreamResource createInputStreamResource(byte[] zipData, String filename) {
-        return new InputStreamResource(new ByteArrayInputStream(zipData)) {
-
-            @Override
-            public String getFilename() {
-                return filename + ".zip";
-            }
-
-            @Override
-            public long contentLength() {
-                return zipData.length;
-            }
-        };
-    }
-
-    /**
-     * Creates a JGit archive of the repository's working tree for a given treeish.
-     *
-     * @param repository the repository to archive
-     * @param treeish    the treeish to archive (e.g., "HEAD", "refs/heads/main")
-     * @return byte array containing the archive data
-     * @throws GitAPIException if the git operation fails
-     * @throws IOException     if IO operations fail
-     */
-    private byte[] createJGitArchive(Repository repository, String treeish) throws GitAPIException, IOException {
-        ObjectId treeId = repository.resolve(treeish);
-        if (treeId == null) {
-            log.debug("Could not resolve tree for '{}', repository might be empty", treeish);
-            return new byte[0];
-        }
-
-        ByteArrayOutputStream archiveData = new ByteArrayOutputStream();
-        try (Git git = new Git(repository)) {
-            git.archive().setFormat("zip").setTree(treeId).setOutputStream(archiveData).call();
-        }
-        return archiveData.toByteArray();
-    }
-
-    /**
      * Exports a repository snapshot directly to memory without creating temporary files.
      * This method uses JGit's ArchiveCommand to create a zip archive of the repository's HEAD state.
      *
@@ -211,8 +139,18 @@ public class GitRepositoryExportService {
      */
     public InputStreamResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
         Repository repository = gitService.getBareRepository(repositoryUri, false);
-        byte[] zipData = createJGitArchive(repository, "HEAD");
-        return createInputStreamResource(zipData, filename);
+        return streamZipResource(filename, out -> {
+            ObjectId treeId = repository.resolve("HEAD");
+            if (treeId == null) {
+                try (ZipOutputStream zos = new ZipOutputStream(out)) {
+                    zos.finish();
+                }
+                return;
+            }
+            try (Git git = new Git(repository)) {
+                git.archive().setFormat("zip").setTree(treeId).setOutputStream(out).call();
+            }
+        });
     }
 
     /**
@@ -272,61 +210,111 @@ public class GitRepositoryExportService {
     }
 
     /**
-     * Exports a repository with full history including the .git directory directly to memory.
+     * Exports a repository with history including the .git directory directly to memory.
      * This method uses JGit's ArchiveCommand to create a zip of the working tree and combines it
-     * with the .git directory for full history, all done in memory without disk checkout.
+     * with the .git directory for history, all done in memory without disk checkout.
      *
      * @param repositoryUri the URI of the repository to export
      * @param filename      the desired filename for the export (without extension)
-     * @return InputStreamResource containing the zipped repository content with full history
+     * @return InputStreamResource containing the zipped repository content with history
      * @throws GitAPIException if the git operation fails
      * @throws IOException     if IO operations fail
      */
-    public InputStreamResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
-        log.debug("Exporting repository with full history to memory using JGit archive: {}", repositoryUri);
+    public InputStreamResource exportRepositoryWithHistory(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
+        log.debug("Exporting repository with history: {}", repositoryUri);
 
         Repository repository = gitService.getBareRepository(repositoryUri, false);
         String branch = determineDefaultBranch(repository);
 
-        if (branch == null) {
-            // Empty repository case - just return the .git directory
-            log.debug("No branches found, returning .git directory only");
-            return zipDirectoryToMemory(repository.getDirectory().toPath(), filename, null);
-        }
+        return streamZipResource(filename, out -> {
+            try (ZipOutputStream zipOutputStream = new ZipOutputStream(out)) {
+                // Always include the .git directory (full history)
+                Path bareRepoPath = repository.getDirectory().toPath();
+                addDirectoryToZip(zipOutputStream, bareRepoPath, bareRepoPath, ".git");
 
-        String treeish = "refs/heads/" + branch;
-        log.debug("Using branch '{}' for export", branch);
+                if (branch != null) {
+                    String treeish = "refs/heads/" + branch;
+                    log.debug("Using branch '{}' for export", branch);
+                    writeWorkingTreeArchiveIntoZip(repository, treeish, zipOutputStream);
+                }
 
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+                zipOutputStream.finish();
+            }
+        });
+    }
 
-            // Step 1: Add the .git directory (full history)
-            Path bareRepoPath = repository.getDirectory().toPath();
-            addDirectoryToZip(zipOutputStream, bareRepoPath, bareRepoPath, ".git");
+    @FunctionalInterface
+    private interface OutputStreamProducer {
 
-            // Step 2: Add the working tree snapshot using ArchiveCommand
-            try {
-                byte[] archiveData = createJGitArchive(repository, treeish);
-                if (archiveData.length > 0) {
-                    // Extract the archive contents and add them to our main zip
-                    try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(archiveData))) {
-                        ZipEntry entry;
-                        while ((entry = zipInputStream.getNextEntry()) != null) {
-                            zipOutputStream.putNextEntry(new ZipEntry(entry.getName()));
-                            zipInputStream.transferTo(zipOutputStream);
-                            zipOutputStream.closeEntry();
-                        }
-                    }
+        void produce(OutputStream outputStream) throws Exception;
+    }
+
+    private InputStreamResource streamZipResource(String filename, OutputStreamProducer producer) throws IOException {
+        final PipedOutputStream pipedOutputStream = new PipedOutputStream();
+        final PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream, 64 * 1024); // 64KB buffer
+
+        Thread producerThread = new Thread(() -> {
+            try (PipedOutputStream pos = pipedOutputStream) {
+                producer.produce(pos);
+            }
+            catch (Exception e) {
+                log.error("Failed to stream zip resource: {}", e.getMessage());
+                try {
+                    pipedOutputStream.close();
+                }
+                catch (IOException ignored) {
+                }
+            }
+        }, "zip-stream-producer");
+
+        producerThread.setDaemon(true);
+        producerThread.start();
+
+        return new InputStreamResource(pipedInputStream) {
+
+            @Override
+            public String getFilename() {
+                return filename + ".zip";
+            }
+
+            @Override
+            public long contentLength() {
+                return -1;
+            }
+        };
+    }
+
+    private void writeWorkingTreeArchiveIntoZip(Repository repository, String treeish, ZipOutputStream targetZip) throws IOException {
+        final PipedOutputStream archivePos = new PipedOutputStream();
+        final PipedInputStream archivePis = new PipedInputStream(archivePos, 64 * 1024); // 64KB buffer
+
+        Thread archiveProducer = new Thread(() -> {
+            try (PipedOutputStream innerPos = archivePos; Git git = new Git(repository)) {
+                ObjectId treeId = repository.resolve(treeish);
+                if (treeId != null) {
+                    git.archive().setFormat("zip").setTree(treeId).setOutputStream(innerPos).call();
                 }
             }
             catch (Exception e) {
-                log.debug("Could not create archive for branch '{}': {}", branch, e.getMessage());
-                // Continue without the working tree content, just include .git directory
+                log.debug("Could not create archive for '{}': {}", treeish, e.getMessage());
+                try {
+                    archivePos.close();
+                }
+                catch (IOException ignored) {
+                }
             }
+        }, "working-tree-archive-producer");
 
-            zipOutputStream.finish();
-            byte[] zipData = outputStream.toByteArray();
+        archiveProducer.setDaemon(true);
+        archiveProducer.start();
 
-            return createInputStreamResource(zipData, filename);
+        try (ZipInputStream zipInputStream = new ZipInputStream(archivePis)) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                targetZip.putNextEntry(new ZipEntry(entry.getName()));
+                zipInputStream.transferTo(targetZip);
+                targetZip.closeEntry();
+            }
         }
     }
 

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
 import net.lingala.zip4j.ZipFile;
@@ -94,38 +92,6 @@ public class ZipFileService {
         try (var files = Files.walk(contentRootPath)) {
             createZipFileFromPathStream(zipFilePath, files, contentRootPath, contentFilter);
             return zipFilePath;
-        }
-    }
-
-    /**
-     * Recursively include all files in contentRootPath and create a zip file in memory.
-     *
-     * @param contentRootPath a path to a folder: all content in this folder (and in any subfolders) will be included in the zip file
-     * @param filename        the filename for the zip (for metadata purposes)
-     * @param contentFilter   a path filter to exclude some files, can be null to include everything
-     * @return ByteArrayResource containing the zip file data
-     * @throws IOException if an error occurred while zipping
-     */
-    public ByteArrayResource createZipFileWithFolderContentInMemory(Path contentRootPath, String filename, @Nullable Predicate<Path> contentFilter) throws IOException {
-        try (var files = Files.walk(contentRootPath); ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-
-            createZipFileFromPathStreamToMemory(byteArrayOutputStream, files, contentRootPath, contentFilter);
-
-            byte[] zipData = byteArrayOutputStream.toByteArray();
-            return new ByteArrayResource(zipData) {
-
-                @Override
-                public String getFilename() {
-                    return filename;
-                }
-            };
-        }
-    }
-
-    private void createZipFileFromPathStreamToMemory(ByteArrayOutputStream byteArrayOutputStream, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter)
-            throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
-            addPathsToZipStream(zipOutputStream, paths, pathsRoot, extraFilter);
         }
     }
 
