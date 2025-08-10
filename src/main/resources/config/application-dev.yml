@@ -134,6 +134,8 @@ artemis:
         enabled: false # Disable sending any telemetry information to the telemetry service by setting this to false
         sendAdminDetails: false # Include the admins email and name in the telemetry data. Set to false to disable
         destination: https://telemetry.artemis.cit.tum.de
+    version-control:
+        local-vcs-repo-path: ./local-vcs-repos
 
 helios:
   status:

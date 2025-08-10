@@ -17,13 +17,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,6 @@ import com.github.dockerjava.api.model.PullResponseItem;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
@@ -100,7 +100,9 @@ public class BuildAgentDockerService {
         this.taskScheduler = taskScheduler;
     }
 
-    @EventListener(FullStartupEvent.class)
+    // EventListener cannot be used here, as the bean is lazy
+    // https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation
+    @PostConstruct
     public void applicationReady() {
         // Schedule the cleanup of dangling build containers once 10 seconds after the application has started and then every containerCleanupScheduleMinutes minutes
         taskScheduler.scheduleAtFixedRate(this::cleanUpContainers, Instant.now().plusSeconds(10), Duration.ofMinutes(containerCleanupScheduleMinutes));
