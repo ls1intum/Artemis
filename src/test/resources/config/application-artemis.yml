@@ -40,6 +40,8 @@ artemis:
             links:
                 en: '<link>'
                 de: '<link>'
+        passkey:
+            enabled: false
     version-control:
         user: fake-username-vc # The git user. This is required for build agents
         password: fake-password # The git password. This is required for build agents
@@ -77,7 +79,10 @@ artemis:
         plagiarism-results-limit: 100
     nebula:
         base-url: http://mockenabula:8000
-        secret-token: "nebula-secret"
+        secret-token: "mocke-secret"
+    tum-live:
+        api-base-url: http://mocketumlive.api
+
 
 info:
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service
