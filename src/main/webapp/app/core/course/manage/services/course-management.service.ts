@@ -773,7 +773,7 @@ export class CourseManagementService {
 
     getSemesterCollapseStateFromStorage(storageId: string): boolean {
         const storedCollapseState = this.localStorageService.retrieve<boolean>('semester.collapseState.' + storageId);
-        return storedCollapseState !== undefined ? storedCollapseState : false;
+        return storedCollapseState ?? false;
     }
 
     setSemesterCollapseState(storageId: string, isCollapsed: boolean) {

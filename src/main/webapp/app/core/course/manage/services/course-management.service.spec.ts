@@ -77,7 +77,6 @@ describe('Course Management Service', () => {
         courseStorageService = TestBed.inject(CourseStorageService);
         scoresStorageService = TestBed.inject(ScoresStorageService);
         localStorageService = TestBed.inject(LocalStorageService);
-        localStorageService.clear();
 
         isAtLeastTutorInCourseSpy = jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
         isAtLeastEditorInCourseSpy = jest.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
