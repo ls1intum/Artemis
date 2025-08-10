@@ -22,6 +22,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-competency-selection',
@@ -34,7 +36,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
             useExisting: forwardRef(() => CompetencySelectionComponent),
         },
     ],
-    imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe, FeatureToggleHideDirective],
 })
 export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
     private route = inject(ActivatedRoute);
@@ -65,6 +67,8 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     faQuestionCircle = faQuestionCircle;
     faStar = faStar;
     faLightbulb = faLightbulb;
+
+    protected readonly FeatureToggle = FeatureToggle;
 
     _onChange = (_value: any) => {};
 

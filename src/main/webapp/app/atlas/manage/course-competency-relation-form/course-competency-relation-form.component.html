@@ -41,7 +41,14 @@
         </select>
     </div>
     <div class="col-3 ps-2 pe-0 d-flex justify-content-end gap-2">
-        <button class="btn btn-warning d-flex align-items-center" type="button" (click)="fetchSuggestions()" [disabled]="isLoadingSuggestions()" ngbTooltip="Get AI Suggestions">
+        <button
+            class="btn btn-warning d-flex align-items-center"
+            type="button"
+            (click)="fetchSuggestions()"
+            [disabled]="isLoadingSuggestions()"
+            ngbTooltip="Get AI Suggestions"
+            [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
+        >
             <fa-icon [icon]="faLightbulb" style="color: white" />
         </button>
         @if (exactRelationAlreadyExists()) {

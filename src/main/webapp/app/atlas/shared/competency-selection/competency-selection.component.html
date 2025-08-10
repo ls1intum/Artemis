@@ -17,6 +17,7 @@
                 [disabled]="isSuggesting || disabled || !exerciseDescription?.trim()"
                 (click)="suggestCompetencies()"
                 ngbTooltip="Get AI Suggestions"
+                [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
             >
                 @if (isSuggesting) {
                     <span class="spinner-border spinner-border-sm" role="status"></span>
