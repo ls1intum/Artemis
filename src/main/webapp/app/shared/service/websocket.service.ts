@@ -69,11 +69,13 @@ export class ConnectionState {
     readonly connected: boolean;
     readonly wasEverConnectedBefore: boolean;
     readonly intendedDisconnect: boolean;
+    readonly consecutiveFailures: number;
 
-    constructor(connected: boolean, wasEverConnectedBefore: boolean, intendedDisconnect: boolean) {
+    constructor(connected: boolean, wasEverConnectedBefore: boolean, intendedDisconnect: boolean, consecutiveFailures: number = 0) {
         this.connected = connected;
         this.wasEverConnectedBefore = wasEverConnectedBefore;
         this.intendedDisconnect = intendedDisconnect;
+        this.consecutiveFailures = consecutiveFailures;
     }
 }
 
@@ -124,7 +126,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         this.connecting = false;
         this.consecutiveFailedAttempts++;
         if (this.connectionStateInternal.getValue().connected) {
-            this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, false));
+            this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, false, this.consecutiveFailedAttempts));
         }
         if (this.shouldReconnect) {
             let waitUntilReconnectAttempt;
