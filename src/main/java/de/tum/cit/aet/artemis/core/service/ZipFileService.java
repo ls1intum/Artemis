@@ -124,23 +124,11 @@ public class ZipFileService {
 
     private void createZipFileFromPathStreamToMemory(ByteArrayOutputStream byteArrayOutputStream, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter)
             throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
-            addPathsToZipStream(zipOutputStream, paths, pathsRoot, extraFilter);
-        }
+        ZipStreamHelper.createZipFileFromPathStreamToMemory(byteArrayOutputStream, paths, pathsRoot, extraFilter, IGNORED_ZIP_FILE_NAMES);
     }
 
     private void createZipFileFromPathStream(Path zipFilePath, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter) throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            addPathsToZipStream(zipOutputStream, paths, pathsRoot, extraFilter);
-        }
-    }
-
-    private void addPathsToZipStream(ZipOutputStream zipOutputStream, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter) {
-        paths.filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).filter(path -> extraFilter == null || extraFilter.test(path))
-                .filter(path -> !IGNORED_ZIP_FILE_NAMES.contains(path.getFileName())).forEach(path -> {
-                    ZipEntry zipEntry = new ZipEntry(pathsRoot.relativize(path).toString());
-                    copyToZipFile(zipOutputStream, path, zipEntry);
-                });
+        ZipStreamHelper.createZipFileFromPathStream(zipFilePath, paths, pathsRoot, extraFilter, IGNORED_ZIP_FILE_NAMES);
     }
 
     /**
