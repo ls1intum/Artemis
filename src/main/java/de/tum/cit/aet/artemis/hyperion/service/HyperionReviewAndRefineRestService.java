@@ -4,26 +4,28 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
-import de.tum.cit.aet.artemis.hyperion.client.api.ReviewAndRefineApi;
-import de.tum.cit.aet.artemis.hyperion.client.model.ConsistencyCheckRequest;
-import de.tum.cit.aet.artemis.hyperion.client.model.ConsistencyCheckResponse;
-import de.tum.cit.aet.artemis.hyperion.client.model.ConsistencyIssueSeverity;
-import de.tum.cit.aet.artemis.hyperion.client.model.Repository;
-import de.tum.cit.aet.artemis.hyperion.client.model.RepositoryFile;
-import de.tum.cit.aet.artemis.hyperion.client.model.RewriteProblemStatementRequest;
-import de.tum.cit.aet.artemis.hyperion.client.model.RewriteProblemStatementResponse;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactType;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
@@ -32,7 +34,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.Severity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -52,13 +53,16 @@ public class HyperionReviewAndRefineRestService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ReviewAndRefineApi reviewAndRefineApi;
+    private final ChatClient chatClient;
+
+    private final ObjectMapper objectMapper;
 
     public HyperionReviewAndRefineRestService(RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ReviewAndRefineApi reviewAndRefineApi) {
+            @Autowired(required = false) ChatClient chatClient) {
         this.repositoryService = repositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.reviewAndRefineApi = reviewAndRefineApi;
+        this.chatClient = chatClient; // may be null if Spring AI isn't configured
+        this.objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     /**
@@ -76,28 +80,79 @@ public class HyperionReviewAndRefineRestService {
         try {
             // Load the exercise with participations to avoid lazy loading issues
             var exerciseWithParticipations = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-            var request = buildConsistencyCheckRequest(exerciseWithParticipations);
 
-            // Use the generated API client to perform the consistency check
-            ConsistencyCheckResponse response = reviewAndRefineApi.consistencyCheckReviewAndRefineConsistencyCheckPost(request);
+            if (chatClient == null) {
+                throw new NetworkingException("Spring AI ChatClient is not configured");
+            }
 
-            // Convert to DTO
-            List<ConsistencyIssueDTO> issueDTOs = response.getIssues().stream()
-                    .map(issue -> new ConsistencyIssueDTO(mapHyperionSeverity(issue.getSeverity()), issue.getCategory(), issue.getDescription(), issue.getSuggestedFix(),
-                            issue.getRelatedLocations().stream().map(location -> new ArtifactLocationDTO(mapHyperionArtifactType(location.getType()), location.getFilePath(),
-                                    location.getStartLine(), location.getEndLine())).collect(Collectors.toList())))
-                    .collect(Collectors.toList());
+            log.info("Using local Spring AI for consistency check");
 
+            // Build input context using exact renderer parity with Python
+            var templateRepo = buildRepository(exerciseWithParticipations, RepositoryType.TEMPLATE);
+            var solutionRepo = buildRepository(exerciseWithParticipations, RepositoryType.SOLUTION);
+            var testRepo = buildRepository(exerciseWithParticipations, RepositoryType.TESTS);
+
+            String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
+
+            // Filter files by language for each repo
+            var lang = exerciseWithParticipations.getProgrammingLanguage();
+            List<ContextRenderer.RepoFile> templateFiles = templateRepo.files().stream().map(f -> new ContextRenderer.RepoFile(f.path(), f.content())).toList();
+            List<ContextRenderer.RepoFile> solutionFiles = solutionRepo.files().stream().map(f -> new ContextRenderer.RepoFile(f.path(), f.content())).toList();
+            List<ContextRenderer.RepoFile> testFiles = testRepo.files().stream().map(f -> new ContextRenderer.RepoFile(f.path(), f.content())).toList();
+            templateFiles = ContextRenderer.filterFilesByLanguage(templateFiles, lang);
+            solutionFiles = ContextRenderer.filterFilesByLanguage(solutionFiles, lang);
+            testFiles = ContextRenderer.filterFilesByLanguage(testFiles, lang);
+
+            String renderedContext = String
+                    .join("\n\n", List.of(
+                            ContextRenderer.renderRepository(
+                                    List.of(new ContextRenderer.RepoFile("problem_statement.md",
+                                            exerciseWithParticipations.getProblemStatement() != null ? exerciseWithParticipations.getProblemStatement() : "")),
+                                    "Problem Statement"),
+                            ContextRenderer.renderRepository(templateFiles, "Template Repository"), ContextRenderer.renderRepository(solutionFiles, "Solution Repository"),
+                            ContextRenderer.renderRepository(testFiles, "Test Repository")));
+
+            var input = Map.<String, Object>of("rendered_context", renderedContext, "programming_language", programmingLanguage);
+
+            ExecutorService executor = Executors.newFixedThreadPool(2);
+
+            CompletableFuture<List<AiIssue>> structuralFuture = CompletableFuture
+                    .supplyAsync(() -> runAiCheckEntity("structural", buildStructuralPrompt(), input, IssuesEntity.class), executor).thenApply(IssuesEntity::issues);
+            CompletableFuture<List<AiIssue>> semanticFuture = CompletableFuture
+                    .supplyAsync(() -> runAiCheckEntity("semantic", buildSemanticPrompt(), input, IssuesEntity.class), executor).thenApply(IssuesEntity::issues);
+
+            List<AiIssue> combinedIssues;
+            try {
+                combinedIssues = structuralFuture.thenCombine(semanticFuture, (a, b) -> {
+                    List<AiIssue> combined = new java.util.ArrayList<>();
+                    if (a != null)
+                        combined.addAll(a);
+                    if (b != null)
+                        combined.addAll(b);
+                    return combined;
+                }).get();
+            }
+            catch (InterruptedException | ExecutionException e) {
+                log.warn("Parallel AI checks failed, falling back to sequential execution", e);
+                IssuesEntity structuralEntity = runAiCheckEntity("structural", buildStructuralPrompt(), input, IssuesEntity.class);
+                IssuesEntity semanticEntity = runAiCheckEntity("semantic", buildSemanticPrompt(), input, IssuesEntity.class);
+                List<AiIssue> structural = structuralEntity != null ? structuralEntity.issues() : List.of();
+                List<AiIssue> semantic = semanticEntity != null ? semanticEntity.issues() : List.of();
+                List<AiIssue> merged = new java.util.ArrayList<>();
+                merged.addAll(structural);
+                merged.addAll(semantic);
+                combinedIssues = merged;
+            }
+            finally {
+                executor.shutdown();
+            }
+
+            List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapAiIssueToDto).collect(Collectors.toList());
             boolean hasIssues = !issueDTOs.isEmpty();
             String summary = hasIssues ? String.format("Found %d consistency issue(s)", issueDTOs.size()) : "No issues found";
-
-            log.info("Consistency check completed for exercise {}", exercise.getId());
+            log.info("Consistency check completed for exercise {} via Spring AI", exercise.getId());
             return new ConsistencyCheckResponseDTO(issueDTOs, hasIssues, summary);
 
-        }
-        catch (RestClientException e) {
-            log.error("Failed to perform consistency check for exercise {} by user {}: {}", exercise.getId(), user.getLogin(), e.getMessage(), e);
-            throw new NetworkingException("An error occurred while calling Hyperion: " + e.getMessage(), e);
         }
         catch (Exception e) {
             log.error("Failed to perform consistency check for exercise {} by user {}", exercise.getId(), user.getLogin(), e);
@@ -129,27 +184,25 @@ public class HyperionReviewAndRefineRestService {
         log.info("Rewriting problem statement for course {} by user {}", course.getId(), user.getLogin());
 
         try {
-            var request = new RewriteProblemStatementRequest();
-            request.setText(problemStatementText.trim());
-
-            // Use the generated API client to perform the problem statement rewrite
-            RewriteProblemStatementResponse response = reviewAndRefineApi.problemStatementRewriteReviewAndRefineProblemStatementRewritePost(request);
-
-            String result = response.getRewrittenText();
-
-            if (result.trim().isEmpty()) {
-                log.warn("Hyperion service returned empty rewritten text for course {}", course.getId());
-                throw new NetworkingException("Hyperion service returned empty response");
+            if (chatClient == null) {
+                throw new NetworkingException("Spring AI ChatClient is not configured");
             }
 
-            boolean improved = !result.trim().equals(problemStatementText.trim());
+            // Local Spring AI rewrite
+            String prompt = buildRewritePrompt().replace("{text}", problemStatementText.trim());
+            String content = chatClient.prompt()
+                    .system("You are an expert technical writing assistant for programming exercise problem statements. Return only the rewritten statement, no explanations.")
+                    .user(prompt).call().content();
 
-            log.info("Problem statement rewrite completed for course {}", course.getId());
-            return new ProblemStatementRewriteResponseDTO(result.trim(), improved);
-        }
-        catch (RestClientException e) {
-            log.error("Failed to rewrite problem statement for course {} by user {}: {}", course.getId(), user.getLogin(), e.getMessage(), e);
-            throw new NetworkingException("An error occurred while calling Hyperion: " + e.getMessage(), e);
+            if (content == null || content.trim().isEmpty()) {
+                log.warn("Spring AI returned empty rewritten text for course {}", course.getId());
+                throw new NetworkingException("AI returned empty response");
+            }
+
+            String result = content.trim();
+            boolean improved = !result.equals(problemStatementText.trim());
+            log.info("Problem statement rewrite completed for course {} via Spring AI", course.getId());
+            return new ProblemStatementRewriteResponseDTO(result, improved);
         }
         catch (Exception e) {
             log.error("Failed to rewrite problem statement for course {} by user {}", course.getId(), user.getLogin(), e);
@@ -158,61 +211,15 @@ public class HyperionReviewAndRefineRestService {
     }
 
     /**
-     * Builds a consistency check request by extracting and structuring exercise data for the Hyperion API.
-     *
-     * @param exercise the programming exercise to extract data from
-     * @return a properly structured ConsistencyCheckRequest for the Hyperion API
-     * @throws RuntimeException if repository access fails or data extraction encounters errors
-     */
-    private ConsistencyCheckRequest buildConsistencyCheckRequest(ProgrammingExercise exercise) {
-        try {
-            var solutionRepo = buildRepository(exercise, RepositoryType.SOLUTION);
-            var templateRepo = buildRepository(exercise, RepositoryType.TEMPLATE);
-            var testRepo = buildRepository(exercise, RepositoryType.TESTS);
-
-            var request = new ConsistencyCheckRequest();
-            request.setProblemStatement(exercise.getProblemStatement() != null ? exercise.getProblemStatement() : "");
-            request.setSolutionRepository(solutionRepo);
-            request.setTemplateRepository(templateRepo);
-            request.setTestRepository(testRepo);
-
-            // Set programming language based on exercise
-            if (exercise.getProgrammingLanguage() != null) {
-                request.setProgrammingLanguage(mapProgrammingLanguage(exercise.getProgrammingLanguage()));
-            }
-
-            return request;
-        }
-        catch (IOException e) {
-            throw new RuntimeException("Failed to build consistency check request", e);
-        }
-    }
-
-    /**
-     * Maps Artemis programming language enumeration to Hyperion API programming language enumeration.
-     *
-     * @param artemisLanguage the Artemis programming language to map
-     * @return the corresponding Hyperion API programming language enumeration
-     */
-    private de.tum.cit.aet.artemis.hyperion.client.model.AppCreationStepsStep8ReviewAndRefineConsistencyCheckModelsProgrammingLanguage mapProgrammingLanguage(
-            ProgrammingLanguage artemisLanguage) {
-        return switch (artemisLanguage) {
-            case JAVA -> de.tum.cit.aet.artemis.hyperion.client.model.AppCreationStepsStep8ReviewAndRefineConsistencyCheckModelsProgrammingLanguage.JAVA;
-            case PYTHON -> de.tum.cit.aet.artemis.hyperion.client.model.AppCreationStepsStep8ReviewAndRefineConsistencyCheckModelsProgrammingLanguage.PYTHON;
-            default -> de.tum.cit.aet.artemis.hyperion.client.model.AppCreationStepsStep8ReviewAndRefineConsistencyCheckModelsProgrammingLanguage.JAVA;
-        };
-    }
-
-    /**
-     * Extracts repository contents and builds a Repository object for Hyperion API requests.
+     * Extracts repository contents and builds an internal repository object for AI prompts.
      *
      * @param exercise       the programming exercise containing repository information
      * @param repositoryType the type of repository to extract (TEMPLATE, SOLUTION, or TESTS)
-     * @return a Repository object containing filtered file contents, or empty Repository if access fails
+     * @return a Repo object containing filtered file contents, or empty Repo if access fails
      * @throws IOException if repository operations encounter unrecoverable errors
      */
-    private Repository buildRepository(ProgrammingExercise exercise, RepositoryType repositoryType) throws IOException {
-        List<RepositoryFile> repositoryFiles;
+    private Repo buildRepository(ProgrammingExercise exercise, RepositoryType repositoryType) throws IOException {
+        List<RepoFile> repositoryFiles;
 
         try {
             switch (repositoryType) {
@@ -238,9 +245,125 @@ public class HyperionReviewAndRefineRestService {
             repositoryFiles = List.of();
         }
 
-        var repository = new Repository();
-        repository.setFiles(repositoryFiles);
-        return repository;
+        return new Repo(repositoryFiles);
+    }
+
+    private ConsistencyIssueDTO mapAiIssueToDto(AiIssue issue) {
+        Severity severity = switch (issue.severity() == null ? "MEDIUM" : issue.severity().toUpperCase()) {
+            case "LOW" -> Severity.LOW;
+            case "HIGH" -> Severity.HIGH;
+            default -> Severity.MEDIUM;
+        };
+        List<ArtifactLocationDTO> locations = issue.relatedLocations() == null ? List.of()
+                : issue.relatedLocations().stream()
+                        .map(loc -> new ArtifactLocationDTO(loc.type() == null ? ArtifactType.PROBLEM_STATEMENT : loc.type(), loc.filePath(), loc.startLine(), loc.endLine()))
+                        .collect(Collectors.toList());
+        return new ConsistencyIssueDTO(severity, issue.category(), issue.description(), issue.suggestedFix(), locations);
+    }
+
+    private <T> T runAiCheckEntity(String checkName, String promptTemplate, Map<String, Object> input, Class<T> entityClass) {
+        try {
+            String formatted = promptTemplate.replace("{rendered_context}", String.valueOf(input.getOrDefault("rendered_context", ""))).replace("{programming_language}",
+                    String.valueOf(input.getOrDefault("programming_language", "")));
+            return chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.").user(formatted).call()
+                    .entity(entityClass);
+        }
+        catch (Exception e) {
+            log.error("{} consistency check failed: {}", checkName, e.getMessage());
+            try {
+                return entityClass.getDeclaredConstructor().newInstance();
+            }
+            catch (Exception ex) {
+                return null;
+            }
+        }
+    }
+
+    private String buildStructuralPrompt() {
+        return """
+                Analyze the programming exercise for structural consistency issues between the problem statement, template code, solution code, and tests.
+                Programming language: {programming_language}
+
+                Context:
+                {rendered_context}
+
+                        Focus on the following categories only:
+                        - METHOD_RETURN_TYPE_MISMATCH
+                        - METHOD_PARAMETER_MISMATCH
+                        - CONSTRUCTOR_PARAMETER_MISMATCH
+                        - ATTRIBUTE_TYPE_MISMATCH
+                        - VISIBILITY_MISMATCH
+
+                        Return a JSON object with the following schema strictly:
+                        {
+                            "issues": [
+                                {
+                                    "severity": "LOW" | "MEDIUM" | "HIGH",
+                                    "category": "METHOD_RETURN_TYPE_MISMATCH" | "METHOD_PARAMETER_MISMATCH" | "CONSTRUCTOR_PARAMETER_MISMATCH" | "ATTRIBUTE_TYPE_MISMATCH" | "VISIBILITY_MISMATCH",
+                                    "description": string,
+                                    "suggestedFix": string,
+                                    "relatedLocations": [
+                                        {
+                                            "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
+                                            "filePath": string,
+                                            "startLine": number | null,
+                                            "endLine": number | null
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                        """;
+    }
+
+    private String buildSemanticPrompt() {
+        return """
+                        Analyze the programming exercise for semantic consistency issues focused on identifier naming consistency across problem statement, template, solution, and tests.
+                        Programming language: {programming_language}
+
+                Context:
+                {rendered_context}
+
+                        Focus on the following category only:
+                        - IDENTIFIER_NAMING_INCONSISTENCY
+
+                        Return a JSON object with the following schema strictly:
+                        {
+                            "issues": [
+                                {
+                                    "severity": "LOW" | "MEDIUM" | "HIGH",
+                                    "category": "IDENTIFIER_NAMING_INCONSISTENCY",
+                                    "description": string,
+                                    "suggestedFix": string,
+                                    "relatedLocations": [
+                                        {
+                                            "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
+                                            "filePath": string,
+                                            "startLine": number | null,
+                                            "endLine": number | null
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                        """;
+    }
+
+    private String buildRewritePrompt() {
+        return """
+                You are tasked with rewriting a programming exercise problem statement.
+                Goals:
+                - Improve clarity, conciseness, and coherence while preserving the original intent.
+                - Maintain technical correctness and avoid changing the required functionality.
+                - Remove ambiguity; ensure inputs, outputs, constraints, and acceptance criteria are explicit when present.
+                - Keep markdown structure (headings, lists, code blocks) and formatting.
+                - Avoid adding extraneous explanations; do not include solution hints.
+
+                Original problem statement:
+                {text}
+
+                Output ONLY the rewritten problem statement as plain text (no JSON, no commentary).
+                """;
     }
 
     /**
@@ -250,16 +373,12 @@ public class HyperionReviewAndRefineRestService {
      * @param participation the programming exercise participation with VCS repository access
      * @return list of RepositoryFile objects containing filtered source files
      */
-    private List<RepositoryFile> getFilteredRepositoryFiles(ProgrammingExerciseParticipation participation) {
+    private List<RepoFile> getFilteredRepositoryFiles(ProgrammingExerciseParticipation participation) {
         var language = participation.getProgrammingExercise().getProgrammingLanguage();
         var repositoryContents = getRepositoryContents(participation.getVcsRepositoryUri());
 
-        return repositoryContents.entrySet().stream().filter(entry -> language == null || language.matchesFileExtension(entry.getKey())).map(entry -> {
-            var file = new RepositoryFile();
-            file.setPath(entry.getKey());
-            file.setContent(entry.getValue());
-            return file;
-        }).collect(Collectors.toList());
+        return repositoryContents.entrySet().stream().filter(entry -> language == null || language.matchesFileExtension(entry.getKey()))
+                .map(entry -> new RepoFile(entry.getKey(), entry.getValue())).collect(Collectors.toList());
     }
 
     /**
@@ -270,15 +389,10 @@ public class HyperionReviewAndRefineRestService {
      * @param repositoryUri the VCS repository URI to access
      * @return list of RepositoryFile objects containing all repository files
      */
-    private List<RepositoryFile> getRepositoryFiles(VcsRepositoryUri repositoryUri) {
+    private List<RepoFile> getRepositoryFiles(VcsRepositoryUri repositoryUri) {
         var repositoryContents = getRepositoryContents(repositoryUri);
 
-        return repositoryContents.entrySet().stream().map(entry -> {
-            var file = new RepositoryFile();
-            file.setPath(entry.getKey());
-            file.setContent(entry.getValue());
-            return file;
-        }).collect(Collectors.toList());
+        return repositoryContents.entrySet().stream().map(entry -> new RepoFile(entry.getKey(), entry.getValue())).collect(Collectors.toList());
     }
 
     /**
@@ -299,31 +413,38 @@ public class HyperionReviewAndRefineRestService {
         }
     }
 
-    /**
-     * Maps Hyperion's ArtifactType enum to Artemis's ArtifactType enum.
-     *
-     * @param hyperionType the artifact type from Hyperion
-     * @return the corresponding Artemis artifact type
-     */
-    private ArtifactType mapHyperionArtifactType(de.tum.cit.aet.artemis.hyperion.client.model.ArtifactType hyperionType) {
-        return switch (hyperionType) {
-            case PROBLEM_STATEMENT -> ArtifactType.PROBLEM_STATEMENT;
-            case TEMPLATE_REPOSITORY -> ArtifactType.TEMPLATE_REPOSITORY;
-            case SOLUTION_REPOSITORY -> ArtifactType.SOLUTION_REPOSITORY;
-        };
+    // Lightweight internal repo models
+    private record Repo(List<RepoFile> files) {
     }
 
-    /**
-     * Maps Hyperion's ConsistencyIssueSeverity enum to Artemis's Severity enum.
-     *
-     * @param hyperionSeverity the severity from Hyperion
-     * @return the corresponding Artemis severity
-     */
-    private Severity mapHyperionSeverity(ConsistencyIssueSeverity hyperionSeverity) {
-        return switch (hyperionSeverity) {
-            case LOW -> Severity.LOW;
-            case MEDIUM -> Severity.MEDIUM;
-            case HIGH -> Severity.HIGH;
-        };
+    private record RepoFile(String path, String content) {
+    }
+
+    private String renderRepo(Repo repo) {
+        // Legacy method not used anymore; kept for backward compatibility in case of future use
+        return "(unused)";
+    }
+
+    // ----- Internal AI Response Models -----
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class IssuesEntity {
+
+        public List<AiIssue> issues = List.of();
+
+        public IssuesEntity() {
+        }
+
+        public List<AiIssue> issues() {
+            return issues == null ? List.of() : issues;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record AiIssue(String severity, String category, String description, String suggestedFix, List<AiArtifactLocation> relatedLocations) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record AiArtifactLocation(ArtifactType type, String filePath, Integer startLine, Integer endLine) {
     }
 }

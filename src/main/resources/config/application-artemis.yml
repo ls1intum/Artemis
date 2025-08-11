@@ -103,8 +103,38 @@ artemis:
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
 
-  # Hyperion Configuration (Programming Exercise Creation Assistance)
-  # hyperion:
-  #   url: https://hyperion.yourdomain.com        # Hyperion service REST API URL
-  #   api-key: ${HYPERION_API_KEY}                # API key for authentication (use environment variable)
+  # Spring AI configuration is defined under the standard 'spring.ai.*' properties
+  # Example (OpenAI):
+  # spring:
+  #   ai:
+  #     openai:
+  #       api-key: ${OPENAI_API_KEY}
+  #       base-url: https://api.openai.com
+  #       chat:
+  #         options:
+  #           model: gpt-4o-mini
+
+---
+# Enable Hyperion features via Spring profile
+spring:
+  config:
+    activate:
+      on-profile: hyperion
+  ai:
+    azure:
+      openai:
+        api-key: ${AZURE_OPENAI_API_KEY:}
+        endpoint: ${AZURE_OPENAI_ENDPOINT:https://example.openai.azure.com/}
+        # deployment-name should match the Azure OpenAI deployment
+        chat:
+          options:
+            deployment-name: ${AZURE_OPENAI_DEPLOYMENT:gpt-5-mini}
+            model: ${AZURE_OPENAI_MODEL:gpt-5-mini}
+    # Fallback OpenAI config can remain for local testing if desired
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      base-url: https://api.openai.com
+      chat:
+        options:
+          model: ${OPENAI_MODEL:gpt-5-mini}
 

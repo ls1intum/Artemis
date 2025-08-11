@@ -129,12 +129,6 @@ artemis:
         min: "2.0.0"
         recommended: "2.1.0"
 
-    # TODO: !!!!! REMOVE THIS BEFORE MERGING START !!!!!
-    hyperion:
-      url: https://hyperion.aet.cit.tum.de
-    # TODO: !!!!! REMOVE THIS BEFORE MERGING END !!!!!
-
-
 
 management:
     endpoints:

@@ -155,44 +155,6 @@ configurations.configureEach {
     exclude group: "commons-configuration", module: "commons-configuration"
 }
 
-// SourceSets Configuration for OpenAPI Generated Files
-sourceSets {
-    main {
-        java {
-            srcDirs 'src/main/java'
-            srcDirs 'build/generated/sources/hyperion-openapi/src/main/java'
-        }
-    }
-}
-
-
-// Custom task for generating Hyperion Java client
-task generateHyperionJavaClient(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask) {
-    generatorName.set('java')
-    inputSpec.set('openapi/hyperion.yaml')
-    outputDir.set("${buildDir}/generated/sources/hyperion-openapi")
-    apiPackage.set('de.tum.cit.aet.artemis.hyperion.client.api')
-    modelPackage.set('de.tum.cit.aet.artemis.hyperion.client.model')
-    invokerPackage.set('de.tum.cit.aet.artemis.hyperion.client')
-    configOptions.set([
-        library: 'resttemplate',
-        openApiNullable: 'false',
-        useJakartaEe: 'true',
-        serializationLibrary: 'jackson',
-        hideGenerationTimestamp: 'true',
-        generateClientAsBean: 'false'
-    ])
-    skipOverwrite.set(false)
-}
-
-// Ensure OpenAPI generation runs before compilation
-tasks.named('compileJava') {
-    dependsOn tasks.generateHyperionJavaClient
-}
-tasks.named('compileTestJava') {
-    dependsOn tasks.generateHyperionJavaClient
-}
-
 dependencies {
 
     // Required by Spring cloud
@@ -218,6 +180,10 @@ dependencies {
     implementation "de.jplag:swift:${jplag_version}"
     implementation "de.jplag:text:${jplag_version}"
     implementation "de.jplag:typescript:${jplag_version}"
+
+    implementation platform("org.springframework.ai:spring-ai-bom:1.0.1")
+    implementation "org.springframework.ai:spring-ai-azure-openai"
+    implementation "org.springframework.ai:spring-ai-starter-model-openai"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -605,5 +571,5 @@ tasks.named("dependencyUpdates").configure {
 // 11) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
 // 12) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
-// 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups at the moment)
+// 14) Generate OpenAPI Angular client services & DTOs: ./gradlew openApiGenerate -x webapp
 // 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups at the moment)

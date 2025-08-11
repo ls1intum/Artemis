@@ -26,7 +26,7 @@
 
 // TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
             args.set(["--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=",
-                      "--artemis.iris.secret-token=token", "--artemis.hyperion.url=http://hyperion.fake", "--artemis.hyperion.api-key=fake-key", 
+                      "--artemis.iris.secret-token=token",
                       "--artemis.version-control.local-vcs-repo-path=/tmp/repos", "--artemis.continuous-integration.artemis-authentication-token-value=fake-token",
                       "--artemis.version-control.user=fake-user", "--artemis.version-control.password=fake-password",
                       "--spring.jpa.database=h2", "--spring.datasource.url=jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE", "--spring.datasource.username=sa", "--spring.datasource.password=", "--aeolus.url=http://aeolus.fake"])
