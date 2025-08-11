@@ -201,7 +201,13 @@ See :ref:`Adaptive Learning <adaptive-learning>` for more information.
     :width: 1000
 .. |create-video-unit| image:: lectures/create-video-unit.png
     :width: 1000
-.. |create-attachment-unit| image:: lectures/create-attachment-unit.png
+.. |create-attachment-video-unit| image:: lectures/create-attachment-video-unit.png
+    :width: 1000
+.. |admin-page-transcription-upload| image:: lectures/admin-page-transcription-upload.png
+    :width: 1000
+.. |send-all-lectures-to-iris| image:: lectures/send-all-lectures-to-iris.png
+    :width: 1000
+.. |send-one-unit-iris| image:: lectures/send-one-unit-iris.png
     :width: 1000
 .. |view-attachment-unit-btn| image:: lectures/view-attachment-unit-btn.png
     :width: 80
