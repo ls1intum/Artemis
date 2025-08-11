@@ -75,10 +75,10 @@ public class LectureTranscriptionResource {
 
     private final TumLiveService tumLiveService;
 
-    @Value("${artemis.nebula.base-url}")
+    @Value("${artemis.nebula.url}")
     private String nebulaBaseUrl;
 
-    @Value("${artemis.nebula.secret-token}")
+    @Value("${artemis.nebula.secret}")
     private String nebulaSecretToken;
 
     @Value("${jhipster.clientApp.name}")
