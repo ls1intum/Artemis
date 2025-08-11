@@ -636,6 +636,75 @@ describe('TutorSuggestionComponent', () => {
         }));
     });
 
+    describe('getTimestamp', () => {
+        const fixedNow = dayjs('2024-07-10T12:00:00Z');
+
+        beforeAll(() => {
+            jest.useFakeTimers();
+            jest.setSystemTime(fixedNow.toDate());
+        });
+
+        afterAll(() => {
+            jest.useRealTimers();
+        });
+
+        it('should return "just now" for timestamps within the last minute', () => {
+            const ts = component.getTimestamp(fixedNow.subtract(10, 'second').toDate());
+            expect(ts).toBe('just now');
+        });
+
+        it('should return minutes ago for same-day timestamps within the hour', () => {
+            const ts = component.getTimestamp(fixedNow.subtract(5, 'minute').toDate());
+            expect(ts).toBe('5 minutes ago');
+        });
+
+        it('should return hours ago for same-day timestamps older than an hour', () => {
+            const ts = component.getTimestamp(fixedNow.subtract(2, 'hour').toDate());
+            expect(ts).toBe('2 hours ago');
+        });
+
+        it('should return "yesterday" for dates one day before now', () => {
+            const ts = component.getTimestamp(fixedNow.subtract(1, 'day').toDate());
+            expect(ts).toBe('yesterday');
+        });
+
+        it('should return X days ago for dates within the last 7 days', () => {
+            const ts = component.getTimestamp(fixedNow.subtract(3, 'day').toDate());
+            expect(ts).toBe('3 days ago');
+        });
+
+        it('should return DD/MM/YYYY for dates older than 7 days', () => {
+            const ts = component.getTimestamp(fixedNow.subtract(8, 'day').toDate());
+            expect(ts).toBe('02/07/2024');
+        });
+    });
+
+    describe('userRequestedNewSuggestion', () => {
+        it('should call requestTutorSuggestion on success', () => {
+            const spy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            component.userRequestedNewSuggestion();
+            expect(spy).toHaveBeenCalled();
+        });
+
+        it('should set error when requestTutorSuggestion fails', () => {
+            jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(throwError(() => new Error('fail')));
+            component.userRequestedNewSuggestion();
+            expect(component['error']).toBe(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
+        });
+    });
+
+    describe('subscribeToIrisActivation', () => {
+        it('should call requestSuggestion when active and session id is available', () => {
+            jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
+            jest.spyOn(chatService, 'currentSessionId').mockReturnValue(of(321));
+            const spy = jest.spyOn(component as any, 'requestSuggestion');
+
+            (component as any).subscribeToIrisActivation();
+
+            expect(spy).toHaveBeenCalled();
+        });
+    });
+
     function setUpForRequestSuggestion() {
         jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
         jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));

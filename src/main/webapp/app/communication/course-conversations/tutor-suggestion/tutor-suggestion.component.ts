@@ -260,7 +260,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
             }
         } else {
             const diffDays = now.diff(parsedDate, 'day');
-            if (diffDays < 1) {
+            if (diffDays === 1) {
                 return 'yesterday';
             } else if (diffDays < 7) {
                 return `${diffDays} days ago`;
