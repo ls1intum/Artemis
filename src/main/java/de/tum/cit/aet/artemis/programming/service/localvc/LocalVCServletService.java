@@ -445,7 +445,7 @@ public class LocalVCServletService {
      */
     private boolean tryAuthenticationWithParticipationVCSAccessToken(User user, String providedToken, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri)
             throws LocalVCAuthException {
-
+        log.error("try to authenticate user {} with participation VCS access token", user.getLogin());
         // Note: we first check if the user has used a vcs access token instead of a password
         if (providedToken.startsWith(TOKEN_PREFIX) && providedToken.length() == VCS_ACCESS_TOKEN_LENGTH) {
             try {
@@ -458,6 +458,7 @@ public class LocalVCServletService {
                 }
                 else {
                     participations = programmingExerciseParticipationService.findStudentParticipationsByExerciseAndStudentId(exercise, user.getLogin());
+                    log.error("Participations found for user {}: {}", user.getLogin(), participations);
                     studentParticipation = participations.stream().filter(participation -> participation.getRepositoryUri().equals(localVCRepositoryUri.toString())).findAny();
                 }
                 if (studentParticipation.isPresent()) {
@@ -466,12 +467,20 @@ public class LocalVCServletService {
                         user.setVcsAccessToken(storedToken.get().getVcsAccessToken());
                         return true;
                     }
+                    else {
+                        log.error("Provided participation VCS access token does not match the stored token for user {} and participation {}", user.getLogin(),
+                                studentParticipation.get().getId());
+                    }
+                }
+                else {
+                    log.error("No student participation found for user {}", user.getLogin());
                 }
             }
             catch (EntityNotFoundException e) {
                 throw new LocalVCAuthException();
             }
         }
+        log.error("Token is not a a participation VCS access token or does not match the expected length");
         return false;
     }
 
