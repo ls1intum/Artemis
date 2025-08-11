@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 import jakarta.validation.Valid;
 
@@ -13,25 +14,22 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -47,25 +45,12 @@ public class LectureTranscriptionResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
-    private final UserRepository userRepository;
-
-    private final AuthorizationCheckService authCheckService;
-
-    private final LectureRepository lectureRepository;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final LectureService lectureService;
-
-    public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, LectureRepository lectureRepository, LectureService lectureService) {
+    public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository) {
         this.lectureTranscriptionRepository = transcriptionRepository;
         this.lectureUnitRepository = lectureUnitRepository;
-        this.authCheckService = authCheckService;
-        this.userRepository = userRepository;
-        this.lectureRepository = lectureRepository;
-        this.lectureService = lectureService;
     }
 
     /**
@@ -96,5 +81,31 @@ public class LectureTranscriptionResource {
         LectureTranscription result = lectureTranscriptionRepository.save(lectureTranscription);
 
         return ResponseEntity.created(new URI("/api/lecture/" + lectureId + "/transcriptions/" + result.getId())).body(result);
+    }
+
+    /**
+     * Retrieves the transcript for a given lecture unit.
+     *
+     * <p>
+     * This endpoint returns the transcript associated with the specified {@code lectureUnitId}, including
+     * the language and individual transcript segments.
+     * </p>
+     *
+     * @param lectureUnitId the ID of the lecture unit for which to retrieve the transcript
+     * @return {@link ResponseEntity} containing the {@link LectureTranscriptionDTO} if found, or 404 Not Found if no transcript exists
+     */
+    @GetMapping("lecture-unit/{lectureUnitId}/transcript")
+    @EnforceAtLeastInstructorInLectureUnit
+    public ResponseEntity<LectureTranscriptionDTO> getTranscript(@PathVariable Long lectureUnitId) {
+        Optional<LectureTranscription> transcriptionOpt = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
+
+        if (transcriptionOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        LectureTranscription transcription = transcriptionOpt.get();
+        LectureTranscriptionDTO dto = new LectureTranscriptionDTO(lectureUnitId, transcription.getLanguage(), transcription.getSegments());
+
+        return ResponseEntity.ok(dto);
     }
 }
