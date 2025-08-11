@@ -55,13 +55,13 @@
         border-left: 1px solid var(--border-color);
         border-right: 1px solid var(--border-color);
         border-top: 1px solid var(--border-color);
-        border-top-left-radius: 12px;
-        border-top-right-radius: 12px;
+        border-top-left-radius: 0.75rem;
+        border-top-right-radius: 0.75rem;
 
         .title-close-button-row {
             display: flex;
             align-items: center;
-            padding: 12px 12px 8px;
+            padding: 0.75rem 0.75rem 0.5rem;
 
             .header-spacer {
                 width: calc(100% / 7);
@@ -72,7 +72,7 @@
 
             .month-title {
                 flex: 1;
-                font-size: 16px;
+                font-size: 1rem;
                 font-weight: 800;
                 text-align: center;
             }
@@ -80,12 +80,12 @@
 
         .day-name-row {
             display: flex;
-            padding: 0px 12px 12px;
+            padding: 0 0.75rem 0.75rem;
             border-bottom: 1px solid var(--border-color);
 
             .weekday-label {
                 flex: 1;
-                font-size: 14px;
+                font-size: 0.75rem;
                 font-weight: 500;
                 text-align: center;
             }
