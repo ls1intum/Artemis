@@ -90,6 +90,19 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     return { invalidVideoUrl: true };
 }
 
+function validJsonOrEmpty(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (value === undefined || value === null || value === '') {
+        return null;
+    }
+    try {
+        JSON.parse(value);
+        return null;
+    } catch {
+        return { invalidJson: true };
+    }
+}
+
 @Component({
     selector: 'jhi-attachment-video-unit-form',
     templateUrl: './attachment-video-unit-form.component.html',
@@ -147,7 +160,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
         updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
-        videoTranscription: [undefined as string | undefined],
+        videoTranscription: [undefined as string | undefined, [validJsonOrEmpty]],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 

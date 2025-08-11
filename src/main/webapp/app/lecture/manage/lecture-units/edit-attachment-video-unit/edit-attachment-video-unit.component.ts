@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, map, switchMap, take } from 'rxjs/operators';
+import { catchError, finalize, map, switchMap, take } from 'rxjs/operators';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -126,22 +126,31 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
 
         this.attachmentVideoUnitService
             .update(this.lectureId, this.attachmentVideoUnit.id!, formData, this.notificationText)
-            .subscribe({
-                next: () => {
-                    if (videoTranscription) {
-                        const transcription = JSON.parse(videoTranscription);
-                        transcription.lectureUnitId = this.attachmentVideoUnit.id!;
-
-                        this.lectureTranscriptionService.createTranscription(this.lectureId, this.attachmentVideoUnit.id!, transcription).subscribe({
-                            next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),
-                            error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                        });
-                    } else {
-                        this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
+            .pipe(
+                switchMap(() => {
+                    if (!videoTranscription) {
+                        return of(null);
                     }
-                },
+                    let transcription: any;
+                    try {
+                        transcription = JSON.parse(videoTranscription);
+                    } catch (e) {
+                        this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
+                        return of(null);
+                    }
+                    transcription.lectureUnitId = this.attachmentVideoUnit.id!;
+                    return this.lectureTranscriptionService.createTranscription(this.lectureId, this.attachmentVideoUnit.id!, transcription).pipe(
+                        catchError((err) => {
+                            onError(this.alertService, err);
+                            return of(null);
+                        }),
+                    );
+                }),
+                finalize(() => (this.isLoading = false)),
+            )
+            .subscribe({
+                next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => (this.isLoading = false));
+            });
     }
 }

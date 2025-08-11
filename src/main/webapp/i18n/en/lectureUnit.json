@@ -84,6 +84,7 @@
             "created": "New attachment unit created",
             "updated": "Attachment unit updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
+            "transcriptionInvalidJson": "The transcription JSON is invalid and was ignored.",
             "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with unit headings) to split the PDF into units.",

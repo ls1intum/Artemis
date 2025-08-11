@@ -21,7 +21,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
-import { switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { LectureTranscriptionService } from '../services/lecture-transcription.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -220,36 +220,56 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.currentlyProcessedAttachmentVideoUnit));
 
-        (this.isEditingLectureUnit
+        const save$ = this.isEditingLectureUnit
             ? this.attachmentVideoUnitService.update(this.lecture.id!, this.currentlyProcessedAttachmentVideoUnit.id!, formData, notificationText)
-            : this.attachmentVideoUnitService.create(formData, this.lecture.id!)
-        ).subscribe({
-            next: (response) => {
-                const lectureUnit = response.body!;
-                if (videoTranscription) {
-                    const transcription = JSON.parse(videoTranscription);
-                    transcription.lectureUnitId = lectureUnit.id!;
+            : this.attachmentVideoUnitService.create(formData, this.lecture.id!);
 
-                    this.lectureTranscriptionService.createTranscription(this.lecture.id!, lectureUnit.id!, transcription).subscribe({
-                        next: () => {
-                            this.onCloseLectureUnitForms();
-                            this.unitManagementComponent.loadData();
-                        },
-                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                    });
-                } else {
+        save$
+            .pipe(
+                switchMap((response) => {
+                    const lectureUnit = response.body!;
+
+                    if (!videoTranscription) {
+                        return of(lectureUnit);
+                    }
+
+                    let transcription: any;
+                    try {
+                        transcription = JSON.parse(videoTranscription);
+                    } catch (e) {
+                        this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
+                        return of(lectureUnit);
+                    }
+
+                    transcription.lectureUnitId = lectureUnit.id;
+
+                    return this.lectureTranscriptionService.createTranscription(this.lecture.id!, lectureUnit.id!, transcription).pipe(
+                        map(() => lectureUnit),
+                        // Swallow transcription errors so the primary save still counts as success
+                        catchError((err) => {
+                            onError(this.alertService, err);
+                            return of(lectureUnit);
+                        }),
+                    );
+                }),
+            )
+            .subscribe({
+                next: () => {
                     this.onCloseLectureUnitForms();
                     this.unitManagementComponent.loadData();
-                }
-            },
-            error: (res: HttpErrorResponse) => {
-                if (res.error?.params === 'file' && res?.error?.title) {
-                    this.alertService.error(res.error.title);
-                } else {
-                    onError(this.alertService, res);
-                }
-            },
-        });
+                },
+                error: (res: HttpErrorResponse | Error) => {
+                    if (res instanceof Error) {
+                        this.alertService.error(res.message);
+                        return;
+                    }
+                    if (res.error?.params === 'file' && res?.error?.title) {
+                        this.alertService.error(res.error.title);
+                    } else {
+                        onError(this.alertService, res);
+                    }
+                },
+            });
     }
 
     /**

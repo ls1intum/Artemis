@@ -84,6 +84,7 @@
             "created": "Eine neue Dateieinheit wurde erstellt",
             "updated": "Dateieinheit aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
+            "transcriptionInvalidJson": "Die Transkriptions-JSON ist ungültig und wurde ignoriert.",
             "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Kapitelüberschriften) und unterteilt das PDF in Einheiten.",
