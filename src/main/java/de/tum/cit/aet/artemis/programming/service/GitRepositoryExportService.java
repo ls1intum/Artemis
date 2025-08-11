@@ -111,7 +111,6 @@ public class GitRepositoryExportService {
      *          Predicate<Path> includeAll = null;
      */
     public Path zipFiles(Path contentRootPath, String zipFilename, String zipDir, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
-        // Strip whitespace from name
         String zipFilenameWithoutWhitespace = zipFilename.replaceAll("\\s", "");
 
         if (!zipFilenameWithoutWhitespace.endsWith(".zip")) {
