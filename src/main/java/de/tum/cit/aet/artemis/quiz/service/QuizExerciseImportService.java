@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -240,40 +241,143 @@ public class QuizExerciseImportService extends ExerciseImportService {
         dndQuestion.setCorrectMappings(newDragAndDropMappings);
     }
 
+    /**
+     * Prepares a short answer question for import by creating new instances of spots, solutions, and mappings.
+     * This method creates copies of the spots and solutions, resetting their identifiers and mappings.
+     * It then recreates the correct mappings by linking them to the new spots and solutions using either
+     * persistent IDs or temporary IDs from the original objects.
+     *
+     * @param saQuestion the short answer question to set up for import
+     */
     private void setUpShortAnswerQuestionForImport(ShortAnswerQuestion saQuestion) {
-        List<ShortAnswerSpot> newShortAnswerSpots = new ArrayList<>();
-        for (ShortAnswerSpot shortAnswerSpot : saQuestion.getSpots()) {
-            shortAnswerSpot.setId(null);
-            shortAnswerSpot.setQuestion(saQuestion);
-            shortAnswerSpot.setMappings(new HashSet<>());
+        Map<Long, ShortAnswerSpot> spotMap = setUpShortAnswerSpotsForImport(saQuestion);
+        Map<Long, ShortAnswerSolution> solutionMap = setUpShortAnswerSolutionsForImport(saQuestion);
+        setUpShortAnswerMappingsForImport(saQuestion, spotMap, solutionMap);
+    }
 
-            newShortAnswerSpots.add(shortAnswerSpot);
+    /**
+     * Sets up a map of new ShortAnswerSpot instances for the given short answer question.
+     * Creates new spots based on the original ones, maps them by their ID or tempID,
+     * and updates the question with the list of new spots.
+     *
+     * @param saQuestion the short answer question containing the original spots
+     * @return a map of IDs/tempIDs to new ShortAnswerSpot instances
+     */
+    private Map<Long, ShortAnswerSpot> setUpShortAnswerSpotsForImport(ShortAnswerQuestion saQuestion) {
+        Map<Long, ShortAnswerSpot> spotMap = new HashMap<>();
+        for (ShortAnswerSpot oldSpot : saQuestion.getSpots()) {
+            ShortAnswerSpot newSpot = createNewShortAnswerSpot(oldSpot, saQuestion);
+            Long key = oldSpot.getId() != null ? oldSpot.getId() : oldSpot.getTempID();
+            spotMap.put(key, newSpot);
         }
-        saQuestion.setSpots(newShortAnswerSpots);
+        saQuestion.setSpots(new ArrayList<>(spotMap.values()));
+        return spotMap;
+    }
 
-        List<ShortAnswerSolution> newShortAnswerSolutions = new ArrayList<>();
-        for (ShortAnswerSolution shortAnswerSolution : saQuestion.getSolutions()) {
-            shortAnswerSolution.setId(null);
-            shortAnswerSolution.setQuestion(saQuestion);
-            shortAnswerSolution.setMappings(new HashSet<>());
-
-            newShortAnswerSolutions.add(shortAnswerSolution);
+    /**
+     * Sets up a map of new ShortAnswerSolution instances for the given short answer question.
+     * Creates new solutions based on the original ones, maps them by their ID or tempID,
+     * and updates the question with the list of new solutions.
+     *
+     * @param saQuestion the short answer question containing the original solutions
+     * @return a map of IDs/tempIDs to new ShortAnswerSolution instances
+     */
+    private Map<Long, ShortAnswerSolution> setUpShortAnswerSolutionsForImport(ShortAnswerQuestion saQuestion) {
+        Map<Long, ShortAnswerSolution> solutionMap = new HashMap<>();
+        for (ShortAnswerSolution oldSolution : saQuestion.getSolutions()) {
+            ShortAnswerSolution newSolution = createNewShortAnswerSolution(oldSolution, saQuestion);
+            Long key = oldSolution.getId() != null ? oldSolution.getId() : oldSolution.getTempID();
+            solutionMap.put(key, newSolution);
         }
-        saQuestion.setSolutions(newShortAnswerSolutions);
+        saQuestion.setSolutions(new ArrayList<>(solutionMap.values()));
+        return solutionMap;
+    }
 
-        List<ShortAnswerMapping> newShortAnswerMappings = new ArrayList<>();
-        for (ShortAnswerMapping shortAnswerMapping : saQuestion.getCorrectMappings()) {
-            shortAnswerMapping.setId(null);
-            shortAnswerMapping.setQuestion(saQuestion);
-            if (shortAnswerMapping.getShortAnswerSolutionIndex() != null) {
-                shortAnswerMapping.setSolution(saQuestion.getSolutions().get(shortAnswerMapping.getShortAnswerSolutionIndex()));
+    /**
+     * Sets up new ShortAnswerMapping instances for the given short answer question.
+     * Creates new mappings based on the original correct mappings, linking them to the new spots and solutions
+     * using the provided maps, and updates the question with the list of new mappings.
+     *
+     * @param saQuestion  the short answer question containing the original mappings
+     * @param spotMap     the map of IDs/tempIDs to new ShortAnswerSpot instances
+     * @param solutionMap the map of IDs/tempIDs to new ShortAnswerSolution instances
+     */
+    private void setUpShortAnswerMappingsForImport(ShortAnswerQuestion saQuestion, Map<Long, ShortAnswerSpot> spotMap, Map<Long, ShortAnswerSolution> solutionMap) {
+        List<ShortAnswerMapping> newMappings = new ArrayList<>();
+        for (ShortAnswerMapping oldMapping : saQuestion.getCorrectMappings()) {
+            ShortAnswerMapping newMapping = createNewShortAnswerMapping(oldMapping, saQuestion, spotMap, solutionMap);
+            newMappings.add(newMapping);
+        }
+        saQuestion.setCorrectMappings(newMappings);
+    }
+
+    /**
+     * Creates a new ShortAnswerSpot instance based on the properties of the old spot.
+     * Copies relevant fields and associates it with the given question, initializing an empty set of mappings.
+     *
+     * @param oldSpot    the original ShortAnswerSpot to copy from
+     * @param saQuestion the short answer question to associate with the new spot
+     * @return the newly created ShortAnswerSpot
+     */
+    private ShortAnswerSpot createNewShortAnswerSpot(ShortAnswerSpot oldSpot, ShortAnswerQuestion saQuestion) {
+        ShortAnswerSpot newSpot = new ShortAnswerSpot();
+        newSpot.setSpotNr(oldSpot.getSpotNr());
+        newSpot.setWidth(oldSpot.getWidth());
+        newSpot.setInvalid(oldSpot.isInvalid());
+        newSpot.setQuestion(saQuestion);
+        newSpot.setMappings(new HashSet<>());
+        return newSpot;
+    }
+
+    /**
+     * Creates a new ShortAnswerSolution instance based on the properties of the old solution.
+     * Copies relevant fields and associates it with the given question, initializing an empty set of mappings.
+     *
+     * @param oldSolution the original ShortAnswerSolution to copy from
+     * @param saQuestion  the short answer question to associate with the new solution
+     * @return the newly created ShortAnswerSolution
+     */
+    private ShortAnswerSolution createNewShortAnswerSolution(ShortAnswerSolution oldSolution, ShortAnswerQuestion saQuestion) {
+        ShortAnswerSolution newSolution = new ShortAnswerSolution();
+        newSolution.setText(oldSolution.getText());
+        newSolution.setInvalid(oldSolution.isInvalid());
+        newSolution.setQuestion(saQuestion);
+        newSolution.setMappings(new HashSet<>());
+        return newSolution;
+    }
+
+    /**
+     * Creates a new ShortAnswerMapping instance based on the properties of the old mapping.
+     * Copies the invalid flag, associates it with the given question, and links it to the corresponding
+     * new solution and spot using the provided maps if they exist.
+     *
+     * @param oldMapping  the original ShortAnswerMapping to copy from
+     * @param saQuestion  the short answer question to associate with the new mapping
+     * @param spotMap     the map of IDs/tempIDs to new ShortAnswerSpot instances
+     * @param solutionMap the map of IDs/tempIDs to new ShortAnswerSolution instances
+     * @return the newly created ShortAnswerMapping
+     */
+    private ShortAnswerMapping createNewShortAnswerMapping(ShortAnswerMapping oldMapping, ShortAnswerQuestion saQuestion, Map<Long, ShortAnswerSpot> spotMap,
+            Map<Long, ShortAnswerSolution> solutionMap) {
+        ShortAnswerMapping newMapping = new ShortAnswerMapping();
+        newMapping.setInvalid(oldMapping.isInvalid());
+        newMapping.setQuestion(saQuestion);
+
+        if (oldMapping.getSolution() != null) {
+            Long solutionKey = oldMapping.getSolution().getId() != null ? oldMapping.getSolution().getId() : oldMapping.getSolution().getTempID();
+            if (solutionKey != null) {
+                newMapping.setSolution(solutionMap.computeIfPresent(solutionKey, (k, v) -> v));
             }
-            if (shortAnswerMapping.getShortAnswerSpotIndex() != null) {
-                shortAnswerMapping.setSpot(saQuestion.getSpots().get(shortAnswerMapping.getShortAnswerSpotIndex()));
-            }
-            newShortAnswerMappings.add(shortAnswerMapping);
         }
-        saQuestion.setCorrectMappings(newShortAnswerMappings);
+
+        if (oldMapping.getSpot() != null) {
+            Long spotKey = oldMapping.getSpot().getId() != null ? oldMapping.getSpot().getId() : oldMapping.getSpot().getTempID();
+            if (spotKey != null) {
+                newMapping.setSpot(spotMap.computeIfPresent(spotKey, (k, v) -> v));
+            }
+        }
+
+        return newMapping;
     }
 
     /**
@@ -293,4 +397,5 @@ public class QuizExerciseImportService extends ExerciseImportService {
         }
         newExercise.setQuizBatches(quizBatchList);
     }
+
 }

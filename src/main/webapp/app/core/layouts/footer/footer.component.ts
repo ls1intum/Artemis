@@ -3,12 +3,14 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-footer',
     templateUrl: './footer.component.html',
     styleUrls: ['./footer.scss'],
-    imports: [TranslateDirective, RouterLink, ArtemisTranslatePipe],
+    imports: [TranslateDirective, RouterLink, ArtemisTranslatePipe, ArtemisDatePipe],
 })
 export class FooterComponent implements OnInit {
     private profileService = inject(ProfileService);
@@ -19,7 +21,7 @@ export class FooterComponent implements OnInit {
     email: string;
     gitBranch: string;
     gitCommitId: string;
-    gitTimestamp: string;
+    gitTimestamp: dayjs.Dayjs;
     gitCommitUser: string;
     isTestServer: boolean;
     isProduction: boolean;
@@ -29,7 +31,7 @@ export class FooterComponent implements OnInit {
         this.contact = profileInfo.contact;
         this.gitBranch = profileInfo.git.branch;
         this.gitCommitId = profileInfo.git.commit.id.abbrev;
-        this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
+        this.gitTimestamp = dayjs(profileInfo.git.commit.time);
         this.gitCommitUser = profileInfo.git.commit.user.name;
         this.isTestServer = this.profileService.isTestServer();
         this.isProduction = this.profileService.isProduction();
