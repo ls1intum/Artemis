@@ -135,6 +135,9 @@
                     "high": "Hoch"
                 }
             },
+            "suggestion": {
+                "tooltip": "Diese Kompetenz wird von der KI auf Grundlage der Übungsbeschreibung vorgeschlagen."
+            },
             "competencyCard": {
                 "connectedLectureUnits": "Verbundene Vorlesungseinheiten",
                 "connectedLectureUnitsExplanation": "Die folgenden Vorlesungseinheiten sind mit der Kompetenz verbunden:",

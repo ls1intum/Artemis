@@ -27,7 +27,6 @@ public class AtlasMLRestTemplateConfiguration {
 
     private static final int ATLASML_SHORT_READ_TIMEOUT = 10 * 1000; // 10 seconds
 
-    // TODO: Change to the correct URL
     @Value("${artemis.atlas.atlasml.base-url:http://localhost:8000}")
     private String atlasmlBaseUrl;
 
