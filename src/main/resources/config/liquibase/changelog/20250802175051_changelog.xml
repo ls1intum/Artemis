@@ -84,15 +84,6 @@
         <createIndex indexName="idx_layout_strategy_exam_room_id" tableName="layout_strategy">
             <column name="exam_room_id"/>
         </createIndex>
-        <createIndex indexName="idx_layout_strategy_room_name" tableName="layout_strategy">
-            <!--
-             Because of the unique constraint, this is probably not required as
-             a smart DB would probably automatically create this index anyway to enforce the
-             unique constraint, which means this index might be redundant, but it doesn't harm.
-            -->
-            <column name="exam_room_id"/>
-            <column name="name"/>
-        </createIndex>
 
         <!-- Rollback section -->
         <rollback>
@@ -100,7 +91,7 @@
         </rollback>
     </changeSet>
 
-    <!-- 3. Add exam room to exam assignment table -->
+    <!-- 3. Add exam room <-> exam assignment table -->
     <changeSet id="20250802175051-03-add-exam-room-exam-assignment" author="röttgermann">
         <createTable tableName="exam_room_exam_assignment">
             <column name="id" type="bigint" autoIncrement="true">
