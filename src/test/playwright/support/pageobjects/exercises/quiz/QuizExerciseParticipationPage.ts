@@ -17,6 +17,10 @@ export class QuizExerciseParticipationPage {
         await this.page.locator('#join-batch').click();
     }
 
+    async startIndividualQuizBatch() {
+        await this.page.locator('#start-batch').click();
+    }
+
     /**
      * Starts the quiz batch.
      */
