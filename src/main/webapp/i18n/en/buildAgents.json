@@ -33,7 +33,6 @@
                 "buildAgentsResumed": "Resume request sent to all build agents. The agents will start accepting new build jobs.",
                 "distributedDataCleared": "Distributed data cleared successfully.",
                 "distributedDataClearFailed": "Failed to clear distributed data.",
-                "buildAgentCapacityAdjusted": "Build agent capacity adjusted successfully.",
                 "buildAgentCapacityAdjustFailed": "Failed to adjust build agent capacity."
             },
             "pause": "Pause",

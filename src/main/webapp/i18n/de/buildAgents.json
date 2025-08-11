@@ -33,7 +33,6 @@
                 "buildAgentsResumed": "Anfrage zum Fortsetzen aller Build-Agenten erfolgreich gesendet. Die Agenten werden wieder neue Build-Jobs annehmen.",
                 "distributedDataCleared": "Verteilte Daten erfolgreich gelöscht.",
                 "distributedDataClearFailed": "Löschen der verteilten Daten fehlgeschlagen.",
-                "buildAgentCapacityAdjusted": "Build-Agent-Kapazität erfolgreich angepasst.",
                 "buildAgentCapacityAdjustFailed": "Anpassung der Build-Agent-Kapazität fehlgeschlagen."
             },
             "pause": "Anhalten",

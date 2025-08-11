@@ -197,10 +197,6 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
         this.buildAgentsService.adjustBuildAgentCapacity(agentName, newCapacity).subscribe({
             next: () => {
                 this.load();
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjusted',
-                });
             },
             error: () => {
                 this.alertService.addAlert({
