@@ -572,9 +572,9 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
+    void testExportSubmissionsByParticipationIds_nonExistentParticipationId_notFound() throws Exception {
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/10";
-        request.postWithResponseBodyFile(path, getOptions(), HttpStatus.BAD_REQUEST);
+        request.postWithResponseBodyFile(path, getOptions(), HttpStatus.NOT_FOUND);
     }
 
     void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
