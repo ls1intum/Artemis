@@ -27,7 +27,7 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @BeforeEach
     void setup() {
         courseTestService.setup(TEST_PREFIX, this);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
     }
 
     @Test
@@ -179,8 +179,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
         changeUserGroup(TEST_PREFIX + "tutor1", Set.of(course.getTeachingAssistantGroupName(), "new-editor-group"));
         changeUserGroup(TEST_PREFIX + "tutor2", Set.of(course.getEditorGroupName()));
 
-        jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
-
         MvcResult result = request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
@@ -209,8 +207,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
         user = userUtilService.createAndSaveUser("new-instructor");
         user.setGroups(Set.of("new-instructor-group"));
         userTestRepository.save(user);
-
-        jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
         MvcResult result = request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 

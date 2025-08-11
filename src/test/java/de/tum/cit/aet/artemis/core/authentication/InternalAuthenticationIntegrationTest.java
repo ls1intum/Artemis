@@ -67,7 +67,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @BeforeEach
     void setUp() {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
 
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
@@ -96,8 +96,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         var course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1.setEnrollmentEnabled(true);
         course1 = courseRepository.save(course1);
-
-        jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, student.getGroups(), Set.of(), false);
         Set<String> updatedGroups = request.postSetWithResponseBody("/api/core/courses/" + course1.getId() + "/enroll", null, String.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is registered for course").contains(course1.getStudentGroupName());
     }
@@ -170,8 +168,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         student.setGroups(newGroups);
         final var managedUserVM = new ManagedUserVM(student);
         managedUserVM.setPassword("12345678");
-
-        jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, newGroups, oldGroups, false);
 
         final var response = request.putWithResponseBody("/api/core/admin/users", managedUserVM, User.class, HttpStatus.OK);
         final var updatedUserIndDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();

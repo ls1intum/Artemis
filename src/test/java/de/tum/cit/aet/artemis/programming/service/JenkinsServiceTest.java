@@ -42,7 +42,7 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVCTes
      */
     @BeforeEach
     void initTestCase() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         continuousIntegrationTestService.setup(TEST_PREFIX, this, continuousIntegrationService);
     }
 

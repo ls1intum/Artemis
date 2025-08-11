@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
 import de.tum.cit.aet.artemis.core.connector.JenkinsRequestMockProvider;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
@@ -54,7 +53,6 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
-import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 
 // TODO: rewrite this test to use LocalVC
@@ -76,9 +74,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     // TODO: we should remove @MockitoSpyBean here and use @Autowired instead
     @MockitoSpyBean
     protected LocalVCService versionControlService;
-
-    @MockitoSpyBean
-    protected JenkinsJobPermissionsService jenkinsJobPermissionsService;
 
     @MockitoSpyBean
     protected ProgrammingMessagingService programmingMessagingService;
@@ -185,8 +180,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
         jenkinsRequestMockProvider.mockGetFolderJob(targetProjectKey);
         jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetProjectKey, templateBuildPlanId);
         jenkinsRequestMockProvider.mockCopyBuildPlanFromSolution(sourceExercise.getProjectKey(), targetProjectKey, solutionBuildPlanId);
-        jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, templateBuildPlanId);
-        jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, solutionBuildPlanId);
         jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, templateBuildPlanId, planExistsInCi, shouldPlanEnableFail);
         jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, solutionBuildPlanId, planExistsInCi, shouldPlanEnableFail);
     }
@@ -278,8 +271,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     @Override
     public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
-        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         final String projectKey = participation.getProgrammingExercise().getProjectKey();
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, participation.getBuildPlanId(), false);
     }
@@ -301,50 +292,13 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     }
 
     @Override
-    public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) throws Exception {
-        jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), oldGroups, true);
-    }
-
-    @Override
-    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws Exception {
-        jenkinsRequestMockProvider.mockCreateUser(user, userExistsInCi, false, false);
-    }
-
-    @Override
-    public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception {
-        jenkinsRequestMockProvider.mockCreateUser(user, false, failInCi, failToGetCiUser);
-    }
-
-    @Override
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws Exception {
-        jenkinsRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, false, false);
-    }
-
-    @Override
-    public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup,
-            boolean failToAddUsers, boolean failToRemoveUsers) throws Exception {
-        jenkinsRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, failToAddUsers, failToRemoveUsers);
-    }
-
-    @Override
     public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception {
         jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, planName, shouldFail);
     }
 
     @Override
-    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws Exception {
+    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) {
         jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey, shouldFail);
-    }
-
-    @Override
-    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception {
-        jenkinsRequestMockProvider.mockAddUsersToGroups(Set.of(group), failInCi);
-    }
-
-    @Override
-    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception {
-        jenkinsRequestMockProvider.mockRemoveUserFromGroups(Set.of(group), failInCi);
-        jenkinsRequestMockProvider.mockAddUsersToGroups(Set.of(group), false);
     }
 
     @Override
@@ -417,20 +371,5 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @Override
     public void mockGetCiProjectMissing(ProgrammingExercise exercise) throws IOException {
         jenkinsRequestMockProvider.mockGetFolderJob(exercise.getProjectKey(), null);
-    }
-
-    @Override
-    public void mockCreateGroupInUserManagement(String groupName) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockDeleteGroupInUserManagement(String groupName) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockUserExists(String username) {
-        // Not needed for this test
     }
 }

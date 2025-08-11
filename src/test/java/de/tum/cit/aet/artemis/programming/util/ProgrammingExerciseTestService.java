@@ -1956,10 +1956,6 @@ public class ProgrammingExerciseTestService {
     public List<StudentExam> prepareStudentExamsForConduction(String testPrefix, ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate,
             Set<User> registeredStudents, List<LocalRepository> studentRepos) throws Exception {
 
-        for (int i = 1; i <= registeredStudents.size(); i++) {
-            mockDelegate.mockUserExists(testPrefix + "student" + i);
-        }
-
         final var course = courseUtilService.addEmptyCourse();
         var exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
@@ -2195,7 +2191,7 @@ public class ProgrammingExerciseTestService {
     }
 
     @NotNull
-    private Team setupTeamForBadRequestForStartExercise() throws Exception {
+    private Team setupTeamForBadRequestForStartExercise() {
         setupTeamExercise();
 
         // Create a team with students
