@@ -140,14 +140,13 @@ public class GitRepositoryExportService {
      *          // Include everything
      *          Predicate<Path> includeAll = null;
      */
-    public InputStreamResource zipDirectoryToMemory(Path contentRootPath, String zipFilename, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
-        String zipFilenameWithoutWhitespace = zipFilename.replaceAll("\\s", "");
-
-        if (!zipFilenameWithoutWhitespace.endsWith(".zip")) {
-            zipFilenameWithoutWhitespace += ".zip";
+    public InputStreamResource zipDirectoryToMemory(Path contentRootPath, String zipFilename, @Nullable Predicate<Path> contentFilter) throws IOException {
+        String sanitized = FileUtil.sanitizeFilename(zipFilename).replaceAll("\\s+", "");
+        if (!sanitized.toLowerCase(java.util.Locale.ROOT).endsWith(".zip")) {
+            sanitized += ".zip";
         }
 
-        var byteArrayResource = zipFileService.createZipFileWithFolderContentInMemory(contentRootPath, zipFilenameWithoutWhitespace, contentFilter);
+        var byteArrayResource = zipFileService.createZipFileWithFolderContentInMemory(contentRootPath, sanitized, contentFilter);
 
         return createZipInputStreamResource(byteArrayResource.getByteArray(), byteArrayResource.getFilename().replace(".zip", ""));
     }
