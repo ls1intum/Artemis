@@ -28,7 +28,7 @@ export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
     ngOnInit() {
         // listen to connect / disconnect events
         this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
-            this.disconnected = !status.connected;
+            this.disconnected = !status.connected && status.consecutiveFailureThresholdForDisconnectedStatusReached;
         });
     }
 

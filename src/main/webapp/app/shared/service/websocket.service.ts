@@ -69,13 +69,13 @@ export class ConnectionState {
     readonly connected: boolean;
     readonly wasEverConnectedBefore: boolean;
     readonly intendedDisconnect: boolean;
-    readonly consecutiveFailures: number;
+    readonly consecutiveFailureThresholdForDisconnectedStatusReached: boolean;
 
-    constructor(connected: boolean, wasEverConnectedBefore: boolean, intendedDisconnect: boolean, consecutiveFailures: number = 0) {
+    constructor(connected: boolean, wasEverConnectedBefore: boolean, intendedDisconnect: boolean, consecutiveFailureThresholdReached: boolean = false) {
         this.connected = connected;
         this.wasEverConnectedBefore = wasEverConnectedBefore;
         this.intendedDisconnect = intendedDisconnect;
-        this.consecutiveFailures = consecutiveFailures;
+        this.consecutiveFailureThresholdForDisconnectedStatusReached = consecutiveFailureThresholdReached;
     }
 }
 
@@ -125,8 +125,9 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     stompFailureCallback() {
         this.connecting = false;
         this.consecutiveFailedAttempts++;
+        const thresholdReached = this.consecutiveFailedAttempts > 20;
         if (this.connectionStateInternal.getValue().connected) {
-            this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, false, this.consecutiveFailedAttempts));
+            this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, false, thresholdReached));
         }
         if (this.shouldReconnect) {
             let waitUntilReconnectAttempt;
