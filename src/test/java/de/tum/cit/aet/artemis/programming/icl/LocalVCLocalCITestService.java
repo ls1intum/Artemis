@@ -345,7 +345,6 @@ public class LocalVCLocalCITestService {
 
     private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
         String repositoryUri = constructLocalVCUrl(username, password, projectKey, repositorySlug);
-        log.error("Complete uri: {}", repositoryUri);
         FetchCommand fetchCommand = repositoryHandle.fetch();
         // Set the remote URL.
         fetchCommand.setRemote(repositoryUri);
