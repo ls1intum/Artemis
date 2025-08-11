@@ -35,6 +35,8 @@ export class LtiCoursesComponent implements OnInit {
                     });
                 },
             });
+        } else {
+            this.courses = [];
         }
     }
 }
