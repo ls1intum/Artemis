@@ -27,8 +27,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -42,7 +40,6 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 /**
  * This class contains integration tests for edge cases pertaining to the local VC system.
  */
-@Execution(ExecutionMode.SAME_THREAD)
 class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localvcint";
