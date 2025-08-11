@@ -21,7 +21,6 @@ export interface CompetencySuggestionRequest {
 
 export interface CompetencySuggestionResponse {
     competencies: SuggestedCompetency[];
-    competencyRelations: any[];
 }
 
 type EntityResponseType = HttpResponse<Competency>;

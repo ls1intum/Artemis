@@ -10,6 +10,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * This matches the Python ExerciseWithCompetencies model.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record AtlasMLExerciseDTO(@JsonProperty("id") String id, @JsonProperty("title") String title, @JsonProperty("description") String description,
-        @JsonProperty("competencies") List<String> competencies, @JsonProperty("course_id") String courseId) {
+public record AtlasMLExerciseDTO(@JsonProperty("id") Long id, @JsonProperty("title") String title, @JsonProperty("description") String description,
+        @JsonProperty("competencies") List<Long> competencies, @JsonProperty("course_id") Long courseId) {
 }

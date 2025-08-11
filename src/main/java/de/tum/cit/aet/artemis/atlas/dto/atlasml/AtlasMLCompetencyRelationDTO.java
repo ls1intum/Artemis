@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
  * This contains only IDs and matches the Python AtlasML API structure.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasMLCompetencyRelationDTO(@JsonProperty("tail_id") String tailId, @JsonProperty("head_id") String headId, @JsonProperty("relation_type") String relationType) {
+public record AtlasMLCompetencyRelationDTO(@JsonProperty("tail_id") Long tailId, @JsonProperty("head_id") Long headId, @JsonProperty("relation_type") String relationType) {
 
     /**
      * Convert from domain CompetencyRelation to AtlasML DTO.
@@ -21,8 +21,8 @@ public record AtlasMLCompetencyRelationDTO(@JsonProperty("tail_id") String tailI
             return null;
         }
 
-        String tailId = relation.getTailCompetency() != null ? relation.getTailCompetency().getId().toString() : null;
-        String headId = relation.getHeadCompetency() != null ? relation.getHeadCompetency().getId().toString() : null;
+        Long tailId = relation.getTailCompetency() != null ? relation.getTailCompetency().getId() : null;
+        Long headId = relation.getHeadCompetency() != null ? relation.getHeadCompetency().getId() : null;
         String relationType = relation.getType() != null ? relation.getType().name() : RelationType.ASSUMES.name();
 
         return new AtlasMLCompetencyRelationDTO(tailId, headId, relationType);

@@ -401,7 +401,7 @@ public class CompetencyResource {
     public ResponseEntity<SuggestCompetencyRelationsResponseDTO> suggestCompetencyRelations(@PathVariable long courseId) {
         log.debug("REST request to suggest competency relations using AtlasML for course: {}", courseId);
         try {
-            SuggestCompetencyRelationsResponseDTO result = atlasMLService.suggestCompetencyRelations(String.valueOf(courseId));
+            SuggestCompetencyRelationsResponseDTO result = atlasMLService.suggestCompetencyRelations(courseId);
             return ResponseEntity.ok(result);
         }
         catch (Exception e) {

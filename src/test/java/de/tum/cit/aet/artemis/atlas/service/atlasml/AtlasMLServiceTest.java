@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -44,6 +46,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class AtlasMLServiceTest {
 
     @Mock
@@ -102,11 +105,11 @@ class AtlasMLServiceTest {
     @Test
     void testSuggestCompetencies() {
         // Given
-        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", null);
+        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", 1L);
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(new ResponseEntity<>(
-                        "{\"competencies\":[{\"id\":\"comp-001\",\"title\":\"Test Competency 1\",\"description\":\"Test Description 1\",\"taxonomy\":\"U\"},{\"id\":\"comp-002\",\"title\":\"Test Competency 2\",\"description\":\"Test Description 2\",\"taxonomy\":\"Y\"}],\"competencyRelations\":[{\"headCompetencyId\":\"comp-001\",\"tailCompetencyId\":\"comp-002\",\"relationType\":\"ASSUMES\"}]}",
+                        "{\"competencies\":[{\"id\":1,\"title\":\"Test Competency 1\",\"description\":\"Test Description 1\",\"course_id\":1},{\"id\":2,\"title\":\"Test Competency 2\",\"description\":\"Test Description 2\",\"course_id\":1}]}",
                         HttpStatus.OK));
 
         // When
@@ -115,14 +118,14 @@ class AtlasMLServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.competencies()).hasSize(2);
-        assertThat(result.competencies().get(0).id()).isEqualTo("comp-001");
-        assertThat(result.competencies().get(1).id()).isEqualTo("comp-002");
+        assertThat(result.competencies().get(0).id()).isEqualTo(1L);
+        assertThat(result.competencies().get(1).id()).isEqualTo(2L);
     }
 
     @Test
     void testSaveCompetencies() {
         // Given
-        AtlasMLCompetencyDTO competencyDTO = new AtlasMLCompetencyDTO("comp-001", "Test Competency", "Test Description", "Y");
+        AtlasMLCompetencyDTO competencyDTO = new AtlasMLCompetencyDTO(1L, "Test Competency", "Test Description", 1L);
 
         SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(competencyDTO, null, OperationType.UPDATE);
 
@@ -178,7 +181,7 @@ class AtlasMLServiceTest {
     @Test
     void testSuggestCompetencies_WhenServiceThrowsException() {
         // Given
-        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", null);
+        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", 1L);
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
@@ -192,7 +195,7 @@ class AtlasMLServiceTest {
     @Test
     void testSuggestCompetencies_EmptyResponse() {
         // Given
-        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", null);
+        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", 1L);
         ResponseEntity<String> response = new ResponseEntity<>("[]", HttpStatus.OK);
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
@@ -209,7 +212,7 @@ class AtlasMLServiceTest {
     @Test
     void testSuggestCompetencies_InvalidJsonResponse() {
         // Given
-        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", null);
+        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", 1L);
         ResponseEntity<String> response = new ResponseEntity<>("invalid json", HttpStatus.OK);
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
@@ -224,12 +227,12 @@ class AtlasMLServiceTest {
     @Test
     void testSuggestCompetencyRelations() {
         // Given
-        String courseId = "course-123";
+        Long courseId = 123L;
         // SuggestCompetencyRelationsResponseDTO expectedResponse = new SuggestCompetencyRelationsResponseDTO(List.of());
         String responseJson = "{\"relations\":[]}";
         ResponseEntity<String> response = new ResponseEntity<>(responseJson, HttpStatus.OK);
 
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/relations/suggest/course-123"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/relations/suggest/123"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(response);
 
         // When
@@ -242,9 +245,9 @@ class AtlasMLServiceTest {
     @Test
     void testSuggestCompetencyRelations_WhenServiceThrowsException() {
         // Given
-        String courseId = "course-123";
+        Long courseId = 123L;
 
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/relations/suggest/course-123"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/relations/suggest/123"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // When & Then
@@ -382,11 +385,11 @@ class AtlasMLServiceTest {
     @Test
     void testSaveExercise_WithAllParameters() {
         // Given
-        String exerciseId = "exercise-123";
+        Long exerciseId = 123L;
         String title = "Test Exercise";
         String description = "Test Description";
-        List<String> competencyIds = List.of("comp-1", "comp-2");
-        String courseId = "course-123";
+        List<Long> competencyIds = List.of(1L, 2L);
+        Long courseId = 123L;
 
         ResponseEntity<String> response = new ResponseEntity<>(HttpStatus.OK);
 
@@ -402,11 +405,11 @@ class AtlasMLServiceTest {
     @Test
     void testSaveExercise_DefaultOperationType() {
         // Given
-        String exerciseId = "exercise-123";
+        Long exerciseId = 123L;
         String title = "Test Exercise";
         String description = "Test Description";
-        List<String> competencyIds = List.of("comp-1", "comp-2");
-        String courseId = "course-123";
+        List<Long> competencyIds = List.of(1L, 2L);
+        Long courseId = 123L;
 
         ResponseEntity<String> response = new ResponseEntity<>(HttpStatus.OK);
 
@@ -422,11 +425,11 @@ class AtlasMLServiceTest {
     @Test
     void testSaveExercise_WhenFeatureDisabled() {
         // Given
-        String exerciseId = "exercise-123";
+        Long exerciseId = 123L;
         when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(false);
 
         // When
-        boolean result = atlasMLService.saveExercise(exerciseId, "title", "desc", List.of(), "course", OperationType.UPDATE);
+        boolean result = atlasMLService.saveExercise(123L, "title", "desc", List.of(), 123L, OperationType.UPDATE);
 
         // Then
         assertThat(result).isTrue();
@@ -435,11 +438,11 @@ class AtlasMLServiceTest {
     @Test
     void testSaveExercise_WhenException() {
         // Given
-        String exerciseId = "exercise-123";
+        Long exerciseId = 123L;
         String title = "Test Exercise";
         String description = "Test Description";
-        List<String> competencyIds = List.of("comp-1", "comp-2");
-        String courseId = "course-123";
+        List<Long> competencyIds = List.of(1L, 2L);
+        Long courseId = 123L;
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
@@ -701,7 +704,7 @@ class AtlasMLServiceTest {
     @Test
     void testSuggestCompetencies_HttpServerErrorException() {
         // Given
-        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", null);
+        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", 1L);
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
@@ -715,7 +718,7 @@ class AtlasMLServiceTest {
     @Test
     void testSuggestCompetencies_ResourceAccessException() {
         // Given
-        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", null);
+        SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", 1L);
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new ResourceAccessException("Connection timeout"));
@@ -729,9 +732,9 @@ class AtlasMLServiceTest {
     @Test
     void testSuggestCompetencyRelations_HttpServerErrorException() {
         // Given
-        String courseId = "course-123";
+        Long courseId = 123L;
 
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/relations/suggest/course-123"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/relations/suggest/123"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // When & Then
@@ -743,9 +746,9 @@ class AtlasMLServiceTest {
     @Test
     void testSuggestCompetencyRelations_ResourceAccessException() {
         // Given
-        String courseId = "course-123";
+        Long courseId = 123L;
 
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/relations/suggest/course-123"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/relations/suggest/123"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new ResourceAccessException("Connection timeout"));
 
         // When & Then

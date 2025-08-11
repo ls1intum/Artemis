@@ -160,7 +160,7 @@ public class AtlasMLService {
      * @param courseId the course identifier
      * @return response DTO containing suggested relations
      */
-    public SuggestCompetencyRelationsResponseDTO suggestCompetencyRelations(String courseId) {
+    public SuggestCompetencyRelationsResponseDTO suggestCompetencyRelations(Long courseId) {
         try {
             log.debug("Requesting competency relation suggestions for courseId: {}", courseId);
 
@@ -203,7 +203,7 @@ public class AtlasMLService {
         }
 
         try {
-            String requestId = request.competency() != null ? request.competency().id() : (request.exercise() != null ? request.exercise().id() : "unknown");
+            String requestId = request.competency() != null ? request.competency().id().toString() : (request.exercise() != null ? request.exercise().id().toString() : "unknown");
             log.debug("Saving competencies for id: {}", requestId);
 
             HttpHeaders headers = new HttpHeaders();
@@ -226,17 +226,17 @@ public class AtlasMLService {
             }
         }
         catch (HttpClientErrorException | HttpServerErrorException e) {
-            String requestId = request.competency() != null ? request.competency().id() : (request.exercise() != null ? request.exercise().id() : "unknown");
+            String requestId = request.competency() != null ? request.competency().id().toString() : (request.exercise() != null ? request.exercise().id().toString() : "unknown");
             log.error("HTTP error while saving request for id {}: {}", requestId, e.getMessage());
             throw new AtlasMLServiceException("Failed to save competencies due to client error", e);
         }
         catch (ResourceAccessException e) {
-            String requestId = request.competency() != null ? request.competency().id() : (request.exercise() != null ? request.exercise().id() : "unknown");
+            String requestId = request.competency() != null ? request.competency().id().toString() : (request.exercise() != null ? request.exercise().id().toString() : "unknown");
             log.error("Connection error while saving request for id {}: {}", requestId, e.getMessage());
             throw new AtlasMLServiceException("Failed to save competencies due to connection issue", e);
         }
         catch (Exception e) {
-            String requestId = request.competency() != null ? request.competency().id() : (request.exercise() != null ? request.exercise().id() : "unknown");
+            String requestId = request.competency() != null ? request.competency().id().toString() : (request.exercise() != null ? request.exercise().id().toString() : "unknown");
             log.error("Unexpected error while saving request for id {}", requestId, e);
             throw new AtlasMLServiceException("Unexpected error while saving competencies", e);
         }
@@ -317,7 +317,7 @@ public class AtlasMLService {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveExercise(String exerciseId, String title, String description, List<String> competencyIds, String courseId, OperationType operationType) {
+    public boolean saveExercise(Long exerciseId, String title, String description, List<Long> competencyIds, Long courseId, OperationType operationType) {
         // Check if AtlasML feature is enabled
         if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
             log.debug("AtlasML feature is disabled, skipping exercise save operation");
@@ -345,7 +345,7 @@ public class AtlasMLService {
      * @param courseId      the course identifier
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveExercise(String exerciseId, String title, String description, List<String> competencyIds, String courseId) {
+    public boolean saveExercise(Long exerciseId, String title, String description, List<Long> competencyIds, Long courseId) {
         return saveExercise(exerciseId, title, description, competencyIds, courseId, OperationType.UPDATE);
     }
 
@@ -368,7 +368,7 @@ public class AtlasMLService {
             List<CompetencyExerciseLink> links = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exercise.getId());
 
             // Extract competency IDs
-            List<String> competencyIds = links.stream().map(link -> link.getCompetency().getId().toString()).toList();
+            List<Long> competencyIds = links.stream().map(link -> link.getCompetency().getId()).toList();
 
             // Ensure description is never null - use problemStatement or fallback to empty string
             String description = exercise.getProblemStatement();
@@ -376,8 +376,8 @@ public class AtlasMLService {
                 description = ""; // AtlasML API expects a non-null description
             }
 
-            String courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId().toString() : null;
-            return saveExercise(exercise.getId().toString(), exercise.getTitle(), description, competencyIds, courseId, operationType);
+            Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+            return saveExercise(exercise.getId(), exercise.getTitle(), description, competencyIds, courseId, operationType);
         }
         catch (Exception e) {
             log.error("Failed to {} exercise with competencies for exercise id {}", operationType.name().toLowerCase(), exercise.getId(), e);
@@ -409,7 +409,7 @@ public class AtlasMLService {
             }
 
             // Extract competency IDs
-            List<String> competencyIds = links.stream().map(link -> link.getCompetency().getId().toString()).toList();
+            List<Long> competencyIds = links.stream().map(link -> link.getCompetency().getId()).toList();
 
             // Use the first link to get exercise details
             Exercise exercise = links.get(0).getExercise();
@@ -420,8 +420,8 @@ public class AtlasMLService {
                 description = ""; // AtlasML API expects a non-null description
             }
 
-            String courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId().toString() : null;
-            return saveExercise(exerciseId.toString(), exercise.getTitle(), description, competencyIds, courseId, operationType);
+            Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+            return saveExercise(exerciseId, exercise.getTitle(), description, competencyIds, courseId, operationType);
         }
         catch (Exception e) {
             log.error("Failed to {} exercise with competencies for exercise id {}", operationType.name().toLowerCase(), exerciseId, e);
