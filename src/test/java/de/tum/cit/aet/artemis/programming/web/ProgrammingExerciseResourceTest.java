@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doReturn;
 
 import java.nio.file.Path;
@@ -22,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
@@ -71,6 +71,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    private CourseTestRepository courseRepository;
 
     @Autowired
     private GitService gitService;
@@ -140,7 +143,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         var files = java.util.Map.of("test.txt", "test content");
         byte[] mockZipData = ZipTestUtil.createTestZipFile(files);
         InputStreamResource mockZipResource = ZipTestUtil.createMockZipResource(mockZipData, "mock-repo.zip");
-        doReturn(mockZipResource).when(gitRepositoryExportService).exportRepositoryWithFullHistoryToMemory(any(), anyString());
+        doReturn(mockZipResource).when(gitRepositoryExportService).exportInstructorRepositoryForExerciseInMemory(any(), any(), any());
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);
@@ -185,7 +188,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         byte[] mockZipData = ZipTestUtil.createTestZipFile(files);
         InputStreamResource mockZipResource = ZipTestUtil.createMockZipResource(mockZipData, "mock-repo-with-git.zip");
-        doReturn(mockZipResource).when(gitRepositoryExportService).exportRepositoryWithFullHistoryToMemory(any(), anyString());
+        doReturn(mockZipResource).when(gitRepositoryExportService).exportInstructorRepositoryForExerciseInMemory(any(), any(), any());
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);
