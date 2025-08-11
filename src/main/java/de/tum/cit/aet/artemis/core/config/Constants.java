@@ -450,7 +450,7 @@ public final class Constants {
     public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
 
     /**
-     * The name of the property used to enable or disable Atlas functionality.
+     * The name of the property used to enable or disable nebula functionalities.
      */
     public static final String NEBULA_ENABLED_PROPERTY_NAME = "artemis.nebula.enabled";
 

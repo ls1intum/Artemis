@@ -39,10 +39,10 @@ public class NebulaRequestMockProvider {
 
     private MockRestServiceServer mockServer;
 
-    @Value("${artemis.nebula.base-url}")
+    @Value("${artemis.nebula.url}")
     private String nebulaBaseUrl;
 
-    @Value("${artemis.nebula.secret-token}")
+    @Value("${artemis.nebula.secret}")
     private String nebulaSecretToken;
 
     @Autowired
