@@ -76,8 +76,8 @@ artemis:
     plagiarism-checks:
         plagiarism-results-limit: 100
     nebula:
-        base-url: http://mockenabula:8000
-        secret-token: "mocke-secret"
+        url: http://mockenabula:8000
+        secret: "mocke-secret"
     tum-live:
         api-base-url: http://mocketumlive.api
 

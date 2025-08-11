@@ -2,6 +2,3 @@ artemis:
     iris:
         url: "http://iris.fake"
         secret-token: "secret-token"
-    nebula:
-        base-url: http://mockenabula:8000
-        secret-token: "mocke-secret"
