@@ -507,30 +507,6 @@ public class UserTestService {
     }
 
     // Test
-    public void createUser_asAdmin_failInExternalCiUserManagement_cannotGetCiUser_internalError() throws Exception {
-        student.setId(null);
-        student.setLogin("batman");
-        student.setPassword("foobar");
-        student.setEmail("batman@secret.invalid");
-
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response).isNull();
-    }
-
-    // Test
-    public void createUser_asAdmin_failInExternalVcsUserManagement_internalError() throws Exception {
-        userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
-
-        student.setId(null);
-        student.setLogin("batman");
-        student.setPassword("foobar");
-        student.setEmail("batman@secret.invalid");
-
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response).isNull();
-    }
-
-    // Test
     public void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
         userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
 
