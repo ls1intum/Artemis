@@ -245,6 +245,7 @@ public class LocalVCServletService {
         }
 
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
+        log.error("Parsed local VC repository URI: {}", localVCRepositoryUri);
         String projectKey = localVCRepositoryUri.getProjectKey();
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
 
@@ -459,6 +460,7 @@ public class LocalVCServletService {
                 else {
                     participations = programmingExerciseParticipationService.findStudentParticipationsByExerciseAndStudentId(exercise, user.getLogin());
                     log.error("Participations found for user {}: {}", user.getLogin(), participations);
+                    log.error("Local VC repository URI: {}", localVCRepositoryUri);
                     studentParticipation = participations.stream().filter(participation -> participation.getRepositoryUri().equals(localVCRepositoryUri.toString())).findAny();
                 }
                 if (studentParticipation.isPresent()) {
@@ -505,6 +507,8 @@ public class LocalVCServletService {
     }
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
+        log.error("Parsing repository URI from request: {}", request);
+        log.error("Request URL: {}", request.getRequestURL());
         var urlString = request.getRequestURL().toString().replace("/info/refs", "");
         return new LocalVCRepositoryUri(Path.of(urlString), localVCBaseUri);
     }
