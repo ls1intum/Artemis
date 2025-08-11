@@ -45,7 +45,7 @@ describe('ConnectionWarning', () => {
         expect(warningDiv).not.toBeNull();
         expect(warningDiv.classes).not.toContainEntry(['disconnected', true]);
 
-        subject.next(new ConnectionState(false, true, false));
+        subject.next(new ConnectionState(false, true, false, true));
         fixture.detectChanges();
 
         expect(component.disconnected).toBeTrue();
