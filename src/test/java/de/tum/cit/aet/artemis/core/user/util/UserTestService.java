@@ -30,7 +30,6 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
-import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -59,7 +58,6 @@ import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
-import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
@@ -91,9 +89,6 @@ public class UserTestService {
     protected RequestUtilService request;
 
     @Autowired
-    private Optional<CIUserManagementService> optionalCIUserManagementService;
-
-    @Autowired
     private UserUtilService userUtilService;
 
     @Autowired
@@ -119,9 +114,6 @@ public class UserTestService {
 
     @Autowired
     private SubmissionTestRepository submissionRepository;
-
-    @Autowired
-    private Optional<LearnerProfileRepository> learnerProfileRepository;
 
     @Autowired
     private ExerciseTestRepository exerciseTestRepository;
@@ -168,7 +160,7 @@ public class UserTestService {
         return student;
     }
 
-    private void assertThatUserWasSoftDeleted(User originalUser, User deletedUser) throws Exception {
+    private void assertThatUserWasSoftDeleted(User originalUser, User deletedUser) {
         assertThat(deletedUser.isDeleted()).isTrue();
         assertThat(deletedUser.getFirstName()).isEqualTo(Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE);
         assertThat(deletedUser.getLastName()).isEqualTo(Constants.USER_LAST_NAME_AFTER_SOFT_DELETE);
@@ -186,7 +178,7 @@ public class UserTestService {
         }
     }
 
-    private void assertThatUserWasNotSoftDeleted(User originalUser, User deletedUser) throws Exception {
+    private void assertThatUserWasNotSoftDeleted(User originalUser, User deletedUser) {
         assertThat(deletedUser.isDeleted()).isFalse();
         assertThat(deletedUser.getFirstName()).isEqualTo(originalUser.getFirstName());
         assertThat(deletedUser.getLastName()).isEqualTo(originalUser.getLastName());
@@ -340,7 +332,7 @@ public class UserTestService {
         request.put("/api/core/admin/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
         final var userInDB = userTestRepository.findById(oldId).orElseThrow();
         assertThat(userInDB).isNotEqualTo(student);
-        assertThat(userTestRepository.findById(oldId + 1)).isNotEqualTo(student);
+        assertThat(userTestRepository.findById(oldId + 1).orElseThrow()).isNotEqualTo(student);
     }
 
     // Test
@@ -353,7 +345,7 @@ public class UserTestService {
         request.put("/api/core/admin/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
         final var userInDB = userTestRepository.findById(oldId).orElseThrow();
         assertThat(userInDB).isNotEqualTo(student);
-        assertThat(userTestRepository.findById(oldId + 1)).isNotEqualTo(student);
+        assertThat(userTestRepository.findById(oldId + 1).orElseThrow()).isNotEqualTo(student);
     }
 
     // Test
@@ -783,8 +775,6 @@ public class UserTestService {
             mockDelegate.mockCreateUserInUserManagement(user, false);
             mockDelegate.mockUpdateUserInUserManagement(user.getLogin(), user, null, new HashSet<>());
         }
-
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/core/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
