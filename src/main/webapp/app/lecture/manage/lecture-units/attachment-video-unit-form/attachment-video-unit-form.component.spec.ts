@@ -68,7 +68,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.nameControl!.setValue(exampleName);
         const exampleVideoUrl = 'https://live.rbg.tum.de/?video_only=1';
         attachmentVideoUnitFormComponent.videoSourceControl!.setValue(exampleVideoUrl);
-        const exampleTranscription = 'transcription text';
+        const exampleTranscription = '{"language": "en"}';
         attachmentVideoUnitFormComponent.videoTranscriptionControl!.setValue(exampleTranscription);
 
         attachmentVideoUnitFormComponentFixture.detectChanges();
