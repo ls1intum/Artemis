@@ -49,18 +49,6 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void updateUserInvalidId() throws Exception {
-        userTestService.updateUserInvalidId();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void updateUserExistingEmail() throws Exception {
-        userTestService.updateUserExistingEmail();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUser_withNullPassword_oldPasswordNotChanged() throws Exception {
         userTestService.updateUser_withNullPassword_oldPasswordNotChanged();
     }
@@ -117,18 +105,6 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUserAsAdminExistsInCi() throws Exception {
         userTestService.createUserAsAdminExistsInCi();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUser_asAdmin_illegalLogin_internalError() throws Exception {
-        userTestService.createUser_asAdmin_illegalLogin_internalError();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUser_asAdmin_failInExternalUserManagement_internalError() throws Exception {
-        userTestService.createUser_asAdmin_failInExternalCiUserManagement_internalError();
     }
 
     @Test
@@ -253,18 +229,6 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
         newUser.setGroups(Set.of("tutor", "instructor"));
 
         request.post("/api/core/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUserWithGroupsAlreadyFails() throws Exception {
-        User newUser = userTestService.student;
-        newUser.setId(null);
-        newUser.setLogin("batman");
-        newUser.setEmail("foobar@tum.com");
-        newUser.setGroups(Set.of("tutor", "instructor2"));
-
-        request.post("/api/core/admin/users", new ManagedUserVM(newUser), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test

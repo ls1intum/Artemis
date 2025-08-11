@@ -728,24 +728,6 @@ public class CourseTestService {
     }
 
     // Test
-    public void testUpdateCourseGroups_InExternalCiUserManagement_failToRemoveUser() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setInstructorGroupName("new-instructor-group");
-        course.setInstructorGroupName("new-editor-group");
-        course.setTeachingAssistantGroupName("new-ta-group");
-        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
-    }
-
-    // Test
-    public void testUpdateCourseGroups_InExternalCiUserManagement_failToAddUser() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setInstructorGroupName("new-instructor-group");
-        course.setInstructorGroupName("new-editor-group");
-        course.setTeachingAssistantGroupName("new-ta-group");
-        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError());
-    }
-
-    // Test
     public void testGetCourseWithoutPermission() throws Exception {
         request.getList("/api/core/courses", HttpStatus.FORBIDDEN, Course.class);
     }

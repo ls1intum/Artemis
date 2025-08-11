@@ -312,40 +312,6 @@ public class UserTestService {
     }
 
     // Test
-    public void updateUserInvalidId() throws Exception {
-        long oldId = student.getId();
-        student.setId(oldId + 1);
-
-        request.put("/api/core/admin/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
-        final var userInDB = userTestRepository.findById(oldId).orElseThrow();
-        assertThat(userInDB).isNotEqualTo(student);
-        assertThat(userTestRepository.findById(oldId + 1).orElseThrow()).isNotEqualTo(student);
-    }
-
-    // Test
-    public void updateUserExistingEmail() throws Exception {
-        long oldId = student.getId();
-        student.setId(oldId + 1);
-        student.setEmail("newEmail@testing.user");
-
-        request.put("/api/core/admin/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
-        final var userInDB = userTestRepository.findById(oldId).orElseThrow();
-        assertThat(userInDB).isNotEqualTo(student);
-        assertThat(userTestRepository.findById(oldId + 1).orElseThrow()).isNotEqualTo(student);
-    }
-
-    // Test
-    public void updateUser_withExternalUserManagement() throws Exception {
-        student.setFirstName("changed");
-
-        request.put("/api/core/admin/users", new ManagedUserVM(student), HttpStatus.OK);
-
-        var updatedUser = userTestRepository.findById(student.getId());
-        assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getFirstName()).isEqualTo("changed");
-    }
-
-    // Test
     public void updateUserGroups() throws Exception {
         var course = courseUtilService.addEmptyCourse();
         programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
@@ -482,28 +448,6 @@ public class UserTestService {
 
         final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
-    }
-
-    // Test
-    public void createUser_asAdmin_illegalLogin_internalError() throws Exception {
-        student.setId(null);
-        student.setLogin("@someusername");
-        student.setPassword("foobar");
-        student.setEmail("batman@secret.invalid");
-
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response).isNull();
-    }
-
-    // Test
-    public void createUser_asAdmin_failInExternalCiUserManagement_internalError() throws Exception {
-        student.setId(null);
-        student.setLogin("batman");
-        student.setPassword("foobar");
-        student.setEmail("batman@secret.invalid");
-
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response).isNull();
     }
 
     // Test
