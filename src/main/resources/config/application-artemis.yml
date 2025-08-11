@@ -114,7 +114,6 @@ artemis:
   #         options:
   #           model: gpt-4o-mini
 
----
 # Enable Hyperion features via Spring profile
 spring:
   config:
@@ -130,6 +129,8 @@ spring:
           options:
             deployment-name: ${AZURE_OPENAI_DEPLOYMENT:gpt-5-mini}
             model: ${AZURE_OPENAI_MODEL:gpt-5-mini}
+            # Some Azure/OpenAI deployments (e.g., gpt-5) only support the default temperature (1.0)
+            temperature: 1.0
     # Fallback OpenAI config can remain for local testing if desired
     openai:
       api-key: ${OPENAI_API_KEY:}
@@ -137,4 +138,6 @@ spring:
       chat:
         options:
           model: ${OPENAI_MODEL:gpt-5-mini}
+          # Ensure temperature is set to the model-supported default
+          temperature: 1.0
 
