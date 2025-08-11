@@ -17,14 +17,16 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 
 @Profile(PROFILE_CORE)
-@Service
+@Lazy
+@Component
 class GitArchiveHelper {
 
     private static final Logger log = LoggerFactory.getLogger(GitArchiveHelper.class);

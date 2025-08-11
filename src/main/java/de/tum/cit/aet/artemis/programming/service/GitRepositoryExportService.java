@@ -24,6 +24,7 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class GitRepositoryExportService {
 
