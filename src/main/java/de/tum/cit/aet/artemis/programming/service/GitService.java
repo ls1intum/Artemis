@@ -1454,13 +1454,13 @@ public class GitService extends AbstractGitService {
      */
     public Path zipFiles(Path contentRootPath, String zipFilename, String zipDir, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
         // Strip whitespace from name
-        var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
+        var zipFilenameWithoutWhitespace = zipFilename.replaceAll("\\s", "");
 
-        if (!zipFilenameWithoutSlash.endsWith(".zip")) {
-            zipFilenameWithoutSlash += ".zip";
+        if (!zipFilenameWithoutWhitespace.endsWith(".zip")) {
+            zipFilenameWithoutWhitespace += ".zip";
         }
 
-        Path zipFilePath = Path.of(zipDir, zipFilenameWithoutSlash);
+        Path zipFilePath = Path.of(zipDir, zipFilenameWithoutWhitespace);
         Files.createDirectories(Path.of(zipDir));
         return zipFileService.createZipFileWithFolderContent(zipFilePath, contentRootPath, contentFilter);
     }

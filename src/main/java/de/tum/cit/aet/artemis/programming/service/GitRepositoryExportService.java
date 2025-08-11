@@ -112,13 +112,13 @@ public class GitRepositoryExportService {
      */
     public Path zipFiles(Path contentRootPath, String zipFilename, String zipDir, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
         // Strip whitespace from name
-        String zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
+        String zipFilenameWithoutWhitespace = zipFilename.replaceAll("\\s", "");
 
-        if (!zipFilenameWithoutSlash.endsWith(".zip")) {
-            zipFilenameWithoutSlash += ".zip";
+        if (!zipFilenameWithoutWhitespace.endsWith(".zip")) {
+            zipFilenameWithoutWhitespace += ".zip";
         }
 
-        Path zipFilePath = Path.of(zipDir, zipFilenameWithoutSlash);
+        Path zipFilePath = Path.of(zipDir, zipFilenameWithoutWhitespace);
         Files.createDirectories(Path.of(zipDir));
         return zipFileService.createZipFileWithFolderContent(zipFilePath, contentRootPath, contentFilter);
     }
@@ -140,13 +140,13 @@ public class GitRepositoryExportService {
      *          Predicate<Path> includeAll = null;
      */
     public InputStreamResource zipDirectoryToMemory(Path contentRootPath, String zipFilename, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
-        String zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
+        String zipFilenameWithoutWhitespace = zipFilename.replaceAll("\\s", "");
 
-        if (!zipFilenameWithoutSlash.endsWith(".zip")) {
-            zipFilenameWithoutSlash += ".zip";
+        if (!zipFilenameWithoutWhitespace.endsWith(".zip")) {
+            zipFilenameWithoutWhitespace += ".zip";
         }
 
-        var byteArrayResource = zipFileService.createZipFileWithFolderContentInMemory(contentRootPath, zipFilenameWithoutSlash, contentFilter);
+        var byteArrayResource = zipFileService.createZipFileWithFolderContentInMemory(contentRootPath, zipFilenameWithoutWhitespace, contentFilter);
 
         return createInputStreamResource(byteArrayResource.getByteArray(), byteArrayResource.getFilename().replace(".zip", ""));
     }
