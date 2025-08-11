@@ -37,6 +37,7 @@ public class AgentHttpClient {
         catch (RestClientException e) {
             log.error("Failed to communicate with agent API", e);
             throw e; // Re-throw or wrap in custom exception
+
         }
     }
 }

@@ -29,7 +29,7 @@ public class AgentResource {
         this.agentService = agentService;
     }
 
-    @PostMapping("/chat")
+    @PostMapping("chat-with-agent")
     public ResponseEntity<AgentChatResponseDto> chatWithAgent(@RequestBody AgentChatRequestDto request) {
         log.info("REST request to chat with agent: {}", request.message());
         AgentChatResponseDto response = agentService.forwardMessageToAgent(request);
