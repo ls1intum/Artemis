@@ -115,10 +115,14 @@ Students complete this unit when they watch the video for at least five minutes 
 
 For Attachment Video Units that contain a lecture recording, transcriptions can be generated using the supporting script
 according to the README.md under supporting_scripts/lecture-transcriptions.
+
+|create-attachment-video-unit|
+
 Either all Attachment Video Units of a lecture or specific Attachment Video Units can be sent to Iris, over the ingestion button in the lecture unit overview.
 Those transcriptions can be used to answer students' questions in the Iris chat.
 
-|create-attachment-video-unit|
+|send-all-lectures-to-iris|
+|send-one-unit-iris|
 
 Attachment Unit Management
 """"""""""""""""""""""""""
@@ -207,8 +211,6 @@ See :ref:`Adaptive Learning <adaptive-learning>` for more information.
 .. |create-video-unit| image:: lectures/create-video-unit.png
     :width: 1000
 .. |create-attachment-video-unit| image:: lectures/create-attachment-video-unit.png
-    :width: 1000
-.. |admin-page-transcription-upload| image:: lectures/admin-page-transcription-upload.png
     :width: 1000
 .. |send-all-lectures-to-iris| image:: lectures/send-all-lectures-to-iris.png
     :width: 1000
