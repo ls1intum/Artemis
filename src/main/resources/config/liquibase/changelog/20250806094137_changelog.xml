@@ -13,7 +13,7 @@
             <column name="course_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="league_id" type="bigint">
+            <column name="league_id" type="int">
                 <constraints nullable="false"/>
             </column>
             <column name="score" type="int">
