@@ -52,8 +52,8 @@ public class LectureTranscriptionService {
      * @param nebulaSecretToken              Secret token used to authenticate with Nebula
      */
     public LectureTranscriptionService(LectureTranscriptionRepository lectureTranscriptionRepository, LectureUnitRepository lectureUnitRepository,
-            RestClient.Builder restClientBuilder, ObjectMapper objectMapper, @Value("${artemis.nebula.base-url}") String nebulaBaseUrl,
-            @Value("${artemis.nebula.secret-token}") String nebulaSecretToken) {
+            RestClient.Builder restClientBuilder, ObjectMapper objectMapper, @Value("${artemis.nebula.url}") String nebulaBaseUrl,
+            @Value("${artemis.nebula.secret}") String nebulaSecretToken) {
         this.lectureTranscriptionRepository = lectureTranscriptionRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.restClient = restClientBuilder.baseUrl(nebulaBaseUrl).defaultHeader("Authorization", nebulaSecretToken).build();
