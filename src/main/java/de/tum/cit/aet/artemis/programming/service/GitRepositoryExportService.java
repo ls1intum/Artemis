@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,10 +32,13 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 @Profile(PROFILE_CORE)
@@ -303,5 +307,99 @@ public class GitRepositoryExportService {
         public boolean accept(java.io.File directory, String fileName) {
             return !GIT_DIRECTORY_NAME.equals(directory.getName());
         }
+    }
+
+    /**
+     * Exports an instructor repository (template, solution, or tests) directly to memory as an InputStreamResource.
+     *
+     * @param programmingExercise the programming exercise that has the repository
+     * @param repositoryType      the type of repository to export (template, solution, or tests)
+     * @param exportErrors        list of failures that occurred during the export
+     * @return an InputStreamResource containing the zipped repository, or null if export failed
+     */
+    public InputStreamResource exportInstructorRepositoryForExerciseInMemory(ProgrammingExercise programmingExercise, RepositoryType repositoryType, List<String> exportErrors) {
+        String zippedRepoName = getZippedRepoName(programmingExercise, repositoryType.getName());
+        try {
+            return exportRepositoryWithFullHistoryToMemory(programmingExercise.getRepositoryURL(repositoryType), zippedRepoName);
+        }
+        catch (IOException | GitAPIException ex) {
+            String error = "Failed to export instructor repository " + repositoryType.getName() + " for programming exercise '" + programmingExercise.getTitle() + "' (id: "
+                    + programmingExercise.getId() + ")";
+            log.error("{}: {}", error, ex.getMessage());
+            exportErrors.add(error);
+            return null;
+        }
+    }
+
+    /**
+     * Exports an auxiliary repository directly to memory as an InputStreamResource.
+     *
+     * @param programmingExercise the programming exercise that has the repository
+     * @param auxiliaryRepository the auxiliary repository to export
+     * @param exportErrors        list of failures that occurred during the export
+     * @return an InputStreamResource containing the zipped repository, or null if export failed
+     */
+    public InputStreamResource exportInstructorAuxiliaryRepositoryForExerciseInMemory(ProgrammingExercise programmingExercise, AuxiliaryRepository auxiliaryRepository,
+            List<String> exportErrors) {
+        String zippedRepoName = getZippedRepoName(programmingExercise, auxiliaryRepository.getRepositoryName());
+        try {
+            return exportRepositoryWithFullHistoryToMemory(auxiliaryRepository.getVcsRepositoryUri(), zippedRepoName);
+        }
+        catch (IOException | GitAPIException ex) {
+            String error = "Failed to export auxiliary repository " + auxiliaryRepository.getName() + " for programming exercise '" + programmingExercise.getTitle() + "' (id: "
+                    + programmingExercise.getId() + ")";
+            log.error("{}: {}", error, ex.getMessage());
+            exportErrors.add(error);
+            return null;
+        }
+    }
+
+    /**
+     * Exports a student repository directly to memory as an InputStreamResource.
+     *
+     * @param programmingExercise the programming exercise
+     * @param participation       the student participation for which to export the repository
+     * @param exportErrors        list of failures that occurred during the export
+     * @return an InputStreamResource containing the zipped repository, or null if export failed
+     */
+    public InputStreamResource exportStudentRepositoryInMemory(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation,
+            List<String> exportErrors) {
+        if (participation.getVcsRepositoryUri() == null) {
+            log.warn("Cannot export participation {} because its repository URI is null", participation.getId());
+            exportErrors.add("Repository URI is null for participation " + participation.getId());
+            return null;
+        }
+
+        try {
+            String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+            String repoName = FileUtil.sanitizeFilename(courseShortName + "-" + programmingExercise.getTitle() + "-" + participation.getId());
+
+            // The zip filename is either the student login, team short name or some default string.
+            String studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + participation.getId());
+            repoName += "-" + studentTeamOrDefault;
+            repoName = participation.addPracticePrefixIfTestRun(repoName);
+
+            // For student repositories, we use snapshot export to exclude .git directory for privacy
+            return exportRepositorySnapshot(participation.getVcsRepositoryUri(), repoName);
+        }
+        catch (IOException | GitAPIException ex) {
+            String error = "Failed to export student repository for participation " + participation.getId() + " in programming exercise '" + programmingExercise.getTitle()
+                    + "' (id: " + programmingExercise.getId() + ")";
+            log.error("{}: {}", error, ex.getMessage());
+            exportErrors.add(error);
+            return null;
+        }
+    }
+
+    /**
+     * Generates a zipped repository name for a programming exercise and repository.
+     *
+     * @param exercise       the programming exercise
+     * @param repositoryName the name of the repository
+     * @return the sanitized filename for the zipped repository
+     */
+    public String getZippedRepoName(ProgrammingExercise exercise, String repositoryName) {
+        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+        return FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + repositoryName);
     }
 }

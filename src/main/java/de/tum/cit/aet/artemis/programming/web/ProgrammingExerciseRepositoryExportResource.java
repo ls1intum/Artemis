@@ -100,7 +100,7 @@ public class ProgrammingExerciseRepositoryExportResource {
 
         long start = System.nanoTime();
 
-        InputStreamResource resource = programmingExerciseExportService.exportInstructorRepositoryForExerciseInMemory(programmingExercise, repositoryType,
+        InputStreamResource resource = gitRepositoryExportService.exportInstructorRepositoryForExerciseInMemory(programmingExercise, repositoryType,
                 Collections.synchronizedList(new ArrayList<>()));
 
         log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", resource.getFilename(), programmingExercise.getId(),
@@ -135,7 +135,7 @@ public class ProgrammingExerciseRepositoryExportResource {
                     .body(null);
         }
 
-        InputStreamResource resource = programmingExerciseExportService.exportInstructorAuxiliaryRepositoryForExerciseInMemory(programmingExercise, auxiliaryRepository,
+        InputStreamResource resource = gitRepositoryExportService.exportInstructorAuxiliaryRepositoryForExerciseInMemory(programmingExercise, auxiliaryRepository,
                 Collections.synchronizedList(new ArrayList<>()));
 
         if (resource == null) {
@@ -229,7 +229,7 @@ public class ProgrammingExerciseRepositoryExportResource {
         var exportErrors = new ArrayList<String>();
         long start = System.nanoTime();
 
-        InputStreamResource resource = programmingExerciseExportService.exportStudentRepositoryInMemory(programmingExercise, studentParticipation, exportErrors);
+        InputStreamResource resource = gitRepositoryExportService.exportStudentRepositoryInMemory(programmingExercise, studentParticipation, exportErrors);
 
         if (resource == null) {
             throw new de.tum.cit.aet.artemis.core.exception.InternalServerErrorException(
