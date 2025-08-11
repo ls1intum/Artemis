@@ -125,14 +125,7 @@ public class ProgrammingExerciseRepositoryExportResource {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
-        Optional<AuxiliaryRepository> optionalAuxiliaryRepository = auxiliaryRepositoryRepository.findById(repositoryId);
-
-        if (optionalAuxiliaryRepository.isEmpty()) {
-            return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the URL of the auxiliary couldn't be retrieved.")).build();
-        }
-
-        AuxiliaryRepository auxiliaryRepository = optionalAuxiliaryRepository.get();
+        AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(repositoryId);
 
         long start = System.nanoTime();
 

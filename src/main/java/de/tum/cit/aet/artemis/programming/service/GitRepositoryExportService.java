@@ -110,14 +110,12 @@ public class GitRepositoryExportService {
      *          // Include everything
      *          Predicate<Path> includeAll = null;
      */
-    public Path zipFiles(Path contentRootPath, String zipFilename, String zipDir, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
-        String zipFilenameWithoutWhitespace = zipFilename.replaceAll("\\s", "");
-
-        if (!zipFilenameWithoutWhitespace.endsWith(".zip")) {
-            zipFilenameWithoutWhitespace += ".zip";
+    public Path zipFiles(Path contentRootPath, String zipFilename, String zipDir, @Nullable Predicate<Path> contentFilter) throws IOException {
+        String sanitized = FileUtil.sanitizeFilename(zipFilename).replaceAll("\\s+", "");
+        if (!sanitized.toLowerCase(java.util.Locale.ROOT).endsWith(".zip")) {
+            sanitized += ".zip";
         }
-
-        Path zipFilePath = Path.of(zipDir, zipFilenameWithoutWhitespace);
+        Path zipFilePath = Path.of(zipDir, sanitized);
         Files.createDirectories(Path.of(zipDir));
         return zipFileService.createZipFileWithFolderContent(zipFilePath, contentRootPath, contentFilter);
     }
@@ -147,7 +145,7 @@ public class GitRepositoryExportService {
 
         var byteArrayResource = zipFileService.createZipFileWithFolderContentInMemory(contentRootPath, zipFilenameWithoutWhitespace, contentFilter);
 
-        return createInputStreamResource(byteArrayResource.getByteArray(), byteArrayResource.getFilename().replace(".zip", ""));
+        return createZipInputStreamResource(byteArrayResource.getByteArray(), byteArrayResource.getFilename().replace(".zip", ""));
     }
 
     /**
@@ -157,7 +155,7 @@ public class GitRepositoryExportService {
      * @param filename the filename for the resource (without .zip extension)
      * @return InputStreamResource with the zip data
      */
-    private InputStreamResource createInputStreamResource(byte[] zipData, String filename) {
+    private InputStreamResource createZipInputStreamResource(byte[] zipData, String filename) {
         return new InputStreamResource(new ByteArrayInputStream(zipData)) {
 
             @Override
@@ -198,7 +196,7 @@ public class GitRepositoryExportService {
     public InputStreamResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
         Repository repository = gitService.getBareRepository(repositoryUri, false);
         byte[] zipData = createJGitArchive(repository, "HEAD");
-        return createInputStreamResource(zipData, filename);
+        return createZipInputStreamResource(zipData, filename);
     }
 
     /**

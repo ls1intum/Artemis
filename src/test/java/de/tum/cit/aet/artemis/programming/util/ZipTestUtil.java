@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -23,7 +24,7 @@ public final class ZipTestUtil {
             for (Map.Entry<String, String> entry : files.entrySet()) {
                 ZipEntry zipEntry = new ZipEntry(entry.getKey());
                 zos.putNextEntry(zipEntry);
-                zos.write(entry.getValue().getBytes());
+                zos.write(entry.getValue().getBytes(StandardCharsets.UTF_8));
                 zos.closeEntry();
             }
         }
@@ -63,12 +64,12 @@ public final class ZipTestUtil {
                     foundGitDirectory = true;
                     if (entryName.endsWith(".git/config")) {
                         foundGitConfig = true;
-                        String configContent = new String(zipInputStream.readAllBytes());
+                        String configContent = new String(zipInputStream.readAllBytes(), StandardCharsets.UTF_8);
                         assertThat(configContent).containsAnyOf("[core]", "[remote", "repositoryformatversion");
                     }
                     else if (entryName.endsWith(".git/HEAD")) {
                         foundGitHead = true;
-                        String headContent = new String(zipInputStream.readAllBytes());
+                        String headContent = new String(zipInputStream.readAllBytes(), StandardCharsets.UTF_8);
                         assertThat(headContent).containsAnyOf("ref: refs/heads/", "refs/heads/main", "refs/heads/master");
                     }
                     else if (entryName.contains(".git/refs/")) {
@@ -110,7 +111,7 @@ public final class ZipTestUtil {
                     byte[] fileContent = zipInputStream.readAllBytes();
                     assertThat(fileContent).isNotNull();
                     if (entryName.endsWith(".java") || entryName.endsWith(".md") || entryName.endsWith(".xml")) {
-                        String textContent = new String(fileContent);
+                        String textContent = new String(fileContent, StandardCharsets.UTF_8);
                         assertThat(textContent).isNotBlank();
                     }
                 }

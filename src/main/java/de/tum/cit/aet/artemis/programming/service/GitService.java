@@ -168,7 +168,12 @@ public class GitService extends AbstractGitService {
             CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
         }
 
-        ArchiveCommand.registerFormat("zip", new ZipFormat());
+        try {
+            ArchiveCommand.registerFormat("zip", new ZipFormat());
+        }
+        catch (Exception e) {
+            log.error("Could not register zip format", e);
+        }
     }
 
     @PreDestroy

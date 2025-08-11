@@ -111,7 +111,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(continuousIntegrationService);
+        Mockito.reset(continuousIntegrationService, gitRepositoryExportService);
         super.resetSpyBeans();
     }
 

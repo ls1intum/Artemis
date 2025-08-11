@@ -39,7 +39,7 @@ public class ZipFileService {
      * Set of file names that should be ignored when zipping.
      * This currently only includes the gc.log.lock (garbage collector) file created by JGit in programming repositories.
      */
-    private static final Set<Path> IGNORED_ZIP_FILE_NAMES = Set.of(Path.of("gc.log.lock"));
+    private static final Set<String> IGNORED_ZIP_FILE_NAMES = Set.of("gc.log.lock");
 
     public ZipFileService(FileService fileService) {
         this.fileService = fileService;
