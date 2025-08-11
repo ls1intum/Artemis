@@ -109,9 +109,14 @@ Using the arrow buttons, the order of the lecture units can be changed.
 
 Attachment Video Unit
 ^^^^^^^^^^^^^^^^^^^^^
-An attachment video unit consists of a name, file, an embedded video link, and optionally a description and release date.
+An attachment video unit consists of a name, file, an embedded video link, and optionally a description, a release date and a transcription.
 Artemis can convert the website link from common video sources to an embeddable URL using the arrow button.
 Students complete this unit when they watch the video for at least five minutes and download the attachment.
+
+For Attachment Video Units that contain a lecture recording, transcriptions can be generated using the supporting script
+according to the README.md under supporting_scripts/lecture-transcriptions.
+Either all Attachment Video Units of a lecture or specific Attachment Video Units can be sent to Iris, over the ingestion button in the lecture unit overview.
+Those transcriptions can be used to answer students' questions in the Iris chat.
 
 |create-attachment-video-unit|
 
@@ -223,24 +228,3 @@ See :ref:`Adaptive Learning <adaptive-learning>` for more information.
    :width: 1000
 .. |automatic-unit-processing| image:: lectures/automatic-unit-processing.png
    :width: 1000
-
-
-Lecture Upload to Iris
-----------------------
-
-For Attachment Video Units that contain a lecture recording, transcriptions can be generated using the supporting script
-according to the README.md under supporting_scripts/lecture-transcriptions.
-
-Those transcriptions can be uploaded to a specific lecture unit through the Admin Page at this path "admin/lecture-transcription-ingestion".
-Under "Create" add the lecture id, the lecture unit id of the corresponding Attachment Video Unit, and the generated transcriptions.
-
-|admin-page-transcription-upload|
-
-Either all Attachment Video Units of a lecture or specific Attachment Video Units can be sent to Iris, so that Iris can answer students' questions based on the information.
-
-|send-all-lectures-to-iris|
-|send-one-unit-iris|
-
-After that, Iris will process the attachment and the transcriptions from the Unit and will use the content to answer questions in the Iris chats.
-
-
