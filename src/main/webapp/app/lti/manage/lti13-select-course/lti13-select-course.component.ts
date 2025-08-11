@@ -24,17 +24,15 @@ export class LtiCoursesComponent implements OnInit {
 
     loadAndFilterCourses() {
         const clientId = this.sessionStorageService.retrieve<string>('clientRegistrationId');
-        if (clientId) {
-            this.courseService.findAllOnlineCoursesWithRegistrationId(clientId).subscribe({
-                next: (courseResponse: OnlineCourseDtoModel[]) => {
-                    this.courses = courseResponse;
-                },
-                error: (error) => {
-                    this.alertService.error('error.unexpectedError', {
-                        error: error.message,
-                    });
-                },
-            });
-        }
+        this.courseService.findAllOnlineCoursesWithRegistrationId(clientId).subscribe({
+            next: (courseResponse: OnlineCourseDtoModel[]) => {
+                this.courses = courseResponse;
+            },
+            error: (error) => {
+                this.alertService.error('error.unexpectedError', {
+                    error: error.message,
+                });
+            },
+        });
     }
 }
