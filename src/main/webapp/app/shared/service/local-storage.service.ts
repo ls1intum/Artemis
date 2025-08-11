@@ -4,6 +4,7 @@ import { Injectable } from '@angular/core';
 export class LocalStorageService {
     /**
      * Stores a value in the local storage under the specified key.
+     * Refer to the comments in the retrieve method to decide how to use this method.
      * @param key The key under which the value will be stored.
      * @param value The value to be stored, which will be stringified.
      */
@@ -14,6 +15,8 @@ export class LocalStorageService {
     /**
      * Retrieves a value from the local storage by its key.
      * Does not support retrieving objects of type {@link Date}.
+     * For complex objects that can not be parsed by this method consider serializing
+     * the object to a string and storing/retrieving it as such.
      * @param key The key to retrieve the value from local storage.
      * @returns The parsed value of type T or undefined if not found.
      */
