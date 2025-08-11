@@ -21,7 +21,7 @@
     height: 1.125rem;
     border-radius: 50%;
     border: 0.125rem solid var(--primary);
-    background: white;
+    background: var(--bs-modal-bg, var(--bs-card-bg, var(--bs-body-bg)));
     display: inline-block;
     transition:
         background 0.2s,
@@ -48,10 +48,11 @@
 .onboarding-title h2 {
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
+    color: var(--bs-body-color);
 }
 
 .onboarding-subtitle {
-    color: var(--secondary);
+    color: var(--bs-secondary-color);
     font-size: 1rem;
     margin-bottom: 1.5rem;
 }
@@ -66,10 +67,10 @@
 
 .feedback-choice-box {
     flex: 1 1 20rem;
-    border: 0.125rem solid var(--border-color);
+    border: 0.125rem solid var(--bs-border-color);
     border-radius: 0.5rem;
     padding: 1.5rem 1.2rem 1.2rem 1.2rem;
-    background: white;
+    background: var(--bs-modal-bg, var(--bs-card-bg, var(--bs-body-bg)));
     cursor: pointer;
     transition:
         border 0.2s,
@@ -82,8 +83,8 @@
 
 .feedback-choice-box.selected {
     border-color: var(--primary);
-    box-shadow: 0 0 0 0.125rem rgba(var(--primary), 0.2);
-    background: var(--light);
+    box-shadow: 0 0 0 0.125rem var(--primary);
+    background: var(--bs-modal-bg, var(--bs-card-bg, var(--bs-body-bg)));
 }
 
 .feedback-choice-box:hover {
@@ -100,10 +101,11 @@
 .feedback-choice-title {
     font-weight: 600;
     font-size: 1.1rem;
+    color: var(--bs-body-color);
 }
 
 .feedback-choice-subtitle {
-    color: var(--secondary);
+    color: var(--bs-secondary-color);
     font-size: 0.98rem;
     margin-bottom: 1rem;
 }
@@ -138,7 +140,7 @@
     top: 1.125rem;
     right: 1.5rem;
     font-size: 2rem;
-    color: var(--body-color);
+    color: var(--bs-body-color);
     background: none;
     border: none;
     cursor: pointer;
