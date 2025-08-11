@@ -1,5 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import dayjs, { Dayjs } from 'dayjs/esm';
@@ -28,12 +29,14 @@ import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } fro
     templateUrl: './calendar-desktop-overview.component.html',
     styleUrl: './calendar-desktop-overview.component.scss',
 })
-export class CalendarDesktopOverviewComponent implements OnInit {
+export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
     private calendarEventService = inject(CalendarEventService);
     private translateService = inject(TranslateService);
     private activatedRoute = inject(ActivatedRoute);
+    private activatedRouteSubscription?: Subscription;
     private courseId?: number;
     private currentLocale = signal(this.translateService.currentLang);
+    private currentLocaleSubscription?: Subscription;
 
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly faChevronRight = faChevronRight;
@@ -44,17 +47,22 @@ export class CalendarDesktopOverviewComponent implements OnInit {
     isLoading = signal<boolean>(false);
 
     ngOnInit(): void {
-        this.translateService.onLangChange.subscribe((event) => {
+        this.currentLocaleSubscription = this.translateService.onLangChange.subscribe((event) => {
             this.currentLocale.set(event.lang);
         });
 
-        this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
+        this.activatedRouteSubscription = this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
             const courseIdParameter = parameterMap.get('courseId');
             if (courseIdParameter) {
                 this.courseId = +courseIdParameter;
                 this.loadEventsForCurrentMonth();
             }
         });
+    }
+
+    ngOnDestroy() {
+        this.currentLocaleSubscription?.unsubscribe();
+        this.activatedRouteSubscription?.unsubscribe();
     }
 
     goToPrevious(): void {

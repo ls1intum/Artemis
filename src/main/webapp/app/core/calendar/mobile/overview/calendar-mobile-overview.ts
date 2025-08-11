@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgClass, NgStyle } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
@@ -27,9 +28,10 @@ import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-
     templateUrl: './calendar-mobile-overview.html',
     styleUrl: './calendar-mobile-overview.scss',
 })
-export class CalendarMobileOverviewComponent implements OnInit {
+export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     private calendarEventService = inject(CalendarEventService);
     private activatedRoute = inject(ActivatedRoute);
+    private activatedRouteSubscription?: Subscription;
     private courseId?: number;
 
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
@@ -42,13 +44,17 @@ export class CalendarMobileOverviewComponent implements OnInit {
     selectedDay = signal<Dayjs | undefined>(undefined);
 
     ngOnInit(): void {
-        this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
+        this.activatedRouteSubscription = this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
             const courseIdParameter = parameterMap.get('courseId');
             if (courseIdParameter) {
                 this.courseId = +courseIdParameter;
                 this.loadEventsForCurrentMonth();
             }
         });
+    }
+
+    ngOnDestroy() {
+        this.activatedRouteSubscription?.unsubscribe();
     }
 
     selectDay(day: Dayjs): void {
