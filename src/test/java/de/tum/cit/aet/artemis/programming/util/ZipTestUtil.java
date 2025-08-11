@@ -47,52 +47,76 @@ public final class ZipTestUtil {
     }
 
     public static void verifyZipContainsGitDirectory(byte[] zipContent) throws Exception {
-        boolean foundGitDirectory = false;
-        boolean foundOtherFiles = false;
-        boolean foundGitConfig = false;
-        boolean foundGitHead = false;
-        boolean foundGitRefs = false;
-        boolean foundGitObjects = false;
+        GitVerificationResult result = processZipEntries(zipContent);
 
-        Set<String> repositoryFiles = new java.util.HashSet<>();
+        assertThat(result.foundGitDirectory).isTrue();
+        assertThat(result.foundGitConfig).isTrue();
+        assertThat(result.foundGitHead).isTrue();
+        assertThat(result.foundGitRefs).isTrue();
+        assertThat(result.foundGitObjects).isTrue();
+        assertThat(result.foundOtherFiles).isTrue();
+        assertThat(result.repositoryFiles).isNotEmpty();
+    }
 
-        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipContent))) {
+    private static GitVerificationResult processZipEntries(byte[] zipContent) throws Exception {
+        GitVerificationResult result = new GitVerificationResult();
+
+        try (var zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipContent))) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
-                String entryName = entry.getName();
-                if (entryName.contains(".git/")) {
-                    foundGitDirectory = true;
-                    if (entryName.endsWith(".git/config")) {
-                        foundGitConfig = true;
-                        String configContent = new String(zipInputStream.readAllBytes(), StandardCharsets.UTF_8);
-                        assertThat(configContent).containsAnyOf("[core]", "[remote", "repositoryformatversion");
-                    }
-                    else if (entryName.endsWith(".git/HEAD")) {
-                        foundGitHead = true;
-                        String headContent = new String(zipInputStream.readAllBytes(), StandardCharsets.UTF_8);
-                        assertThat(headContent).containsAnyOf("ref: refs/heads/", "refs/heads/main", "refs/heads/master");
-                    }
-                    else if (entryName.contains(".git/refs/")) {
-                        foundGitRefs = true;
-                    }
-                    else if (entryName.contains(".git/objects/")) {
-                        foundGitObjects = true;
-                    }
-                }
-                else if (!entryName.endsWith("/")) {
-                    foundOtherFiles = true;
-                    repositoryFiles.add(entryName);
-                }
+                processZipEntry(entry, zipInputStream, result);
             }
         }
 
-        assertThat(foundGitDirectory).isTrue();
-        assertThat(foundGitConfig).isTrue();
-        assertThat(foundGitHead).isTrue();
-        assertThat(foundGitRefs).isTrue();
-        assertThat(foundGitObjects).isTrue();
-        assertThat(foundOtherFiles).isTrue();
-        assertThat(repositoryFiles).isNotEmpty();
+        return result;
+    }
+
+    private static void processZipEntry(ZipEntry entry, ZipInputStream zipInputStream, GitVerificationResult result) throws Exception {
+        String entryName = entry.getName();
+        if (entryName.contains(".git/")) {
+            result.foundGitDirectory = true;
+            processGitEntry(entryName, zipInputStream, result);
+        }
+        else if (!entryName.endsWith("/")) {
+            result.foundOtherFiles = true;
+            result.repositoryFiles.add(entryName);
+        }
+    }
+
+    private static void processGitEntry(String entryName, ZipInputStream zipInputStream, GitVerificationResult result) throws Exception {
+        switch (entryName) {
+            case String s when s.endsWith(".git/config") -> {
+                result.foundGitConfig = true;
+                String configContent = new String(zipInputStream.readAllBytes(), StandardCharsets.UTF_8);
+                assertThat(configContent).containsAnyOf("[core]", "[remote", "repositoryformatversion");
+            }
+            case String s when s.endsWith(".git/HEAD") -> {
+                result.foundGitHead = true;
+                String headContent = new String(zipInputStream.readAllBytes(), StandardCharsets.UTF_8);
+                assertThat(headContent).containsAnyOf("ref: refs/heads/", "refs/heads/main", "refs/heads/master");
+            }
+            case String s when s.contains(".git/refs/") -> result.foundGitRefs = true;
+            case String s when s.contains(".git/objects/") -> result.foundGitObjects = true;
+            default -> {
+                /* No specific git entry type found */ }
+        }
+    }
+
+    private static class GitVerificationResult {
+
+        boolean foundGitDirectory = false;
+
+        boolean foundOtherFiles = false;
+
+        boolean foundGitConfig = false;
+
+        boolean foundGitHead = false;
+
+        boolean foundGitRefs = false;
+
+        boolean foundGitObjects = false;
+
+        final Set<String> repositoryFiles = new java.util.HashSet<>();
     }
 
     public static void verifyZipStructureAndContent(byte[] zipContent) throws Exception {
