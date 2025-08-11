@@ -1,4 +1,5 @@
 import {
+    AfterViewChecked,
     Component,
     ContentChild,
     ElementRef,
@@ -77,7 +78,7 @@ type PagingValue = number | 'all';
         ArtemisTranslatePipe,
     ],
 })
-export class DataTableComponent implements OnInit, OnChanges {
+export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     private sortService = inject(SortService);
     private localStorage = inject(LocalStorageService);
 
@@ -207,6 +208,15 @@ export class DataTableComponent implements OnInit, OnChanges {
         if (changes.allEntities || changes.customFilterKey) {
             this.updateEntities();
         }
+    }
+
+    /**
+     * Life cycle hook called by Angular after a component has been checked for changes.
+     */
+    ngAfterViewChecked() {
+        // Either the browser window can change or orientation on mobile devices.
+        // We then need all ngx-table to resize their width or heights appropriately.
+        window.dispatchEvent(new Event('resize'));
     }
 
     /**
