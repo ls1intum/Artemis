@@ -15,7 +15,6 @@ import {
 } from '@angular/core';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { ColumnMode, SortType } from '@siemens/ngx-datatable';
 import { flatten, get, isNumber } from 'lodash-es';
 import { BaseEntity, StringBaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -218,8 +217,8 @@ export class DataTableComponent implements OnInit, OnChanges {
         return {
             settings: {
                 limit: this.pageLimit,
-                sortType: SortType.multi,
-                columnMode: ColumnMode.force,
+                sortType: 'multi',
+                columnMode: 'force',
                 headerHeight: 50,
                 footerHeight: 50,
                 rowHeight: 'auto',

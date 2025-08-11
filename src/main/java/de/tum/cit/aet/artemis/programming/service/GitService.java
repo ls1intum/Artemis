@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 
@@ -81,10 +82,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
@@ -147,12 +146,14 @@ public class GitService extends AbstractGitService {
 
     /**
      * initialize the GitService, in particular which authentication mechanism should be used
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      * Artemis uses the following order for authentication:
      * 1. ssh key (if available)
      * 2. username + personal access token (if available)
      * 3. username + password
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void init() {
         if (useSsh()) {
             log.info("GitService will use ssh keys as authentication method to interact with remote git repositories");
@@ -338,33 +339,21 @@ public class GitService extends AbstractGitService {
         return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, defaultBranch, writeAccess);
     }
 
-    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUri repoUri, VcsRepositoryUri targetUri, boolean pullOnGet, boolean writeAccess)
-            throws GitAPIException, GitException, InvalidPathException {
-        Path localPath = getDefaultLocalPathOfRepo(targetUri);
-        return getOrCheckoutRepository(repoUri, targetUri, localPath, pullOnGet, writeAccess);
-    }
-
-    public Repository getOrCheckoutRepositoryWithLocalPath(VcsRepositoryUri repoUri, Path localPath, boolean pullOnGet, boolean writeAccess)
-            throws GitAPIException, GitException, InvalidPathException {
-        return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, writeAccess);
-    }
-
     /**
      * Get the local repository for a given remote repository URI. If the local repo does not exist yet, it will be checked out.
      *
-     * @param sourceRepoUri The source remote repository.
-     * @param targetRepoUri The target remote repository.
-     * @param localPath     The local path to clone the repository to.
-     * @param pullOnGet     Pull from the remote on the checked out repository, if it does not need to be cloned.
-     * @param writeAccess   Whether we want to write to the repository
+     * @param repoUri     The source and target remote repository.
+     * @param localPath   The local path to clone the repository to.
+     * @param pullOnGet   Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @param writeAccess whether we want to write to the repository
      * @return the repository if it could be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    private Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, boolean writeAccess)
+    public Repository getOrCheckoutRepositoryWithLocalPath(VcsRepositoryUri repoUri, Path localPath, boolean pullOnGet, boolean writeAccess)
             throws GitAPIException, GitException, InvalidPathException {
-        return getOrCheckoutRepository(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch, writeAccess);
+        return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, defaultBranch, writeAccess);
     }
 
     /**
@@ -417,8 +406,9 @@ public class GitService extends AbstractGitService {
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-                Git git = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
-                git.close();
+                try (Git ignored = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).call()) {
+                    // Git instance automatically closed by try-with-resources
+                }
             }
             catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
                 // cleanup the folder to avoid problems in the future.
@@ -920,7 +910,7 @@ public class GitService extends AbstractGitService {
 
     /**
      * Retrieves a bare JGit repository based on a remote repository URI. This method is functional only when LocalVC is active.
-     * It uses the default branch, also see {@link #getBareRepository(VcsRepositoryUri, String)} for more details.
+     * It uses the default branch, also see {@link #getBareRepository(VcsRepositoryUri, String, boolean)} for more details.
      *
      * @param repositoryUri The URI of the remote VCS repository, not null.
      * @param writeAccess   Whether we write to the repository or not. If true, the git config will be set.

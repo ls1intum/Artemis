@@ -30,6 +30,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { map } from 'rxjs';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { firstValueFrom } from 'rxjs';
 
 const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
@@ -543,7 +544,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
                                 if (userLogins.length === 1) {
                                     // Direct message
                                     try {
-                                        const response = await this.metisConversationService.createDirectConversation(userLogins[0]).toPromise();
+                                        const response = await firstValueFrom(this.metisConversationService.createDirectConversation(userLogins[0]));
                                         newConversation = (response?.body ?? undefined) as Conversation;
                                         if (newConversation) {
                                             allSelections.push(newConversation);
@@ -554,7 +555,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
                                 } else {
                                     // Group message
                                     try {
-                                        const response = await this.metisConversationService.createGroupConversation(userLogins).toPromise();
+                                        const response = await firstValueFrom(this.metisConversationService.createGroupConversation(userLogins));
                                         if (response && response.body) {
                                             newConversation = response.body as Conversation;
                                             allSelections.push(newConversation);

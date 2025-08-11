@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -35,7 +37,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
     private final User user;
 
-    public LocalVCPrePushHook(LocalVCServletService localVCServletService, User user) {
+    public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NotNull User user) {
         this.localVCServletService = localVCServletService;
         this.user = user;
     }
@@ -87,9 +89,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
             return;
         }
 
-        try {
-            Git git = new Git(repository);
-
+        try (Git git = new Git(repository)) {
             // Prevent deletion of branches.
             Ref ref = git.getRepository().exactRef(command.getRefName());
             if (ref != null && command.getNewId().equals(ObjectId.zeroId())) {
@@ -134,8 +134,6 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
             reader.close();
             revWalk.close();
-
-            git.close();
         }
         catch (IOException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
