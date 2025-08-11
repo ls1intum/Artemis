@@ -48,6 +48,7 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
             return;
         }
         catch (AuthenticationException e) {
+            log.error("Authentication failed", e);
             // intercept failed authentication to log it in the VCS access log
             localVCServletService.createVCSAccessLogForFailedAuthenticationAttempt(servletRequest);
             throw e;
