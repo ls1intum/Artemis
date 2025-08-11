@@ -1,16 +1,18 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, switchMap, take } from 'rxjs/operators';
+import { finalize, map, switchMap, take } from 'rxjs/operators';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { combineLatest } from 'rxjs';
+import { combineLatest, of } from 'rxjs';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-edit-attachment-video-unit',
@@ -22,6 +24,8 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     private router = inject(Router);
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
+    private lectureTranscriptionService = inject(LectureTranscriptionService);
+    private accountService = inject(AccountService);
 
     @ViewChild('attachmentVideoUnitForm') attachmentVideoUnitForm: AttachmentVideoUnitFormComponent;
 
@@ -43,13 +47,25 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                     this.lectureId = Number(parentParams.get('lectureId'));
                     return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, this.lectureId);
                 }),
+                switchMap((attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
+                    const attachmentVideoUnit = attachmentVideoUnitResponse.body!;
+                    if (!this.accountService.isAdmin()) {
+                        return of({ attachmentVideoUnit, transcription: null });
+                    }
+                    return this.lectureTranscriptionService.getTranscription(attachmentVideoUnit.id!).pipe(
+                        map((transcription) => ({
+                            attachmentVideoUnit,
+                            transcription,
+                        })),
+                    );
+                }),
                 finalize(() => {
                     this.isLoading = false;
                 }),
             )
             .subscribe({
-                next: (attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
-                    this.attachmentVideoUnit = attachmentVideoUnitResponse.body!;
+                next: ({ attachmentVideoUnit, transcription }) => {
+                    this.attachmentVideoUnit = attachmentVideoUnit;
                     this.attachment = this.attachmentVideoUnit.attachment || {};
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
                     this.attachmentVideoUnit.attachment = undefined;
@@ -67,6 +83,9 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                         fileProperties: {
                             fileName: this.attachment.link,
                         },
+                        transcriptionProperties: {
+                            videoTranscription: transcription ? JSON.stringify(transcription) : '',
+                        },
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -76,6 +95,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
+        const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
 
         // optional update notification text for students
         if (updateNotificationText) {
@@ -107,7 +127,19 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         this.attachmentVideoUnitService
             .update(this.lectureId, this.attachmentVideoUnit.id!, formData, this.notificationText)
             .subscribe({
-                next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),
+                next: () => {
+                    if (videoTranscription) {
+                        const transcription = JSON.parse(videoTranscription);
+                        transcription.lectureUnitId = this.attachmentVideoUnit.id!;
+
+                        this.lectureTranscriptionService.createTranscription(this.lectureId, this.attachmentVideoUnit.id!, transcription).subscribe({
+                            next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),
+                            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                        });
+                    } else {
+                        this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
+                    }
+                },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             })
             .add(() => (this.isLoading = false));

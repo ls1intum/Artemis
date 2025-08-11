@@ -21,6 +21,10 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
+import { switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { LectureTranscriptionService } from '../services/lecture-transcription.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-lecture-update-units',
@@ -41,6 +45,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
     protected textUnitService = inject(TextUnitService);
     protected onlineUnitService = inject(OnlineUnitService);
     protected attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    protected lectureTranscriptionService = inject(LectureTranscriptionService);
+    protected accountService = inject(AccountService);
 
     @Input() lecture: Lecture;
 
@@ -163,6 +169,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
         const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
+        const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
         if (!name || (!fileName && !videoSource)) {
             return;
         }
@@ -217,9 +224,23 @@ export class LectureUpdateUnitsComponent implements OnInit {
             ? this.attachmentVideoUnitService.update(this.lecture.id!, this.currentlyProcessedAttachmentVideoUnit.id!, formData, notificationText)
             : this.attachmentVideoUnitService.create(formData, this.lecture.id!)
         ).subscribe({
-            next: () => {
-                this.onCloseLectureUnitForms();
-                this.unitManagementComponent.loadData();
+            next: (response) => {
+                const lectureUnit = response.body!;
+                if (videoTranscription) {
+                    const transcription = JSON.parse(videoTranscription);
+                    transcription.lectureUnitId = lectureUnit.id!;
+
+                    this.lectureTranscriptionService.createTranscription(this.lecture.id!, lectureUnit.id!, transcription).subscribe({
+                        next: () => {
+                            this.onCloseLectureUnitForms();
+                            this.unitManagementComponent.loadData();
+                        },
+                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                    });
+                } else {
+                    this.onCloseLectureUnitForms();
+                    this.unitManagementComponent.loadData();
+                }
             },
             error: (res: HttpErrorResponse) => {
                 if (res.error?.params === 'file' && res?.error?.title) {
@@ -255,36 +276,50 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.isOnlineUnitFormOpen.set(lectureUnit.type === LectureUnitType.ONLINE);
         this.isAttachmentVideoUnitFormOpen.set(lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO);
 
-        switch (lectureUnit.type) {
-            case LectureUnitType.TEXT:
-                this.textUnitFormData = {
-                    name: this.currentlyProcessedTextUnit.name,
-                    releaseDate: this.currentlyProcessedTextUnit.releaseDate,
-                    content: this.currentlyProcessedTextUnit.content,
-                };
-                break;
-            case LectureUnitType.ONLINE:
-                this.onlineUnitFormData = {
-                    name: this.currentlyProcessedOnlineUnit.name,
-                    description: this.currentlyProcessedOnlineUnit.description,
-                    releaseDate: this.currentlyProcessedOnlineUnit.releaseDate,
-                    source: this.currentlyProcessedOnlineUnit.source,
-                };
-                break;
-            case LectureUnitType.ATTACHMENT_VIDEO:
-                this.attachmentVideoUnitFormData = {
-                    formProperties: {
-                        name: this.currentlyProcessedAttachmentVideoUnit.name,
-                        description: this.currentlyProcessedAttachmentVideoUnit.description,
-                        releaseDate: this.currentlyProcessedAttachmentVideoUnit.releaseDate,
-                        version: this.currentlyProcessedAttachmentVideoUnit.attachment?.version,
-                        videoSource: this.currentlyProcessedAttachmentVideoUnit.videoSource,
-                    },
-                    fileProperties: {
-                        fileName: this.currentlyProcessedAttachmentVideoUnit.attachment?.link,
-                    },
-                };
-                break;
-        }
+        of(lectureUnit)
+            .pipe(
+                switchMap((unit) => {
+                    if (this.accountService.isAdmin() && unit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+                        return this.lectureTranscriptionService.getTranscription(unit.id!);
+                    }
+                    return of(null);
+                }),
+            )
+            .subscribe((transcription) => {
+                switch (lectureUnit.type) {
+                    case LectureUnitType.TEXT:
+                        this.textUnitFormData = {
+                            name: this.currentlyProcessedTextUnit.name,
+                            releaseDate: this.currentlyProcessedTextUnit.releaseDate,
+                            content: this.currentlyProcessedTextUnit.content,
+                        };
+                        break;
+                    case LectureUnitType.ONLINE:
+                        this.onlineUnitFormData = {
+                            name: this.currentlyProcessedOnlineUnit.name,
+                            description: this.currentlyProcessedOnlineUnit.description,
+                            releaseDate: this.currentlyProcessedOnlineUnit.releaseDate,
+                            source: this.currentlyProcessedOnlineUnit.source,
+                        };
+                        break;
+                    case LectureUnitType.ATTACHMENT_VIDEO:
+                        this.attachmentVideoUnitFormData = {
+                            formProperties: {
+                                name: this.currentlyProcessedAttachmentVideoUnit.name,
+                                description: this.currentlyProcessedAttachmentVideoUnit.description,
+                                releaseDate: this.currentlyProcessedAttachmentVideoUnit.releaseDate,
+                                version: this.currentlyProcessedAttachmentVideoUnit.attachment?.version,
+                                videoSource: this.currentlyProcessedAttachmentVideoUnit.videoSource,
+                            },
+                            fileProperties: {
+                                fileName: this.currentlyProcessedAttachmentVideoUnit.attachment?.link,
+                            },
+                            transcriptionProperties: {
+                                videoTranscription: transcription ? JSON.stringify(transcription) : undefined,
+                            },
+                        };
+                        break;
+                }
+            });
     }
 }

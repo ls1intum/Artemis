@@ -11,6 +11,7 @@ import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'a
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { LectureTranscriptionService } from '../../services/lecture-transcription.service';
 
 @Component({
     selector: 'jhi-create-attachment-video-unit',
@@ -22,6 +23,7 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
     private router = inject(Router);
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
+    private lectureTranscriptionService = inject(LectureTranscriptionService);
 
     @ViewChild('attachmentVideoUnitForm')
     attachmentVideoUnitForm: AttachmentVideoUnitFormComponent;
@@ -45,6 +47,7 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
     createAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
         const { name, videoSource, description, releaseDate, competencyLinks } = attachmentVideoUnitFormData?.formProperties || {};
         const { file, fileName } = attachmentVideoUnitFormData?.fileProperties || {};
+        const { videoTranscription } = attachmentVideoUnitFormData?.transcriptionProperties || {};
 
         if (!name || (!(file && fileName) && !videoSource)) {
             return;
@@ -77,7 +80,20 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
         this.attachmentVideoUnitService
             .create(formData, this.lectureId)
             .subscribe({
-                next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),
+                next: (response) => {
+                    const lectureUnit = response.body!;
+                    if (videoTranscription) {
+                        const transcription = JSON.parse(videoTranscription);
+                        transcription.lectureUnitId = lectureUnit.id!;
+
+                        this.lectureTranscriptionService.createTranscription(this.lectureId, lectureUnit.id!, transcription).subscribe({
+                            next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),
+                            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                        });
+                    } else {
+                        this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                    }
+                },
                 error: (res: HttpErrorResponse) => {
                     if (res.error.params === 'file' && res?.error?.title) {
                         this.alertService.error(res.error.title);

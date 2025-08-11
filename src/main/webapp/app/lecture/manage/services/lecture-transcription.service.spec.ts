@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { LectureTranscriptionService } from 'app/core/admin/lecture-transcription-ingestion/service/lecture-transcription.service';
+import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 
 describe('LectureTranscriptionService', () => {
     let service: LectureTranscriptionService;
