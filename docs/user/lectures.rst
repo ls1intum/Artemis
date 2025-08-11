@@ -235,6 +235,6 @@ Either all Attachment Video Units of a lecture or specific Attachment Video Unit
 |send-all-lectures-to-iris|
 |send-one-unit-iris|
 
-After that Iris will process the attachment and the transcriptions from the Unit and will use the content to answer in the Iris chats.
+After that, Iris will process the attachment and the transcriptions from the Unit and will use the content to answer questions in the Iris chats.
 
 
