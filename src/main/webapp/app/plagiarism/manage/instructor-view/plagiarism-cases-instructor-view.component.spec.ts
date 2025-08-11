@@ -21,6 +21,7 @@ import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/pl
 import { Component, ElementRef, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({ template: '' })
 class DummyComponent {}
@@ -113,6 +114,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
                         component: DummyComponent,
                     },
                 ]),
+                FaIconComponent,
             ],
             declarations: [
                 PlagiarismCasesInstructorViewComponent,
@@ -247,6 +249,17 @@ describe('Plagiarism Cases Instructor View Component', () => {
         tick();
         expect(location.path()).toBe(`/course-management/${courseId}/${exercise1.type}-exercises/${exerciseId}/plagiarism`);
     }));
+
+    it('should handle empty plagiarism cases list', () => {
+        const emptyPlagiarismCases: PlagiarismCase[] = [];
+        expect(component.numberOfCases(emptyPlagiarismCases)).toBe(0);
+        expect(component.numberOfCasesWithVerdict(emptyPlagiarismCases)).toBe(0);
+        expect(component.percentageOfCasesWithVerdict(emptyPlagiarismCases)).toBe(0);
+        expect(component.numberOfCasesWithPost(emptyPlagiarismCases)).toBe(0);
+        expect(component.percentageOfCasesWithPost(emptyPlagiarismCases)).toBe(0);
+        expect(component.numberOfCasesWithStudentAnswer(emptyPlagiarismCases)).toBe(0);
+        expect(component.percentageOfCasesWithStudentAnswer(emptyPlagiarismCases)).toBe(0);
+    });
 
     it('should scroll to the correct exercise element when scrollToExercise is called', () => {
         const nativeElement1 = { id: 'exercise-with-plagiarism-case-1', scrollIntoView: jest.fn() };

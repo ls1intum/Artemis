@@ -15,6 +15,8 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
+import jakarta.annotation.PostConstruct;
+
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyEncryptionContext;
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.slf4j.Logger;
@@ -22,10 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 
 @Lazy
 @Service
@@ -37,7 +36,7 @@ public class BuildAgentSshKeyService {
     private KeyPair keyPair;
 
     @Value("${artemis.version-control.ssh-private-key-folder-path:#{null}}")
-    private Optional<String> gitSshPrivateKeyPath;
+    private Optional<Path> gitSshPrivateKeyPath;
 
     @Value("${artemis.version-control.build-agent-use-ssh:false}")
     private boolean useSshForBuildAgent;
@@ -47,9 +46,11 @@ public class BuildAgentSshKeyService {
 
     /**
      * Generates the SSH key pair and writes the private key when the application is started and the build agents should use SSH for their git operations.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(FullStartupEvent.class)
-    public void applicationReady() {
+    @PostConstruct
+    public void applicationReady() throws IOException {
         if (!useSshForBuildAgent) {
             return;
         }
@@ -58,6 +59,10 @@ public class BuildAgentSshKeyService {
 
         if (gitSshPrivateKeyPath.isEmpty()) {
             throw new RuntimeException("No SSH private key folder was set but should use SSH for build agent authentication.");
+        }
+
+        if (!Files.exists(gitSshPrivateKeyPath.get())) {
+            Files.createDirectories(gitSshPrivateKeyPath.get());
         }
 
         try {
@@ -76,7 +81,7 @@ public class BuildAgentSshKeyService {
     }
 
     private void writePrivateKey() throws IOException, GeneralSecurityException {
-        Path privateKeyPath = Path.of(gitSshPrivateKeyPath.orElseThrow(), "id_rsa");
+        Path privateKeyPath = gitSshPrivateKeyPath.orElseThrow().resolve("id_rsa");
         OpenSSHKeyPairResourceWriter writer = new OpenSSHKeyPairResourceWriter();
 
         try (OutputStream outputStream = Files.newOutputStream(privateKeyPath)) {

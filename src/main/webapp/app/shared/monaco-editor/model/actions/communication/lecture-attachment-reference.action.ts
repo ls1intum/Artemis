@@ -143,8 +143,11 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     }
 
     insertAttachmentVideoUnitReference(editor: TextEditor, attachmentVideoUnit: AttachmentVideoUnit): void {
-        const link = attachmentVideoUnit.attachment!.studentVersion || this.fileService.createStudentLink(attachmentVideoUnit.attachment!.link!);
-        const shortLink = link.split('attachments/')[1];
-        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentVideoUnit.name)}(${shortLink})[/lecture-unit]`);
+        const attachment = attachmentVideoUnit.attachment;
+        if (attachment && attachment.link) {
+            const link = attachment.studentVersion || this.fileService.createStudentLink(attachment.link!);
+            const shortLink = link.split('attachments/')[1];
+            this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentVideoUnit.name)}(${shortLink})[/lecture-unit]`);
+        }
     }
 }

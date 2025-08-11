@@ -113,7 +113,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
                     const canvas = this.createCanvas(viewport);
                     const context = canvas.getContext('2d')!;
 
-                    await pageProxy.render({ canvasContext: context, viewport }).promise;
+                    await pageProxy.render({ canvasContext: context, canvas, viewport }).promise;
 
                     const container = this.pdfContainer().nativeElement.querySelector(`#pdf-page-${page.slideId}`);
                     if (container) {

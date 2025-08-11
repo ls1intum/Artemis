@@ -74,6 +74,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.course.CourseForUserGroupService;
+import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
 import de.tum.cit.aet.artemis.core.service.course.CourseOverviewService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -92,6 +93,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
+import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
 /**
@@ -110,6 +112,8 @@ public class CourseResource {
     private static final Logger log = LoggerFactory.getLogger(CourseResource.class);
 
     private static final int MAX_TITLE_LENGTH = 255;
+
+    private final CourseLoadService courseLoadService;
 
     private final UserRepository userRepository;
 
@@ -157,13 +161,16 @@ public class CourseResource {
 
     private final CourseOverviewService courseOverviewService;
 
+    private final QuizQuestionProgressService quizQuestionProgressService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, Optional<LtiApi> ltiApi,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
             Optional<AthenaApi> athenaApi, Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
-            Optional<LearnerProfileApi> learnerProfileApi, CourseForUserGroupService courseForUserGroupService, CourseOverviewService courseOverviewService) {
+            Optional<LearnerProfileApi> learnerProfileApi, CourseForUserGroupService courseForUserGroupService, CourseOverviewService courseOverviewService,
+            CourseLoadService courseLoadService, QuizQuestionProgressService quizQuestionProgressService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.ltiApi = ltiApi;
@@ -187,6 +194,8 @@ public class CourseResource {
         this.learnerProfileApi = learnerProfileApi;
         this.courseForUserGroupService = courseForUserGroupService;
         this.courseOverviewService = courseOverviewService;
+        this.courseLoadService = courseLoadService;
+        this.quizQuestionProgressService = quizQuestionProgressService;
     }
 
     /**
@@ -427,6 +436,8 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(courseId, user);
+        boolean trainingEnabled = quizQuestionProgressService.questionsAvailableForTraining(courseId);
+        course.setTrainingEnabled(trainingEnabled);
         log.debug("courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser done");
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             // user might be allowed to enroll in the course
@@ -495,13 +506,7 @@ public class CourseResource {
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
 
         log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");
-        // TODO: we should avoid fetching plagiarism in the future, it's unnecessary for 99.9% of the cases
-        courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
 
-        log.debug("courseService.fetchPlagiarismCasesForCourseExercises done");
-        // TODO: loading the grading scale here is only done to handle edge cases, we should avoid it, it's unnecessary for 90% of the cases and can be done when navigating into
-        // the course
-        var gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
         // we explicitly add 1 hour here to compensate for potential write extensions. Calculating it exactly is not feasible here
         Set<Exam> activeExams;
         if (examRepositoryApi.isPresent()) {
@@ -511,12 +516,13 @@ public class CourseResource {
         else {
             activeExams = Set.of();
         }
-
-        log.debug("gradingScaleRepository.findAllByCourseIds done");
         Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
         for (Course course : courses) {
-            GradingScale gradingScale = gradingScales.stream().filter(scale -> scale.getCourse().getId().equals(course.getId())).findFirst().orElse(null);
-            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId(), false);
+            // Passing null here for the grading scale is fine. This only leads to presentation scores not being considered which doesn't matter for the dashboard.
+            // Not fetching plagiarism cases before the calculation also affects calculation as plagiarism cases are not considered in the scores, but this is fine for the
+            // dashboard.
+            // We prefer to have better performance for 99.9% of the users without plagiarism cases over accurate scores for the 0.1% of users with plagiarism cases.
+            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, null, user.getId(), false);
             coursesForDashboard.add(courseForDashboardDTO);
         }
         logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
@@ -626,8 +632,7 @@ public class CourseResource {
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<Course> getCourseWithExercisesAndLecturesAndCompetencies(@PathVariable Long courseId) {
         log.debug("REST request to get course {} for tutors", courseId);
-        return courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId).map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.ok(courseLoadService.loadCourseWithExercisesLecturesLectureUnitsCompetenciesAndPrerequisites(courseId));
     }
 
     /**

@@ -158,8 +158,9 @@
                     "emptyError": "{{ exercise }}: Keine Ergebnisse gefunden"
                 }
             },
-            "startPractice": "Übung starten",
+            "startTraining": "Training starten",
             "nextQuestion": "Nächste Frage",
+            "endTraining": "Training beenden",
             "submit": "Einreichen",
             "refresh": "Aktualisieren",
             "course": "Kurs",

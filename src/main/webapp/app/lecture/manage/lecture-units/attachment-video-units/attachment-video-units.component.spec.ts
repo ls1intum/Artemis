@@ -17,6 +17,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content />' })
 class LectureUnitLayoutStubComponent {
@@ -66,7 +67,7 @@ describe('AttachmentVideoUnitsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, MockModule(NgbTooltipModule)],
+            imports: [FormsModule, MockModule(NgbTooltipModule), FaIconComponent],
             declarations: [
                 AttachmentVideoUnitsComponent,
                 LectureUnitLayoutStubComponent,

@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.core.security.jwt;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.BEARER_PREFIX;
+import static de.tum.cit.aet.artemis.core.config.Constants.JWT_COOKIE_NAME;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -32,12 +35,6 @@ import org.springframework.web.util.WebUtils;
 public class JWTFilter extends GenericFilterBean {
 
     private static final Logger log = LoggerFactory.getLogger(JWTFilter.class);
-
-    public static final String JWT_COOKIE_NAME = "jwt";
-
-    private static final String AUTHORIZATION_HEADER = "Authorization";
-
-    private static final String BEARER_PREFIX = "Bearer ";
 
     private final TokenProvider tokenProvider;
 
@@ -180,7 +177,7 @@ public class JWTFilter extends GenericFilterBean {
         }
 
         var cookie = WebUtils.getCookie(httpServletRequest, JWT_COOKIE_NAME);
-        var authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
+        var authHeader = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (cookie == null && authHeader == null) {
             return null;

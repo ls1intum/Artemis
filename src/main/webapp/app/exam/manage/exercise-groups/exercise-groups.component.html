@@ -200,12 +200,11 @@
                                     <th>
                                         <span jhiTranslate="artemisApp.exercise.shortName"></span>
                                     </th>
-                                    <th>
-                                        <span jhiTranslate="artemisApp.programmingExercise.repositories"></span>
-                                    </th>
-                                    <th>
-                                        <span jhiTranslate="artemisApp.programmingExercise.buildplans"></span>
-                                    </th>
+                                    @if (!localCIEnabled) {
+                                        <th>
+                                            <span jhiTranslate="artemisApp.programmingExercise.buildplans"></span>
+                                        </th>
+                                    }
                                     <th>
                                         <span jhiTranslate="artemisApp.programmingExercise.participationMode"></span>
                                     </th>
@@ -298,16 +297,13 @@
                                                 <jhi-programming-exercise-group-cell [exercise]="exercise" [displayShortName]="true" />
                                             }
                                         </td>
-                                        <td class="align-middle">
-                                            @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayRepositoryUri]="true" />
-                                            }
-                                        </td>
-                                        <td class="align-middle">
-                                            @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayTemplateUrls]="true" />
-                                            }
-                                        </td>
+                                        @if (!localCIEnabled) {
+                                            <td class="align-middle">
+                                                @if (exercise.type === exerciseType.PROGRAMMING) {
+                                                    <jhi-programming-exercise-group-cell [exercise]="exercise" [displayTemplateUrls]="true" />
+                                                }
+                                            </td>
+                                        }
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
                                                 <jhi-programming-exercise-group-cell [exercise]="exercise" [displayEditorMode]="true" />

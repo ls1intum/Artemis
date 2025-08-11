@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 
 /**
  * Spring Data JPA repository for the ProgrammingExercise entity.
@@ -154,7 +155,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
      * <ul>
-     * <li>The release date is in the future → Schedule combine template commits</li>
      * <li>The build and test student submissions after due date is in the future</li>
      * <li>The due date is in the future</li>
      * <li>There are participations in the exercise with individual due dates in the future</li>
@@ -901,6 +901,28 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         validateTitle(programmingExercise, course);
         validateCourseAndExerciseShortName(programmingExercise, course);
     }
+
+    /**
+     * Find the names of a programming exercise by its id.
+     * This method returns a DTO containing the short name of the programming exercise and the short name of the course.
+     * We need the left join as otherwise an implicit inner join is performed due to the COALESCE function filtering out
+     * programming exercises where not both a course and an exercise group are set, which implies all are filtered out.
+     *
+     * @param programmingExerciseId the id of the programming exercise
+     * @return a DTO containing the short name of the programming exercise and the short name of the course
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO(
+                p.shortName,
+                COALESCE(c.shortName, ec.shortName))
+            FROM ProgrammingExercise p
+              LEFT JOIN p.course c
+              LEFT JOIN p.exerciseGroup eg
+              LEFT JOIN eg.exam  e
+              LEFT JOIN e.course ec
+            WHERE p.id = :programmingExerciseId
+            """)
+    ProgrammingExerciseNamesDTO findNames(@Param("programmingExerciseId") long programmingExerciseId);
 
     /**
      * Fetch options for the {@link ProgrammingExercise} entity.

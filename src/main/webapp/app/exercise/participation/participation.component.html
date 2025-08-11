@@ -144,7 +144,7 @@
                         <ng-template ngx-datatable-cell-template let-row="row">
                             @if (row) {
                                 <span>
-                                    @if (!localCIEnabled) {
+                                    @if (!isLocalCIEnabled) {
                                         <a href="{{ row.buildPlanUrl }}" target="_blank" rel="noreferrer">
                                             {{ row.buildPlanId }}
                                         </a>
@@ -347,18 +347,13 @@
                                         jhiDeleteButton
                                         [entityTitle]="exercise.teamMode ? value.team?.name : value.student?.name"
                                         deleteQuestion="artemisApp.participation.delete.question"
-                                        (delete)="deleteParticipation(value.id, $event)"
+                                        (delete)="deleteParticipation(value.id)"
                                         [dialogError]="dialogError"
-                                        [additionalChecks]="
-                                            exercise.type === ExerciseType.PROGRAMMING
-                                                ? { deleteBuildPlan: 'artemisApp.participation.deleteBuildPlan', deleteRepository: 'artemisApp.participation.deleteRepository' }
-                                                : undefined
-                                        "
                                     >
                                         <fa-icon [icon]="faTrash" />
                                     </button>
                                 }
-                                @if (exercise?.type === ExerciseType.PROGRAMMING && value.buildPlanId !== null && exercise.isAtLeastInstructor) {
+                                @if (exercise?.type === ExerciseType.PROGRAMMING && !isLocalCIEnabled && value.buildPlanId !== null && exercise.isAtLeastInstructor) {
                                     <button
                                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                         jhiDeleteButton

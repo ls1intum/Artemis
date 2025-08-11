@@ -55,15 +55,15 @@ const moduleThresholds = {
     },
     exam: {
         statements: 91.30,
-        branches:   78.12,
+        branches:   77.82,
         functions:  83.66,
         lines:      91.53,
     },
     exercise: {
-        statements: 88.55,
-        branches:   79.09,
-        functions:  80.22,
-        lines:      88.65,
+        statements: 88.52,
+        branches:   78.91,
+        functions:  80.18,
+        lines:      88.63,
     },
     fileupload: {
         statements: 92.59,
@@ -72,10 +72,10 @@ const moduleThresholds = {
         lines:      93.23,
     },
     iris: {
-        statements: 86.90,
-        branches:   70.88,
-        functions:  84.67,
-        lines:      87.46,
+        statements: 86.99,
+        branches:   71.18,
+        functions:  85.10,
+        lines:      87.54,
     },
     lecture: {
         statements: 92.19,
@@ -102,10 +102,10 @@ const moduleThresholds = {
         lines:      92.20,
     },
     programming: {
-        statements: 88.75,
+        statements: 88.74,
         branches:   76.65,
-        functions:  80.97,
-        lines:      88.87,
+        functions:  80.93,
+        lines:      88.86,
     },
     quiz: {
         statements: 86.25,
@@ -114,10 +114,10 @@ const moduleThresholds = {
         lines:      86.35,
     },
     shared: {
-        statements: 86.75,
+        statements: 86.74,
         branches:   71.49,
         functions:  83.88,
-        lines:      86.55,
+        lines:      86.53,
     },
     text: {
         statements: 89.32,

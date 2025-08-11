@@ -36,6 +36,8 @@ export class ExamParticipationService {
 
     private examEndViewSubject = new BehaviorSubject<boolean>(false);
     endViewDisplayed$ = this.examEndViewSubject.asObservable();
+    private shouldUpdateTestExams = new BehaviorSubject<boolean>(false);
+    shouldUpdateTestExamsObservable = this.shouldUpdateTestExams.asObservable();
 
     public getResourceURL(courseId: number, examId: number): string {
         return `api/exam/courses/${courseId}/exams/${examId}`;
@@ -133,6 +135,14 @@ export class ExamParticipationService {
                 const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
                 this.currentlyLoadedStudentExam.next(convertedStudentExam);
                 return convertedStudentExam;
+            }),
+        );
+    }
+    public getRealExamSidebarData(courseId: number): Observable<Exam[]> {
+        const url = `api/exam/courses/${courseId}/real-exams-sidebar-data`;
+        return this.httpClient.get<Exam[]>(url).pipe(
+            map((exams: Exam[]) => {
+                return exams.map((exam) => ExamParticipationService.convertExamDateFromServer(exam)).filter((exam) => exam !== undefined) as Exam[];
             }),
         );
     }
@@ -342,6 +352,9 @@ export class ExamParticipationService {
 
     setEndView(isEndView: boolean) {
         this.examEndViewSubject.next(isEndView);
+    }
+    setShouldUpdateTestExams(shouldUpdate: boolean) {
+        this.shouldUpdateTestExams.next(shouldUpdate);
     }
 
     setExamLayout(isExamStarted: boolean = true, isTestRun: boolean = false) {
