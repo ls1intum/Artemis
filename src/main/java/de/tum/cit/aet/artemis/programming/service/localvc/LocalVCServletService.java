@@ -220,6 +220,7 @@ public class LocalVCServletService {
 
         // The first request does not contain an authorizationHeader, the client expects this response
         if (authorizationHeader == null) {
+            log.error("Authorization header is null");
             throw new LocalVCAuthException("No authorization header provided");
         }
 
@@ -228,6 +229,7 @@ public class LocalVCServletService {
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             if (Objects.equals(usernameAndPassword.username(), buildAgentGitUsername) && Objects.equals(usernameAndPassword.password(), buildAgentGitPassword)) {
                 // Authentication successful
+                log.error("Authentication successful for build agent with username {} and password {}", buildAgentGitUsername, buildAgentGitPassword);
                 return;
             }
         }
@@ -238,6 +240,7 @@ public class LocalVCServletService {
         // URL]/git-upload-pack' (for fetch).
         // The following checks will only be conducted for the second request, so we do not have to access the database too often.
         if (!request.getRequestURI().endsWith("/info/refs")) {
+            log.debug("Skipping authentication and authorization for request to {}", request.getRequestURI());
             return;
         }
 
@@ -619,6 +622,7 @@ public class LocalVCServletService {
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, repositoryActionType);
         }
         catch (AccessForbiddenException e) {
+            log.error("User {} does not have access to the repository {} in exercise {}", user.getLogin(), participation.getRepositoryUri(), exercise.getId());
             throw new LocalVCForbiddenException(e);
         }
     }
