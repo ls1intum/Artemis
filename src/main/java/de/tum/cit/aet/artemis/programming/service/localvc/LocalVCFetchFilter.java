@@ -42,8 +42,6 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
             localVCServletService.authenticateAndAuthorizeGitRequest(servletRequest, RepositoryActionType.READ);
         }
         catch (LocalVCAuthException | LocalVCForbiddenException | LocalVCInternalException e) {
-            log.error("Authentication failed", e);
-            log.error(e.getMessage());
             servletResponse.setStatus(localVCServletService.getHttpStatusForException(e, servletRequest.getRequestURI()));
             return;
         }
