@@ -18,7 +18,7 @@ export class SessionStorageService {
      * @returns The parsed value of type T or undefined if not found.
      */
     retrieve<T>(key: string): T | undefined {
-        const value = sessionStorage.getItem(key) || undefined;
+        const value = sessionStorage.getItem(key);
         return value ? (JSON.parse(value) as T) : undefined;
     }
 
@@ -28,7 +28,7 @@ export class SessionStorageService {
      * @returns The parsed value or undefined if not found or parsing failed.
      */
     retrieveDate(key: string): Date | undefined {
-        const raw = sessionStorage.getItem(key) || undefined;
+        const raw = sessionStorage.getItem(key);
         if (!raw) return undefined;
         const isoString = JSON.parse(raw);
         const date = new Date(isoString);

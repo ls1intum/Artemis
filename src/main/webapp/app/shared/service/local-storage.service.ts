@@ -18,7 +18,7 @@ export class LocalStorageService {
      * @returns The parsed value of type T or undefined if not found.
      */
     retrieve<T>(key: string): T | undefined {
-        const value = localStorage.getItem(key) || undefined;
+        const value = localStorage.getItem(key);
         return value ? (JSON.parse(value) as T) : undefined;
     }
 
@@ -28,7 +28,7 @@ export class LocalStorageService {
      * @returns The parsed value or undefined if not found or parsing failed.
      */
     retrieveDate(key: string): Date | undefined {
-        const raw = localStorage.getItem(key) || undefined;
+        const raw = localStorage.getItem(key);
         if (!raw) return undefined;
         const isoString = JSON.parse(raw);
         const date = new Date(isoString);
