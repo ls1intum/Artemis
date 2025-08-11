@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.assessment.domain;
 
 import java.time.Instant;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
@@ -68,14 +67,14 @@ public abstract class ParticipantScore extends DomainObject {
     /**
      * Last result of the participant for the exercise no matter if the result is rated or not
      */
-    @OneToOne(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_result_id")
     private Result lastResult;
 
     /**
      * Last rated result of the participant for the exercise
      */
-    @OneToOne(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_rated_result_id")
     private Result lastRatedResult;
 
