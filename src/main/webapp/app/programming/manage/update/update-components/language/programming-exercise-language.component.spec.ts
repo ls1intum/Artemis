@@ -32,7 +32,6 @@ describe('ProgrammingExerciseLanguageComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

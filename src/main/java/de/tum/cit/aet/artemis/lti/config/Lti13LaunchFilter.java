@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -44,14 +44,14 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
     private final Lti13Service lti13Service;
 
-    private final AntPathRequestMatcher requestMatcher;
+    private final PathPatternRequestMatcher requestMatcher;
 
     private static final Logger log = LoggerFactory.getLogger(Lti13LaunchFilter.class);
 
     public Lti13LaunchFilter(OAuth2LoginAuthenticationFilter defaultFilter, String filterProcessingUrl, Lti13Service lti13Service) {
         this.defaultFilter = defaultFilter;
         this.lti13Service = lti13Service;
-        this.requestMatcher = new AntPathRequestMatcher(filterProcessingUrl);
+        this.requestMatcher = PathPatternRequestMatcher.withDefaults().matcher(filterProcessingUrl);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        log.info("LTI 1.3 Launch request received for url {}", this.requestMatcher.getPattern());
+        log.info("LTI 1.3 Launch request received for url {}", request.getRequestURL().toString());
 
         try {
             // Login using the distributed authorization request repository

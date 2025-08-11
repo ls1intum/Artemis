@@ -71,7 +71,7 @@ test.describe('Modeling Exercise Assessment', { tag: '@fast' }, () => {
             await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
             await exerciseResult.shouldShowExerciseTitle(modelingExercise.title!);
             await exerciseResult.shouldShowScore(20);
-            await exerciseResult.clickOpenExercise(modelingExercise.id!);
+            await exerciseResult.clickOpenExerciseAndAwaitRatingResponse(modelingExercise.id!);
             await modelingExerciseFeedback.shouldShowScore(20);
             await modelingExerciseFeedback.shouldShowAdditionalFeedback(1, 'Thanks, good job.');
             await modelingExerciseFeedback.shouldShowComponentFeedback(1, 2, 'Good');

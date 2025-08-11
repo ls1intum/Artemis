@@ -13,6 +13,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +47,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.CourseService;
+import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -67,6 +68,7 @@ import de.tum.cit.aet.artemis.lecture.api.SlideApi;
  * REST controller for managing FileUploadExercise.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadExerciseResource {

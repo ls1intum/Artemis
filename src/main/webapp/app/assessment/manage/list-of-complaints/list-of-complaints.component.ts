@@ -139,11 +139,11 @@ export class ListOfComplaintsComponent implements OnInit {
     }
 
     openAssessmentEditor(complaint: Complaint) {
-        if (!complaint || !complaint.result || !complaint.result.participation || !complaint.result.submission) {
+        if (!complaint || !complaint.result || !complaint.result.submission) {
             return;
         }
 
-        const studentParticipation = complaint.result.participation as StudentParticipation;
+        const studentParticipation = complaint.result.submission.participation as StudentParticipation;
         const exercise = studentParticipation.exercise;
         const submissionId = complaint.result.submission.id;
         if (!exercise || !exercise.type || !submissionId) {

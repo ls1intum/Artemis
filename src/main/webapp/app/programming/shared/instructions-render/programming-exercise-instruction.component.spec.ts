@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement, VERSION } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -85,9 +84,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .overrideModule(BrowserDynamicTestingModule, { set: {} })
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
         comp = fixture.componentInstance;
@@ -120,7 +117,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         };
         const oldParticipation: Participation = { id: 1 };
         const result: Result = { id: 1 };
-        const participation: Participation = { id: 2, results: [result] };
+        const participation: Participation = { id: 2, submissions: [{ results: [result] }] };
         const oldSubscription = new Subscription();
         const getTestCasesSpy = jest.spyOn(programmingExerciseGradingService, 'getTestCases');
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
@@ -248,7 +245,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.markdownExtensions).toHaveLength(2);
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledOnce();
         // result should have been fetched with the submission as this is required to show details for it
-        expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id, true);
+        expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(comp.isInitial).toBeFalse();
         expect(comp.isLoading).toBeFalse();

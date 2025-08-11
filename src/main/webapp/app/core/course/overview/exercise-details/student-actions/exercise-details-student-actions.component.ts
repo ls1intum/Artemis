@@ -14,7 +14,7 @@ import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { MODULE_FEATURE_TEXT, PROFILE_ATHENA } from 'app/app.constants';
+import { PROFILE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { NgTemplateOutlet } from '@angular/common';
@@ -30,6 +30,7 @@ import { OpenCodeEditorButtonComponent } from 'app/core/course/overview/exercise
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     imports: [
@@ -86,13 +87,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     hasRatedGradedResult: boolean;
     beforeDueDate: boolean;
     editorLabel?: string;
-    textExerciseEnabled = false;
     athenaEnabled = false;
     routerLink: string;
+    numberOfGradedParticipationResults: number;
 
     ngOnInit(): void {
-        this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
-        this.textExerciseEnabled = this.profileService.isProfileActive(MODULE_FEATURE_TEXT);
         this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
         if (this.exercise.type === ExerciseType.QUIZ) {
@@ -133,9 +132,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     updateParticipations() {
         const studentParticipations = this.exercise.studentParticipations ?? [];
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
+        this.numberOfGradedParticipationResults = getAllResultsOfAllSubmissions(this.gradedParticipation?.submissions).length;
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
 
-        this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
+        this.hasRatedGradedResult = !!getAllResultsOfAllSubmissions(this.gradedParticipation?.submissions)?.some(
+            (result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA,
+        );
     }
 
     /**
@@ -205,7 +207,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                 next: (resumedParticipation: StudentParticipation) => {
                     if (resumedParticipation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
-                        resumedParticipation.results = participation ? participation.results : [];
                         const replacedIndex = this.exercise.studentParticipations!.indexOf(participation!);
                         this.exercise.studentParticipations![replacedIndex] = resumedParticipation;
                         this.updateParticipations();
@@ -268,9 +269,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     }
 
     get allowEditing(): boolean {
-        if (this.exercise.type === ExerciseType.TEXT && this.textExerciseEnabled) {
-            return false;
-        }
         return (
             (this.gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate) ||
             this.gradedParticipation?.initializationState === InitializationState.FINISHED

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.domain.settings;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH;
+
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -33,6 +35,10 @@ public class IrisTextExerciseChatSubSettings extends IrisSubSettings implements 
     private SortedSet<String> enabledForCategories = new TreeSet<>();
 
     @Nullable
+    @Column(name = "custom_instructions", length = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH)
+    private String customInstructions;
+
+    @Nullable
     public Integer getRateLimit() {
         return rateLimit;
     }
@@ -57,5 +63,14 @@ public class IrisTextExerciseChatSubSettings extends IrisSubSettings implements 
 
     public void setEnabledForCategories(@Nullable SortedSet<String> enabledForCategories) {
         this.enabledForCategories = enabledForCategories;
+    }
+
+    @Nullable
+    public String getCustomInstructions() {
+        return customInstructions;
+    }
+
+    public void setCustomInstructions(@Nullable String customInstructions) {
+        this.customInstructions = customInstructions;
     }
 }

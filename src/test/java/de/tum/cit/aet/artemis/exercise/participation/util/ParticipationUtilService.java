@@ -13,11 +13,19 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -63,15 +71,16 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -81,6 +90,7 @@ import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 /**
  * Service responsible for initializing the database with specific testdata related to participations, submissions and results.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ParticipationUtilService {
@@ -138,11 +148,17 @@ public class ParticipationUtilService {
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    @Autowired
+    private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
+
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
     @Value("${artemis.version-control.url}")
     protected String artemisVersionControlUrl;
+
+    @Autowired
+    private ResultTestRepository resultRepository;
 
     /**
      * Creates and saves a Result for a ProgrammingExerciseStudentParticipation associated with the given ProgrammingExercise and login. If no corresponding
@@ -169,12 +185,13 @@ public class ParticipationUtilService {
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
-            studentParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
+            studentParticipation = studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
         }
         else {
             studentParticipation = storedParticipation.get();
         }
-        return addResultToParticipation(null, null, studentParticipation);
+        var submission = this.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
+        return addResultToSubmission(null, null, submission);
     }
 
     /**
@@ -211,6 +228,20 @@ public class ParticipationUtilService {
      */
     public Result createSubmissionAndResult(StudentParticipation studentParticipation, long scoreAwarded, boolean rated) {
         Exercise exercise = studentParticipation.getExercise();
+        var submission = getSubmission(studentParticipation, exercise);
+        submission = submissionRepository.save(submission);
+
+        Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
+        result.setSubmission(submission);
+        result.completionDate(ZonedDateTime.now());
+        submission.addResult(result);
+        resultRepository.save(result);
+        submissionRepository.save(submission);
+        return result;
+    }
+
+    @NotNull
+    private static Submission getSubmission(StudentParticipation studentParticipation, Exercise exercise) {
         Submission submission = switch (exercise) {
             case ProgrammingExercise ignored -> new ProgrammingSubmission();
             case ModelingExercise ignored -> new ModelingSubmission();
@@ -222,15 +253,7 @@ public class ParticipationUtilService {
 
         submission.setType(SubmissionType.MANUAL);
         submission.setParticipation(studentParticipation);
-        submission = submissionRepository.saveAndFlush(submission);
-
-        Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
-        result.setParticipation(studentParticipation);
-        result.setSubmission(submission);
-        result.completionDate(ZonedDateTime.now());
-        submission.addResult(result);
-        submission = submissionRepository.saveAndFlush(submission);
-        return submission.getResults().getFirst();
+        return submission;
     }
 
     /**
@@ -241,8 +264,7 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login,
-                false);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
         if (storedParticipation.isEmpty()) {
             User user = userUtilService.getUserByLogin(login);
             StudentParticipation participation = new StudentParticipation();
@@ -250,10 +272,10 @@ public class ParticipationUtilService {
             participation.setParticipant(user);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
             assertThat(storedParticipation).isPresent();
         }
-        return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
+        return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
     }
 
     /**
@@ -264,8 +286,7 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation createAndSaveParticipationForExerciseInTheFuture(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login,
-                false);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
         storedParticipation.ifPresent(studentParticipation -> studentParticipationRepo.delete(studentParticipation));
         User user = userUtilService.getUserByLogin(login);
         StudentParticipation participation = new StudentParticipation();
@@ -273,9 +294,9 @@ public class ParticipationUtilService {
         participation.setParticipant(user);
         participation.setExercise(exercise);
         studentParticipationRepo.save(participation);
-        storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+        storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
         assertThat(storedParticipation).isPresent();
-        return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
+        return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
     }
 
     /**
@@ -286,7 +307,7 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation addTeamParticipationForExercise(Exercise exercise, long teamId) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId);
         if (storedParticipation.isEmpty()) {
             Team team = teamRepo.findById(teamId).orElseThrow();
             StudentParticipation participation = new StudentParticipation();
@@ -294,10 +315,10 @@ public class ParticipationUtilService {
             participation.setParticipant(team);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId);
+            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId);
             assertThat(storedParticipation).isPresent();
         }
-        return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
+        return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
     }
 
     /**
@@ -319,7 +340,7 @@ public class ParticipationUtilService {
         participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
         participationVCSAccessTokenService.createParticipationVCSAccessToken(userUtilService.getUserByLogin(login), participation);
-        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
     }
 
     /**
@@ -341,7 +362,7 @@ public class ParticipationUtilService {
         participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
-        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
     }
 
     /**
@@ -365,7 +386,7 @@ public class ParticipationUtilService {
         participation.setRepositoryUri(String.format(localRepoPath.toString() + "%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
-        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
     }
 
     /**
@@ -373,14 +394,14 @@ public class ParticipationUtilService {
      *
      * @param type           The AssessmentType of the Result
      * @param completionDate The completionDate of the Result
-     * @param participation  The Participation the Result belongs to
+     * @param submission     The submission the Result belongs to
      * @param successful     True, if the Result is successful
      * @param rated          True, if the Result is rated
      * @param score          The score of the Result
      * @return The created Result
      */
-    public Result addResultToParticipation(AssessmentType type, ZonedDateTime completionDate, Participation participation, boolean successful, boolean rated, double score) {
-        Result result = new Result().participation(participation).successful(successful).rated(rated).score(score).assessmentType(type).completionDate(completionDate);
+    public Result addResultToSubmission(AssessmentType type, ZonedDateTime completionDate, Submission submission, boolean successful, boolean rated, double score) {
+        Result result = new Result().submission(submission).successful(successful).rated(rated).score(score).assessmentType(type).completionDate(completionDate);
         return resultRepo.save(result);
     }
 
@@ -389,12 +410,15 @@ public class ParticipationUtilService {
      *
      * @param assessmentType The AssessmentType of the Result
      * @param completionDate The completionDate of the Result
-     * @param participation  The Participation the Result belongs to
+     * @param submission     The submission the Result belongs to
      * @return The created Result
      */
-    public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
-        Result result = new Result().participation(participation).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
-        return resultRepo.save(result);
+    public Result addResultToSubmission(AssessmentType assessmentType, ZonedDateTime completionDate, Submission submission) {
+        Result result = new Result().submission(submission).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
+        submission.addResult(result);
+        result = resultRepo.save(result);
+        submissionRepository.save(submission);
+        return result;
     }
 
     /**
@@ -402,14 +426,13 @@ public class ParticipationUtilService {
      *
      * @param assessmentType The AssessmentType of the Result
      * @param completionDate The completionDate of the Result
-     * @param participation  The Participation the Result belongs to
+     * @param submission     The submission the Result belongs to
      * @param assessorLogin  The login of the assessor of the Result
      * @param feedbacks      The Feedbacks of the Result
      * @return The created Result
      */
-    public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation, String assessorLogin,
-            List<Feedback> feedbacks) {
-        Result result = new Result().participation(participation).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
+    public Result addResultToSubmission(AssessmentType assessmentType, ZonedDateTime completionDate, Submission submission, String assessorLogin, List<Feedback> feedbacks) {
+        Result result = new Result().submission(submission).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         return resultRepo.save(result);
     }
@@ -420,10 +443,10 @@ public class ParticipationUtilService {
      * @param participation The Participation the Result belongs to
      * @return The created Result
      */
-    public Result addResultToParticipation(Participation participation, Submission submission) {
-        Result result = new Result().participation(participation).successful(true).score(100D).rated(true);
-        result = resultRepo.save(result);
+    public Result addResultToSubmission(Participation participation, Submission submission) {
+        Result result = new Result().submission(submission).successful(true).score(100D).rated(true);
         result.setSubmission(submission);
+        result = resultRepo.save(result);
         submission.addResult(result);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
@@ -482,7 +505,8 @@ public class ParticipationUtilService {
         ));
 
         result.addFeedbacks(feedbacks);
-        return resultRepo.save(result);
+        resultRepo.save(result);
+        return result;
     }
     // @formatter:on
 
@@ -525,10 +549,10 @@ public class ParticipationUtilService {
      * @return The updated Submission with eagerly loaded results and assessor
      */
     public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated, ZonedDateTime completionDate) {
-        Result result = new Result().participation(submission.getParticipation()).assessmentType(assessmentType).score(score).rated(rated).completionDate(completionDate);
+        Result result = new Result().submission(submission).assessmentType(assessmentType).score(score).rated(rated).completionDate(completionDate);
         result.setAssessor(user);
-        result = resultRepo.save(result);
         result.setSubmission(submission);
+        result = resultRepo.save(result);
         submission.addResult(result);
         var savedSubmission = submissionRepository.save(submission);
         return submissionRepository.findWithEagerResultsAndAssessorById(savedSubmission.getId()).orElseThrow();
@@ -609,7 +633,6 @@ public class ParticipationUtilService {
     public void saveResultInParticipation(Submission submission, Result result) {
         submission.addResult(result);
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
     }
 
@@ -622,12 +645,12 @@ public class ParticipationUtilService {
      */
     public Result generateResult(Submission submission, User assessor) {
         Result result = new Result();
-        result = resultRepo.save(result);
         result.setSubmission(submission);
         result.completionDate(pastTimestamp);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
         result.setRated(true);
+        result = resultRepo.save(result);
         return result;
     }
 
@@ -692,6 +715,21 @@ public class ParticipationUtilService {
         return submission;
     }
 
+    /**
+     * Updates and saves the given Submission by adding it to the given Participation.
+     *
+     * @param participation The Participation the Submission belongs to
+     * @param submission    The Submission to add and update
+     * @return The updated Submission
+     */
+    public Submission addSubmission(TemplateProgrammingExerciseParticipation participation, Submission submission) {
+        participation.addSubmission(submission);
+        submission.setParticipation(participation);
+        submissionRepository.save(submission);
+        templateProgrammingExerciseParticipationRepository.save(participation);
+        return submission;
+    }
+
     public Submission addSubmissionWithTwoFinishedResultsWithAssessor(Exercise exercise, Submission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         submission = addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
@@ -714,7 +752,6 @@ public class ParticipationUtilService {
         result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
-        submission.getParticipation().addResult(result);
         submission = saveSubmissionToRepo(submission);
         studentParticipationRepo.save(participation);
         return submission;
@@ -821,8 +858,12 @@ public class ParticipationUtilService {
 
         Course course = new Course();
         course.setAccuracyOfScores(1);
-        storedFeedbackResult.setParticipation(new StudentParticipation().exercise(new ProgrammingExercise().course(course)));
-        sentFeedbackResult.setParticipation(new StudentParticipation().exercise(new ProgrammingExercise().course(course)));
+        var programmingSubmission = new ProgrammingSubmission();
+        var programmingSubmission2 = new ProgrammingSubmission();
+        programmingSubmission.addResult(storedFeedbackResult);
+        storedFeedbackResult.setSubmission(programmingSubmission);
+        programmingSubmission2.addResult(sentFeedbackResult);
+        sentFeedbackResult.setSubmission(programmingSubmission2);
 
         double calculatedTotalPoints = resultRepo.calculateTotalPoints(storedFeedback);
         double totalPoints = resultRepo.constrainToRange(calculatedTotalPoints, 20.0);
@@ -861,7 +902,7 @@ public class ParticipationUtilService {
             submission = ParticipationFactory.generateProgrammingSubmission(true);
         }
         Submission submissionWithParticipation = addSubmission(studentParticipation, submission);
-        Result result = addResultToParticipation(studentParticipation, submissionWithParticipation);
+        Result result = addResultToSubmission(studentParticipation, submissionWithParticipation);
         resultRepo.save(result);
 
         assertThat(exercise.getGradingCriteria()).isNotNull();
@@ -883,20 +924,20 @@ public class ParticipationUtilService {
      * @return A List of Results with eagerly loaded submissions and feedbacks
      */
     public List<Result> getResultsForExercise(Exercise exercise) {
-        return resultRepo.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
+        return resultRepo.findWithEagerSubmissionAndFeedbackBySubmissionParticipationExerciseId(exercise.getId());
     }
 
     public void mockCreationOfExerciseParticipation(boolean useGradedParticipationOfResult, Result gradedResult, ProgrammingExercise programmingExercise, UriService uriService,
-            VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService, LocalVCGitBranchService localVCGitBranchService)
-            throws URISyntaxException {
+            VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws URISyntaxException {
         String templateRepoName;
         if (useGradedParticipationOfResult) {
-            templateRepoName = uriService.getRepositorySlugFromRepositoryUri(((ProgrammingExerciseStudentParticipation) gradedResult.getParticipation()).getVcsRepositoryUri());
+            templateRepoName = uriService
+                    .getRepositorySlugFromRepositoryUri(((ProgrammingExerciseStudentParticipation) gradedResult.getSubmission().getParticipation()).getVcsRepositoryUri());
         }
         else {
             templateRepoName = uriService.getRepositorySlugFromRepositoryUri(programmingExercise.getVcsTemplateRepositoryUri());
         }
-        mockCreationOfExerciseParticipation(templateRepoName, programmingExercise, versionControlService, continuousIntegrationService, localVCGitBranchService);
+        mockCreationOfExerciseParticipation(templateRepoName, versionControlService, continuousIntegrationService);
     }
 
     /**
@@ -904,47 +945,88 @@ public class ParticipationUtilService {
      * URL.
      *
      * @param templateRepoName             The expected sourceRepositoryName when calling the copyRepository method of the mocked VersionControlService
-     * @param programmingExercise          The ProgrammingExercise the StudentParticipation belongs to
      * @param versionControlService        The mocked VersionControlService
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
-     * @param localVCGitBranchService      The mocked LocalVCGitBranchService
      */
-    public void mockCreationOfExerciseParticipation(String templateRepoName, ProgrammingExercise programmingExercise, VersionControlService versionControlService,
-            ContinuousIntegrationService continuousIntegrationService, LocalVCGitBranchService localVCGitBranchService) throws URISyntaxException {
+    public void mockCreationOfExerciseParticipation(String templateRepoName, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
+            throws URISyntaxException {
         var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
+        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
                 any(Integer.class));
-        mockCreationOfExerciseParticipationInternal(programmingExercise, continuousIntegrationService, localVCGitBranchService);
+        mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
 
     /**
      * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise. The StudentParticipation's repositoryUri is set to a fake
      * URL.
      *
-     * @param programmingExercise          The ProgrammingExercise the StudentParticipation belongs to
      * @param versionControlService        The mocked VersionControlService
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
-     * @param localVCGitBranchService      The mocked LocalVCGitBranchService
      */
-    public void mockCreationOfExerciseParticipation(ProgrammingExercise programmingExercise, VersionControlService versionControlService,
-            ContinuousIntegrationService continuousIntegrationService, LocalVCGitBranchService localVCGitBranchService) throws URISyntaxException {
+    public void mockCreationOfExerciseParticipation(VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
+            throws URISyntaxException {
         var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(), any(String.class), any(String.class), any(String.class), any(Integer.class));
-        mockCreationOfExerciseParticipationInternal(programmingExercise, continuousIntegrationService, localVCGitBranchService);
+        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), any(), any(String.class), any(String.class), any(String.class),
+                any(Integer.class));
+        mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
 
     /**
      * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise.
      *
-     * @param programmingExercise          The ProgrammingExercise the StudentParticipation belongs to
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
-     * @param localVCGitBranchService      The mocked LocalVCGitBranchService
      */
-    private void mockCreationOfExerciseParticipationInternal(ProgrammingExercise programmingExercise, ContinuousIntegrationService continuousIntegrationService,
-            LocalVCGitBranchService localVCGitBranchService) {
-        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfExercise(programmingExercise);
-
+    private void mockCreationOfExerciseParticipationInternal(ContinuousIntegrationService continuousIntegrationService) {
         doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any());
+    }
+
+    /**
+     * Gets all Results of all submissions for the given Participation.
+     *
+     * @return A Set of Results that belong to the Participation's submissions
+     */
+    public Set<Result> getResultsForParticipation(Participation participation) {
+        return Stream.ofNullable(participation.getSubmissions()).flatMap(Collection::stream)
+                .flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream)).filter(Objects::nonNull).collect(Collectors.toSet());
+    }
+
+    /**
+     * Sets up a programming submission with two results: one completed and one draft.
+     *
+     * @param programmingExercise The programming exercise
+     * @param student             The student
+     * @return The configured programming submission with two results
+     */
+    public ProgrammingSubmission setupSubmissionWithTwoResults(ProgrammingExercise programmingExercise, User student) {
+        // Create student participation and submission
+        StudentParticipation participation = addStudentParticipationForProgrammingExercise(programmingExercise, student.getLogin());
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setParticipation(participation);
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now().minusHours(1).minusMinutes(30));
+        submission = submissionRepository.save(submission);
+        participation.addSubmission(submission);
+        addSubmission(participation, submission);
+
+        // Create results for both correction rounds
+        Result firstResult = generateResultWithScore(submission, student, 80.0);
+        firstResult.setRated(true);
+        firstResult.setCompletionDate(ZonedDateTime.now().minusMinutes(45));
+        firstResult = resultRepository.save(firstResult);
+        submission.addResult(firstResult);
+
+        Result secondResult = generateResult(submission, student);
+        secondResult.setRated(false); // Second correction not completed
+        secondResult.setCompletionDate(null);
+        secondResult.setScore(null); // Draft results should have null score
+        secondResult = resultRepository.save(secondResult);
+        submission.addResult(secondResult);
+        submission = submissionRepository.save(submission);
+
+        // Verify submission has both results: one completed, one draft
+        assertThat(submission.getResults()).hasSize(2);
+
+        return submission;
     }
 }

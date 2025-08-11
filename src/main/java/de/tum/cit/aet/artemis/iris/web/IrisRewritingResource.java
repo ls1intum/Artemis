@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisRewriteTextReques
  * REST controller for managing Markdown Rewritings.
  */
 @Profile(PROFILE_IRIS)
+@Lazy
 @RestController
 @RequestMapping("api/iris/")
 public class IrisRewritingResource {
@@ -59,7 +61,6 @@ public class IrisRewritingResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         rewritingService.executeRewritingPipeline(user, course, request.variant(), request.toBeRewritten());
-        log.debug("REST request to rewrite text: {}", request.toBeRewritten());
         return ResponseEntity.ok().build();
     }
 

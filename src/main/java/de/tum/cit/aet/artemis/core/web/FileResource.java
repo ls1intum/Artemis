@@ -27,6 +27,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
@@ -95,6 +96,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
  * REST controller for managing Files.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/core/")
 public class FileResource {

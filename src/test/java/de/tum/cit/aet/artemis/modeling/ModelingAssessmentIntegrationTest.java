@@ -258,7 +258,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
-        assertThat(storedResult.getParticipation()).isNotNull();
+        assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
     }
 
     @Test
@@ -287,7 +287,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
-        assertThat(storedResult.getParticipation()).isNotNull();
+        assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
 
         Course course = request.get("/api/core/courses/" + this.course.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
         Exercise exercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
@@ -309,7 +309,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
-        assertThat(storedResult.getParticipation()).isNotNull();
+        assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
     }
 
     @Test
@@ -342,7 +342,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
-        assertThat(storedResult.getParticipation()).isNotNull();
+        assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
     }
 
     @Test
@@ -367,7 +367,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
-        assertThat(storedResult.getParticipation()).isNotNull();
+        assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -460,7 +460,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     private void checkAssessmentNotFinished(Result storedResult, User assessor) {
-        assertThat(storedResult.isRated() == null || !storedResult.isRated()).as("rated has not been set").isTrue();
+        assertThat(storedResult.isRated()).as("rated has not been set").isFalse();
         assertThat(storedResult.getScore()).as("score has not been calculated").isNull();
         assertThat(storedResult.getAssessor()).as("Assessor has been set").isEqualTo(assessor);
         assertThat(storedResult.getCompletionDate()).as("completion date has not been set").isNull();
@@ -474,7 +474,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     private void checkAutomaticAssessment(Result storedResult) {
-        assertThat(storedResult.isRated() == null || !storedResult.isRated()).as("rated has not been set").isTrue();
+        assertThat(storedResult.isRated()).as("rated has not been set").isFalse();
         assertThat(storedResult.getScore()).as("score has not been calculated").isNull();
         assertThat(storedResult.getAssessor()).as("assessor has not been set").isNull();
         assertThat(storedResult.getCompletionDate()).as("completion date has not been set").isNull();
@@ -694,16 +694,16 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // verify that the result contains the relationship
         assertThat(firstSubmittedManualResult).isNotNull();
-        assertThat(firstSubmittedManualResult.getParticipation()).isEqualTo(studentParticipation);
+        assertThat(firstSubmittedManualResult.getSubmission().getParticipation()).isEqualTo(studentParticipation);
 
         // verify that the relationship between student participation,
-        var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
         assertThat(databaseRelationshipStateOfResultsOverParticipation).isPresent();
         var fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutFirstAssessment);
-        assertThat(fetchedParticipation.findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
@@ -733,13 +733,14 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
 
         // verify that the relationship between student participation,
-        databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
         assertThat(databaseRelationshipStateOfResultsOverParticipation).isPresent();
         fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutSecondAssessment);
-        assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst()).contains(submissionWithoutSecondAssessment.getLatestResult());
+        assertThat(participationUtilService.getResultsForParticipation(fetchedParticipation).stream().filter(result -> result.getCompletionDate() == null).findFirst())
+                .contains(submissionWithoutSecondAssessment.getLatestResult());
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
@@ -854,11 +855,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         Result firstResult = ParticipationFactory.generateResult(true, 50);
         firstResult.setAssessor(tutor1);
         firstResult.setHasComplaint(true);
-        firstResult.setParticipation(studentParticipation);
+        firstResult.setSubmission(submission);
         firstResult = resultRepository.saveAndFlush(firstResult);
 
         submission.addResult(firstResult);
-        firstResult.setSubmission(submission);
         submission = submissionRepository.saveAndFlush(submission);
 
         // creating complaint by student 1

@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,8 +42,11 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
+import de.tum.cit.aet.artemis.core.service.course.CourseAdminService;
+import de.tum.cit.aet.artemis.core.service.course.CourseDeletionService;
+import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -53,6 +57,7 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
  */
 @Profile(PROFILE_CORE)
 @EnforceAdmin
+@Lazy
 @RestController
 @RequestMapping("api/core/admin/")
 public class AdminCourseResource {
@@ -61,12 +66,16 @@ public class AdminCourseResource {
 
     private static final int MAX_TITLE_LENGTH = 255;
 
+    private final CourseAccessService courseAccessService;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final CourseLoadService courseLoadService;
+
     private final UserRepository userRepository;
 
-    private final CourseService courseService;
+    private final CourseAdminService courseAdminService;
 
     private final ChannelService channelService;
 
@@ -78,15 +87,21 @@ public class AdminCourseResource {
 
     private final Optional<LtiApi> ltiApi;
 
-    public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService) {
-        this.courseService = courseService;
+    private final CourseDeletionService courseDeletionService;
+
+    public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
+            FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseAccessService courseAccessService,
+            CourseLoadService courseLoadService) {
+        this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
         this.ltiApi = ltiApi;
         this.channelService = channelService;
+        this.courseDeletionService = courseDeletionService;
+        this.courseAccessService = courseAccessService;
+        this.courseLoadService = courseLoadService;
     }
 
     /**
@@ -147,7 +162,7 @@ public class AdminCourseResource {
             ltiApi.get().createOnlineCourseConfiguration(course);
         }
 
-        courseService.setDefaultGroupsIfNotSet(course);
+        courseAccessService.setDefaultGroupsIfNotSet(course);
 
         Course createdCourse = courseRepository.save(course);
 
@@ -173,13 +188,13 @@ public class AdminCourseResource {
     @DeleteMapping("courses/{courseId}")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
-        Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(courseId);
+        Course course = courseLoadService.loadCourseWithExercisesLecturesLectureUnitsCompetenciesAndPrerequisites(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has requested to delete the course {}", user.getLogin(), course.getTitle());
 
-        courseService.delete(course);
+        courseDeletionService.delete(course);
         if (course.getCourseIcon() != null) {
             fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(course.getCourseIcon()), FilePathType.COURSE_ICON), 0);
         }
@@ -195,7 +210,7 @@ public class AdminCourseResource {
     @GetMapping("courses/{courseId}/deletion-summary")
     public ResponseEntity<CourseDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId) {
         log.debug("REST request to get deletion summary course: {}", courseId);
-        return ResponseEntity.ok().body(courseService.getDeletionSummary(courseId));
+        return ResponseEntity.ok().body(courseAdminService.getDeletionSummary(courseId));
     }
 
     /**

@@ -15,13 +15,16 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.ldap.query.SearchScope;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.ldap.LdapUserRepository;
 
+@Lazy
 @Service
 @Profile(PROFILE_LDAP)
 public class LdapUserService {
@@ -92,19 +95,31 @@ public class LdapUserService {
     public void loadUserDetailsFromLdap(User user) {
         if (allowedLdapUsernamePattern.isEmpty() || allowedLdapUsernamePattern.get().matcher(user.getLogin()).matches()) {
             LdapUserDto ldapUserDto = loadUserDetailsFromLdap(user.getLogin());
-            if (ldapUserDto != null) {
-                if (ldapUserDto.getFirstName() != null) {
-                    user.setFirstName(ldapUserDto.getFirstName());
-                }
-                if (ldapUserDto.getLastName() != null) {
-                    user.setLastName(ldapUserDto.getLastName());
-                }
-                if (ldapUserDto.getEmail() != null) {
-                    user.setEmail(ldapUserDto.getEmail());
-                }
-                if (ldapUserDto.getRegistrationNumber() != null) {
-                    user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
-                }
+            syncUserDetails(user, ldapUserDto);
+        }
+    }
+
+    /**
+     * Syncs the user details from the LDAP user DTO to the Artemis user entity.
+     * This method updates the first name, last name, email, and registration number of the user.
+     *
+     * @param user        the Artemis user entity to be updated
+     * @param ldapUserDto the LDAP user DTO containing the details to sync
+     */
+    public static void syncUserDetails(User user, LdapUserDto ldapUserDto) {
+        if (ldapUserDto != null) {
+            if (ldapUserDto.getFirstName() != null) {
+                user.setFirstName(ldapUserDto.getFirstName());
+            }
+            if (ldapUserDto.getLastName() != null) {
+                user.setLastName(ldapUserDto.getLastName());
+            }
+            if (ldapUserDto.getEmail() != null) {
+                user.setEmail(ldapUserDto.getEmail());
+            }
+            // an empty string is considered as null to satisfy the unique constraint on registration number
+            if (StringUtils.hasText(ldapUserDto.getRegistrationNumber())) {
+                user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
             }
         }
     }

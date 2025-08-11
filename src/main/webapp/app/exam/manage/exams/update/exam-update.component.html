@@ -134,8 +134,8 @@
                             name="workingTimeInMinutes"
                             class="form-control"
                             type="number"
-                            [customMin]="1"
-                            [customMax]="maxWorkingTimeInMinutes"
+                            min="1"
+                            [max]="maxWorkingTimeInMinutes"
                             [(ngModel)]="workingTimeInMinutes"
                             (focusin)="roundWorkingTime()"
                             (focusout)="roundWorkingTime()"
@@ -161,7 +161,8 @@
                     <label class="form-check-label" for="numberOfExercisesInExam" jhiTranslate="artemisApp.examManagement.numberOfExercisesInExam"
                         >Number of Exercises in Exam</label
                     >
-                    <input id="numberOfExercisesInExam" name="numberOfExercisesInExam" class="form-control" type="number" min="0" [(ngModel)]="exam.numberOfExercisesInExam" />
+                    <jhi-help-icon [text]="'artemisApp.examManagement.numberOfExercisesInExamTooltip'" />
+                    <input id="numberOfExercisesInExam" name="numberOfExercisesInExam" class="form-control" type="number" min="1" [(ngModel)]="exam.numberOfExercisesInExam" />
                 </div>
             </div>
             <div class="form-check mb-3">

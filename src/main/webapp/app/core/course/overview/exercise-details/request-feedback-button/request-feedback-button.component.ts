@@ -23,6 +23,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-request-feedback-button',
@@ -30,7 +31,21 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
-    faPenSquare = faPenSquare;
+    private readonly profileService = inject(ProfileService);
+    private readonly alertService = inject(AlertService);
+    private readonly courseExerciseService = inject(CourseExerciseService);
+    private readonly translateService = inject(TranslateService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly participationService = inject(ParticipationService);
+    private readonly accountService = inject(AccountService);
+    private readonly userService = inject(UserService);
+    private readonly modalService = inject(NgbModal);
+    private readonly participationWebsocketService = inject(ParticipationWebsocketService);
+
+    protected readonly faPenSquare = faPenSquare;
+
+    protected readonly ExerciseType = ExerciseType;
+
     athenaEnabled = false;
     requestFeedbackEnabled = false;
     isExamExercise: boolean;
@@ -47,21 +62,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     exercise = input.required<Exercise>();
     generatingFeedback = output<void>();
 
-    private profileService = inject(ProfileService);
-    private alertService = inject(AlertService);
-    private courseExerciseService = inject(CourseExerciseService);
-    private translateService = inject(TranslateService);
-    private exerciseService = inject(ExerciseService);
-    private participationService = inject(ParticipationService);
-    private accountService = inject(AccountService);
-    private userService = inject(UserService);
-    private modalService = inject(NgbModal);
-    private participationWebsocketService = inject(ParticipationWebsocketService);
-
     private athenaResultUpdateListener?: Subscription;
     private acceptSubscription?: Subscription;
-
-    protected readonly ExerciseType = ExerciseType;
 
     ngOnInit() {
         this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
@@ -85,7 +87,9 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                     this.participation = this.participationService.getSpecificStudentParticipation(exerciseResponse.body!.exercise.studentParticipations ?? [], false);
                     if (this.participation) {
                         this.currentFeedbackRequestCount =
-                            this.participation.results?.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && result.successful == true).length ?? 0;
+                            getAllResultsOfAllSubmissions(this.participation.submissions)?.filter(
+                                (result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && result.successful == true,
+                            ).length ?? 0;
                         this.subscribeToResultUpdates();
                     }
                 },
@@ -102,7 +106,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     acceptExternalLLMUsage(modal: any) {
         this.acceptSubscription?.unsubscribe();
-        this.acceptSubscription = this.userService.acceptExternalLLMUsage().subscribe(() => {
+        this.acceptSubscription = this.userService.updateExternalLLMUsageConsent(true).subscribe(() => {
             this.hasUserAcceptedExternalLLMUsage = true;
             this.accountService.setUserAcceptedExternalLLMUsage();
             modal.close();

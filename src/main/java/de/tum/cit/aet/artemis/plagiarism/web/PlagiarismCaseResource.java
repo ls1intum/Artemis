@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,10 +28,12 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismVerdictDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
@@ -40,6 +43,7 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
  * REST controller for managing Plagiarism Cases.
  */
 @Conditional(PlagiarismEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/plagiarism/")
 public class PlagiarismCaseResource {
@@ -68,21 +72,32 @@ public class PlagiarismCaseResource {
     }
 
     /**
+     * Retrieves all plagiarism cases related to a course for the course scores view.
+     * Only include the plagiarism case with student/team and exercise
+     *
+     * @param courseId the id of the course
+     * @return all plagiarism cases of the course
+     */
+    @GetMapping("courses/{courseId}/plagiarism-cases/for-scores")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<PlagiarismCaseDTO>> getPlagiarismCasesForCourseScores(@PathVariable long courseId) {
+        log.debug("REST request to get all plagiarism cases for instructor in course with id: {}", courseId);
+        var plagiarismCases = plagiarismCaseRepository.findPlagiarismCaseDtoByCourseId(courseId);
+        return ResponseEntity.ok(plagiarismCases);
+    }
+
+    /**
      * Retrieves all plagiarism cases related to a course for the instructor view.
      *
      * @param courseId the id of the course
      * @return all plagiarism cases of the course
      */
     @GetMapping("courses/{courseId}/plagiarism-cases/for-instructor")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesForCourseForInstructor(@PathVariable long courseId) {
         log.debug("REST request to get all plagiarism cases for instructor in course with id: {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
-            throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
-        }
         var plagiarismCases = plagiarismCaseRepository.findByCourseIdWithPlagiarismSubmissionsAndComparison(courseId);
-        return getPlagiarismCasesResponseEntity(plagiarismCases);
+        return removeUnnecessaryData(plagiarismCases);
     }
 
     /**
@@ -107,7 +122,7 @@ public class PlagiarismCaseResource {
                 throw new ConflictException("Exam with id " + exam.getId() + " is not related to the given course id " + courseId, ENTITY_NAME, "courseMismatch");
             }
         }
-        return getPlagiarismCasesResponseEntity(plagiarismCases);
+        return removeUnnecessaryData(plagiarismCases);
     }
 
     /**
@@ -229,7 +244,7 @@ public class PlagiarismCaseResource {
         return ResponseEntity.ok(plagiarismCaseInfoDTOs);
     }
 
-    private ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesResponseEntity(List<PlagiarismCase> plagiarismCases) {
+    private ResponseEntity<List<PlagiarismCase>> removeUnnecessaryData(List<PlagiarismCase> plagiarismCases) {
         for (var plagiarismCase : plagiarismCases) {
             if (plagiarismCase.getPost() != null) {
                 plagiarismCase.getPost().setPlagiarismCase(null);

@@ -2,9 +2,8 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Optional;
-
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -13,14 +12,16 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
  * Service for managing programming exercise repositories and participations
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class RepositoryParticipationService {
 
@@ -32,7 +33,7 @@ public class RepositoryParticipationService {
 
     private final RepositoryAccessService repositoryAccessService;
 
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     /**
      * Constructor for the RepositoryParticipationService.
@@ -42,12 +43,12 @@ public class RepositoryParticipationService {
      * @param userRepository          the user repository
      */
     public RepositoryParticipationService(ParticipationRepository participationRepository, GitService gitService, UserRepository userRepository,
-            RepositoryAccessService repositoryAccessService, Optional<LocalVCGitBranchService> localVCGitBranchService) {
+            RepositoryAccessService repositoryAccessService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.participationRepository = participationRepository;
         this.gitService = gitService;
         this.userRepository = userRepository;
         this.repositoryAccessService = repositoryAccessService;
-        this.localVCGitBranchService = localVCGitBranchService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -80,15 +81,8 @@ public class RepositoryParticipationService {
      */
     public Repository getRepositoryFromGitService(boolean pullOnGet, ProgrammingExerciseParticipation programmingParticipation) throws GitAPIException {
         var repositoryUri = programmingParticipation.getVcsRepositoryUri();
-
-        // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
-        // Retrieving the default branch is not necessary if the repository is already cached.
-        if (gitService.isRepositoryCached(repositoryUri)) {
-            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet);
-        }
-        else {
-            String branch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(programmingParticipation);
-            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch);
-        }
+        String branch = programmingParticipation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch()
+                : programmingExerciseRepository.findBranchByExerciseId(programmingParticipation.getExercise().getId());
+        return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch, false);
     }
 }

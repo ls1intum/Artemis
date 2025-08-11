@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
  */
 @Profile(PROFILE_CORE)
 @Controller
+@Lazy
 public class LectureRepositoryApi extends AbstractLectureApi {
 
     private final LectureRepository lectureRepository;
@@ -57,15 +58,15 @@ public class LectureRepositoryApi extends AbstractLectureApi {
         return lectureRepository.countByCourse_Id(courseId);
     }
 
-    public Set<CourseContentCountDTO> countVisibleLectures(Set<Long> courseIds, ZonedDateTime now) {
-        return lectureRepository.countVisibleLectures(courseIds, now);
-    }
-
     public String getLectureTitle(long lectureId) {
         return lectureRepository.getLectureTitle(lectureId);
     }
 
     public void saveAll(Collection<Lecture> lectures) {
         lectureRepository.saveAll(lectures);
+    }
+
+    public Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(long courseId, ZonedDateTime now) {
+        return lectureRepository.findAllVisibleByCourseIdWithEagerLectureUnits(courseId, now);
     }
 }

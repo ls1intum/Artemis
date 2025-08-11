@@ -226,6 +226,13 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         }
     }
 
+    onCustomInstructionsChange(customInstructions: string) {
+        if (!this.subSettings) {
+            return;
+        }
+        this.subSettings.customInstructions = customInstructions;
+    }
+
     get inheritDisabled() {
         if (this.parentSubSettings) {
             return !this.parentSubSettings.enabled;

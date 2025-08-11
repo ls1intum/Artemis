@@ -17,6 +17,8 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
+import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-programming-exam-summary',
@@ -56,13 +58,19 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     ngOnInit() {
         this.routerLink = this.router.url;
-        this.result = this.participation.results?.[0];
+        this.participation.exercise = this.exercise;
+        this.submission = getLatestSubmission(this.participation) as ProgrammingSubmission;
+        this.result = getLatestSubmissionResult(this.submission);
+        if (this.result && this.submission) {
+            this.result.submission = this.submission;
+            this.result.submission.participation = this.participation;
+        }
         this.commitHash = this.submission?.commitHash?.slice(0, 11);
         this.isInCourseManagement = this.router.url.includes('course-management');
         const isBuilding = false;
         const missingResultInfo = MissingResultInformation.NONE;
 
-        const templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.participation.results?.[0], isBuilding, missingResultInfo);
+        const templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, isBuilding, missingResultInfo);
 
         if (this.result) {
             this.feedbackComponentParameters = prepareFeedbackComponentParameters(

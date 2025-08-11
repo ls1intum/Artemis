@@ -85,6 +85,11 @@
                     "disabled": {
                         "course": "IRIS is disabled in course IRIS settings",
                         "global": "IRIS is disabled in global IRIS settings"
+                    },
+                    "customInstructions": {
+                        "title": "Custom Instructions",
+                        "description": "Custom instructions to be provided to the AI when generating responses.",
+                        "placeholder": "Enter custom instructions for the AI (max 2048 characters)"
                     }
                 },
                 "title": {
@@ -136,6 +141,18 @@
             },
             "controlCenter": {
                 "tooltip": "By toggling you enable or disable ALL Iris features for this course. For a more precise control, please use the Iris settings by clicking on Custom."
+            },
+            "chatHistory": {
+                "title": "Chats",
+                "today": "Today",
+                "yesterday": "Yesterday",
+                "last7Days": "Last 7 Days",
+                "last30Days": "Last 30 Days",
+                "older": "Older",
+                "relatedEntityTooltip": {
+                    "programmingExercise": "This chat is related to a programming exercise.",
+                    "lecture": "This chat is related to a lecture."
+                }
             }
         }
     }

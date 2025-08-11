@@ -6,6 +6,7 @@ import java.io.InputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
  * REST controller for managing ApollonDiagram.
  */
 @Profile(PROFILE_APOLLON)
+@Lazy
 @RestController
 @RequestMapping("api/modeling/")
 public class ApollonConversionResource {

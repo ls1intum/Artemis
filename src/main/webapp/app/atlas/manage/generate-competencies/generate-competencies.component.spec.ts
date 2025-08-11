@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockProvider } from 'ng-mocks';
 import { CompetencyFormControlsWithViewed, GenerateCompetenciesComponent } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { FormControl, FormGroup } from '@angular/forms';
@@ -27,6 +27,8 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseDescriptionFormStubComponent } from 'test/helpers/stubs/atlas/course-description-form-stub.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('GenerateCompetenciesComponent', () => {
     let fixture: ComponentFixture<GenerateCompetenciesComponent>;
@@ -40,15 +42,17 @@ describe('GenerateCompetenciesComponent', () => {
             imports: [GenerateCompetenciesComponent],
             declarations: [
                 CourseDescriptionFormStubComponent,
-                MockComponent(CompetencyRecommendationDetailComponent),
-                MockComponent(DocumentationButtonComponent),
-                MockComponent(CourseDescriptionFormComponent),
+                CompetencyRecommendationDetailComponent,
+                DocumentationButtonComponent,
+                CourseDescriptionFormComponent,
                 ButtonComponent,
-                MockPipe(ArtemisTranslatePipe),
+                ArtemisTranslatePipe,
                 MockDirective(FeatureToggleDirective),
-                MockDirective(TranslateDirective),
+                TranslateDirective,
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 1 }) },
                 { provide: Router, useClass: MockRouter },
                 {
@@ -59,12 +63,12 @@ describe('GenerateCompetenciesComponent', () => {
                         unsubscribe: jest.fn(),
                     },
                 },
-                MockProvider(CourseDescriptionFormComponent),
+                CourseDescriptionFormComponent,
                 MockProvider(CourseManagementService),
                 MockProvider(CourseCompetencyService),
                 MockProvider(CompetencyService),
-                MockProvider(AlertService),
-                MockProvider(ArtemisTranslatePipe),
+                AlertService,
+                ArtemisTranslatePipe,
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
  * 1) Jenkins + LocalVC
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ConsistencyCheckTestService {
@@ -131,7 +133,6 @@ public class ConsistencyCheckTestService {
      * @throws Exception if an error occurs
      */
     public void testCheckConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
-        mockDelegate.mockCheckIfProjectExistsInVcs(exercise1, true);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getSolutionBuildPlanId(), true, false);
         exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise1, ProgrammingExercise.class, HttpStatus.CREATED);

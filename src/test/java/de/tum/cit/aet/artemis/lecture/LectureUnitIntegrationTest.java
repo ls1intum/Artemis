@@ -27,9 +27,9 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -41,7 +41,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     private TextUnitRepository textUnitRepository;
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureRepository;
 
     @Autowired
     private LectureUnitCompletionRepository lectureUnitCompletionRepository;
@@ -224,7 +224,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=true",
                 null, HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(lecture1.getId());
         LectureUnit lectureUnit = this.lecture1.getLectureUnits().getFirst();
 
         assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
@@ -234,7 +234,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=false",
                 null, HttpStatus.OK, null);
 
-        this.lecture1 = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(lecture1.getId());
         lectureUnit = this.lecture1.getLectureUnits().getFirst();
 
         assertThat(lectureUnit.getCompletedUsers()).isEmpty();

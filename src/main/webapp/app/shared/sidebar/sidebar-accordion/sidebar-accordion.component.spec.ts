@@ -15,6 +15,7 @@ import { By } from '@angular/platform-browser';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('SidebarAccordionComponent', () => {
     let component: SidebarAccordionComponent;
@@ -22,7 +23,7 @@ describe('SidebarAccordionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), MockModule(NgbCollapseModule), MockModule(RouterModule)],
+            imports: [MockModule(NgbTooltipModule), MockModule(NgbCollapseModule), MockModule(RouterModule), FaIconComponent],
             declarations: [
                 SidebarAccordionComponent,
                 SidebarCardMediumComponent,
@@ -47,16 +48,16 @@ describe('SidebarAccordionComponent', () => {
 
         component.groupedData = {
             current: {
-                entityData: [{ title: 'Title 1', type: 'Type A', id: 1, size: 'M', conversation: { unreadMessagesCount: 1 } }],
+                entityData: [{ title: 'Title 1', type: 'Type A', id: 1, size: 'M', conversation: { unreadMessagesCount: 2, isMuted: false } }],
             },
             past: {
-                entityData: [{ title: 'Title 2', type: 'Type B', id: 2, size: 'M', conversation: { unreadMessagesCount: 0 } }],
+                entityData: [{ title: 'Title 2', type: 'Type B', id: 2, size: 'M', conversation: { unreadMessagesCount: 5, isMuted: false } }],
             },
             future: {
-                entityData: [{ title: 'Title 3', type: 'Type C', id: 3, size: 'M', conversation: { unreadMessagesCount: 1 } }],
+                entityData: [{ title: 'Title 3', type: 'Type C', id: 3, size: 'M', conversation: { unreadMessagesCount: 4, isMuted: true } }],
             },
             noDate: {
-                entityData: [{ title: 'Title 4', type: 'Type D', id: 4, size: 'M', conversation: { unreadMessagesCount: 0 } }],
+                entityData: [{ title: 'Title 4', type: 'Type D', id: 4, size: 'M', conversation: { unreadMessagesCount: 3, isMuted: true } }],
             },
         };
         component.routeParams = { exerciseId: 3 };
@@ -155,9 +156,9 @@ describe('SidebarAccordionComponent', () => {
     });
 
     it('should calculate unread messages of each group correctly', () => {
-        expect(component.totalUnreadMessagesPerGroup['current']).toBe(1);
-        expect(component.totalUnreadMessagesPerGroup['past']).toBe(0);
-        expect(component.totalUnreadMessagesPerGroup['future']).toBe(1);
+        expect(component.totalUnreadMessagesPerGroup['current']).toBe(2);
+        expect(component.totalUnreadMessagesPerGroup['past']).toBe(5);
+        expect(component.totalUnreadMessagesPerGroup['future']).toBe(0);
         expect(component.totalUnreadMessagesPerGroup['noDate']).toBe(0);
     });
 

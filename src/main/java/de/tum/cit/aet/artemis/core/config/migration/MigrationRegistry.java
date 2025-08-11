@@ -8,14 +8,17 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 /**
  * This component allows registering certain entries containing functionality that gets executed on application startup. The entries must extend {@link MigrationEntry}.
+ * It should definitely be executed on startup, so we make it non-lazy.
  */
 @Component
+@Lazy(value = false)
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class MigrationRegistry {
 

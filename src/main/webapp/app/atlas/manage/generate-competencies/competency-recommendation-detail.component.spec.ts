@@ -1,8 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { AlertService } from 'app/shared/service/alert.service';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
@@ -10,10 +13,14 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 
 describe('CompetencyRecommendationDetailComponent', () => {
-    let competencyRecommendationDetailComponentFixture: ComponentFixture<CompetencyRecommendationDetailComponent>;
-    let competencyRecommendationDetailComponent: CompetencyRecommendationDetailComponent;
+    let fixture: ComponentFixture<CompetencyRecommendationDetailComponent>;
+    let component: CompetencyRecommendationDetailComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -25,21 +32,25 @@ describe('CompetencyRecommendationDetailComponent', () => {
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
-                MockComponent(MarkdownEditorMonacoComponent),
-                MockComponent(TaxonomySelectComponent),
+                MarkdownEditorMonacoComponent,
+                TaxonomySelectComponent,
+                MockComponent(MonacoEditorComponent),
             ],
-            providers: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(AlertService), MockProvider(TranslateService), MockProvider(MonacoEditorService)],
         })
             .compileComponents()
             .then(() => {
-                competencyRecommendationDetailComponentFixture = TestBed.createComponent(CompetencyRecommendationDetailComponent);
-                competencyRecommendationDetailComponent = competencyRecommendationDetailComponentFixture.componentInstance;
+                fixture = TestBed.createComponent(CompetencyRecommendationDetailComponent);
+                component = fixture.componentInstance;
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
             });
     });
 
     beforeEach(() => {
         //initialize component
-        competencyRecommendationDetailComponent.form = new FormGroup({
+        component.form = new FormGroup({
             competency: new FormGroup({
                 title: new FormControl('Title' as string | undefined, { nonNullable: true }),
                 description: new FormControl('Description' as string | undefined, { nonNullable: true }),
@@ -47,7 +58,7 @@ describe('CompetencyRecommendationDetailComponent', () => {
             }),
             viewed: new FormControl(false, { nonNullable: true }),
         });
-        competencyRecommendationDetailComponent.index = 0;
+        component.index = 0;
     });
 
     afterEach(() => {
@@ -55,35 +66,35 @@ describe('CompetencyRecommendationDetailComponent', () => {
     });
 
     it('should initialize', () => {
-        competencyRecommendationDetailComponentFixture.detectChanges();
-        expect(competencyRecommendationDetailComponent).toBeDefined();
+        fixture.detectChanges();
+        expect(component).toBeDefined();
     });
 
     it('should switch between edit and save mode', () => {
-        competencyRecommendationDetailComponentFixture.detectChanges();
-        const editSpy = jest.spyOn(competencyRecommendationDetailComponent, 'edit');
-        const saveSpy = jest.spyOn(competencyRecommendationDetailComponent, 'save');
+        fixture.detectChanges();
+        const editSpy = jest.spyOn(component, 'edit');
+        const saveSpy = jest.spyOn(component, 'save');
 
         //component should not start out in edit mode
-        expect(competencyRecommendationDetailComponent.isInEditMode).toBeFalse();
-        expect(competencyRecommendationDetailComponent.form.controls.competency.disabled).toBeTrue();
+        expect(component.isInEditMode).toBeFalse();
+        expect(component.form.controls.competency.disabled).toBeTrue();
 
-        const editButton = competencyRecommendationDetailComponentFixture.debugElement.nativeElement.querySelector('#editButton-0 > .jhi-btn');
+        const editButton = fixture.debugElement.nativeElement.querySelector('#editButton-0 > .jhi-btn');
         editButton.click();
 
         expect(editSpy).toHaveBeenCalledOnce();
-        competencyRecommendationDetailComponentFixture.detectChanges();
+        fixture.detectChanges();
 
-        const saveButton = competencyRecommendationDetailComponentFixture.debugElement.nativeElement.querySelector('#saveButton-0 > .jhi-btn');
+        const saveButton = fixture.debugElement.nativeElement.querySelector('#saveButton-0 > .jhi-btn');
         saveButton.click();
 
         expect(saveSpy).toHaveBeenCalledOnce();
     });
 
     it('should delete', () => {
-        competencyRecommendationDetailComponentFixture.detectChanges();
-        const deleteSpy = jest.spyOn(competencyRecommendationDetailComponent, 'delete');
-        const deleteButton = competencyRecommendationDetailComponentFixture.debugElement.nativeElement.querySelector('#deleteButton-0 > .jhi-btn');
+        fixture.detectChanges();
+        const deleteSpy = jest.spyOn(component, 'delete');
+        const deleteButton = fixture.debugElement.nativeElement.querySelector('#deleteButton-0 > .jhi-btn');
 
         deleteButton.click();
 
@@ -91,9 +102,9 @@ describe('CompetencyRecommendationDetailComponent', () => {
     });
 
     it('should expand', () => {
-        competencyRecommendationDetailComponentFixture.detectChanges();
-        const toggleSpy = jest.spyOn(competencyRecommendationDetailComponent, 'toggle');
-        const expandIcon = competencyRecommendationDetailComponentFixture.debugElement.nativeElement.querySelector('.rotate-icon');
+        fixture.detectChanges();
+        const toggleSpy = jest.spyOn(component, 'toggle');
+        const expandIcon = fixture.debugElement.nativeElement.querySelector('.rotate-icon');
 
         expandIcon.click();
 

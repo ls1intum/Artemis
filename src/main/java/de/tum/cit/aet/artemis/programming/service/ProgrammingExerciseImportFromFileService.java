@@ -20,6 +20,7 @@ import org.apache.commons.io.filefilter.NotFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,12 +43,15 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingExerciseImportFromFileService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportFromFileService.class);
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService;
+
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
     private final ZipFileService zipFileService;
 
@@ -65,10 +69,12 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final BuildPlanRepository buildPlanRepository;
 
-    public ProgrammingExerciseImportFromFileService(ProgrammingExerciseService programmingExerciseService, ZipFileService zipFileService,
-            StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, RepositoryService repositoryService,
-            GitService gitService, FileService fileService, ProfileService profileService, BuildPlanRepository buildPlanRepository) {
-        this.programmingExerciseService = programmingExerciseService;
+    public ProgrammingExerciseImportFromFileService(ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
+            ProgrammingExerciseValidationService programmingExerciseValidationService, ZipFileService zipFileService, StaticCodeAnalysisService staticCodeAnalysisService,
+            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, RepositoryService repositoryService, GitService gitService, FileService fileService,
+            ProfileService profileService, BuildPlanRepository buildPlanRepository) {
+        this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.zipFileService = zipFileService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
@@ -105,9 +111,9 @@ public class ProgrammingExerciseImportFromFileService {
             zipFileService.extractZipFileRecursively(exerciseFilePath);
             checkDetailsJsonExists(importExerciseDir);
             checkRepositoriesExist(importExerciseDir);
-            programmingExerciseService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
+            programmingExerciseValidationService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
-            newProgrammingExercise = programmingExerciseService.createProgrammingExercise(originalProgrammingExercise);
+            newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise);
             if (Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
@@ -184,12 +190,12 @@ public class ProgrammingExerciseImportFromFileService {
      * @param user        the user performing the import
      */
     private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, User user) throws IOException, GitAPIException, URISyntaxException {
-        Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTemplateRepositoryUri()), false);
-        Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getSolutionRepositoryUri()), false);
-        Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTestRepositoryUri()), false);
+        Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTemplateRepositoryUri()), false, true);
+        Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getSolutionRepositoryUri()), false, true);
+        Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTestRepositoryUri()), false, true);
         List<Repository> auxiliaryRepositories = new ArrayList<>();
         for (AuxiliaryRepository auxiliaryRepository : newExercise.getAuxiliaryRepositories()) {
-            auxiliaryRepositories.add(gitService.getOrCheckoutRepository(auxiliaryRepository.getVcsRepositoryUri(), false));
+            auxiliaryRepositories.add(gitService.getOrCheckoutRepository(auxiliaryRepository.getVcsRepositoryUri(), false, true));
         }
 
         copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, auxiliaryRepositories, basePath);

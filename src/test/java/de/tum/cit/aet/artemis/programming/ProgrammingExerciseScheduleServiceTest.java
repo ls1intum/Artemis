@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.inOrder;
@@ -26,7 +25,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -36,7 +34,6 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationLifecycle;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrationLocalVCSamlTest {
@@ -57,7 +54,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @BeforeEach
     void init() throws Exception {
-        studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");
+        studentRepository.configureRepos(localVCRepoPath, "studentLocalRepo", "studentOriginRepo");
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
@@ -79,7 +76,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldExecuteScheduledBuildAndTestAfterDueDate() throws Exception {
+    void shouldExecuteScheduledBuildAndTestAfterDueDate() {
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(nowPlusMillis(DELAY_MS));
         programmingExerciseRepository.saveAndFlush(programmingExercise);
@@ -112,7 +109,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldNotExecuteScheduledTwiceIfSameExercise() throws Exception {
+    void shouldNotExecuteScheduledTwiceIfSameExercise() {
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         // Setting it the first time.
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(nowPlusMillis(DELAY_MS));
@@ -144,7 +141,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldScheduleExercisesWithBuildAndTestDateInFuture() throws Exception {
+    void shouldScheduleExercisesWithBuildAndTestDateInFuture() {
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(nowPlusMillis(DELAY_MS * 2));
         programmingExerciseRepository.saveAndFlush(programmingExercise);
@@ -156,7 +153,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldScheduleExercisesWithManualAssessment() throws Exception {
+    void shouldScheduleExercisesWithManualAssessment() {
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -170,7 +167,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldUpdateScoresIfHasTestsAfterDueDateAndNoBuildAfterDueDate() throws Exception {
+    void shouldUpdateScoresIfHasTestsAfterDueDateAndNoBuildAfterDueDate() {
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         programmingExerciseRepository.saveAndFlush(programmingExercise);
@@ -189,7 +186,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldNotUpdateScoresIfHasTestsAfterDueDateAndBuildAfterDueDate() throws Exception {
+    void shouldNotUpdateScoresIfHasTestsAfterDueDateAndBuildAfterDueDate() {
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(nowPlusMillis(DELAY_MS * 2));
         programmingExerciseRepository.saveAndFlush(programmingExercise);
@@ -207,7 +204,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldNotUpdateScoresIfHasNoTestsAfterDueDate(boolean hasBuildAndTestAfterDueDate) throws Exception {
+    void shouldNotUpdateScoresIfHasNoTestsAfterDueDate(boolean hasBuildAndTestAfterDueDate) {
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         if (hasBuildAndTestAfterDueDate) {
             programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(nowPlusMillis(DELAY_MS * 2));
@@ -234,26 +231,12 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testCombineTemplateBeforeRelease() throws Exception {
-        ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-        VcsRepositoryUri repositoryUri = programmingExerciseWithTemplate.getVcsTemplateRepositoryUri();
-        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(repositoryUri);
-
-        programmingExercise.setReleaseDate(nowPlusMillis(DELAY_MS).plusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS));
-        programmingExerciseRepository.saveAndFlush(programmingExercise);
-        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
-
-        verify(gitService, timeout(TIMEOUT_MS)).combineAllCommitsOfRepositoryIntoOne(repositoryUri);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void scheduleIndividualDueDateNoBuildAndTestDateLock() throws Exception {
+    void scheduleIndividualDueDateNoBuildAndTestDateLock() {
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, null);
         var login = TEST_PREFIX + "student3";
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2 + SCHEDULER_TASK_TRIGGER_DELAY_MS, login);
+        setupParticipationWithIndividualDueDate(now, DELAY_MS * 2 + SCHEDULER_TASK_TRIGGER_DELAY_MS, login);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
@@ -268,18 +251,17 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void scheduleIndividualDueDateBetweenDueDateAndBuildAndTestDate() throws Exception {
+    void scheduleIndividualDueDateBetweenDueDateAndBuildAndTestDate() {
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, 2 * SCHEDULER_TASK_TRIGGER_DELAY_MS);
         // individual due date between regular due date and build and test date
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2 + SCHEDULER_TASK_TRIGGER_DELAY_MS, TEST_PREFIX + "student3");
+        var participationIndividualDueDate = setupParticipationWithIndividualDueDate(now, DELAY_MS * 2 + SCHEDULER_TASK_TRIGGER_DELAY_MS, TEST_PREFIX + "student3");
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         verify(scheduleService, timeout(DELAY_MS * 2)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
-        verify(scheduleService, timeout(DELAY_MS * 2)).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.SHORTLY_BEFORE_RELEASE), any(Runnable.class), any());
         verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(), any());
 
         // not yet locked on regular due date
@@ -292,26 +274,25 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void scheduleIndividualDueDateAfterBuildAndTestDate() throws Exception {
+    void scheduleIndividualDueDateAfterBuildAndTestDate() {
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, DELAY_MS);
         // individual due date after build and test date
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2, TEST_PREFIX + "student3");
+        var participationIndividualDueDate = setupParticipationWithIndividualDueDate(now, DELAY_MS * 2, TEST_PREFIX + "student3");
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         // special scheduling for both lock and build and test
         verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.SHORTLY_BEFORE_RELEASE), any(Runnable.class), any());
         verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(),
                 any());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void scheduleIndividualDueDateTestsAfterDueDateNoBuildAndTestDate() throws Exception {
+    void scheduleIndividualDueDateTestsAfterDueDateNoBuildAndTestDate() {
         final ZonedDateTime now = ZonedDateTime.now();
 
         // no build and test date, but after_due_date tests ⇒ score update needed
@@ -320,7 +301,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         testCases.stream().findFirst().orElseThrow().setVisibility(Visibility.AFTER_DUE_DATE);
         programmingExerciseTestCaseRepository.saveAllAndFlush(testCases);
 
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2, TEST_PREFIX + "student3");
+        var participationIndividualDueDate = setupParticipationWithIndividualDueDate(now, DELAY_MS * 2, TEST_PREFIX + "student3");
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
@@ -334,7 +315,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void cancelAllSchedulesOnRemovingExerciseDueDate() throws Exception {
+    void cancelAllSchedulesOnRemovingExerciseDueDate() {
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, null);
@@ -342,7 +323,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         testCases.stream().findFirst().orElseThrow().setVisibility(Visibility.AFTER_DUE_DATE);
         programmingExerciseTestCaseRepository.saveAll(testCases);
 
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2, TEST_PREFIX + "student3");
+        var participationIndividualDueDate = setupParticipationWithIndividualDueDate(now, DELAY_MS * 2, TEST_PREFIX + "student3");
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
@@ -373,12 +354,12 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void cancelIndividualSchedulesOnRemovingIndividualDueDate() throws Exception {
+    void cancelIndividualSchedulesOnRemovingIndividualDueDate() {
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, null);
 
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * DELAY_MS, TEST_PREFIX + "student3");
+        var participationIndividualDueDate = setupParticipationWithIndividualDueDate(now, 2 * DELAY_MS, TEST_PREFIX + "student3");
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
@@ -400,12 +381,12 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void updateIndividualScheduleOnIndividualDueDateChange() throws Exception {
+    void updateIndividualScheduleOnIndividualDueDateChange() {
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, null);
 
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2 * DELAY_MS, TEST_PREFIX + "student3");
+        var participationIndividualDueDate = setupParticipationWithIndividualDueDate(now, 2 * DELAY_MS, TEST_PREFIX + "student3");
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
@@ -426,7 +407,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void keepIndividualScheduleOnExerciseDueDateChange() throws Exception {
+    void keepIndividualScheduleOnExerciseDueDateChange() {
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, 1000L, null);
@@ -434,7 +415,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         testCases.stream().findFirst().orElseThrow().setVisibility(Visibility.AFTER_DUE_DATE);
         programmingExerciseTestCaseRepository.saveAllAndFlush(testCases);
 
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, 2000L, TEST_PREFIX + "student3");
+        var participationIndividualDueDate = setupParticipationWithIndividualDueDate(now, 2000L, TEST_PREFIX + "student3");
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
@@ -459,14 +440,14 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldScheduleExerciseIfAnyIndividualDueDateInFuture() throws Exception {
+    void shouldScheduleExerciseIfAnyIndividualDueDateInFuture() {
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, -DELAY_MS, null);
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
 
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS, TEST_PREFIX + "student3");
+        var participationIndividualDueDate = setupParticipationWithIndividualDueDate(now, DELAY_MS, TEST_PREFIX + "student3");
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
@@ -477,7 +458,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldCancelAllTasksIfSchedulingNoLongerNeeded() throws Exception {
+    void shouldCancelAllTasksIfSchedulingNoLongerNeeded() {
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, -DELAY_MS, null);
@@ -505,8 +486,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         exam = examRepository.saveAndFlush(exam);
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, user);
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationUtilService
-                .addProgrammingParticipationWithResultForExercise(examExercise, TEST_PREFIX + "student1").getParticipation();
+        participationUtilService.addProgrammingParticipationWithResultForExercise(examExercise, TEST_PREFIX + "student1");
         studentExam.setExercises(List.of(examExercise));
         studentExam.setWorkingTime(1);
         studentExamRepository.saveAndFlush(studentExam);
@@ -521,8 +501,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         exam = examRepository.saveAndFlush(exam);
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, user);
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationUtilService
-                .addProgrammingParticipationWithResultForExercise(examExercise, TEST_PREFIX + "student1").getParticipation();
+        participationUtilService.addProgrammingParticipationWithResultForExercise(examExercise, TEST_PREFIX + "student1");
         studentExam.setExercises(List.of(examExercise));
         studentExam.setWorkingTime(1);
         studentExamRepository.saveAndFlush(studentExam);
@@ -553,17 +532,17 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
     }
 
-    private ProgrammingExerciseStudentParticipation setupParticipationIndividualDueDate(final ZonedDateTime reference, Long individualDueDateDelayMillis, String login) {
-        var participationIndividualDueDate = getParticipation(login);
+    private ProgrammingExerciseStudentParticipation setupParticipationWithIndividualDueDate(final ZonedDateTime reference, Long individualDueDateDelayMillis, String login) {
+        var participation = getParticipation(login);
 
         if (individualDueDateDelayMillis != null) {
-            participationIndividualDueDate.setIndividualDueDate(plusMillis(reference, individualDueDateDelayMillis));
+            participation.setIndividualDueDate(plusMillis(reference, individualDueDateDelayMillis));
         }
         else {
-            participationIndividualDueDate.setIndividualDueDate(null);
+            participation.setIndividualDueDate(null);
         }
 
-        return participationRepository.saveAndFlush((ProgrammingExerciseStudentParticipation) participationIndividualDueDate);
+        return participationRepository.saveAndFlush((ProgrammingExerciseStudentParticipation) participation);
     }
 
     private StudentParticipation getParticipation(String login) {

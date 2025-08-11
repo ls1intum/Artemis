@@ -92,8 +92,8 @@ describe('Participation Service', () => {
             buildPlanId: 'build-plan-id',
             student: { id: 1, login: 'student1', internal: true },
             team: { id: 1, name: 'team1' },
-            results: [{ id: 3 }],
-            submissions: [{ id: 1 }],
+
+            submissions: [{ id: 1, results: [{ id: 3 }] }],
         };
 
         const participation2: ProgrammingExerciseStudentParticipation = {
@@ -102,17 +102,18 @@ describe('Participation Service', () => {
             repositoryUri: 'repo-url-1',
             buildPlanId: 'build-plan-id-1',
             student: { id: 2, login: 'student2', internal: true },
-            results: [{ id: 1 }, { id: 2 }],
-            submissions: [{ id: 2 }, { id: 3 }],
+
+            submissions: [
+                { id: 2, results: [{ id: 1 }] },
+                { id: 3, results: [{ id: 2 }] },
+            ],
         };
 
         const mergedParticipation = service.mergeStudentParticipations([participation1, participation2])[0];
         expect(mergedParticipation?.team!.id).toEqual(participation1.team!.id);
         expect(mergedParticipation?.team!.name).toEqual(participation1.team!.name);
         expect(mergedParticipation?.id).toEqual(participation1.id);
-        expect(mergedParticipation?.results).toEqual([...participation1.results!, ...participation2.results!]);
         expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);
-        mergedParticipation?.results?.forEach((result) => expect(result.participation).toMatchObject(mergedParticipation));
         mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
     }));
 
@@ -123,8 +124,8 @@ describe('Participation Service', () => {
             repositoryUri: 'repo-url',
             buildPlanId: 'build-plan-id',
             student: { id: 1, login: 'student1', internal: true },
-            results: [{ id: 3 }],
-            submissions: [{ id: 1 }],
+
+            submissions: [{ id: 1, results: [{ id: 3 }] }],
             testRun: true,
         };
 
@@ -134,8 +135,10 @@ describe('Participation Service', () => {
             repositoryUri: 'repo-url-1',
             buildPlanId: 'build-plan-id-1',
             student: { id: 2, login: 'student2', internal: true },
-            results: [{ id: 1 }, { id: 2 }],
-            submissions: [{ id: 2 }, { id: 3 }],
+            submissions: [
+                { id: 2, results: [{ id: 1 }] },
+                { id: 3, results: [{ id: 2 }] },
+            ],
         };
 
         const mergedParticipations = service.mergeStudentParticipations([participation1, participation2]);
@@ -149,23 +152,22 @@ describe('Participation Service', () => {
             id: 1,
             type: ParticipationType.STUDENT,
             student: { id: 1, login: 'student1', internal: true },
-            results: [{ id: 3 }],
-            submissions: [{ id: 1 }],
+            submissions: [{ id: 1, results: [{ id: 3 }] }],
         };
 
         const participation2: StudentParticipation = {
             id: 2,
             type: ParticipationType.STUDENT,
             student: { id: 2, login: 'student2', internal: true },
-            results: [{ id: 1 }, { id: 2 }],
-            submissions: [{ id: 2 }, { id: 3 }],
+            submissions: [
+                { id: 2, results: [{ id: 1 }] },
+                { id: 3, results: [{ id: 2 }] },
+            ],
         };
 
         const mergedParticipation = service.mergeStudentParticipations([participation1, participation2])[0];
         expect(mergedParticipation?.id).toEqual(participation1.id);
-        expect(mergedParticipation?.results).toEqual([...participation1.results!, ...participation2.results!]);
         expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);
-        mergedParticipation?.results?.forEach((result) => expect(result.participation).toMatchObject(mergedParticipation));
         mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
     }));
 

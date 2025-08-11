@@ -14,6 +14,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
@@ -22,6 +23,7 @@ import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -30,6 +32,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -42,7 +45,6 @@ import de.tum.cit.aet.artemis.core.connector.JenkinsRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
-import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -50,9 +52,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 
 // TODO: rewrite this test to use LocalVC
@@ -60,8 +62,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALVC, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_LTI, PROFILE_AEOLUS,
         PROFILE_APOLLON, "local" })
-@TestPropertySource(properties = { "server.port=49153", "artemis.version-control.url=http://localhost:49153",
-        "artemis.version-control.ssh-private-key-folder-path=${java.io.tmpdir}", "artemis.user-management.use-external=false",
+@TestPropertySource(properties = { "server.port=49153", "artemis.version-control.url=http://localhost:49153", "artemis.user-management.use-external=false",
         "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc", "artemis.version-control.ssh-port=1235", "info.contact=test@localhost",
         "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1235/",
@@ -72,11 +73,9 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @MockitoSpyBean
     protected JenkinsService continuousIntegrationService;
 
+    // TODO: we should remove @MockitoSpyBean here and use @Autowired instead
     @MockitoSpyBean
     protected LocalVCService versionControlService;
-
-    @MockitoSpyBean
-    protected LocalVCGitBranchService localVCGitBranchService;
 
     @MockitoSpyBean
     protected JenkinsJobPermissionsService jenkinsJobPermissionsService;
@@ -98,6 +97,12 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     @MockitoSpyBean
     protected GroupNotificationScheduleService groupNotificationScheduleService;
+
+    @MockitoSpyBean
+    protected ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    protected Path localVCRepoPath;
 
     @AfterEach
     @Override
@@ -159,7 +164,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
         // mocking them turned out to be not feasible with reasonable effort as this effects a lot of other test classes and leads to many other test failures.
         // not mocking for all tests also posed a problem due to many test failures in other classes.
         doCallRealMethod().when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
-        doCallRealMethod().when(gitService).getOrCheckoutRepository(any(VcsRepositoryUri.class), eq(true));
+        doCallRealMethod().when(gitService).getOrCheckoutRepository(any(VcsRepositoryUri.class), eq(true), anyBoolean());
     }
 
     @Override
@@ -276,7 +281,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         final String projectKey = participation.getProgrammingExercise().getProjectKey();
-        mockFetchCommitInfo(projectKey, slug, hash);
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, participation.getBuildPlanId(), false);
     }
 
@@ -416,62 +420,12 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     }
 
     @Override
-    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
-        // Not needed for this test
-    }
-
-    @Override
     public void mockCreateGroupInUserManagement(String groupName) {
         // Not needed for this test
     }
 
     @Override
     public void mockDeleteGroupInUserManagement(String groupName) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey, boolean b) {
-        // Not needed for this test
-    }
-
-    @Override
-    public void mockDefaultBranch(ProgrammingExercise programmingExercise) {
         // Not needed for this test
     }
 

@@ -1,7 +1,7 @@
 <div [id]="'exercise-' + quizExercise?.id" class="position-relative min-h-100 d-flex flex-column">
     @if (quizExercise) {
         <div class="row sticky-top module-bg">
-            <div class="d-flex justify-content-between align-items-center module-bg gap-2" [ngClass]="isManagementView ? 'mt-2' : 'pt-2 mt-n3'">
+            <div class="d-flex justify-content-between align-items-center module-bg gap-2" [ngClass]="'pt-2 mt-n3'">
                 <h5 class="mb-0 d-flex gap-2 align-items-center">
                     {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }}
                     - {{ quizExercise.title }}
@@ -10,7 +10,7 @@
                             <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'practiceMode' }" />
                         }
                         @case ('preview') {
-                            <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'previewMode' }" />
+                            <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'preview' }" />
                         }
                         @case ('solution') {
                             <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'solution' }" />
@@ -73,10 +73,14 @@
             <hr class="mt-2" />
         </div>
         <!-- STEPWIZARD SECTION -->
+        <!-- TODO the STEPWIZARD SECTION is duplicated it quiz-exam-submission.component.html, should be merged to a shared component -->
         <!-- TODO for a follow-up: Much of this template relies on method calls in the template. We should avoid this for performance reasons -->
         <div class="row m-0">
             <div class="col-md-auto ps-0">
-                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard" [ngClass]="{ 'sticky-top-quiz': mode === 'preview' }">
+                <div
+                    class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard hide-scrollbar-unless-scrolling"
+                    [ngClass]="{ 'sticky-top-quiz': mode === 'preview' }"
+                >
                     @for (question of quizExercise.quizQuestions; track question; let index = $index) {
                         <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
                             @switch (question.type) {
@@ -126,6 +130,7 @@
             </div>
             <!-- END STEPWIZARD SECTION -->
             <!-- QUESTION CONTENT SECTION -->
+            <!-- TODO the QUESTION CONTENT SECTION is duplicated it quiz-exam-submission.component.html, should be merged to a shared component -->
             <div class="col p-0 quiz-content mb-3">
                 @if (!waitingForQuizStart) {
                     @if (!submission.submitted && !showingResult && remainingTimeSeconds >= 0) {

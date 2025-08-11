@@ -9,7 +9,7 @@ import {
     GenericUpdateTextPropertyDialogComponent,
     GenericUpdateTextPropertyTranslationKeys,
 } from 'app/communication/course-conversations-components/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
-import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
+import { EMPTY, Subject, debounceTime, distinctUntilChanged, filter, from, map, takeUntil } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -23,15 +23,24 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { canChangeChannelProperties, canChangeGroupChatProperties } from 'app/communication/conversations/conversation-permissions.utils';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
+import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
+import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-conversation-info',
     templateUrl: './conversation-info.component.html',
     styleUrls: ['./conversation-info.component.scss'],
-    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, CommonModule, FormsModule, FaIconComponent, RouterLink],
 })
 export class ConversationInfoComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
+    private mute$ = new Subject<boolean>();
 
     isGroupChat = isGroupChatDTO;
     isChannel = isChannelDTO;
@@ -56,8 +65,14 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     private groupChatService = inject(GroupChatService);
     private modalService = inject(NgbModal);
     private alertService = inject(AlertService);
+    private conversationService = inject(ConversationService);
+    private courseNotificationSettingService = inject(CourseNotificationSettingService);
 
     readOnlyMode = false;
+    notificationSettings?: CourseNotificationSettingInfo;
+    isNotificationsEnabled = false;
+
+    protected readonly faVolumeXmark = faVolumeXmark;
 
     ngOnInit(): void {
         if (this.activeConversation()) {
@@ -65,6 +80,8 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 this.readOnlyMode = !!getAsChannelDTO(this.activeConversation())?.isArchived;
             }
         }
+        this.loadNotificationSettings();
+        this.updateConversationIsMuted();
     }
 
     ngOnDestroy() {
@@ -92,7 +109,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         };
 
         event.stopPropagation();
-        this.openEditPropertyDialog(channelOrGroupChat, 'name', 30, true, channelRegex, keys);
+        this.openEditPropertyDialog(channelOrGroupChat, 'name', 20, true, channelRegex, keys);
     }
 
     openEditTopicModal(event: MouseEvent) {
@@ -219,6 +236,53 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                     }
                 },
             });
+    }
+
+    onMuteToggle(): void {
+        const currentMuted = this.activeConversation()?.isMuted ?? false;
+        this.mute$.next(!currentMuted);
+    }
+
+    private updateConversationIsMuted() {
+        this.mute$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isMuted) => {
+            const courseId = this.course()?.id;
+            const conversationId = this.activeConversation()?.id;
+
+            if (!courseId || !conversationId) return;
+
+            this.conversationService.updateIsMuted(courseId, conversationId, isMuted).subscribe({
+                next: () => {
+                    const conversation = this.activeConversation();
+                    if (conversation) {
+                        conversation.isMuted = isMuted;
+                    }
+                    this.onChangePerformed();
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+        });
+    }
+
+    private loadNotificationSettings() {
+        const courseId = this.course()?.id;
+        if (!courseId) {
+            return;
+        }
+
+        this.courseNotificationSettingService
+            .getSettingInfo(courseId)
+            .pipe(filter((settings): settings is CourseNotificationSettingInfo => !!settings))
+            .subscribe({
+                next: (settings) => {
+                    this.notificationSettings = settings;
+                    this.checkNotificationStatus();
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+    }
+
+    private checkNotificationStatus() {
+        this.isNotificationsEnabled = this.notificationSettings?.selectedPreset !== 3;
     }
 
     protected readonly ConversationDTO = ConversationDTO;

@@ -12,11 +12,14 @@ import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,6 +29,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.authentication.AuthenticationFactory;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.util.CookieParserTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -64,6 +68,15 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "/git/EXERCISEID/exerciseid-studentLogin.git/info/refs", "/git/EXERCISEID/exerciseid-studentLogin.git/git-upload-pack", })
+    void shouldIgnoreSpecialUris(String uri) {
+        final MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI(uri);
+
+        assertThat(JWTFilter.extractValidJwt(request, null)).isNull();
     }
 
     /**
@@ -219,10 +232,10 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
 
                 LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
                 HttpHeaders headers = new HttpHeaders();
-                headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
+                headers.add(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + jwt);
 
                 MvcResult res = mvc
-                        .perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).params(params).headers(headers).cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt)))
+                        .perform(MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST)).params(params).headers(headers).cookie(new Cookie(Constants.JWT_COOKIE_NAME, jwt)))
                         .andExpect(status().is(HttpStatus.BAD_REQUEST.value())).andReturn();
 
                 MockHttpServletResponse response = res.getResponse();
@@ -295,10 +308,10 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     private MockHttpServletResponse performRequest(String jwt, boolean useBearerToken) throws Exception {
         MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders.get(new URI(ENDPOINT_TO_TEST));
         if (useBearerToken) {
-            requestBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
+            requestBuilder.header(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + jwt);
         }
         else {
-            requestBuilder.cookie(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt));
+            requestBuilder.cookie(new Cookie(Constants.JWT_COOKIE_NAME, jwt));
         }
         MvcResult res = mvc.perform(requestBuilder).andReturn();
         MockHttpServletResponse response = res.getResponse();
@@ -311,7 +324,7 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
      */
     private void validateUpdatedCookie(ResponseCookie updatedCookie, String originalJwt, Authentication expectedAuthentication, Date expectedIssuedAt,
             long expectedMaxAgeInSeconds) {
-        assertThat(updatedCookie.getName()).isEqualTo(JWTFilter.JWT_COOKIE_NAME);
+        assertThat(updatedCookie.getName()).isEqualTo(Constants.JWT_COOKIE_NAME);
         assertThat(updatedCookie.getPath()).isEqualTo("/");
         assertThat(updatedCookie.getMaxAge().getSeconds()).isCloseTo(expectedMaxAgeInSeconds, Offset.offset(15L)); // prevents that the test is flaky on slow runners
         assertThat(updatedCookie.isSecure()).isTrue();

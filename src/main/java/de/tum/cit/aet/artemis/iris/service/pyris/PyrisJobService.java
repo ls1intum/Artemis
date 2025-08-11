@@ -7,17 +7,21 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
@@ -34,12 +38,14 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
  * The class also handles generating job ID tokens and validating tokens from request headers based ont these tokens.
  * It uses Hazelcast to store the jobs in a distributed map.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class PyrisJobService {
 
     private final HazelcastInstance hazelcastInstance;
 
+    @Nullable
     private IMap<String, PyrisJob> jobMap;
 
     @Value("${server.url}")
@@ -66,7 +72,19 @@ public class PyrisJobService {
     public void init() {
         var mapConfig = hazelcastInstance.getConfig().getMapConfig("pyris-job-map");
         mapConfig.setTimeToLiveSeconds(jobTimeout);
-        jobMap = hazelcastInstance.getMap("pyris-job-map");
+    }
+
+    /**
+     * Lazy init: Retrieves the Hazelcast map that stores Pyris jobs.
+     * If the map is not initialized, it initializes it.
+     *
+     * @return the IMap containing Pyris jobs
+     */
+    private IMap<String, PyrisJob> getPyrisJobMap() {
+        if (this.jobMap == null) {
+            this.jobMap = this.hazelcastInstance.getMap("pyris-job-map");
+        }
+        return this.jobMap;
     }
 
     /**
@@ -79,21 +97,21 @@ public class PyrisJobService {
     public String createTokenForJob(Function<String, PyrisJob> tokenToJobFunction) {
         var token = generateJobIdToken();
         var job = tokenToJobFunction.apply(token);
-        jobMap.put(token, job);
+        getPyrisJobMap().put(token, job);
         return token;
     }
 
     public String addExerciseChatJob(Long courseId, Long exerciseId, Long sessionId) {
         var token = generateJobIdToken();
         var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId, null);
-        jobMap.put(token, job);
+        getPyrisJobMap().put(token, job);
         return token;
     }
 
     public String addCourseChatJob(Long courseId, Long sessionId) {
         var token = generateJobIdToken();
         var job = new CourseChatJob(token, courseId, sessionId, null);
-        jobMap.put(token, job);
+        getPyrisJobMap().put(token, job);
         return token;
     }
 
@@ -108,7 +126,7 @@ public class PyrisJobService {
     public String addTutorSuggestionJob(Long postId, Long courseId, Long sessionId) {
         var token = generateJobIdToken();
         var job = new TutorSuggestionJob(token, postId, courseId, sessionId, null);
-        jobMap.put(token, job);
+        getPyrisJobMap().put(token, job);
         return token;
     }
 
@@ -123,7 +141,7 @@ public class PyrisJobService {
     public String addLectureIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
         var token = generateJobIdToken();
         var job = new LectureIngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
-        jobMap.put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
+        getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
         return token;
     }
 
@@ -137,7 +155,7 @@ public class PyrisJobService {
     public String addFaqIngestionWebhookJob(long courseId, long faqId) {
         var token = generateJobIdToken();
         var job = new FaqIngestionWebhookJob(token, courseId, faqId);
-        jobMap.put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
+        getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
         return token;
     }
 
@@ -152,7 +170,7 @@ public class PyrisJobService {
     public String addTranscriptionIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
         var token = generateJobIdToken();
         var job = new TranscriptionIngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
-        jobMap.put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
+        getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
         return token;
     }
 
@@ -162,7 +180,7 @@ public class PyrisJobService {
      * @param job the job to remove
      */
     public void removeJob(PyrisJob job) {
-        jobMap.remove(job.jobId());
+        getPyrisJobMap().remove(job.jobId());
     }
 
     /**
@@ -171,7 +189,7 @@ public class PyrisJobService {
      * @param job the job to store
      */
     public void updateJob(PyrisJob job) {
-        jobMap.put(job.jobId(), job);
+        getPyrisJobMap().put(job.jobId(), job);
     }
 
     /**
@@ -180,7 +198,7 @@ public class PyrisJobService {
      * @return the all current jobs
      */
     public Collection<PyrisJob> currentJobs() {
-        return jobMap.values();
+        return getPyrisJobMap().values();
     }
 
     /**
@@ -190,7 +208,7 @@ public class PyrisJobService {
      * @return the job
      */
     public PyrisJob getJob(String token) {
-        return jobMap.get(token);
+        return getPyrisJobMap().get(token);
     }
 
     /**
@@ -208,8 +226,8 @@ public class PyrisJobService {
      * @throws AccessForbiddenException if the token is invalid or not provided
      */
     public <Job extends PyrisJob> Job getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest request, Class<Job> jobClass) {
-        var authHeader = request.getHeader("Authorization");
-        if (!authHeader.startsWith("Bearer ")) {
+        var authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (!authHeader.startsWith(Constants.BEARER_PREFIX)) {
             throw new AccessForbiddenException("No valid token provided");
         }
         var token = authHeader.substring(7);

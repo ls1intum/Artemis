@@ -27,6 +27,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.VcsAccessLogService;
  * Service that provides utilities for managing files in a git repository.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class RepositoryService {
 
@@ -129,7 +131,7 @@ public class RepositoryService {
             log.debug("Using local VCS for getting files at commit {} for participation {}", commitId, participation.getId());
             // If local VCS is active, operate directly on the bare repository
             var repoUri = repositoryType == RepositoryType.TESTS ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
-            try (Repository repository = gitService.getBareRepository(repoUri)) {
+            try (Repository repository = gitService.getBareRepository(repoUri, false)) {
                 return getFilesContentFromBareRepository(repository, commitId);
             }
         }
@@ -222,7 +224,7 @@ public class RepositoryService {
     }
 
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(VcsRepositoryUri repositoryUri) throws IOException {
-        try (var bareRepository = gitService.getBareRepository(repositoryUri)) {
+        try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
             return getFilesContentFromBareRepositoryForLastCommit(bareRepository);
         }
     }
@@ -543,24 +545,12 @@ public class RepositoryService {
      * Retrieve the status of the repository. Also pulls the repository.
      *
      * @param repositoryUri of the repository to check the status for.
-     * @return a dto to determine the status of the repository.
-     * @throws GitAPIException if the repository status can't be retrieved.
-     */
-    public boolean isWorkingCopyClean(VcsRepositoryUri repositoryUri) throws GitAPIException {
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
-        return gitService.isWorkingCopyClean(repository);
-    }
-
-    /**
-     * Retrieve the status of the repository. Also pulls the repository.
-     *
-     * @param repositoryUri of the repository to check the status for.
      * @param defaultBranch the already used default branch in the remote repository
      * @return a dto to determine the status of the repository.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
     public boolean isWorkingCopyClean(VcsRepositoryUri repositoryUri, String defaultBranch) throws GitAPIException {
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, defaultBranch);
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, defaultBranch, false);
         return gitService.isWorkingCopyClean(repository);
     }
 

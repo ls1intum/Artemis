@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
@@ -39,8 +41,9 @@ import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.util.GitUtilService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 
@@ -68,29 +71,29 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
 
         // Instantiate the remote repository as non-bare so its files can be manipulated
-        testRepo.configureRepos("testLocalRepo", "testOriginRepo", false);
+        testRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo", false);
 
         // add file to the repository folder
-        Path filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFileName);
+        Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);
         var file = Files.createFile(filePath).toFile();
         // write content to the created file
         FileUtils.write(file, currentLocalFileContent, Charset.defaultCharset());
 
         // add folder to the repository folder
-        filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName);
+        filePath = Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath);
 
-        var testRepoUri = new GitUtilService.MockFileRepositoryUri(testRepo.localRepoFile);
+        var testRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(testRepo.workingCopyGitRepoFile, localVCRepoPath));
         programmingExercise.setTestRepositoryUri(testRepoUri.toString());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUri, false);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri),
+                eq(true), anyBoolean());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri),
+                eq(false), anyBoolean());
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(true),
-                any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri), eq(false),
-                any());
-
-        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfExercise(programmingExercise);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri),
+                eq(true), anyString(), anyBoolean());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUri),
+                eq(false), anyString(), anyBoolean());
     }
 
     @AfterEach
@@ -108,7 +111,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Path.of(testRepo.localRepoFile + "/" + key)).exists();
+            assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + key)).exists();
         }
     }
 
@@ -127,7 +130,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         params.add("file", currentLocalFileName);
         var file = request.get(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
-        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
 
@@ -136,10 +139,10 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     void testCreateFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Path.of(testRepo.localRepoFile + "/newFile")).doesNotExist();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/newFile")).doesNotExist();
         params.add("file", "newFile");
         request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
-        assertThat(Path.of(testRepo.localRepoFile + "/newFile")).isRegularFile();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/newFile")).isRegularFile();
     }
 
     @Test
@@ -147,7 +150,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     void testCreateFile_alreadyExists() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat((Path.of(testRepo.localRepoFile + "/newFile"))).doesNotExist();
+        assertThat((Path.of(testRepo.workingCopyGitRepoFile + "/newFile"))).doesNotExist();
         params.add("file", "newFile");
 
         doReturn(Optional.of(true)).when(gitService).getFileByName(any(), any());
@@ -159,12 +162,12 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     void testCreateFile_invalidRepository() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat((Path.of(testRepo.localRepoFile + "/newFile"))).doesNotExist();
+        assertThat((Path.of(testRepo.workingCopyGitRepoFile + "/newFile"))).doesNotExist();
         params.add("file", "newFile");
 
         Repository mockRepository = mock(Repository.class);
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
-        doReturn(testRepo.localRepoFile.toPath()).when(mockRepository).getLocalPath();
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true), anyBoolean());
+        doReturn(testRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
         doReturn(false).when(mockRepository).isValidFile(any());
         request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.BAD_REQUEST, params);
     }
@@ -174,23 +177,23 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     void testCreateFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Path.of(testRepo.localRepoFile + "/newFolder")).doesNotExist();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/newFolder")).doesNotExist();
         params.add("folder", "newFolder");
         request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/folder", HttpStatus.OK, params);
-        assertThat(Path.of(testRepo.localRepoFile + "/newFolder")).isDirectory();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/newFolder")).isDirectory();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRenameFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        assertThat((Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).exists();
+        assertThat((Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName))).exists();
         String newLocalFileName = "newFileName";
-        assertThat(Path.of(testRepo.localRepoFile + "/" + newLocalFileName)).doesNotExist();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + newLocalFileName)).doesNotExist();
         FileMove fileMove = new FileMove(currentLocalFileName, newLocalFileName);
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).doesNotExist();
-        assertThat(Path.of(testRepo.localRepoFile + "/" + newLocalFileName)).exists();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).doesNotExist();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + newLocalFileName)).exists();
     }
 
     @Test
@@ -209,11 +212,11 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         programmingExerciseRepository.save(programmingExercise);
         FileMove fileMove = createRenameFileMove();
 
-        doReturn(Optional.of(testRepo.localRepoFile)).when(gitService).getFileByName(any(), eq(fileMove.currentFilePath()));
+        doReturn(Optional.of(testRepo.workingCopyGitRepoFile)).when(gitService).getFileByName(any(), eq(fileMove.currentFilePath()));
 
         Repository mockRepository = mock(Repository.class);
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
-        doReturn(testRepo.localRepoFile.toPath()).when(mockRepository).getLocalPath();
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true), anyBoolean());
+        doReturn(testRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
         doReturn(false).when(mockRepository).isValidFile(argThat(file -> file.getName().contains(currentLocalFileName)));
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.BAD_REQUEST, null);
     }
@@ -221,8 +224,8 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     private FileMove createRenameFileMove() {
         String newLocalFileName = "newFileName";
 
-        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
-        assertThat(Path.of(testRepo.localRepoFile + "/" + newLocalFileName)).doesNotExist();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + newLocalFileName)).doesNotExist();
 
         return new FileMove(currentLocalFileName, newLocalFileName);
     }
@@ -231,13 +234,13 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRenameFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName)).exists();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFolderName)).exists();
         String newLocalFolderName = "newFolderName";
-        assertThat(Path.of(testRepo.localRepoFile + "/" + newLocalFolderName)).doesNotExist();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + newLocalFolderName)).doesNotExist();
         FileMove fileMove = new FileMove(currentLocalFolderName, newLocalFolderName);
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName)).doesNotExist();
-        assertThat(Path.of(testRepo.localRepoFile + "/" + newLocalFolderName)).exists();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFolderName)).doesNotExist();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + newLocalFolderName)).exists();
     }
 
     @Test
@@ -245,10 +248,10 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     void testDeleteFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
         params.add("file", currentLocalFileName);
         request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
-        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).doesNotExist();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).doesNotExist();
     }
 
     @Test
@@ -256,7 +259,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     void testDeleteFile_notFound() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
         params.add("file", currentLocalFileName);
 
         doReturn(Optional.empty()).when(gitService).getFileByName(any(), any());
@@ -269,14 +272,14 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     void testDeleteFile_invalidFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
         params.add("file", currentLocalFileName);
 
-        doReturn(Optional.of(testRepo.localRepoFile)).when(gitService).getFileByName(any(), eq(currentLocalFileName));
+        doReturn(Optional.of(testRepo.workingCopyGitRepoFile)).when(gitService).getFileByName(any(), eq(currentLocalFileName));
 
         Repository mockRepository = mock(Repository.class);
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
-        doReturn(testRepo.localRepoFile.toPath()).when(mockRepository).getLocalPath();
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true), anyBoolean());
+        doReturn(testRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
         doReturn(false).when(mockRepository).isValidFile(argThat(file -> file.getName().contains(currentLocalFileName)));
 
         request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.BAD_REQUEST, params);
@@ -287,7 +290,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     void testDeleteFile_validFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
         params.add("file", currentLocalFileName);
 
         File mockFile = mock(File.class);
@@ -296,8 +299,8 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         doReturn(false).when(mockFile).isFile();
 
         Repository mockRepository = mock(Repository.class);
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
-        doReturn(testRepo.localRepoFile.toPath()).when(mockRepository).getLocalPath();
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true), anyBoolean());
+        doReturn(testRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
         doReturn(true).when(mockRepository).isValidFile(argThat(file -> file.getName().contains(currentLocalFileName)));
 
         request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
@@ -331,10 +334,10 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveFiles() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
         request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
 
-        Path filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFileName);
+        Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);
         assertThat(filePath).hasContent("updatedFileContent");
     }
 
@@ -343,7 +346,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveFilesAndCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        assertThat(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName)).exists();
+        assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
 
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
@@ -353,7 +356,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
-        Path filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFileName);
+        Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);
         assertThat(filePath).hasContent("updatedFileContent");
 
         var testRepoCommits = testRepo.getAllLocalCommits();
@@ -378,19 +381,19 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         // Create a commit for the local and the remote repository
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
-        try (var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.originRepoFile.toPath(), null)) {
+        try (var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.remoteBareGitRepoFile.toPath(), null)) {
 
             // Create file in the remote repository
-            Path filePath = Path.of(testRepo.originRepoFile + "/" + fileName);
+            Path filePath = Path.of(testRepo.remoteBareGitRepoFile + "/" + fileName);
             Files.createFile(filePath);
 
             // Check if the file exists in the remote repository and that it doesn't yet exist in the local repository
-            assertThat(Path.of(testRepo.originRepoFile + "/" + fileName)).exists();
-            assertThat(Path.of(testRepo.localRepoFile + "/" + fileName)).doesNotExist();
+            assertThat(Path.of(testRepo.remoteBareGitRepoFile + "/" + fileName)).exists();
+            assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + fileName)).doesNotExist();
 
             // Stage all changes and make a second commit in the remote repository
             gitService.stageAllChanges(remoteRepository);
-            GitService.commit(testRepo.originGit).setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
+            GitService.commit(testRepo.remoteBareGitRepo).setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
 
             // Checks if the current commit is not equal on the local and the remote repository
             assertThat(testRepo.getAllLocalCommits().getFirst()).isNotEqualTo(testRepo.getAllOriginCommits().getFirst());
@@ -400,7 +403,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
             // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
             assertThat(testRepo.getAllLocalCommits().getFirst()).isEqualTo(testRepo.getAllOriginCommits().getFirst());
-            assertThat(Path.of(testRepo.localRepoFile + "/" + fileName)).exists();
+            assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + fileName)).exists();
         }
     }
 
@@ -410,8 +413,8 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     void testResetToLastCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         String fileName = "testFile";
-        try (var localRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
-                var remoteRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.originRepoFile.toPath(), null)) {
+        try (var localRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null);
+                var remoteRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.remoteBareGitRepoFile.toPath(), null)) {
 
             // Check status of git before the commit
             var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -425,26 +428,26 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
             assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
             // Create file in the local repository and commit it
-            Path localFilePath = Path.of(testRepo.localRepoFile + "/" + fileName);
+            Path localFilePath = Path.of(testRepo.workingCopyGitRepoFile + "/" + fileName);
             var localFile = Files.createFile(localFilePath).toFile();
             // write content to the created file
             FileUtils.write(localFile, "local", Charset.defaultCharset());
             gitService.stageAllChanges(localRepo);
-            GitService.commit(testRepo.localGit).setMessage("local").call();
+            GitService.commit(testRepo.workingCopyGitRepo).setMessage("local").call();
 
             // Create file in the remote repository and commit it
-            Path remoteFilePath = Path.of(testRepo.originRepoFile + "/" + fileName);
+            Path remoteFilePath = Path.of(testRepo.remoteBareGitRepoFile + "/" + fileName);
             var remoteFile = Files.createFile(remoteFilePath).toFile();
             // write content to the created file
             FileUtils.write(remoteFile, "remote", Charset.defaultCharset());
             gitService.stageAllChanges(remoteRepo);
-            GitService.commit(testRepo.originGit).setMessage("remote").call();
+            GitService.commit(testRepo.remoteBareGitRepo).setMessage("remote").call();
 
             // Merge the two and a conflict will occur
-            testRepo.localGit.fetch().setRemote("origin").call();
-            List<Ref> refs = testRepo.localGit.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
-            var result = testRepo.localGit.merge().include(refs.getFirst().getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
-            var status = testRepo.localGit.status().call();
+            testRepo.workingCopyGitRepo.fetch().setRemote("origin").call();
+            List<Ref> refs = testRepo.workingCopyGitRepo.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
+            var result = testRepo.workingCopyGitRepo.merge().include(refs.getFirst().getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
+            var status = testRepo.workingCopyGitRepo.status().call();
             assertThat(status.getConflicting()).isNotEmpty();
             assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
 
@@ -452,7 +455,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
             request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/reset", null, HttpStatus.OK, null);
 
             // Check the git status after the reset
-            status = testRepo.localGit.status().call();
+            status = testRepo.workingCopyGitRepo.status().call();
             assertThat(status.getConflicting()).isEmpty();
             assertThat(testRepo.getAllLocalCommits().getFirst()).isEqualTo(testRepo.getAllOriginCommits().getFirst());
             var receivedStatusAfterReset = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -490,7 +493,6 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRepositoryState() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        doReturn(true).when(gitService).isRepositoryCached(any());
         var status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(status.repositoryStatus()).isEqualTo(RepositoryStatusDTOType.UNCOMMITTED_CHANGES);
         // TODO: also test other states

@@ -12,7 +12,7 @@
                 }
             } @else {
                 {{
-                    (diffForTemplateAndSolution() || !report().participationIdForLeftCommit
+                    (diffForTemplateAndSolution() || !participationId()
                         ? 'artemisApp.programmingExercise.diffReport.template'
                         : 'artemisApp.programmingExercise.diffReport.previousSubmission'
                     ) | artemisTranslate
@@ -52,8 +52,9 @@
             />
             <jhi-git-diff-line-stat
                 class="mt-1 fw-bold"
-                [addedLineCount]="addedLineCount()"
-                [removedLineCount]="removedLineCount()"
+                [hidden]="!allDiffsReady()"
+                [addedLineCount]="repositoryDiffInformation().totalLineChange.addedLineCount"
+                [removedLineCount]="repositoryDiffInformation().totalLineChange.removedLineCount"
                 ngbTooltip="{{
                     (diffForTemplateAndSolution()
                         ? 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport'
@@ -65,16 +66,39 @@
     </div>
 </div>
 <div [hidden]="!allDiffsReady()">
-    @for (diffInformation of diffInformationForPaths(); track diffInformation) {
+    @for (diffInformation of repositoryDiffInformation().diffInformations; track diffInformation) {
         <div class="mt-2">
-            <jhi-git-diff-file-panel
-                [allowSplitView]="allowSplitView()"
-                [diffForTemplateAndSolution]="diffForTemplateAndSolution()"
-                [diffEntries]="diffInformation.entries"
-                [originalFileContent]="diffInformation.templateFileContent"
-                [modifiedFileContent]="diffInformation.solutionFileContent"
-                (onDiffReady)="onDiffReady(diffInformation.path, $event)"
-            />
+            <div ngbAccordion [destroyOnHide]="false" class="git-diff-file-panel">
+                <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="false">
+                    <div ngbAccordionHeader class="d-flex align-items-center justify-content-between">
+                        <jhi-git-diff-file-panel-title [diffInformation]="diffInformation" />
+                        <div>
+                            <jhi-git-diff-line-stat
+                                [addedLineCount]="diffInformation.lineChange?.addedLineCount ?? 0"
+                                [removedLineCount]="diffInformation.lineChange?.removedLineCount ?? 0"
+                                ngbTooltip="{{
+                                    (diffForTemplateAndSolution()
+                                        ? 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport'
+                                        : 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReportExamTimeline'
+                                    ) | artemisTranslate
+                                }}"
+                            />
+                            <button ngbAccordionToggle class="btn ms-1">
+                                <fa-icon [icon]="!fileDiffPanel.collapsed ? faAngleUp : faAngleDown" />
+                            </button>
+                        </div>
+                    </div>
+                    <div ngbAccordionCollapse>
+                        <div ngbAccordionBody>
+                            <jhi-git-diff-file
+                                [allowSplitView]="allowSplitView()"
+                                [diffInformation]="diffInformation"
+                                (onDiffReady)="handleDiffReady(diffInformation.title, $event)"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     }
 </div>

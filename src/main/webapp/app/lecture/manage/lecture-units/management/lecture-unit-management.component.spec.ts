@@ -69,7 +69,7 @@ describe('LectureUnitManagementComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip), FaIconComponent],
             declarations: [
                 LectureUnitManagementComponent,
                 MockComponent(UnitCreationCardComponent),
@@ -79,7 +79,6 @@ describe('LectureUnitManagementComponent', () => {
                 MockComponent(ExerciseUnitComponent),
                 MockComponent(AttachmentVideoUnitComponent),
                 MockComponent(TextUnitComponent),
-                MockComponent(FaIconComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockRouterLinkDirective,

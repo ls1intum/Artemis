@@ -54,7 +54,7 @@ describe('CourseCompetenciesDetails', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
+            imports: [MockModule(NgbTooltipModule), FaIconComponent],
             declarations: [
                 CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -66,7 +66,6 @@ describe('CourseCompetenciesDetails', () => {
                 MockComponent(CompetencyRingsComponent),
                 MockComponent(SidePanelComponent),
                 MockComponent(HelpIconComponent),
-                MockComponent(FaIconComponent),
                 MockComponent(FireworksComponent),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(HtmlForMarkdownPipe),
@@ -87,7 +86,6 @@ describe('CourseCompetenciesDetails', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(ScienceService),
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

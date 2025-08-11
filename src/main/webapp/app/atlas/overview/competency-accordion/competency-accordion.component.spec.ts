@@ -24,7 +24,6 @@ describe('CompetencyAccordionComponent', () => {
         TestBed.configureTestingModule({
             declarations: [CompetencyAccordionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(CompetencyRingsComponent)],
             providers: [MockProvider(TranslateService)],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

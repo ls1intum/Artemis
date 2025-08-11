@@ -15,7 +15,6 @@ describe('LectureWizardPeriodComponent', () => {
         TestBed.configureTestingModule({
             declarations: [LectureUpdatePeriodComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {

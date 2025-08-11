@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
@@ -20,6 +22,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 
 @Conditional(TutorialGroupEnabled.class)
+@Lazy
 @Repository
 public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<TutorialGroupSession, Long> {
 
@@ -40,6 +43,29 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
             WHERE session.tutorialGroup.id = :tutorialGroupId
             """)
     Set<TutorialGroupSession> findAllByTutorialGroupId(@Param("tutorialGroupId") Long tutorialGroupId);
+
+    @Query("""
+                SELECT new de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO(
+                    de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.TUTORIAL,
+                    de.tum.cit.aet.artemis.core.util.CalendarEventSemantics.START_AND_END_DATE,
+                    "Tutorial Session",
+                    session.start,
+                    session.end,
+                    CONCAT(
+                        CAST(session.location AS string),
+                        CASE WHEN tutorialGroup.campus IS NOT NULL AND NOT tutorialGroup.isOnline
+                             THEN CONCAT(' - ', CAST(tutorialGroup.campus AS string))
+                             ELSE ''
+                        END
+                    ),
+                    CONCAT(teachingAssistant.firstName, ' ', teachingAssistant.lastName)
+                )
+                FROM TutorialGroupSession session
+                    JOIN session.tutorialGroup tutorialGroup
+                    JOIN tutorialGroup.teachingAssistant teachingAssistant
+                WHERE tutorialGroup.id IN :tutorialGroupIds AND session.status = 'ACTIVE'
+            """)
+    Set<CalendarEventDTO> getCalendarEventDTOsFromActiveSessionsForTutorialGroupIds(@Param("tutorialGroupIds") Set<Long> tutorialGroupIds);
 
     @Query("""
             SELECT session

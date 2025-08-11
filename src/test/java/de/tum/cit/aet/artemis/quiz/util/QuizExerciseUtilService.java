@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 /**
  * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class QuizExerciseUtilService {
@@ -174,6 +176,22 @@ public class QuizExerciseUtilService {
         quizExerciseRepository.save(quizExercise);
 
         return quizExercise;
+    }
+
+    /**
+     * Creates and saves a new synchronized quiz exercise.
+     *
+     * @param course      The course for which to create the quiz.
+     * @param releaseDate The release date of the quiz.
+     * @param startTime   The start time of the batch.
+     * @param duration    The duration of the quiz in seconds.
+     * @return The created quiz exercise.
+     */
+    public QuizExercise createAndSaveSynchronizedQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime startTime, int duration) {
+        QuizExercise synchronizedQuiz = QuizExerciseFactory.createSynchronizedQuiz(course, releaseDate, startTime, duration);
+        quizExerciseRepository.save(synchronizedQuiz);
+
+        return synchronizedQuiz;
     }
 
     /**

@@ -25,7 +25,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.TimeService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -34,8 +34,6 @@ import tech.jhipster.config.JHipsterProperties;
  * we only test that the correct send method is called
  */
 class MailServiceTest {
-
-    private MailService mailService;
 
     private MailSendingService mailSendingService;
 
@@ -57,12 +55,7 @@ class MailServiceTest {
     @Mock
     private SpringTemplateEngine templateEngine;
 
-    @Mock
-    private TimeService timeService;
-
     private User student1;
-
-    private User student2;
 
     private String subject;
 
@@ -79,7 +72,7 @@ class MailServiceTest {
         student1.setEmail("benige8246@omibrown.com");
         student1.setLangKey("de");
 
-        student2 = new User();
+        User student2 = new User();
         student2.setLogin("student2");
         student2.setId(556L);
         student2.setEmail("bege123@abc.com");
@@ -105,9 +98,9 @@ class MailServiceTest {
         templateEngine = mock(SpringTemplateEngine.class);
         when(templateEngine.process(any(String.class), any())).thenReturn("test");
 
-        mailSendingService = new MailSendingService(jHipsterProperties, javaMailSender, messageSource, templateEngine);
+        mailSendingService = new MailSendingService(jHipsterProperties, javaMailSender, mock(ProfileService.class), messageSource, templateEngine);
 
-        mailService = new MailService(messageSource, templateEngine, mailSendingService);
+        MailService mailService = new MailService(messageSource, templateEngine, mailSendingService);
         ReflectionTestUtils.setField(mailService, "artemisServerUrl", new URI("http://localhost:8080").toURL());
     }
 

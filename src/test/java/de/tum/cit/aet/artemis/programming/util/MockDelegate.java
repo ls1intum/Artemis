@@ -1,17 +1,13 @@
 package de.tum.cit.aet.artemis.programming.util;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -38,23 +34,17 @@ public interface MockDelegate {
 
     void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) throws IOException, URISyntaxException;
 
-    void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException;
-
-    void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws Exception;
-
-    void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) throws Exception;
-
-    void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) throws MalformedURLException, URISyntaxException, JsonProcessingException;
-
+    @Deprecated
     void mockGetRepositorySlugFromRepositoryUri(String repositorySlug, VcsRepositoryUri repositoryUri);
 
+    @Deprecated
     void mockGetProjectKeyFromRepositoryUri(String projectKey, VcsRepositoryUri repositoryUri);
 
+    @Deprecated
     void mockGetRepositoryPathFromRepositoryUri(String projectPath, VcsRepositoryUri repositoryUri);
 
+    @Deprecated
     void mockGetProjectKeyFromAnyUrl(String projectKey);
-
-    void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException;
 
     void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
@@ -89,10 +79,6 @@ public interface MockDelegate {
 
     void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception;
 
-    void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws Exception;
-
-    void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception;
-
     void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception;
 
     void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws Exception;
@@ -103,19 +89,13 @@ public interface MockDelegate {
 
     void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception;
 
-    void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception;
-
     void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) throws Exception;
 
     void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) throws Exception;
 
-    void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey, boolean b) throws Exception;
-
     void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception;
 
     void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception;
-
-    void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException;
 
     void mockUserExists(String username) throws Exception;
 

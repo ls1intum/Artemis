@@ -44,8 +44,8 @@ describe('CreateTutorialGroupSessionComponent', () => {
         activeModal = TestBed.inject(NgbActiveModal);
         fixture = TestBed.createComponent(CreateTutorialGroupSessionComponent);
         component = fixture.componentInstance;
-        component.course = course;
-        component.tutorialGroup = tutorialGroup;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         component.initialize();
         tutorialGroupSessionService = TestBed.inject(TutorialGroupSessionService);
         fixture.detectChanges();

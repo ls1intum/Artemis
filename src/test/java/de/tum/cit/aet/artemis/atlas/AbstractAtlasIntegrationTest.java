@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRepositoryService;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyLectureUnitLinkTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyProgressTestRepository;
@@ -33,11 +34,11 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -94,7 +95,7 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     // External Repositories
     @Autowired
-    protected LectureRepository lectureRepository;
+    protected LectureTestRepository lectureRepository;
 
     @Autowired
     protected LectureUnitRepository lectureUnitRepository;
@@ -126,6 +127,9 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected FeatureToggleService featureToggleService;
+
+    @Autowired
+    protected LearningPathRepositoryService learningPathRepositoryService;
 
     // External Services
     @Autowired

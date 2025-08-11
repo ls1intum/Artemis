@@ -26,11 +26,11 @@ import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -97,9 +97,6 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
     protected BuildLogEntryService buildLogEntryService;
 
     @Autowired
-    protected GitUtilService gitUtilService;
-
-    @Autowired
     protected ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
     @Autowired
@@ -134,5 +131,8 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
 
     @Autowired
     protected StudentExamService studentExamService;
+
+    @Autowired
+    protected ProgrammingExerciseService programmingExerciseService;
 
 }

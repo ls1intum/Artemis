@@ -13,6 +13,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +43,7 @@ import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 /**
  * Service responsible for initializing the database with specific testdata related to conversations for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ConversationUtilService {
@@ -70,7 +72,7 @@ public class ConversationUtilService {
     private ExerciseTestRepository exerciseRepo;
 
     @Autowired
-    private LectureRepository lectureRepo;
+    private LectureTestRepository lectureRepo;
 
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;

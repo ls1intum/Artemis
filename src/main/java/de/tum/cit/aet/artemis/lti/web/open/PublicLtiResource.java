@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.lti.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
-import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_DEEPLINK_REDIRECT_PATH;
-import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH;
+import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_DEEPLINK_REDIRECT;
+import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,8 +32,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
  * REST controller for receiving LTI requests.
  */
 @Profile(PROFILE_LTI)
+@Lazy
 @RestController
-// TODO: should we adapt the mapping based on the profile?
 public class PublicLtiResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicLtiResource.class);
@@ -51,7 +52,7 @@ public class PublicLtiResource {
      * @return the ResponseEntity with status 200 (OK)
      * @throws IOException If an input or output exception occurs
      */
-    @PostMapping({ LTI13_LOGIN_REDIRECT_PROXY_PATH, LTI13_DEEPLINK_REDIRECT_PATH })
+    @PostMapping({ LTI13_LOGIN_REDIRECT_PROXY, LTI13_DEEPLINK_REDIRECT })
     @EnforceNothing
     public ResponseEntity<Void> lti13LaunchRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String state = request.getParameter("state");

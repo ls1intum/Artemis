@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, viewChildren } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import isMobile from 'ismobilejs-es5';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -13,7 +13,7 @@ import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-an
 import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -39,7 +39,6 @@ import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { FormsModule } from '@angular/forms';
@@ -91,14 +90,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
-    @ViewChildren(MultipleChoiceQuestionComponent)
-    mcQuestionComponents: QueryList<MultipleChoiceQuestionComponent>;
+    readonly mcQuestionComponents = viewChildren(MultipleChoiceQuestionComponent);
 
-    @ViewChildren(DragAndDropQuestionComponent)
-    dndQuestionComponents: QueryList<DragAndDropQuestionComponent>;
+    readonly dndQuestionComponents = viewChildren(DragAndDropQuestionComponent);
 
-    @ViewChildren(ShortAnswerQuestionComponent)
-    shortAnswerQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
+    readonly shortAnswerQuestionComponents = viewChildren(ShortAnswerQuestionComponent);
 
     private routeAndDataSubscription: Subscription;
 
@@ -623,8 +619,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
 
         // apply submission if it exists
-        if (participation?.results?.length) {
-            this.submission = participation.results[0].submission as QuizSubmission;
+        if (participation?.submissions?.length) {
+            this.submission = participation.submissions.first() as QuizSubmission;
 
             // update submission time
             this.updateSubmissionTime();
@@ -632,9 +628,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // show submission answers in UI
             this.applySubmission();
 
-            if (participation.results[0].score !== undefined && this.quizExercise.quizEnded) {
+            if (this.submission.results?.length && this.submission.results[0].score !== undefined && this.quizExercise.quizEnded) {
                 // quiz has ended and results are available
-                this.showResult(participation.results[0]);
+                this.showResult(this.submission.results[0]);
             }
         } else {
             this.submission = new QuizSubmission();
@@ -689,15 +685,16 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     showQuizResultAfterQuizEnd(participation: StudentParticipation) {
         const quizExercise = participation.exercise as QuizExercise;
-        if (participation.results?.first()?.submission !== undefined && quizExercise.quizEnded) {
+        if (participation.submissions?.first() !== undefined && quizExercise.quizEnded) {
             // quiz has ended and results are available
-            this.submission = participation.results[0].submission as QuizSubmission;
-
-            // update submission time
-            this.updateSubmissionTime();
-            this.transferInformationToQuizExercise(quizExercise);
-            this.applySubmission();
-            this.showResult(participation.results[0]);
+            this.submission = participation.submissions.first() as QuizSubmission;
+            if (this.submission.results?.length) {
+                // update submission time
+                this.updateSubmissionTime();
+                this.transferInformationToQuizExercise(quizExercise);
+                this.applySubmission();
+                this.showResult(this.submission.results[0]);
+            }
         }
     }
 
@@ -752,13 +749,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }, this);
 
         // make sure that a possible explanation is updated correctly in all sub components
-        this.mcQuestionComponents.forEach((mcQuestionComponent) => {
+        this.mcQuestionComponents().forEach((mcQuestionComponent) => {
             mcQuestionComponent.watchCollection();
         });
-        this.dndQuestionComponents.forEach((dndQuestionComponent) => {
+        this.dndQuestionComponents().forEach((dndQuestionComponent) => {
             dndQuestionComponent.watchCollection();
         });
-        this.shortAnswerQuestionComponents.forEach((shortAnswerQuestionComponent) => {
+        this.shortAnswerQuestionComponents().forEach((shortAnswerQuestionComponent) => {
             shortAnswerQuestionComponent.watchCollection();
         });
     }
@@ -944,7 +941,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
         this.submission = result.submission as QuizSubmission;
         // make sure the additional information (explanations, correct answers) is available
-        const quizExercise = (result.participation! as StudentParticipation).exercise as QuizExercise;
+        const quizExercise = (this.submission.participation! as StudentParticipation).exercise as QuizExercise;
         this.transferInformationToQuizExercise(quizExercise);
         this.applySubmission();
         this.showResult(result);
@@ -965,12 +962,16 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * TODO this is duplicated with {@link QuizExamSubmissionComponent#navigateToQuestion}, extract to a shared component
+     *
      * By clicking on the bubble of the progress navigation towards the corresponding question of the quiz is triggered
      * @param questionIndex
      */
     navigateToQuestion(questionIndex: number): void {
         document.getElementById('question' + questionIndex)!.scrollIntoView({
             behavior: 'smooth',
+            block: 'nearest',
+            inline: 'start',
         });
     }
 

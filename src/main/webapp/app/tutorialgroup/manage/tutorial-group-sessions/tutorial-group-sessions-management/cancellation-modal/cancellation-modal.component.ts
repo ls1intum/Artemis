@@ -29,14 +29,10 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
     tutorialGroupSessionStatus = TutorialGroupSessionStatus;
     form: FormGroup;
 
-    @Input()
-    course: Course;
-
-    @Input()
-    tutorialGroupId: number;
-
-    @Input()
-    tutorialGroupSession: TutorialGroupSession;
+    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
+    @Input() course: Course;
+    @Input() tutorialGroupId: number;
+    @Input() tutorialGroupSession: TutorialGroupSession;
 
     ngOnInit(): void {
         this.initializeForm();

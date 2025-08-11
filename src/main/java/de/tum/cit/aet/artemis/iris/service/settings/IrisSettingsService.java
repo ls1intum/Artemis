@@ -16,9 +16,10 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import jakarta.annotation.PostConstruct;
+
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -61,6 +62,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * enabled for an exercise.
  * See {@link IrisSubSettingsService} for more information on the handling of {@link IrisSubSettings}.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisSettingsService {
@@ -92,13 +94,13 @@ public class IrisSettingsService {
     }
 
     /**
-     * Hooks into the {@link ApplicationReadyEvent} and creates or updates the global IrisSettings object on startup.
-     *
-     * @param ignoredEvent Unused event param used to specify when the method should be executed
+     * Creates or updates the global IrisSettings object on bean creation.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @Profile(PROFILE_CORE_AND_SCHEDULING)
-    @EventListener
-    public void execute(ApplicationReadyEvent ignoredEvent) throws Exception {
+    @PostConstruct
+    public void execute() throws Exception {
         var allGlobalSettings = irisSettingsRepository.findAllGlobalSettings();
         if (allGlobalSettings.isEmpty()) {
             createInitialGlobalSettings();
@@ -560,38 +562,6 @@ public class IrisSettingsService {
     }
 
     /**
-     * Checks whether an Iris event is enabled for a course.
-     * Throws an exception if the chat feature is disabled.
-     * Throws an exception if the event is disabled.
-     *
-     * @param type   The Iris event to check
-     * @param course The course to check
-     */
-    public void isActivatedForElseThrow(IrisEventType type, Course course) {
-        isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, course);
-
-        if (!isActivatedFor(type, course)) {
-            throw new AccessForbiddenAlertException("The Iris " + type.name() + " event is disabled for this course.", "Iris", "iris." + type.name().toLowerCase() + "Disabled");
-        }
-    }
-
-    /**
-     * Checks whether an Iris event is enabled for an exercise.
-     * Throws an exception if the chat feature is disabled.
-     * Throws an exception if the event is disabled.
-     *
-     * @param type     The Iris event to check
-     * @param exercise The exercise to check
-     */
-    public void isActivatedForElseThrow(IrisEventType type, ProgrammingExercise exercise) {
-        isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, exercise);
-
-        if (!isActivatedFor(type, exercise)) {
-            throw new AccessForbiddenAlertException("The Iris " + type.name() + " event is disabled for this exercise.", "Iris", "iris." + type.name().toLowerCase() + "Disabled");
-        }
-    }
-
-    /**
      * Checks whether an Iris feature is enabled for a course.
      *
      * @param type   The Iris feature to check
@@ -600,6 +570,18 @@ public class IrisSettingsService {
      */
     public boolean isEnabledFor(IrisSubSettingsType type, Course course) {
         var settings = getCombinedIrisSettingsFor(course, true);
+        return isFeatureEnabledInSettings(settings, type);
+    }
+
+    /**
+     * Checks whether an Iris feature is enabled for a course.
+     *
+     * @param type     The Iris feature to check
+     * @param courseId The course to check
+     * @return Whether the Iris feature is enabled for the course
+     */
+    public boolean isEnabledForCourse(IrisSubSettingsType type, Long courseId) {
+        var settings = getCombinedIrisSettingsForCourse(courseId, true);
         return isFeatureEnabledInSettings(settings, type);
     }
 
@@ -616,27 +598,41 @@ public class IrisSettingsService {
     }
 
     /**
-     * Checks whether an Iris event is enabled for a course.
+     * Checks whether an Iris event is enabled for a course and if the course chat feature is enabled.
      *
      * @param type   The Iris event to check
      * @param course The course to check
-     * @return Whether the Iris event is active for the course
+     * @return True if the Iris event type and the course chat feature are enabled for the course, false otherwise
      */
     public boolean isActivatedFor(IrisEventType type, Course course) {
         var settings = getCombinedIrisSettingsFor(course, false);
+        if (!isFeatureEnabledInSettings(settings, IrisSubSettingsType.COURSE_CHAT)) {
+            return false;
+        }
         return isEventEnabledInSettings(settings, type);
     }
 
     /**
-     * Checks whether an Iris event is enabled for an exercise.
+     * Checks if a certain Iris event type is activated for an exercise and if the corresponding Iris chat feature is enabled.
      *
-     * @param type     The Iris event to check
-     * @param exercise The exercise to check
-     * @return Whether the Iris event is active for the exercise
+     * @param eventType The Iris event type to check
+     * @param exercise  The exercise to check
+     * @return True if the Iris event type is activated for the exercise and the corresponding Iris chat feature is enabled, false otherwise
      */
-    public boolean isActivatedFor(IrisEventType type, Exercise exercise) {
+    public boolean isActivatedFor(IrisEventType eventType, Exercise exercise) {
         var settings = getCombinedIrisSettingsFor(exercise, false);
-        return isEventEnabledInSettings(settings, type);
+
+        IrisSubSettingsType subSettingsType = switch (exercise) {
+            case ProgrammingExercise pe -> IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT;
+            case TextExercise te -> IrisSubSettingsType.TEXT_EXERCISE_CHAT;
+            default -> null;
+        };
+
+        if (subSettingsType == null || !isFeatureEnabledInSettings(settings, subSettingsType)) {
+            return false;
+        }
+
+        return isEventEnabledInSettings(settings, eventType);
     }
 
     /**
@@ -868,7 +864,7 @@ public class IrisSettingsService {
      * @param type     the type of the event
      * @return Whether the settings type is enabled
      */
-    private boolean isEventEnabledInSettings(IrisCombinedSettingsDTO settings, IrisEventType type) {
+    public static boolean isEventEnabledInSettings(IrisCombinedSettingsDTO settings, IrisEventType type) {
         return switch (type) {
             case PROGRESS_STALLED -> {
                 if (settings.irisProgrammingExerciseChatSettings().disabledProactiveEvents() != null) {
@@ -886,7 +882,7 @@ public class IrisSettingsService {
                     yield true;
                 }
             }
-            default -> throw new IllegalStateException("Unexpected value: " + type); // TODO: Add JOL event, once Course Chat Settings are implemented
+            case JOL -> true; // TODO: Add JOL event settings check
         };
     }
 }

@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 @Conditional(TutorialGroupEnabled.class)
+@Lazy
 @Repository
 public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGroup, Long> {
 
@@ -59,6 +61,17 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
             ORDER BY tutorialGroup.title
             """)
     Set<TutorialGroup> findAllByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT DISTINCT tutorialGroup.id
+            FROM TutorialGroup tutorialGroup
+                JOIN tutorialGroup.course course
+                LEFT JOIN tutorialGroup.registrations registration
+                LEFT JOIN registration.student student
+                LEFT JOIN tutorialGroup.teachingAssistant teachingAssistant
+            WHERE (student.id = :userId OR teachingAssistant.id = :userId) AND (course.id = :courseId)
+            """)
+    Set<Long> findTutorialGroupIdsWhereUserParticipatesForCourseId(@Param("courseId") long courseId, @Param("userId") long userId);
 
     @Query("""
             SELECT tutorialGroup

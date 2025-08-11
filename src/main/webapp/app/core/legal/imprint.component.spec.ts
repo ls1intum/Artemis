@@ -12,7 +12,7 @@ import { ImprintComponent } from 'app/core/legal/imprint.component';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 
 describe('ImprintComponent', () => {
     let component: ImprintComponent;
@@ -29,7 +29,7 @@ describe('ImprintComponent', () => {
                     useClass: MockSyncStorage,
                 },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                provideHttpClient(),
+                provideHttpClient(withFetch()),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ImprintComponent);

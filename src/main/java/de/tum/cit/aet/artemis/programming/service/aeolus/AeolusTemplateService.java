@@ -7,12 +7,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jakarta.annotation.PostConstruct;
+
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.web.localci.AeolusTemplateResource;
  * Handles the request to {@link AeolusTemplateResource} and Artemis internal
  * requests to fetch aeolus templates for programming exercises.
  */
+@Lazy
 @Service
 @Profile("aeolus | localci")
 public class AeolusTemplateService {
@@ -64,12 +66,14 @@ public class AeolusTemplateService {
     }
 
     /**
-     * Loads all YAML scripts from the "templates/aeolus" directory into the cache when the application is ready.
+     * Loads all YAML scripts from the "templates/aeolus" directory into the cache when the bean has been created.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * Scripts are read, processed, and stored in the {@code templateCache}. Errors during loading are logged.
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void cacheOnBoot() {
         // load all scripts into the cache
         var resources = this.resourceLoaderService.getFileResources(Path.of("templates", "aeolus"));

@@ -4,13 +4,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
  * REST controller for managing ProgrammingSubmission.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingSubmissionResource {
@@ -71,7 +72,7 @@ public class ProgrammingSubmissionResource {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final ProgrammingMessagingService programmingMessagingService;
+    private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -96,7 +97,7 @@ public class ProgrammingSubmissionResource {
     private final ExerciseDateService exerciseDateService;
 
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingTriggerService programmingTriggerService,
-            ProgrammingMessagingService programmingMessagingService, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository,
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GradingCriterionRepository gradingCriterionRepository,
@@ -104,7 +105,7 @@ public class ProgrammingSubmissionResource {
             ExerciseDateService exerciseDateService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingTriggerService = programmingTriggerService;
-        this.programmingMessagingService = programmingMessagingService;
+        this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
         this.exerciseRepository = exerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -189,7 +190,7 @@ public class ProgrammingSubmissionResource {
             if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
                 // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
                 // This resets the pending submission timer in the client.
-                programmingMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
+                programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
                 return ResponseEntity.ok().build();
             }
         }
@@ -351,7 +352,6 @@ public class ProgrammingSubmissionResource {
         else {
             programmingSubmission.setResults(Collections.singletonList(manualResults.get(correctionRound)));
         }
-        programmingSubmission.getParticipation().setResults(new HashSet<>(programmingSubmission.getResults()));
 
         return ResponseEntity.ok(programmingSubmission);
     }

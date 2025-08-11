@@ -48,12 +48,12 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
 
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow();
 
         participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
 
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow();
     }
 
     @AfterEach
@@ -112,7 +112,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of(), new ArrayList<>(), new ArrayList<>());
         postResult(notification, HttpStatus.BAD_REQUEST);
 
-        var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        var results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId());
         assertThat(results).isEmpty();
     }
 
@@ -178,7 +178,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
     private Result assertBuildError(Long participationId, String userLogin) throws Exception {
         SecurityUtils.setAuthorizationObject();
         // Assert that result is linked to the participation
-        var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
+        var results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
         var result = results.getFirst();
         assertThat(result.isSuccessful()).isFalse();
@@ -195,7 +195,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
 
         userUtilService.changeUser(userLogin);
         // Assert that the build logs can be retrieved from the REST API from the database
-        var receivedLogs = request.get("/api/programming/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
+        var receivedLogs = request.get("/api/programming/participations/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull().isNotEmpty();
 
         return result;
@@ -213,7 +213,7 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
         final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
+        httpHeaders.add(HttpHeaders.AUTHORIZATION, ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
         request.postWithoutLocation("/api/programming/public/programming-exercises/new-result", alteredObj, status, httpHeaders);
     }
 

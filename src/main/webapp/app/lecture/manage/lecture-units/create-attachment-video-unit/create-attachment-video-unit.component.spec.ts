@@ -66,7 +66,6 @@ describe('CreateAttachmentVideoUnitComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-            schemas: [],
         }).compileComponents();
 
         createAttachmentVideoUnitComponentFixture = TestBed.createComponent(CreateAttachmentVideoUnitComponent);

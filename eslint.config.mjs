@@ -8,6 +8,7 @@ import angularTemplateParser from '@angular-eslint/template-parser';
 import angular from 'angular-eslint';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
+import localRulesPlugin from './rules/index.mjs';
 
 export default tseslint.config(
     {
@@ -17,12 +18,14 @@ export default tseslint.config(
             '.github/',
             '.gradle/',
             '.idea/',
+            '.venv/',
             '.jhipster/',
             'build/',
             'coverage/',
             'docker/',
             'docs/',
             'gradle/',
+            'local/',
             'node/',
             'node_modules/',
             'out/',
@@ -32,6 +35,7 @@ export default tseslint.config(
             'src/main/resources/',
             'target/',
             'uploads/',
+            'local/',
             'supporting_scripts/',
             'src/test/javascript/spec/stub.js',
             '.lintstagedrc.js',
@@ -39,6 +43,7 @@ export default tseslint.config(
             'prebuild.mjs',
             'rules/**/*.js',
             'src/main/webapp/content/scripts/pdf.worker.min.mjs',
+            'src/main/webapp/app/openapi/**',
         ],
     },
     eslint.configs.recommended,
@@ -81,6 +86,7 @@ export default tseslint.config(
             '@typescript-eslint': tsPlugin,
             '@angular-eslint': angularPlugin,
             prettier: prettierPlugin,
+            localRules: localRulesPlugin
         },
         // TODO: adapt the rules of the newest jhipster version, e.g. no-inferrable-types, restrict-plus-operands, etc.
         rules: {
@@ -95,7 +101,7 @@ export default tseslint.config(
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@angular-eslint/no-output-on-prefix': 'off',
             '@typescript-eslint/ban-ts-comment': 'warn',
-            // '@typescript-eslint/no-deprecated': 'warn',
+            '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/no-non-null-asserted-optional-chain': 'warn',
             '@typescript-eslint/no-explicit-any': 'off',
@@ -132,19 +138,8 @@ export default tseslint.config(
                         }
                     ]
                 }
-            ]
-        },
-    },
-    {
-        files: ['src/test/**/mock-*.ts'],
-        languageOptions: {
-            parser: typescriptParser,
-        },
-        plugins: {
-            '@typescript-eslint': tsPlugin,
-        },
-        rules: {
-            '@typescript-eslint/no-unused-vars': 'off',
+            ],
+            'localRules/require-signal-reference-ngb-modal-input': 'error',
         },
     },
     {
@@ -159,12 +154,35 @@ export default tseslint.config(
             ...jestExtendedPlugin.configs.all.rules,
             'jest/expect-expect': 'off',
             'jest/no-conditional-expect': 'off',
-            // '@typescript-eslint/no-deprecated': 'warn',
+            '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/ban-ts-comment': 'off',
             '@typescript-eslint/no-var-requires': 'off',
-            '@typescript-eslint/no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': ['warn', {
+                vars: 'all',
+                varsIgnorePattern: '^_',
+                args: 'none',
+                ignoreRestSiblings: true,
+                caughtErrors: 'none',
+            }],
             'no-unused-private-class-members': 'error',
+            'no-unused-vars': 'off',
+            'no-undef': 'off',
+        },
+    },
+    {
+        files: ['src/test/**/mock-*.ts'],
+        languageOptions: {
+            parser: typescriptParser,
+            parserOptions: {
+                project: ['./tsconfig.spec.json'],
+            },
+        },
+        plugins: {
+            '@typescript-eslint': tsPlugin,
+        },
+        rules: {
+            '@typescript-eslint/no-unused-vars': 'off',
             'no-unused-vars': 'off',
             'no-undef': 'off',
         },

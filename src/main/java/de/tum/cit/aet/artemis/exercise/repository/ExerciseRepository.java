@@ -13,6 +13,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
@@ -21,6 +22,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
@@ -32,6 +34,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
  * Spring Data JPA repository for the Exercise entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long> {
 
@@ -46,10 +49,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT e
             FROM Exercise e
-                LEFT JOIN FETCH e.categories
             WHERE e.course.id IN :courseIds
             """)
-    Set<Exercise> findByCourseIdsWithCategories(@Param("courseIds") Set<Long> courseIds);
+    Set<Exercise> findByCourseIds(@Param("courseIds") Set<Long> courseIds);
 
     @Query("""
             SELECT e
@@ -73,6 +75,14 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.id = :courseId
             """)
     Set<Exercise> findAllExercisesByCourseId(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT e
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+                AND (e.releaseDate <=:now  OR e.releaseDate IS NULL)
+            """)
+    Set<Exercise> findAllReleasedExercisesByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT e
@@ -436,27 +446,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     List<Exercise> getPastExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
     /**
-     * Finds all exercises that should be part of the summary email (e.g. weekly summary)
-     * Exercises should have been released, not yet ended, and the release should be in the time frame [daysAgo,now]
-     *
-     * @param now     the current date time
-     * @param daysAgo the current date time minus the wanted number of days (the used interval) (e.g. for weeklySummaries -> daysAgo = 7)
-     * @return all exercises that should be part of the summary (email)
-     */
-    @Query("""
-            SELECT e
-            FROM Exercise e
-            WHERE e.releaseDate IS NOT NULL
-                AND e.releaseDate < :now
-                AND e.releaseDate > :daysAgo
-                AND (
-                    (e.dueDate IS NOT NULL AND e.dueDate > :now)
-                    OR e.dueDate IS NULL
-                )
-            """)
-    Set<Exercise> findAllExercisesForSummary(@Param("now") ZonedDateTime now, @Param("daysAgo") ZonedDateTime daysAgo);
-
-    /**
      * Fetches the number of student participations in the given exercise
      *
      * @param exerciseId the id of the exercise to get the amount for
@@ -674,4 +663,23 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     default Set<Exercise> findByCourseIdWithFutureDueDatesAndCategories(Long courseId) {
         return findByCourseIdWithFutureDueDatesAndCategories(courseId, ZonedDateTime.now());
     }
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO(
+                CASE TYPE(exercise)
+                    WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.FILE_UPLOAD_EXERCISE
+                    WHEN TextExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.TEXT_EXERCISE
+                    WHEN ModelingExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.MODELING_EXERCISE
+                    ELSE de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.PROGRAMMING_EXERCISE
+                END,
+                exercise.title,
+                exercise.releaseDate,
+                exercise.startDate,
+                exercise.dueDate,
+                exercise.assessmentDueDate
+            )
+            FROM Exercise exercise
+            WHERE exercise.course.id = :courseId AND TYPE(exercise) IN (FileUploadExercise, TextExercise, ModelingExercise, ProgrammingExercise)
+            """)
+    Set<NonQuizExerciseCalendarEventDTO> getNonQuizExerciseCalendarEventsDAOsForCourseId(@Param("courseId") long courseId);
 }

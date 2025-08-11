@@ -170,7 +170,6 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         Complaint complaint = new Complaint().result(fileUploadAssessment).complaintText("This is not fair");
 
         complaint = complaintRepository.save(complaint);
-        complaint.getResult().setParticipation(null); // Break infinite reference chain
 
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
@@ -183,7 +182,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
                 Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
-        assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+        assertThat(((StudentParticipation) updatedResult.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         assertThat(updatedResult.getFeedbacks()).hasSize(3);
     }
 
@@ -197,8 +196,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         Result result = request.putWithResponseBody(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", body, Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
-        assertThat(result.isRated()).isNull();
-        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+        assertThat(result.isRated()).isFalse();
+        assertThat(((StudentParticipation) result.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
 
     @Test
@@ -216,7 +215,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
 
         assertThat(result).as("submitted result found").isNotNull();
         assertThat(result.isRated()).isTrue();
-        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+        assertThat(((StudentParticipation) result.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         assertThat(result.getFeedbacks()).hasSize(3);
         assertThat(result.getFeedbacks().getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
         assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
@@ -455,16 +454,16 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
 
         // verify that the result contains the relationship
         assertThat(firstSubmittedManualResult).isNotNull();
-        assertThat(firstSubmittedManualResult.getParticipation()).isEqualTo(studentParticipation);
+        assertThat(firstSubmittedManualResult.getSubmission().getParticipation()).isEqualTo(studentParticipation);
 
         // verify that the relationship between student participation,
-        var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
         assertThat(databaseRelationshipStateOfResultsOverParticipation).isPresent();
         var fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutFirstAssessment);
-        assertThat(fetchedParticipation.findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
@@ -494,13 +493,14 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
 
         // verify that the relationship between student participation,
-        databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
         assertThat(databaseRelationshipStateOfResultsOverParticipation).isPresent();
         fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutSecondAssessment);
-        assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst()).contains(submissionWithoutSecondAssessment.getLatestResult());
+        assertThat(participationUtilService.getResultsForParticipation(fetchedParticipation).stream().filter(result -> result.getCompletionDate() == null).findFirst())
+                .contains(submissionWithoutSecondAssessment.getLatestResult());
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);

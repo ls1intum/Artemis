@@ -75,16 +75,18 @@ export class ManageAssessmentButtonsComponent implements OnInit {
             this.participation.submissions?.[0]?.id,
             this.exercise.exerciseGroup?.exam?.id,
             this.exercise.exerciseGroup?.id,
-            this.participation.results?.[correctionRound]?.id,
+            // TODO do we need to handle this differently for programming exercises?
+            this.participation.submissions[0].results?.[correctionRound]?.id,
         );
     }
 
     getCorrectionRoundForAssessmentLink(correctionRound = 0): number {
-        const result = this.participation.results?.[correctionRound];
+        // TODO do we need to handle this differently for programming exercises?
+        const result = this.participation.submissions![0].results?.[correctionRound];
         if (!result) {
             return correctionRound;
         }
-        if (result.hasComplaint && !!this.participation.results?.[correctionRound + 1]) {
+        if (result.hasComplaint && !!this.participation.submissions![0].results?.[correctionRound + 1]) {
             // If there is a complaint and the complaint got accepted (additional result)
             // open this next result.
             return correctionRound + 1;

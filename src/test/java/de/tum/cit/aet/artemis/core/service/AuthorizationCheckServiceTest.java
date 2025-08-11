@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -39,17 +38,22 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
     @Autowired
     private AuthorizationCheckService authCheckService;
 
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private CourseTestRepository courseRepository;
+
+    @Autowired
+    private UserTestRepository userRepository;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
     }
 
     @Nested
-    @Component
     class IsUserAllowedToGetResultTest {
-
-        @Autowired
-        private ParticipationUtilService participationUtilService;
 
         private ModelingExercise modelingExercise;
 
@@ -101,16 +105,8 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
     }
 
     @Nested
-    @Component
     // Only the login name of the student2 user is NOT allowed to enrol for courses.
     class IsUserAllowedToEnrollForCourseTest {
-
-        // We need our own courseService here that overshadows the one from the CourseServiceTest, so that the new property is applied to it.
-        @Autowired
-        private CourseTestRepository courseRepository;
-
-        @Autowired
-        private UserTestRepository userRepository;
 
         private User student1;
 
@@ -201,14 +197,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
     }
 
     @Nested
-    @Component
     class IsUserAllowedToUnenrollFromCourseTest {
-
-        @Autowired
-        private AuthorizationCheckService authCheckService;
-
-        @Autowired
-        private CourseTestRepository courseRepository;
 
         private Course getCourseForUnenrollmentAllowedTest() {
             var course = courseUtilService.createCourse();

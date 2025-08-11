@@ -37,9 +37,9 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -51,7 +51,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private static final String TEST_PREFIX = "lectureintegrationtest";
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureRepository;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -260,12 +260,15 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         AttachmentVideoUnit attachmentVideoUnitWithSlides = lectureUtilService.createAttachmentVideoUnitWithSlides(numberOfSlides);
         lectureWithSlides = lectureUtilService.addLectureUnitsToLecture(lectureWithSlides, List.of(attachmentVideoUnitWithSlides));
 
+        AttachmentVideoUnit attachmentVideoUnitWithoutSlides = lectureUtilService.createAttachmentVideoUnitWithoutAttachment();
+        lectureUtilService.addLectureUnitsToLecture(lectureWithSlides, List.of(attachmentVideoUnitWithoutSlides));
+
         List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures-with-slides", HttpStatus.OK, Lecture.class);
 
         final Lecture finalLectureWithSlides = lectureWithSlides;
         Lecture filteredLecture = returnedLectures.stream().filter(lecture -> lecture.getId().equals(finalLectureWithSlides.getId())).findFirst().orElseThrow();
 
-        assertThat(filteredLecture.getLectureUnits()).hasSize(1); // we only have one lecture unit which is attachmentVideoUnitWithSlides
+        assertThat(filteredLecture.getLectureUnits()).hasSize(2);
         assertThat(filteredLecture.getLectureUnits()).contains(attachmentVideoUnitWithSlides);
         AttachmentVideoUnit attachmentVideoUnit = (AttachmentVideoUnit) filteredLecture.getLectureUnits().getFirst();
         assertThat(attachmentVideoUnit.getSlides()).hasSize(numberOfSlides);

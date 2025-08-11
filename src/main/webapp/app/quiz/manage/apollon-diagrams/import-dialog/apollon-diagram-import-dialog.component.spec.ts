@@ -13,7 +13,6 @@ describe('ApollonDiagramImportDialog Component', () => {
         TestBed.configureTestingModule({
             imports: [ApollonDiagramImportDialogComponent],
             providers: [{ provide: NgbActiveModal, useClass: MockNgbActiveModalService }],
-            schemas: [],
         })
             .overrideTemplate(ApollonDiagramImportDialogComponent, '')
             .compileComponents()

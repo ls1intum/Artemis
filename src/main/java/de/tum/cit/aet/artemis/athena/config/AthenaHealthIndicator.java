@@ -9,11 +9,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 
@@ -21,6 +20,7 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
  * Service determining the health of the Athena service and its assessment modules.
  */
 @Component
+@Lazy
 @Profile(PROFILE_ATHENA)
 public class AthenaHealthIndicator implements HealthIndicator {
 
@@ -30,17 +30,7 @@ public class AthenaHealthIndicator implements HealthIndicator {
 
     private static final String ATHENA_URL_KEY = "url";
 
-    private static final String ATHENA_STATUS_KEY = "status";
-
-    private static final String ATHENA_MODULES_KEY = "modules";
-
     private static final String ATHENA_ASSESSMENT_MODULE_MANAGER_KEY = "assessment module manager";
-
-    private static final String ATHENA_MODULE_URL_KEY = "url";
-
-    private static final String ATHENA_MODULE_EXERCISE_TYPE_KEY = "type";
-
-    private static final String ATHENA_MODULE_HEALTHY_KEY = "healthy";
 
     private final RestTemplate shortTimeoutRestTemplate;
 
@@ -69,12 +59,12 @@ public class AthenaHealthIndicator implements HealthIndicator {
         additionalInfo.put(ATHENA_URL_KEY, athenaUrl);
         ConnectorHealth health;
         try {
-            final var response = shortTimeoutRestTemplate.getForObject(athenaUrl + "/health", JsonNode.class);
-            final var athenaStatus = response != null ? response.get(ATHENA_STATUS_KEY).asText() : null;
+            final var healthResponse = shortTimeoutRestTemplate.getForObject(athenaUrl + "/health", AthenaHealthResponse.class);
+            final var athenaStatus = healthResponse != null ? healthResponse.status() : null;
 
             if (athenaStatus != null) {
                 additionalInfo.put(ATHENA_ASSESSMENT_MODULE_MANAGER_KEY, athenaStatus);
-                additionalInfo.putAll(getAdditionalInfoForModules(response));
+                additionalInfo.putAll(getAdditionalInfoForModules(healthResponse));
             }
             else {
                 additionalInfo.put(ATHENA_ASSESSMENT_MODULE_MANAGER_KEY, "not available");
@@ -91,17 +81,13 @@ public class AthenaHealthIndicator implements HealthIndicator {
     /**
      * Get additional information about the health of the assessment modules.
      */
-    private Map<String, Object> getAdditionalInfoForModules(JsonNode athenaHealthResponse) {
+    private Map<String, Object> getAdditionalInfoForModules(AthenaHealthResponse athenaHealthResponse) {
         var additionalModuleInfo = new HashMap<String, Object>();
-        if (athenaHealthResponse.has(ATHENA_MODULES_KEY)) {
-            JsonNode modules = athenaHealthResponse.get(ATHENA_MODULES_KEY);
-            // keys are module names, values are description maps
-            modules.fields().forEachRemaining(module -> {
-                var moduleHealth = new AthenaModuleHealth(module.getValue().get(ATHENA_MODULE_EXERCISE_TYPE_KEY).asText(),
-                        module.getValue().get(ATHENA_MODULE_HEALTHY_KEY).asBoolean(), module.getValue().get(ATHENA_MODULE_URL_KEY).asText());
-                additionalModuleInfo.put(module.getKey(), moduleHealthToString(moduleHealth));
-            });
-        }
+        var modules = athenaHealthResponse.modules();
+        modules.forEach((moduleName, descriptionMap) -> {
+            var moduleHealth = new AthenaModuleHealth(descriptionMap.type(), descriptionMap.healthy(), descriptionMap.url());
+            additionalModuleInfo.put(moduleName, moduleHealthToString(moduleHealth));
+        });
         return additionalModuleInfo;
     }
 }

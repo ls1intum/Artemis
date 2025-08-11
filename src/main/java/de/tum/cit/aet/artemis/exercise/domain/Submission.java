@@ -3,9 +3,12 @@ package de.tum.cit.aet.artemis.exercise.domain;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -129,10 +132,33 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestResult() {
-        if (results != null && !results.isEmpty()) {
-            return results.getLast();
+        Result latestResult = Optional.ofNullable(results).orElse(Collections.emptyList()).stream().filter(Objects::nonNull).max(Comparator.comparing(Result::getId)).orElse(null);
+
+        if (latestResult != null) {
+            latestResult.setSubmission(this);
         }
-        return null;
+
+        return latestResult;
+    }
+
+    /**
+     * Returns the most recent result that has been completed, i.e. has a non-null completion date.
+     * This ignores draft results that might exist when an assessment lock was created but not
+     * finished.
+     *
+     * @return the latest completed {@link Result} or {@code null} if none exists
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getLatestCompletedResult() {
+        Result latestResult = Optional.ofNullable(results).orElse(Collections.emptyList()).stream().filter(result -> result != null && result.getCompletionDate() != null)
+                .max(Comparator.comparing(Result::getCompletionDate)).orElse(null);
+
+        if (latestResult != null) {
+            latestResult.setSubmission(this);
+        }
+
+        return latestResult;
     }
 
     /**

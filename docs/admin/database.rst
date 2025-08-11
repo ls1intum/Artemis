@@ -42,7 +42,7 @@ Migrating MySQL Data to PostgreSQL
         ---
         services:
             mysql:
-                image: docker.io/library/mysql:9.2.0
+                image: docker.io/library/mysql:9.4.0
                 environment:
                     - MYSQL_DATABASE=Artemis
                     - MYSQL_ALLOW_EMPTY_PASSWORD=yes
@@ -59,7 +59,7 @@ Migrating MySQL Data to PostgreSQL
                     - db-migration
 
             postgres:
-                image: docker.io/library/postgres:17.4-alpine
+                image: docker.io/library/postgres:17.5-alpine
                 environment:
                     - POSTGRES_USER=root
                     - POSTGRES_DB=Artemis

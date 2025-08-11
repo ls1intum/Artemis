@@ -8,7 +8,7 @@ import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/ex
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { Submission, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getAllResultsOfAllSubmissions, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import dayjs from 'dayjs/esm';
@@ -36,6 +36,8 @@ export class ExamParticipationService {
 
     private examEndViewSubject = new BehaviorSubject<boolean>(false);
     endViewDisplayed$ = this.examEndViewSubject.asObservable();
+    private shouldUpdateTestExams = new BehaviorSubject<boolean>(false);
+    shouldUpdateTestExamsObservable = this.shouldUpdateTestExams.asObservable();
 
     public getResourceURL(courseId: number, examId: number): string {
         return `api/exam/courses/${courseId}/exams/${examId}`;
@@ -136,6 +138,14 @@ export class ExamParticipationService {
             }),
         );
     }
+    public getRealExamSidebarData(courseId: number): Observable<Exam[]> {
+        const url = `api/exam/courses/${courseId}/real-exams-sidebar-data`;
+        return this.httpClient.get<Exam[]>(url).pipe(
+            map((exams: Exam[]) => {
+                return exams.map((exam) => ExamParticipationService.convertExamDateFromServer(exam)).filter((exam) => exam !== undefined) as Exam[];
+            }),
+        );
+    }
 
     public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/test-run/' + testRunId + '/conduction';
@@ -195,9 +205,9 @@ export class ExamParticipationService {
         studentExam.exercises!.forEach((exercise) => {
             if (exercise.studentParticipations) {
                 for (const participation of exercise.studentParticipations) {
-                    if (participation.results) {
-                        for (const result of participation.results) {
-                            delete result.participation;
+                    const results = getAllResultsOfAllSubmissions(participation.submissions);
+                    if (results) {
+                        for (const result of results) {
                             if (result.feedbacks) {
                                 for (const feedback of result.feedbacks) {
                                     delete feedback.result;
@@ -210,7 +220,6 @@ export class ExamParticipationService {
                             delete submission.participation;
                             const result = getLatestSubmissionResult(submission);
                             if (result) {
-                                delete result.participation;
                                 delete result.submission;
                             }
                         }
@@ -343,6 +352,9 @@ export class ExamParticipationService {
 
     setEndView(isEndView: boolean) {
         this.examEndViewSubject.next(isEndView);
+    }
+    setShouldUpdateTestExams(shouldUpdate: boolean) {
+        this.shouldUpdateTestExams.next(shouldUpdate);
     }
 
     setExamLayout(isExamStarted: boolean = true, isTestRun: boolean = false) {

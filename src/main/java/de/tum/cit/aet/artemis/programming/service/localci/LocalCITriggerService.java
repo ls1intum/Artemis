@@ -11,6 +11,7 @@ import java.util.Optional;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
-import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -48,11 +49,11 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfig
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 
 /**
  * Service for triggering builds on the local CI system.
  */
+@Lazy
 @Service
 @Profile(PROFILE_LOCALCI)
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
@@ -83,8 +84,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
-
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
@@ -108,18 +107,16 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     public LocalCITriggerService(DistributedDataAccessService distributedDataAccessService, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<LocalVCGitBranchService> localVCGitBranchService,
+            LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, GitService gitService, ExerciseDateService exerciseDateService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
+            LocalCIBuildConfigurationService localCIBuildConfigurationService, ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
-            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
-            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository) {
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
-        this.localVCGitBranchService = localVCGitBranchService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
         this.gitService = gitService;
@@ -216,7 +213,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
         // leading to a failed update operation due to a missing record.
         buildJobRepository.save(new BuildJob(buildJobQueueItem, BuildStatus.QUEUED, null));
-        distributedDataAccessService.getDistributedQueuedJobs().add(buildJobQueueItem);
+        distributedDataAccessService.getDistributedBuildJobQueue().add(buildJobQueueItem);
         log.info("Added build job {} for exercise {} and participation {} with priority {} to the queue", buildJobId, programmingExercise.getShortName(), participation.getId(),
                 priority);
 
@@ -294,14 +291,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private BuildConfig getBuildConfig(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash, String testCommitHash,
             ProgrammingExerciseBuildConfig buildConfig) {
-        String branch;
-        try {
-            branch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
-        }
-        catch (LocalVCInternalException e) {
-            throw new LocalCIException("Error while getting branch of participation", e);
-        }
-
+        String branch = participation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch() : buildConfig.getBranch();
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
         ProjectType projectType = programmingExercise.getProjectType();

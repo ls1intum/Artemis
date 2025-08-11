@@ -25,6 +25,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.AbstractGitService;
 
 @Profile(PROFILE_BUILDAGENT)
+@Lazy
 @Service
 public class BuildJobGitService extends AbstractGitService {
 
@@ -70,6 +72,8 @@ public class BuildJobGitService extends AbstractGitService {
      * 1. ssh key (if available)
      * 2. username + personal access token (if available)
      * 3. username + password
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @PostConstruct
     public void init() {
@@ -138,16 +142,9 @@ public class BuildJobGitService extends AbstractGitService {
         log.debug("Cloning from {} to {}", gitUriAsString, localPath);
         // make sure the directory to copy into is empty (the operation only executes a delete if the directory exists)
         FileUtils.deleteDirectory(localPath.toFile());
-        Git git = null;
-        try {
-            CloneCommand cloneCommand = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
-            git = cloneCommand.call();
+        CloneCommand cloneCommand = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
+        try (Git ignored = cloneCommand.call()) {
             return getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri, defaultBranch);
-        }
-        finally {
-            if (git != null) {
-                git.close();
-            }
         }
     }
 

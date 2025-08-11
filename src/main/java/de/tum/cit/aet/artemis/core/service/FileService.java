@@ -20,12 +20,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class FileService implements DisposableBean {
 
@@ -90,7 +92,8 @@ public class FileService implements DisposableBean {
                 futures.remove(path);
             }
             catch (IOException e) {
-                log.error("Deleting the file {} did not work", path, e);
+                log.error("Deleting the file {} did not work", path);
+                log.error("Exception during deletion of file", e);
             }
         }, delayInMinutes, TimeUnit.MINUTES);
 
@@ -116,7 +119,8 @@ public class FileService implements DisposableBean {
                 futures.remove(path);
             }
             catch (IOException e) {
-                log.error("Deleting the directory {} did not work", path, e);
+                log.error("Deleting the directory {} did not work", path);
+                log.error("Exception during deletion of directory", e);
             }
         }, delayInMinutes, TimeUnit.MINUTES);
 

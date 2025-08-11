@@ -64,6 +64,8 @@ import { CourseNotificationService } from 'app/communication/course-notification
 import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
 import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
 import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -187,7 +189,7 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
+            imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule), FaIconComponent],
             declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -210,6 +212,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(TeamService),
                 MockProvider(WebsocketService),
                 MockProvider(ArtemisServerDateService),
+                MockProvider(CalendarEventService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
                 MockProvider(TutorialGroupsService),
@@ -334,17 +337,27 @@ describe('CourseOverviewComponent', () => {
         expect(sidebarItems[1].title).toContain('Lectures');
     });
 
+    it('should create sidebar items for student if questions are available for practice', () => {
+        component.course.set({ id: 123, lectures: [], exams: [], trainingEnabled: true });
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
+        expect(sidebarItems[0].title).toContain('Exercises');
+        expect(sidebarItems[1].title).toContain('Training');
+        expect(sidebarItems[2].title).toContain('Lectures');
+    });
+
     it('should create competencies and learning path item if competencies or prerequisites are available and learning paths are enabled', () => {
         component.course.set({ id: 123, numberOfPrerequisites: 3, learningPathsEnabled: true });
         component.atlasEnabled = true;
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[2].title).toContain('Competencies');
-        expect(sidebarItems[3].title).toContain('Learning Path');
+        expect(sidebarItems[3].title).toContain('Competencies');
+        expect(sidebarItems[4].title).toContain('Learning Path');
     });
+
     it('should create faq item when faqs are enabled', () => {
         component.course.set({ id: 123, faqEnabled: true });
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[2].title).toContain('FAQs');
+        expect(sidebarItems[3].title).toContain('FAQs');
     });
 
     it('loads conversations when switching to message tab once', async () => {
@@ -363,27 +376,29 @@ describe('CourseOverviewComponent', () => {
         tabs.forEach((tab) => {
             jest.spyOn(router, 'url', 'get').mockReturnValue(baseUrl + '/' + tab);
             component.onSubRouteActivate({ controlConfiguration: undefined });
-
-            expect(metisConversationServiceStub).toHaveBeenCalledOnce();
+            fixture.detectChanges();
         });
+        expect(metisConversationServiceStub).toHaveBeenCalledOnce();
     });
 
     it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
         const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         metisConversationService._hasUnreadMessages$.next(hasNewMessages);
         jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of());
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/communication');
 
         await component.ngOnInit();
 
         route.snapshot.firstChild!.routeConfig!.path = 'exercises';
         component.onSubRouteActivate({ controlConfiguration: undefined });
-
+        fixture.detectChanges();
         expect(component.hasUnreadMessages()).toBe(hasNewMessages);
 
         const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
+            fixture.detectChanges();
 
             expect(spy).toHaveBeenCalledOnce();
         });
@@ -452,14 +467,14 @@ describe('CourseOverviewComponent', () => {
         const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'addAlert');
 
-        component.loadCourse().subscribe(
-            () => {
+        component.loadCourse().subscribe({
+            next: () => {
                 throw new Error('should not happen');
             },
-            (error) => {
+            error: (error) => {
                 expect(error).toBeDefined();
             },
-        );
+        });
 
         expect(alertServiceSpy).toHaveBeenCalled();
     });
@@ -479,15 +494,14 @@ describe('CourseOverviewComponent', () => {
     it('should throw for unexpected registration responses from the server', fakeAsync(() => {
         findOneForRegistrationStub.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
-        // test that canRegisterForCourse throws
-        component.canRegisterForCourse().subscribe(
-            () => {
+        component.canRegisterForCourse().subscribe({
+            next: () => {
                 throw new Error('should not be called');
             },
-            (error) => {
+            error: (error) => {
                 expect(error).toEqual(new HttpResponse({ status: 404 }));
             },
-        );
+        });
 
         tick();
     }));
@@ -503,9 +517,14 @@ describe('CourseOverviewComponent', () => {
         const subscribeStub = jest.spyOn(findOneForDashboardResponse, 'subscribe');
         findOneForDashboardStub.mockReturnValue(findOneForDashboardResponse);
 
+        // check that calendar events are refreshed
+        const calendarEventService = TestBed.inject(CalendarEventService);
+        const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+
         component.loadCourse(true);
 
         expect(subscribeStub).toHaveBeenCalledOnce();
+        expect(refreshSpy).toHaveBeenCalledOnce();
     });
 
     it('should have visible exams', () => {

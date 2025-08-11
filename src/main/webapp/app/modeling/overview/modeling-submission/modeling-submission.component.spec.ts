@@ -214,7 +214,7 @@ describe('ModelingSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
+        expect(submitButton.componentInstance.disabled).toBeFalse();
         expect(comp.isActive).toBeTrue();
     });
 
@@ -229,7 +229,7 @@ describe('ModelingSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
+        expect(submitButton.componentInstance.disabled).toBeTrue();
     });
 
     it('should allow to submit after the due date if the initialization date is after the due date and not submitted', () => {
@@ -245,7 +245,7 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.isLate).toBeTrue();
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
+        expect(submitButton.componentInstance.disabled).toBeFalse();
         submission.submitted = true;
     });
 
@@ -259,7 +259,7 @@ describe('ModelingSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
+        expect(submitButton.componentInstance.disabled).toBeTrue();
     });
 
     it('should get inactive as soon as the due date passes the current date', () => {
@@ -367,7 +367,6 @@ describe('ModelingSubmissionComponent', () => {
         manualResult.score = 50.0;
         manualResult.assessmentType = AssessmentType.MANUAL;
         manualResult.submission = submission;
-        manualResult.participation = submission.participation;
         manualResult.completionDate = dayjs();
         manualResult.feedbacks = [];
 
@@ -375,7 +374,6 @@ describe('ModelingSubmissionComponent', () => {
         const failedAthenaResult = new Result();
         failedAthenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
         failedAthenaResult.submission = submission;
-        failedAthenaResult.participation = submission.participation;
         failedAthenaResult.completionDate = undefined;
         failedAthenaResult.successful = false;
         failedAthenaResult.feedbacks = [];
@@ -413,7 +411,6 @@ describe('ModelingSubmissionComponent', () => {
         athenaResult.score = 75.0;
         athenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
         athenaResult.submission = submission;
-        athenaResult.participation = submission.participation;
         athenaResult.completionDate = dayjs();
         athenaResult.successful = true;
         athenaResult.feedbacks = [];
@@ -423,7 +420,6 @@ describe('ModelingSubmissionComponent', () => {
         manualResult.score = 50.0;
         manualResult.assessmentType = AssessmentType.MANUAL;
         manualResult.submission = submission;
-        manualResult.participation = submission.participation;
         manualResult.completionDate = dayjs();
         manualResult.feedbacks = [];
 
@@ -462,7 +458,6 @@ describe('ModelingSubmissionComponent', () => {
         newResult.score = 50.0;
         newResult.assessmentType = AssessmentType.MANUAL;
         newResult.submission = submission;
-        newResult.participation = submission.participation;
         newResult.completionDate = dayjs();
         newResult.feedbacks = [unreferencedFeedback];
         const subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(newResult);
@@ -504,7 +499,6 @@ describe('ModelingSubmissionComponent', () => {
         const incompleteResult = new Result();
         incompleteResult.assessmentType = AssessmentType.MANUAL;
         incompleteResult.submission = submission;
-        incompleteResult.participation = submission.participation;
         incompleteResult.completionDate = undefined;
 
         const resultSubject = new BehaviorSubject<Result | undefined>(incompleteResult);
@@ -832,7 +826,6 @@ describe('ModelingSubmissionComponent', () => {
         comp.sortedResultHistory.forEach((result, index) => {
             expect(result?.id).toBe(expectedSortedResults[index].id);
             expect(result?.completionDate?.isSame(expectedSortedResults[index].completionDate)).toBeTrue();
-            expect(result?.participation).toBe(participation);
         });
     });
 });

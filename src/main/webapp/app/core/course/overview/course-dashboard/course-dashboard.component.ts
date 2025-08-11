@@ -225,7 +225,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     }
 
     private setCourse(course?: Course) {
-        const shouldLoadMetrics = this.course?.id !== course?.id;
+        const shouldLoadMetrics = this.course?.id !== course?.id && course?.studentCourseAnalyticsDashboardEnabled;
         this.course = course;
         if (this.course && shouldLoadMetrics) {
             this.loadMetrics();

@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisExtendedCourseDTO(long id, String name, String description, Instant startTime, Instant endTime, ProgrammingLanguage defaultProgrammingLanguage,
         int maxComplaints, int maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, Integer maxPoints, Integer presentationScore,
-        List<PyrisExerciseWithStudentSubmissionsDTO> exercises, List<PyrisExamDTO> exams, List<PyrisCompetencyDTO> competencies) {
+        List<PyrisExerciseWithStudentSubmissionsDTO> exercises, List<PyrisExamDTO> exams, List<PyrisCompetencyDTO> competencies, boolean studentAnalyticsDashboardEnabled) {
 
     /**
      * Convert a course to a PyrisExtendedCourseDTO.
@@ -33,6 +33,7 @@ public record PyrisExtendedCourseDTO(long id, String name, String description, I
 
         return new PyrisExtendedCourseDTO(course.getId(), course.getTitle(), course.getDescription(), toInstant(course.getStartDate()), toInstant(course.getEndDate()),
                 course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
-                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxPoints(), course.getPresentationScore(), exercises, exams, competencies);
+                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxPoints(), course.getPresentationScore(), exercises, exams, competencies,
+                course.getStudentCourseAnalyticsDashboardEnabled());
     }
 }

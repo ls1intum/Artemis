@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -45,33 +46,30 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 
 /**
  * Executes requested actions on the test repository of a programming exercise. Only available to TAs, Instructors and Admins.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class TestRepositoryResource extends RepositoryResource {
 
-    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
-
     public TestRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalVCServletService> localVCServletService, Optional<LocalVCGitBranchService> localVCGitBranchService) {
+            Optional<LocalVCServletService> localVCServletService) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
-        this.localVCGitBranchService = localVCGitBranchService;
     }
 
     @Override
-    Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws GitAPIException {
+    Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
         final var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, user, "test");
         final var repoUri = exercise.getVcsTestRepositoryUri();
-        return gitService.getOrCheckoutRepository(repoUri, pullOnGet);
+        return gitService.getOrCheckoutRepository(repoUri, pullOnGet, writeAccess);
     }
 
     @Override
@@ -94,8 +92,7 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     String getOrRetrieveBranchOfDomainObject(Long exerciseId) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        return localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(exercise);
+        return programmingExerciseRepository.findBranchByExerciseId(exerciseId);
     }
 
     @Override
@@ -193,7 +190,7 @@ public class TestRepositoryResource extends RepositoryResource {
         Repository repository;
         try {
             repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithGroupsAndAuthorities(principal.getName()), "test");
-            repository = gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true);
+            repository = gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true, true);
         }
         catch (AccessForbiddenException e) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");

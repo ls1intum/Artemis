@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.security.passkey;
 
-import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
-
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -13,11 +11,13 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations;
 import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter;
 
+import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -30,17 +30,20 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
 
     static final String DEFAULT_REGISTER_CREDENTIAL_URL = "/webauthn/register";
 
-    private final RequestMatcher registerCredentialMatcher = antMatcher(HttpMethod.POST, DEFAULT_REGISTER_CREDENTIAL_URL);
+    private final PathPatternRequestMatcher registerCredentialMatcher = PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, DEFAULT_REGISTER_CREDENTIAL_URL);
 
     private final MailSendingService mailSendingService;
 
     private final UserRepository userRepository;
 
+    private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
+
     public ArtemisWebAuthnRegistrationFilter(@NotNull UserCredentialRepository userCredentials, @NotNull WebAuthnRelyingPartyOperations rpOptions,
-            MailSendingService mailSendingService, UserRepository userRepository) {
+            MailSendingService mailSendingService, UserRepository userRepository, GlobalNotificationSettingRepository globalNotificationSettingRepository) {
         super(userCredentials, rpOptions);
         this.mailSendingService = mailSendingService;
         this.userRepository = userRepository;
+        this.globalNotificationSettingRepository = globalNotificationSettingRepository;
     }
 
     /**
@@ -60,7 +63,9 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
         if (isWebAuthnRegistrationRequest(request) && response.getStatus() == HttpStatus.OK.value()) {
             User recipient = userRepository.getUser();
 
-            mailSendingService.buildAndSendAsync(recipient, "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
+            if (globalNotificationSettingRepository.isNotificationEnabled(recipient.getId(), GlobalNotificationType.NEW_PASSKEY_ADDED)) {
+                mailSendingService.buildAndSendAsync(recipient, "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
+            }
         }
     }
 
@@ -73,6 +78,6 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
      * @return true if the request is a WebAuthn registration request, false otherwise
      */
     private boolean isWebAuthnRegistrationRequest(HttpServletRequest request) {
-        return registerCredentialMatcher.matches(request) && request.getMethod().equals("POST");
+        return registerCredentialMatcher.matches(request) && request.getMethod().equals(HttpMethod.POST.name());
     }
 }

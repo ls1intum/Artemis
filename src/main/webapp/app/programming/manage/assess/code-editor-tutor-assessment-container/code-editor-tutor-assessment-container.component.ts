@@ -33,7 +33,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/shared/util/navigation.utils';
-import { SubmissionType, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
 import { faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
@@ -84,7 +84,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
-    SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
 
     readonly diffMatchPatch = new DiffMatchPatch();
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -278,6 +277,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.manualResult!.submission = this.submission;
         }
         this.participation = submission.participation!;
+        this.participation.submissions = [this.submission];
         this.exercise = this.participation.exercise as ProgrammingExercise;
         /**
          * CARE: Setting access rights for exercises should not happen this way and is a workaround.
@@ -499,7 +499,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             .subscribe({
                 next: (result: Result) => {
                     assessmentAfterComplaint.onSuccess();
-                    this.participation.results![0] = this.manualResult = result;
+                    this!.submission!.results![0] = this.manualResult = result;
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
                 },
@@ -604,10 +604,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        if (!this.participation.results) {
-            this.participation.results = [];
-        }
-        this.participation.results[0] = this.manualResult = response.body!;
+        this.submission!.results![0] = this.manualResult = response.body!;
         this.alertService.closeAll();
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;

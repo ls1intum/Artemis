@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -83,11 +84,13 @@ public class Result extends DomainObject implements Comparable<Result> {
      * For all other exercises (modeling, programming, etc.) - results are rated=true when students submit before the due date (or when the due date is null), multiple results can
      * be rated=true, then the result with the last completionDate counts towards the total score of a student - results are rated=false when students submit after the due date
      */
+    // TODO: we should change this to a primitive boolean in the future with default value false
+    @Nullable
     @Column(name = "rated")
     private Boolean rated;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({ "results", "participation" })
+    @ManyToOne
+    @JsonIgnoreProperties({ "results" })
     private Submission submission;
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -95,13 +98,6 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<Feedback> feedbacks = new ArrayList<>();
-
-    /**
-     * @deprecated: Will be removed for 8.0, please use submission.participation instead
-     */
-    @ManyToOne
-    @Deprecated(since = "7.7", forRemoval = true)
-    private Participation participation;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn()
@@ -216,16 +212,21 @@ public class Result extends DomainObject implements Comparable<Result> {
         setScore(totalPoints / maxPoints * 100, course);
     }
 
-    public Boolean isRated() {
-        return rated;
+    /**
+     * Checks whether the result is rated.
+     *
+     * @return true if the result is rated. If rated is null, it returns false.
+     */
+    public boolean isRated() {
+        return Boolean.TRUE.equals(this.rated);
     }
 
-    public Result rated(Boolean rated) {
+    public Result rated(boolean rated) {
         this.rated = rated;
         return this;
     }
 
-    public void setRated(Boolean rated) {
+    public void setRated(boolean rated) {
         this.rated = rated;
     }
 
@@ -236,7 +237,7 @@ public class Result extends DomainObject implements Comparable<Result> {
             return;
         }
         var dueDate = optionalDueDate.get();
-        if (getParticipation().getExercise() instanceof ProgrammingExercise) {
+        if (getSubmission().getParticipation().getExercise() instanceof ProgrammingExercise) {
             dueDate = dueDate.plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS);
         }
         this.rated = !submissionDate.isAfter(dueDate);
@@ -252,11 +253,11 @@ public class Result extends DomainObject implements Comparable<Result> {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
         }
-        else if (submission.getType() == SubmissionType.ILLEGAL || participation.isPracticeMode()) {
+        else if (submission.getParticipation().isPracticeMode()) {
             this.rated = false;
         }
         else {
-            setRatedIfNotAfterDueDate(participation, submission.getSubmissionDate());
+            setRatedIfNotAfterDueDate(submission.getParticipation(), submission.getSubmissionDate());
         }
     }
 
@@ -366,35 +367,6 @@ public class Result extends DomainObject implements Comparable<Result> {
             return false;
         }
         return !Objects.equals(existingText, newText);
-    }
-
-    /**
-     * @deprecated: Will be removed for 8.0, please use submission.participation instead
-     * @return the participation
-     */
-    @Deprecated(since = "7.7", forRemoval = true)
-    public Participation getParticipation() {
-        return participation;
-    }
-
-    /**
-     * @deprecated: Will be removed for 8.0, please use submission.participation instead
-     * @param participation the participation to set
-     * @return the result
-     */
-    @Deprecated(since = "7.7", forRemoval = true)
-    public Result participation(Participation participation) {
-        this.participation = participation;
-        return this;
-    }
-
-    /**
-     * @deprecated: Will be removed for 8.0, please use submission.participation instead
-     * @param participation the participation to set
-     */
-    @Deprecated(since = "7.7", forRemoval = true)
-    public void setParticipation(Participation participation) {
-        this.participation = participation;
     }
 
     public User getAssessor() {
@@ -539,7 +511,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @param removeHiddenFeedback true if feedbacks marked with visibility 'after due date' should also be removed.
      */
     public void filterSensitiveFeedbacks(boolean removeHiddenFeedback) {
-        filterSensitiveFeedbacks(removeHiddenFeedback, participation.getExercise());
+        filterSensitiveFeedbacks(removeHiddenFeedback, submission.getParticipation().getExercise());
     }
 
     /**
@@ -639,7 +611,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     public Double calculateTotalPointsForProgrammingExercises() {
         double totalPoints = 0.0;
         double scoreAutomaticTests = 0.0;
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) getParticipation().getExercise();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) submission.getParticipation().getExercise();
         List<Feedback> feedbacks = getFeedbacks();
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 

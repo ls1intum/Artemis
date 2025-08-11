@@ -11,6 +11,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { KnowledgeAreaDTO, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('StandardizedCompetencyEditComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyEditComponent>;
@@ -39,7 +40,7 @@ describe('StandardizedCompetencyEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule],
+            imports: [ReactiveFormsModule, FaIconComponent],
             declarations: [
                 StandardizedCompetencyEditComponent,
                 MockComponent(ButtonComponent),

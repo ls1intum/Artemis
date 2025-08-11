@@ -26,9 +26,9 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationIndependentTest {
+class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "athenarepositoryexport";
 
@@ -53,10 +53,10 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationIndepen
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
-        testRepo.configureRepos("testLocalRepo", "testOriginRepo");
+        testRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
 
         // add test file to the repository folder
-        Path filePath = Path.of(testRepo.localRepoFile + "/Test.java");
+        Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/Test.java");
         var file = Files.createFile(filePath).toFile();
         // write content to the created file
         FileUtils.write(file, "Test", Charset.defaultCharset());
@@ -66,7 +66,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "instructor1")
     void shouldExportRepository() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        var programmingExercise = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(course.getId()).stream().iterator().next();
+        var programmingExercise = programmingExerciseRepository.findAllByCourseId(course.getId()).getFirst();
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);

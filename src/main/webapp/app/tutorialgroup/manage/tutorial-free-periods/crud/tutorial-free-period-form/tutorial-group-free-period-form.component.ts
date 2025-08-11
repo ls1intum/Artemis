@@ -1,12 +1,12 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, EventEmitter, OnChanges, OnInit, Output, inject, input } from '@angular/core';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { OWL_DATE_TIME_FORMATS, OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgClass } from '@angular/common';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import dayjs from 'dayjs/esm';
 
 export const MY_NATIVE_FORMATS = {
     datePickerInput: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
@@ -39,30 +39,29 @@ export enum TimeFrame {
     templateUrl: './tutorial-group-free-period-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [{ provide: OWL_DATE_TIME_FORMATS, useValue: MY_NATIVE_FORMATS }],
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, OwlDateTimeModule, NgClass, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, OwlDateTimeModule, ArtemisDatePipe, ArtemisTranslatePipe, FormDateTimePickerComponent],
 })
 export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
     private fb = inject(FormBuilder);
+    protected readonly DateTimePickerType = DateTimePickerType;
 
-    @Input()
-    formData: TutorialGroupFreePeriodFormData = {
+    readonly formData = input<TutorialGroupFreePeriodFormData>({
         startDate: undefined,
         endDate: undefined,
         startTime: undefined,
         endTime: undefined,
         reason: undefined,
-    };
+    });
 
-    @Input() isEditMode = false;
+    readonly isEditMode = input(false);
 
-    @Input() timeZone: string;
+    readonly timeZone = input<string>();
 
     @Output() formSubmitted: EventEmitter<TutorialGroupFreePeriodFormData> = new EventEmitter<TutorialGroupFreePeriodFormData>();
 
     faCalendarAlt = faCalendarAlt;
 
     form: FormGroup;
-
     // TimeFrame to store the current time frame of the form.
     protected timeFrame = TimeFrame.Day;
 
@@ -101,23 +100,24 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
      */
     get isStartBeforeEnd(): boolean {
         if (this.timeFrame === TimeFrame.PeriodWithinDay && this.endTimeControl?.value && this.startTimeControl?.value) {
-            const endTime = new Date(this.endTimeControl.value.getTime());
-            const startTime = new Date(this.startTimeControl.value.getTime());
-
-            endTime.setSeconds(0, 0);
-            startTime.setSeconds(0, 0);
-
-            return endTime > startTime;
-        } else if (this.timeFrame === TimeFrame.Period && this.endDateControl?.value && this.startDateControl?.value) {
-            const endDate = new Date(this.endDateControl.value.getTime());
-            const startDate = new Date(this.startDateControl.value.getTime());
-
-            endDate.setHours(0, 0, 0, 0);
-            startDate.setHours(0, 0, 0, 0);
-
-            return endDate > startDate;
+            return this.normalizeAndCompare(this.startTimeControl.value, this.endTimeControl.value, 'minute');
         }
+
+        if (this.timeFrame === TimeFrame.Period && this.endDateControl?.value && this.startDateControl?.value) {
+            return this.normalizeAndCompare(this.startDateControl.value, this.endDateControl.value, 'day');
+        }
+
         return true;
+    }
+
+    /**
+     * Normalize two input values (either Date or dayjs) to dayjs, round down to the chosen unit,
+     * then check whether endValue > startValue.
+     */
+    private normalizeAndCompare(rawStart: Date | dayjs.Dayjs, rawEnd: Date | dayjs.Dayjs, unit: 'minute' | 'day'): boolean {
+        const start = dayjs(rawStart).startOf(unit);
+        const end = dayjs(rawEnd).startOf(unit);
+        return end.isAfter(start);
     }
 
     get timeFrameControl(): TimeFrame {
@@ -176,14 +176,23 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     ngOnChanges() {
         this.initializeForm();
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
-            this.setFirstTimeFrameInEditMode(this.formData);
+        const formData = this.formData();
+        if (this.isEditMode() && formData) {
+            this.setFormValues(formData);
+            this.setFirstTimeFrameInEditMode(formData);
         }
     }
 
     submitForm() {
-        const tutorialGroupFreePeriodFormData: TutorialGroupFreePeriodFormData = { ...this.form.value };
+        const formValue = this.form.value;
+        // Creating a TutorialGroupFreePeriodFormData is currently neccessary till component gets rewritten to modern angular
+        const tutorialGroupFreePeriodFormData: TutorialGroupFreePeriodFormData = {
+            startDate: formValue.startDate ? new Date(formValue.startDate) : undefined,
+            endDate: formValue.endDate ? new Date(formValue.endDate) : undefined,
+            startTime: formValue.startTime ? new Date(formValue.startTime) : undefined,
+            endTime: formValue.endTime ? new Date(formValue.endTime) : undefined,
+            reason: formValue.reason,
+        };
         this.formSubmitted.emit(tutorialGroupFreePeriodFormData);
     }
 
@@ -220,7 +229,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
             return;
         }
         this.form = this.fb.group({
-            startDate: [undefined, [Validators.required]],
+            startDate: [undefined],
             endDate: [undefined],
             startTime: [undefined],
             endTime: [undefined],

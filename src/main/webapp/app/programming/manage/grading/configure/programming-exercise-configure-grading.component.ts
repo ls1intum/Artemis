@@ -31,7 +31,7 @@ import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseGradingTasksTableComponent } from '../tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component';
 import { TestCaseDistributionChartComponent } from '../charts/test-case-distribution-chart.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from '../table-actions/programming-exercise-grading-table-actions.component';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { NgxDatatableModule, SortPropDir } from '@siemens/ngx-datatable';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
@@ -224,12 +224,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => (this.course = courseResponse.body!));
 
             if (this.programmingExercise == undefined || this.programmingExercise.id !== exerciseId) {
-                if (this.testCaseSubscription) {
-                    this.testCaseSubscription.unsubscribe();
-                }
-                if (this.testCaseChangedSubscription) {
-                    this.testCaseChangedSubscription.unsubscribe();
-                }
+                this.testCaseSubscription?.unsubscribe();
+                this.testCaseChangedSubscription?.unsubscribe();
 
                 const loadExercise = this.programmingExerciseService.find(exerciseId).pipe(
                     map((res) => res.body!),
@@ -280,15 +276,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * If there is an existing subscription, unsubscribe
      */
     ngOnDestroy(): void {
-        if (this.testCaseSubscription) {
-            this.testCaseSubscription.unsubscribe();
-        }
-        if (this.testCaseChangedSubscription) {
-            this.testCaseChangedSubscription.unsubscribe();
-        }
-        if (this.paramSub) {
-            this.paramSub.unsubscribe();
-        }
+        this.testCaseSubscription?.unsubscribe();
+        this.testCaseChangedSubscription?.unsubscribe();
+        this.paramSub?.unsubscribe();
     }
 
     /**
@@ -296,9 +286,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      *  updates the list of test cases
      */
     private subscribeForTestCaseUpdates() {
-        if (this.testCaseSubscription) {
-            this.testCaseSubscription.unsubscribe();
-        }
+        this.testCaseSubscription?.unsubscribe();
         this.testCaseSubscription = this.gradingService
             .subscribeForTestCases(this.programmingExercise.id!)
             .pipe(
@@ -315,9 +303,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      *  checks if the test cases have changed
      */
     private subscribeForExerciseTestCasesChangedUpdates() {
-        if (this.testCaseChangedSubscription) {
-            this.testCaseChangedSubscription.unsubscribe();
-        }
+        this.testCaseChangedSubscription?.unsubscribe();
         this.testCaseChangedSubscription = this.programmingExerciseWebsocketService
             .getTestCaseState(this.programmingExercise.id!)
             .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedGradingConfig = testCasesChanged)))
@@ -649,7 +635,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return this.gradingStatistics?.categoryIssuesMap ? this.gradingStatistics.categoryIssuesMap[categoryName] : undefined;
     }
 
-    tableSorts = { testCases: [{ prop: 'testName', dir: 'asc' }], codeAnalysis: [{ prop: 'name', dir: 'asc' }] };
+    tableSorts: Record<string, SortPropDir[]> = {
+        testCases: [{ prop: 'testName', dir: 'asc' }],
+        codeAnalysis: [{ prop: 'name', dir: 'asc' }],
+    };
     onSort(table: Table, config: any) {
         this.tableSorts[table] = config.sorts;
     }

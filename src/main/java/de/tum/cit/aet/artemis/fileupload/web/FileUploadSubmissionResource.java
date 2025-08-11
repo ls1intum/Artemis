@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,6 +60,7 @@ import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionService;
  * REST controller for managing FileUploadSubmission.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadSubmissionResource extends AbstractSubmissionResource {
@@ -298,7 +300,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("participations/{participationId}/file-upload-editor")
     @EnforceAtLeastStudent
     public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
         FileUploadExercise fileUploadExercise;
         if (participation.getExercise() instanceof FileUploadExercise) {
             fileUploadExercise = (FileUploadExercise) participation.getExercise();
@@ -324,7 +326,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         // make sure only the latest submission and latest result is sent to the client
         participation.setSubmissions(null);
-        participation.setResults(null);
 
         if (fileUploadSubmission.getLatestResult() != null) {
             // do not send the feedback to the client

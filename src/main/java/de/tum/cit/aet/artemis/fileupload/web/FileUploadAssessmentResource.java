@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +44,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
  * REST controller for managing FileUploadAssessment.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadAssessmentResource extends AssessmentResource {
@@ -116,9 +118,9 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
         Result result = assessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getLatestResult(), fileUploadExercise, assessmentUpdate);
 
-        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
+        if (result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
-            ((StudentParticipation) result.getParticipation()).setParticipant(null);
+            ((StudentParticipation) result.getSubmission().getParticipation()).setParticipant(null);
         }
 
         return ResponseEntity.ok(result);

@@ -6,14 +6,15 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +30,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
@@ -69,6 +69,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
  * REST controller for managing Exercise.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/exercise/")
 public class ExerciseResource {
@@ -107,14 +108,12 @@ public class ExerciseResource {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
-    private final ResultRepository resultRepository;
-
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
             ParticipationRepository participationRepository, Optional<ExamAccessApi> examAccessApi, Optional<IrisSettingsApi> irisSettingsApi,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi, ResultRepository resultRepository) {
+            Optional<PlagiarismCaseApi> plagiarismCaseApi) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -131,7 +130,6 @@ public class ExerciseResource {
         this.examAccessApi = examAccessApi;
         this.irisSettingsApi = irisSettingsApi;
         this.plagiarismCaseApi = plagiarismCaseApi;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -316,6 +314,7 @@ public class ExerciseResource {
      */
     @GetMapping("exercises/{exerciseId}/details")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<ExerciseDetailsDTO> getExerciseDetails(@PathVariable Long exerciseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
@@ -331,17 +330,13 @@ public class ExerciseResource {
             throw new AccessForbiddenException();
         }
 
-        List<StudentParticipation> participations = participationService.findByExerciseAndStudentId(exercise, user.getId());
+        List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, user.getId());
         // normally we only have one participation here (only in case of practice mode, there could be two)
         exercise.setStudentParticipations(new HashSet<>());
         for (StudentParticipation participation : participations) {
-            // load the 20 last results with submission here for the participation (avoid loading all results in case there are many, e.g. in excessive programming exercises)
-            var results = resultRepository.findLatestResultsForParticipation(participation.getId(), PageRequest.of(0, 20));
-            participation.setResults(exercise.filterResultsForStudents(results));
             // By filtering the results available yet, they can become null for the exercise.
-            if (participation.getResults() != null) {
-                participation.getResults().forEach(Result::filterSensitiveInformation);
-            }
+            exercise.filterResultsForStudents(participation);
+            participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull)).forEach(Result::filterSensitiveInformation);
             exercise.addParticipation(participation);
         }
 

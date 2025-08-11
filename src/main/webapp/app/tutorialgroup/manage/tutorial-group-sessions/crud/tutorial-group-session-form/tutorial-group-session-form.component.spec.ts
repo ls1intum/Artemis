@@ -14,6 +14,7 @@ import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredPr
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateModule } from '@ngx-translate/core';
 
 describe('TutorialGroupSessionForm', () => {
     let fixture: ComponentFixture<TutorialGroupSessionFormComponent>;
@@ -28,7 +29,7 @@ describe('TutorialGroupSessionForm', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [ReactiveFormsModule, FormsModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule, TranslateModule.forRoot()],
             declarations: [
                 TutorialGroupSessionFormComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -36,24 +37,23 @@ describe('TutorialGroupSessionForm', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TutorialGroupSessionFormComponent);
-                component = fixture.componentInstance;
-                component.timeZone = 'Europe/Berlin';
-                fixture.detectChanges();
+        }).compileComponents();
 
-                clickSubmit = generateClickSubmitButton(component, fixture, {
-                    date: validDate,
-                    startTime: validStartTime,
-                    endTime: validEndTime,
-                    location: validLocation,
-                });
+        fixture = TestBed.createComponent(TutorialGroupSessionFormComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('timeZone', 'Europe/Berlin');
+        fixture.detectChanges();
 
-                testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
-                fixture.detectChanges();
-            });
+        clickSubmit = generateClickSubmitButton(component, fixture, {
+            date: validDate,
+            startTime: validStartTime,
+            endTime: validEndTime,
+            location: validLocation,
+        });
+
+        testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
+
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -65,13 +65,13 @@ describe('TutorialGroupSessionForm', () => {
     });
 
     it('should correctly set form values in edit mode', () => {
-        component.isEditMode = true;
+        fixture.componentRef.setInput('isEditMode', true);
         const formData: TutorialGroupSessionFormData = {
             date: validDate,
             startTime: validStartTime,
             endTime: validEndTime,
         };
-        component.formData = formData;
+        fixture.componentRef.setInput('formData', formData);
         component.ngOnChanges();
 
         const formControlNames = ['date', 'startTime', 'endTime'];
@@ -106,7 +106,7 @@ describe('TutorialGroupSessionForm', () => {
     }));
 
     it('should block submit when required property is missing', fakeAsync(() => {
-        const requiredControlNames = ['startTime', 'endTime', 'date', 'location'];
+        const requiredControlNames = ['startTime', 'endTime', 'location'];
         for (const controlName of requiredControlNames) {
             testFormIsInvalidOnMissingRequiredProperty(controlName);
         }

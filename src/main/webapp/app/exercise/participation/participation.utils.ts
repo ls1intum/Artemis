@@ -7,6 +7,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { orderBy as _orderBy } from 'lodash-es';
 import { isAIResultAndIsBeingProcessed } from 'app/exercise/result/result.utils';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 /**
  * Check if the participation has changed.
@@ -65,7 +66,7 @@ export const isModelingOrTextOrFileUpload = (participation: Participation) => {
  * @return {boolean}
  */
 export const hasResults = (participation: Participation) => {
-    return participation.results?.length;
+    return getAllResultsOfAllSubmissions(participation.submissions).length;
 };
 /**
  * Check if a given participation is in due time of the given exercise based on its submission at index position 0.
@@ -112,15 +113,14 @@ export function getLatestResultOfStudentParticipation(
         return undefined;
     }
 
+    let results = getAllResultsOfAllSubmissions(participation.submissions);
+
     // Sort participation results by completionDate desc.
-    if (participation.results) {
-        participation.results = _orderBy(participation.results, 'completionDate', 'desc');
+    if (results) {
+        results = _orderBy(results, 'completionDate', 'desc');
     }
 
     // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
-    const latestResult = participation.results?.find(
-        (result) => showUngradedResults || result.rated === true || (showAthenaPreliminaryFeedback && isAIResultAndIsBeingProcessed(result)),
-    );
-    // Make sure that the participation result is connected to the newest result.
-    return latestResult ? { ...latestResult, participation: participation } : undefined;
+    const latestResult = results?.find((result) => showUngradedResults || result.rated === true || (showAthenaPreliminaryFeedback && isAIResultAndIsBeingProcessed(result)));
+    return latestResult ? latestResult : undefined;
 }

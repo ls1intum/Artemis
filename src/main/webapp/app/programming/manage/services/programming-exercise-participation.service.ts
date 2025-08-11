@@ -25,13 +25,13 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     public resourceUrlParticipations = 'api/programming/programming-exercise-participations/';
     public resourceUrl = 'api/programming/programming-exercise/';
 
-    getLatestResultWithFeedback(participationId: number, withSubmission = false): Observable<Result | undefined> {
+    getLatestResultWithFeedback(participationId: number, withSubmission = true): Observable<Result | undefined> {
         const options = createRequestOption({ withSubmission });
         return this.http.get<Result | undefined>(this.resourceUrlParticipations + participationId + '/latest-result-with-feedbacks', { params: options }).pipe(
             tap((res) => {
-                if (res?.participation?.exercise) {
-                    this.sendTitlesToEntityTitleService(res?.participation);
-                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.participation.exercise);
+                if (res?.submission?.participation?.exercise) {
+                    this.sendTitlesToEntityTitleService(res?.submission.participation);
+                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.submission.participation.exercise);
                 }
             }),
         );

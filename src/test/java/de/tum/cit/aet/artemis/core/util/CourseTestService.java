@@ -47,6 +47,7 @@ import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -141,7 +142,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
@@ -153,7 +154,7 @@ import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
@@ -170,6 +171,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class CourseTestService {
@@ -184,7 +186,7 @@ public class CourseTestService {
     private ExerciseTestRepository exerciseRepo;
 
     @Autowired
-    private LectureRepository lectureRepo;
+    private LectureTestRepository lectureRepo;
 
     @Autowired
     private ResultTestRepository resultRepo;
@@ -284,9 +286,6 @@ public class CourseTestService {
 
     @Autowired
     private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -549,18 +548,11 @@ public class CourseTestService {
             for (Exercise exercise : course.getExercises()) {
                 if (exercise instanceof final ProgrammingExercise programmingExercise) {
                     final String projectKey = programmingExercise.getProjectKey();
-                    final var templateRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
-                    final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
-                    final var testsRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
                     programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
                     programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
                     mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getTemplateBuildPlanId(), false);
                     mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getSolutionBuildPlanId(), false);
                     mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
-                    mockDelegate.mockDeleteRepository(projectKey, templateRepoName, false);
-                    mockDelegate.mockDeleteRepository(projectKey, solutionRepoName, false);
-                    mockDelegate.mockDeleteRepository(projectKey, testsRepoName, false);
-                    mockDelegate.mockDeleteProjectInVcs(projectKey, false);
                 }
             }
         }
@@ -1022,7 +1014,6 @@ public class CourseTestService {
             }
             else {
                 assertThat(receivedCourse.getExams()).hasSize(0);
-                assertThat(receivedCourse.getNumberOfExams()).isEqualTo(3);
             }
         }
     }
@@ -1041,7 +1032,7 @@ public class CourseTestService {
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student3");
         gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);
         resultRepo.save(gradedResult);
-        StudentParticipation gradedParticipation = (StudentParticipation) gradedResult.getParticipation();
+        StudentParticipation gradedParticipation = (StudentParticipation) gradedResult.getSubmission().getParticipation();
         gradedParticipation.setInitializationState(InitializationState.FINISHED);
         participationRepository.save(gradedParticipation);
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(gradedResult, gradedParticipation, "asdf");
@@ -1049,7 +1040,8 @@ public class CourseTestService {
                 student);
         practiceParticipation.setPracticeMode(true);
         participationRepository.save(practiceParticipation);
-        Result practiceResult = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceParticipation);
+        Submission practiceSubmission = participationUtilService.addSubmission(practiceParticipation, new ProgrammingSubmission());
+        Result practiceResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceSubmission);
         practiceResult.setRated(false);
         resultRepo.save(practiceResult);
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(practiceResult, practiceParticipation, "ghjk");
@@ -1829,7 +1821,7 @@ public class CourseTestService {
         course.setLearningPathsEnabled(true);
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
-        course = courseRepo.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(course.getId());
+        course = courseRepo.findWithEagerLearningPathsByIdElseThrow(course.getId());
         assertThat(course.getLearningPaths()).isNotEmpty();
         // TODO check that the roles have changed accordingly
     }
@@ -2521,7 +2513,6 @@ public class CourseTestService {
 
         final String repoSuffix = "-" + userPrefix + "student1";
 
-        mockDelegate.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + repoSuffix, false);
         var buildPlanId = (programmingExercise.getProjectKey() + repoSuffix).toUpperCase();
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId, false);
         request.delete("/api/core/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
@@ -2927,8 +2918,6 @@ public class CourseTestService {
         complaint.setResult(result1);
         complaint = complaintRepo.save(complaint);
 
-        complaint.getResult().setParticipation(null);
-
         // Accept Complaint and update Assessment
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(userPrefix + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
@@ -2959,8 +2948,6 @@ public class CourseTestService {
         Complaint feedbackRequest = new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
         feedbackRequest.setResult(result2);
         feedbackRequest = complaintRepo.save(feedbackRequest);
-
-        feedbackRequest.getResult().setParticipation(null);
 
         ComplaintResponse feedbackResponse = complaintUtilService.createInitialEmptyResponse(userPrefix + "tutor2", feedbackRequest);
         feedbackResponse.getComplaint().setAccepted(true);
@@ -3473,7 +3460,7 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetExistingExerciseDetails_asEditor(String username) throws Exception {
+    public void testGetExistingExerciseDetails_asEditor() throws Exception {
         Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
         request.get("/api/core/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK, CourseExistingExerciseDetailsDTO.class);
     }
