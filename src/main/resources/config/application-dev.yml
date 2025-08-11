@@ -58,8 +58,8 @@ spring:
         localInstances: true
 
 server:
-  port: 8080
-  url: http://localhost
+    port: 8080
+    url: http://localhost
 # ===================================================================
 # JHipster specific properties
 #
