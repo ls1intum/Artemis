@@ -14,9 +14,8 @@ public class NebulaException extends HttpStatusException {
 
     protected final Map<String, Object> translationParams;
 
-    public NebulaException(String translationKey, Map<String, Object> translationParams) {
-        super(ErrorConstants.DEFAULT_TYPE, "An error within Nebula has occurred", Status.INTERNAL_SERVER_ERROR, "Nebula", translationKey,
-                getAlertParameters(translationKey, translationParams));
+    public NebulaException(String translationKey, Map<String, Object> translationParams, Status errorKey) {
+        super(ErrorConstants.DEFAULT_TYPE, "An error within Nebula has occurred", errorKey, "Nebula", translationKey, getAlertParameters(translationKey, translationParams));
         this.translationKey = translationKey;
         this.translationParams = translationParams;
     }

@@ -21,9 +21,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyDTO;
-import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponse;
+import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponseDTO;
 import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingDTO;
-import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponse;
+import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponseDTO;
 import de.tum.cit.aet.artemis.nebula.exception.NebulaConnectorException;
 import de.tum.cit.aet.artemis.nebula.exception.NebulaException;
 import de.tum.cit.aet.artemis.nebula.exception.NebulaForbiddenException;
@@ -59,11 +59,11 @@ public class NebulaConnectionService {
      *
      * @param faqRewritingDTO the data transfer object containing the necessary information for rewriting FAQs
      */
-    public FaqRewritingResponse executeFaqRewriting(FaqRewritingDTO faqRewritingDTO) {
+    public FaqRewritingResponseDTO executeFaqRewriting(FaqRewritingDTO faqRewritingDTO) {
         try {
             HttpHeaders headers = createNebulaHeader();
             HttpEntity<FaqRewritingDTO> request = new HttpEntity<>(faqRewritingDTO, headers);
-            ResponseEntity<FaqRewritingResponse> response = restTemplate.exchange(nebulaUrl + "/faq/rewrite-faq", HttpMethod.POST, request, FaqRewritingResponse.class);
+            ResponseEntity<FaqRewritingResponseDTO> response = restTemplate.exchange(nebulaUrl + "/faq/rewrite-faq", HttpMethod.POST, request, FaqRewritingResponseDTO.class);
             return response.getBody();
         }
         catch (HttpStatusCodeException e) {
@@ -80,11 +80,12 @@ public class NebulaConnectionService {
      *
      * @param faqConsistencyDTO the data transfer object containing the necessary information for consistency check the current FAQs
      */
-    public FaqConsistencyResponse executeFaqConsistencyCheck(FaqConsistencyDTO faqConsistencyDTO) {
+    public FaqConsistencyResponseDTO executeFaqConsistencyCheck(FaqConsistencyDTO faqConsistencyDTO) {
         try {
             HttpHeaders headers = createNebulaHeader();
             HttpEntity<FaqConsistencyDTO> request = new HttpEntity<>(faqConsistencyDTO, headers);
-            ResponseEntity<FaqConsistencyResponse> response = restTemplate.exchange(nebulaUrl + "/faq/check-consistency", HttpMethod.POST, request, FaqConsistencyResponse.class);
+            ResponseEntity<FaqConsistencyResponseDTO> response = restTemplate.exchange(nebulaUrl + "/faq/check-consistency", HttpMethod.POST, request,
+                    FaqConsistencyResponseDTO.class);
             return response.getBody();
         }
         catch (HttpStatusCodeException e) {

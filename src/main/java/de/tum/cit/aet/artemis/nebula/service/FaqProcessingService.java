@@ -15,9 +15,9 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyDTO;
-import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponse;
+import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponseDTO;
 import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingDTO;
-import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponse;
+import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponseDTO;
 
 @Conditional(NebulaEnabled.class)
 @Lazy
@@ -43,10 +43,10 @@ public class FaqProcessingService {
      * @param toBeRewritten the text that needs to be rewritten
      * @return a response containing the rewritten FAQs
      */
-    public FaqRewritingResponse executeRewriting(User user, Course course, String toBeRewritten) {
+    public FaqRewritingResponseDTO executeRewriting(User user, Course course, String toBeRewritten) {
         List<FaqDTO> faqDTOs = faqRepository.findAllByCourseIdAndFaqState(course.getId(), FaqState.ACCEPTED).stream().map(FaqDTO::new).toList();
         FaqRewritingDTO faqRewritingDTO = new FaqRewritingDTO(toBeRewritten, faqDTOs);
-        FaqRewritingResponse response = nebulaConnectionService.executeFaqRewriting(faqRewritingDTO);
+        FaqRewritingResponseDTO response = nebulaConnectionService.executeFaqRewriting(faqRewritingDTO);
         log.info("Rewriting FAQ for user: {} in course: {} with text: {}", user.getLogin(), course.getTitle(), toBeRewritten);
         return response;
     }
@@ -59,10 +59,10 @@ public class FaqProcessingService {
      * @param toBeChecked the faqAnswer that needs to be checked for consistency
      * @return a response containing the results of the consistency check
      */
-    public FaqConsistencyResponse executeConsistencyCheck(User user, Course course, String toBeChecked) {
+    public FaqConsistencyResponseDTO executeConsistencyCheck(User user, Course course, String toBeChecked) {
         List<FaqDTO> faqDTOs = faqRepository.findAllByCourseIdAndFaqState(course.getId(), FaqState.ACCEPTED).stream().map(FaqDTO::new).toList();
         FaqConsistencyDTO faqConsistencyDTO = new FaqConsistencyDTO(toBeChecked, faqDTOs);
-        FaqConsistencyResponse response = nebulaConnectionService.executeFaqConsistencyCheck(faqConsistencyDTO);
+        FaqConsistencyResponseDTO response = nebulaConnectionService.executeFaqConsistencyCheck(faqConsistencyDTO);
         log.info("Consistency check FAQ for user: {} in course: {} with text: {}", user.getLogin(), course.getTitle(), toBeChecked);
         return response;
     }

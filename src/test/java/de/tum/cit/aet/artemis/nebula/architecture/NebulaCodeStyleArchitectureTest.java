@@ -11,6 +11,6 @@ class NebulaCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     protected int dtoNameEndingThreshold() {
-        return 2;
+        return 0;
     }
 }

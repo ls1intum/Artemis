@@ -17,9 +17,12 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.nebula.architecture.AbstractNebulaIntegrationTest;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyDTO;
-import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponse;
+import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponseDTO;
 import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingDTO;
-import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponse;
+import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponseDTO;
+import de.tum.cit.aet.artemis.nebula.exception.NebulaConnectorException;
+import de.tum.cit.aet.artemis.nebula.exception.NebulaForbiddenException;
+import de.tum.cit.aet.artemis.nebula.exception.NebulaInternalErrorException;
 import de.tum.cit.aet.artemis.nebula.service.FaqProcessingService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
@@ -49,10 +52,10 @@ class NebulaFaqIntegrationTest extends AbstractNebulaIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void callRewritingPipeline_shouldSucceed() throws Exception {
         String toBeRewritten = "Test";
-        FaqRewritingResponse potentialResponse = new FaqRewritingResponse("rewritten: " + toBeRewritten);
+        FaqRewritingResponseDTO potentialResponse = new FaqRewritingResponseDTO("rewritten: " + toBeRewritten);
         var requestDTO = new FaqRewritingDTO(toBeRewritten, null);
         nebulaRequestMockProvider.mockFaqRewritingRequestReturning(req -> potentialResponse);
-        FaqRewritingResponse response = request.postWithResponseBody("/api/nebula/courses/" + course.getId() + "/rewrite-text", requestDTO, FaqRewritingResponse.class,
+        FaqRewritingResponseDTO response = request.postWithResponseBody("/api/nebula/courses/" + course.getId() + "/rewrite-text", requestDTO, FaqRewritingResponseDTO.class,
                 HttpStatus.OK);
         assertThat(potentialResponse.rewrittenText()).isEqualTo(response.rewrittenText());
     }
@@ -61,10 +64,10 @@ class NebulaFaqIntegrationTest extends AbstractNebulaIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void callConsistencyPipeline_shouldSucceed() throws Exception {
         var requestDTO = new FaqConsistencyDTO("test", null);
-        FaqConsistencyResponse response = createFaqConsistencyResponse();
+        FaqConsistencyResponseDTO response = createFaqConsistencyResponse();
         nebulaRequestMockProvider.mockFaqConsistencyRequestReturning(req -> response);
-        FaqConsistencyResponse actualRespones = request.postWithResponseBody("/api/nebula/courses/" + course.getId() + "/consistency-check", requestDTO,
-                FaqConsistencyResponse.class, HttpStatus.OK);
+        FaqConsistencyResponseDTO actualRespones = request.postWithResponseBody("/api/nebula/courses/" + course.getId() + "/consistency-check", requestDTO,
+                FaqConsistencyResponseDTO.class, HttpStatus.OK);
         assertThat(actualRespones.consistent()).isEqualTo(response.consistent());
         assertThat(actualRespones.faqIds().size()).isEqualTo(response.faqIds().size());
         assertThat(actualRespones.faqIds()).containsExactlyElementsOf(response.faqIds());
@@ -73,7 +76,7 @@ class NebulaFaqIntegrationTest extends AbstractNebulaIntegrationTest {
         assertThat(actualRespones.inconsistencies()).containsExactlyElementsOf(response.inconsistencies());
     }
 
-    private FaqConsistencyResponse createFaqConsistencyResponse() {
+    private FaqConsistencyResponseDTO createFaqConsistencyResponse() {
         List<String> inconstistencies = new ArrayList<>();
         inconstistencies.add("inconsistency 1");
         inconstistencies.add("inconsistency 2");
@@ -81,7 +84,37 @@ class NebulaFaqIntegrationTest extends AbstractNebulaIntegrationTest {
         List<Long> faqIds = new ArrayList<>();
         faqIds.add(1L);
         faqIds.add(2L);
-        FaqConsistencyResponse response = new FaqConsistencyResponse(false, inconstistencies, improvement, faqIds);
+        FaqConsistencyResponseDTO response = new FaqConsistencyResponseDTO(false, inconstistencies, improvement, faqIds);
         return response;
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void callRewritingPipeline_forbidden_shouldReturn403() throws Exception {
+
+        var dto = new FaqRewritingDTO("test", null);
+        nebulaRequestMockProvider.mockThrowingNebulaExceptionForUrl("/faq/rewrite-faq", new NebulaForbiddenException());
+
+        request.postWithResponseBody("/api/nebula/courses/" + course.getId() + "/rewrite-text", dto, FaqRewritingResponseDTO.class, HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void callRewritingPipeline_internalError_shouldReturn500() throws Exception {
+
+        var dto = new FaqRewritingDTO("test", null);
+        nebulaRequestMockProvider.mockThrowingNebulaExceptionForUrl("/faq/rewrite-faq", new NebulaInternalErrorException("simulated error"));
+
+        request.postWithResponseBody("/api/nebula/courses/" + course.getId() + "/rewrite-text", dto, FaqRewritingResponseDTO.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void callRewritingPipeline_connectorError_shouldReturn500() throws Exception {
+        var dto = new FaqRewritingDTO("test", null);
+        nebulaRequestMockProvider.mockThrowingNebulaRuntimeExceptionForUrl("/faq/rewrite-faq", new NebulaConnectorException("simulated connector failure"));
+
+        request.postWithResponseBody("/api/nebula/courses/" + course.getId() + "/rewrite-text", dto, FaqRewritingResponseDTO.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 }
