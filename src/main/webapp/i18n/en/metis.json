@@ -189,7 +189,9 @@
                 "forwardedMessageDeleted": "This message has been deleted",
                 "showLess": "Show less",
                 "showMore": "Show more"
-            }
+            },
+            "newMessages": "New",
+            "newMessagesButton": "Jump to first unread message"
         },
         "communicationDisabled": {
             "title": "Welcome to Communication!",

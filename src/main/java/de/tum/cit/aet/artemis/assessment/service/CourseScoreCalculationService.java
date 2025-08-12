@@ -241,7 +241,7 @@ public class CourseScoreCalculationService {
      * @param includeIrisCourseDashboardEnabled whether the enabled state of the course chat should be included in the CourseForDashboardDTO
      * @return the CourseForDashboardDTO containing relevant information for the client to display.
      */
-    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, GradingScale gradingScale, long userId, boolean includeIrisCourseDashboardEnabled) {
+    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, @Nullable GradingScale gradingScale, long userId, boolean includeIrisCourseDashboardEnabled) {
         // TODO: we should rework this to use DTOs
         Set<StudentParticipation> gradedStudentParticipations = new HashSet<>();
         for (Exercise exercise : course.getExercises()) {
@@ -345,7 +345,7 @@ public class CourseScoreCalculationService {
      * @param plagiarismCases       the plagiarism verdicts for the student.
      * @return a StudentScoresDTO instance with the presentation score, relative and absolute points achieved by the given student.
      */
-    public StudentScoresDTO calculateCourseScoreForStudent(Course course, GradingScale gradingScale, Long studentId, Collection<CourseGradeScoreDTO> gradeScoresOfStudent,
+    public StudentScoresDTO calculateCourseScoreForStudent(Course course, @Nullable GradingScale gradingScale, Long studentId, Collection<CourseGradeScoreDTO> gradeScoresOfStudent,
             MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases) {
 
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
@@ -368,10 +368,11 @@ public class CourseScoreCalculationService {
             }
             // getResultForParticipation always sorts the results by completion date, maybe optimize with a flag
             // if input results are already sorted.
-            var score = gradeScore.score();
-            double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise.get().maxPoints(), score, course.getAccuracyOfScores(),
-                    plagiarismCasesForStudent.get(exerciseId));
-            pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
+            var result = getResultForParticipation(participation, exercise.getDueDate());
+            if (result != null && result.isRated()) {
+                double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, result, plagiarismCasesForStudent.get(exercise.getId()));
+                pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
+            }
         }
 
         // calculate presentation points for graded presentations
@@ -435,7 +436,7 @@ public class CourseScoreCalculationService {
 
         var resultsList = new ArrayList<>(resultsSet);
 
-        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null).toList();
+        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> result.isRated() && result.getCompletionDate() != null).toList();
 
         if (ratedResultsWithCompletionDate.isEmpty()) {
             return emptyResult;

@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
-import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.api.ExerciseGroupApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
-import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
@@ -63,13 +62,9 @@ public class CourseService {
 
     private final Optional<LectureApi> lectureApi;
 
-    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
-
     private final Optional<ExerciseGroupApi> exerciseGroupApi;
 
     private final Optional<ExamRepositoryApi> examRepositoryApi;
-
-    private final Optional<ExamMetricsApi> examMetricsApi;
 
     private final CourseRepository courseRepository;
 
@@ -89,14 +84,11 @@ public class CourseService {
 
     private final CourseVisibleService courseVisibleService;
 
-    public CourseService(Optional<ExamMetricsApi> examMetricsApi, Optional<LectureApi> lectureApi, Optional<LectureRepositoryApi> lectureRepositoryApi,
-            CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi, StudentParticipationRepository studentParticipationRepository,
-            ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi,
-            Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository, CourseVisibleService courseVisibleService) {
-        this.examMetricsApi = examMetricsApi;
+    public CourseService(Optional<LectureApi> lectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
+            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> tutorialGroupApi,
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository, CourseVisibleService courseVisibleService) {
         this.lectureApi = lectureApi;
-        this.lectureRepositoryApi = lectureRepositoryApi;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -203,8 +195,8 @@ public class CourseService {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
-        course.setExercises(exerciseService.filterExercisesForCourse(course, user));
-        exerciseService.loadExerciseDetailsIfNecessary(course, user);
+        course.setExercises(exerciseService.filterExercisesForCourse(course, user, true));
+        exerciseService.loadExerciseDetailsIfNecessary(course, user, true);
         examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(course.getId(), user.getId(), user.getGroups(), ZonedDateTime.now())));
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
         lectureApi.ifPresent(api -> course.setLectures(api.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user)));
@@ -237,6 +229,49 @@ public class CourseService {
      */
     public Set<Course> findAllActiveForUser(User user) {
         return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course)).collect(Collectors.toSet());
+    }
+
+    /**
+     * Get all courses with exercises (filtered for given user)
+     *
+     * @param user the user entity
+     * @return an unmodifiable list of all courses including exercises for the user
+     */
+    public Set<Course> findAllActiveWithExercisesForUser(User user) {
+        long start = System.nanoTime();
+
+        var userVisibleCourses = courseRepository.findAllActive().stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course)).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        if (log.isDebugEnabled()) {
+            log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
+        }
+        long startFindAllExercises = System.nanoTime();
+        var courseIds = userVisibleCourses.stream().map(DomainObject::getId).collect(Collectors.toSet());
+        // TODO Performance: we only need the total score, the number of exercises and exams and - in case there is one - the currently active exercise(s)/exam(s)
+        // we do NOT need to retrieve this information and send it to the client
+        Set<Exercise> allExercises = exerciseRepository.findByCourseIds(courseIds);
+
+        if (log.isDebugEnabled()) {
+            log.debug("findAllExercisesByCourseIds finished with {} exercises after {}", allExercises.size(), TimeLogUtil.formatDurationFrom(startFindAllExercises));
+        }
+
+        long startFilterAll = System.nanoTime();
+        var courses = userVisibleCourses.stream().peek(course -> {
+            // connect the exercises with the course
+            course.setExercises(allExercises.stream().filter(ex -> ex.getCourseViaExerciseGroupOrCourseMember().getId().equals(course.getId())).collect(Collectors.toSet()));
+            course.setExercises(exerciseService.filterExercisesForCourse(course, user, false));
+            exerciseService.loadExerciseDetailsIfNecessary(course, user, false);
+            // we do not send actual lectures or exams to the client, not needed
+            course.setLectures(Set.of());
+            course.setExams(Set.of());
+        }).collect(Collectors.toSet());
+
+        if (log.isDebugEnabled()) {
+            log.debug("all {} filterExercisesForCourse individually finished together after {}", courses.size(), TimeLogUtil.formatDurationFrom(startFilterAll));
+            log.debug("Filter exercises, lectures, and exams finished after {}", TimeLogUtil.formatDurationFrom(start));
+        }
+        return courses;
     }
 
     /**

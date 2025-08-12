@@ -89,12 +89,14 @@ public abstract class RepositoryResource {
     /**
      * Override this method to define how a repository can be retrieved.
      *
-     * @param domainId that serves as an abstract identifier for retrieving the repository.
+     * @param domainId    that serves as an abstract identifier for retrieving the repository.
+     * @param writeAccess Whether to write to the repository
      * @return the repository if available.
      * @throws IOException     if the repository folder can't be accessed.
      * @throws GitAPIException if the repository can't be checked out.
      */
-    abstract Repository getRepository(Long domainId, RepositoryActionType repositoryAction, boolean pullOnCheckout) throws IOException, IllegalArgumentException, GitAPIException;
+    abstract Repository getRepository(Long domainId, RepositoryActionType repositoryAction, boolean pullOnCheckout, boolean writeAccess)
+            throws IOException, IllegalArgumentException, GitAPIException;
 
     /**
      * Get the url for a repository.
@@ -130,7 +132,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to files for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.READ, true, false);
             Map<String, FileType> fileList = repositoryService.getFiles(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
         });
@@ -147,7 +149,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to file {} for domainId : {}", filename, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.READ, true, false);
             return repositoryService.getFileFromRepository(filename, repository);
         });
     }
@@ -164,7 +166,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to create file {} for domainId : {}", filePath, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
             try (var inputStream = request.getInputStream()) {
                 repositoryService.createFile(repository, filePath, inputStream);
             }
@@ -184,7 +186,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to create file {} for domainId : {}", folderPath, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
             try (InputStream inputStream = request.getInputStream()) {
                 repositoryService.createFolder(repository, folderPath, inputStream);
             }
@@ -203,7 +205,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to rename file {} to {} for domainId : {}", fileMove.currentFilePath(), fileMove.newFilename(), domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
             repositoryService.renameFile(repository, fileMove);
             return new ResponseEntity<>(HttpStatus.OK);
         });
@@ -220,7 +222,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to delete file {} for domainId : {}", filename, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
             repositoryService.deleteFile(repository, filename);
             return new ResponseEntity<>(HttpStatus.OK);
         });
@@ -236,7 +238,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            try (Repository repository = getRepository(domainId, RepositoryActionType.READ, true)) {
+            try (Repository repository = getRepository(domainId, RepositoryActionType.READ, true, false)) {
                 repositoryService.pullChanges(repository);
 
                 return new ResponseEntity<>(HttpStatus.OK);
@@ -276,7 +278,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, true);
             repositoryService.commitChanges(repository, user);
             var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
 
@@ -298,7 +300,7 @@ public abstract class RepositoryResource {
      */
     public ResponseEntity<Void> resetToLastCommit(Long domainId) {
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.RESET, false);
+            Repository repository = getRepository(domainId, RepositoryActionType.RESET, false, true);
             gitService.resetToOriginHead(repository);
             return new ResponseEntity<>(HttpStatus.OK);
         });
@@ -322,16 +324,8 @@ public abstract class RepositoryResource {
         VcsRepositoryUri repositoryUri = getRepositoryUri(domainId);
 
         try {
-            boolean isClean;
-            // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
-            // Retrieving the default branch is not necessary if the repository is already cached.
-            if (gitService.isRepositoryCached(repositoryUri)) {
-                isClean = repositoryService.isWorkingCopyClean(repositoryUri);
-            }
-            else {
-                String branch = getOrRetrieveBranchOfDomainObject(domainId);
-                isClean = repositoryService.isWorkingCopyClean(repositoryUri, branch);
-            }
+            String branch = getOrRetrieveBranchOfDomainObject(domainId);
+            boolean isClean = repositoryService.isWorkingCopyClean(repositoryUri, branch);
             repositoryStatus = isClean ? CLEAN : UNCOMMITTED_CHANGES;
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {

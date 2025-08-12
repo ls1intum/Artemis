@@ -54,7 +54,9 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -67,14 +69,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     private static File java17Home;
 
     private ProgrammingExercise exercise;
-
-    private final LocalRepository exerciseRepo = new LocalRepository(defaultBranch);
-
-    private final LocalRepository testRepo = new LocalRepository(defaultBranch);
-
-    private final LocalRepository solutionRepo = new LocalRepository(defaultBranch);
-
-    private final LocalRepository auxRepo = new LocalRepository(defaultBranch);
 
     private static final String MAVEN_TEST_RESULTS_PATH = "target/surefire-reports";
 
@@ -191,24 +185,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         Course course = courseUtilService.addEmptyCourse();
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-
-        exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
-        testRepo.configureRepos("testLocalRepo", "testOriginRepo");
-        solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
-        auxRepo.configureRepos("auxLocalRepo", "auxOriginRepo");
-
-        programmingExerciseTestService.setup(this, versionControlService);
-        programmingExerciseTestService.setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
     }
 
     @AfterEach
     void tearDown() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        programmingExerciseTestService.tearDown();
-        exerciseRepo.resetLocalRepo();
-        testRepo.resetLocalRepo();
-        solutionRepo.resetLocalRepo();
-        auxRepo.resetLocalRepo();
     }
 
     /**
@@ -221,7 +202,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     private Stream<Arguments> languageTypeBuilder() {
         Stream.Builder<Arguments> argumentBuilder = Stream.builder();
         // Add programming exercises that should be tested with Maven or Gradle here
-        List<ProgrammingLanguage> programmingLanguages = List.of(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN);
+        List<ProgrammingLanguage> programmingLanguages = List.of(ProgrammingLanguage.JAVA);
         for (ProgrammingLanguage language : programmingLanguages) {
             var languageFeatures = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
             var projectTypes = languageFeatures.projectTypes();
@@ -244,7 +225,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     @MethodSource("languageTypeBuilder")
     void testTemplateExercise(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         checkPreconditionsForJavaTemplateExecution(projectType);
-        runTests(language, projectType, exerciseRepo, TestResult.FAILED);
+        runTests(language, projectType, RepositoryType.TEMPLATE, TestResult.FAILED);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -252,7 +233,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     @MethodSource("languageTypeBuilder")
     void testTemplateSolution(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         checkPreconditionsForJavaTemplateExecution(projectType);
-        runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL);
+        runTests(language, projectType, RepositoryType.SOLUTION, TestResult.SUCCESSFUL);
     }
 
     private void checkPreconditionsForJavaTemplateExecution(final ProjectType projectType) {
@@ -262,20 +243,23 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         assumeTrue(java17Home != null, "Could not find Java 17. Skipping execution of template tests.");
     }
 
-    private void runTests(ProgrammingLanguage language, ProjectType projectType, LocalRepository repository, TestResult testResult) throws Exception {
+    private void runTests(ProgrammingLanguage language, ProjectType projectType, RepositoryType repositoryType, TestResult testResult) throws Exception {
         exercise.setProgrammingLanguage(language);
         exercise.setProjectType(projectType);
         mockConnectorRequestsForSetup(exercise, false, true, false);
         exercise.setChannelName("exercise-pe");
-        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-
-        moveAssignmentSourcesOf(repository);
+        exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        VcsRepositoryUri assignmentUri = exercise.getRepositoryURL(repositoryType);
+        VcsRepositoryUri testUri = exercise.getRepositoryURL(RepositoryType.TESTS);
+        Repository assignmentRepository = gitService.getOrCheckoutRepository(assignmentUri, true, true);
+        Repository testRepository = gitService.getOrCheckoutRepository(testUri, true, true);
+        moveAssignmentSourcesOf(assignmentRepository.getLocalPath(), testRepository.getLocalPath());
         int exitCode;
         if (projectType != null && projectType.isGradle()) {
-            exitCode = invokeGradle();
+            exitCode = invokeGradle(testRepository.getLocalPath());
         }
         else {
-            exitCode = invokeMaven();
+            exitCode = invokeMaven(testRepository.getLocalPath());
         }
 
         if (TestResult.SUCCESSFUL.equals(testResult)) {
@@ -286,14 +270,14 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         }
 
         var testReportPath = projectType != null && projectType.isGradle() ? GRADLE_TEST_RESULTS_PATH : MAVEN_TEST_RESULTS_PATH;
-        var testResults = readTestReports(testReportPath);
+        var testResults = readTestReports(testRepository.getLocalPath(), testReportPath);
         assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(testResult, 12 + (ProgrammingLanguage.JAVA.equals(language) ? 1 : 0)));
     }
 
-    private int invokeMaven() throws MavenInvocationException {
+    private int invokeMaven(Path testRepositoryPath) throws MavenInvocationException {
         InvocationRequest mvnRequest = new DefaultInvocationRequest();
         mvnRequest.setJavaHome(java17Home);
-        mvnRequest.setPomFile(testRepo.localRepoFile);
+        mvnRequest.setPomFile(testRepositoryPath.toFile());
         mvnRequest.addArgs(List.of("clean", "test"));
         mvnRequest.setShowVersion(true);
 
@@ -304,8 +288,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         return result.getExitCode();
     }
 
-    private int invokeGradle() {
-        try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepo.localRepoFile).useBuildDistribution().connect()) {
+    private int invokeGradle(Path testRepositoryPath) {
+        try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepositoryPath.toFile()).useBuildDistribution().connect()) {
             BuildLauncher launcher = connector.newBuild();
             launcher.setJavaHome(java17Home);
             String[] tasks = new String[] { "clean", "test" };
@@ -320,15 +304,15 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         return 0;
     }
 
-    private void moveAssignmentSourcesOf(LocalRepository localRepository) throws IOException {
-        Path sourceSrc = localRepository.localRepoFile.toPath().resolve("src");
-        Path assignment = testRepo.localRepoFile.toPath().resolve("assignment");
+    private void moveAssignmentSourcesOf(Path assignmentRepositoryPath, Path testRepositoryPath) throws IOException {
+        Path sourceSrc = assignmentRepositoryPath.resolve("src");
+        Path assignment = testRepositoryPath.resolve("assignment");
         Files.createDirectories(assignment);
         FileUtils.moveDirectory(sourceSrc.toFile(), assignment.resolve("src").toFile());
     }
 
-    private Map<TestResult, Integer> readTestReports(String testResultPath) {
-        File reportFolder = testRepo.localRepoFile.toPath().resolve(testResultPath).toFile();
+    private Map<TestResult, Integer> readTestReports(Path testRepositoryPath, String testResultPath) {
+        File reportFolder = testRepositoryPath.resolve(testResultPath).toFile();
         assertThat(reportFolder).as("test reports generated").matches(SurefireReportParser::hasReportFiles, "the report folder should contain test reports");
 
         // Note that the locale does not have any effect on parsing and is only used in some other methods

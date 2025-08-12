@@ -5,7 +5,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-test-run-ribbon',
     template: `
         <div class="box">
-            <div class="ribbon ribbon-top-left">
+            <div class="ribbon ribbon-rotate">
                 <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
             </div>
         </div>

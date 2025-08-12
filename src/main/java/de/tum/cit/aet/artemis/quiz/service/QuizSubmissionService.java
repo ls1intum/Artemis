@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
+import de.tum.cit.aet.artemis.quiz.domain.AbstractQuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
-public class QuizSubmissionService {
+public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSubmission> {
 
     private static final Logger log = LoggerFactory.getLogger(QuizSubmissionService.class);
 
@@ -65,11 +65,13 @@ public class QuizSubmissionService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final SubmissionVersionService submissionVersionService;
+    private final QuizQuestionProgressService quizQuestionProgressService;
 
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository, SubmissionVersionService submissionVersionService,
             QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService, QuizStatisticService quizStatisticService,
-            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService) {
+            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService,
+            QuizQuestionProgressService quizQuestionProgressService) {
+        super(submissionVersionService);
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -78,7 +80,7 @@ public class QuizSubmissionService {
         this.quizStatisticService = quizStatisticService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.websocketMessagingService = websocketMessagingService;
-        this.submissionVersionService = submissionVersionService;
+        this.quizQuestionProgressService = quizQuestionProgressService;
     }
 
     /**
@@ -88,18 +90,21 @@ public class QuizSubmissionService {
      * <p>
      * The process includes:
      * <p>
-     * 1. **Updating Submission Properties**: Sets the submission as submitted, marks it as a manual submission,
-     * and records the current date and time as the submission date.
-     * 2. **Calculating Scores**: Computes the scores based on the quiz questions and updates the submission.
-     * 3. **Saving Submission**: Saves the updated submission in the repository.
-     * 4. **Creating Result**: Initializes a new result, associates it with the participation, sets it as unrated
-     * and automatic, and records the current date and time as the completion date.
-     * 5. **Saving Result**: Saves the newly created result in the repository.
-     * 6. **Setting Result-Submission Relation**: Links the result to the submission and recalculates the score.
-     * 7. **Updating Submission with Result**: Adds the result to the submission and saves it again to set the result index column.
-     * 8. **Re-saving Result**: Saves the result again to store the calculated score.
-     * 9. **Fixing Proxy Objects**: Reassigns the participation to the result to avoid proxy issues.
-     * 10. **Recalculating Statistics**: Updates the quiz statistics based on the new result.
+     * <ol>
+     * <li><b>Updating Submission Properties:</b> Sets the submission as submitted, marks it as a manual submission,
+     * and records the current date and time as the submission date.</li>
+     * <li><b>Calculating Scores:</b> Computes the scores based on the quiz questions and updates the submission.</li>
+     * <li><b>Saving Submission:</b> Saves the updated submission in the repository.</li>
+     * <li><b>Creating Result:</b> Initializes a new result, associates it with the participation, sets it as unrated
+     * and automatic, and records the current date and time as the completion date.</li>
+     * <li><b>Saving Result:</b> Saves the newly created result in the repository.</li>
+     * <li><b>Setting Result-Submission Relation:</b> Links the result to the submission and recalculates the score.</li>
+     * <li><b>Updating Submission with Result:</b> Adds the result to the submission and saves it again to set the result index column.</li>
+     * <li><b>Re-saving Result:</b> Saves the result again to store the calculated score.</li>
+     * <li><b>Fixing Proxy Objects:</b> Reassigns the participation to the result to avoid proxy issues.</li>
+     * <li><b>Recalculating Statistics:</b> Updates the quiz statistics based on the new result.</li>
+     * <li><b>Saving Question Progress</b>Updates the question progress based on the result and submission.</li>
+     * </ol>
      *
      * @param quizSubmission The quiz submission to be processed.
      * @param quizExercise   The quiz exercise related to the submission.
@@ -361,11 +366,11 @@ public class QuizSubmissionService {
      * Find StudentParticipation of the given quizExercise that was done by the given user
      *
      * @param quizExercise   the QuizExercise of which the StudentParticipation belongs to
-     * @param quizSubmission the QuizSubmission of which the participation to be set to
+     * @param quizSubmission the AbstractQuizSubmission of which the participation to be set to
      * @param user           the User of the StudentParticipation
      * @return StudentParticipation the participation if exists, otherwise throw entity not found exception
      */
-    protected StudentParticipation getParticipation(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
+    protected StudentParticipation getParticipation(QuizExercise quizExercise, AbstractQuizSubmission quizSubmission, User user) {
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, user.getLogin());
 
         if (optionalParticipation.isEmpty()) {
@@ -385,42 +390,11 @@ public class QuizSubmissionService {
      * @param user           the User of the participation of which the given quizSubmission belongs to
      * @return saved QuizSubmission
      */
+    @Override
     protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
         quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
         var savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;
     }
-
-    /**
-     * Updates a submission for the exam mode
-     *
-     * @param quizExercise   the quiz exercise for which the submission for the exam mode should be done
-     * @param quizSubmission the quiz submission includes the submitted answers by the student
-     * @param user           the student who wants to submit the quiz during the exam
-     * @return the updated quiz submission after it has been saved to the database
-     */
-    public QuizSubmission saveSubmissionForExamMode(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
-        // update submission properties
-        quizSubmission.setSubmitted(true);
-        quizSubmission.setType(SubmissionType.MANUAL);
-        quizSubmission.setSubmissionDate(ZonedDateTime.now());
-
-        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        quizSubmission.setResults(new ArrayList<>());
-        QuizSubmission savedQuizSubmission = this.save(quizExercise, quizSubmission, user);
-
-        // versioning of submission
-        try {
-            submissionVersionService.saveVersionForIndividual(quizSubmission, user);
-        }
-        catch (Exception ex) {
-            log.error("Quiz submission version could not be saved", ex);
-        }
-
-        log.debug("submit exam quiz finished: {}", savedQuizSubmission);
-
-        return savedQuizSubmission;
-    }
-
 }

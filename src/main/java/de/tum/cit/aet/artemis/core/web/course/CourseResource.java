@@ -37,7 +37,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
-import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentDashboardService;
@@ -94,6 +93,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
+import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
 /**
@@ -161,6 +161,8 @@ public class CourseResource {
 
     private final CourseOverviewService courseOverviewService;
 
+    private final QuizQuestionProgressService quizQuestionProgressService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, Optional<LtiApi> ltiApi,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
@@ -168,7 +170,7 @@ public class CourseResource {
             GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
             Optional<AthenaApi> athenaApi, Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
             Optional<LearnerProfileApi> learnerProfileApi, CourseForUserGroupService courseForUserGroupService, CourseOverviewService courseOverviewService,
-            CourseLoadService courseLoadService) {
+            CourseLoadService courseLoadService, QuizQuestionProgressService quizQuestionProgressService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.ltiApi = ltiApi;
@@ -193,6 +195,7 @@ public class CourseResource {
         this.courseForUserGroupService = courseForUserGroupService;
         this.courseOverviewService = courseOverviewService;
         this.courseLoadService = courseLoadService;
+        this.quizQuestionProgressService = quizQuestionProgressService;
     }
 
     /**
@@ -433,6 +436,8 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(courseId, user);
+        boolean trainingEnabled = quizQuestionProgressService.questionsAvailableForTraining(courseId);
+        course.setTrainingEnabled(trainingEnabled);
         log.debug("courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser done");
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             // user might be allowed to enroll in the course
@@ -493,35 +498,34 @@ public class CourseResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<CoursesForDashboardDTO> getCoursesForDashboard() {
-        log.info("Start courses/for-dashboard (multiple courses)");
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
-        var activeCoursesForUser = courseService.findAllActiveForUser(user);
+        Set<Course> courses = courseService.findAllActiveWithExercisesForUser(user);
         log.debug("courseService.findAllActiveWithExercisesForUser done");
-        var allUserCourseGrades = courseService.fetchCoursesGradesForUser(activeCoursesForUser, user);
-        log.debug("courseService.fetchCourseGradesForUser done");
+        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
 
-        var courseIds = activeCoursesForUser.stream().map(Course::getId).collect(Collectors.toSet());
-        // we explicitly add 1 hour to the end date to compensate for potential write extensions. Calculating it exactly is not feasible here
-        Set<Exam> activeExams = examRepositoryApi.isPresent()
-                ? examRepositoryApi.get().findActiveExams(courseIds, user.getId(), ZonedDateTime.now(), ZonedDateTime.now().plusHours(1))
-                : Set.of();
+        log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");
 
-        var allExercises = exerciseRepository.findCourseExerciseScoreInformationByCourseIds(courseIds);
-
-        Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
-        for (Course course : activeCoursesForUser) {
-            var courseExercises = allExercises.stream().filter(exercise -> exercise.courseId().equals(course.getId())).collect(Collectors.toSet());
-            var courseExerciseIds = courseExercises.stream().map(ExerciseCourseScoreDTO::id).collect(Collectors.toSet());
-            var userCourseGrades = allUserCourseGrades.stream().filter(grade -> courseExerciseIds.contains(grade.exerciseId())).collect(Collectors.toSet());
-            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.calculateCourseScore(course, courseExercises, userCourseGrades, user.getId());
-            coursesForDashboard.add(courseForDashboardDTO);
-            // TODO: find the next relevant exercise per course and add it to the courseForDashboardDTO
+        // we explicitly add 1 hour here to compensate for potential write extensions. Calculating it exactly is not feasible here
+        Set<Exam> activeExams;
+        if (examRepositoryApi.isPresent()) {
+            activeExams = examRepositoryApi.get().findActiveExams(courses.stream().map(Course::getId).collect(Collectors.toSet()), user.getId(), ZonedDateTime.now(),
+                    ZonedDateTime.now().plusHours(1));
         }
-        log.info("courses/for-dashboard (multiple courses) finished in {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(timeNanoStart), activeCoursesForUser.size(),
-                user.getLogin());
-
+        else {
+            activeExams = Set.of();
+        }
+        Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
+        for (Course course : courses) {
+            // Passing null here for the grading scale is fine. This only leads to presentation scores not being considered which doesn't matter for the dashboard.
+            // Not fetching plagiarism cases before the calculation also affects calculation as plagiarism cases are not considered in the scores, but this is fine for the
+            // dashboard.
+            // We prefer to have better performance for 99.9% of the users without plagiarism cases over accurate scores for the 0.1% of users with plagiarism cases.
+            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, null, user.getId(), false);
+            coursesForDashboard.add(courseForDashboardDTO);
+        }
+        logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
         final var dto = new CoursesForDashboardDTO(coursesForDashboard, activeExams);
         return ResponseEntity.ok(dto);
     }
