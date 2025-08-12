@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, OnInit, inject, input, output } from '@angular/core';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
@@ -22,12 +22,12 @@ export class ComplaintsFormComponent implements OnInit {
     private complaintService = inject(ComplaintService);
     private alertService = inject(AlertService);
 
-    @Input() exercise: Exercise;
-    @Input() resultId: number;
-    @Input() examId?: number;
-    @Input() complaintType: ComplaintType;
-    @Input() isCurrentUserSubmissionAuthor = false;
-    @Output() onSubmit: EventEmitter<void> = new EventEmitter();
+    readonly exercise = input.required<Exercise>();
+    readonly resultId = input.required<number>();
+    readonly examId = input<number>();
+    readonly complaintType = input.required<ComplaintType>();
+    readonly isCurrentUserSubmissionAuthor = input(false);
+    readonly onSubmit = output<void>();
     maxComplaintsPerCourse = 1;
     maxComplaintTextLimit: number;
     complaintText?: string;
@@ -36,11 +36,12 @@ export class ComplaintsFormComponent implements OnInit {
     readonly ComplaintType = ComplaintType;
 
     ngOnInit(): void {
-        this.course = getCourseFromExercise(this.exercise);
+        this.course = getCourseFromExercise(this.exercise());
         this.maxComplaintTextLimit = this.course?.maxComplaintTextLimit ?? 0;
-        if (this.exercise.course) {
+        const exercise = this.exercise();
+        if (exercise.course) {
             // only set the complaint limit for course exercises, there are unlimited complaints for exams
-            this.maxComplaintsPerCourse = this.exercise.teamMode ? this.exercise.course.maxTeamComplaints! : this.exercise.course.maxComplaints!;
+            this.maxComplaintsPerCourse = exercise.teamMode ? exercise.course.maxTeamComplaints! : exercise.course.maxComplaints!;
         } else {
             // Complaints for exams should always allow at least 2000 characters. If the course limit is higher, the custom limit gets used.
             this.maxComplaintTextLimit = Math.max(2000, this.maxComplaintTextLimit);
@@ -52,10 +53,10 @@ export class ComplaintsFormComponent implements OnInit {
      */
     createComplaint(): void {
         const complaintRequest = new ComplaintRequestDTO();
-        complaintRequest.resultId = this.resultId;
-        complaintRequest.complaintType = this.complaintType;
+        complaintRequest.resultId = this.resultId();
+        complaintRequest.complaintType = this.complaintType();
         complaintRequest.complaintText = this.complaintText;
-        complaintRequest.examId = this.examId;
+        complaintRequest.examId = this.examId();
 
         // TODO: Rethink global client error handling and adapt this line accordingly
         if (complaintRequest.complaintText !== undefined && this.maxComplaintTextLimit < complaintRequest.complaintText!.length) {

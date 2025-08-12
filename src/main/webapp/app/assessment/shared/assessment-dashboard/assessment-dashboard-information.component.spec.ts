@@ -19,7 +19,8 @@ describe('AssessmentDashboardInformationComponent', () => {
 
         fixture = TestBed.createComponent(AssessmentDashboardInformationComponent);
         component = fixture.componentInstance;
-        component.course = { id: 10 } as Course;
+        fixture.componentRef.setInput('course', { id: 10 } as Course);
+        fixture.componentRef.setInput('isExamMode', false);
     });
 
     afterEach(() => {
@@ -35,9 +36,9 @@ describe('AssessmentDashboardInformationComponent', () => {
         submissions.inTime = 400;
         submissions.late = 350;
 
-        component.totalNumberOfAssessments = totalAssessments;
-        component.numberOfSubmissions = submissions;
-        component.numberOfCorrectionRounds = 1;
+        fixture.componentRef.setInput('totalNumberOfAssessments', totalAssessments);
+        fixture.componentRef.setInput('numberOfSubmissions', submissions);
+        fixture.componentRef.setInput('numberOfCorrectionRounds', 1);
         const setupSpy = jest.spyOn(component, 'setup');
         const setupLinksSpy = jest.spyOn(component, 'setupLinks');
         const setupGraphSpy = jest.spyOn(component, 'setupGraph');
@@ -55,8 +56,8 @@ describe('AssessmentDashboardInformationComponent', () => {
     });
 
     it('should set up links correctly', () => {
-        component.isExamMode = false;
-        component.examId = 42;
+        fixture.componentRef.setInput('isExamMode', false);
+        fixture.componentRef.setInput('examId', 42);
 
         jest.spyOn(component, 'setupGraph').mockImplementation();
 
@@ -67,7 +68,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(component.assessmentLocksLink).toEqual(['/course-management', 10, 'assessment-locks']);
         expect(component.ratingsLink).toEqual(['/course-management', 10, 'ratings']);
 
-        component.isExamMode = true;
+        fixture.componentRef.setInput('isExamMode', true);
 
         component.ngOnChanges();
 
