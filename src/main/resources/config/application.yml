@@ -130,7 +130,6 @@ artemis:
         recommended: "2.1.0"
 
 
-
 management:
     endpoints:
         web:

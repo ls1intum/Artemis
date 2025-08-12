@@ -70,6 +70,12 @@ You only need to modify them if your specific work or production environments re
        athena:
             # If you want to use Athena, refer to the dedicated configuration section. Under Administration Guide, Setup of Extension Services.
 
+       hyperion:
+            # If you want to use Hyperion for programming exercise creation assistance,
+            # refer to the dedicated configuration section.
+            # See: Hyperion Service section below.
+
+
 **Note:**
 If you use a password for authentication, update it in ``gradle/liquibase.gradle``.
 
@@ -106,6 +112,8 @@ module replacement in the client.
   ``dev,jenkins,localvc,artemis,scheduling,core,atlas,local``.
 * **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with ``athena`` profile and Local VC / CI enabled
   (see `Athena Service <#athena-service>`__).
+* **Artemis (Server, LocalVC & LocalCI, Hyperion):** The server will be started separated from the client with ``hyperion`` profile and Local VC / CI enabled
+  (see `Hyperion Service <#hyperion-service>`__).
 * **Artemis (Server, LocalVC & LocalCI, Theia):** The server will be started separated from the client with ``theia`` profile and Local VC / CI enabled.
 * **Artemis (BuildAgent):** The server will be started separated from the client with the profiles ``buildagent,local``.
   This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
@@ -250,3 +258,36 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 .. code:: bash
 
    ./gradlew bootRun --args='--spring.profiles.active=dev,jenkins,localvc,artemis,scheduling'
+
+.. _hyperion-service:
+
+Hyperion Service (Optional)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Hyperion** is an AI-driven programming exercise creation assistance that provides consistency checking and problem statement rewriting features for programming exercises.
+
+Quick Setup for Development
+"""""""""""""""""""""""""""
+
+1. **Start Hyperion Service**
+
+   .. code-block:: bash
+
+      # Navigate to EduTelligence Hyperion directory
+      cd /path/to/edutelligence/hyperion/docker
+      docker compose -f compose.local.yaml up -d
+
+2. **Enable Hyperion Profile**
+
+   Add ``hyperion`` to your Spring profiles:
+
+   .. code-block:: bash
+
+      --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,hyperion
+
+3. **Verify Connection**
+
+   The default development configuration uses ``http://localhost:8000`` with API key ``local-development-key``.
+
+.. note::
+   For detailed setup, AI provider configuration, and production deployment, see the :doc:`Hyperion admin documentation <../../admin/setup/hyperion>` and the `EduTelligence Hyperion repository <https://github.com/ls1intum/edutelligence/tree/main/hyperion>`__.
