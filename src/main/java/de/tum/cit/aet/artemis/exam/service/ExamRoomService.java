@@ -398,9 +398,7 @@ public class ExamRoomService {
         final long startTime = System.nanoTime();
 
         // deleting everything in batch is more efficient
-        examRoomAssignmentRepository.deleteAllInBatch();
-        layoutStrategyRepository.deleteAllInBatch();
-        examRoomRepository.deleteAllInBatch();
+        examRoomRepository.deleteAll();
 
         log.debug("Deleting all exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));
     }
