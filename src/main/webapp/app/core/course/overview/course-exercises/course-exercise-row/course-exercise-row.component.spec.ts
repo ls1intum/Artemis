@@ -4,6 +4,8 @@ import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockCourseExerciseService } from 'test/helpers/mocks/service/mock-course-exercise.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -14,8 +16,6 @@ import { MockCourseService } from 'test/helpers/mocks/service/mock-course.servic
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag/not-released-tag.component';
@@ -75,8 +75,8 @@ describe('CourseExerciseRowComponent', () => {
                 { provide: CourseManagementService, useClass: MockCourseService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
+                LocalStorageService,
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

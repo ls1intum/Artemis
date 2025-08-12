@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -46,9 +48,7 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -235,8 +235,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         { provide: TranslateService, useClass: MockTranslateService },
         { provide: AccountService, useClass: MockAccountService },
         { provide: ActivatedRoute, useValue: route },
-        { provide: LocalStorageService, useClass: MockSyncStorage },
-        { provide: SessionStorageService, useClass: MockSyncStorage },
+        LocalStorageService,
+        SessionStorageService,
         { provide: ProfileService, useClass: MockProfileService },
         MockProvider(ExerciseService),
         MockProvider(AlertService),
