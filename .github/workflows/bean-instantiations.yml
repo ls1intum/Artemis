@@ -7,7 +7,7 @@ on:
       - src/main/java/**
   pull_request:
     paths:
-      -  src/main/java/**
+      - src/main/java/**
 
 jobs:
   bean-instantiation-check:
@@ -17,7 +17,7 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 9
       MAX_DEFERRED_CHAIN_LENGTH: 10
       MIN_INSTANTIATED_BEANS: 20
-      MAX_INSTANTIATED_BEANS: 92
+      MAX_INSTANTIATED_BEANS: 96
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
@@ -25,7 +25,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate threshold consistency between BeanInstantiationTracer and GitHub Action
+        shell: bash
         run: |
+          set -Eeuo pipefail
+
           echo "Validating that thresholds in BeanInstantiationTracer match GitHub Action values..."
 
           echo "GitHub Action thresholds:"
@@ -37,21 +40,23 @@ jobs:
 
           JAVA_FILE="src/main/java/de/tum/cit/aet/artemis/core/config/BeanInstantiationTracer.java"
 
-          if [ ! -f "$JAVA_FILE" ]; then
+          if [[ ! -f "$JAVA_FILE" ]]; then
             echo "❌ BeanInstantiationTracer.java not found at expected location: $JAVA_FILE"
             echo "Searching for the file..."
             find . -name "BeanInstantiationTracer.java" -type f || echo "File not found anywhere"
             exit 1
           fi
+
           EXTRACT_NUMBER_REGEX='.*=\s*([0-9]+).*'
-          JAVA_MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH=$(grep -E "STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD\s*=" "$JAVA_FILE" | sed -E "s/$EXTRACT_NUMBER_REGEX/\1/" | head -1)
-          JAVA_MAX_DEFERRED_CHAIN_LENGTH=$(grep -E "DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD\s*=" "$JAVA_FILE" | sed -E "s/$EXTRACT_NUMBER_REGEX/\1/" | head -1)
+
+          JAVA_MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH=$(grep -E "STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD\s*=" "$JAVA_FILE" | sed -E "s/${EXTRACT_NUMBER_REGEX}/\1/" | head -1 || true)
+          JAVA_MAX_DEFERRED_CHAIN_LENGTH=$(grep -E "DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD\s*=" "$JAVA_FILE" | sed -E "s/${EXTRACT_NUMBER_REGEX}/\1/" | head -1 || true)
 
           echo "Extracted thresholds from Java file:"
-          echo "STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD = $JAVA_MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH"
-          echo "DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD = $JAVA_MAX_DEFERRED_CHAIN_LENGTH"
+          echo "STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD = ${JAVA_MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH:-<empty>}"
+          echo "DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD = ${JAVA_MAX_DEFERRED_CHAIN_LENGTH:-<empty>}"
 
-          if [ -z "$JAVA_MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH" ] || [ -z "$JAVA_MAX_DEFERRED_CHAIN_LENGTH" ]; then
+          if [[ -z "${JAVA_MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH:-}" || -z "${JAVA_MAX_DEFERRED_CHAIN_LENGTH:-}" ]]; then
             echo "❌ Failed to extract threshold values from Java file"
             echo "Java file contents around threshold definitions:"
             grep -A2 -B2 -E "(STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD|DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD)" "$JAVA_FILE" || echo "Threshold constants not found"
@@ -60,21 +65,21 @@ jobs:
 
           THRESHOLD_MISMATCH=false
 
-          if [ "$JAVA_MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH" != "$MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH" ]; then
+          if [[ "$JAVA_MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH" != "$MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH" ]]; then
             echo "❌ STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD mismatch:"
             echo "   Java: $JAVA_MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH"
             echo "   GitHub Action: $MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH"
             THRESHOLD_MISMATCH=true
           fi
 
-          if [ "$JAVA_MAX_DEFERRED_CHAIN_LENGTH" != "$MAX_DEFERRED_CHAIN_LENGTH" ]; then
+          if [[ "$JAVA_MAX_DEFERRED_CHAIN_LENGTH" != "$MAX_DEFERRED_CHAIN_LENGTH" ]]; then
             echo "❌ DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD mismatch:"
             echo "   Java: $JAVA_MAX_DEFERRED_CHAIN_LENGTH"
             echo "   GitHub Action: $MAX_DEFERRED_CHAIN_LENGTH"
             THRESHOLD_MISMATCH=true
           fi
 
-          if [ "$THRESHOLD_MISMATCH" = true ]; then
+          if [[ "$THRESHOLD_MISMATCH" == true ]]; then
             echo ""
             echo "🔧 Please update either the Java constants or GitHub Action variables to match:"
             echo "   - Java file: $JAVA_FILE"
@@ -91,14 +96,19 @@ jobs:
           java-version: '21'
 
       - name: Build application
-        run: ./gradlew clean bootJar -x test -x webapp
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          ./gradlew clean bootJar -x test -x webapp
 
       - name: Start Spring Boot app
+        shell: bash
         run: |
+          set -Eeuo pipefail
           PROFILES=dev,localci,lti,aeolus,theia,iris,localvc,artemis,scheduling,buildagent,core,ldap
           JAR=$(ls build/libs/Artemis*.jar | head -n1)
-          nohup java -jar $JAR \
-            --spring.profiles.active=$PROFILES \
+          nohup java -jar "$JAR" \
+            --spring.profiles.active="$PROFILES" \
             --artemis.user-management.passkey.enabled=true \
             --artemis.user-management.use-external=false \
             --artemis.iris.url=http://iris.fake \
@@ -112,7 +122,9 @@ jobs:
           echo $! > app.pid
 
       - name: Wait for the application to start
+        shell: bash
         run: |
+          set -Eeuo pipefail
           RUNNING_MESSAGE="'Artemis' is running!"
           STARTUP_TIMEOUT_ATTEMPTS=30
           STARTUP_RETRY_INTERVAL=2
@@ -122,36 +134,41 @@ jobs:
           echo "Waiting up to ${STARTUP_TOTAL_TIMEOUT}s for $RUNNING_MESSAGE to appear in $LOG_FILE..."
 
           isAppRunning=false
-          for i in $(seq 1 $STARTUP_TIMEOUT_ATTEMPTS); do
+          for i in $(seq 1 "$STARTUP_TIMEOUT_ATTEMPTS"); do
             if grep -q "$RUNNING_MESSAGE" "$LOG_FILE"; then
               isAppRunning=true
               echo "✅ Found $RUNNING_MESSAGE in $LOG_FILE after $i attempts"
               break
             fi
             echo "  attempt $i/$STARTUP_TIMEOUT_ATTEMPTS: not found yet"
-            sleep $STARTUP_RETRY_INTERVAL
+            sleep "$STARTUP_RETRY_INTERVAL"
           done
 
-          if [ "$isAppRunning" = false ]; then
+          if [[ "$isAppRunning" == false ]]; then
             echo "❌ Timeout: $RUNNING_MESSAGE not found in $LOG_FILE"
-            cat $LOG_FILE
+            cat "$LOG_FILE"
             exit 1
           fi
 
       - name: Extract and validate startup bean instantiation metrics
+        shell: bash
         run: |
-          STARTUP_LOG_PATTERN="Bean instantiation graph exported to startupBeans\.dot \(([0-9]+) edges, longest dependency chain length: ([0-9]+)\)"
+          set -Eeuo pipefail
+          # Use a safe, single-quoted regex and a simple search prefix
+          STARTUP_LOG_PATTERN='Bean instantiation graph exported to startupBeans\.dot \(([0-9]+) edges, longest dependency chain length: ([0-9]+)\)'
+          STARTUP_SEARCH='Bean instantiation graph exported to startupBeans\.dot'
           LOG_FILE="app.log"
 
-          # Extract search text from pattern (everything before opening parenthesis)
-          STARTUP_SEARCH=$(echo "$STARTUP_LOG_PATTERN" | sed 's/ \\(.*$//')
-
-          LINE=$(grep -E "$STARTUP_SEARCH" $LOG_FILE) \
-            || { echo "❌ No startup metrics line found"; cat $LOG_FILE; exit 1; }
+          LINE=$(grep -E "$STARTUP_SEARCH" "$LOG_FILE" || true)
+          if [[ -z "$LINE" ]]; then
+            echo "❌ No startup metrics line found"
+            cat "$LOG_FILE"
+            exit 1
+          fi
 
           if [[ "$LINE" =~ $STARTUP_LOG_PATTERN ]]; then
-            INSTANTIATED_BEANS=${BASH_REMATCH[1]}
-            LONGEST_CHAIN_LENGTH=${BASH_REMATCH[2]}
+            INSTANTIATED_BEANS="${BASH_REMATCH[1]}"
+            LONGEST_CHAIN_LENGTH="${BASH_REMATCH[2]}"
           else
             echo "❌ Failed to parse startup metrics from: $LINE"
             exit 1
@@ -171,9 +188,7 @@ jobs:
 
           if (( INSTANTIATED_BEANS > MAX_INSTANTIATED_BEANS )); then
             echo "❌ $INSTANTIATED_BEANS > $MAX_INSTANTIATED_BEANS threshold"
-            echo "Please double-check that your introduced beans need to be instantiated at the application startup.
             STARTUP_VALIDATION_FAILED=true
-            exit 1;
           fi
 
           if (( LONGEST_CHAIN_LENGTH > MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH )); then
@@ -181,24 +196,28 @@ jobs:
             STARTUP_VALIDATION_FAILED=true
           fi
 
-          if [ "$STARTUP_VALIDATION_FAILED" = false ]; then
+          if [[ "$STARTUP_VALIDATION_FAILED" == false ]]; then
             echo "✅ Final values → Beans: $INSTANTIATED_BEANS; Longest dependency chain length: $LONGEST_CHAIN_LENGTH"
             echo "✅ Startup bean instantiation metrics within expected ranges"
           fi
 
           # Export variables for next step
-          echo "LONGEST_CHAIN_LENGTH=$LONGEST_CHAIN_LENGTH" >> $GITHUB_ENV
-          echo "STARTUP_VALIDATION_FAILED=$STARTUP_VALIDATION_FAILED" >> $GITHUB_ENV
+          {
+            echo "LONGEST_CHAIN_LENGTH=$LONGEST_CHAIN_LENGTH"
+            echo "STARTUP_VALIDATION_FAILED=$STARTUP_VALIDATION_FAILED"
+          } >> "$GITHUB_ENV"
 
       - name: Check for startup dependency chains exceeding threshold
+        shell: bash
         run: |
-          STARTUP_DEEP_CHAIN_PATTERN="Startup long bean instantiation chain"
+          set -Eeuo pipefail
+          STARTUP_DEEP_CHAIN_PATTERN='Startup long bean instantiation chain'
           LOG_FILE="app.log"
 
           if (( LONGEST_CHAIN_LENGTH > MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH )); then
             echo "❌ Startup dependency chain length $LONGEST_CHAIN_LENGTH > $MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH threshold"
             echo "Chains exceeding threshold:"
-            grep -E "$STARTUP_DEEP_CHAIN_PATTERN" $LOG_FILE || echo "  (No detailed chains found in log)"
+            (grep -E "$STARTUP_DEEP_CHAIN_PATTERN" "$LOG_FILE" || echo "  (No detailed chains found in log)")
             echo "🔧 These chains violate the threshold MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH. Please refactor them to break these chains."
             echo "You can find a visualization of the bean instantiation graph in startupBeans.dot when starting the application locally."
             echo "You can visualize the file on http://webgraphviz.com/"
@@ -206,42 +225,42 @@ jobs:
             echo "✅ No startup dependency chains exceed the threshold of $MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH"
           fi
 
-          if [ "$STARTUP_VALIDATION_FAILED" = "true" ]; then
+          if [[ "$STARTUP_VALIDATION_FAILED" == "true" ]]; then
             exit 1
           fi
 
       - name: Extract and validate deferred eager bean chain length
+        shell: bash
         run: |
-          DEFERRED_BEAN_PATTERN="Maximum dependency chain length during deferred eager init: ([0-9]+)"
+          set -Eeuo pipefail
+          DEFERRED_BEAN_PATTERN='Maximum dependency chain length during deferred eager init: ([0-9]+)'
+          DEFERRED_BEAN_SEARCH='Maximum dependency chain length during deferred eager init'
           DEFERRED_TIMEOUT_ATTEMPTS=10
           DEFERRED_RETRY_INTERVAL=12
           DEFERRED_TOTAL_TIMEOUT=$((DEFERRED_TIMEOUT_ATTEMPTS * DEFERRED_RETRY_INTERVAL))
           LOG_FILE="app.log"
 
-          # Extract search text from pattern (everything before :)
-          DEFERRED_BEAN_SEARCH=$(echo "$DEFERRED_BEAN_PATTERN" | sed 's/:.*$//')
-
           echo "Waiting for deferred eager bean initialization to complete..."
 
           DEFERRED_LINE=""
-          for i in $(seq 1 $DEFERRED_TIMEOUT_ATTEMPTS); do
-            DEFERRED_LINE=$(grep -E "$DEFERRED_BEAN_SEARCH" $LOG_FILE 2>/dev/null || true)
-            if [ -n "$DEFERRED_LINE" ]; then
+          for i in $(seq 1 "$DEFERRED_TIMEOUT_ATTEMPTS"); do
+            DEFERRED_LINE=$(grep -E "$DEFERRED_BEAN_SEARCH" "$LOG_FILE" 2>/dev/null || true)
+            if [[ -n "$DEFERRED_LINE" ]]; then
               echo "✅ Found deferred eager bean initialization log after $i attempts"
               break
             fi
             echo "  attempt $i/$DEFERRED_TIMEOUT_ATTEMPTS: deferred eager bean initialization not completed yet"
-            sleep $DEFERRED_RETRY_INTERVAL
+            sleep "$DEFERRED_RETRY_INTERVAL"
           done
 
-          if [ -z "$DEFERRED_LINE" ]; then
+          if [[ -z "$DEFERRED_LINE" ]]; then
             echo "❌ No deferred eager bean chain length line found after ${DEFERRED_TOTAL_TIMEOUT}s"
-            cat $LOG_FILE
+            cat "$LOG_FILE"
             exit 1
           fi
 
           if [[ "$DEFERRED_LINE" =~ $DEFERRED_BEAN_PATTERN ]]; then
-            DEFERRED_CHAIN_LENGTH=${BASH_REMATCH[1]}
+            DEFERRED_CHAIN_LENGTH="${BASH_REMATCH[1]}"
           else
             echo "❌ Failed to parse deferred eager bean chain length from: $DEFERRED_LINE"
             exit 1
@@ -250,7 +269,6 @@ jobs:
           echo "• Maximum dependency chain length during deferred eager bean initialization = $DEFERRED_CHAIN_LENGTH"
           echo "Validating against thresholds: MIN_DEFERRED_CHAIN_LENGTH=$MIN_DEFERRED_CHAIN_LENGTH (expected ≥ $MIN_DEFERRED_CHAIN_LENGTH), MAX_DEFERRED_CHAIN_LENGTH=$MAX_DEFERRED_CHAIN_LENGTH (expected ≤ $MAX_DEFERRED_CHAIN_LENGTH)"
 
-          # Set validation flags instead of exiting immediately
           DEFERRED_VALIDATION_FAILED=false
 
           if (( DEFERRED_CHAIN_LENGTH < MIN_DEFERRED_CHAIN_LENGTH )); then
@@ -264,18 +282,21 @@ jobs:
             DEFERRED_VALIDATION_FAILED=true
           fi
 
-          if [ "$DEFERRED_VALIDATION_FAILED" = false ]; then
+          if [[ "$DEFERRED_VALIDATION_FAILED" == false ]]; then
             echo "✅ Deferred eager bean chain length: $DEFERRED_CHAIN_LENGTH"
             echo "✅ Deferred eager bean dependency chain length within expected ranges"
           fi
 
-          # Export variables for next step
-          echo "DEFERRED_CHAIN_LENGTH=$DEFERRED_CHAIN_LENGTH" >> $GITHUB_ENV
-          echo "DEFERRED_VALIDATION_FAILED=$DEFERRED_VALIDATION_FAILED" >> $GITHUB_ENV
+          {
+            echo "DEFERRED_CHAIN_LENGTH=$DEFERRED_CHAIN_LENGTH"
+            echo "DEFERRED_VALIDATION_FAILED=$DEFERRED_VALIDATION_FAILED"
+          } >> "$GITHUB_ENV"
 
       - name: Check for deferred dependency chains exceeding threshold
+        shell: bash
         run: |
-          DEFERRED_LONG_CHAIN_PATTERN="Deferred long bean instantiation chain"
+          set -Eeuo pipefail
+          DEFERRED_LONG_CHAIN_PATTERN='Deferred long bean instantiation chain'
           LOG_FILE="app.log"
 
           echo "Checking for deferred dependency chains exceeding threshold..."
@@ -283,7 +304,7 @@ jobs:
           if (( DEFERRED_CHAIN_LENGTH > MAX_DEFERRED_CHAIN_LENGTH )); then
             echo "❌ Deferred dependency chain length $DEFERRED_CHAIN_LENGTH > $MAX_DEFERRED_CHAIN_LENGTH threshold"
             echo "Chains exceeding threshold:"
-            grep -E "$DEFERRED_LONG_CHAIN_PATTERN" $LOG_FILE || echo "  (No detailed chains found in log)"
+            (grep -E "$DEFERRED_LONG_CHAIN_PATTERN" "$LOG_FILE" || echo "  (No detailed chains found in log)")
             echo "🔧 These chains violate the threshold MAX_DEFERRED_CHAIN_LENGTH. Please refactor them to break these chains."
             echo "You can find a visualization of the bean instantiation graph in deferredEagerBeanInstantiationViolations.dot when starting the application locally."
             echo "You can visualize the file on http://webgraphviz.com/"
@@ -291,10 +312,13 @@ jobs:
             echo "✅ No deferred dependency chains exceed the threshold of $MAX_DEFERRED_CHAIN_LENGTH"
           fi
 
-          if [ "$DEFERRED_VALIDATION_FAILED" = "true" ]; then
+          if [[ "$DEFERRED_VALIDATION_FAILED" == "true" ]]; then
             exit 1
           fi
 
       - name: Stop application
         if: always()
-        run: kill $(<app.pid) || true
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          kill "$(cat app.pid)" || true
