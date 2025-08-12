@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of, throwError } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseResetDialogComponent } from 'app/programming/manage/reset/dialog/programming-exercise-reset-dialog.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -32,8 +32,8 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
+                LocalStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(NgbActiveModal),
                 provideHttpClient(),
@@ -94,7 +94,12 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         });
 
         it('should not be called when there is an error in the reset response', fakeAsync(() => {
-            const errorResponse = throwError({ status: 500 });
+            const errorResponse = throwError(
+                () =>
+                    new HttpErrorResponse({
+                        status: 500,
+                    }),
+            );
             comp.programmingExerciseResetOptions = {
                 deleteParticipationsSubmissionsAndResults: true,
                 recreateBuildPlans: false,

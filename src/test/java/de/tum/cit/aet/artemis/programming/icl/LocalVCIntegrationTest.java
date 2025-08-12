@@ -25,7 +25,6 @@ import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -178,7 +177,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         someRepository.resetLocalRepo();
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFetchPush_offlineIDENotAllowed() {
@@ -230,27 +228,25 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         localVCLocalCITestService.testPushReturnsError(solutionRepository.workingCopyGitRepo, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUserTriesToDeleteBranch() throws GitAPIException {
+    void testUserTriesToDeleteBranch() throws GitAPIException, URISyntaxException {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // ":" prefix in the refspec means delete the branch in the remote repository.
         RefSpec refSpec = new RefSpec(":refs/heads/" + defaultBranch);
-        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
         PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRefSpecs(refSpec).setRemote(repositoryUri).call().iterator().next();
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot delete a branch.");
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStudentTriesToForcePush() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
 
         RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, repositoryUri, student1Login, projectKey1, assignmentRepositorySlug);
 
@@ -259,16 +255,15 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     // TODO add test for force push over ssh, which should work
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorTriesToForcePushOverHttp() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        String assignmentRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, assignmentRepositorySlug);
-        String templateRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, templateRepositorySlug);
-        String solutionRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, solutionRepositorySlug);
-        String testsRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, testsRepositorySlug);
+        String assignmentRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, assignmentRepositorySlug);
+        String templateRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, templateRepositorySlug);
+        String solutionRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, solutionRepositorySlug);
+        String testsRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, testsRepositorySlug);
 
         // Force push to assignment repository is allowed for instructors
         RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, assignmentRepoUri, instructor1Login, projectKey1, assignmentRepositorySlug);
@@ -316,7 +311,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         return remoteRefUpdate;
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesNewBranch() throws Exception {
@@ -324,7 +318,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         // Users cannot create new branches.
         assignmentRepository.workingCopyGitRepo.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
-        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
 
         // Push the new branch.
         PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch"))
@@ -341,8 +335,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         String login1 = "ab123git";
         String login2 = "git123ab";
 
-        LocalVCRepositoryUri studentAssignmentRepositoryUri1 = new LocalVCRepositoryUri(projectKey1, projectKey1.toLowerCase() + "-" + login1, localVCBaseUri);
-        LocalVCRepositoryUri studentAssignmentRepositoryUri2 = new LocalVCRepositoryUri(projectKey1, projectKey1.toLowerCase() + "-" + login2, localVCBaseUri);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri1 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase() + "-" + login1);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri2 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase() + "-" + login2);
 
         // assert that the URIs are correct
         assertThat(studentAssignmentRepositoryUri1.getURI().toString()).isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1 + ".git");
@@ -353,7 +347,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2);
     }
 
-    @Disabled
     @Test
     void testFilesLargerThan10MbAreRejected() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -364,7 +357,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assignmentRepository.workingCopyGitRepo.add().addFilepattern("large-file.txt").call();
         GitService.commit(assignmentRepository.workingCopyGitRepo).setMessage("Add large file").call();
 
-        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
         PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRemote(repositoryUri)
                 .setRefSpecs(new RefSpec("refs/heads/" + defaultBranch + ":refs/heads/" + defaultBranch)).call().iterator().next();
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();

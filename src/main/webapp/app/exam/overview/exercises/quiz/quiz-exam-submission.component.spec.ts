@@ -32,7 +32,8 @@ import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 
 describe('QuizExamSubmissionComponent', () => {
-    MockInstance.scope();
+    MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as SecuredImageComponent));
+
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
     let component: QuizExamSubmissionComponent;
 
@@ -67,8 +68,6 @@ describe('QuizExamSubmissionComponent', () => {
             ],
             providers: [provideRouter([]), MockProvider(ArtemisQuizService)],
         }).compileComponents();
-
-        MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as SecuredImageComponent));
 
         fixture = TestBed.createComponent(QuizExamSubmissionComponent);
         component = fixture.componentInstance;
