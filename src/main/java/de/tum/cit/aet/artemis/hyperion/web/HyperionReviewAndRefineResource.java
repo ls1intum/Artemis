@@ -24,7 +24,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewAndRefineService;
+import de.tum.cit.aet.artemis.hyperion.service.ConsistencyCheckService;
+import de.tum.cit.aet.artemis.hyperion.service.ProblemStatementRewriteService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -50,14 +51,17 @@ public class HyperionReviewAndRefineResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final HyperionReviewAndRefineService reviewAndRefineService;
+    private final ConsistencyCheckService consistencyCheckService;
+
+    private final ProblemStatementRewriteService rewriteService;
 
     public HyperionReviewAndRefineResource(UserRepository userRepository, CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            HyperionReviewAndRefineService reviewAndRefineService) {
+            ConsistencyCheckService consistencyCheckService, ProblemStatementRewriteService rewriteService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.reviewAndRefineService = reviewAndRefineService;
+        this.consistencyCheckService = consistencyCheckService;
+        this.rewriteService = rewriteService;
     }
 
     /**
@@ -81,7 +85,7 @@ public class HyperionReviewAndRefineResource {
         log.info("Performing consistency check for exercise {} by user {}", exerciseId, user.getLogin());
 
         try {
-            ConsistencyCheckResponseDTO result = reviewAndRefineService.checkConsistency(user, programmingExercise);
+            ConsistencyCheckResponseDTO result = consistencyCheckService.checkConsistency(user, programmingExercise);
             log.info("Consistency check completed successfully for exercise {}", exerciseId);
             return ResponseEntity.ok(result);
         }
@@ -141,7 +145,7 @@ public class HyperionReviewAndRefineResource {
         log.info("Rewriting problem statement for course {} by user {}", courseId, user.getLogin());
 
         try {
-            ProblemStatementRewriteResponseDTO result = reviewAndRefineService.rewriteProblemStatement(user, course, requestDTO.problemStatementText());
+            ProblemStatementRewriteResponseDTO result = rewriteService.rewriteProblemStatement(user, course, requestDTO.problemStatementText());
             log.info("Problem statement rewrite completed successfully for course {}", courseId);
             return ResponseEntity.ok(result);
         }

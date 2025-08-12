@@ -25,7 +25,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.Severity;
-import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewAndRefineService;
+import de.tum.cit.aet.artemis.hyperion.service.ConsistencyCheckService;
+import de.tum.cit.aet.artemis.hyperion.service.ProblemStatementRewriteService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -47,7 +48,10 @@ class HyperionReviewAndRefineResourceTest {
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @MockBean
-    private HyperionReviewAndRefineService service;
+    private ConsistencyCheckService consistencyCheckService;
+
+    @MockBean
+    private ProblemStatementRewriteService rewriteService;
 
     @Test
     void checkExerciseConsistency_returnsOkWithBody() throws Exception {
@@ -61,7 +65,7 @@ class HyperionReviewAndRefineResourceTest {
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId)).thenReturn(exercise);
 
         var issues = List.of(new ConsistencyIssueDTO(Severity.MEDIUM, "METHOD_PARAMETER_MISMATCH", "desc", "fix", List.of()));
-        when(service.checkConsistency(eq(user), eq(exercise))).thenReturn(new ConsistencyCheckResponseDTO(issues, true, "Found 1 consistency issue(s)"));
+        when(consistencyCheckService.checkConsistency(eq(user), eq(exercise))).thenReturn(new ConsistencyCheckResponseDTO(issues, true, "Found 1 consistency issue(s)"));
 
         mockMvc.perform(post("/api/hyperion/exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk()).andExpect(jsonPath("$.hasIssues").value(true))
                 .andExpect(jsonPath("$.issues[0].category").value("METHOD_PARAMETER_MISMATCH"));
@@ -78,7 +82,7 @@ class HyperionReviewAndRefineResourceTest {
         course.setId(courseId);
         when(courseRepository.findByIdElseThrow(courseId)).thenReturn(course);
 
-        when(service.rewriteProblemStatement(eq(user), eq(course), eq("Original"))).thenReturn(new ProblemStatementRewriteResponseDTO("Rewritten", true));
+        when(rewriteService.rewriteProblemStatement(eq(user), eq(course), eq("Original"))).thenReturn(new ProblemStatementRewriteResponseDTO("Rewritten", true));
 
         String body = "{\"problemStatementText\":\"Original\"}";
         mockMvc.perform(post("/api/hyperion/courses/{courseId}/problem-statement-rewrite", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
