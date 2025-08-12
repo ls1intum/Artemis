@@ -17,7 +17,6 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { UserService } from 'app/core/user/shared/user.service';
 import dayjs from 'dayjs/esm';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 
 describe('TutorSuggestionComponent', () => {
@@ -51,9 +50,7 @@ describe('TutorSuggestionComponent', () => {
         await TestBed.configureTestingModule({
             imports: [TutorSuggestionComponent, MockComponent(IrisBaseChatbotComponent)],
             providers: [
-                { provide: LocalStorageService, useValue: {} },
                 { provide: TranslateService, useValue: {} },
-                { provide: SessionStorageService, useValue: {} },
                 { provide: HttpClient, useValue: {} },
                 { provide: AccountService, useValue: accountMock },
                 { provide: UserService, useValue: mockUserService },
