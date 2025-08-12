@@ -49,7 +49,10 @@ class HyperionReviewAndRefineServiceTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         this.chatClient = ChatClient.create(chatModel);
-        this.service = new HyperionReviewAndRefineService(repositoryService, programmingExerciseRepository, chatClient);
+        var templateService = new PromptTemplateService();
+        var checkService = new ConsistencyCheckService(repositoryService, programmingExerciseRepository, chatClient, templateService);
+        var rewriteService = new ProblemStatementRewriteService(chatClient, templateService);
+        this.service = new HyperionReviewAndRefineService(checkService, rewriteService);
     }
 
     @Test
