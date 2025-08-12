@@ -122,6 +122,12 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
             Collections.reverse(forward);
             log.debug("Longest instantiation chain: {}", String.join(" → ", forward));
         }
+        // Clear startup data so deferred-eager init is measured independently
+        exceedingThresholdChains.clear();
+        deferredInstantiationExceedingThresholdChains.clear();
+        edges.clear();
+        maxCallStackSize.set(0);
+        longestChain.set(new ArrayList<>());
     }
 
     /**
