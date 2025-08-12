@@ -6,13 +6,13 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
 import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
@@ -42,10 +42,12 @@ public class SlideUnhideScheduleService {
     }
 
     /**
-     * Method called when the application is ready.
+     * Method called when the bean has been created.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      * It loads all hidden slides and schedules tasks to unhide them at their expiration time.
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void onApplicationReady() {
         scheduleAllHiddenSlides();
     }

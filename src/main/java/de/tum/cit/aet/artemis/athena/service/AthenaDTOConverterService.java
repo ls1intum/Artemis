@@ -93,6 +93,9 @@ public class AthenaDTOConverterService {
      * @return *SubmissionDTO for Athena
      */
     public SubmissionBaseDTO ofSubmission(long exerciseId, Submission submission) {
+        if (submission == null) {
+            return null;
+        }
         if (submission instanceof TextSubmission textSubmission) {
             return TextSubmissionDTO.of(exerciseId, textSubmission);
         }

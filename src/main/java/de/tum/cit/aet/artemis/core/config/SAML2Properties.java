@@ -1,23 +1,23 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SAML2;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.annotation.PostConstruct;
+
 import org.springframework.beans.factory.BeanInitializationException;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 /**
  * This class describes SAML2 properties. Those values are specified in application-saml2.yml and automatically mapped to the below Java attributes. Admins can override the values
  * in application-prod.yml
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_SAML2)
 @Component
 @ConfigurationProperties(Constants.PROFILE_SAML2)
 public class SAML2Properties {
@@ -43,7 +43,12 @@ public class SAML2Properties {
 
     private Set<ExtractionPattern> valueExtractionPatterns = Set.of();
 
-    @EventListener(ApplicationReadyEvent.class)
+    /**
+     * Validates SAML2 configuration properties on bean creation
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
+     */
+    @PostConstruct
     private void init() {
         final Set<String> extractionKeys = new HashSet<>();
 

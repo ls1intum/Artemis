@@ -15,6 +15,7 @@ import org.hamcrest.text.MatchesPattern;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 
 /**
@@ -115,7 +117,8 @@ public class AeolusRequestMockProvider {
     }
 
     public void mockAuthenticatedRequest(String uri, String token) {
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andExpect(header("Authorization", "Bearer " + token)).andRespond(withSuccess());
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andExpect(header(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token))
+                .andRespond(withSuccess());
     }
 
     /**

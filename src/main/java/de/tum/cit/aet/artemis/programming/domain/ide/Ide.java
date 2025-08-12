@@ -46,7 +46,7 @@ public class Ide extends DomainObject {
         return deepLink;
     }
 
-    public static Ide[] PREDEFINED_IDES = { new Ide("VS Code", "vscode://vscode.git/clone?url={cloneUrl}"),
+    public static Ide[] PREDEFINED_IDES = { new Ide("VS Code", "vscode://vscode.git/clone?url={cloneUrl}"), new Ide("Cursor", "cursor://vscode.git/clone?url={cloneUrl}"),
             new Ide("IntelliJ", "jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo={cloneUrl}"),
             new Ide("PyCharm", "jetbrains://pycharm/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo={cloneUrl}"),
             new Ide("CLion", "jetbrains://clion/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo={cloneUrl}"), new Ide("XCode", "xcode://clone?repo={cloneUrl}"), };

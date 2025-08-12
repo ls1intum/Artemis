@@ -12,6 +12,7 @@ import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, Sideba
 import { LtiService } from 'app/shared/service/lti.service';
 import { forkJoin } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -50,6 +51,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     private courseOverviewService = inject(CourseOverviewService);
     private ltiService = inject(LtiService);
     private lectureService = inject(LectureService);
+    private sessionStorageService = inject(SessionStorageService);
 
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
@@ -151,8 +153,8 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         this.courseOverviewService.setSidebarCollapseState('lecture', this.isCollapsed);
     }
 
-    getLastSelectedLecture(): string | null {
-        return sessionStorage.getItem('sidebar.lastSelectedItem.lecture.byCourse.' + this.courseId);
+    getLastSelectedLecture(): string | undefined {
+        return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.lecture.byCourse.' + this.courseId);
     }
 
     onSubRouteDeactivate() {

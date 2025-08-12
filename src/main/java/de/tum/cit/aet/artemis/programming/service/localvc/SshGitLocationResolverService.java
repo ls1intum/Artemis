@@ -55,7 +55,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         }
 
         final var gitCommand = args[0];
-        final var localVCRepositoryUri = new LocalVCRepositoryUri(Path.of(repositoryPath), localVCBaseUri);
+        final var localVCRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, Path.of(repositoryPath));
         final var projectKey = localVCRepositoryUri.getProjectKey();
         final var repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
         ProgrammingExercise exercise;

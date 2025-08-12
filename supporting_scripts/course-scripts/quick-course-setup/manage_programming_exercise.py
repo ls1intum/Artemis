@@ -1,10 +1,17 @@
 import sys
+import re
 from logging_config import logging
 from typing import Dict, Any
 from requests import Session
-from randomize_results_after import run_cleanup
 
 exercise_Ids: list[int] = []
+
+def sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
+    """Sanitize the exercise name to create a valid short name."""
+    valid_short_name = re.sub(r'[^a-zA-Z0-9]', '', exercise_name)
+    if not valid_short_name or not valid_short_name[0].isalpha():
+        valid_short_name = f"A{valid_short_name}"
+    return f"{valid_short_name}{short_name_index}"
 
 def create_programming_exercise(session: Session, course_id: int, server_url: str, exercises_to_create: int, exercise_name: str) -> None:
     """Create multiple programming exercises for the course."""
@@ -13,10 +20,12 @@ def create_programming_exercise(session: Session, course_id: int, server_url: st
         headers: Dict[str, str] = {"Content-Type": "application/json"}
         short_name_index: int = i + 1
 
+        short_name = sanitize_exercise_name(exercise_name, short_name_index)
+
         default_programming_exercise: Dict[str, Any] = {
             "type": "programming",
-            "title": f"{exercise_name} {short_name_index}",
-            "shortName": f"ExProgEx{short_name_index}",
+            "title": f"{exercise_name}",
+            "shortName": short_name,
             "course": {"id": course_id},
             "programmingLanguage": "JAVA",
             "projectType": "PLAIN_GRADLE",

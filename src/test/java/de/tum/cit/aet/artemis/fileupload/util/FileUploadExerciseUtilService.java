@@ -77,6 +77,21 @@ public class FileUploadExerciseUtilService {
     private ExerciseTestRepository exerciseRepository;
 
     /**
+     * Creates and saves a FileUploadExercise.
+     *
+     * @param course            The Course to which the exercise belongs
+     * @param startDate         The release date of the TextExercise
+     * @param releaseDate       The release date of the TextExercise
+     * @param dueDate           The due date of the TextExercise
+     * @param assessmentDueDate The assessment due date of the TextExercise
+     * @return The created TextExercise
+     */
+    public FileUploadExercise addFileUploadExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(releaseDate, startDate, dueDate, assessmentDueDate, "pdf", course);
+        return exerciseRepository.save(fileUploadExercise);
+    }
+
+    /**
      * Creates and saves a new Course and an Exam with one mandatory FileUploadExercise.
      *
      * @param startDateBeforeCurrentTime True, if the start date of the created Exam with one mandatory FileUploadExercis should be before the current time, needed for

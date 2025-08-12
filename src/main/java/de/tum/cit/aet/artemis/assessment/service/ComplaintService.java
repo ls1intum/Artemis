@@ -306,7 +306,7 @@ public class ComplaintService {
             throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "complaint" : "more feedback request ") + " for an uncompleted result.",
                     ENTITY_NAME, "complaintOrRequestMoreFeedbackNotCompleted");
         }
-        if (!Boolean.TRUE.equals(result.isRated()) && !exercise.getAllowComplaintsForAutomaticAssessments()) {
+        if (!result.isRated() && !exercise.getAllowComplaintsForAutomaticAssessments()) {
             throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "complaint" : "more feedback request ")
                     + " for an unrated result with no complaints on automatic assessment.", ENTITY_NAME, "complaintOrRequestMoreFeedbackNotGraded");
         }

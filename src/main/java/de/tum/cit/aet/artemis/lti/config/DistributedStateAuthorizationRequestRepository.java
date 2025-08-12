@@ -8,21 +8,19 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import com.hazelcast.core.HazelcastInstance;
-
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 
 /**
  * A specialized {@link AuthorizationRequestRepository} that uses Hazelcast to store OAuth2 authorization requests.
@@ -43,6 +41,7 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
 
     private final HazelcastInstance hazelcastInstance;
 
+    @Nullable
     private Map<String, OAuth2AuthorizationRequest> store;
 
     /**
@@ -53,11 +52,6 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
 
     DistributedStateAuthorizationRequestRepository(HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
-    }
-
-    @EventListener(FullStartupEvent.class)
-    void init() {
-        this.store = hazelcastInstance.getMap("ltiStateAuthorizationRequestStore");
     }
 
     public void setLimitIpAddress(boolean limitIpAddress) {
@@ -72,7 +66,7 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
         if (stateParameter == null) {
             return null;
         }
-        OAuth2AuthorizationRequest oAuth2AuthorizationRequest = this.store.get(stateParameter);
+        OAuth2AuthorizationRequest oAuth2AuthorizationRequest = getStore().get(stateParameter);
         if (oAuth2AuthorizationRequest == null) {
             return null;
         }
@@ -102,9 +96,9 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
         else {
             String state = authorizationRequest.getState();
             Assert.hasText(state, "authorizationRequest.state cannot be empty");
-            this.store.put(state, authorizationRequest);
+            getStore().put(state, authorizationRequest);
             // Remove request after timeout
-            delayedExecutor.execute(() -> this.store.remove(state));
+            delayedExecutor.execute(() -> getStore().remove(state));
         }
     }
 
@@ -114,9 +108,16 @@ public class DistributedStateAuthorizationRequestRepository implements Authoriza
         OAuth2AuthorizationRequest authorizationRequest = this.loadAuthorizationRequest(request);
         if (authorizationRequest != null) {
             String stateParameter = request.getParameter("state");
-            this.store.remove(stateParameter);
+            getStore().remove(stateParameter);
         }
 
         return authorizationRequest;
+    }
+
+    private Map<String, OAuth2AuthorizationRequest> getStore() {
+        if (this.store == null) {
+            this.store = hazelcastInstance.getMap("ltiStateAuthorizationRequestStore");
+        }
+        return this.store;
     }
 }

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static java.time.ZonedDateTime.now;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -35,11 +37,16 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
+import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -526,5 +533,88 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         return newQuizExercise;
+    }
+
+    /**
+     * Retrieves a {@link QuizExerciseCalendarEventDTO} for each {@link QuizExercise} associated to the given courseId.
+     * Each DTO encapsulates the quizMode, title, releaseDate, dueDate, quizBatches and duration of the respective QuizExercise.
+     * <p>
+     * The method then derives a set of {@link CalendarEventDTO}s from the DTOs. Whether events are included in the result
+     * depends on the quizMode of the given exercise and whether the logged-in user is a student of the {@link Course}.
+     *
+     * @param courseId      the ID of the course
+     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @return the set of results
+     */
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromQuizExercises(long courseId, boolean userIsStudent) {
+        Set<QuizExerciseCalendarEventDTO> daos = quizExerciseRepository.getQuizExerciseCalendarEventDAOsForCourseId(courseId);
+        return daos.stream().flatMap(dao -> deriveCalendarEventDTOs(dao, userIsStudent).stream()).collect(Collectors.toSet());
+    }
+
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(QuizExerciseCalendarEventDTO dao, boolean userIsStudent) {
+        if (dao.quizMode() == QuizMode.SYNCHRONIZED) {
+            return deriveCalendarEventDTOForSynchronizedQuizExercise(dao, userIsStudent).map(Set::of).orElseGet(Collections::emptySet);
+        }
+        else {
+            return deriveCalendarEventDTOsForIndividualAndBatchedQuizExercises(dao, userIsStudent);
+        }
+    }
+
+    /**
+     * Derives one event represents the working time period of the {@link QuizExercise} represented by the given DTO.
+     * <p>
+     * The events are only derived given that either the exercise is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     * <p>
+     * Context: <br>
+     * The startDate and dueDate properties of {@link QuizExercise}s in {@code QuizMode.SYNCHRONIZED} are always null. Instead, such quizzes have exactly one {@link QuizBatch}
+     * for which the startTime property is set. The end of the quiz can be calculated by adding the duration property of the exercise to the startTime of the batch.
+     *
+     * @param dto           the DAO from which to derive the event
+     * @param userIsStudent indicates whether the logged-in user is a student of the course related to the exercise
+     * @return one event representing the working time period of the exercise
+     */
+    private Optional<CalendarEventDTO> deriveCalendarEventDTOForSynchronizedQuizExercise(QuizExerciseCalendarEventDTO dto, boolean userIsStudent) {
+        if (userIsStudent && dto.releaseDate() != null && ZonedDateTime.now().isBefore(dto.releaseDate())) {
+            return Optional.empty();
+        }
+
+        QuizBatch synchronizedBatch = dto.quizBatch();
+        if (synchronizedBatch == null || synchronizedBatch.getStartTime() == null || dto.duration() == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.START_AND_END_DATE, dto.title(), synchronizedBatch.getStartTime(),
+                synchronizedBatch.getStartTime().plusSeconds(dto.duration()), null, null));
+    }
+
+    /**
+     * Derives one event for start/end of the duration during which the user can choose to participate in the {@link QuizExercise} represented by the given DAO.
+     * <p>
+     * The events are only derived given that either the exercise is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     * <p>
+     * Context: <br>
+     * For {@link QuizExercise}s in {@code QuizMode.INDIVIDUAL} the user can decide when to start the quiz himself.
+     * For {@link QuizExercise}s in {@code QuizMode.BATCHED} the user can join a quiz by using a password. The instructor can then start the quiz manually.
+     * For both modes, the period in which the quiz can be held may be constrained by releaseDate (defining a start of the period) or dueDate (defining an end of the period).
+     * The dueDate and startDate can be set independent of each other.
+     *
+     * @param dao           the DAO from which to derive the events
+     * @param userIsStudent indicates whether the logged-in user is a student of the course associated to the quizExercise
+     * @return the derived events
+     */
+    private Set<CalendarEventDTO> deriveCalendarEventDTOsForIndividualAndBatchedQuizExercises(QuizExerciseCalendarEventDTO dao, boolean userIsStudent) {
+        Set<CalendarEventDTO> events = new HashSet<>();
+        boolean userIsCourseStaff = !userIsStudent;
+        if (userIsCourseStaff || dao.releaseDate() == null || dao.releaseDate().isBefore(now())) {
+            if (dao.releaseDate() != null) {
+                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE, dao.title(), dao.releaseDate(), null, null, null));
+            }
+            if (dao.dueDate() != null) {
+                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE, dao.title(), dao.dueDate(), null, null, null));
+            }
+        }
+        return events;
     }
 }

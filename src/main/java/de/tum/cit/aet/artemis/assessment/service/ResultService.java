@@ -423,7 +423,7 @@ public class ResultService {
      */
     public Map<Long, String> getLogsAvailabilityForResults(Long participationId) {
         Map<Long, String> logsAvailability = new HashMap<>();
-        Set<ResultBuildJob> buildJobs = buildJobRepository.findBuildJobIdsForParticipationId(participationId);
+        Set<ResultBuildJob> buildJobs = buildJobRepository.findBuildJobIdsWithResultForParticipationId(participationId);
         ProgrammingExerciseNamesDTO names = null;
         for (var buildJob : buildJobs) {
             // all build jobs belong to the same programming exercise, so we can fetch the names only once

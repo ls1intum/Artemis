@@ -21,10 +21,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +33,6 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.util.Pair;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
@@ -169,6 +169,8 @@ public class ScheduleService {
      * Initializes and schedules periodic logging and cleanup tasks for scheduled exercises,
      * participation tasks, and slide tasks. This method is triggered automatically when the application
      * is fully started.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * Every 15 seconds, this method:
@@ -179,7 +181,7 @@ public class ScheduleService {
      * <li>Cleans up empty entries from all task maps to avoid memory leaks.</li>
      * </ul>
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void startup() {
         taskScheduler.scheduleAtFixedRate(() -> {
             log.debug("Number of scheduled Exercise Tasks: {}", scheduledExerciseTasks.values().stream().mapToLong(Set::size).sum());

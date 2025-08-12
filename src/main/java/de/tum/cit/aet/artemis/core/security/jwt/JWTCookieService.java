@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.security.jwt;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.JWT_COOKIE_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.security.jwt.JWTFilter.JWT_COOKIE_NAME;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;

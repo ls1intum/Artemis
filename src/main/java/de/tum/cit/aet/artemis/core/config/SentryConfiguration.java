@@ -2,12 +2,13 @@ package de.tum.cit.aet.artemis.core.config;
 
 import java.util.Optional;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 
 import io.sentry.Sentry;
 import tech.jhipster.config.JHipsterConstants;
@@ -29,8 +30,10 @@ public class SentryConfiguration {
 
     /**
      * init sentry with the correct package name and Artemis version
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void init() {
         if (sentryDsn.isEmpty() || sentryDsn.get().isEmpty()) {
             log.info("Sentry is disabled: Provide a DSN to enable Sentry.");

@@ -48,6 +48,7 @@ import de.jplag.typescript.TypeScriptLanguage;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
@@ -317,7 +318,15 @@ public class ProgrammingPlagiarismDetectionService {
         }
     }
 
-    private Language getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
+    /**
+     * * Returns the JPlag programming language based on the programming exercise's programming language.
+     *
+     * @param programmingExercise The programming exercise to get the programming language for
+     * @return the JPlag Language object corresponding to the programming exercise's programming language
+     * @throws BadRequestAlertException if the programming language is not supported for plagiarism check
+     */
+    @NotNull
+    public static Language getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
         return switch (programmingExercise.getProgrammingLanguage()) {
             case C -> new CLanguage();
             case C_PLUS_PLUS -> new CPPLanguage();
@@ -357,7 +366,7 @@ public class ProgrammingPlagiarismDetectionService {
 
     private Optional<Repository> cloneTemplateRepository(ProgrammingExercise programmingExercise, Path targetPath) {
         try {
-            var templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
+            var templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath, false);
             gitService.resetToOriginHead(templateRepo); // start with clean state
             return Optional.of(templateRepo);
         }
@@ -440,7 +449,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @param minimumTokenSize    The minimum number of tokens required
      * @return true if the repository meets the minimum size requirement or if there are any errors
      */
-    private boolean meetsMinimumSize(Repository repository, ProgrammingExercise programmingExercise, int minimumTokenSize) {
+    public static boolean meetsMinimumSize(Repository repository, ProgrammingExercise programmingExercise, int minimumTokenSize) {
         try {
             Path repoPath = repository.getLocalPath();
             if (!Files.exists(repoPath) || !Files.isDirectory(repoPath)) {
@@ -460,7 +469,7 @@ public class ProgrammingPlagiarismDetectionService {
 
                 int totalTokenCount = 0;
                 for (Path path : relevantFiles) {
-                    totalTokenCount = countTokensInFile(path, minimumTokenSize, totalTokenCount);
+                    totalTokenCount = FileUtil.countTokensInFile(path, minimumTokenSize, totalTokenCount);
                     if (totalTokenCount >= minimumTokenSize) {
                         // Return true as soon as the minimum token size is reached
                         return true;
@@ -475,38 +484,6 @@ public class ProgrammingPlagiarismDetectionService {
             // Check for plagiarism if there is an error reading the repository
             log.warn("Failed to check repository token count {}: {}", repository.getLocalPath(), e.getMessage());
             return true;
-        }
-    }
-
-    /**
-     * Counts the number of tokens in a single file.
-     * Returns minimumTokenSize if there's an error reading the file. This includes the file for plagiarism check
-     *
-     * @param path The path to the file to count tokens in
-     * @return The number of tokens in the file, or minimumTokenSize if there's an error
-     */
-    private int countTokensInFile(Path path, int minimumTokenSize, int totalTokenCount) {
-        try {
-            String content = Files.readString(path);
-            // Split the content into tokens using a regex that matches whitespace and common programming symbols.
-            // This set of delimiters is chosen because it covers the most common token boundaries in programming languages.
-            String[] tokens = content.split("[\\s\\n\\r\\t{}();,=+\\-*/<>!&|\\[\\]]+");
-
-            for (String token : tokens) {
-                // Count non-empty tokens
-                if (!token.trim().isEmpty()) {
-                    totalTokenCount++;
-                    if (totalTokenCount >= minimumTokenSize) {
-                        // Return totalTokenCount as soon as the minimum token size is reached
-                        break;
-                    }
-                }
-            }
-            return totalTokenCount;
-        }
-        catch (IOException e) {
-            log.warn("Failed to read file {}: {}", path, e.getMessage());
-            return minimumTokenSize;
         }
     }
 }

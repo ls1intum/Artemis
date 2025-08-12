@@ -32,6 +32,10 @@ import liquibase.integration.spring.SpringLiquibase;
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
 
+/**
+ * Configuration class to control liquibase behavior
+ * We don't make it lazy as it's important that it's instantiated during startup.
+ */
 @Profile(PROFILE_CORE)
 @Configuration
 @ConditionalOnProperty(name = "spring.liquibase.enabled", havingValue = "true")

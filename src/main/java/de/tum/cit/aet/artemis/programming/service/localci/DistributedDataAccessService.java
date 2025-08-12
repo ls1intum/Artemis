@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.annotation.Nullable;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -350,5 +352,24 @@ public class DistributedDataAccessService {
      */
     public boolean noDataMemberInClusterAvailable() {
         return getClusterMembers().allMatch(Member::isLiteMember);
+    }
+
+    /**
+     * Retrieves the build agent status for the local member.
+     *
+     * @return the status of the local build agent, or {@code null} if the local member is not registered as a build agent
+     */
+    @Nullable
+    public BuildAgentInformation.BuildAgentStatus getLocalBuildAgentStatus() {
+        try {
+            BuildAgentInformation localAgentInfo = getDistributedBuildAgentInformation().get(getLocalMemberAddress());
+            if (localAgentInfo == null) {
+                return null;
+            }
+            return localAgentInfo.status();
+        }
+        catch (HazelcastInstanceNotActiveException e) {
+            return null;
+        }
     }
 }

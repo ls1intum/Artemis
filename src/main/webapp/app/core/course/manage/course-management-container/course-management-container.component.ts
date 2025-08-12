@@ -19,6 +19,7 @@ import {
     faSync,
     faTable,
     faTimes,
+    faTrash,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -31,7 +32,6 @@ import { CourseSidebarItemService } from 'app/core/course/shared/services/sideba
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { TutorialGroupsChecklistComponent } from 'app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
@@ -52,6 +52,7 @@ import { CourseConversationsComponent } from 'app/communication/shared/course-co
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -72,22 +73,44 @@ import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course
         CourseTitleBarComponent,
         DeleteButtonDirective,
         HasAnyAuthorityDirective,
+        FaIconComponent,
     ],
 })
 export class CourseManagementContainerComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
-    private eventManager = inject(EventManager);
-    private featureToggleService = inject(FeatureToggleService);
-    private sidebarItemService = inject(CourseSidebarItemService);
-    private courseAdminService = inject(CourseAdminService);
+    private readonly eventManager = inject(EventManager);
+    private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly sidebarItemService = inject(CourseSidebarItemService);
+    private readonly courseAdminService = inject(CourseAdminService);
+
+    protected readonly faTimes = faTimes;
+    protected readonly faEye = faEye;
+    protected readonly faWrench = faWrench;
+    protected readonly faTable = faTable;
+    protected readonly faFlag = faFlag;
+    protected readonly faListAlt = faListAlt;
+    protected readonly faChartBar = faChartBar;
+    protected readonly faClipboard = faClipboard;
+    protected readonly faSync = faSync;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faChevronLeft = faChevronLeft;
+    protected readonly faQuestion = faQuestion;
+    protected readonly faTrash = faTrash;
+
+    protected readonly ButtonSize = ButtonSize;
 
     private eventSubscriber: Subscription;
     private featureToggleSub: Subscription;
     private courseSub?: Subscription;
     private urlSubscription?: Subscription;
+    private routeSubscription?: Subscription;
+
     private learningPathsActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
     studentViewLink = signal<string[]>([]);
+
+    removePadding = false;
 
     // we cannot use signals here because the child component doesn't expect it
     dialogErrorSource = new Subject<string>();
@@ -111,28 +134,16 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         | undefined
     >(undefined);
 
-    // Icons
-    faTimes = faTimes;
-    faEye = faEye;
-    faWrench = faWrench;
-    faTable = faTable;
-    faFlag = faFlag;
-    faListAlt = faListAlt;
-    faChartBar = faChartBar;
-    faClipboard = faClipboard;
-    faSync = faSync;
-    faCircleNotch = faCircleNotch;
-    faChevronRight = faChevronRight;
-    faChevronLeft = faChevronLeft;
-    faQuestion = faQuestion;
-
-    protected readonly ButtonSize = ButtonSize;
-
     async ngOnInit() {
         this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
             this.checkIfSettingsPage();
+        });
+
+        this.routeSubscription = this.router.events.subscribe(() => {
+            // we do not want to have the padding to the left and right during test runs, see https://github.com/ls1intum/Artemis/pull/11235
+            this.removePadding = this.router.url.includes('test-runs') && this.router.url.includes('conduction');
         });
 
         this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
@@ -374,31 +385,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.featureToggleSub?.unsubscribe();
         this.urlSubscription?.unsubscribe();
         this.courseSub?.unsubscribe();
-    }
-
-    private getExistingSummaryEntries(): EntitySummary {
-        const numberOfExercisesPerType = new Map<ExerciseType, number>();
-        this.course()?.exercises?.forEach((exercise) => {
-            if (exercise.type === undefined) {
-                return;
-            }
-            const oldValue = numberOfExercisesPerType.get(exercise.type) ?? 0;
-            numberOfExercisesPerType.set(exercise.type, oldValue + 1);
-        });
-
-        const numberStudents = this.course()?.numberOfStudents ?? 0;
-        const numberTutors = this.course()?.numberOfTeachingAssistants ?? 0;
-        const numberEditors = this.course()?.numberOfEditors ?? 0;
-        const numberInstructors = this.course()?.numberOfInstructors ?? 0;
-        const isTestCourse = this.course()?.testCourse;
-
-        return {
-            'artemisApp.course.delete.summary.numberStudents': numberStudents,
-            'artemisApp.course.delete.summary.numberTutors': numberTutors,
-            'artemisApp.course.delete.summary.numberEditors': numberEditors,
-            'artemisApp.course.delete.summary.numberInstructors': numberInstructors,
-            'artemisApp.course.delete.summary.isTestCourse': isTestCourse,
-        };
+        this.routeSubscription?.unsubscribe();
     }
 
     fetchCourseDeletionSummary(): Observable<EntitySummary> {
@@ -407,19 +394,23 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             return of({});
         }
 
-        return this.courseAdminService.getDeletionSummary(courseId).pipe(map((response) => (response.body ? this.combineSummary(response.body) : {})));
+        return this.courseAdminService.getDeletionSummary(courseId).pipe(map((response) => (response.body ? this.combineFetchedSummaryWithPresentValues(response.body) : {})));
     }
 
-    private combineSummary(summary: CourseDeletionSummaryDTO) {
+    private combineFetchedSummaryWithPresentValues(summary: CourseDeletionSummaryDTO) {
         return {
-            ...this.getExistingSummaryEntries(),
+            'artemisApp.course.delete.summary.isTestCourse': this.course()?.testCourse,
+            'artemisApp.course.delete.summary.numberStudents': summary.numberOfStudents,
+            'artemisApp.course.delete.summary.numberTutors': summary.numberOfTutors,
+            'artemisApp.course.delete.summary.numberEditors': summary.numberOfEditors,
+            'artemisApp.course.delete.summary.numberInstructors': summary.numberOfInstructors,
             'artemisApp.course.delete.summary.numberExams': summary.numberExams,
             'artemisApp.course.delete.summary.numberLectures': summary.numberLectures,
             'artemisApp.course.delete.summary.numberProgrammingExercises': summary.numberProgrammingExercises,
+            'artemisApp.course.delete.summary.numberModelingExercises': summary.numberModelingExercises,
+            'artemisApp.course.delete.summary.numberQuizExercises': summary.numberQuizExercises,
             'artemisApp.course.delete.summary.numberTextExercises': summary.numberTextExercises,
             'artemisApp.course.delete.summary.numberFileUploadExercises': summary.numberFileUploadExercises,
-            'artemisApp.course.delete.summary.numberQuizExercises': summary.numberQuizExercises,
-            'artemisApp.course.delete.summary.numberModelingExercises': summary.numberModelingExercises,
             'artemisApp.course.delete.summary.numberBuilds': summary.numberOfBuilds,
             'artemisApp.course.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
             'artemisApp.course.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static java.time.ZonedDateTime.now;
 
-import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -23,14 +22,15 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
@@ -145,10 +145,10 @@ public class AutomaticProgrammingExerciseCleanupService {
 
     private void deleteLocalRepositoryByUriString(String uri) {
         try {
-            VcsRepositoryUri vcsRepositoryUrl = new VcsRepositoryUri(uri);
+            LocalVCRepositoryUri vcsRepositoryUrl = new LocalVCRepositoryUri(uri);
             gitService.deleteLocalRepository(vcsRepositoryUrl);
         }
-        catch (URISyntaxException e) {
+        catch (LocalVCInternalException e) {
             log.error("Cannot create URI for repositoryUri: {}", uri, e);
         }
     }

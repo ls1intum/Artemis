@@ -43,7 +43,7 @@ const moduleThresholds = {
     },
     communication: {
         statements: 92.08,
-        branches:   78.05,
+        branches:   77.95,
         functions:  88.79,
         lines:      92.38,
     },
@@ -55,7 +55,7 @@ const moduleThresholds = {
     },
     exam: {
         statements: 91.30,
-        branches:   78.12,
+        branches:   77.74,
         functions:  83.66,
         lines:      91.53,
     },

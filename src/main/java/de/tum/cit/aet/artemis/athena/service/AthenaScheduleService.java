@@ -9,17 +9,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -54,7 +53,12 @@ public class AthenaScheduleService {
         this.athenaSubmissionSendingService = athenaSubmissionSendingService;
     }
 
-    @EventListener(FullStartupEvent.class)
+    /**
+     * Schedule tasks for exercises
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
+     */
+    @PostConstruct
     public void startup() {
         // schedule the task after the application has started to avoid delaying the start of the application
         taskScheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(ATHENA_SCHEDULE_DELAY_SEC));

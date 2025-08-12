@@ -6,8 +6,6 @@ import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.s
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading-system/grading-key/grading-key-table.component';
@@ -41,7 +39,7 @@ describe('GradingKeyOverviewComponent', () => {
             imports: [
                 GradingKeyOverviewComponent,
                 MockComponent(GradingKeyTableComponent),
-                MockComponent(FaIconComponent),
+                FaIconComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
                 MockPipe(SafeHtmlPipe),
@@ -55,7 +53,6 @@ describe('GradingKeyOverviewComponent', () => {
                 MockProvider(CourseStorageService),
                 MockProvider(ScoresStorageService),
                 MockProvider(ArtemisNavigationUtilService),
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         })
             .compileComponents()

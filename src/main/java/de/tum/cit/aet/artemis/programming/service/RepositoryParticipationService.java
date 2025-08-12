@@ -81,6 +81,6 @@ public class RepositoryParticipationService {
         var repositoryUri = programmingParticipation.getVcsRepositoryUri();
         String branch = programmingParticipation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch()
                 : programmingExerciseRepository.findBranchByExerciseId(programmingParticipation.getExercise().getId());
-        return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch);
+        return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch, false);
     }
 }

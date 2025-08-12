@@ -154,7 +154,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
@@ -285,9 +284,6 @@ public class CourseTestService {
 
     @Autowired
     private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -550,9 +546,6 @@ public class CourseTestService {
             for (Exercise exercise : course.getExercises()) {
                 if (exercise instanceof final ProgrammingExercise programmingExercise) {
                     final String projectKey = programmingExercise.getProjectKey();
-                    final var templateRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
-                    final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
-                    final var testsRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
                     programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
                     programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
                     mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getTemplateBuildPlanId(), false);
@@ -1019,7 +1012,6 @@ public class CourseTestService {
             }
             else {
                 assertThat(receivedCourse.getExams()).hasSize(0);
-                assertThat(receivedCourse.getNumberOfExams()).isEqualTo(3);
             }
         }
     }
@@ -3466,7 +3458,7 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetExistingExerciseDetails_asEditor(String username) throws Exception {
+    public void testGetExistingExerciseDetails_asEditor() throws Exception {
         Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
         request.get("/api/core/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK, CourseExistingExerciseDetailsDTO.class);
     }

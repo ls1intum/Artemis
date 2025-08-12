@@ -15,6 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('SystemNotificationManagementUpdateComponent', () => {
     let updateComponentFixture: ComponentFixture<SystemNotificationManagementUpdateComponent>;
@@ -29,7 +30,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule],
+            imports: [ReactiveFormsModule, FaIconComponent],
             declarations: [SystemNotificationManagementUpdateComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

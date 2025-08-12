@@ -60,6 +60,17 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
     Set<TutorialGroup> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
+            SELECT DISTINCT tutorialGroup.id
+            FROM TutorialGroup tutorialGroup
+                JOIN tutorialGroup.course course
+                LEFT JOIN tutorialGroup.registrations registration
+                LEFT JOIN registration.student student
+                LEFT JOIN tutorialGroup.teachingAssistant teachingAssistant
+            WHERE (student.id = :userId OR teachingAssistant.id = :userId) AND (course.id = :courseId)
+            """)
+    Set<Long> findTutorialGroupIdsWhereUserParticipatesForCourseId(@Param("courseId") long courseId, @Param("userId") long userId);
+
+    @Query("""
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
                 LEFT JOIN FETCH tutorialGroup.tutorialGroupChannel

@@ -11,7 +11,6 @@ import java.util.Set;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -55,10 +54,6 @@ public class LectureRepositoryApi extends AbstractLectureApi {
 
     public long countByCourseId(long courseId) {
         return lectureRepository.countByCourse_Id(courseId);
-    }
-
-    public Set<CourseContentCountDTO> countVisibleLectures(Set<Long> courseIds, ZonedDateTime now) {
-        return lectureRepository.countVisibleLectures(courseIds, now);
     }
 
     public String getLectureTitle(long lectureId) {

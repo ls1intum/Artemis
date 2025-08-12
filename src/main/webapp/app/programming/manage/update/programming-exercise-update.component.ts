@@ -54,6 +54,8 @@ import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
 import { FileService } from 'app/shared/service/file.service';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -91,6 +93,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly aeolusService = inject(AeolusService);
+    private readonly calendarEventService = inject(CalendarEventService);
+    private readonly localStorageService = inject(LocalStorageService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -212,9 +216,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         effect(
             function initializeEditMode() {
-                const editModeRetrievedFromLocalStorage = localStorage.getItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-                if (editModeRetrievedFromLocalStorage) {
-                    this.isSimpleMode.set(editModeRetrievedFromLocalStorage === 'true');
+                const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+                if (editModeRetrievedFromLocalStorage !== undefined) {
+                    this.isSimpleMode.set(editModeRetrievedFromLocalStorage);
                 } else {
                     const DEFAULT_EDIT_MODE_IS_SIMPLE_MODE = true;
                     this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
@@ -785,6 +789,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
+        this.calendarEventService.refresh();
     }
 
     private onSaveError(error: HttpErrorResponse) {
@@ -903,7 +908,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     switchEditMode = () => {
         this.isSimpleMode.update((isSimpleMode) => !isSimpleMode);
-        localStorage.setItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, JSON.stringify(this.isSimpleMode()));
+        this.localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, this.isSimpleMode());
     };
 
     /**

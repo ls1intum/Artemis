@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -82,4 +83,13 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
                 AND clp.course.id = l.course.id
             """)
     Optional<LearningPath> findWithEagerUserAndLearnerProfileById(@Param("learningPathId") long learningPathId);
+
+    @Query("""
+            SELECT lp
+            FROM LearningPath lp
+            WHERE lp.course.id = :courseId
+                AND lp.user.deleted = FALSE
+                AND lp.course.studentGroupName MEMBER OF lp.user.groups
+            """)
+    List<LearningPath> findAllByCourseIdForEnrolledStudents(@Param("courseId") long courseId);
 }

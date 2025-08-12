@@ -181,6 +181,23 @@ public class TextExerciseUtilService {
     }
 
     /**
+     * Creates and saves a TextExercise with 10 achievable points and 0 bonus points.
+     *
+     * @param course            The Course to which the exercise belongs
+     * @param startDate         The release date of the TextExercise
+     * @param releaseDate       The release date of the TextExercise
+     * @param dueDate           The due date of the TextExercise
+     * @param assessmentDueDate The assessment due date of the TextExercise
+     * @return The created TextExercise
+     */
+    public TextExercise createIndividualTextExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, startDate, dueDate, assessmentDueDate, course);
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(0.0);
+        return exerciseRepository.save(textExercise);
+    }
+
+    /**
      * Creates and saves a TextExercise with 10 achievable points and 0 bonus points for a team.
      *
      * @param course            The Course to which the TextExercise belongs

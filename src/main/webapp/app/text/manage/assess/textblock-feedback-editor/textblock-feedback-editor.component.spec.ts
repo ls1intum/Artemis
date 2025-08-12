@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
@@ -11,8 +12,6 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { ChangeDetectorRef } from '@angular/core';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -25,6 +24,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { provideHttpClient } from '@angular/common/http';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 describe('TextBlockFeedbackEditorComponent', () => {
     let component: TextBlockFeedbackEditorComponent;
@@ -35,7 +36,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), MockDirective(NgbTooltip)],
+            imports: [TranslateModule.forRoot(), MockDirective(NgbTooltip), FaIconComponent],
             declarations: [
                 TextBlockFeedbackEditorComponent,
                 AssessmentCorrectionRoundBadgeComponent,
@@ -48,9 +49,9 @@ describe('TextBlockFeedbackEditorComponent', () => {
             providers: [
                 MockProvider(ChangeDetectorRef),
                 { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -81,37 +82,37 @@ describe('TextBlockFeedbackEditorComponent', () => {
     });
 
     it('should show delete button for empty feedback only', () => {
-        let button = compiled.querySelector('.close fa-icon[ng-reflect-icon="[object Object]"]');
-        let confirm = compiled.querySelector('.close jhi-confirm-icon');
+        let button = compiled.querySelector('#dismiss-icon');
+        let confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeTruthy();
         expect(confirm).toBeFalsy();
 
         component.feedback.credits = 1;
         fixture.detectChanges();
-        button = compiled.querySelector('.close fa-icon[ng-reflect-icon="[object Object]"]');
-        confirm = compiled.querySelector('.close jhi-confirm-icon');
+        button = compiled.querySelector('#dismiss-icon');
+        confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.detailText = 'Lorem Ipsum';
         fixture.detectChanges();
-        button = compiled.querySelector('.close fa-icon[ng-reflect-icon="[object Object]"]');
-        confirm = compiled.querySelector('.close jhi-confirm-icon');
+        button = compiled.querySelector('#dismiss-icon');
+        confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.credits = 0;
         fixture.detectChanges();
-        button = compiled.querySelector('.close fa-icon[ng-reflect-icon="[object Object]"]');
-        confirm = compiled.querySelector('.close jhi-confirm-icon');
+        button = compiled.querySelector('#dismiss-icon');
+        confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.detailText = '';
         fixture.detectChanges();
 
-        button = compiled.querySelector('.close fa-icon[ng-reflect-icon="[object Object]"]');
-        confirm = compiled.querySelector('.close jhi-confirm-icon');
+        button = compiled.querySelector('#dismiss-icon');
+        confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeTruthy();
         expect(confirm).toBeFalsy();
     });

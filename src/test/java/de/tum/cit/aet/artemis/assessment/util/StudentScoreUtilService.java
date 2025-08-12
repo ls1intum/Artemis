@@ -69,7 +69,7 @@ public class StudentScoreUtilService {
         studentScore.setLastResult(result);
         studentScore.setLastScore(result.getScore());
         studentScore.setLastPoints(exercise.getMaxPoints() * result.getScore() / 100);
-        if (Boolean.TRUE.equals(result.isRated())) {
+        if (result.isRated()) {
             studentScore.setLastRatedResult(result);
             studentScore.setLastRatedScore(result.getScore());
             studentScore.setLastRatedPoints(exercise.getMaxPoints() * result.getScore() / 100);

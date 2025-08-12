@@ -23,6 +23,7 @@ import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
@@ -62,7 +63,7 @@ describe('ExamStudentsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgxDatatableModule],
+            imports: [NgxDatatableModule, FaIconComponent],
             declarations: [
                 ExamStudentsComponent,
                 MockComponent(UsersImportButtonComponent),

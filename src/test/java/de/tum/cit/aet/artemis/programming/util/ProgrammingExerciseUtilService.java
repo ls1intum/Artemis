@@ -158,6 +158,22 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
+     * Generates a programming exercise for the given course. Configures only the exercise's schedule, no other properties.
+     *
+     * @param course            The course of the exercise.
+     * @param releaseDate       The release date of the exercise.
+     * @param startDate         The start date of the exercise.
+     * @param dueDate           The due date of the exercise.
+     * @param assessmentDueDate The assessment due date of the exercise.
+     * @return The newly generated programming exercise.
+     */
+    public ProgrammingExercise createProgrammingExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
+            ZonedDateTime assessmentDueDate) {
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(releaseDate, startDate, dueDate, assessmentDueDate, course);
+        return programmingExerciseRepository.save(programmingExercise);
+    }
+
+    /**
      * Create an example programming exercise
      *
      * @return the created programming exercise
@@ -852,7 +868,7 @@ public class ProgrammingExerciseUtilService {
         doReturn(true).when(mockRepository).isValidFile(any());
         doReturn(testRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
         // Mock Git service operations
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString());
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString(), anyBoolean());
         doNothing().when(gitService).resetToOriginHead(any());
         doReturn(Path.of("repo.zip")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(true));
         doReturn(Path.of("repo")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(false));

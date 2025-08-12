@@ -67,30 +67,12 @@ public class ProfileService {
     }
 
     /**
-     * Checks if the local VCS or CI profile is active
-     *
-     * @return true if the local VCS or CI profile is active, false otherwise
-     */
-    public boolean isLocalVCorCIActive() {
-        return isLocalVCActive() || isLocalCIActive();
-    }
-
-    /**
      * Checks if the local CI profile is active
      *
      * @return true if the local CI profile is active, false otherwise
      */
     public boolean isLocalCIActive() {
         return isProfileActive(Constants.PROFILE_LOCALCI);
-    }
-
-    /**
-     * Checks if the local VC profile is active
-     *
-     * @return true if the local VC profile is active, false otherwise
-     */
-    public boolean isLocalVCActive() {
-        return isProfileActive(Constants.PROFILE_LOCALVC);
     }
 
     // Sub-system profiles

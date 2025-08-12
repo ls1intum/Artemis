@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * This component allows registering certain entries containing functionality that gets executed on application startup. The entries must extend {@link MigrationEntry}.
+ * It should definitely be executed on startup, so we make it non-lazy.
  */
 @Component
 @Profile(PROFILE_CORE_AND_SCHEDULING)

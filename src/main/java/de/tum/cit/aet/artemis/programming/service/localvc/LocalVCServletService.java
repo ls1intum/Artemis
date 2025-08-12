@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -113,7 +114,7 @@ public class LocalVCServletService {
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Value("${artemis.version-control.url}")
-    public void setLocalVCBaseUrl(URI localVCBaseUri) {
+    public void setLocalVCBaseUri(URI localVCBaseUri) {
         LocalVCServletService.localVCBaseUri = localVCBaseUri;
     }
 
@@ -125,11 +126,6 @@ public class LocalVCServletService {
 
     @Value("${artemis.version-control.build-agent-git-password}")
     private String buildAgentGitPassword;
-
-    /**
-     * Name of the header containing the authorization information.
-     */
-    public static final String AUTHORIZATION_HEADER = "Authorization";
 
     public static final String BUILD_USER_NAME = "buildjob_user";
 
@@ -218,7 +214,7 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
 
-        String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         // The first request does not contain an authorizationHeader, the client expects this response
         if (authorizationHeader == null) {
@@ -284,7 +280,7 @@ public class LocalVCServletService {
         if (optionalParticipation.isPresent()) {
             ProgrammingExerciseParticipation participation = optionalParticipation.get();
             var ipAddress = request.getRemoteAddr();
-            var authenticationMechanism = resolveHTTPSAuthenticationMechanism(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER), user);
+            var authenticationMechanism = resolveHTTPSAuthenticationMechanism(request.getHeader(HttpHeaders.AUTHORIZATION), user);
 
             String finalCommitHash = getCommitHash(localVCRepositoryUri);
             RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH : RepositoryActionType.PULL;
@@ -337,7 +333,7 @@ public class LocalVCServletService {
             }
             case AuthenticationContext.Request request -> {
                 try {
-                    return resolveHTTPSAuthenticationMechanism(request.request().getHeader(LocalVCServletService.AUTHORIZATION_HEADER), user);
+                    return resolveHTTPSAuthenticationMechanism(request.request().getHeader(HttpHeaders.AUTHORIZATION), user);
                 }
                 catch (LocalVCAuthException ignored) {
                     return AuthenticationMechanism.AUTH_HEADER_MISSING;
@@ -495,12 +491,13 @@ public class LocalVCServletService {
     }
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
-        var urlString = request.getRequestURL().toString().replace("/info/refs", "");
-        return new LocalVCRepositoryUri(Path.of(urlString), localVCBaseUri);
+        String path = request.getRequestURI();
+        String normalizedPath = path.replaceFirst("/(info/refs|git-(upload|receive)-pack)$", "");
+        return new LocalVCRepositoryUri(localVCBaseUri, Path.of(normalizedPath));
     }
 
     private LocalVCRepositoryUri parseRepositoryUri(Path repositoryPath) {
-        return new LocalVCRepositoryUri(repositoryPath, localVCBaseUri);
+        return new LocalVCRepositoryUri(localVCBaseUri, repositoryPath);
     }
 
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
@@ -567,6 +564,19 @@ public class LocalVCServletService {
         checkAccessForRepository(participation, user, exercise, repositoryActionType);
 
         return Optional.of(participation);
+    }
+
+    /**
+     * Retrieves a user based on the provided authorization header.
+     *
+     * @param authorizationHeader the authorization header containing Basic credentials
+     * @return the {@link User}
+     * @throws LocalVCAuthException if the user could not be found or if the authorization header is invalid
+     */
+    public User getUserByAuthHeader(String authorizationHeader) throws LocalVCAuthException {
+        UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+        String username = usernameAndPassword.username();
+        return userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
     }
 
     /**
@@ -814,7 +824,7 @@ public class LocalVCServletService {
 
     private static LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
-            return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUri);
+            return new LocalVCRepositoryUri(localVCBaseUri, repositoryFolderPath);
         }
         catch (LocalVCInternalException e) {
             // This means something is misconfigured.
@@ -937,14 +947,14 @@ public class LocalVCServletService {
         revCommit = repository.parseCommit(objectId);
 
         // Get the branch name.
-        Git git = new Git(repository);
-        // Look in the 'refs/heads' namespace for a ref that points to the commit.
-        // The returned map contains at most one entry where the key is the commit id and the value denotes the branch which points to it.
-        Map<ObjectId, String> objectIdBranchNameMap = git.nameRev().addPrefix("refs/heads").add(objectId).call();
-        if (!objectIdBranchNameMap.isEmpty()) {
-            branch = objectIdBranchNameMap.get(objectId);
+        try (Git git = new Git(repository)) {
+            // Look in the 'refs/heads' namespace for a ref that points to the commit.
+            // The returned map contains at most one entry where the key is the commit id and the value denotes the branch which points to it.
+            Map<ObjectId, String> objectIdBranchNameMap = git.nameRev().addPrefix("refs/heads").add(objectId).call();
+            if (!objectIdBranchNameMap.isEmpty()) {
+                branch = objectIdBranchNameMap.get(objectId);
+            }
         }
-        git.close();
 
         if (revCommit == null || branch == null) {
             throw new VersionControlException("Something went wrong retrieving the revCommit or the branch.");
@@ -1020,7 +1030,7 @@ public class LocalVCServletService {
      */
     public void createVCSAccessLogForFailedAuthenticationAttempt(HttpServletRequest servletRequest) {
         try {
-            String authorizationHeader = servletRequest.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+            String authorizationHeader = servletRequest.getHeader(HttpHeaders.AUTHORIZATION);
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
             AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;
