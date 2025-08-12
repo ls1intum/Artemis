@@ -57,7 +57,6 @@ public class LayoutStrategy extends DomainObject {
     @Column(name = "parameters", columnDefinition = "json", nullable = false)
     private String parametersJson;
 
-    /* Getters & Setters */
     public String getName() {
         return name;
     }
@@ -97,5 +96,4 @@ public class LayoutStrategy extends DomainObject {
     public void setParametersJson(String parametersJson) {
         this.parametersJson = parametersJson;
     }
-    /* Getters & Setters End */
 }
