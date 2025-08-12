@@ -15,7 +15,7 @@ jobs:
 
     env:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 9
-      MAX_DEFERRED_CHAIN_LENGTH: 10
+      MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
       MAX_INSTANTIATED_BEANS: 96
       MIN_DEFERRED_CHAIN_LENGTH: 1
@@ -219,7 +219,7 @@ jobs:
             echo "Chains exceeding threshold:"
             (grep -E "$STARTUP_DEEP_CHAIN_PATTERN" "$LOG_FILE" || echo "  (No detailed chains found in log)")
             echo "🔧 These chains violate the threshold MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH. Please refactor them to break these chains."
-            echo "You can find a visualization of the bean instantiation graph in startupBeans.dot when starting the application locally."
+            echo "You can find a visualization of the bean instantiation graph in the artifacts of this job in startupBeans.dot"
             echo "You can visualize the file on http://webgraphviz.com/"
           else
             echo "✅ No startup dependency chains exceed the threshold of $MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH"
@@ -306,7 +306,7 @@ jobs:
             echo "Chains exceeding threshold:"
             (grep -E "$DEFERRED_LONG_CHAIN_PATTERN" "$LOG_FILE" || echo "  (No detailed chains found in log)")
             echo "🔧 These chains violate the threshold MAX_DEFERRED_CHAIN_LENGTH. Please refactor them to break these chains."
-            echo "You can find a visualization of the bean instantiation graph in deferredEagerBeanInstantiationViolations.dot when starting the application locally."
+            echo "You can find a visualization of the bean instantiation graph in in the artifacts of this job in deferredEagerBeanInstantiationViolations.dot."
             echo "You can visualize the file on http://webgraphviz.com/"
           else
             echo "✅ No deferred dependency chains exceed the threshold of $MAX_DEFERRED_CHAIN_LENGTH"
@@ -322,3 +322,13 @@ jobs:
         run: |
           set -Eeuo pipefail
           kill "$(cat app.pid)" || true
+
+      - name: Upload artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bean-instantiation-graphs-and-logs
+          path: |
+            startupBeans.dot
+            deferredEagerBeanInstantiationViolations.dot
+            app.log

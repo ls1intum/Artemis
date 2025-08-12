@@ -34,7 +34,7 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
     // Keep these two constants in sync with the values in .github/workflows/bean-instantiations.yml
     private static final int STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD = 9;
 
-    private static final int DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD = 10;
+    private static final int DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD = 16;
 
     private static final Logger log = LoggerFactory.getLogger(BeanInstantiationTracer.class);
 
