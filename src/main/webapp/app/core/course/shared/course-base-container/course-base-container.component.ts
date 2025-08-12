@@ -35,6 +35,7 @@ import { CourseAccessStorageService } from '../services/course-access-storage.se
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 /**
  * Base class that contains common functionality for course container components.
@@ -54,6 +55,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected profileService = inject(ProfileService);
     protected ltiService = inject(LtiService);
     protected courseSidebarService = inject(CourseSidebarService);
+    protected localStorageService = inject(LocalStorageService);
 
     ngUnsubscribe = new Subject<void>();
     protected closeSidebarEventSubscription: Subscription;
@@ -347,13 +349,13 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     }
 
     getCollapseStateFromStorage() {
-        const storedCollapseState: string | null = localStorage.getItem('navbar.collapseState');
-        if (storedCollapseState) this.isNavbarCollapsed.set(JSON.parse(storedCollapseState));
+        const storedCollapseState: boolean | undefined = this.localStorageService.retrieve<boolean>('navbar.collapseState');
+        if (storedCollapseState !== undefined) this.isNavbarCollapsed.set(storedCollapseState);
     }
 
     toggleCollapseState() {
         this.isNavbarCollapsed.update((value) => !value);
-        localStorage.setItem('navbar.collapseState', JSON.stringify(this.isNavbarCollapsed()));
+        this.localStorageService.store<boolean>('navbar.collapseState', this.isNavbarCollapsed());
     }
 
     /**
