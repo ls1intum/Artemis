@@ -62,7 +62,7 @@ public class QuizTrainingLeaderboardService {
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
         long studentLeagueId;
-        if (authorizationCheckService.isOnlyStudentInCourse(course, user)) {
+        if (authorizationCheckService.isStudentInCourse(course, user)) {
             studentLeagueId = getLeagueForUser(userId, courseId);
         }
         else {
@@ -126,7 +126,7 @@ public class QuizTrainingLeaderboardService {
             double easinessFactor = data.getEasinessFactor();
 
             // Example progress-based formula (adjust weights as you like)
-            double questionDelta = (lastScore * 10) + (repetition * 5) + (box * 2) + sessionCount + (Math.max(0, 2.5 - easinessFactor) * 4);
+            double questionDelta = lastScore * ((lastScore * 2) + (repetition * 3) + (box * 2) + sessionCount + (Math.max(0, 2.5 - easinessFactor) * 4));
 
             delta += (int) Math.round(questionDelta);
         }
@@ -195,7 +195,7 @@ public class QuizTrainingLeaderboardService {
         }
     }
 
-    @Scheduled(cron = "0 0 3 * * MON")
+    @Scheduled(cron = "0 09 17 * * MON")
     public void weeklyLeaderboardRebuild() {
         List<Course> allCourses = courseRepository.findAll();
         for (Course course : allCourses) {
