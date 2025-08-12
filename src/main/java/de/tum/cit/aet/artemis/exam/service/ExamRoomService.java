@@ -131,9 +131,9 @@ public class ExamRoomService {
 
                 // extract the filename - remove the folder path (if existent) and remove the trailing '.json'
                 // Math.max(0, entryName.lastIndexOf('/') + 1); === entryName.lastIndexOf('/') + 1;
-                int roomNumberStartIdx = entryName.lastIndexOf('/') + 1;
-                int roomNumberEndIdx = entryName.lastIndexOf(".json");
-                String roomNumber = entryName.substring(roomNumberStartIdx, roomNumberEndIdx);
+                int roomNumberStartIndex = entryName.lastIndexOf('/') + 1;
+                int roomNumberEndIndex = entryName.lastIndexOf(".json");
+                String roomNumber = entryName.substring(roomNumberStartIndex, roomNumberEndIndex);
 
                 ExamRoomInput examRoomInput = objectMapper.readValue(zis.readAllBytes(), ExamRoomInput.class);
 
