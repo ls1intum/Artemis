@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.retry.NonTransientAiException;
+import org.springframework.ai.retry.TransientAiException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -84,8 +86,26 @@ public class HyperionReviewAndRefineResource {
             return ResponseEntity.ok(result);
         }
         catch (NetworkingException e) {
+            Throwable cause = e.getCause();
+            if (cause == null) {
+                // Chat client not configured or similar non-upstream condition
+                log.warn("Consistency check unavailable for exercise {}: {}", exerciseId, e.getMessage());
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+            }
+            if (cause instanceof TransientAiException) {
+                log.warn("Consistency check transient AI error for exercise {}: {}", exerciseId, cause.getMessage());
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+            }
+            if (cause instanceof NonTransientAiException) {
+                String msg = cause.getMessage() != null ? cause.getMessage() : "";
+                // Best-effort: if the upstream response hinted 429, surface it precisely; otherwise use 400
+                if (msg.contains("429")) {
+                    return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+                }
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
             log.error("Consistency check failed for exercise {}: {}", exerciseId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
         catch (Exception e) {
             log.error("Consistency check failed for exercise {}: {}", exerciseId, e.getMessage(), e);
@@ -126,8 +146,24 @@ public class HyperionReviewAndRefineResource {
             return ResponseEntity.ok(result);
         }
         catch (NetworkingException e) {
+            Throwable cause = e.getCause();
+            if (cause == null) {
+                log.warn("Rewrite unavailable for course {}: {}", courseId, e.getMessage());
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+            }
+            if (cause instanceof TransientAiException) {
+                log.warn("Rewrite transient AI error for course {}: {}", courseId, cause.getMessage());
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+            }
+            if (cause instanceof NonTransientAiException) {
+                String msg = cause.getMessage() != null ? cause.getMessage() : "";
+                if (msg.contains("429")) {
+                    return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+                }
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
             log.error("Problem statement rewrite failed for course {}: {}", courseId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
         catch (Exception e) {
             log.error("Problem statement rewrite failed for course {}: {}", courseId, e.getMessage(), e);

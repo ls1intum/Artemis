@@ -262,21 +262,10 @@ public class HyperionReviewAndRefineService {
     }
 
     private <T> T runAiCheckEntity(String checkName, String promptTemplate, Map<String, Object> input, Class<T> entityClass) {
-        try {
-            String formatted = promptTemplate.replace("{rendered_context}", String.valueOf(input.getOrDefault("rendered_context", ""))).replace("{programming_language}",
-                    String.valueOf(input.getOrDefault("programming_language", "")));
-            return chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.").user(formatted).call()
-                    .entity(entityClass);
-        }
-        catch (Exception e) {
-            log.error("{} consistency check failed: {}", checkName, e.getMessage());
-            try {
-                return entityClass.getDeclaredConstructor().newInstance();
-            }
-            catch (Exception ex) {
-                return null;
-            }
-        }
+        String formatted = promptTemplate.replace("{rendered_context}", String.valueOf(input.getOrDefault("rendered_context", ""))).replace("{programming_language}",
+                String.valueOf(input.getOrDefault("programming_language", "")));
+        return chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.").user(formatted).call()
+                .entity(entityClass);
     }
 
     private String buildStructuralPrompt() {
