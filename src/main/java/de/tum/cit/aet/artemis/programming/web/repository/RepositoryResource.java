@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
@@ -46,6 +45,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.web.repository.util.RepositoryExecutor;
 
@@ -104,7 +104,7 @@ public abstract class RepositoryResource {
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @return the repositoryUri.
      */
-    abstract VcsRepositoryUri getRepositoryUri(Long domainId);
+    abstract LocalVCRepositoryUri getRepositoryUri(Long domainId);
 
     /**
      * Check if the current user can access the given repository.
@@ -282,12 +282,10 @@ public abstract class RepositoryResource {
             repositoryService.commitChanges(repository, user);
             var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
 
-            // Trigger a build, and process the result. Only implemented for local CI.
+            // Trigger a build, and process the result.
             // For Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
-            if (profileService.isLocalVCorCIActive()) {
-                localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog);
-            }
+            localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -321,7 +319,7 @@ public abstract class RepositoryResource {
         }
 
         RepositoryStatusDTOType repositoryStatus;
-        VcsRepositoryUri repositoryUri = getRepositoryUri(domainId);
+        LocalVCRepositoryUri repositoryUri = getRepositoryUri(domainId);
 
         try {
             String branch = getOrRetrieveBranchOfDomainObject(domainId);

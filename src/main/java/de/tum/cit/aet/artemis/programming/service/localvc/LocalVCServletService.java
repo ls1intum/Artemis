@@ -116,7 +116,7 @@ public class LocalVCServletService {
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Value("${artemis.version-control.url}")
-    public void setLocalVCBaseUrl(URI localVCBaseUri) {
+    public void setLocalVCBaseUri(URI localVCBaseUri) {
         LocalVCServletService.localVCBaseUri = localVCBaseUri;
     }
 
@@ -493,12 +493,13 @@ public class LocalVCServletService {
     }
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
-        var urlString = request.getRequestURL().toString().replace("/info/refs", "");
-        return new LocalVCRepositoryUri(Path.of(urlString), localVCBaseUri);
+        String path = request.getRequestURI();
+        String normalizedPath = path.replaceFirst("/(info/refs|git-(upload|receive)-pack)$", "");
+        return new LocalVCRepositoryUri(localVCBaseUri, Path.of(normalizedPath));
     }
 
     private LocalVCRepositoryUri parseRepositoryUri(Path repositoryPath) {
-        return new LocalVCRepositoryUri(repositoryPath, localVCBaseUri);
+        return new LocalVCRepositoryUri(localVCBaseUri, repositoryPath);
     }
 
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
@@ -825,7 +826,7 @@ public class LocalVCServletService {
 
     private static LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
-            return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUri);
+            return new LocalVCRepositoryUri(localVCBaseUri, repositoryFolderPath);
         }
         catch (LocalVCInternalException e) {
             // This means something is misconfigured.

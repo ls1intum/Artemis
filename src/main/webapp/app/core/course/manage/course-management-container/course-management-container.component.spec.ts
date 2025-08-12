@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
@@ -8,7 +9,6 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 
 import { CourseSidebarComponent } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
@@ -45,8 +45,6 @@ import { CourseConversationsComponent } from 'app/communication/shared/course-co
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -57,6 +55,7 @@ import { CourseAccessStorageService } from 'app/core/course/shared/services/cour
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -141,6 +140,7 @@ describe('CourseManagementContainerComponent', () => {
     let featureToggleService: FeatureToggleService;
     let metisConversationService: MetisConversationService;
     let profileService: ProfileService;
+    let localStorageService: LocalStorageService;
     let router: Router;
     let route: ActivatedRoute;
 
@@ -189,8 +189,6 @@ describe('CourseManagementContainerComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -212,6 +210,7 @@ describe('CourseManagementContainerComponent', () => {
                 eventManager = TestBed.inject(EventManager);
                 featureToggleService = TestBed.inject(FeatureToggleService);
                 profileService = TestBed.inject(ProfileService);
+                localStorageService = TestBed.inject(LocalStorageService);
                 courseSidebarService = TestBed.inject(CourseSidebarService);
                 router = TestBed.inject(Router);
                 findSpy = jest.spyOn(courseService, 'find').mockReturnValue(
@@ -281,8 +280,8 @@ describe('CourseManagementContainerComponent', () => {
     afterEach(() => {
         component.ngOnDestroy();
         jest.restoreAllMocks();
-        localStorage.clear();
-        sessionStorage.clear();
+        localStorageService.clear();
+        TestBed.inject(SessionStorageService).clear();
     });
 
     it('should call necessary methods on init', async () => {
@@ -535,21 +534,21 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should get collapse state from localStorage on init', async () => {
-        localStorage.setItem('navbar.collapseState', 'true');
+        localStorageService.store<boolean>('navbar.collapseState', true);
 
         await component.ngOnInit();
 
         expect(component.isNavbarCollapsed()).toBeTrue();
 
-        localStorage.setItem('navbar.collapseState', 'false');
+        localStorageService.store<boolean>('navbar.collapseState', false);
 
         component.getCollapseStateFromStorage();
 
         expect(component.isNavbarCollapsed()).toBeFalse();
     });
 
-    it('should set isNavbarCollapsed to false by default if not in localStorage', async () => {
-        localStorage.removeItem('navbar.collapseState');
+    it('should set isNavbarCollapsed to false by default if not in localStorageService', async () => {
+        localStorageService.remove('navbar.collapseState');
 
         await component.ngOnInit();
 
@@ -561,11 +560,11 @@ describe('CourseManagementContainerComponent', () => {
 
         component.toggleCollapseState();
 
-        expect(localStorage.getItem('navbar.collapseState')).toBe('true');
+        expect(localStorageService.retrieve<boolean>('navbar.collapseState')).toBeTrue();
 
         component.toggleCollapseState();
 
-        expect(localStorage.getItem('navbar.collapseState')).toBe('false');
+        expect(localStorageService.retrieve<boolean>('navbar.collapseState')).toBeFalse();
     });
 
     it('should correctly determine if course is active', () => {
