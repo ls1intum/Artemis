@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
@@ -56,6 +57,12 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
+    @Profile(PROFILE_HYPERION)
+    public RestTemplate hyperionRestTemplate() {
+        return createRestTemplate();
+    }
+
+    @Bean
     @Profile(PROFILE_APOLLON)
     public RestTemplate apollonRestTemplate() {
         return createRestTemplate();
@@ -91,6 +98,12 @@ public class RestTemplateConfiguration {
     @Profile(PROFILE_ATHENA)
     public RestTemplate shortTimeoutAthenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createShortTimeoutRestTemplate());
+    }
+
+    @Bean
+    @Profile(PROFILE_HYPERION)
+    public RestTemplate shortTimeoutHyperionRestTemplate() {
+        return createShortTimeoutRestTemplate();
     }
 
     @Bean

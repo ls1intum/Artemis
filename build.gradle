@@ -155,6 +155,44 @@ configurations.configureEach {
     exclude group: "commons-configuration", module: "commons-configuration"
 }
 
+// SourceSets Configuration for OpenAPI Generated Files
+sourceSets {
+    main {
+        java {
+            srcDirs 'src/main/java'
+            srcDirs 'build/generated/sources/hyperion-openapi/src/main/java'
+        }
+    }
+}
+
+
+// Custom task for generating Hyperion Java client
+task generateHyperionJavaClient(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask) {
+    generatorName.set('java')
+    inputSpec.set('openapi/hyperion.yaml')
+    outputDir.set("${buildDir}/generated/sources/hyperion-openapi")
+    apiPackage.set('de.tum.cit.aet.artemis.hyperion.client.api')
+    modelPackage.set('de.tum.cit.aet.artemis.hyperion.client.model')
+    invokerPackage.set('de.tum.cit.aet.artemis.hyperion.client')
+    configOptions.set([
+        library: 'resttemplate',
+        openApiNullable: 'false',
+        useJakartaEe: 'true',
+        serializationLibrary: 'jackson',
+        hideGenerationTimestamp: 'true',
+        generateClientAsBean: 'false'
+    ])
+    skipOverwrite.set(false)
+}
+
+// Ensure OpenAPI generation runs before compilation
+tasks.named('compileJava') {
+    dependsOn tasks.generateHyperionJavaClient
+}
+tasks.named('compileTestJava') {
+    dependsOn tasks.generateHyperionJavaClient
+}
+
 dependencies {
 
     // Required by Spring cloud
@@ -496,6 +534,13 @@ dependencyManagement {
 tasks.register("cleanResources", Delete) {
     delete "build/resources"
 }
+
+tasks.register("cleanGenerated", Delete) {
+    delete "build/generated"
+}
+
+// Clean task should also clean generated files
+clean.dependsOn cleanGenerated
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << "-Xlint:deprecation"

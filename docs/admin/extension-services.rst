@@ -21,6 +21,7 @@ EduTelligence is a comprehensive suite of AI-powered microservices designed to e
    setup/iris
    setup/pyris
    setup/athena
+   setup/hyperion
 
 Other Extension Services
 ------------------------
