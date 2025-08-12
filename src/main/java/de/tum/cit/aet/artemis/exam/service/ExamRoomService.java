@@ -387,7 +387,7 @@ public class ExamRoomService {
         final Integer numberOfStoredLayoutStrategies = examRooms.stream().mapToInt(er -> er.getLayoutStrategies().size()).sum();
         final Set<String> distinctLayoutStrategyNames = examRooms.stream().flatMap(er -> er.getLayoutStrategies().stream()).map(LayoutStrategy::getName)
                 .collect(Collectors.toSet());
-        final ExamRoomUniqueRoomsDTO uniqueRoomsDTO = this.countUniqueRoomsSeatsAndLayoutStrategies(examRooms);
+        final ExamRoomUniqueRoomsDTO uniqueRoomsDTO = countUniqueRoomsSeatsAndLayoutStrategies(examRooms);
 
         final Set<ExamRoomDTO> examRoomDTOS = examRooms.stream()
                 .map(examRoom -> new ExamRoomDTO(examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
