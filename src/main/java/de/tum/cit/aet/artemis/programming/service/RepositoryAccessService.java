@@ -80,8 +80,6 @@ public class RepositoryAccessService {
                 }
             }
         }
-        log.error("User {} is not allowed to access the repository of participation {} in programming exercise {} with action type {}", user.getLogin(),
-                programmingParticipation.getId(), programmingExercise.getId(), repositoryActionType);
         throw new AccessForbiddenException("You are not allowed to access the repository of this programming exercise.");
     }
 
