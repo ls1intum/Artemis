@@ -140,4 +140,14 @@ spring:
           model: ${OPENAI_MODEL:gpt-5-mini}
           # Ensure temperature is set to the model-supported default
           temperature: 1.0
+    # Retry/response handling tuning for AI providers (applies when Spring AI auto-config is active)
+    retry:
+      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
+      on-http-codes: [429]
+      # Conservative defaults; adjust if needed
+      max-attempts: 5
+      backoff:
+        initial-interval: 1000ms
+        multiplier: 2.0
+        max-interval: 30000ms
 

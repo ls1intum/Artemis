@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -14,10 +15,13 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.template.st.StTemplateRenderer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -117,9 +121,9 @@ public class HyperionReviewAndRefineService {
             ExecutorService executor = Executors.newFixedThreadPool(2);
 
             CompletableFuture<List<AiIssue>> structuralFuture = CompletableFuture
-                    .supplyAsync(() -> runAiCheckEntity("structural", buildStructuralPrompt(), input, IssuesEntity.class), executor).thenApply(IssuesEntity::issues);
+                    .supplyAsync(() -> runAiCheckEntity("structural", "/prompts/hyperion/structural.st", input, IssuesEntity.class), executor).thenApply(IssuesEntity::issues);
             CompletableFuture<List<AiIssue>> semanticFuture = CompletableFuture
-                    .supplyAsync(() -> runAiCheckEntity("semantic", buildSemanticPrompt(), input, IssuesEntity.class), executor).thenApply(IssuesEntity::issues);
+                    .supplyAsync(() -> runAiCheckEntity("semantic", "/prompts/hyperion/semantic.st", input, IssuesEntity.class), executor).thenApply(IssuesEntity::issues);
 
             List<AiIssue> combinedIssues;
             try {
@@ -134,8 +138,8 @@ public class HyperionReviewAndRefineService {
             }
             catch (InterruptedException | ExecutionException e) {
                 log.warn("Parallel AI checks failed, falling back to sequential execution", e);
-                IssuesEntity structuralEntity = runAiCheckEntity("structural", buildStructuralPrompt(), input, IssuesEntity.class);
-                IssuesEntity semanticEntity = runAiCheckEntity("semantic", buildSemanticPrompt(), input, IssuesEntity.class);
+                IssuesEntity structuralEntity = runAiCheckEntity("structural", "/prompts/hyperion/structural.st", input, IssuesEntity.class);
+                IssuesEntity semanticEntity = runAiCheckEntity("semantic", "/prompts/hyperion/semantic.st", input, IssuesEntity.class);
                 List<AiIssue> structural = structuralEntity != null ? structuralEntity.issues() : List.of();
                 List<AiIssue> semantic = semanticEntity != null ? semanticEntity.issues() : List.of();
                 List<AiIssue> merged = new java.util.ArrayList<>();
@@ -189,10 +193,10 @@ public class HyperionReviewAndRefineService {
             }
 
             // Local Spring AI rewrite
-            String prompt = buildRewritePrompt().replace("{text}", problemStatementText.trim());
+            String renderedRewrite = renderTemplate("/prompts/hyperion/rewrite.st", Map.of("text", problemStatementText.trim()));
             String content = chatClient.prompt()
                     .system("You are an expert technical writing assistant for programming exercise problem statements. Return only the rewritten statement, no explanations.")
-                    .user(prompt).call().content();
+                    .user(renderedRewrite).call().content();
 
             if (content == null || content.trim().isEmpty()) {
                 log.warn("Spring AI returned empty rewritten text for course {}", course.getId());
@@ -261,98 +265,24 @@ public class HyperionReviewAndRefineService {
         return new ConsistencyIssueDTO(severity, issue.category(), issue.description(), issue.suggestedFix(), locations);
     }
 
-    private <T> T runAiCheckEntity(String checkName, String promptTemplate, Map<String, Object> input, Class<T> entityClass) {
-        String formatted = promptTemplate.replace("{rendered_context}", String.valueOf(input.getOrDefault("rendered_context", ""))).replace("{programming_language}",
-                String.valueOf(input.getOrDefault("programming_language", "")));
-        return chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.").user(formatted).call()
+    private String renderTemplate(String resourcePath, Map<String, Object> variables) {
+        try {
+            var renderer = StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build();
+            var resource = new ClassPathResource(resourcePath);
+            String template = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+            return renderer.apply(template, Map.copyOf(variables));
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Failed to load template: " + resourcePath, e);
+        }
+    }
+
+    private <T> T runAiCheckEntity(String checkName, String resourcePath, Map<String, Object> input, Class<T> entityClass) {
+        String rendered = renderTemplate(resourcePath, Map.of("rendered_context", String.valueOf(input.getOrDefault("rendered_context", "")), "programming_language",
+                String.valueOf(input.getOrDefault("programming_language", ""))));
+        return chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.").user(rendered).call()
                 .entity(entityClass);
-    }
 
-    private String buildStructuralPrompt() {
-        return """
-                Analyze the programming exercise for structural consistency issues between the problem statement, template code, solution code, and tests.
-                Programming language: {programming_language}
-
-                Context:
-                {rendered_context}
-
-                        Focus on the following categories only:
-                        - METHOD_RETURN_TYPE_MISMATCH
-                        - METHOD_PARAMETER_MISMATCH
-                        - CONSTRUCTOR_PARAMETER_MISMATCH
-                        - ATTRIBUTE_TYPE_MISMATCH
-                        - VISIBILITY_MISMATCH
-
-                        Return a JSON object with the following schema strictly:
-                        {
-                            "issues": [
-                                {
-                                    "severity": "LOW" | "MEDIUM" | "HIGH",
-                                    "category": "METHOD_RETURN_TYPE_MISMATCH" | "METHOD_PARAMETER_MISMATCH" | "CONSTRUCTOR_PARAMETER_MISMATCH" | "ATTRIBUTE_TYPE_MISMATCH" | "VISIBILITY_MISMATCH",
-                                    "description": string,
-                                    "suggestedFix": string,
-                                    "relatedLocations": [
-                                        {
-                                            "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
-                                            "filePath": string,
-                                            "startLine": number | null,
-                                            "endLine": number | null
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                        """;
-    }
-
-    private String buildSemanticPrompt() {
-        return """
-                        Analyze the programming exercise for semantic consistency issues focused on identifier naming consistency across problem statement, template, solution, and tests.
-                        Programming language: {programming_language}
-
-                Context:
-                {rendered_context}
-
-                        Focus on the following category only:
-                        - IDENTIFIER_NAMING_INCONSISTENCY
-
-                        Return a JSON object with the following schema strictly:
-                        {
-                            "issues": [
-                                {
-                                    "severity": "LOW" | "MEDIUM" | "HIGH",
-                                    "category": "IDENTIFIER_NAMING_INCONSISTENCY",
-                                    "description": string,
-                                    "suggestedFix": string,
-                                    "relatedLocations": [
-                                        {
-                                            "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
-                                            "filePath": string,
-                                            "startLine": number | null,
-                                            "endLine": number | null
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                        """;
-    }
-
-    private String buildRewritePrompt() {
-        return """
-                You are tasked with rewriting a programming exercise problem statement.
-                Goals:
-                - Improve clarity, conciseness, and coherence while preserving the original intent.
-                - Maintain technical correctness and avoid changing the required functionality.
-                - Remove ambiguity; ensure inputs, outputs, constraints, and acceptance criteria are explicit when present.
-                - Keep markdown structure (headings, lists, code blocks) and formatting.
-                - Avoid adding extraneous explanations; do not include solution hints.
-
-                Original problem statement:
-                {text}
-
-                Output ONLY the rewritten problem statement as plain text (no JSON, no commentary).
-                """;
     }
 
     /**
