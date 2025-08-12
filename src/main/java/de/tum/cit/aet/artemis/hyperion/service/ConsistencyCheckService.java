@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -14,6 +15,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.retry.NonTransientAiException;
+import org.springframework.ai.retry.TransientAiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -100,7 +103,7 @@ public class ConsistencyCheckService {
             List<ConsistencyIssue> combinedIssues;
             try {
                 combinedIssues = structuralFuture.thenCombine(semanticFuture, (a, b) -> {
-                    List<ConsistencyIssue> combined = new java.util.ArrayList<>();
+                    List<ConsistencyIssue> combined = new ArrayList<>();
                     if (a != null)
                         combined.addAll(a);
                     if (b != null)
@@ -114,7 +117,7 @@ public class ConsistencyCheckService {
                 ConsistencyIssues semanticEntity = runConsistencyCheck("/prompts/hyperion/semantic.st", input);
                 List<ConsistencyIssue> structural = structuralEntity != null ? structuralEntity.issues() : List.of();
                 List<ConsistencyIssue> semantic = semanticEntity != null ? semanticEntity.issues() : List.of();
-                List<ConsistencyIssue> merged = new java.util.ArrayList<>();
+                List<ConsistencyIssue> merged = new ArrayList<>();
                 merged.addAll(structural);
                 merged.addAll(semantic);
                 combinedIssues = merged;
@@ -128,16 +131,41 @@ public class ConsistencyCheckService {
             String summary = hasIssues ? String.format("Found %d consistency issue(s)", issueDTOs.size()) : "No issues found";
             return new ConsistencyCheckResponseDTO(issueDTOs, hasIssues, summary);
         }
+        catch (TransientAiException e) {
+            // Suggest retryable failure (e.g., 429/5xx). Let caller decide to retry at a higher level.
+            log.warn("Transient AI error during consistency check: {}", e.getMessage());
+            throw new NetworkingException("Temporary AI service issue. Please retry.", e);
+        }
+        catch (NonTransientAiException e) {
+            // Non-retryable (e.g., invalid request, auth). Provide actionable message.
+            log.error("Non-transient AI error during consistency check: {}", e.getMessage());
+            throw new NetworkingException("AI request failed due to configuration or input. Check model and request.", e);
+        }
         catch (Exception e) {
-            throw new NetworkingException("An error occurred while performing consistency check", e);
+            throw new NetworkingException("An unexpected error occurred while performing consistency check", e);
         }
     }
 
     private ConsistencyIssues runConsistencyCheck(String resourcePath, Map<String, Object> input) {
         String rendered = templates.render(resourcePath, Map.of("rendered_context", String.valueOf(input.getOrDefault("rendered_context", "")), "programming_language",
                 String.valueOf(input.getOrDefault("programming_language", ""))));
-        return chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.").user(rendered).call()
-                .entity(ConsistencyIssues.class);
+        try {
+            return chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.").user(rendered).call()
+                    .entity(ConsistencyIssues.class);
+        }
+        catch (TransientAiException e) {
+            log.warn("Transient AI error in {}: {}", resourcePath, e.getMessage());
+            return new ConsistencyIssues();
+        }
+        catch (NonTransientAiException e) {
+            log.error("Non-transient AI error in {}: {}", resourcePath, e.getMessage());
+            return new ConsistencyIssues();
+        }
+        catch (RuntimeException e) {
+            // JSON mapping or unexpected client errors. Do not fail the whole request; return empty issues.
+            log.error("Failed to obtain or parse AI response for {}", resourcePath, e);
+            return new ConsistencyIssues();
+        }
     }
 
     private Repo buildRepository(ProgrammingExercise exercise, RepositoryType repositoryType) throws IOException {
