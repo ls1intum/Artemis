@@ -76,6 +76,7 @@ public class RepositoryAccessService {
                 }
             }
         }
+
         throw new AccessForbiddenException("You are not allowed to access the repository of this programming exercise.");
     }
 
