@@ -146,8 +146,8 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testExportAuxiliaryRepositoryBadRequest() throws Exception {
-        programmingExerciseIntegrationTestService.testExportAuxiliaryRepositoryBadRequest();
+    void testExportAuxiliaryRepositoryUnprocessableEntity() throws Exception {
+        programmingExerciseIntegrationTestService.testExportAuxiliaryRepositoryUnprocessableEntity();
     }
 
     @Test
