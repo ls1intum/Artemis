@@ -43,9 +43,27 @@ export class ExamRoomsComponent {
     uploadInformation: Signal<ExamRoomUploadInformationDTO | undefined> = computed(() => this.actionInformation() as ExamRoomUploadInformationDTO);
     deletionInformation: Signal<ExamRoomDeletionSummaryDTO | undefined> = computed(() => this.actionInformation() as ExamRoomDeletionSummaryDTO);
     hasOverview: Signal<boolean> = computed(() => !!this.overview());
-    hasExamRoomData: Signal<boolean> = computed(() => !!this.overview()?.examRoomDTOS?.length);
+    numberOfUniqueExamRooms: Signal<number> = computed(() => this.overview()?.newestUniqueExamRooms?.length ?? 0);
+    numberOfUniqueExamSeats: Signal<number> = computed(
+        () =>
+            this.overview()
+                ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.numberOfSeats)
+                .reduce((acc, val) => acc + val, 0) ?? 0,
+    );
+    numberOfUniqueLayoutStrategies: Signal<number> = computed(
+        () =>
+            this.overview()
+                ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.layoutStrategies?.length ?? 0)
+                .reduce((acc, val) => acc + val, 0) ?? 0,
+    );
+    distinctLayoutStrategyNames: Signal<string> = computed(() =>
+        [...new Set(this.overview()?.newestUniqueExamRooms?.flatMap((examRoomDTO) => examRoomDTO.layoutStrategies?.map((layoutStrategy) => layoutStrategy.name)) ?? [])]
+            .toSorted()
+            .join(', '),
+    );
+    hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
     examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => {
-        return this.overview()?.examRoomDTOS.map(
+        return this.overview()?.newestUniqueExamRooms?.map(
             (examRoomDTO) =>
                 ({
                     ...examRoomDTO,

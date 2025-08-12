@@ -3,14 +3,12 @@ package de.tum.cit.aet.artemis.exam.service;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -41,7 +39,6 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
-import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUniqueRoomsDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomAssignmentRepository;
@@ -385,17 +382,13 @@ public class ExamRoomService {
         final Integer numberOfStoredExamRooms = examRooms.size();
         final Integer numberOfStoredExamSeats = examRooms.stream().mapToInt(er -> er.getSeats().size()).sum();
         final Integer numberOfStoredLayoutStrategies = examRooms.stream().mapToInt(er -> er.getLayoutStrategies().size()).sum();
-        final Set<String> distinctLayoutStrategyNames = examRooms.stream().flatMap(er -> er.getLayoutStrategies().stream()).map(LayoutStrategy::getName)
-                .collect(Collectors.toSet());
-        final ExamRoomUniqueRoomsDTO uniqueRoomsDTO = countUniqueRoomsSeatsAndLayoutStrategies(examRooms);
 
         final Set<ExamRoomDTO> examRoomDTOS = examRooms.stream()
                 .map(examRoom -> new ExamRoomDTO(examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
                         examRoom.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .collect(Collectors.toSet());
 
-        return new ExamRoomAdminOverviewDTO(numberOfStoredExamRooms, numberOfStoredExamSeats, numberOfStoredLayoutStrategies, uniqueRoomsDTO.numberOfUniqueRooms(),
-                uniqueRoomsDTO.numberOfUniqueSeats(), uniqueRoomsDTO.numberOfUniqueLayoutStrategies(), distinctLayoutStrategyNames, examRoomDTOS);
+        return new ExamRoomAdminOverviewDTO(numberOfStoredExamRooms, numberOfStoredExamSeats, numberOfStoredLayoutStrategies, examRoomDTOS);
     }
 
     /**
@@ -410,23 +403,6 @@ public class ExamRoomService {
         examRoomRepository.deleteAllInBatch();
 
         log.debug("Deleting all exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));
-    }
-
-    private ExamRoomUniqueRoomsDTO countUniqueRoomsSeatsAndLayoutStrategies(List<ExamRoom> examRooms) {
-        record ExamRoomKey(String roomNumber, String name, String building) {
-        }
-
-        Collection<ExamRoom> latestUniqueRooms = examRooms.stream().collect(Collectors.toMap(
-                // key
-                er -> new ExamRoomKey(er.getRoomNumber(), er.getName(), er.getBuilding()),
-                // value (the exam room itself)
-                Function.identity(),
-                // merging function
-                (er1, er2) -> er1.getCreatedDate().isAfter(er2.getCreatedDate()) ? er1 : er2)).values();
-        int uniqueSeats = latestUniqueRooms.stream().mapToInt(room -> room.getSeats().size()).sum();
-        int uniqueLayoutStrategies = latestUniqueRooms.stream().mapToInt(room -> room.getLayoutStrategies().size()).sum();
-
-        return new ExamRoomUniqueRoomsDTO(latestUniqueRooms.size(), uniqueSeats, uniqueLayoutStrategies);
     }
 
     /**

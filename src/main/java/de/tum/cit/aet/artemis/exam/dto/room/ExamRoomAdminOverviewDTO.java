@@ -10,11 +10,7 @@ public record ExamRoomAdminOverviewDTO(
     Integer numberOfStoredExamRooms,
     Integer numberOfStoredExamSeats,
     Integer numberOfStoredLayoutStrategies,
-    Integer numberOfUniqueExamRooms,
-    Integer numberOfUniqueExamSeats,
-    Integer numberOfUniqueLayoutStrategies,
-    Set<String> distinctLayoutStrategyNames,
-    Set<ExamRoomDTO> examRoomDTOS
+    Set<ExamRoomDTO> newestUniqueExamRooms
 ) {
 }
 // @formatter:on
