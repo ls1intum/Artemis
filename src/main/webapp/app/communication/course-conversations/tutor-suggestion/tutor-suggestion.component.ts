@@ -22,6 +22,9 @@ import dayjs from 'dayjs/esm';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { faArrowDown, faArrowUp, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -32,7 +35,7 @@ import { faArrowDown, faArrowUp, faArrowsRotate } from '@fortawesome/free-solid-
     selector: 'jhi-tutor-suggestion',
     templateUrl: './tutor-suggestion.component.html',
     styleUrls: ['./tutor-suggestion.component.scss'],
-    imports: [IrisLogoComponent, AsPipe, FormsModule, TranslateDirective, IrisBaseChatbotComponent, ButtonComponent],
+    imports: [IrisLogoComponent, AsPipe, FormsModule, TranslateDirective, IrisBaseChatbotComponent, ButtonComponent, ArtemisDatePipe, ArtemisTimeAgoPipe, NgbTooltip],
 })
 export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -229,45 +232,6 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
                 filter((id): id is number => !!id),
             )
             .subscribe(() => this.requestSuggestion());
-    }
-
-    /**
-     * Returns a timestamp string based on the provided date.
-     * If the date is today, it returns "just now", "X minutes ago", or "X hours ago".
-     * If the date is yesterday, it returns "yesterday".
-     * If the date is within the last 7 days, it returns "X days ago".
-     * Otherwise, it returns the date formatted as "DD/MM/YYYY".
-     * @param date - The date to format, can be a dayjs object, string, or Date object.
-     * @returns A formatted timestamp string or an empty string if the date is undefined.
-     */
-    getTimestamp(date: dayjs.Dayjs | string | Date | undefined): string | undefined {
-        if (!date) {
-            return '';
-        }
-
-        const parsedDate = dayjs(date);
-        const now = dayjs();
-
-        if (parsedDate.isSame(now, 'day')) {
-            const diffMinutes = now.diff(parsedDate, 'minute');
-            const diffHours = now.diff(parsedDate, 'hour');
-            if (diffMinutes < 1) {
-                return 'just now';
-            } else if (diffMinutes < 60) {
-                return `${diffMinutes} minutes ago`;
-            } else {
-                return `${diffHours} hours ago`;
-            }
-        } else {
-            const diffDays = now.diff(parsedDate, 'day');
-            if (diffDays === 1) {
-                return 'yesterday';
-            } else if (diffDays < 7) {
-                return `${diffDays} days ago`;
-            } else {
-                return parsedDate.format('DD/MM/YYYY');
-            }
-        }
     }
 
     /**

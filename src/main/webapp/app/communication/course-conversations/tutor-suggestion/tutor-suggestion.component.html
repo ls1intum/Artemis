@@ -16,7 +16,7 @@
                             </div>
                         }
                         <div class="timestamp-container">
-                            {{ getTimestamp(suggestion.sentAt) }}
+                            <span [ngbTooltip]="suggestion.sentAt | artemisDate"> ({{ suggestion.sentAt | artemisTimeAgo }}) </span>
                         </div>
                     </div>
                     <div class="iris-suggestion-buttons">

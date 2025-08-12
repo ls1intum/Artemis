@@ -130,9 +130,6 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
     }
 
     Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
-        if (programmingExerciseStudentParticipationRepository == null || programmingSubmissionRepository == null) {
-            return Optional.empty();
-        }
         List<ProgrammingExerciseStudentParticipation> participations;
         if (exercise.isTeamMode()) {
             participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionByExerciseIdAndStudentLoginInTeam(exercise.getId(), user.getLogin());
