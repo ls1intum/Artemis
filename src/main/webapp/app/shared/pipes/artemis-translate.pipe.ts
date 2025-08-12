@@ -20,7 +20,7 @@ export class ArtemisTranslatePipe implements PipeTransform, OnDestroy {
      * this exception should be okay.
      */
     // NOTE: we cannot use inject() here because of a limitation as this pipe is a wrapper
-
+    // eslint-disable-next-line @angular-eslint/prefer-inject
     constructor(translateService: TranslateService, changeDetectorRef: ChangeDetectorRef) {
         this.translatePipe = new TranslatePipe(translateService, changeDetectorRef);
     }
