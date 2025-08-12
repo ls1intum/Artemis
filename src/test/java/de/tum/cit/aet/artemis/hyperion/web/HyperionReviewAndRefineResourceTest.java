@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.Severity;
-import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewAndRefineRestService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewAndRefineService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -47,7 +47,7 @@ class HyperionReviewAndRefineResourceTest {
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @MockBean
-    private HyperionReviewAndRefineRestService service;
+    private HyperionReviewAndRefineService service;
 
     @Test
     void checkExerciseConsistency_returnsOkWithBody() throws Exception {

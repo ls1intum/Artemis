@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
-class HyperionReviewAndRefineRestServiceTest {
+class HyperionReviewAndRefineServiceTest {
 
     @Mock
     private RepositoryService repositoryService;
@@ -43,13 +43,13 @@ class HyperionReviewAndRefineRestServiceTest {
 
     private ChatClient chatClient;
 
-    private HyperionReviewAndRefineRestService service;
+    private HyperionReviewAndRefineService service;
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         this.chatClient = ChatClient.create(chatModel);
-        this.service = new HyperionReviewAndRefineRestService(repositoryService, programmingExerciseRepository, chatClient);
+        this.service = new HyperionReviewAndRefineService(repositoryService, programmingExerciseRepository, chatClient);
     }
 
     @Test

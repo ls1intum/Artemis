@@ -45,9 +45,9 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 @Service
 @Lazy
 @Profile(PROFILE_HYPERION)
-public class HyperionReviewAndRefineRestService {
+public class HyperionReviewAndRefineService {
 
-    private static final Logger log = LoggerFactory.getLogger(HyperionReviewAndRefineRestService.class);
+    private static final Logger log = LoggerFactory.getLogger(HyperionReviewAndRefineService.class);
 
     private final RepositoryService repositoryService;
 
@@ -57,7 +57,7 @@ public class HyperionReviewAndRefineRestService {
 
     private final ObjectMapper objectMapper;
 
-    public HyperionReviewAndRefineRestService(RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository,
+    public HyperionReviewAndRefineService(RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository,
             @Autowired(required = false) ChatClient chatClient) {
         this.repositoryService = repositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;

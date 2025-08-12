@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewAndRefineRestService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewAndRefineService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -48,10 +48,10 @@ public class HyperionReviewAndRefineResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final HyperionReviewAndRefineRestService reviewAndRefineService;
+    private final HyperionReviewAndRefineService reviewAndRefineService;
 
     public HyperionReviewAndRefineResource(UserRepository userRepository, CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            HyperionReviewAndRefineRestService reviewAndRefineService) {
+            HyperionReviewAndRefineService reviewAndRefineService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
