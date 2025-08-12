@@ -47,6 +47,7 @@ import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -154,7 +155,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
@@ -171,6 +171,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class CourseTestService {
@@ -285,9 +286,6 @@ public class CourseTestService {
 
     @Autowired
     private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -550,18 +548,11 @@ public class CourseTestService {
             for (Exercise exercise : course.getExercises()) {
                 if (exercise instanceof final ProgrammingExercise programmingExercise) {
                     final String projectKey = programmingExercise.getProjectKey();
-                    final var templateRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
-                    final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
-                    final var testsRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
                     programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
                     programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
                     mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getTemplateBuildPlanId(), false);
                     mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getSolutionBuildPlanId(), false);
                     mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
-                    mockDelegate.mockDeleteRepository(projectKey, templateRepoName, false);
-                    mockDelegate.mockDeleteRepository(projectKey, solutionRepoName, false);
-                    mockDelegate.mockDeleteRepository(projectKey, testsRepoName, false);
-                    mockDelegate.mockDeleteProjectInVcs(projectKey, false);
                 }
             }
         }
@@ -1023,7 +1014,6 @@ public class CourseTestService {
             }
             else {
                 assertThat(receivedCourse.getExams()).hasSize(0);
-                assertThat(receivedCourse.getNumberOfExams()).isEqualTo(3);
             }
         }
     }
@@ -2523,7 +2513,6 @@ public class CourseTestService {
 
         final String repoSuffix = "-" + userPrefix + "student1";
 
-        mockDelegate.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + repoSuffix, false);
         var buildPlanId = (programmingExercise.getProjectKey() + repoSuffix).toUpperCase();
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId, false);
         request.delete("/api/core/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
@@ -3471,7 +3460,7 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetExistingExerciseDetails_asEditor(String username) throws Exception {
+    public void testGetExistingExerciseDetails_asEditor() throws Exception {
         Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
         request.get("/api/core/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK, CourseExistingExerciseDetailsDTO.class);
     }

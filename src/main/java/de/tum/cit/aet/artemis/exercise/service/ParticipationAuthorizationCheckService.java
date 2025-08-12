@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ParticipationAuthorizationCheckService {
 
@@ -52,9 +55,12 @@ public class ParticipationAuthorizationCheckService {
 
     private final Optional<StudentExamApi> studentExamApi;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public ParticipationAuthorizationCheckService(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuthorizationCheckService authCheckService, TeamRepository teamRepository, ExerciseDateService exerciseDateService,
-            SubmissionPolicyRepository submissionPolicyRepository, SubmissionRepository submissionRepository, Optional<StudentExamApi> studentExamApi) {
+            SubmissionPolicyRepository submissionPolicyRepository, SubmissionRepository submissionRepository, Optional<StudentExamApi> studentExamApi,
+            StudentParticipationRepository studentParticipationRepository) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
@@ -63,6 +69,20 @@ public class ParticipationAuthorizationCheckService {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.submissionRepository = submissionRepository;
         this.studentExamApi = studentExamApi;
+        this.studentParticipationRepository = studentParticipationRepository;
+    }
+
+    /**
+     * Checks if the current user is allowed to access the given participation.
+     * <p>
+     * Throws an {@link AccessForbiddenException} if not.
+     *
+     * @param participationId the id of the participation to check access for.
+     */
+    public void checkCanAccessParticipationElseThrow(long participationId) {
+        if (!canAccessParticipation(participationId)) {
+            throw new AccessForbiddenException("participation", participationId);
+        }
     }
 
     /**
@@ -79,6 +99,26 @@ public class ParticipationAuthorizationCheckService {
         else if (!canAccessParticipation(participation)) {
             throw new AccessForbiddenException("participation", participation.getId());
         }
+    }
+
+    /**
+     * Checks if the current user is allowed to access the participation
+     * 1. Either the user owns the participations or 2. is at least a teaching assistant in the course of the participation.
+     *
+     * @param participationId The id of the participation to check access for.
+     * @return True, if the current user is allowed to access the participation; false otherwise.
+     */
+    public boolean canAccessParticipation(long participationId) {
+        String userLogin = userRepository.getCurrentUserLogin();
+        // 1. Check if the user owns the participation
+        // 1a. StudentParticipation: the user is the owner of the participation
+        // 1b. TeamParticipation: the user is a member of the team
+        boolean isOwner = studentParticipationRepository.isOwnerOfStudentParticipation(userLogin, participationId);
+        if (isOwner) {
+            return true;
+        }
+        // 2. Check if the user is at least a teaching assistant of the course
+        return userRepository.isAtLeastTeachingAssistantInParticipation(userLogin, participationId);
     }
 
     /**

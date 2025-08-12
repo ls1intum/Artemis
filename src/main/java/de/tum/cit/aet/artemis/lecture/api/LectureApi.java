@@ -4,11 +4,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
@@ -18,6 +20,7 @@ import de.tum.cit.aet.artemis.lecture.service.LectureService;
  */
 @Profile(PROFILE_CORE)
 @Controller
+@Lazy
 public class LectureApi extends AbstractLectureApi {
 
     private final LectureService lectureService;
@@ -39,5 +42,9 @@ public class LectureApi extends AbstractLectureApi {
 
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
         lectureService.delete(lecture, updateCompetencyProgress);
+    }
+
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent) {
+        return lectureService.getCalendarEventDTOsFromLectures(courseId, userIsStudent);
     }
 }

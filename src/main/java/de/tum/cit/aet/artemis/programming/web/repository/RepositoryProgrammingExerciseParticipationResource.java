@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -46,7 +47,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
@@ -59,12 +59,14 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipati
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 
 /**
  * Executes repository actions on repositories related to the participation id transmitted. Available to the owner of the participation, TAs/Instructors of the exercise and Admins.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
@@ -110,7 +112,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @throws AccessForbiddenException if the user does not have access to the repository
      */
     @Override
-    Repository getRepository(Long participationId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws GitAPIException, AccessForbiddenException {
+    Repository getRepository(Long participationId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess)
+            throws GitAPIException, AccessForbiddenException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
 
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
@@ -132,7 +135,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    VcsRepositoryUri getRepositoryUri(Long participationId) throws IllegalArgumentException {
+    LocalVCRepositoryUri getRepositoryUri(Long participationId) throws IllegalArgumentException {
         return getProgrammingExerciseParticipation(participationId).getVcsRepositoryUri();
     }
 
@@ -235,11 +238,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @EnforceAtLeastTutor
     public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
+            Repository repository = getRepository(participationId, RepositoryActionType.READ, true, false);
             var participation = participationRepository.findByIdElseThrow(participationId);
             var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
 
-            Repository templateRepository = getRepository(exercise.getTemplateParticipation().getId(), RepositoryActionType.READ, true);
+            Repository templateRepository = getRepository(exercise.getTemplateParticipation().getId(), RepositoryActionType.READ, true, false);
             var filesWithInformationAboutChange = super.repositoryService.getFilesWithInformationAboutChange(repository, templateRepository);
             return new ResponseEntity<>(filesWithInformationAboutChange, HttpStatus.OK);
         });
@@ -284,7 +287,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId,
             @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
         return super.executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
+            Repository repository = getRepository(participationId, RepositoryActionType.READ, true, false);
             var filesWithContent = super.repositoryService.getFilesContentFromWorkingCopy(repository, omitBinaries);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
         });
@@ -345,7 +348,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         Repository repository;
         try {
             // Get the repository and also conduct access checks.
-            repository = getRepository(participationId, RepositoryActionType.WRITE, true);
+            repository = getRepository(participationId, RepositoryActionType.WRITE, true, false);
         }
         catch (EntityNotFoundException e) {
             // Participation was not found.

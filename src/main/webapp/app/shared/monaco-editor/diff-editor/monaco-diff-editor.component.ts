@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { LineChange } from 'app/programming/shared/utils/diff.utils';
 
 import * as monaco from 'monaco-editor';
-import { MonacoEditorService } from '../service/monaco-editor.service';
 
+import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
 export type MonacoEditorDiffText = { original: string; modified: string };
 @Component({
     selector: 'jhi-monaco-diff-editor',
@@ -17,7 +18,7 @@ export class MonacoDiffEditorComponent implements OnDestroy {
     monacoDiffEditorContainerElement: HTMLElement;
 
     allowSplitView = input<boolean>(true);
-    onReadyForDisplayChange = output<boolean>();
+    onReadyForDisplayChange = output<{ ready: boolean; lineChange: LineChange }>();
 
     /*
      * Subscriptions and listeners that need to be disposed of when this component is destroyed.
@@ -60,12 +61,17 @@ export class MonacoDiffEditorComponent implements OnDestroy {
 
     /**
      * Sets up a listener that responds to changes in the diff. It will signal via {@link onReadyForDisplayChange} that
-     * the component is ready to display the diff.
+     * the component is ready to display the diff, including the current line changes.
      */
     setupDiffListener(): void {
         const diffListener = this._editor.onDidUpdateDiff(() => {
             this.adjustContainerHeight(this.getMaximumContentHeight());
-            this.onReadyForDisplayChange.emit(true);
+
+            // Get line changes when diff is updated
+            const monacoLineChanges = this._editor.getLineChanges() ?? [];
+
+            // Signal that the diff is ready for display with line changes summary
+            this.onReadyForDisplayChange.emit({ ready: true, lineChange: this.convertMonacoLineChanges(monacoLineChanges) });
         });
 
         this.listeners.push(diffListener);
@@ -107,12 +113,14 @@ export class MonacoDiffEditorComponent implements OnDestroy {
      * Updates the files displayed in this editor. When this happens, {@link onReadyForDisplayChange} will signal that the editor is not
      * ready to display the diff (as it must be computed first). This will later be change by the appropriate listener.
      * @param original The content of the original file, if available.
-     * @param originalFileName The name of the original file, if available. The name is used to determine the syntax highlighting of the left editor.
      * @param modified The content of the modified file, if available.
-     * @param modifiedFileName The name of the modified file, if available. The name is used to determine the syntax highlighting of the right editor.
+     * @param originalFileName The name of the original file, if available.
+     * @param modifiedFileName The name of the modified file, if available.
      */
-    setFileContents(original?: string, originalFileName?: string, modified?: string, modifiedFileName?: string): void {
-        this.onReadyForDisplayChange.emit(false);
+    setFileContents(original?: string, modified?: string, originalFileName?: string, modifiedFileName?: string): void {
+        // Reset ready state and clear line changes when loading new content
+        this.onReadyForDisplayChange.emit({ ready: false, lineChange: { addedLineCount: 0, removedLineCount: 0 } });
+
         const originalModelUri = monaco.Uri.parse(`inmemory://model/original-${this._editor.getId()}/${originalFileName ?? 'left'}`);
         const modifiedFileUri = monaco.Uri.parse(`inmemory://model/modified-${this._editor.getId()}/${modifiedFileName ?? 'right'}`);
         const originalModel = monaco.editor.getModel(originalModelUri) ?? monaco.editor.createModel(original ?? '', undefined, originalModelUri);
@@ -130,6 +138,29 @@ export class MonacoDiffEditorComponent implements OnDestroy {
         };
 
         this._editor.setModel(newModel);
+    }
+
+    /**
+     * Converts Monaco line changes to a LineChange object
+     * @param monacoLineChanges The Monaco line changes to convert
+     * @returns The converted LineChange object
+     */
+    convertMonacoLineChanges(monacoLineChanges: monaco.editor.ILineChange[]): LineChange {
+        const lineChange: LineChange = { addedLineCount: 0, removedLineCount: 0 };
+        if (!monacoLineChanges) {
+            return lineChange;
+        }
+
+        for (const change of monacoLineChanges) {
+            const addedLines = change.modifiedEndLineNumber >= change.modifiedStartLineNumber ? change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1 : 0;
+
+            const removedLines = change.originalEndLineNumber >= change.originalStartLineNumber ? change.originalEndLineNumber - change.originalStartLineNumber + 1 : 0;
+
+            lineChange.addedLineCount += addedLines;
+            lineChange.removedLineCount += removedLines;
+        }
+
+        return lineChange;
     }
 
     /**

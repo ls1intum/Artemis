@@ -16,6 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepo
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingExerciseTaskService {
 

@@ -26,14 +26,14 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingService;
+import de.tum.cit.aet.artemis.communication.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatusService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -73,6 +74,7 @@ import tech.jhipster.security.RandomUtil;
  * Service class for managing users.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class UserService {
 
@@ -121,12 +123,14 @@ public class UserService {
 
     private final UserCourseNotificationStatusService userCourseNotificationStatusService;
 
+    private final GlobalNotificationSettingService globalNotificationSettingService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             Optional<CIUserManagementService> optionalCIUserManagementService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
             Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
             SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
-            UserCourseNotificationStatusService userCourseNotificationStatusService) {
+            UserCourseNotificationStatusService userCourseNotificationStatusService, GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -144,12 +148,15 @@ public class UserService {
         this.userSshPublicKeyService = userSshPublicKeyService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.userCourseNotificationStatusService = userCourseNotificationStatusService;
+        this.globalNotificationSettingService = globalNotificationSettingService;
     }
 
     /**
      * Make sure that the internal artemis admin (in case it is defined in the yml configuration) is available in the database
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void applicationReady() {
 
         try {
@@ -463,6 +470,7 @@ public class UserService {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
             userSshPublicKeyService.deleteAllByUserId(user.getId());
+            globalNotificationSettingService.deleteAllByUserId(user.getId());
             user.setDeleted(true);
             user.setLearnerProfile(null);
             anonymizeUser(user);

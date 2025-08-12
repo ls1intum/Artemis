@@ -25,6 +25,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -34,11 +35,11 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.Deregist
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.RegisteredToTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -56,10 +57,9 @@ import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGr
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
 
 @Conditional(TutorialGroupEnabled.class)
+@Lazy
 @Service
 public class TutorialGroupService {
-
-    private final SingleUserNotificationService singleUserNotificationService;
 
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
@@ -77,15 +77,14 @@ public class TutorialGroupService {
 
     private final CourseNotificationService courseNotificationService;
 
-    public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
-            TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
-            ConversationDTOService conversationDTOService, CourseNotificationService courseNotificationService) {
+    public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
+            UserRepository userRepository, AuthorizationCheckService authorizationCheckService, TutorialGroupSessionRepository tutorialGroupSessionRepository,
+            TutorialGroupChannelManagementService tutorialGroupChannelManagementService, ConversationDTOService conversationDTOService,
+            CourseNotificationService courseNotificationService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.singleUserNotificationService = singleUserNotificationService;
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.conversationDTOService = conversationDTOService;
@@ -935,5 +934,17 @@ public class TutorialGroupService {
             }
         }
         return students;
+    }
+
+    /**
+     * Derives a set of {@link CalendarEventDTO}s from {@link TutorialGroupSession}s that the {@link User} participates in and that are related to the given {@link Course}.
+     *
+     * @param userId   the user for which the DTOs should be retrieved
+     * @param courseId the course to which sessions should belong
+     * @return the retrieved events
+     */
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromTutorialsGroups(long userId, long courseId) {
+        Set<Long> tutorialGroupIds = tutorialGroupRepository.findTutorialGroupIdsWhereUserParticipatesForCourseId(courseId, userId);
+        return tutorialGroupSessionRepository.getCalendarEventDTOsFromActiveSessionsForTutorialGroupIds(tutorialGroupIds);
     }
 }

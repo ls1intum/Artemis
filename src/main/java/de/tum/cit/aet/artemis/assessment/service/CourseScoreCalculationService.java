@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 
 import org.hibernate.Hibernate;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -55,6 +57,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * Adapted from the implementation at course-score-calculation.service.ts.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class CourseScoreCalculationService {
 
@@ -96,7 +99,7 @@ public class CourseScoreCalculationService {
      * @param exercises    the exercises which are included into max points calculation
      * @return the max and reachable max points for the given exercises
      */
-    private MaxAndReachablePointsDTO calculateMaxAndReachablePoints(GradingScale gradingScale, Set<Exercise> exercises) {
+    private MaxAndReachablePointsDTO calculateMaxAndReachablePoints(@Nullable GradingScale gradingScale, Set<Exercise> exercises) {
 
         if (exercises.isEmpty()) {
             return new MaxAndReachablePointsDTO(0, 0, 0);
@@ -221,7 +224,7 @@ public class CourseScoreCalculationService {
      * @param includeIrisCourseDashboardEnabled whether the enabled state of the course chat should be included in the CourseForDashboardDTO
      * @return the CourseForDashboardDTO containing all the mentioned items.
      */
-    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, GradingScale gradingScale, long userId, boolean includeIrisCourseDashboardEnabled) {
+    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, @Nullable GradingScale gradingScale, long userId, boolean includeIrisCourseDashboardEnabled) {
         Set<StudentParticipation> gradedStudentParticipations = new HashSet<>();
         for (Exercise exercise : course.getExercises()) {
             exercise.setCourse(course);
@@ -264,15 +267,13 @@ public class CourseScoreCalculationService {
         // Get participation results (used in course-statistics.component).
         Set<ParticipationResultDTO> participationResults = new HashSet<>();
         for (StudentParticipation studentParticipation : gradedStudentParticipations) {
-            if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
-                Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
-                var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());
-                participationResults.add(participationResult);
-                // this line is an important workaround. It prevents that the whole tree
-                // "result -> participation -> exercise -> course -> exercises -> studentParticipations -> submissions -> results" is sent again to the client which is useless
-                // TODO: in the future, we need a better solution to prevent this
-                studentParticipation.setExercise(null);
-            }
+            Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
+            var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());
+            participationResults.add(participationResult);
+            // this line is an important workaround. It prevents that the whole tree
+            // "result -> participation -> exercise -> course -> exercises -> studentParticipations -> submissions -> results" is sent again to the client which is useless
+            // TODO: in the future, we need a better solution to prevent this
+            studentParticipation.setExercise(null);
         }
 
         return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
@@ -325,8 +326,8 @@ public class CourseScoreCalculationService {
      * @param plagiarismCases         the plagiarism verdicts for the student.
      * @return a StudentScoresDTO instance with the presentation score, relative and absolute points achieved by the given student.
      */
-    public StudentScoresDTO calculateCourseScoreForStudent(Course course, GradingScale gradingScale, Long studentId, Collection<StudentParticipation> participationsOfStudent,
-            MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases) {
+    public StudentScoresDTO calculateCourseScoreForStudent(Course course, @Nullable GradingScale gradingScale, Long studentId,
+            Collection<StudentParticipation> participationsOfStudent, MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases) {
 
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
 
@@ -346,7 +347,7 @@ public class CourseScoreCalculationService {
             // getResultForParticipation always sorts the results by completion date, maybe optimize with a flag
             // if input results are already sorted.
             var result = getResultForParticipation(participation, exercise.getDueDate());
-            if (result != null && Boolean.TRUE.equals(result.isRated())) {
+            if (result != null && result.isRated()) {
                 double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, result, plagiarismCasesForStudent.get(exercise.getId()));
                 pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
             }
@@ -401,24 +402,24 @@ public class CourseScoreCalculationService {
      * @param dueDate       the due date of the exercise.
      * @return the result that should be used for the score calculation.
      */
-    // TODO: This connection between participations and results will not be used in the future. This should be refactored to take the latest rated result from the submissions.
     public Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
         if (participation == null) {
             return null;
         }
-        var resultsSet = participation.getResults();
+        Set<Result> resultsSet = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull))
+                .collect(Collectors.toSet());
 
         Result emptyResult = new Result();
         // TODO: Check if you can just instantiate Result.score with 0.0.
         emptyResult.setScore(0.0);
 
-        if (resultsSet == null || resultsSet.isEmpty()) {
+        if (resultsSet.isEmpty()) {
             return emptyResult;
         }
 
         var resultsList = new ArrayList<>(resultsSet);
 
-        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> Boolean.TRUE.equals(result.isRated() && result.getCompletionDate() != null)).toList();
+        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> result.isRated() && result.getCompletionDate() != null).toList();
 
         if (ratedResultsWithCompletionDate.isEmpty()) {
             return emptyResult;

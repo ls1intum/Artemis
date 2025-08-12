@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -32,14 +32,13 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
-import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -59,8 +58,6 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
         CompetencySelectionComponent,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
-        CustomMinDirective,
-        CustomMaxDirective,
         FaIconComponent,
         NgbTooltip,
         PresentationScoreComponent,
@@ -70,20 +67,20 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
     ],
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
-    private fileUploadExerciseService = inject(FileUploadExerciseService);
-    private modalService = inject(NgbModal);
-    private popupService = inject(ExerciseUpdateWarningService);
-    private activatedRoute = inject(ActivatedRoute);
-    private courseService = inject(CourseManagementService);
-    private exerciseService = inject(ExerciseService);
-    private alertService = inject(AlertService);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private exerciseGroupService = inject(ExerciseGroupService);
+    private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
+    private readonly modalService = inject(NgbModal);
+    private readonly popupService = inject(ExerciseUpdateWarningService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly courseService = inject(CourseManagementService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly alertService = inject(AlertService);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly exerciseGroupService = inject(ExerciseGroupService);
+    private readonly calendarEventService = inject(CalendarEventService);
 
     protected readonly faQuestionCircle = faQuestionCircle;
-
-    readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly documentationType: DocumentationType = 'FileUpload';
+    protected readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly documentationType: DocumentationType = 'FileUpload';
 
     @ViewChild('bonusPoints') bonusPoints: NgModel;
     @ViewChild('points') points: NgModel;
@@ -92,7 +89,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
     @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
     @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
-    @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
+    exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent: TeamConfigFormGroupComponent;
 
     isExamMode: boolean;
@@ -109,8 +106,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
 
     formStatusSections: FormSectionStatus[];
 
-    // Subscriptions
-    titleChannelNameComponentSubscription?: Subscription;
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
@@ -120,6 +115,21 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
             return EditType.IMPORT;
         }
         return this.fileUploadExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
+    }
+
+    constructor() {
+        effect(() => {
+            this.updateFormSectionsOnIsValidChange();
+        });
+    }
+
+    /**
+     * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
+     */
+    private updateFormSectionsOnIsValidChange() {
+        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // trigger the effect
+
+        this.calculateFormSectionStatus();
     }
 
     /**
@@ -151,16 +161,12 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     }
 
     ngAfterViewInit() {
-        this.titleChannelNameComponentSubscription = this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.subscribe(() =>
-            this.calculateFormSectionStatus(),
-        );
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.teamSubscription = this.teamConfigFormGroupComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
     }
 
     ngOnDestroy() {
-        this.titleChannelNameComponentSubscription?.unsubscribe();
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
         this.teamSubscription?.unsubscribe();
@@ -170,7 +176,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
         this.formStatusSections = [
             {
                 title: 'artemisApp.exercise.sections.general',
-                valid: this.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValid,
+                valid: this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(),
             },
             { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent.formValid },
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.fileUploadExercise.problemStatement },
@@ -290,6 +296,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     private onSaveSuccess(exercise: Exercise) {
         this.isSaving = false;
 
+        this.calendarEventService.refresh();
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 

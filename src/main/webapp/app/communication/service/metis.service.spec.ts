@@ -1,7 +1,8 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/communication/service/metis.service';
@@ -18,8 +19,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProvider } from 'ng-mocks';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
@@ -76,6 +75,7 @@ describe('Metis Service', () => {
     let targetConversation: Conversation;
     let newContent: string;
     let forwardedMessageCreateSpy: jest.SpyInstance;
+    let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -93,7 +93,6 @@ describe('Metis Service', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         });
         metisService = TestBed.inject(MetisService);
@@ -109,6 +108,7 @@ describe('Metis Service', () => {
         metisServiceUserStub = jest.spyOn(metisService, 'getUser');
         // @ts-ignore method is private
         setIsSavedAndStatusOfPostSpy = jest.spyOn(metisService, 'setIsSavedAndStatusOfPost');
+        httpMock = TestBed.inject(HttpTestingController);
 
         post = metisPostExerciseUser1;
         post.displayPriority = DisplayPriority.PINNED;
@@ -1127,4 +1127,14 @@ describe('Metis Service', () => {
             expect(answer.post?.conversation).toEqual({ id: 123 });
         });
     }));
+
+    it('should make PUT request to enable communication with messaging', () => {
+        metisService.enable(1, true).subscribe((resp) => expect(resp).toEqual(of()));
+        httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/enable?withMessaging=true` });
+    });
+
+    it('should make PUT request to enable communication without messaging', () => {
+        metisService.enable(1, false).subscribe((resp) => expect(resp).toEqual(of()));
+        httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/enable?withMessaging=false` });
+    });
 });

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
-import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { input, runInInjectionContext } from '@angular/core';
 import { faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
@@ -10,7 +9,7 @@ describe('ChannelIconComponent', () => {
     let fixture: ComponentFixture<ChannelIconComponent>;
 
     beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({ declarations: [ChannelIconComponent, MockComponent(FaIconComponent)] }).compileComponents();
+        TestBed.configureTestingModule({ imports: [ChannelIconComponent, FaIconComponent] }).compileComponents();
     }));
 
     beforeEach(() => {

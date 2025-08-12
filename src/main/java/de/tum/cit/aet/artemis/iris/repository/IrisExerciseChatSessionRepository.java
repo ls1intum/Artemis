@@ -5,9 +5,11 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSes
  * Repository interface for managing {@link IrisProgrammingExerciseChatSession} entities.
  * Provides custom queries for finding chat sessions based on different criteria.
  */
+@Lazy
 @Repository
 @Profile(PROFILE_IRIS)
 public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<IrisProgrammingExerciseChatSession, Long> {
@@ -52,6 +55,9 @@ public interface IrisExerciseChatSessionRepository extends ArtemisJpaRepository<
             ORDER BY s.creationDate DESC
             """)
     List<IrisProgrammingExerciseChatSession> findSessionsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = "messages")
+    Optional<IrisProgrammingExerciseChatSession> findSessionWithMessagesByIdAndUserId(Long id, Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
     List<IrisProgrammingExerciseChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);

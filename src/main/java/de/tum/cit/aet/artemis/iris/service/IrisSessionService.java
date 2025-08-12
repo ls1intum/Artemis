@@ -2,22 +2,30 @@ package de.tum.cit.aet.artemis.iris.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.annotation.Nullable;
 import jakarta.ws.rs.BadRequestException;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatBasedFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
@@ -26,10 +34,12 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisRateLimitedFeatureInterfa
 import de.tum.cit.aet.artemis.iris.service.session.IrisSubFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
  * Service for managing Iris sessions.
  */
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisSessionService {
@@ -46,15 +56,22 @@ public class IrisSessionService {
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
 
+    private final IrisChatSessionRepository irisChatSessionRepository;
+
+    private final IrisSettingsService irisSettingsService;
+
     public IrisSessionService(UserRepository userRepository, IrisTextExerciseChatSessionService irisTextExerciseChatSessionService,
             IrisExerciseChatSessionService irisExerciseChatSessionService, IrisCourseChatSessionService irisCourseChatSessionService,
-            IrisLectureChatSessionService irisLectureChatSessionService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService) {
+            IrisLectureChatSessionService irisLectureChatSessionService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService,
+            IrisChatSessionRepository irisChatSessionRepository, IrisSettingsService irisSettingsService) {
         this.userRepository = userRepository;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisCourseChatSessionService = irisCourseChatSessionService;
         this.irisLectureChatSessionService = irisLectureChatSessionService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
+        this.irisChatSessionRepository = irisChatSessionRepository;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -160,5 +177,36 @@ public class IrisSessionService {
     }
 
     private record IrisSubFeatureWrapper<S extends IrisSession>(IrisSubFeatureInterface<S> irisSubFeatureInterface, S irisSession) {
+    }
+
+    /**
+     * Get all IrisChatSessions for a course and map the IrisChatSessionDAO to IrisChatSessionDTO
+     *
+     * @param course The course
+     * @param userId The id of the user
+     * @return A list of all IrisChatSessionsDTOs for a course
+     */
+    public List<IrisChatSessionDTO> getIrisSessionsByCourseAndUserId(Course course, Long userId) {
+        var settings = irisSettingsService.getCombinedIrisSettingsForCourse(course.getId(), true);
+        List<Class<? extends IrisChatSession>> enabledTypes = new ArrayList<>();
+
+        if (settings.irisTextExerciseChatSettings().enabled()) {
+            enabledTypes.add(IrisTextExerciseChatSession.class);
+        }
+
+        if (settings.irisProgrammingExerciseChatSettings().enabled()) {
+            enabledTypes.add(IrisProgrammingExerciseChatSession.class);
+        }
+
+        if (settings.irisCourseChatSettings().enabled()) {
+            enabledTypes.add(IrisCourseChatSession.class);
+        }
+
+        if (settings.irisLectureChatSettings().enabled()) {
+            enabledTypes.add(IrisLectureChatSession.class);
+        }
+
+        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId, enabledTypes).stream()
+                .map(dao -> new IrisChatSessionDTO(dao.session().getId(), dao.entityId(), dao.entityName(), dao.session().getCreationDate(), dao.session().getMode())).toList();
     }
 }

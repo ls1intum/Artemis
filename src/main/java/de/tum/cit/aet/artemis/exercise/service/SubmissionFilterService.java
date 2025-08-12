@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * A service that filters the submissions of a participation mainly for the course dashboard. Different logic is
  * required for the different types of exercises.
  */
+@Lazy
 @Service
 @Profile(PROFILE_CORE)
 public class SubmissionFilterService {
@@ -79,7 +81,7 @@ public class SubmissionFilterService {
             return optionalDueDate.map(dueDate -> programmingSubmission.getSubmissionDate() != null && programmingSubmission.getSubmissionDate().isBefore(dueDate)).orElse(true);
         }
         // if the result is not rated, we don't consider it
-        if (Boolean.FALSE.equals(latestResult.isRated())) {
+        if (!latestResult.isRated()) {
             return false;
         }
         // the latest rated automatic (or athena based) result can always be chosen
@@ -110,7 +112,7 @@ public class SubmissionFilterService {
         Exercise exercise = submission.getParticipation().getExercise();
         Result result = submission.getLatestResult();
         boolean isAssessmentPeriodOverOrIgnored = ignoreAssessmentDueDate || ExerciseDateService.isAfterAssessmentDueDate(exercise);
-        return result != null && Boolean.TRUE.equals(result.isRated()) && isAssessmentPeriodOverOrIgnored;
+        return result != null && result.isRated() && isAssessmentPeriodOverOrIgnored;
     }
 
     private boolean isModelingSubmissionRelevantForCourseDashboard(ModelingSubmission modelingSubmission, boolean ignoreAssessmentDueDate) {
@@ -137,7 +139,7 @@ public class SubmissionFilterService {
         }
         else {
             Result result = quizSubmission.getLatestResult();
-            return result != null && Boolean.TRUE.equals(result.isRated()) && result.isAssessmentComplete();
+            return result != null && result.isRated() && result.isAssessmentComplete();
         }
     }
 }

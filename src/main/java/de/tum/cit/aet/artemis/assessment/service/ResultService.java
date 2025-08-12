@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -66,16 +67,17 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionFilterService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ResultService {
 
@@ -418,32 +420,23 @@ public class ResultService {
     /**
      * Get a map of result ids to the respective build job ids if build log files for this build job exist.
      *
-     * @param results       the results for which to check the availability of build logs
-     * @param participation the participation the results belong to
+     * @param participationId the participation id for which the results and build logs should be checked
      * @return a map of result ids to respective build job ids if the build log files exist, null otherwise
      */
-    public Map<Long, String> getLogsAvailabilityForResults(List<Result> results, Participation participation) {
-
+    public Map<Long, String> getLogsAvailabilityForResults(Long participationId) {
         Map<Long, String> logsAvailability = new HashMap<>();
-
-        List<Long> resultIds = results.stream().map(Result::getId).toList();
-
-        Map<Long, String> resultBuildJobSet = buildJobRepository.findBuildJobIdsForResultIds(resultIds).stream()
-                .collect(Collectors.toMap(ResultBuildJob::resultId, ResultBuildJob::buildJobId, (existing, replacement) -> existing));
-
-        for (Long resultId : resultIds) {
-            String buildJobId = resultBuildJobSet.get(resultId);
-            if (buildJobId != null) {
-
-                if (buildLogEntryService.buildJobHasLogFile(buildJobId, ((ProgrammingExerciseParticipation) participation).getProgrammingExercise())) {
-                    logsAvailability.put(resultId, buildJobId);
-                }
-                else {
-                    logsAvailability.put(resultId, null);
-                }
+        Set<ResultBuildJob> buildJobs = buildJobRepository.findBuildJobIdsWithResultForParticipationId(participationId);
+        ProgrammingExerciseNamesDTO names = null;
+        for (var buildJob : buildJobs) {
+            // all build jobs belong to the same programming exercise, so we can fetch the names only once
+            if (names == null) {
+                names = programmingExerciseRepository.findNames(buildJob.programmingExerciseId());
+            }
+            if (buildLogEntryService.buildJobHasLogFile(buildJob.buildJobId(), names)) {
+                logsAvailability.put(buildJob.resultId(), buildJob.buildJobId());
             }
             else {
-                logsAvailability.put(resultId, null);
+                logsAvailability.put(buildJob.resultId(), null);
             }
         }
         return logsAvailability;

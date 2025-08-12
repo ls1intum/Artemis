@@ -2,9 +2,11 @@ package de.tum.cit.aet.artemis.atlas.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -22,6 +24,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Important: For fetching a learning path with its competencies, use the {@link LearningPathRepositoryService} instead of this repository.
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Repository
 public interface LearningPathRepository extends ArtemisJpaRepository<LearningPath, Long> {
 
@@ -83,4 +86,13 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
                 AND clp.course.id = l.course.id
             """)
     Optional<LearningPath> findWithEagerUserAndLearnerProfileById(@Param("learningPathId") long learningPathId);
+
+    @Query("""
+            SELECT lp
+            FROM LearningPath lp
+            WHERE lp.course.id = :courseId
+                AND lp.user.deleted = FALSE
+                AND lp.course.studentGroupName MEMBER OF lp.user.groups
+            """)
+    List<LearningPath> findAllByCourseIdForEnrolledStudents(@Param("courseId") long courseId);
 }

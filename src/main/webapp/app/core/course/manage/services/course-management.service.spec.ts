@@ -15,10 +15,10 @@ import { Organization } from 'app/core/shared/entities/organization.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { CourseForDashboardDTO, ParticipationResultDTO } from 'app/core/course/shared/entities/course-for-dashboard-dto';
@@ -37,6 +37,7 @@ describe('Course Management Service', () => {
     let httpMock: HttpTestingController;
     let courseStorageService: CourseStorageService;
     let scoresStorageService: ScoresStorageService;
+    let localStorageService: LocalStorageService;
 
     let isAtLeastTutorInCourseSpy: jest.SpyInstance;
     let isAtLeastEditorInCourseSpy: jest.SpyInstance;
@@ -64,8 +65,8 @@ describe('Course Management Service', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: Router, useClass: MockRouter },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
@@ -75,6 +76,7 @@ describe('Course Management Service', () => {
         lectureService = TestBed.inject(LectureService);
         courseStorageService = TestBed.inject(CourseStorageService);
         scoresStorageService = TestBed.inject(ScoresStorageService);
+        localStorageService = TestBed.inject(LocalStorageService);
 
         isAtLeastTutorInCourseSpy = jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
         isAtLeastEditorInCourseSpy = jest.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
@@ -289,10 +291,10 @@ describe('Course Management Service', () => {
     it('should find participations for the course', fakeAsync(() => {
         returnedFromService = [...participations];
         courseManagementService
-            .findAllParticipationsWithResults(course.id!)
+            .findGradeScores(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(participations));
-        const req = httpMock.expectOne({ method: 'GET', url: `api/exercise/courses/${course.id}/participations` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/assessment/courses/${course.id}/grade-scores` });
         req.flush(returnedFromService);
         tick();
     }));
@@ -541,5 +543,23 @@ describe('Course Management Service', () => {
         expect(res.request.url).toBe(`${resourceUrl}/${courseId}/allowed-complaints?teamMode=true`);
 
         res.flush(expectedCount);
+    });
+
+    describe('Semester collapse state storage', () => {
+        it('should return false if no collapse state is stored', () => {
+            const collapseState = courseManagementService.getSemesterCollapseStateFromStorage('2024');
+            expect(collapseState).toBeFalse();
+        });
+
+        it('should store the collapse state via service method and retrieve it correctly', () => {
+            const storageId = '2026';
+            courseManagementService.setSemesterCollapseState(storageId, false);
+
+            const storedValue = localStorageService.retrieve<boolean>(`semester.collapseState.${storageId}`);
+            expect(storedValue).toBeFalse();
+
+            const retrieved = courseManagementService.getSemesterCollapseStateFromStorage(storageId);
+            expect(retrieved).toBeFalse();
+        });
     });
 });

@@ -1,7 +1,6 @@
 import { THEME_LOCAL_STORAGE_KEY, THEME_OVERRIDE_ID, Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('ThemeService', () => {
     let service: ThemeService;
@@ -18,10 +17,7 @@ describe('ThemeService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: ThemeService, useClass: ThemeService },
-            ],
+            providers: [{ provide: ThemeService, useClass: ThemeService }],
         })
             .compileComponents()
             .then(() => {
@@ -62,11 +58,11 @@ describe('ThemeService', () => {
     });
 
     it('applies theme changes correctly', () => {
-        TestBed.flushEffects();
+        TestBed.tick();
         expect(documentGetElementMock).toHaveBeenCalledOnce();
 
         service.applyThemePreference(Theme.DARK);
-        TestBed.flushEffects();
+        TestBed.tick();
 
         expect(documentGetElementMock).toHaveBeenCalledTimes(2);
         expect(documentGetElementMock).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
@@ -92,7 +88,7 @@ describe('ThemeService', () => {
         expect(service.currentTheme()).toBe(Theme.DARK);
 
         service.applyThemePreference(Theme.LIGHT);
-        TestBed.flushEffects();
+        TestBed.tick();
 
         expect(documentGetElementMock).toHaveBeenCalledTimes(3);
         expect(documentGetElementMock).toHaveBeenNthCalledWith(3, THEME_OVERRIDE_ID);
@@ -104,7 +100,7 @@ describe('ThemeService', () => {
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue('LIGHT');
 
         service.initialize();
-        TestBed.flushEffects();
+        TestBed.tick();
 
         expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(service.currentTheme()).toBe(Theme.LIGHT);
@@ -124,7 +120,7 @@ describe('ThemeService', () => {
         });
 
         service.initialize();
-        TestBed.flushEffects();
+        TestBed.tick();
         // @ts-ignore
         newElement?.onload();
 
@@ -138,7 +134,7 @@ describe('ThemeService', () => {
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
 
         service.initialize();
-        TestBed.flushEffects();
+        TestBed.tick();
 
         expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenCalledOnce();
@@ -154,7 +150,7 @@ describe('ThemeService', () => {
         const docSpy = jest.spyOn(document, 'getElementById').mockReturnValue(returnedElement as any as HTMLElement);
 
         service.print();
-        TestBed.flushEffects();
+        TestBed.tick();
 
         expect(docSpy).toHaveBeenCalledTimes(2);
         expect(docSpy).toHaveBeenCalledWith(THEME_OVERRIDE_ID);

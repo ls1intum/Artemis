@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
@@ -20,6 +21,7 @@ import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenti
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConverter;
 import de.tum.cit.aet.artemis.core.domain.PersistentAuditEvent;
 
@@ -27,16 +29,11 @@ import de.tum.cit.aet.artemis.core.domain.PersistentAuditEvent;
  * An implementation of Spring Boot's {@link AuditEventRepository}.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public class CustomAuditEventRepository implements AuditEventRepository {
 
     private final boolean isSaml2Active;
-
-    private static final String AUTHENTICATION_SUCCESS = "AUTHENTICATION_SUCCESS";
-
-    private static final String AUTHENTICATION_PASSKEY_SUCCESS = "AUTHENTICATION_PASSKEY_SUCCESS";
-
-    private static final String AUTHORIZATION_FAILURE = "AUTHORIZATION_FAILURE";
 
     /**
      * Should be the same as in Liquibase migration.
@@ -66,15 +63,15 @@ public class CustomAuditEventRepository implements AuditEventRepository {
         String eventType = event.getType();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (!AUTHORIZATION_FAILURE.equals(eventType)) {
-            if (isSaml2Active && AUTHENTICATION_SUCCESS.equals(eventType) && authentication == null) {
+        if (!AuditEventConstants.AUTHORIZATION_FAILURE.equals(eventType)) {
+            if (isSaml2Active && AuditEventConstants.AUTHENTICATION_SUCCESS.equals(eventType) && authentication == null) {
                 // If authentication is null, Auth is a success, and SAML2 profile is active => SAML2 authentication is running.
                 // Logging is handled manually.
                 return;
             }
 
             if (authentication instanceof WebAuthnAuthentication) {
-                eventType = AUTHENTICATION_PASSKEY_SUCCESS;
+                eventType = AuditEventConstants.AUTHENTICATION_PASSKEY_SUCCESS;
             }
 
             PersistentAuditEvent persistentAuditEvent = new PersistentAuditEvent();

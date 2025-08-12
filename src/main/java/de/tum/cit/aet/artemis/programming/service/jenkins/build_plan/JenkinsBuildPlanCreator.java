@@ -13,6 +13,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils;
 
 @Profile(PROFILE_JENKINS)
 @Component
+@Lazy
 public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private static final String REPLACE_PIPELINE_SCRIPT = "#pipelineScript";
@@ -81,6 +83,11 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         this.resourceLoaderService = resourceLoaderService;
     }
 
+    /**
+     * Creates the Artemis notification URL on bean creation
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
+     */
     @PostConstruct
     public void init() {
         this.artemisNotificationUrl = artemisServerUrl + Constants.NEW_RESULT_RESOURCE_API_PATH;

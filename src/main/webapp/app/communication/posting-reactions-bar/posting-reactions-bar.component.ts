@@ -30,6 +30,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { map } from 'rxjs';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { firstValueFrom } from 'rxjs';
 
 const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
@@ -386,10 +387,14 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }, {});
     }
 
+    /** Emits bookmark click event */
     protected bookmarkPosting() {
         this.onBookmarkClicked.emit();
     }
 
+    /**
+     * Returns true if any emoji reaction has a count greater than zero.
+     */
     isAnyReactionCountAboveZero(): boolean {
         return Object.values(this.reactionMetaDataMap).some((reaction) => reaction.count >= 1);
     }
@@ -438,21 +443,30 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         return this.displayPriority;
     }
 
+    /** Emits view open event and shows answer modal */
     openAnswerView() {
         this.showAnswersChange.emit(true);
         this.openPostingCreateEditModal.emit();
     }
 
+    /** Emits view close event and hides answer modal */
     closeAnswerView() {
         this.showAnswersChange.emit(false);
         this.closePostingCreateEditModal.emit();
     }
 
+    /**
+     * Determines whether the current user can edit the post.
+     * Emits the result via output.
+     */
     setMayEdit(): void {
         this.mayEdit = this.isAuthorOfPosting;
         this.mayEditOutput.emit(this.mayEdit);
     }
 
+    /**
+     * Handles opening of the create/edit modal based on post type.
+     */
     editPosting() {
         if (this.getPostingType() === 'post') {
             if ((this.posting() as Post)!.title != '') {
@@ -478,6 +492,14 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }
     }
 
+    /**
+     * Opens the forward message modal dialog.
+     * Fetches user and channel conversations, opens the modal, and forwards the message
+     * to the selected conversations after confirming selection.
+     *
+     * @param post The post or answer post to be forwarded
+     * @param isAnswer Whether the forwarded post is an answer post
+     */
     openForwardMessageView(post: Posting, isAnswer: boolean): void {
         if (!this.course()?.id) {
             return;
@@ -485,22 +507,26 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         this.channels = [];
         this.users = [];
 
+        // Load all conversations the user is part of
         this.conversationService
             .getConversationsOfUser(this.course()!.id!)
             .pipe(map((response) => response.body || []))
             .subscribe({
                 next: (conversations) => {
+                    // Filter only non-announcement channels for forwarding
                     conversations.forEach((conversation) => {
                         if (conversation.type === ConversationType.CHANNEL && !(conversation as ChannelDTO).isAnnouncementChannel) {
                             this.channels.push(conversation as ChannelDTO);
                         }
                     });
 
+                    // Open the forward message dialog
                     const modalRef = this.modalService.open(ForwardMessageDialogComponent, {
                         size: 'lg',
                         backdrop: 'static',
                     });
 
+                    // Pass initial data to the dialog
                     modalRef.componentInstance.users.set([]);
                     modalRef.componentInstance.channels.set(this.channels);
                     modalRef.componentInstance.postToForward.set(post);
@@ -511,12 +537,14 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
                             const allSelections: Conversation[] = [...selection.channels];
                             const userLogins = selection.users.map((user) => user.login!);
 
+                            // Create new conversation if necessary
                             if (userLogins.length > 0) {
                                 let newConversation: Conversation | undefined = undefined;
 
                                 if (userLogins.length === 1) {
+                                    // Direct message
                                     try {
-                                        const response = await this.metisConversationService.createDirectConversation(userLogins[0]).toPromise();
+                                        const response = await firstValueFrom(this.metisConversationService.createDirectConversation(userLogins[0]));
                                         newConversation = (response?.body ?? undefined) as Conversation;
                                         if (newConversation) {
                                             allSelections.push(newConversation);
@@ -525,8 +553,9 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
                                         return;
                                     }
                                 } else {
+                                    // Group message
                                     try {
-                                        const response = await this.metisConversationService.createGroupConversation(userLogins).toPromise();
+                                        const response = await firstValueFrom(this.metisConversationService.createGroupConversation(userLogins));
                                         if (response && response.body) {
                                             newConversation = response.body as Conversation;
                                             allSelections.push(newConversation);
@@ -537,6 +566,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
                                 }
                             }
 
+                            // Send the forwarded post to each selected conversation
                             allSelections.forEach((conversation) => {
                                 if (conversation && conversation.id) {
                                     this.forwardPost(post, conversation, selection.messageContent, isAnswer);
@@ -548,10 +578,17 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
             });
     }
 
+    /**
+     * Sends the post to selected conversation with optional new content via MetisService.
+     */
     forwardPost(post: Posting, conversation: Conversation, content: string, isAnswer: boolean): void {
         this.metisService.createForwardedMessages([post], conversation, isAnswer, content).subscribe({});
     }
 
+    /**
+     * Evaluates whether the user may delete the posting based on their role, authorship, and course/channel context.
+     * Emits the result via output.
+     */
     setMayDelete(): void {
         const conversation = this.getConversation();
         const channel = getAsChannelDTO(conversation);

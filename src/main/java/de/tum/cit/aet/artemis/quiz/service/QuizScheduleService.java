@@ -9,12 +9,13 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 
 @Profile(PROFILE_CORE_AND_SCHEDULING)
+@Lazy
 @Service
 public class QuizScheduleService {
 
@@ -60,7 +62,12 @@ public class QuizScheduleService {
         this.quizSubmissionService = quizSubmissionService;
     }
 
-    @EventListener(ApplicationReadyEvent.class)
+    /**
+     * Schedules quiz exercises
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
+     */
+    @PostConstruct
     public void applicationReady() {
         // schedule the task after the application has started to avoid delaying the start of the application
         scheduler.schedule(this::scheduleRunningExercisesOnStartup, Instant.now().plusSeconds(QUIZ_EXERCISE_SCHEDULE_DELAY_SEC));

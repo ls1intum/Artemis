@@ -1,17 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
-import { ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, input, viewChild } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -25,29 +24,25 @@ import { IconCardComponent } from 'app/tutorialgroup/shared/icon-card/icon-card.
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {
-    @Input() tutorialGroup: TutorialGroup;
+    readonly tutorialGroup = input.required<TutorialGroup>();
 }
 
 @Component({
     selector: 'jhi-mock-wrapper',
     template: `
-        <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup">
-            <ng-template let-tutorialGroup>
-                <jhi-mock-header [tutorialGroup]="tutorialGroup" />
+        <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup()">
+            <ng-template>
+                <jhi-mock-header [tutorialGroup]="tutorialGroup()" />
             </ng-template>
         </jhi-tutorial-group-detail>
     `,
     imports: [TutorialGroupDetailComponent, MockHeaderComponent],
 })
 class MockWrapperComponent {
-    @Input()
-    tutorialGroup: TutorialGroup;
+    readonly tutorialGroup = input.required<TutorialGroup>();
 
-    @ViewChild(TutorialGroupDetailComponent)
-    tutorialGroupDetailInstance: TutorialGroupDetailComponent;
-
-    @ViewChild(MockHeaderComponent)
-    mockHeaderInstance: MockHeaderComponent;
+    tutorialGroupDetailInstance = viewChild.required(TutorialGroupDetailComponent);
+    mockHeaderInstance = viewChild.required(MockHeaderComponent);
 }
 
 describe('TutorialGroupDetailWrapperTest', () => {
@@ -59,7 +54,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([])],
+            imports: [RouterModule.forRoot([]), FaIconComponent],
             declarations: [
                 TutorialGroupDetailComponent,
                 MockWrapperComponent,
@@ -67,7 +62,6 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 MockComponent(IconCardComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(RemoveSecondsPipe),
-                MockComponent(FaIconComponent),
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockDirective(TranslateDirective),
                 MockComponent(ProfilePictureComponent),
@@ -79,7 +73,6 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 MockProvider(SortService),
                 MockProvider(SessionStorageService),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         })
             .compileComponents()
@@ -87,10 +80,10 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 fixture = TestBed.createComponent(MockWrapperComponent);
                 component = fixture.componentInstance;
                 exampleTutorialGroup = generateExampleTutorialGroup({});
-                component.tutorialGroup = exampleTutorialGroup;
+                fixture.componentRef.setInput('tutorialGroup', exampleTutorialGroup);
                 fixture.detectChanges();
-                detailInstance = component.tutorialGroupDetailInstance;
-                headerInstance = component.mockHeaderInstance;
+                detailInstance = component.tutorialGroupDetailInstance();
+                headerInstance = component.mockHeaderInstance();
             });
     });
 
@@ -99,8 +92,8 @@ describe('TutorialGroupDetailWrapperTest', () => {
     });
 
     it('should pass the tutorialGroup to the header', () => {
-        expect(headerInstance.tutorialGroup).toEqual(component.tutorialGroup);
-        expect(component.tutorialGroup).toEqual(detailInstance.tutorialGroup);
+        expect(headerInstance.tutorialGroup()).toEqual(component.tutorialGroup());
+        expect(component.tutorialGroup()).toEqual(detailInstance.tutorialGroup());
         const mockHeader = fixture.debugElement.nativeElement.querySelector('#mockHeader');
         expect(mockHeader).toBeTruthy();
     });
@@ -112,11 +105,10 @@ describe('TutorialGroupDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([])],
+            imports: [RouterModule.forRoot([]), FaIconComponent],
             declarations: [
                 TutorialGroupDetailComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
                 MockComponent(IconCardComponent),
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockPipe(RemoveSecondsPipe),
@@ -129,7 +121,7 @@ describe('TutorialGroupDetailComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupDetailComponent);
                 component = fixture.componentInstance;
-                component.tutorialGroup = generateExampleTutorialGroup({});
+                fixture.componentRef.setInput('tutorialGroup', generateExampleTutorialGroup({}));
                 fixture.detectChanges();
             });
     });
@@ -178,8 +170,8 @@ describe('TutorialGroupDetailComponent', () => {
             24,
         ],
     ])('should calculate average attendance correctly', (tutorialGroup: TutorialGroup, expectedAttendance: number) => {
-        component.tutorialGroup = tutorialGroup;
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         component.recalculateAttendanceDetails();
-        expect(component.tutorialGroup.averageAttendance).toBe(expectedAttendance);
+        expect(component.tutorialGroup().averageAttendance).toBe(expectedAttendance);
     });
 });

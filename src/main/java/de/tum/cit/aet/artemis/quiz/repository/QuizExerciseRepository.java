@@ -10,6 +10,7 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -17,6 +18,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -25,8 +27,12 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  * Spring Data JPA repository for the QuizExercise entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercise, Long>, JpaSpecificationExecutor<QuizExercise> {
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
+    Set<QuizExercise> findWithBatchesByCourseId(long courseId);
 
     @Query("""
             SELECT DISTINCT e
@@ -84,6 +90,21 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 AND q.course.id = :courseId
             """)
     Set<QuizExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO(
+                exercise.quizMode,
+                exercise.title,
+                exercise.releaseDate,
+                exercise.dueDate,
+                batch,
+                exercise.duration
+            )
+            FROM QuizExercise exercise
+                LEFT JOIN exercise.quizBatches batch ON exercise.quizMode = de.tum.cit.aet.artemis.quiz.domain.QuizMode.SYNCHRONIZED
+            WHERE exercise.course.id = :courseId
+            """)
+    Set<QuizExerciseCalendarEventDTO> getQuizExerciseCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
 
     /**
      * Finds a quiz exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.

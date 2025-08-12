@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -75,6 +76,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -90,6 +92,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
@@ -118,6 +121,7 @@ import tech.jhipster.web.util.PaginationUtil;
  * REST controller for managing Exam.
  */
 @Conditional(ExamEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/exam/")
 public class ExamResource {
@@ -1109,6 +1113,22 @@ public class ExamResource {
         StudentExam exam = examAccessService.getOrCreateStudentExamElseThrow(courseId, examId);
         exam.getUser().setVisibleRegistrationNumber();
         return ResponseEntity.ok(exam);
+    }
+
+    /**
+     * GET /courses/{courseId}/real-exams-sidebar-data : Get sidebar data for real exams in a course.
+     * For the content see {@link ExamSidebarDataDTO}
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and with the found sidebar data as body
+     */
+    @GetMapping("courses/{courseId}/real-exams-sidebar-data")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<ExamSidebarDataDTO>> getSidebarDataForRealExams(@PathVariable long courseId) {
+        log.debug("REST request to get sidebar data for exams in course {}", courseId);
+        User user = userRepository.getUser();
+        Set<ExamSidebarDataDTO> sidebarData = examRepository.findSidebarDataForRealStudentExamsByCourseId(courseId, ZonedDateTime.now(), user.getId());
+        return ResponseEntity.ok(sidebarData);
     }
 
     /**

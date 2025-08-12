@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlConfigBuilde
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
+@Lazy
 @Service
 @Profile(PROFILE_JENKINS)
 public class JenkinsBuildPlanService {
@@ -153,8 +155,8 @@ public class JenkinsBuildPlanService {
 
     private JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs getInternalRepositoryUris(final ProgrammingExercise exercise, final VcsRepositoryUri assignmentRepositoryUri) {
         final VcsRepositoryUri assignmentUrl = jenkinsInternalUrlService.toInternalVcsUrl(assignmentRepositoryUri);
-        final VcsRepositoryUri testUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.TESTS));
-        final VcsRepositoryUri solutionUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.SOLUTION));
+        final VcsRepositoryUri testUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURI(RepositoryType.TESTS));
+        final VcsRepositoryUri solutionUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURI(RepositoryType.SOLUTION));
 
         return new JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs(assignmentUrl, testUrl, solutionUrl);
     }

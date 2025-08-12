@@ -9,13 +9,13 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.ItemEvent;
@@ -45,9 +45,11 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 
 @Profile(PROFILE_LOCALCI)
+@Lazy
 @Service
 public class LocalCIResultProcessingService {
 
@@ -73,12 +75,15 @@ public class LocalCIResultProcessingService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
+    private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
+
     private UUID listenerId;
 
     public LocalCIResultProcessingService(ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
             BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
             ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
-            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService) {
+            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService,
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -88,12 +93,15 @@ public class LocalCIResultProcessingService {
         this.buildLogEntryService = buildLogEntryService;
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
     }
 
     /**
      * Initializes the result queue, build agent information map and the locks.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void init() {
         this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addItemListener(new ResultQueueListener(), true);
     }
@@ -191,7 +199,7 @@ public class LocalCIResultProcessingService {
                         programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
                     }
                     else {
-                        programmingMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
+                        programmingSubmissionMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
                                 new BuildTriggerWebsocketError("Result could not be processed", programmingExerciseParticipation.getId()));
                     }
 

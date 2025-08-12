@@ -19,15 +19,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
@@ -51,6 +52,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
  * Includes functionality for processing build jobs from the shared build job queue.
  */
 @Profile(PROFILE_BUILDAGENT)
+@Lazy
 @Service
 public class SharedQueueProcessingService {
 
@@ -61,6 +63,8 @@ public class SharedQueueProcessingService {
     private final BuildJobManagementService buildJobManagementService;
 
     private final BuildLogsMap buildLogsMap;
+
+    private final AtomicInteger consecutiveBuildJobFailures = new AtomicInteger(0);
 
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
@@ -123,8 +127,10 @@ public class SharedQueueProcessingService {
 
     /**
      * Initialize relevant data from hazelcast
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void init() {
         if (!buildAgentShortName.matches("^[a-z0-9-]+$")) {
             String errorMessage = "Build agent short name must not be empty and only contain lowercase letters, numbers and hyphens."
@@ -153,7 +159,7 @@ public class SharedQueueProcessingService {
 
         distributedDataAccessService.getPauseBuildAgentTopic().addMessageListener(message -> {
             if (buildAgentShortName.equals(message.getMessageObject())) {
-                pauseBuildAgent();
+                pauseBuildAgent(false);
             }
         });
 
@@ -343,7 +349,9 @@ public class SharedQueueProcessingService {
             // after processing a build job, remove it from the processing jobs
             distributedDataAccessService.getDistributedProcessingJobs().remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get());
+            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
+
+            consecutiveBuildJobFailures.set(0);
 
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
@@ -357,22 +365,21 @@ public class SharedQueueProcessingService {
             BuildJobQueueItem job;
             BuildStatus status;
 
-            String cancelledMsg = "Build job with id " + buildJob.id() + " was cancelled.";
-            String timeoutMsg = "Build job with id " + buildJob.id() + " was timed out";
-            Throwable cause = ex.getCause();
-            String errorMessage = ex.getMessage();
-
-            if ((cause instanceof TimeoutException) || errorMessage.equals(timeoutMsg)) {
+            if (isCausedByTimeoutException(ex, buildJob.id())) {
                 status = BuildStatus.TIMEOUT;
                 log.info("Build job with id {} was timed out", buildJob.id());
+                consecutiveBuildJobFailures.incrementAndGet();
             }
-            else if ((cause instanceof CancellationException) && errorMessage.equals(cancelledMsg)) {
+            else if (isCausedByCancelledException(ex, buildJob.id())) {
                 status = BuildStatus.CANCELLED;
                 log.info("Build job with id {} was cancelled", buildJob.id());
             }
             else {
                 status = BuildStatus.FAILED;
                 log.error("Error while processing build job: {}", buildJob, ex);
+                if (!isCausedByImagePullFailedException(ex)) {
+                    consecutiveBuildJobFailures.incrementAndGet();
+                }
             }
 
             job = new BuildJobQueueItem(buildJob, completionDate, status);
@@ -393,14 +400,20 @@ public class SharedQueueProcessingService {
 
             distributedDataAccessService.getDistributedProcessingJobs().remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(job, isPaused.get());
+            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(job, isPaused.get(), false, consecutiveBuildJobFailures.get());
+
+            if (consecutiveBuildJobFailures.get() >= buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs()) {
+                log.error("Build agent has failed to process build jobs {} times in a row. Pausing build agent.", consecutiveBuildJobFailures.get());
+                pauseBuildAgent(true);
+                return null;
+            }
 
             checkAvailabilityAndProcessNextBuild();
             return null;
         });
     }
 
-    private void pauseBuildAgent() {
+    private void pauseBuildAgent(boolean dueToFailures) {
         if (isPaused.get()) {
             log.info("Build agent is already paused");
             return;
@@ -412,7 +425,7 @@ public class SharedQueueProcessingService {
 
             isPaused.set(true);
             removeListenerAndCancelScheduledFuture();
-            buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
+            buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get(), dueToFailures, consecutiveBuildJobFailures.get());
 
             log.info("Gracefully cancelling running build jobs");
             Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
@@ -475,6 +488,7 @@ public class SharedQueueProcessingService {
             isPaused.set(false);
             processResults.set(true);
             buildAgentConfiguration.openBuildAgentServices();
+            consecutiveBuildJobFailures.set(0);
 
             // Cleanup docker containers
             buildAgentDockerService.cleanUpContainers();
@@ -499,13 +513,52 @@ public class SharedQueueProcessingService {
     private boolean nodeIsAvailable() {
         var buildExecutorService = buildAgentConfiguration.getBuildExecutor();
         if (buildExecutorService == null) {
-            log.error("buildExecutorService is null!");
+            log.warn("build node is not available yet because buildExecutorService is null!");
             return false;
         }
         log.debug("Currently processing jobs on this node: {}, active threads in Pool: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
                 buildExecutorService.getActiveCount(), buildExecutorService.getMaximumPoolSize());
         return localProcessingJobs.get() < buildExecutorService.getMaximumPoolSize() && buildExecutorService.getActiveCount() < buildExecutorService.getMaximumPoolSize()
                 && buildExecutorService.getQueue().isEmpty();
+    }
+
+    /**
+     * Check if a throwable is caused by local CI failing to pull the docker image
+     *
+     * @param throwable throwable to check
+     * @return {@code true} if the throwable is caused by local CI failing to pull the docker image, {@code false} otherwise
+     */
+    private boolean isCausedByImagePullFailedException(Throwable throwable) {
+        Throwable cause = throwable.getCause();
+        if (!(cause instanceof ExecutionException)) {
+            return false;
+        }
+        Throwable rootCause = cause.getCause();
+        return rootCause instanceof LocalCIException && rootCause.getMessage() != null && rootCause.getMessage().contains("Could not pull Docker image");
+    }
+
+    /**
+     * Check if a throwable is caused by a cancelled build job
+     *
+     * @param throwable  the throwable to check
+     * @param buildJobId the id of the build job
+     * @return {@code true} if the throwable is caused by a cancelled build job, {@code false} otherwise
+     */
+    private boolean isCausedByCancelledException(Throwable throwable, String buildJobId) {
+        String cancelledMsg = "Build job with id " + buildJobId + " was cancelled.";
+        return throwable.getCause() instanceof CancellationException && throwable.getMessage().equals(cancelledMsg);
+    }
+
+    /**
+     * Check if a throwable is caused by a timeout
+     *
+     * @param throwable  the throwable to check
+     * @param buildJobId the id of the build job
+     * @return {@code true} if the throwable is caused by a timeout, {@code false} otherwise
+     */
+    private boolean isCausedByTimeoutException(Throwable throwable, String buildJobId) {
+        String timeoutMsg = "Build job with id " + buildJobId + " was timed out";
+        return throwable.getCause() instanceof TimeoutException || throwable.getMessage().equals(timeoutMsg);
     }
 
     public class QueuedBuildJobItemListener implements ItemListener<BuildJobQueueItem> {

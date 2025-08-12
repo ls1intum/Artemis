@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
@@ -8,7 +9,6 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 
 import { CourseSidebarComponent } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
@@ -18,8 +18,7 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -38,8 +37,6 @@ import { AfterViewInit, Component, EventEmitter, TemplateRef, ViewChild } from '
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/core/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD } from 'app/app.constants';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
@@ -48,8 +45,6 @@ import { CourseConversationsComponent } from 'app/communication/shared/course-co
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -60,6 +55,7 @@ import { CourseAccessStorageService } from 'app/core/course/shared/services/cour
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -144,6 +140,7 @@ describe('CourseManagementContainerComponent', () => {
     let featureToggleService: FeatureToggleService;
     let metisConversationService: MetisConversationService;
     let profileService: ProfileService;
+    let localStorageService: LocalStorageService;
     let router: Router;
     let route: ActivatedRoute;
 
@@ -192,8 +189,6 @@ describe('CourseManagementContainerComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -215,6 +210,7 @@ describe('CourseManagementContainerComponent', () => {
                 eventManager = TestBed.inject(EventManager);
                 featureToggleService = TestBed.inject(FeatureToggleService);
                 profileService = TestBed.inject(ProfileService);
+                localStorageService = TestBed.inject(LocalStorageService);
                 courseSidebarService = TestBed.inject(CourseSidebarService);
                 router = TestBed.inject(Router);
                 findSpy = jest.spyOn(courseService, 'find').mockReturnValue(
@@ -249,6 +245,10 @@ describe('CourseManagementContainerComponent', () => {
                     of(
                         new HttpResponse({
                             body: {
+                                numberOfStudents: 100,
+                                numberOfTutors: 10,
+                                numberOfEditors: 5,
+                                numberOfInstructors: 2,
                                 numberExams: 2,
                                 numberLectures: 3,
                                 numberProgrammingExercises: 5,
@@ -280,8 +280,8 @@ describe('CourseManagementContainerComponent', () => {
     afterEach(() => {
         component.ngOnDestroy();
         jest.restoreAllMocks();
-        localStorage.clear();
-        sessionStorage.clear();
+        localStorageService.clear();
+        TestBed.inject(SessionStorageService).clear();
     });
 
     it('should call necessary methods on init', async () => {
@@ -369,6 +369,19 @@ describe('CourseManagementContainerComponent', () => {
 
         expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
     });
+    it('should not include sidebar items for disabled features for non-instructors', async () => {
+        const courseWithDisabledFeatures = {
+            ...course1,
+            isAtLeastEditor: true,
+            isAtLeastInstructor: false,
+            faqEnabled: false,
+            courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED,
+        };
+        component.course.set(courseWithDisabledFeatures);
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.find((item) => item.title === 'Communication')).toBeUndefined();
+        expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeUndefined();
+    });
 
     it('should subscribe to course updates when handleCourseIdChange is called', () => {
         component.handleCourseIdChange(2);
@@ -399,35 +412,18 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.isSidebarCollapsed()).toBeFalse();
     });
 
-    it('should get existing summary entries correctly', () => {
+    it('should fetch course deletion summary correctly', () => {
         component.course.set({
             ...course1,
-            numberOfStudents: 100,
-            numberOfTeachingAssistants: 10,
-            numberOfEditors: 5,
-            numberOfInstructors: 2,
             testCourse: true,
-            exercises: [
-                { type: ExerciseType.PROGRAMMING } as ProgrammingExercise,
-                { type: ExerciseType.PROGRAMMING } as ProgrammingExercise,
-                { type: ExerciseType.TEXT } as TextExercise,
-                { type: ExerciseType.QUIZ } as QuizExercise,
-            ],
         });
 
-        const summary = (component as any).getExistingSummaryEntries();
-
-        expect(summary['artemisApp.course.delete.summary.numberStudents']).toBe(100);
-        expect(summary['artemisApp.course.delete.summary.numberTutors']).toBe(10);
-        expect(summary['artemisApp.course.delete.summary.numberEditors']).toBe(5);
-        expect(summary['artemisApp.course.delete.summary.numberInstructors']).toBe(2);
-        expect(summary['artemisApp.course.delete.summary.isTestCourse']).toBeTrue();
-    });
-
-    it('should fetch course deletion summary correctly', () => {
-        component.course.set(course1);
-
         component.fetchCourseDeletionSummary().subscribe((summary: EntitySummary) => {
+            expect(summary['artemisApp.course.delete.summary.isTestCourse']).toBeTrue();
+            expect(summary['artemisApp.course.delete.summary.numberStudents']).toBe(100);
+            expect(summary['artemisApp.course.delete.summary.numberTutors']).toBe(10);
+            expect(summary['artemisApp.course.delete.summary.numberEditors']).toBe(5);
+            expect(summary['artemisApp.course.delete.summary.numberInstructors']).toBe(2);
             expect(summary['artemisApp.course.delete.summary.numberExams']).toBe(2);
             expect(summary['artemisApp.course.delete.summary.numberLectures']).toBe(3);
             expect(summary['artemisApp.course.delete.summary.numberProgrammingExercises']).toBe(5);
@@ -510,7 +506,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should set up conversation service if course has communication enabled', () => {
-        const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService').mockImplementation((currentCourse) => {
+        const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService').mockImplementation(() => {
             return new Observable((subscriber) => subscriber.complete());
         });
 
@@ -519,8 +515,8 @@ describe('CourseManagementContainerComponent', () => {
             courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
         });
         jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
-
         component.onSubRouteActivate({});
+        fixture.detectChanges();
 
         expect(component.communicationRouteLoaded()).toBeTrue();
         expect(setUpConversationServiceSpy).toHaveBeenCalled();
@@ -538,21 +534,21 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should get collapse state from localStorage on init', async () => {
-        localStorage.setItem('navbar.collapseState', 'true');
+        localStorageService.store<boolean>('navbar.collapseState', true);
 
         await component.ngOnInit();
 
         expect(component.isNavbarCollapsed()).toBeTrue();
 
-        localStorage.setItem('navbar.collapseState', 'false');
+        localStorageService.store<boolean>('navbar.collapseState', false);
 
         component.getCollapseStateFromStorage();
 
         expect(component.isNavbarCollapsed()).toBeFalse();
     });
 
-    it('should set isNavbarCollapsed to false by default if not in localStorage', async () => {
-        localStorage.removeItem('navbar.collapseState');
+    it('should set isNavbarCollapsed to false by default if not in localStorageService', async () => {
+        localStorageService.remove('navbar.collapseState');
 
         await component.ngOnInit();
 
@@ -564,11 +560,11 @@ describe('CourseManagementContainerComponent', () => {
 
         component.toggleCollapseState();
 
-        expect(localStorage.getItem('navbar.collapseState')).toBe('true');
+        expect(localStorageService.retrieve<boolean>('navbar.collapseState')).toBeTrue();
 
         component.toggleCollapseState();
 
-        expect(localStorage.getItem('navbar.collapseState')).toBe('false');
+        expect(localStorageService.retrieve<boolean>('navbar.collapseState')).toBeFalse();
     });
 
     it('should correctly determine if course is active', () => {
@@ -665,7 +661,6 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should handle component activation with controls', () => {
         const getPageTitleSpy = jest.spyOn(component, 'getPageTitle');
-        const setUpConversationServiceSpy = jest.spyOn(component as any, 'setupConversationService');
         const tryRenderControlsSpy = jest.spyOn(component as any, 'tryRenderControls');
 
         const controlsComponent = {
@@ -678,7 +673,6 @@ describe('CourseManagementContainerComponent', () => {
         component.onSubRouteActivate(controlsComponent);
 
         expect(getPageTitleSpy).toHaveBeenCalled();
-        expect(setUpConversationServiceSpy).toHaveBeenCalled();
         expect(component.controlConfiguration()).toBe(controlsComponent.controlConfiguration);
 
         const template = {} as TemplateRef<any>;

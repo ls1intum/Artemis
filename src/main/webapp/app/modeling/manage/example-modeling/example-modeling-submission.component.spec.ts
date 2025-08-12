@@ -34,6 +34,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('Example Modeling Submission Component', () => {
     let comp: ExampleModelingSubmissionComponent;
@@ -95,7 +96,7 @@ describe('Example Modeling Submission Component', () => {
         } as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [FormsModule],
+            imports: [FormsModule, FaIconComponent],
             declarations: [
                 ExampleModelingSubmissionComponent,
                 ModelingAssessmentComponent,

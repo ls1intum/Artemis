@@ -1,18 +1,17 @@
 import { PlagiarismComparison } from './PlagiarismComparison';
-import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 
 /**
  * Base result of any automatic plagiarism detection.
  */
-export abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> {
+export class PlagiarismResult {
     id?: number;
 
     /**
      * List of detected comparisons whose similarity is above the specified threshold.
      */
-    comparisons: PlagiarismComparison<E>[];
+    comparisons: PlagiarismComparison[];
 
     /**
      * Duration of the plagiarism detection run in milliseconds.

@@ -5,6 +5,7 @@ import {
     faChartColumn,
     faCog,
     faComments,
+    faDumbbell,
     faFlag,
     faGraduationCap,
     faList,
@@ -91,25 +92,40 @@ describe('CourseSidebarItemService', () => {
     });
 
     describe('getStudentDefaultItems', () => {
-        it('should return items without dashboard when hasDashboard is false', () => {
-            const items = service.getStudentDefaultItems(false);
-
-            expect(items).toHaveLength(2);
-            expect(items[0].title).toBe('Exercises');
-            expect(items[1].title).toBe('Statistics');
-        });
-
-        it('should include dashboard item when hasDashboard is true', () => {
-            const items = service.getStudentDefaultItems(true);
+        it('should return items without dashboard when hasDashboard is false and questionsAvailableForTraining is false', () => {
+            const items = service.getStudentDefaultItems(false, false);
 
             expect(items).toHaveLength(3);
+            expect(items[0].title).toBe('Exercises');
+            expect(items[1].title).toBe('Statistics');
+            expect(items[2].title).toBe('Calendar');
+        });
+
+        it('should include dashboard item when hasDashboard is true and questionsAvailableForTraining is true', () => {
+            const items = service.getStudentDefaultItems(true, true);
+
+            expect(items).toHaveLength(5);
             expect(items[0].title).toBe('Dashboard');
             expect(items[1].title).toBe('Exercises');
-            expect(items[2].title).toBe('Statistics');
+            expect(items[2].title).toBe('Training');
+            expect(items[3].title).toBe('Statistics');
+            expect(items[4].title).toBe('Calendar');
         });
     });
 
     describe('Individual item methods', () => {
+        it('getTrainingItem should return correct item', () => {
+            const item = service.getTrainingItem();
+
+            expect(item).toEqual({
+                routerLink: 'training',
+                icon: faDumbbell,
+                title: 'Training',
+                translation: 'overview.training',
+                hidden: false,
+            });
+        });
+
         it('getExamsItem should return correct item with courseId', () => {
             const item = service.getExamsItem(courseId);
 

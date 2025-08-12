@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
@@ -39,6 +40,7 @@ import com.hazelcast.map.IMap;
  * </p>
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public class HazelcastPublicKeyCredentialRequestOptionsRepository implements PublicKeyCredentialRequestOptionsRepository {
 
@@ -70,6 +72,8 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
 
     /**
      * Initializes the Hazelcast map configuration after dependency injection.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * Sets the time-to-live for WebAuthn request options to 2 minutes.

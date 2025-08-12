@@ -1,21 +1,21 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
-import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
+import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 
 describe('TextExercise Service', () => {
     let service: TextExerciseService;
@@ -31,8 +31,8 @@ describe('TextExercise Service', () => {
                 provideHttpClientTesting(),
                 { provide: Router, useClass: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
             ],
         });
         requestResult = {} as HttpResponse<TextExercise>;
@@ -44,7 +44,7 @@ describe('TextExercise Service', () => {
         elemDefault.dueDate = dayjs();
         elemDefault.releaseDate = dayjs();
         elemDefault.studentParticipations = new Array<StudentParticipation>();
-        plagiarismResults = new TextPlagiarismResult();
+        plagiarismResults = new PlagiarismResult();
         plagiarismResults.exercise = elemDefault;
         plagiarismResults.comparisons = [];
         plagiarismResults.duration = 40;

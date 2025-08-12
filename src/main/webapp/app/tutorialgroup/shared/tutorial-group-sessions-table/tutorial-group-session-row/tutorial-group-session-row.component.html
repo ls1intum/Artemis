@@ -1,12 +1,12 @@
 <ng-container>
-    @if (showIdColumn) {
-        <td>{{ session.id }}</td>
+    @if (showIdColumn()) {
+        <td>{{ localSession().id }}</td>
     }
     <td>
         <span>
-            {{ session.start | artemisDate: 'short-date' : false : timeZone! : true }}
-            {{ session.start | artemisDate: 'time' : false : timeZone! }} -
-            {{ session.end | artemisDate: 'time' : false : timeZone! }}
+            {{ localSession().start | artemisDate: 'short-date' : false : timeZone() : true }}
+            {{ localSession().start | artemisDate: 'time' : false : timeZone() }} -
+            {{ localSession().end | artemisDate: 'time' : false : timeZone() }}
         </span>
         @if (isCancelled) {
             <button
@@ -26,19 +26,19 @@
         }
     </td>
     <td>
-        <button type="button" class="btn btn-outline-info" placement="top" [ngbPopover]="session.location" [animation]="false" [autoClose]="'outside'">
+        <button type="button" class="btn btn-outline-info" placement="top" [ngbPopover]="localSession().location" [animation]="false" [autoClose]="'outside'">
             <span class="d-inline-block text-truncate" style="max-width: 150px">
-                {{ session.location }}
+                {{ localSession().location }}
             </span>
         </button>
     </td>
     <td class="attendance-column">
-        @if (!isReadOnly) {
+        @if (!isReadOnly()) {
             <div class="input-group">
                 <input
                     type="number"
                     class="form-control attendance-input"
-                    [ngModel]="session.attendanceCount"
+                    [ngModel]="localSession().attendanceCount"
                     (ngModelChange)="onAttendanceInput($event)"
                     name="attendance"
                     #attendance="ngModel"
@@ -48,7 +48,7 @@
                     aria-labelledby="attendanceHeader"
                 />
                 <button
-                    [style.visibility]="attendanceDiffersFromPersistedValue && attendance.valid ? 'visible' : 'hidden'"
+                    [style.visibility]="attendanceDiffersFromPersistedValue() && attendance.valid ? 'visible' : 'hidden'"
                     class="btn btn-outline-secondary"
                     type="button"
                     (click)="saveAttendanceCount()"
@@ -61,10 +61,10 @@
                 </button>
             </div>
         } @else {
-            {{ session.attendanceCount ?? '' }}
+            {{ localSession().attendanceCount ?? '' }}
         }
     </td>
-    @if (tutorialGroup.tutorialGroupSchedule) {
+    @if (tutorialGroup().tutorialGroupSchedule) {
         <td>
             @if (!hasSchedule) {
                 <div class="alert alert-info" role="alert" jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.differsFromSchedule"></div>

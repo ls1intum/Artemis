@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * Service used to check whether user is authorized to perform actions on the entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class AuthorizationCheckService {
 
@@ -219,7 +221,7 @@ public class AuthorizationCheckService {
      *
      * @param course the course that needs to be checked
      * @param user   the user whose permissions should be checked
-     * @return true if the passed user is at least a teaching assistant in the course (also if the user is instructor or admin), false otherwise
+     * @return true if the passed user is at least a teaching assistant in the course (also if the user is editor, instructor or admin), false otherwise
      */
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInCourse(@NotNull Course course, @Nullable User user) {

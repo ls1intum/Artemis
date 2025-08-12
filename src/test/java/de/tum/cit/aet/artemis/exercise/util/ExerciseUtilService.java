@@ -13,6 +13,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +24,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 /**
  * Service responsible for initializing the database with specific testdata related to exercises for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ExerciseUtilService {
@@ -76,9 +77,6 @@ public class ExerciseUtilService {
 
     @Autowired
     private ResultTestRepository resultRepo;
-
-    @Autowired
-    private ChannelRepository channelRepository;
 
     @Autowired
     private AnswerPostRepository answerPostRepository;

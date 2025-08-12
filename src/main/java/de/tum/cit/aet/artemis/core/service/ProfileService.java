@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import tech.jhipster.config.JHipsterConstants;
  * Helper service for checking which profiles are active
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProfileService {
 
@@ -67,30 +69,12 @@ public class ProfileService {
     }
 
     /**
-     * Checks if the local VCS or CI profile is active
-     *
-     * @return true if the local VCS or CI profile is active, false otherwise
-     */
-    public boolean isLocalVCorCIActive() {
-        return isLocalVCActive() || isLocalCIActive();
-    }
-
-    /**
      * Checks if the local CI profile is active
      *
      * @return true if the local CI profile is active, false otherwise
      */
     public boolean isLocalCIActive() {
         return isProfileActive(Constants.PROFILE_LOCALCI);
-    }
-
-    /**
-     * Checks if the local VC profile is active
-     *
-     * @return true if the local VC profile is active, false otherwise
-     */
-    public boolean isLocalVCActive() {
-        return isProfileActive(Constants.PROFILE_LOCALVC);
     }
 
     // Sub-system profiles

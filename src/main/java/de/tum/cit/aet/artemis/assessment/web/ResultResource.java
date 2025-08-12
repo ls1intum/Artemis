@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,8 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -67,6 +70,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  * REST controller for managing Result.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/assessment/")
 // TODO: verify unused endpoints in client
@@ -169,6 +173,7 @@ public class ResultResource {
      */
     @GetMapping("participations/{participationId}/results/{resultId}/details")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get details of Result : {}", resultId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
@@ -194,13 +199,8 @@ public class ResultResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Map<Long, String>> getBuildJobIdsForResultsOfParticipation(@PathVariable long participationId) {
         log.debug("REST request to get build job ids for results of participation : {}", participationId);
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
-        List<Result> results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
-
-        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results, participation);
-
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participationId);
+        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(participationId);
         return new ResponseEntity<>(resultBuildJobMap, HttpStatus.OK);
     }
 
@@ -274,7 +274,7 @@ public class ResultResource {
 
         // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, studentLogin);
-        if (optionalParticipation.isPresent() && optionalParticipation.get().getResults() != null && !optionalParticipation.get().getResults().isEmpty()) {
+        if (optionalParticipation.isPresent() && optionalParticipation.get().getSubmissions().stream().anyMatch(submission -> !submission.getResults().isEmpty())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "resultAlreadyExists", "A result already exists for this student in this exercise."))
                     .build();
@@ -282,7 +282,7 @@ public class ResultResource {
 
         // Create a participation and a submitted empty submission if they do not exist yet
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
-        Submission submission = participationRepository.findByIdWithLegalSubmissionsElseThrow(participation.getId()).findLatestSubmission().orElseThrow();
+        Submission submission = participationRepository.findByIdWithSubmissionsElseThrow(participation.getId()).findLatestSubmission().orElseThrow();
         result.setSubmission(submission);
 
         // Create a new manual result which can be rated or unrated depending on what was specified in the create form

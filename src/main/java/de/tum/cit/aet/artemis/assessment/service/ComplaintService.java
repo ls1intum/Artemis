@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +44,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
  * Service for managing complaints.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ComplaintService {
 
@@ -306,7 +308,7 @@ public class ComplaintService {
             throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "complaint" : "more feedback request ") + " for an uncompleted result.",
                     ENTITY_NAME, "complaintOrRequestMoreFeedbackNotCompleted");
         }
-        if (!Boolean.TRUE.equals(result.isRated()) && !exercise.getAllowComplaintsForAutomaticAssessments()) {
+        if (!result.isRated() && !exercise.getAllowComplaintsForAutomaticAssessments()) {
             throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "complaint" : "more feedback request ")
                     + " for an unrated result with no complaints on automatic assessment.", ENTITY_NAME, "complaintOrRequestMoreFeedbackNotGraded");
         }

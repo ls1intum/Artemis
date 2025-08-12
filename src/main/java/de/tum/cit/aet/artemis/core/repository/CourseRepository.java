@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Spring Data JPA repository for the Course entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
@@ -130,9 +132,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites" })
-    Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
 
     @Query("""
             SELECT course
@@ -439,11 +438,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @NotNull
     default Course findByIdForUpdateElseThrow(long courseId) {
         return getValueElseThrow(findForUpdateById(courseId), courseId);
-    }
-
-    @NotNull
-    default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(long courseId) {
-        return getValueElseThrow(findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId), courseId);
     }
 
     @NotNull

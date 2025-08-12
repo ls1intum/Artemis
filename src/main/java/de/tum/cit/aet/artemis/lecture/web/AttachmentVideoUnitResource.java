@@ -15,6 +15,7 @@ import java.util.Optional;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/lecture/")
 public class AttachmentVideoUnitResource {

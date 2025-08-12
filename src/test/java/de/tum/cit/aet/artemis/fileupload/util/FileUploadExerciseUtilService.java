@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
 /**
  * Service responsible for initializing the database with specific testdata related to file upload exercises for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class FileUploadExerciseUtilService {
@@ -75,6 +77,21 @@ public class FileUploadExerciseUtilService {
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
+
+    /**
+     * Creates and saves a FileUploadExercise.
+     *
+     * @param course            The Course to which the exercise belongs
+     * @param startDate         The release date of the TextExercise
+     * @param releaseDate       The release date of the TextExercise
+     * @param dueDate           The due date of the TextExercise
+     * @param assessmentDueDate The assessment due date of the TextExercise
+     * @return The created TextExercise
+     */
+    public FileUploadExercise addFileUploadExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(releaseDate, startDate, dueDate, assessmentDueDate, "pdf", course);
+        return exerciseRepository.save(fileUploadExercise);
+    }
 
     /**
      * Creates and saves a new Course and an Exam with one mandatory FileUploadExercise.

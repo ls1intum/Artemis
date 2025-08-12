@@ -16,7 +16,7 @@ import de.tum.in.test.api.WhitelistPath;
 import de.tum.in.test.api.jupiter.Public;
 
 /**
- * @author Stephan Krusche (krusche@in.tum.de)
+ * @author Stephan Krusche
  * @version 5.1 (11.06.2021)
  */
 @Public

@@ -13,6 +13,7 @@ import java.util.Set;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTrigge
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingExerciseImportService {
 
@@ -45,7 +47,11 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
+
+    private final ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService;
+
+    private final ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService;
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
@@ -63,7 +69,8 @@ public class ProgrammingExerciseImportService {
 
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
-            ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService,
+            ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProgrammingExerciseTaskService programmingExerciseTaskService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UriService uriService, TemplateUpgradePolicyService templateUpgradePolicyService,
             ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository) {
@@ -71,7 +78,9 @@ public class ProgrammingExerciseImportService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
+        this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
+        this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.uriService = uriService;
@@ -103,14 +112,15 @@ public class ProgrammingExerciseImportService {
         String sourceBranch = programmingExerciseRepository.findBranchByExerciseId(templateExercise.getId());
 
         // TODO: in case one of those operations fail, we should do error handling and revert all previous operations
-        versionControl.copyRepository(sourceProjectKey, templateRepoName, sourceBranch, targetProjectKey, RepositoryType.TEMPLATE.getName(), null);
-        versionControl.copyRepository(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName(), null);
-        versionControl.copyRepository(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName(), null);
+        versionControl.copyRepositoryWithHistory(sourceProjectKey, templateRepoName, sourceBranch, targetProjectKey, RepositoryType.TEMPLATE.getName(), null);
+        versionControl.copyRepositoryWithHistory(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName(), null);
+        versionControl.copyRepositoryWithHistory(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName(), null);
 
         List<AuxiliaryRepository> auxRepos = templateExercise.getAuxiliaryRepositories();
         for (int i = 0; i < auxRepos.size(); i++) {
             AuxiliaryRepository auxRepo = auxRepos.get(i);
-            var repoUri = versionControl.copyRepository(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName(), null).toString();
+            var repoUri = versionControl.copyRepositoryWithHistory(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName(), null)
+                    .toString();
             AuxiliaryRepository newAuxRepo = newExercise.getAuxiliaryRepositories().get(i);
             newAuxRepo.setRepositoryUri(repoUri);
             auxiliaryRepositoryRepository.save(newAuxRepo);
@@ -219,7 +229,7 @@ public class ProgrammingExerciseImportService {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
         newProgrammingExercise.setShortName(newProgrammingExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
         newProgrammingExercise.generateAndSetProjectKey();
-        programmingExerciseService.checkIfProjectExists(newProgrammingExercise);
+        programmingExerciseValidationService.checkIfProjectExists(newProgrammingExercise);
 
         if (newProgrammingExercise.isExamExercise()) {
             // Disable feedback suggestions on exam exercises (currently not supported)
@@ -246,7 +256,7 @@ public class ProgrammingExerciseImportService {
 
         if (recreateBuildPlans) {
             // Create completely new build plans for the exercise
-            programmingExerciseService.setupBuildPlansForNewExercise(newProgrammingExercise);
+            programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(newProgrammingExercise);
         }
         else {
             // We have removed the automatic build trigger from test to base for new programming exercises.
@@ -255,7 +265,7 @@ public class ProgrammingExerciseImportService {
             importBuildPlans(originalProgrammingExercise, newProgrammingExercise);
         }
 
-        programmingExerciseService.scheduleOperations(newProgrammingExercise.getId());
+        programmingExerciseCreationScheduleService.scheduleOperations(newProgrammingExercise.getId());
 
         programmingExerciseTaskService.replaceTestIdsWithNames(newProgrammingExercise);
         return newProgrammingExercise;

@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
  */
 
 @Conditional(AtlasEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/atlas/")
 public class ScienceSettingsResource {

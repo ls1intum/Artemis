@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphEdgeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathAverageProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
@@ -66,6 +68,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
  * </ul>
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class LearningPathService {
 
@@ -220,6 +223,27 @@ public class LearningPathService {
         }
         learningPathRepository.save(learningPath);
         log.debug("Updated LearningPath (id={}) for user (id={})", learningPath.getId(), userId);
+    }
+
+    /**
+     * Calculate the average learning path progress for all enrolled students in a course
+     *
+     * @param courseId the id of the course
+     * @return the average progress as a double (0.0 to 100.0)
+     */
+    public LearningPathAverageProgressDTO getAverageProgressForCourse(long courseId) {
+        List<LearningPath> learningPaths = learningPathRepository.findAllByCourseIdForEnrolledStudents(courseId);
+
+        if (learningPaths.isEmpty()) {
+            return new LearningPathAverageProgressDTO(courseId, 0.0, 0);
+        }
+
+        double totalProgress = learningPaths.stream().mapToInt(LearningPath::getProgress).sum();
+
+        double averageProgress = totalProgress / learningPaths.size();
+        averageProgress = Math.round(averageProgress * 100.0) / 100.0;
+
+        return new LearningPathAverageProgressDTO(courseId, averageProgress, learningPaths.size());
     }
 
     /**

@@ -36,6 +36,7 @@ import { CourseAccessStorageService } from '../services/course-access-storage.se
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 /**
  * Base class that contains common functionality for course container components.
@@ -55,6 +56,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected profileService = inject(ProfileService);
     protected ltiService = inject(LtiService);
     protected courseSidebarService = inject(CourseSidebarService);
+    protected localStorageService = inject(LocalStorageService);
 
     ngUnsubscribe = new Subject<void>();
     protected closeSidebarEventSubscription: Subscription;
@@ -109,13 +111,21 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected readonly CachingStrategy = CachingStrategy;
 
     constructor() {
-        // Use effect to react to navigation changes
         effect(() => {
-            // This effect will run whenever navigationEnd signal changes
             const navEvent = this.navigationEnd();
 
             if (navEvent) {
                 this.handleNavigationEndActions();
+            }
+        });
+
+        effect(() => {
+            const updatedCourse = this.course();
+            const communicationRouteLoaded = this.communicationRouteLoaded();
+            if (isCommunicationEnabled(updatedCourse) && communicationRouteLoaded) {
+                this.setupConversationService();
+            } else if (!isCommunicationEnabled(updatedCourse) && this.conversationServiceInstantiated()) {
+                this.disableConversationService();
             }
         });
     }
@@ -199,6 +209,11 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.ngUnsubscribe.complete();
     }
 
+    private disableConversationService() {
+        this.conversationServiceInstantiated.set(false);
+        this.metisConversationService.disableConversationService();
+    }
+
     /** Initialize courses attribute by retrieving all courses from the server */
     async updateRecentlyAccessedCourses() {
         this.dashboardSubscription = this.courseManagementService.findAllForDropdown().subscribe({
@@ -230,8 +245,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.communicationRouteLoaded.set(urlSegments.length > 3 && urlSegments[3] === 'communication');
 
         this.hasSidebar.set(this.getHasSidebar());
-        this.setupConversationService();
-
         if (componentRef.controlConfiguration) {
             const provider = componentRef;
             this.controlConfiguration.set(provider.controlConfiguration);
@@ -338,13 +351,13 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     }
 
     getCollapseStateFromStorage() {
-        const storedCollapseState: string | null = localStorage.getItem('navbar.collapseState');
-        if (storedCollapseState) this.isNavbarCollapsed.set(JSON.parse(storedCollapseState));
+        const storedCollapseState: boolean | undefined = this.localStorageService.retrieve<boolean>('navbar.collapseState');
+        if (storedCollapseState !== undefined) this.isNavbarCollapsed.set(storedCollapseState);
     }
 
     toggleCollapseState() {
         this.isNavbarCollapsed.update((value) => !value);
-        localStorage.setItem('navbar.collapseState', JSON.stringify(this.isNavbarCollapsed()));
+        this.localStorageService.store<boolean>('navbar.collapseState', this.isNavbarCollapsed());
     }
 
     /**

@@ -14,6 +14,7 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
@@ -51,6 +52,7 @@ import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 /**
  * Service responsible for initializing the database with specific testdata related to lectures for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class LectureUtilService {
@@ -128,6 +130,26 @@ public class LectureUtilService {
     }
 
     /**
+     * Creates and saves a Lecture for the given Course. The Lecture is empty as it does not contain any LectureUnits.
+     *
+     * @param course      The Course the Lecture belongs to
+     * @param visibleDate The visible date of the Lecture
+     * @param startDate   The start date of the Lecture
+     * @param endDate     The end date of the Lecture
+     * @return The created Lecture
+     */
+    public Lecture createLecture(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
+        Lecture lecture = new Lecture();
+        lecture.setDescription("Test Lecture");
+        lecture.setCourse(course);
+        lecture.setVisibleDate(visibleDate);
+        lecture.setStartDate(startDate);
+        lecture.setEndDate(endDate);
+        lectureRepo.save(lecture);
+        return lecture;
+    }
+
+    /**
      * Adds the given Competencies to all LectureUnits of the given Lecture and saves the updated LectureUnits.
      *
      * @param lecture      The Lecture whose LectureUnits should be updated
@@ -183,6 +205,18 @@ public class LectureUtilService {
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         return exerciseUnitRepository.save(exerciseUnit);
+    }
+
+    /**
+     * Creates and saves an AttachmentVideoUnit without an Attachment.
+     *
+     * @return The created AttachmentVideoUnit
+     */
+    public AttachmentVideoUnit createAttachmentVideoUnitWithoutAttachment() {
+        AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.setDescription("Lorem Ipsum");
+        attachmentVideoUnit.setVideoSource("http://video.fake");
+        return attachmentVideoUnitRepository.save(attachmentVideoUnit);
     }
 
     /**

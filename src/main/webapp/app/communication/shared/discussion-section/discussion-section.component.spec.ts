@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
@@ -20,8 +21,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { getElement, getElements } from 'test/helpers/utils/general-test.utils';
 import {
@@ -70,7 +69,14 @@ describe('DiscussionSectionComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule), DiscussionSectionComponent, MockModule(BrowserAnimationsModule)],
+            imports: [
+                MockModule(FormsModule),
+                MockModule(ReactiveFormsModule),
+                MockModule(NgbTooltipModule),
+                DiscussionSectionComponent,
+                MockModule(BrowserAnimationsModule),
+                FaIconComponent,
+            ],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -86,7 +92,6 @@ describe('DiscussionSectionComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisService, useClass: MetisService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: CourseStorageService, useClass: CourseStorageService },
@@ -95,7 +100,7 @@ describe('DiscussionSectionComponent', () => {
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),
                 },
             ],
-            declarations: [InfiniteScrollStubDirective, MockComponent(FaIconComponent), MockComponent(ProfilePictureComponent)],
+            declarations: [InfiniteScrollStubDirective, MockComponent(ProfilePictureComponent)],
         })
             .overrideComponent(DiscussionSectionComponent, {
                 set: {

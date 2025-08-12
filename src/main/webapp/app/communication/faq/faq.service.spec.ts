@@ -1,15 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { take } from 'rxjs/operators';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { EMPTY, of } from 'rxjs';
 
 describe('Faq Service', () => {
     let httpMock: HttpTestingController;
@@ -20,13 +21,7 @@ describe('Faq Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [provideHttpClient(), provideHttpClientTesting(), LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(FaqService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -271,5 +266,9 @@ describe('Faq Service', () => {
             });
             expect(req.request.method).toBe('POST');
         });
+    });
+    it('should make PUT request to enable FAQ', () => {
+        service.enable(1).subscribe((resp) => expect(resp).toEqual(of(EMPTY)));
+        httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/faqs/enable` });
     });
 });

@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 import { TextExerciseUpdateComponent } from 'app/text/manage/text-exercise/update/text-exercise-update.component';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -17,16 +17,19 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
-import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockProvider } from 'ng-mocks';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { ActivatedRouteSnapshot } from '@angular/router';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -35,9 +38,10 @@ describe('TextExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -45,6 +49,7 @@ describe('TextExercise Management Update Component', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                MockProvider(CalendarEventService),
             ],
         }).compileComponents();
 
@@ -65,12 +70,14 @@ describe('TextExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('should call update service on save for existing entity', fakeAsync(() => {
+            it('should call update service and refresh calendar events on save for existing entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
                 const entity = { ...textExercise };
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+                const calendarEventService = TestBed.inject(CalendarEventService);
+                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
 
                 // WHEN
                 comp.save();
@@ -79,6 +86,7 @@ describe('TextExercise Management Update Component', () => {
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(entity, {});
                 expect(comp.isSaving).toBeFalse();
+                expect(refreshSpy).toHaveBeenCalledOnce();
             }));
 
             it('should error during save', fakeAsync(() => {
@@ -108,12 +116,14 @@ describe('TextExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('should call create service on save for new entity', fakeAsync(() => {
+            it('should call create service and refresh calendar events on save for new entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
                 const entity = { ...textExercise };
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+                const calendarEventService = TestBed.inject(CalendarEventService);
+                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
 
                 // WHEN
                 comp.save();
@@ -122,6 +132,7 @@ describe('TextExercise Management Update Component', () => {
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(entity);
                 expect(comp.isSaving).toBeFalse();
+                expect(refreshSpy).toHaveBeenCalledOnce();
             }));
         });
 
@@ -192,6 +203,15 @@ describe('TextExercise Management Update Component', () => {
             const route = TestBed.inject(ActivatedRoute);
             route.url = of([{ path: 'new' } as UrlSegment]);
             route.data = of({ textExercise });
+            route.snapshot = {
+                paramMap: {
+                    get: (key: string) => 'mockValue',
+                },
+            } as ActivatedRouteSnapshot;
+
+            global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                return new MockResizeObserver(callback);
+            });
         });
 
         it('should not be in exam mode', fakeAsync(() => {
@@ -205,30 +225,27 @@ describe('TextExercise Management Update Component', () => {
 
         it('should calculate valid sections', () => {
             const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
-            comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject() } } as ExerciseTitleChannelNameComponent;
-            comp.exerciseUpdatePlagiarismComponent = {
-                formValidChanges: new Subject(),
-                formValid: true,
-            } as ExerciseUpdatePlagiarismComponent;
+            comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
+            comp.exerciseUpdatePlagiarismComponent()?.isFormValid.set(true);
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
 
             comp.ngOnInit();
             comp.ngAfterViewInit();
-            expect(comp.titleChannelNameComponentSubscription).toBeDefined();
 
-            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValid = true;
-            comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(true);
-            expect(calculateValidSpy).toHaveBeenCalledOnce();
+            comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(true);
+
+            fixture.detectChanges();
+
+            expect(calculateValidSpy).toHaveBeenCalledTimes(2);
             expect(comp.formSectionStatus).toBeDefined();
             expect(comp.formSectionStatus[0].valid).toBeTrue();
 
             comp.validateDate();
-            expect(calculateValidSpy).toHaveBeenCalledTimes(2);
+            expect(calculateValidSpy).toHaveBeenCalledTimes(3);
 
             comp.ngOnDestroy();
-            expect(comp.titleChannelNameComponentSubscription?.closed).toBeTrue();
         });
     });
 

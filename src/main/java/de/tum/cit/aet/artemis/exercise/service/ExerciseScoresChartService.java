@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresDTO;
  * This services uses the participant scores tables for performance reason
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ExerciseScoresChartService {
 

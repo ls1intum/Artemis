@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
  */
 @Validated
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/assessment/")
 public class RatingResource {

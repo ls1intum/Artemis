@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -40,7 +41,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 /**
  * Service responsible for initializing the database with specific testdata related to text exercises for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class TextExerciseUtilService {
@@ -175,6 +177,23 @@ public class TextExerciseUtilService {
      */
     public TextExercise createIndividualTextExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(0.0);
+        return exerciseRepository.save(textExercise);
+    }
+
+    /**
+     * Creates and saves a TextExercise with 10 achievable points and 0 bonus points.
+     *
+     * @param course            The Course to which the exercise belongs
+     * @param startDate         The release date of the TextExercise
+     * @param releaseDate       The release date of the TextExercise
+     * @param dueDate           The due date of the TextExercise
+     * @param assessmentDueDate The assessment due date of the TextExercise
+     * @return The created TextExercise
+     */
+    public TextExercise createIndividualTextExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, startDate, dueDate, assessmentDueDate, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         return exerciseRepository.save(textExercise);
@@ -450,13 +469,13 @@ public class TextExerciseUtilService {
     }
 
     /**
-     * Creates and saves a TextPlagiarismResult for the given Exercise.
+     * Creates and saves a PlagiarismResult for the given Exercise.
      *
-     * @param exercise The Exercise the TextPlagiarismResult belongs to
-     * @return The created TextPlagiarismResult
+     * @param exercise The Exercise the PlagiarismResult belongs to
+     * @return The created PlagiarismResult
      */
-    public TextPlagiarismResult createTextPlagiarismResultForExercise(Exercise exercise) {
-        TextPlagiarismResult result = new TextPlagiarismResult();
+    public PlagiarismResult createPlagiarismResultForExercise(Exercise exercise) {
+        PlagiarismResult result = new PlagiarismResult();
         result.setExercise(exercise);
         result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         result.setDuration(4);

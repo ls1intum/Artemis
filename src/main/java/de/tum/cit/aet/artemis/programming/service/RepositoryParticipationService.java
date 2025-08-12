@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
  * Service for managing programming exercise repositories and participations
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class RepositoryParticipationService {
 
@@ -79,16 +81,8 @@ public class RepositoryParticipationService {
      */
     public Repository getRepositoryFromGitService(boolean pullOnGet, ProgrammingExerciseParticipation programmingParticipation) throws GitAPIException {
         var repositoryUri = programmingParticipation.getVcsRepositoryUri();
-
-        // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
-        // Retrieving the default branch is not necessary if the repository is already cached.
-        if (gitService.isRepositoryCached(repositoryUri)) {
-            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet);
-        }
-        else {
-            String branch = programmingParticipation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch()
-                    : programmingExerciseRepository.findBranchByExerciseId(programmingParticipation.getExercise().getId());
-            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch);
-        }
+        String branch = programmingParticipation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch()
+                : programmingExerciseRepository.findBranchByExerciseId(programmingParticipation.getExercise().getId());
+        return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch, false);
     }
 }

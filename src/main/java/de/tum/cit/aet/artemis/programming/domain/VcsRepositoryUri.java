@@ -44,17 +44,6 @@ public class VcsRepositoryUri {
     }
 
     /**
-     * Associates a username with the current VCS repository URI and returns the instance for chaining.
-     *
-     * @param username The username to be associated with the URI.
-     * @return The instance of {@link VcsRepositoryUri} with the username set.
-     */
-    public VcsRepositoryUri withUser(final String username) {
-        this.username = username;
-        return this;
-    }
-
-    /**
      * Returns the URI associated with this VCS repository.
      *
      * @return The URI of the VCS repository.
@@ -124,6 +113,8 @@ public class VcsRepositoryUri {
             path = path.replaceAll("/$", "");
             path = path.replaceAll("^/.*scm", "");
             path = path.replaceAll("^.*?/git/", "/");
+            path = path.replaceFirst("^/", "");
+
             return path;
         }
     }

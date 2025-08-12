@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionStatisticRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class QuizStatisticService {
 
@@ -90,11 +92,11 @@ public class QuizStatisticService {
             // update all Results of a participation
             for (Result result : results) {
                 // find the latest rated Result
-                if (Boolean.TRUE.equals(result.isRated()) && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                if (result.isRated() && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestRatedResult = result;
                 }
                 // find latest unrated Result
-                if (Boolean.FALSE.equals(result.isRated()) && (latestUnratedResult == null || latestUnratedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                if (!result.isRated() && (latestUnratedResult == null || latestUnratedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestUnratedResult = result;
                 }
             }
@@ -137,7 +139,7 @@ public class QuizStatisticService {
             for (Result result : results) {
                 // check if the result is rated
                 // NOTE: there is never an old Result if the new result is rated
-                if (Boolean.FALSE.equals(result.isRated())) {
+                if (!result.isRated()) {
                     quiz.removeResultFromAllStatistics(getPreviousResult(result));
                 }
                 var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());

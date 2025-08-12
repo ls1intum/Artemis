@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.domain;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Set;
 
 import jakarta.annotation.Nullable;
 
@@ -12,8 +11,9 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 public interface ProgrammingExerciseParticipation extends ParticipationInterface {
 
@@ -30,8 +30,6 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
     ProgrammingExercise getProgrammingExercise();
 
     void setProgrammingExercise(ProgrammingExercise programmingExercise);
-
-    Set<Result> getResults();
 
     /**
      * This method is used to automatically create a user independent URL when serializing subclasses into json
@@ -59,16 +57,16 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
      * @return the repository uri of the programming exercise participation wrapped in an object
      */
     @JsonIgnore
-    default VcsRepositoryUri getVcsRepositoryUri() {
+    default LocalVCRepositoryUri getVcsRepositoryUri() {
         var repoUri = getRepositoryUri();
         if (repoUri == null) {
             return null;
         }
 
         try {
-            return new VcsRepositoryUri(repoUri);
+            return new LocalVCRepositoryUri(repoUri);
         }
-        catch (URISyntaxException e) {
+        catch (LocalVCInternalException e) {
             log.warn("Cannot create URI for repositoryUri: {} due to the following error: {}", repoUri, e.getMessage());
         }
         return null;

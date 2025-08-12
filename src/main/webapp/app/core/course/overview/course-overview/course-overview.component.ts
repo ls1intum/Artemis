@@ -37,6 +37,7 @@ import { CourseNotificationSettingInfo } from 'app/communication/shared/entities
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -68,6 +69,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private modalService = inject(NgbModal);
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
+    private calendarEventService = inject(CalendarEventService);
     protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
     protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
 
@@ -136,10 +138,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             this.isExamStarted.set(isStarted);
         });
 
-        await this.initAfterCourseLoad();
         this.courseActionItems.set(this.getCourseActionItems());
         this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed ?? false);
         this.sidebarItems.set(this.getSidebarItems());
+        await this.initAfterCourseLoad();
     }
 
     /**
@@ -219,8 +221,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                     this.course.set(res.body);
                 }
 
-                this.setupConversationService();
-
                 setTimeout(() => this.refreshingCourse.set(false), 500); // ensure min animation duration
             }),
             // catch 403 errors where registration is possible
@@ -249,6 +249,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.loadCourseSubscription?.unsubscribe();
         if (refresh) {
             this.loadCourseSubscription = observable.subscribe();
+            this.calendarEventService.refresh();
         }
         return observable;
     }
@@ -290,12 +291,15 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         const currentCourse = this.course();
 
         // Use the service to get sidebar items
-        const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled);
+        const defaultItems = this.sidebarItemService.getStudentDefaultItems(
+            currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled,
+            currentCourse?.trainingEnabled,
+        );
         sidebarItems.push(...defaultItems);
 
         if (currentCourse?.lectures) {
             const lecturesItem = this.sidebarItemService.getLecturesItem();
-            sidebarItems.splice(-1, 0, lecturesItem);
+            sidebarItems.splice(-2, 0, lecturesItem);
         }
 
         if (currentCourse?.exams && this.hasVisibleExams()) {
@@ -327,6 +331,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             const faqItem = this.sidebarItemService.getFaqItem();
             sidebarItems.push(faqItem);
         }
+
         sidebarItems.push(this.sidebarItemService.getNotificationSettingsItem());
 
         return sidebarItems;
