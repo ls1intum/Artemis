@@ -577,7 +577,15 @@ Viewing previous suggestions:
 
 |tutor-suggestions-history|
 
-Tutor Suggestions are only available to users with the tutor role. The feature must be enabled by course instructors either globally or per course. All messages and suggestions are stored securely within Artemis, and no external services are contacted.
+Tutor Suggestions are only available to users with the tutor role. The feature is disabled by default and must be explicitly enabled by the administrators. Students' messages are processed and stored locally within Artemis to generate suggestions. No external services are contacted, and no content is sent to GPT models.
+
+.. important::
+   **Privacy and activation at a glance**
+
+   - **Local processing**: Students' messages are processed locally inside Artemis to create Tutor Suggestions. There is no transfer of personal data to third parties.
+   - **Opt‑in**: The feature is not active by default and must be explicitly enabled by the administrators.
+   - **No external AI**: No content is sent to GPT models or other external AI services.
+   - **GDPR**: Processing is purpose‑limited to assisting tutors (purpose limitation, data minimisation). If your institution requires consent as the legal basis, activation must be preceded by explicit **consent** (Art. 6(1)(a) GDPR).
 
 .. raw:: html
 
