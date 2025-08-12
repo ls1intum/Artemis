@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -48,7 +47,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 public abstract class AbstractGitService {
 
@@ -65,7 +64,7 @@ public abstract class AbstractGitService {
     protected static final String REMOTE_NAME = "origin";
 
     @Value("${artemis.version-control.url}")
-    protected URL gitUrl;
+    protected URI localVCBaseUri;
 
     @Value("${artemis.version-control.token:#{null}}")
     protected Optional<String> gitToken;
@@ -99,7 +98,7 @@ public abstract class AbstractGitService {
      */
     protected void configureSsh() {
         CredentialsProvider.setDefault(new CustomCredentialsProvider());
-        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, gitUrl);
+        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, localVCBaseUri);
         jgitKeyCache = new JGitKeyCache();
         sshdSessionFactory = sshSessionFactoryBuilder.build(jgitKeyCache);
         sshCallback = transport -> {
@@ -113,11 +112,11 @@ public abstract class AbstractGitService {
         };
     }
 
-    protected static SshdSessionFactoryBuilder getSshdSessionFactoryBuilder(Optional<String> gitSshPrivateKeyPath, Optional<String> gitSshPrivateKeyPassphrase, URL gitUrl) {
+    protected static SshdSessionFactoryBuilder getSshdSessionFactoryBuilder(Optional<String> gitSshPrivateKeyPath, Optional<String> gitSshPrivateKeyPassphrase, URI gitUri) {
         // @formatter:off
         return new SshdSessionFactoryBuilder()
             .setKeyPasswordProvider(keyPasswordProvider -> new CustomKeyPasswordProvider(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase))
-            .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUrl))
+            .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUri))
             .setSshDirectory(Path.of(gitSshPrivateKeyPath.orElseThrow()).toFile())
             .setHomeDirectory(Path.of(System.getProperty("user.home")).toFile());
             // @formatter:on
@@ -149,7 +148,7 @@ public abstract class AbstractGitService {
      * @throws InvalidRefNameException If the provided default branch name is invalid.
      */
     @NotNull
-    public static Repository linkRepositoryForExistingGit(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare, boolean writeAccess)
+    public static Repository linkRepositoryForExistingGit(Path localPath, LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare, boolean writeAccess)
             throws IOException, InvalidRefNameException {
         // Open the repository from the filesystem
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
@@ -206,7 +205,7 @@ public abstract class AbstractGitService {
      * @throws InvalidRefNameException If the provided default branch name is invalid.
      */
     @NotNull
-    public static Repository getExistingBareRepository(Path localPath, VcsRepositoryUri bareRepositoryUri, String defaultBranch) throws IOException, InvalidRefNameException {
+    public static Repository getExistingBareRepository(Path localPath, LocalVCRepositoryUri bareRepositoryUri, String defaultBranch) throws IOException, InvalidRefNameException {
         // Open the repository from the filesystem
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         builder.setBare();
@@ -219,7 +218,7 @@ public abstract class AbstractGitService {
     }
 
     @NotNull
-    protected static Repository openCheckedOutRepositoryFromFileSystem(Path localPath, VcsRepositoryUri remoteRepositoryUri, String defaultBranch)
+    protected static Repository openCheckedOutRepositoryFromFileSystem(Path localPath, LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch)
             throws IOException, InvalidRefNameException {
 
         return linkRepositoryForExistingGit(localPath, remoteRepositoryUri, defaultBranch, false, false);
@@ -233,7 +232,7 @@ public abstract class AbstractGitService {
      * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
     @Nullable
-    public ObjectId getLastCommitHash(VcsRepositoryUri repoUri) throws EntityNotFoundException {
+    public ObjectId getLastCommitHash(LocalVCRepositoryUri repoUri) throws EntityNotFoundException {
         if (repoUri == null || repoUri.getURI() == null) {
             return null;
         }
@@ -253,11 +252,11 @@ public abstract class AbstractGitService {
         }
     }
 
-    protected String getGitUriAsString(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
+    protected String getGitUriAsString(LocalVCRepositoryUri vcsRepositoryUri) throws URISyntaxException {
         return getGitUri(vcsRepositoryUri).toString();
     }
 
-    protected abstract URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException;
+    protected abstract URI getGitUri(LocalVCRepositoryUri vcsRepositoryUri) throws URISyntaxException;
 
     private LsRemoteCommand lsRemoteCommand() {
         return authenticate(Git.lsRemoteRepository());
@@ -269,7 +268,7 @@ public abstract class AbstractGitService {
         return authenticate(Git.cloneRepository());
     }
 
-    protected static URI getSshUri(VcsRepositoryUri vcsRepositoryUri, Optional<String> sshUrlTemplate) throws URISyntaxException {
+    protected static URI getSshUri(LocalVCRepositoryUri vcsRepositoryUri, Optional<String> sshUrlTemplate) throws URISyntaxException {
         URI templateUri = new URI(sshUrlTemplate.orElseThrow());
         // Example: ssh://git@artemis.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
         final var repositoryUri = vcsRepositoryUri.getURI();
@@ -355,13 +354,7 @@ public abstract class AbstractGitService {
         }
     }
 
-    static class CustomSshConfigStore implements SshConfigStore {
-
-        URL gitUrl;
-
-        public CustomSshConfigStore(URL gitUrl) {
-            this.gitUrl = gitUrl;
-        }
+    record CustomSshConfigStore(URI gitUri) implements SshConfigStore {
 
         @Override
         public HostConfig lookup(String hostName, int port, String userName) {
@@ -380,7 +373,7 @@ public abstract class AbstractGitService {
                 @Override
                 public Map<String, String> getOptions() {
                     log.debug("getOptions: {}:{}", hostName, port);
-                    if (hostName.equals(gitUrl.getHost())) {
+                    if (hostName.equals(gitUri.getHost())) {
                         return Collections.singletonMap(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
                     }
                     else {

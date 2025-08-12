@@ -1,10 +1,10 @@
 import { TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { SettingsComponent } from 'app/core/account/settings/settings.component';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { User } from 'app/core/user/user.model';
@@ -34,8 +34,8 @@ describe('SettingsComponent', () => {
             imports: [SettingsComponent],
             providers: [
                 FormBuilder,
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
