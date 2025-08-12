@@ -138,8 +138,10 @@ public class LocalCIEventListenerService {
      * This is a fallback mechanism to ensure that no results are left unprocessed in the queue e.g. if listener events are lost
      * under high system load or network hiccups
      */
-    @Scheduled(fixedDelay = 60 * 1000)
+    @Scheduled(fixedRate = 60 * 1000)
     public void processQueuedResults() {
+        var startTime = System.currentTimeMillis();
+        log.debug("Scheduled processing of queued results started");
         final int initialSize = distributedDataAccessService.getResultQueueSize();
         log.debug("Processing up to {} queued results from the distributed build result queue", initialSize);
         for (int i = 0; i < initialSize; i++) {
@@ -153,6 +155,8 @@ public class LocalCIEventListenerService {
                 log.warn("Processing a queued result failed. Continuing with remaining items", ex);
             }
         }
+        var endTime = System.currentTimeMillis();
+        log.debug("Scheduled processing of queued results finished in {} ms", endTime - startTime);
     }
 
     private boolean checkIfBuildJobIsStillBuilding(List<String> processingJobIds, String buildJobId) {
