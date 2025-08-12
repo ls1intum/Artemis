@@ -1,12 +1,12 @@
 import { TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivateService } from 'app/core/account/activate/activate.service';
 import { ActivateComponent } from 'app/core/account/activate/activate.component';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -19,8 +19,8 @@ describe('ActivateComponent', () => {
             imports: [ActivateComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ key: 'ABC123' }) },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
             ],

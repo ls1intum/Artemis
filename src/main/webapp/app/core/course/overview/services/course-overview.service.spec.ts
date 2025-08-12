@@ -7,9 +7,9 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -18,7 +18,8 @@ import dayjs from 'dayjs/esm';
 import { ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 
 describe('CourseOverviewService', () => {
-    let service: CourseOverviewService;
+    let courseOverviewService: CourseOverviewService;
+    let localStorageService: LocalStorageService;
     let pastExercise: Exercise;
     let dueSoonExercise: Exercise;
     let currentExercise: Exercise;
@@ -43,12 +44,13 @@ describe('CourseOverviewService', () => {
                 provideHttpClientTesting(),
                 CourseOverviewService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
+                LocalStorageService,
             ],
         });
-        service = TestBed.inject(CourseOverviewService);
-        localStorage.clear();
+        courseOverviewService = TestBed.inject(CourseOverviewService);
+        localStorageService = TestBed.inject(LocalStorageService);
+        localStorageService.clear();
         const lastWeek = dayjs().subtract(1, 'week');
         const yesterday = dayjs().subtract(1, 'day');
         const tomorrow = dayjs().add(1, 'day');
@@ -140,20 +142,20 @@ describe('CourseOverviewService', () => {
 
     it('should return true if sidebar collapse state is stored as true in localStorage', () => {
         const storageId = 'testId';
-        localStorage.setItem('sidebar.collapseState.' + storageId, JSON.stringify(true));
+        localStorageService.store<boolean>('sidebar.collapseState.' + storageId, true);
 
-        expect(service.getSidebarCollapseStateFromStorage(storageId)).toBeTrue();
+        expect(courseOverviewService.getSidebarCollapseStateFromStorage(storageId)).toBeTrue();
     });
 
     it('should return false if there is no stored sidebar collapse state in localStorage', () => {
         const storageId = 'testId';
 
-        expect(service.getSidebarCollapseStateFromStorage(storageId)).toBeFalse();
+        expect(courseOverviewService.getSidebarCollapseStateFromStorage(storageId)).toBeFalse();
     });
 
     it('should sort lectures by startDate and by title if startDates are equal or undefined', () => {
         const lectures = [futureLecture, pastLecture, currentLecture];
-        const sortedLectures = service.sortLectures(lectures);
+        const sortedLectures = courseOverviewService.sortLectures(lectures);
 
         expect(sortedLectures[0].id).toBe(futureLecture.id);
         expect(sortedLectures[1].id).toBe(currentLecture.id);
@@ -162,7 +164,7 @@ describe('CourseOverviewService', () => {
 
     it('should sort exercises by dueDate and by title if dueDate are equal or undefined', () => {
         const exercises = [dueSoonExercise, pastExercise, futureExercise];
-        const sortedExercises = service.sortExercises(exercises);
+        const sortedExercises = courseOverviewService.sortExercises(exercises);
 
         expect(sortedExercises[0].id).toBe(futureExercise.id);
         expect(sortedExercises[1].id).toBe(dueSoonExercise.id);
@@ -172,26 +174,26 @@ describe('CourseOverviewService', () => {
     it('should group lectures by start date and map to sidebar card elements', () => {
         const sortedLectures = [futureLecture, pastLecture, currentLecture];
 
-        jest.spyOn(service, 'getCorrespondingLectureGroupByDate');
+        jest.spyOn(courseOverviewService, 'getCorrespondingLectureGroupByDate');
 
-        jest.spyOn(service, 'mapLectureToSidebarCardElement');
-        const groupedLectures = service.groupLecturesByStartDate(sortedLectures);
+        jest.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement');
+        const groupedLectures = courseOverviewService.groupLecturesByStartDate(sortedLectures);
 
         expect(groupedLectures['current'].entityData).toHaveLength(1);
         expect(groupedLectures['past'].entityData).toHaveLength(1);
         expect(groupedLectures['future'].entityData).toHaveLength(1);
-        expect(service.mapLectureToSidebarCardElement).toHaveBeenCalledTimes(3);
+        expect(courseOverviewService.mapLectureToSidebarCardElement).toHaveBeenCalledTimes(3);
         expect(groupedLectures['future'].entityData[0].title).toBe('Advanced Topics in Computer Science');
         expect(groupedLectures['past'].entityData[0].title).toBe('Introduction to Computer Science');
         expect(groupedLectures['current'].entityData[0].title).toBe('Algorithms');
     });
 
     it('should return undefined if lectures array is undefined', () => {
-        expect(service.getUpcomingLecture(undefined)).toBeUndefined();
+        expect(courseOverviewService.getUpcomingLecture(undefined)).toBeUndefined();
     });
 
     it('should return undefined if lectures array is empty', () => {
-        expect(service.getUpcomingLecture([])).toBeUndefined();
+        expect(courseOverviewService.getUpcomingLecture([])).toBeUndefined();
     });
 
     it('should handle all past lectures', () => {
@@ -199,7 +201,7 @@ describe('CourseOverviewService', () => {
             { id: 1, title: 'Past Lecture 1', startDate: dayjs().subtract(2, 'day') },
             { id: 2, title: 'Past Lecture 2', startDate: dayjs().subtract(1, 'day') },
         ];
-        const upcomingLecture = service.getUpcomingLecture(pastLectures);
+        const upcomingLecture = courseOverviewService.getUpcomingLecture(pastLectures);
 
         expect(upcomingLecture?.id).toBe(2);
     });
@@ -210,7 +212,7 @@ describe('CourseOverviewService', () => {
             { id: 2, title: 'Upcoming Lecture', startDate: dayjs().add(1, 'day') },
             { id: 3, title: 'Far Future Lecture', startDate: dayjs().add(2, 'weeks') },
         ];
-        const upcomingLecture = service.getUpcomingLecture(lectures);
+        const upcomingLecture = courseOverviewService.getUpcomingLecture(lectures);
 
         expect(upcomingLecture?.id).toBe(3);
     });
@@ -218,17 +220,17 @@ describe('CourseOverviewService', () => {
     it('should group exercises by start date and map to sidebar card elements', () => {
         const sortedExercises = [futureExercise, pastExercise, dueSoonExercise, currentExercise, futureExercise2, currentExerciseNoDueDate];
 
-        jest.spyOn(service, 'getCorrespondingExerciseGroupByDate');
+        jest.spyOn(courseOverviewService, 'getCorrespondingExerciseGroupByDate');
 
-        jest.spyOn(service, 'mapExerciseToSidebarCardElement');
-        const groupedExercises = service.groupExercisesByDueDate(sortedExercises);
+        jest.spyOn(courseOverviewService, 'mapExerciseToSidebarCardElement');
+        const groupedExercises = courseOverviewService.groupExercisesByDueDate(sortedExercises);
 
         expect(groupedExercises['current'].entityData).toHaveLength(1);
         expect(groupedExercises['dueSoon'].entityData).toHaveLength(1);
         expect(groupedExercises['past'].entityData).toHaveLength(1);
         expect(groupedExercises['future'].entityData).toHaveLength(2);
         expect(groupedExercises['noDate'].entityData).toHaveLength(1);
-        expect(service.mapExerciseToSidebarCardElement).toHaveBeenCalledTimes(6);
+        expect(courseOverviewService.mapExerciseToSidebarCardElement).toHaveBeenCalledTimes(6);
         expect(groupedExercises['current'].entityData[0].title).toBe('Current Exercise');
         expect(groupedExercises['dueSoon'].entityData[0].title).toBe('DueSoon Exercise');
         expect(groupedExercises['past'].entityData[0].title).toBe('Past Exercise');
@@ -266,7 +268,7 @@ describe('CourseOverviewService', () => {
             exercise.startDate = startDate;
             exercise.dueDate = endDate;
 
-            const groupedExercises = service.groupExercisesByDueDate([exercise]);
+            const groupedExercises = courseOverviewService.groupExercisesByDueDate([exercise]);
             for (const possibleGroup of ['past', 'current', 'dueSoon', 'future', 'noDate']) {
                 if (possibleGroup === group) {
                     expect(groupedExercises[possibleGroup].entityData).toHaveLength(1);
@@ -283,7 +285,7 @@ describe('CourseOverviewService', () => {
         exercise.startDate = dayjs().add(1, 'day');
         exercise.dueDate = undefined;
 
-        const groupedExercises = service.groupExercisesByDueDate([exercise]);
+        const groupedExercises = courseOverviewService.groupExercisesByDueDate([exercise]);
         expect(groupedExercises['future'].entityData).toHaveLength(1);
     });
 
@@ -293,28 +295,28 @@ describe('CourseOverviewService', () => {
             { id: 2, title: 'Past Exercise 2', dueDate: dayjs().subtract(2, 'day') } as Exercise,
             { id: 3, title: 'Past Exercise 3', dueDate: dayjs().subtract(3, 'day') } as Exercise,
         ];
-        const sortedExercises = service.sortExercises(pastExercises);
+        const sortedExercises = courseOverviewService.sortExercises(pastExercises);
 
-        jest.spyOn(service, 'getCorrespondingExerciseGroupByDate');
+        jest.spyOn(courseOverviewService, 'getCorrespondingExerciseGroupByDate');
 
-        jest.spyOn(service, 'mapExerciseToSidebarCardElement');
-        const groupedExercises = service.groupExercisesByDueDate(sortedExercises);
+        jest.spyOn(courseOverviewService, 'mapExerciseToSidebarCardElement');
+        const groupedExercises = courseOverviewService.groupExercisesByDueDate(sortedExercises);
 
         expect(groupedExercises['past'].entityData).toHaveLength(3);
         expect(groupedExercises['current'].entityData).toHaveLength(0);
         expect(groupedExercises['future'].entityData).toHaveLength(0);
-        expect(service.mapExerciseToSidebarCardElement).toHaveBeenCalledTimes(3);
+        expect(courseOverviewService.mapExerciseToSidebarCardElement).toHaveBeenCalledTimes(3);
         expect(groupedExercises['past'].entityData[0].title).toBe('Past Exercise 1');
         expect(groupedExercises['past'].entityData[1].title).toBe('Past Exercise 2');
         expect(groupedExercises['past'].entityData[2].title).toBe('Past Exercise 3');
     });
 
     it('should return undefined if exercises array is undefined', () => {
-        expect(service.getUpcomingExercise(undefined)).toBeUndefined();
+        expect(courseOverviewService.getUpcomingExercise(undefined)).toBeUndefined();
     });
 
     it('should return undefined if exercises array is empty', () => {
-        expect(service.getUpcomingExercise([])).toBeUndefined();
+        expect(courseOverviewService.getUpcomingExercise([])).toBeUndefined();
     });
 
     it('should handle all past exercises', () => {
@@ -336,7 +338,7 @@ describe('CourseOverviewService', () => {
                 studentAssignedTeamIdComputed: false,
             },
         ];
-        const upcomingLecture = service.getUpcomingExercise(pastLectures);
+        const upcomingLecture = courseOverviewService.getUpcomingExercise(pastLectures);
 
         // Assuming the function should return the most recent past lecture if all are in the past
         expect(upcomingLecture?.id).toBe(2);
@@ -355,7 +357,7 @@ describe('CourseOverviewService', () => {
                 endDate: dayjs().subtract(1, 'day'),
             },
         ];
-        const upcomingExam = service.getUpcomingExam(pastExams);
+        const upcomingExam = courseOverviewService.getUpcomingExam(pastExams);
 
         // Assuming the function should return the most recent past lecture if all are in the past
         expect(upcomingExam?.id).toBe(2);
@@ -388,7 +390,7 @@ describe('CourseOverviewService', () => {
                 studentAssignedTeamIdComputed: false,
             },
         ];
-        const upcomingExercise = service.getUpcomingExercise(exercises);
+        const upcomingExercise = courseOverviewService.getUpcomingExercise(exercises);
 
         expect(upcomingExercise?.id).toBe(3);
     });
@@ -411,30 +413,30 @@ describe('CourseOverviewService', () => {
                 endDate: dayjs().add(2, 'weeks'),
             },
         ];
-        const upcomingExam = service.getUpcomingExam(exams);
+        const upcomingExam = courseOverviewService.getUpcomingExam(exams);
 
         expect(upcomingExam?.id).toBe(3);
     });
 
     it('should return undefined if exams array is undefined', () => {
-        expect(service.getUpcomingExam(undefined)).toBeUndefined();
+        expect(courseOverviewService.getUpcomingExam(undefined)).toBeUndefined();
     });
 
     it('should return undefined if exams array is empty', () => {
-        expect(service.getUpcomingExam([])).toBeUndefined();
+        expect(courseOverviewService.getUpcomingExam([])).toBeUndefined();
     });
 
     it('should group conversations by conversation types and map to sidebar card elements', () => {
         const conversations = [generalChannel, examChannel, exerciseChannel];
 
-        jest.spyOn(service, 'getCorrespondingChannelSubType');
-        jest.spyOn(service, 'mapConversationToSidebarCardElement');
-        const groupedConversations = service.groupConversationsByChannelType(course, conversations, true);
+        jest.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
+        jest.spyOn(courseOverviewService, 'mapConversationToSidebarCardElement');
+        const groupedConversations = courseOverviewService.groupConversationsByChannelType(course, conversations, true);
 
         expect(groupedConversations['generalChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['examChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['exerciseChannels'].entityData).toHaveLength(1);
-        expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(3);
+        expect(courseOverviewService.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(3);
         expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[0].conversation)?.name).toBe('General');
         expect(getAsChannelDTO(groupedConversations['examChannels'].entityData[0].conversation)?.name).toBe('exam-test');
         expect(getAsChannelDTO(groupedConversations['exerciseChannels'].entityData[0].conversation)?.name).toBe('exercise-test');
@@ -443,12 +445,12 @@ describe('CourseOverviewService', () => {
     it('should group conversations together when having the same type', () => {
         const conversations = [generalChannel, generalChannel2];
 
-        jest.spyOn(service, 'getCorrespondingChannelSubType');
-        jest.spyOn(service, 'mapConversationToSidebarCardElement');
-        const groupedConversations = service.groupConversationsByChannelType(course, conversations, true);
+        jest.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
+        jest.spyOn(courseOverviewService, 'mapConversationToSidebarCardElement');
+        const groupedConversations = courseOverviewService.groupConversationsByChannelType(course, conversations, true);
 
         expect(groupedConversations['generalChannels'].entityData).toHaveLength(2);
-        expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(2);
+        expect(courseOverviewService.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(2);
         expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[0].conversation)?.name).toBe('General');
         expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[1].conversation)?.name).toBe('General 2');
     });
@@ -456,20 +458,20 @@ describe('CourseOverviewService', () => {
     it('should group favorite and archived conversations correctly', () => {
         const conversations = [generalChannel, examChannel, exerciseChannel, generalChannel2, favoriteChannel, hiddenChannel];
 
-        jest.spyOn(service, 'getCorrespondingChannelSubType');
-        jest.spyOn(service, 'mapConversationToSidebarCardElement');
-        jest.spyOn(service, 'getConversationGroup');
-        jest.spyOn(service, 'getCorrespondingChannelSubType');
-        const groupedConversations = service.groupConversationsByChannelType(course, conversations, true);
+        jest.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
+        jest.spyOn(courseOverviewService, 'mapConversationToSidebarCardElement');
+        jest.spyOn(courseOverviewService, 'getConversationGroup');
+        jest.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
+        const groupedConversations = courseOverviewService.groupConversationsByChannelType(course, conversations, true);
 
         expect(groupedConversations['generalChannels'].entityData).toHaveLength(3);
         expect(groupedConversations['examChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['exerciseChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['favoriteChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['archivedChannels'].entityData).toHaveLength(1);
-        expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(6);
-        expect(service.getConversationGroup).toHaveBeenCalledTimes(6);
-        expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(5);
+        expect(courseOverviewService.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(6);
+        expect(courseOverviewService.getConversationGroup).toHaveBeenCalledTimes(6);
+        expect(courseOverviewService.getCorrespondingChannelSubType).toHaveBeenCalledTimes(5);
         expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[0].conversation)?.name).toBe('fav-channel');
         expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[1].conversation)?.name).toBe('General');
         expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[2].conversation)?.name).toBe('General 2');
@@ -482,18 +484,18 @@ describe('CourseOverviewService', () => {
     it('should not remove favorite conversations from their original section but keep them at the top of the related section', () => {
         const conversations = [generalChannel, examChannel, exerciseChannel, favoriteChannel];
 
-        jest.spyOn(service, 'getCorrespondingChannelSubType');
-        jest.spyOn(service, 'mapConversationToSidebarCardElement');
-        jest.spyOn(service, 'getConversationGroup');
-        const groupedConversations = service.groupConversationsByChannelType(course, conversations, true);
+        jest.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
+        jest.spyOn(courseOverviewService, 'mapConversationToSidebarCardElement');
+        jest.spyOn(courseOverviewService, 'getConversationGroup');
+        const groupedConversations = courseOverviewService.groupConversationsByChannelType(course, conversations, true);
 
         expect(groupedConversations['favoriteChannels'].entityData).toContainEqual(expect.objectContaining({ id: favoriteChannel.id }));
 
         expect(groupedConversations['generalChannels'].entityData[0].id).toBe(favoriteChannel.id);
 
-        expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(4);
-        expect(service.getConversationGroup).toHaveBeenCalledTimes(4);
-        expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(4);
+        expect(courseOverviewService.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(4);
+        expect(courseOverviewService.getConversationGroup).toHaveBeenCalledTimes(4);
+        expect(courseOverviewService.getCorrespondingChannelSubType).toHaveBeenCalledTimes(4);
     });
 
     it('should correctly set isCurrent based on the date range in mapConversationToSidebarCardElement', () => {
@@ -519,8 +521,8 @@ describe('CourseOverviewService', () => {
         course.exercises = [exerciseWithinRange];
         course.lectures = [lectureOutsideRange];
 
-        const sidebarCardWithinRange = service.mapConversationToSidebarCardElement(course, conversationWithinRange);
-        const sidebarCardOutsideRange = service.mapConversationToSidebarCardElement(course, conversationOutsideRange);
+        const sidebarCardWithinRange = courseOverviewService.mapConversationToSidebarCardElement(course, conversationWithinRange);
+        const sidebarCardOutsideRange = courseOverviewService.mapConversationToSidebarCardElement(course, conversationOutsideRange);
 
         expect(sidebarCardWithinRange.isCurrent).toBeTrue();
         expect(sidebarCardOutsideRange.isCurrent).toBeFalse();
@@ -530,8 +532,8 @@ describe('CourseOverviewService', () => {
         const announcementChannel = new ChannelDTO();
         announcementChannel.isAnnouncementChannel = true;
 
-        const icon = service.getChannelIcon(announcementChannel);
-        expect(icon).toBe(service.faBullhorn);
+        const icon = courseOverviewService.getChannelIcon(announcementChannel);
+        expect(icon).toBe(courseOverviewService.faBullhorn);
     });
 
     it('should return faHashtag for public channels', () => {
@@ -539,8 +541,8 @@ describe('CourseOverviewService', () => {
         publicChannel.isAnnouncementChannel = false;
         publicChannel.isPublic = true;
 
-        const icon = service.getChannelIcon(publicChannel);
-        expect(icon).toBe(service.faHashtag);
+        const icon = courseOverviewService.getChannelIcon(publicChannel);
+        expect(icon).toBe(courseOverviewService.faHashtag);
     });
 
     it('should return faLock for private channels', () => {
@@ -548,7 +550,7 @@ describe('CourseOverviewService', () => {
         privateChannel.isAnnouncementChannel = false;
         privateChannel.isPublic = false;
 
-        const icon = service.getChannelIcon(privateChannel);
-        expect(icon).toBe(service.faLock);
+        const icon = courseOverviewService.getChannelIcon(privateChannel);
+        expect(icon).toBe(courseOverviewService.faLock);
     });
 });

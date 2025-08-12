@@ -16,8 +16,8 @@ import {
     viewChildren,
 } from '@angular/core';
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { firstValueFrom, timeout } from 'rxjs';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -426,7 +426,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         const toKeep = pickBy(this.loadAnnotations(), (a) => !savedFiles.includes(a.fileName));
 
         this.localStorageService.store(
-            'annotations-' + this.sessionId,
+            'annotations-' + this.sessionId(),
             JSON.stringify({
                 ...toKeep,
                 ...toUpdate,
@@ -438,7 +438,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * Loads annotations from local storage
      */
     loadAnnotations() {
-        return JSON.parse(this.localStorageService.retrieve('annotations-' + this.sessionId) || '{}');
+        return JSON.parse(this.localStorageService.retrieve<string>('annotations-' + this.sessionId()) || '{}');
     }
 
     setBuildAnnotations(buildAnnotations: Annotation[]): void {

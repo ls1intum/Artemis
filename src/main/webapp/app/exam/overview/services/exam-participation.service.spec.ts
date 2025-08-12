@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -26,21 +26,16 @@ describe('ExamParticipationService', () => {
     let exam: Exam;
     let studentExam: StudentExam;
     let quizSubmission: QuizSubmission;
-    let localStorage: LocalStorageService;
+    let localStorageService: LocalStorageService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [provideHttpClient(), provideHttpClientTesting(), LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(ExamParticipationService);
         httpMock = TestBed.inject(HttpTestingController);
-        localStorage = TestBed.inject(LocalStorageService);
+        localStorageService = TestBed.inject(LocalStorageService);
+        localStorageService.clear();
 
         exam = new Exam();
         studentExam = new StudentExam();
@@ -206,6 +201,7 @@ describe('ExamParticipationService', () => {
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
     });
+
     it('should update a QuizSubmission', async () => {
         const returnedFromService = Object.assign({}, quizSubmission);
         const expected = Object.assign({}, returnedFromService);
@@ -217,6 +213,7 @@ describe('ExamParticipationService', () => {
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
     });
+
     it('should load testRun with exercises for conduction', async () => {
         const returnedFromService = Object.assign({}, studentExam);
         const expected = Object.assign({}, returnedFromService);
@@ -228,28 +225,20 @@ describe('ExamParticipationService', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
+
     it('save examSessionToken to sessionStorage', async () => {
         service.saveExamSessionTokenToSessionStorage('token1');
         jest.spyOn(sessionStorage, 'setItem').mockImplementation(() => {
             expect(sessionStorage['ExamSessionToken']).toBe('token1');
         });
     });
-    it('should save StudentExam to localStorage', async () => {
-        const sendToService = Object.assign({ exercises: [] }, studentExam);
-        const expected = Object.assign({}, sendToService);
-        service.saveStudentExamToLocalStorage(1, 1, sendToService);
-        jest.spyOn(localStorage, 'store').mockImplementation(() => {
-            expect(localStorage.retrieve('artemis_student_exam_1_1')).toBe(expected);
-        });
-    });
-    it('should load StudentExam from localStorage', async () => {
+
+    it('should save and load StudentExam from localStorage', async () => {
         studentExam.exercises = [];
         service.saveStudentExamToLocalStorage(1, 1, studentExam);
 
-        const stored = Object.assign({}, studentExam);
-        jest.spyOn(localStorage, 'retrieve').mockReturnValue(JSON.stringify(stored));
-
         service.loadStudentExamWithExercisesForConductionFromLocalStorage(1, 1).subscribe((localExam: StudentExam) => {
+            expect(localExam).toBeDefined();
             expect(localExam).toEqual(studentExam);
         });
     });
