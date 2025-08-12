@@ -6,10 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -37,6 +33,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 @Lazy
@@ -94,25 +92,34 @@ public class ConsistencyCheckService {
             String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
             var input = Map.<String, Object>of("rendered_context", renderedContext, "programming_language", programmingLanguage);
 
-            ExecutorService executor = Executors.newFixedThreadPool(2);
-            CompletableFuture<List<ConsistencyIssue>> structuralFuture = CompletableFuture
-                    .supplyAsync(() -> runConsistencyCheck("/prompts/hyperion/structural.st", input), executor).thenApply(ConsistencyIssues::issues);
-            CompletableFuture<List<ConsistencyIssue>> semanticFuture = CompletableFuture.supplyAsync(() -> runConsistencyCheck("/prompts/hyperion/semantic.st", input), executor)
-                    .thenApply(ConsistencyIssues::issues);
+            Mono<List<ConsistencyIssue>> structuralMono = Mono.fromCallable(() -> runConsistencyCheck("/prompts/hyperion/structural.st", input).issues())
+                    .subscribeOn(Schedulers.boundedElastic()).onErrorResume(ex -> {
+                        log.warn("Structural check failed, returning empty issues: {}", ex.getMessage());
+                        return Mono.just(List.of());
+                    });
+
+            Mono<List<ConsistencyIssue>> semanticMono = Mono.fromCallable(() -> runConsistencyCheck("/prompts/hyperion/semantic.st", input).issues())
+                    .subscribeOn(Schedulers.boundedElastic()).onErrorResume(ex -> {
+                        log.warn("Semantic check failed, returning empty issues: {}", ex.getMessage());
+                        return Mono.just(List.of());
+                    });
 
             List<ConsistencyIssue> combinedIssues;
             try {
-                combinedIssues = structuralFuture.thenCombine(semanticFuture, (a, b) -> {
+                combinedIssues = Mono.zip(structuralMono, semanticMono, (a, b) -> {
                     List<ConsistencyIssue> combined = new ArrayList<>();
                     if (a != null)
                         combined.addAll(a);
                     if (b != null)
                         combined.addAll(b);
                     return combined;
-                }).get();
+                }).block();
+                if (combinedIssues == null) {
+                    combinedIssues = List.of();
+                }
             }
-            catch (InterruptedException | ExecutionException e) {
-                log.warn("Parallel AI checks failed, falling back to sequential execution", e);
+            catch (RuntimeException e) {
+                log.warn("Reactive parallel AI checks failed, falling back to sequential execution", e);
                 ConsistencyIssues structuralEntity = runConsistencyCheck("/prompts/hyperion/structural.st", input);
                 ConsistencyIssues semanticEntity = runConsistencyCheck("/prompts/hyperion/semantic.st", input);
                 List<ConsistencyIssue> structural = structuralEntity != null ? structuralEntity.issues() : List.of();
@@ -121,9 +128,6 @@ public class ConsistencyCheckService {
                 merged.addAll(structural);
                 merged.addAll(semantic);
                 combinedIssues = merged;
-            }
-            finally {
-                executor.shutdown();
             }
 
             List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).collect(Collectors.toList());
