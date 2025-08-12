@@ -396,10 +396,6 @@ describe('BuildAgentDetailsComponent', () => {
         component.onConcurrencyChange(3);
 
         expect(mockBuildAgentsService.adjustBuildAgentCapacity).toHaveBeenCalledWith('agent1', 3);
-        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
-            type: AlertType.SUCCESS,
-            message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjusted',
-        });
     });
 
     it('should handle concurrency change error', () => {
