@@ -92,15 +92,15 @@ public class ConsistencyCheckService {
             var input = Map.<String, Object>of("rendered_context", renderedContext, "programming_language", programmingLanguage);
 
             ExecutorService executor = Executors.newFixedThreadPool(2);
-            CompletableFuture<List<AiIssue>> structuralFuture = CompletableFuture
-                    .supplyAsync(() -> runAiCheckEntity("/prompts/hyperion/structural.st", input, IssuesEntity.class), executor).thenApply(IssuesEntity::issues);
-            CompletableFuture<List<AiIssue>> semanticFuture = CompletableFuture
-                    .supplyAsync(() -> runAiCheckEntity("/prompts/hyperion/semantic.st", input, IssuesEntity.class), executor).thenApply(IssuesEntity::issues);
+            CompletableFuture<List<ConsistencyIssue>> structuralFuture = CompletableFuture
+                    .supplyAsync(() -> runConsistencyCheck("/prompts/hyperion/structural.st", input), executor).thenApply(ConsistencyIssues::issues);
+            CompletableFuture<List<ConsistencyIssue>> semanticFuture = CompletableFuture.supplyAsync(() -> runConsistencyCheck("/prompts/hyperion/semantic.st", input), executor)
+                    .thenApply(ConsistencyIssues::issues);
 
-            List<AiIssue> combinedIssues;
+            List<ConsistencyIssue> combinedIssues;
             try {
                 combinedIssues = structuralFuture.thenCombine(semanticFuture, (a, b) -> {
-                    List<AiIssue> combined = new java.util.ArrayList<>();
+                    List<ConsistencyIssue> combined = new java.util.ArrayList<>();
                     if (a != null)
                         combined.addAll(a);
                     if (b != null)
@@ -110,11 +110,11 @@ public class ConsistencyCheckService {
             }
             catch (InterruptedException | ExecutionException e) {
                 log.warn("Parallel AI checks failed, falling back to sequential execution", e);
-                IssuesEntity structuralEntity = runAiCheckEntity("/prompts/hyperion/structural.st", input, IssuesEntity.class);
-                IssuesEntity semanticEntity = runAiCheckEntity("/prompts/hyperion/semantic.st", input, IssuesEntity.class);
-                List<AiIssue> structural = structuralEntity != null ? structuralEntity.issues() : List.of();
-                List<AiIssue> semantic = semanticEntity != null ? semanticEntity.issues() : List.of();
-                List<AiIssue> merged = new java.util.ArrayList<>();
+                ConsistencyIssues structuralEntity = runConsistencyCheck("/prompts/hyperion/structural.st", input);
+                ConsistencyIssues semanticEntity = runConsistencyCheck("/prompts/hyperion/semantic.st", input);
+                List<ConsistencyIssue> structural = structuralEntity != null ? structuralEntity.issues() : List.of();
+                List<ConsistencyIssue> semantic = semanticEntity != null ? semanticEntity.issues() : List.of();
+                List<ConsistencyIssue> merged = new java.util.ArrayList<>();
                 merged.addAll(structural);
                 merged.addAll(semantic);
                 combinedIssues = merged;
@@ -123,7 +123,7 @@ public class ConsistencyCheckService {
                 executor.shutdown();
             }
 
-            List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapAiIssueToDto).collect(Collectors.toList());
+            List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).collect(Collectors.toList());
             boolean hasIssues = !issueDTOs.isEmpty();
             String summary = hasIssues ? String.format("Found %d consistency issue(s)", issueDTOs.size()) : "No issues found";
             return new ConsistencyCheckResponseDTO(issueDTOs, hasIssues, summary);
@@ -133,11 +133,11 @@ public class ConsistencyCheckService {
         }
     }
 
-    private <T> T runAiCheckEntity(String resourcePath, Map<String, Object> input, Class<T> entityClass) {
+    private ConsistencyIssues runConsistencyCheck(String resourcePath, Map<String, Object> input) {
         String rendered = templates.render(resourcePath, Map.of("rendered_context", String.valueOf(input.getOrDefault("rendered_context", "")), "programming_language",
                 String.valueOf(input.getOrDefault("programming_language", ""))));
         return chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.").user(rendered).call()
-                .entity(entityClass);
+                .entity(ConsistencyIssues.class);
     }
 
     private Repo buildRepository(ProgrammingExercise exercise, RepositoryType repositoryType) throws IOException {
@@ -190,7 +190,7 @@ public class ConsistencyCheckService {
         }
     }
 
-    private ConsistencyIssueDTO mapAiIssueToDto(AiIssue issue) {
+    private ConsistencyIssueDTO mapConsistencyIssueToDto(ConsistencyIssue issue) {
         Severity severity = switch (issue.severity() == null ? "MEDIUM" : issue.severity().toUpperCase()) {
             case "LOW" -> Severity.LOW;
             case "HIGH" -> Severity.HIGH;
@@ -210,23 +210,23 @@ public class ConsistencyCheckService {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class IssuesEntity {
+    private static class ConsistencyIssues {
 
-        public List<AiIssue> issues = List.of();
+        public List<ConsistencyIssue> issues = List.of();
 
-        public IssuesEntity() {
+        public ConsistencyIssues() {
         }
 
-        public List<AiIssue> issues() {
+        public List<ConsistencyIssue> issues() {
             return issues == null ? List.of() : issues;
         }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record AiIssue(String severity, String category, String description, String suggestedFix, List<AiArtifactLocation> relatedLocations) {
+    private record ConsistencyIssue(String severity, String category, String description, String suggestedFix, List<ArtifactLocation> relatedLocations) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record AiArtifactLocation(ArtifactType type, String filePath, Integer startLine, Integer endLine) {
+    private record ArtifactLocation(ArtifactType type, String filePath, Integer startLine, Integer endLine) {
     }
 }
