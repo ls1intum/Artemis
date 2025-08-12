@@ -341,16 +341,16 @@ public class ExamRoomService {
 
         List<ExamSeatDTO> examSeatsFilteredAndSorted = examRoom.getSeats().stream()
                 // Filter out all exam rooms that are before the "first row". The coords start at 0, the row numbers at 1
-                .filter(examSeatDTO -> examSeatDTO.y() >= (firstRow - 1))
+                .filter(examSeatDTO -> examSeatDTO.yCoordinate() >= (firstRow - 1))
                 // Filter out all exam rooms that are not default usable
                 .filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE)
                 // Sort by X, then by Y to ensure stable processing later
-                .sorted(Comparator.comparingDouble(ExamSeatDTO::y).thenComparingDouble(ExamSeatDTO::x)).toList();
+                .sorted(Comparator.comparingDouble(ExamSeatDTO::yCoordinate).thenComparingDouble(ExamSeatDTO::xCoordinate)).toList();
 
         List<ExamSeatDTO> selectedSeats = new ArrayList<>();
         for (ExamSeatDTO examSeatDTO : examSeatsFilteredAndSorted) {
-            boolean isFarEnough = selectedSeats.stream()
-                    .noneMatch(existing -> Math.abs(existing.y() - examSeatDTO.y()) <= ySpace && Math.abs(existing.x() - examSeatDTO.x()) <= xSpace);
+            boolean isFarEnough = selectedSeats.stream().noneMatch(
+                    existing -> Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate()) <= ySpace && Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate()) <= xSpace);
             if (isFarEnough) {
                 selectedSeats.add(examSeatDTO);
             }
