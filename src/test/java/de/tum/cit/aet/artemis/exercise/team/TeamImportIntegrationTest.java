@@ -350,8 +350,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     private Pair<List<Team>, List<Team>> getImportedTeamsAndBody(String shortNamePrefix, String loginPrefix, String registrationPrefix) {
-        List<Team> generatedTeams = teamUtilService.generateTeamsForExercise(destinationExercise, shortNamePrefix, loginPrefix, 3, null, TEST_PREFIX + "instructor1",
-                registrationPrefix);
+        List<Team> generatedTeams = teamUtilService.generateTeamsForExercise(destinationExercise, shortNamePrefix, loginPrefix, 3, null, registrationPrefix);
         var users = generatedTeams.stream().map(Team::getStudents).flatMap(Collection::stream).toList();
         users.forEach(u -> userUtilService.cleanUpRegistrationNumberForUser(u));
         userTestRepository.saveAll(users);

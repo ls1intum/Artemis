@@ -3,6 +3,7 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -16,8 +17,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { SessionStorageService } from 'ngx-webstorage';
 import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
@@ -45,7 +44,7 @@ examples.forEach((activeConversation) => {
                     provideHttpClient(),
                     provideHttpClientTesting(),
                     { provide: TranslateService, useClass: MockTranslateService },
-                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    SessionStorageService,
                     { provide: Router, useClass: MockRouter },
                     { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 ],
