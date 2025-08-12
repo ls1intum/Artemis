@@ -18,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -76,6 +78,25 @@ public class CalendarResource {
         this.exerciseService = exerciseService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
+    }
+
+    @GetMapping("/subscriptionToken")
+    @EnforceAtLeastStudent
+    public ResponseEntity<String> getSubscriptionToken() {
+        // TODO: retrieve or create token for user if none present yet
+        return ResponseEntity.ok(token);
+    }
+
+    @GetMapping("/courses/{courseId}/subscription/calendarEvents.ics")
+    public ResponseEntity<String> getICalendarSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
+            @RequestParam("filterOptions") Set<CalendarEventFilterOption> filterOptions) {
+        // TODO: validate token
+        // TODO: retrieve user for token
+        // TODO: verify that user is part of course
+        // TODO: determine whether user is student in course
+        String icsFileString = calendarSubscriptionService.getICSFileAsString(courseId, userIsStudent, filterOptions);
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/calendar; charset=utf-8"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=calendarEvents.ics").body(icsFileString);
     }
 
     /**
