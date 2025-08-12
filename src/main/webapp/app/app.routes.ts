@@ -193,6 +193,13 @@ const routes: Routes = [
         loadChildren: () => import('app/core/feature-overview/feature-overview.route').then((m) => m.routes),
     },
     {
+        path: 'demo/unified-feedback',
+        loadComponent: () => import('app/shared/components/unified-feedback/unified-feedback-demo.component').then((m) => m.UnifiedFeedbackDemoComponent),
+        data: {
+            pageTitle: 'Unified Feedback Component Demo',
+        },
+    },
+    {
         path: 'lti',
         loadChildren: () => import('./lti/shared/lti.route').then((m) => m.ltiLaunchRoutes),
     },

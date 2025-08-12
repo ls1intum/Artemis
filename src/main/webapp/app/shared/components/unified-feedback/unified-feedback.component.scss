@@ -1,0 +1,124 @@
+.unified-feedback {
+    border-radius: 8px;
+    border-left: 8px solid;
+    margin-bottom: 1rem;
+    background-color: var(--bs-modal-bg, var(--bs-card-bg, var(--bs-body-bg)));
+    border-top: 1px solid var(--bs-border-color);
+    border-right: 1px solid var(--bs-border-color);
+    border-bottom: 1px solid var(--bs-border-color);
+
+    &.alert-success {
+        border-left-color: var(--bs-success);
+    }
+
+    &.alert-danger {
+        border-left-color: var(--bs-danger);
+    }
+
+    &.alert-warning {
+        border-left-color: var(--bs-warning);
+    }
+
+    &.alert-info {
+        border-left-color: var(--bs-info);
+    }
+}
+
+.unified-feedback__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.unified-feedback__reference {
+    font-size: 0.875rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.unified-feedback__main {
+    flex: 1;
+}
+
+.unified-feedback__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.unified-feedback__header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.unified-feedback__icon {
+    font-size: 1.25rem;
+}
+
+.unified-feedback.alert-success .unified-feedback__icon {
+    color: var(--bs-success);
+}
+
+.unified-feedback.alert-danger .unified-feedback__icon {
+    color: var(--bs-danger);
+}
+
+.unified-feedback.alert-warning .unified-feedback__icon {
+    color: var(--bs-warning);
+}
+
+.unified-feedback.alert-info .unified-feedback__icon {
+    color: var(--bs-info);
+}
+
+.unified-feedback__title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: inherit;
+}
+
+.unified-feedback.alert-success .unified-feedback__title {
+    color: var(--bs-success);
+}
+
+.unified-feedback.alert-danger .unified-feedback__title {
+    color: var(--bs-danger);
+}
+
+.unified-feedback.alert-warning .unified-feedback__title {
+    color: var(--bs-warning);
+}
+
+.unified-feedback.alert-info .unified-feedback__title {
+    color: var(--bs-info);
+}
+
+.unified-feedback__text {
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+    color: var(--bs-body-color);
+}
+
+.unified-feedback__points {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--bs-body-color);
+}
+
+.unified-feedback.alert-success .unified-feedback__points {
+    color: var(--bs-success);
+}
+
+.unified-feedback.alert-danger .unified-feedback__points {
+    color: var(--bs-danger);
+}
+
+.unified-feedback.alert-warning .unified-feedback__points {
+    color: var(--bs-warning);
+}
+
+.unified-feedback.alert-info .unified-feedback__points {
+    color: var(--bs-info);
+}

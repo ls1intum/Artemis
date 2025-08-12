@@ -1,0 +1,59 @@
+<div class="unified-feedback-demo">
+    <div class="container">
+        <h1>Unified Feedback Component Demo</h1>
+        <p class="lead">This page showcases different variations of the unified feedback component.</p>
+
+        <div class="demo-section">
+            <h2>All Feedback Variations</h2>
+            <div class="demo-grid">
+                @for (feedback of demoFeedbacks; track feedback.title || feedback.feedbackContent) {
+                    <div class="demo-item">
+                        <h3>{{ feedback.title || 'No Title' }}</h3>
+                        <jhi-unified-feedback
+                            [feedbackContent]="feedback.feedbackContent"
+                            [points]="feedback.points"
+                            [icon]="feedback.icon"
+                            [title]="feedback.title"
+                            [reference]="feedback.reference"
+                        />
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Individual Icon Types</h2>
+
+            <div class="icon-demo">
+                <h3>Success Feedback</h3>
+                <jhi-unified-feedback feedbackContent="This is a success feedback example with positive points." [points]="5" icon="success" title="Great job!" />
+            </div>
+
+            <div class="icon-demo">
+                <h3>Error Feedback</h3>
+                <jhi-unified-feedback feedbackContent="This is an error feedback example with zero points." [points]="0" icon="error" title="Incorrect" />
+            </div>
+
+            <div class="icon-demo">
+                <h3>Retry Feedback</h3>
+                <jhi-unified-feedback feedbackContent="This is a retry feedback example that needs improvement." [points]="2" icon="retry" title="Needs revision" />
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>With References</h2>
+            <jhi-unified-feedback
+                feedbackContent="This feedback includes a reference to specific code."
+                [points]="3"
+                icon="retry"
+                title="Code Review"
+                reference="src/main/java/com/example/Service.java:42-45"
+            />
+        </div>
+
+        <div class="demo-section">
+            <h2>Without Title</h2>
+            <jhi-unified-feedback feedbackContent="This feedback doesn't have a title, just content and points." [points]="4" icon="success" />
+        </div>
+    </div>
+</div>
