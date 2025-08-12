@@ -11,21 +11,21 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
  * DTO for saving competencies request to AtlasML.
  * Maps to the Python SaveCompetencyRequest model.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SaveCompetencyRequestDTO(@JsonProperty("competency") AtlasMLCompetencyDTO competency, @JsonProperty("exercise") AtlasMLExerciseDTO exercise,
-        @JsonProperty("operation_type") OperationType operationType) {
+        @JsonProperty("operation_type") OperationTypeDTO operationType) {
 
     /**
      * Operation type enum for AtlasML save operations.
      */
-    public enum OperationType {
+    public enum OperationTypeDTO {
         UPDATE, DELETE
     }
 
     /**
      * Create a SaveCompetencyRequestDTO from domain objects for competency saving.
      */
-    public static SaveCompetencyRequestDTO fromCompetency(Competency competency, OperationType operationType) {
+    public static SaveCompetencyRequestDTO fromCompetency(Competency competency, OperationTypeDTO operationType) {
         AtlasMLCompetencyDTO atlasMLCompetency = competency != null ? AtlasMLCompetencyDTO.fromDomain(competency) : null;
         return new SaveCompetencyRequestDTO(atlasMLCompetency, null, operationType);
     }
@@ -33,7 +33,8 @@ public record SaveCompetencyRequestDTO(@JsonProperty("competency") AtlasMLCompet
     /**
      * Create a SaveCompetencyRequestDTO from domain objects for exercise saving.
      */
-    public static SaveCompetencyRequestDTO fromExercise(Long exerciseId, String title, String description, List<Long> competencyIds, Long courseId, OperationType operationType) {
+    public static SaveCompetencyRequestDTO fromExercise(Long exerciseId, String title, String description, List<Long> competencyIds, Long courseId,
+            OperationTypeDTO operationType) {
         AtlasMLExerciseDTO atlasMLExercise = new AtlasMLExerciseDTO(exerciseId, title, description, competencyIds, courseId);
         return new SaveCompetencyRequestDTO(null, atlasMLExercise, operationType);
     }

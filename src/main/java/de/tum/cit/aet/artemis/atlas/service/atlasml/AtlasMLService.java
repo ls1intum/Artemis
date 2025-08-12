@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationType;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
@@ -249,7 +249,7 @@ public class AtlasMLService {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveCompetency(Competency competency, OperationType operationType) {
+    public boolean saveCompetency(Competency competency, OperationTypeDTO operationType) {
         // Check if AtlasML feature is enabled
         if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
             log.debug("AtlasML feature is disabled, skipping competency save operation");
@@ -274,7 +274,7 @@ public class AtlasMLService {
      * @param operationType    the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveCourseCompetency(CourseCompetency courseCompetency, OperationType operationType) {
+    public boolean saveCourseCompetency(CourseCompetency courseCompetency, OperationTypeDTO operationType) {
         // Check if AtlasML feature is enabled
         if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
             log.debug("AtlasML feature is disabled, skipping course competency save operation");
@@ -303,7 +303,7 @@ public class AtlasMLService {
      * @return true if the save operation was successful, false otherwise
      */
     public boolean saveCompetency(Competency competency) {
-        return saveCompetency(competency, OperationType.UPDATE);
+        return saveCompetency(competency, OperationTypeDTO.UPDATE);
     }
 
     /**
@@ -317,7 +317,7 @@ public class AtlasMLService {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveExercise(Long exerciseId, String title, String description, List<Long> competencyIds, Long courseId, OperationType operationType) {
+    public boolean saveExercise(Long exerciseId, String title, String description, List<Long> competencyIds, Long courseId, OperationTypeDTO operationType) {
         // Check if AtlasML feature is enabled
         if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
             log.debug("AtlasML feature is disabled, skipping exercise save operation");
@@ -346,7 +346,7 @@ public class AtlasMLService {
      * @return true if the save operation was successful, false otherwise
      */
     public boolean saveExercise(Long exerciseId, String title, String description, List<Long> competencyIds, Long courseId) {
-        return saveExercise(exerciseId, title, description, competencyIds, courseId, OperationType.UPDATE);
+        return saveExercise(exerciseId, title, description, competencyIds, courseId, OperationTypeDTO.UPDATE);
     }
 
     /**
@@ -356,7 +356,7 @@ public class AtlasMLService {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveExerciseWithCompetencies(Exercise exercise, OperationType operationType) {
+    public boolean saveExerciseWithCompetencies(Exercise exercise, OperationTypeDTO operationType) {
         // Check if AtlasML feature is enabled
         if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
             log.debug("AtlasML feature is disabled, skipping exercise with competencies save operation");
@@ -392,7 +392,7 @@ public class AtlasMLService {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveExerciseWithCompetenciesById(Long exerciseId, OperationType operationType) {
+    public boolean saveExerciseWithCompetenciesById(Long exerciseId, OperationTypeDTO operationType) {
         // Check if AtlasML feature is enabled
         if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
             log.debug("AtlasML feature is disabled, skipping exercise with competencies save operation");

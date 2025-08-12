@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationType;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -176,7 +176,7 @@ public class FileUploadExerciseResource {
         // Notify AtlasML about the new exercise
         atlasMLService.ifPresent(service -> {
             try {
-                service.saveExerciseWithCompetencies(result, OperationType.UPDATE);
+                service.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise creation: {}", e.getMessage());
@@ -221,7 +221,7 @@ public class FileUploadExerciseResource {
         // Notify AtlasML about the new exercise
         atlasMLService.ifPresent(service -> {
             try {
-                service.saveExerciseWithCompetencies(newFileUploadExercise, OperationType.UPDATE);
+                service.saveExerciseWithCompetencies(newFileUploadExercise, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise creation: {}", e.getMessage());
@@ -325,7 +325,7 @@ public class FileUploadExerciseResource {
         // Notify AtlasML about the exercise update
         atlasMLService.ifPresent(service -> {
             try {
-                service.saveExerciseWithCompetencies(updatedExercise, OperationType.UPDATE);
+                service.saveExerciseWithCompetencies(updatedExercise, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise update: {}", e.getMessage());
@@ -406,7 +406,7 @@ public class FileUploadExerciseResource {
         // Notify AtlasML about the exercise deletion before actual deletion
         atlasMLService.ifPresent(service -> {
             try {
-                service.saveExerciseWithCompetencies(exercise, OperationType.DELETE);
+                service.saveExerciseWithCompetencies(exercise, OperationTypeDTO.DELETE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise deletion: {}", e.getMessage());

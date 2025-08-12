@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
  * DTO for AtlasML API communication representing a competency.
  * This matches the Python AtlasML API structure with single-letter taxonomy codes.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AtlasMLCompetencyDTO(@JsonProperty("id") Long id, @JsonProperty("title") String title, @JsonProperty("description") String description,
         @JsonProperty("course_id") Long courseId) {
 

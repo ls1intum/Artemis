@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
  * DTO for competency suggestions response from AtlasML.
  * Maps to the Python SuggestCompetencyResponse model.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SuggestCompetencyResponseDTO(@JsonProperty("competencies") List<AtlasMLCompetencyDTO> competencies) {
 
     /**

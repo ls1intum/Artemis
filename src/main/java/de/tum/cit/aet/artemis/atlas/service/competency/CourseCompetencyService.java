@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationType;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
@@ -260,10 +260,10 @@ public class CourseCompetencyService {
         for (CompetencyWithTailRelationDTO competencyDTO : idToImportedCompetency.values()) {
             CourseCompetency importedCompetency = competencyDTO.competency();
             if (importedCompetency instanceof Competency competency) {
-                atlasMLService.saveCompetency(competency, OperationType.UPDATE);
+                atlasMLService.saveCompetency(competency, OperationTypeDTO.UPDATE);
             }
             else {
-                atlasMLService.saveCourseCompetency(importedCompetency, OperationType.UPDATE);
+                atlasMLService.saveCourseCompetency(importedCompetency, OperationTypeDTO.UPDATE);
             }
         }
 

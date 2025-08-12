@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationType;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
@@ -150,7 +150,7 @@ public class CompetencyResource {
 
         // Notify AtlasML about the new competency
         try {
-            atlasMLService.saveCompetency(persistedCompetency, OperationType.UPDATE);
+            atlasMLService.saveCompetency(persistedCompetency, OperationTypeDTO.UPDATE);
         }
         catch (Exception e) {
             log.warn("Failed to notify AtlasML about competency creation: {}", e.getMessage());
@@ -181,7 +181,7 @@ public class CompetencyResource {
         // Notify AtlasML about the new competencies
         for (Competency createdCompetency : createdCompetencies) {
             try {
-                atlasMLService.saveCompetency(createdCompetency, OperationType.UPDATE);
+                atlasMLService.saveCompetency(createdCompetency, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about competency creation for id {}: {}", createdCompetency.getId(), e.getMessage());
@@ -330,7 +330,7 @@ public class CompetencyResource {
 
         // Notify AtlasML about the competency update
         try {
-            atlasMLService.saveCompetency(persistedCompetency, OperationType.UPDATE);
+            atlasMLService.saveCompetency(persistedCompetency, OperationTypeDTO.UPDATE);
         }
         catch (Exception e) {
             log.warn("Failed to notify AtlasML about competency update: {}", e.getMessage());
@@ -357,7 +357,7 @@ public class CompetencyResource {
 
         // Notify AtlasML about the competency deletion before actual deletion
         try {
-            atlasMLService.saveCourseCompetency(competency, OperationType.DELETE);
+            atlasMLService.saveCourseCompetency(competency, OperationTypeDTO.DELETE);
         }
         catch (Exception e) {
             log.warn("Failed to notify AtlasML about competency deletion: {}", e.getMessage());

@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationType;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -254,7 +254,7 @@ public class TextExerciseResource {
         // Notify AtlasML about the new exercise
         atlasMLService.ifPresent(service -> {
             try {
-                service.saveExerciseWithCompetencies(result, OperationType.UPDATE);
+                service.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise creation: {}", e.getMessage());
@@ -327,7 +327,7 @@ public class TextExerciseResource {
         // Notify AtlasML about the exercise update
         atlasMLService.ifPresent(service -> {
             try {
-                service.saveExerciseWithCompetencies(updatedTextExercise, OperationType.UPDATE);
+                service.saveExerciseWithCompetencies(updatedTextExercise, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise update: {}", e.getMessage());
@@ -424,7 +424,7 @@ public class TextExerciseResource {
         // Notify AtlasML about the exercise deletion before actual deletion
         atlasMLService.ifPresent(service -> {
             try {
-                service.saveExerciseWithCompetencies(textExercise, OperationType.DELETE);
+                service.saveExerciseWithCompetencies(textExercise, OperationTypeDTO.DELETE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise deletion: {}", e.getMessage());
