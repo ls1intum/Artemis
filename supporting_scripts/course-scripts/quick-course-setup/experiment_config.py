@@ -1,4 +1,17 @@
-from experiment_consts import BUBBLE_SORT_JAVA_ALLOCATE_MEMORY, BUBBLE_SORT_JAVA_CORRECT, BUBBLE_SORT_JAVA_INFINITE_LOOP, C_CORRECT, C_FACT_BUILD_SCRIPT, GRADLE_BUILD_SCRIPT, INFINITE_BUILD_SCRIPT, FAILING_BUILD_SCRIPT, MEMORY_ALLOCATE_BUILD_SCRIPT, SORT_STRATEGY_JAVA, SPAMMY_BUILD_GRADLE, START_ARTEMIS_COMMAND, START_DOCKER_COMMAND, STOP_ARTEMIS_COMMAND, STOP_DOCKER_SERVICE_COMMAND, STOP_DOCKER_SOCKET_COMMAND, WRITE_FILE_JAVA
+import configparser
+from experiment_consts import BUBBLE_SORT_JAVA_ALLOCATE_MEMORY, BUBBLE_SORT_JAVA_CORRECT, BUBBLE_SORT_JAVA_INFINITE_LOOP, C_CORRECT, C_FACT_BUILD_SCRIPT, CPU_STRESS_COMMAND, GRADLE_BUILD_SCRIPT, INFINITE_BUILD_SCRIPT, FAILING_BUILD_SCRIPT, MEMORY_ALLOCATE_BUILD_SCRIPT, NETWORK_STRESS_COMMAND, SORT_STRATEGY_JAVA, SPAMMY_BUILD_GRADLE, START_ARTEMIS_COMMAND, START_DOCKER_COMMAND, STOP_ARTEMIS_COMMAND, STOP_DOCKER_SERVICE_COMMAND, STOP_DOCKER_SOCKET_COMMAND, WRITE_FILE_JAVA
+from enum import Enum
+
+config = configparser.ConfigParser()
+config.read("config.ini")
+
+EXPERIMENT_TARGET_NODE_AGENT = config.get("Settings", "experiment_target_node_agent")
+EXPERIMENT_TARGET_NODE_CORE = config.get("Settings", "experiment_target_node_core")
+USER_NAME_SSH = config.get("Settings", "user_name_ssh")
+
+class NodeTargetType(Enum):
+    CORE = "core"
+    AGENT = "agent"
 
 class ExperimentConfig:
     programming_language: str
@@ -8,10 +21,11 @@ class ExperimentConfig:
     commit_files: dict[str, str]
     identifier: str
     remote_command: str | None = None
+    target_node_type: NodeTargetType
     execute_after_seconds: int
     timeout_experiment: int
     final_command: str | None = None
-    def __init__(self, programming_language: str, project_type: str, package_name:str, build_script: str, commit_files: dict[str, str], identifier: str, remote_command: str | None = None, execute_after_seconds: int = 0, timeout_experiment: int = 60 * 15, final_command: str | None = None):
+    def __init__(self, programming_language: str, project_type: str, package_name:str, build_script: str, commit_files: dict[str, str], identifier: str, remote_command: str | None = None, execute_after_seconds: int = 0, timeout_experiment: int = 60 * 15, final_command: str | None = None, target_node_type: NodeTargetType = NodeTargetType.AGENT):
         self.programming_language = programming_language
         self.project_type = project_type
         self.package_name = package_name
@@ -22,6 +36,13 @@ class ExperimentConfig:
         self.execute_after_seconds = execute_after_seconds
         self.timeout_experiment = timeout_experiment
         self.final_command = final_command
+        self.target_node_type = target_node_type
+
+    def get_target_node_address(self) -> str | None:
+        if self.remote_command == None: 
+            return None
+        host = EXPERIMENT_TARGET_NODE_AGENT if self.target_node_type == NodeTargetType.AGENT else EXPERIMENT_TARGET_NODE_CORE
+        return f"{USER_NAME_SSH}@{host}"
 
 JAVA_HAPPY_PATH = ExperimentConfig(
     programming_language="JAVA",
@@ -44,7 +65,7 @@ JAVA_SPAMMY_BUILD = ExperimentConfig(
         "src/experiment/BubbleSort.java": BUBBLE_SORT_JAVA_CORRECT.format("experiment")
     },
     identifier="java_spammy_build",
-    timeout_experiment=60 * 30
+    timeout_experiment=60 * 20
 )
 
 JAVA_TIMEOUT_BUILD = ExperimentConfig(
@@ -206,4 +227,62 @@ DOCKER_CLIENT_FAILURE_JAVA = ExperimentConfig(
     execute_after_seconds=30,
     timeout_experiment=60 * 15,
     final_command=START_DOCKER_COMMAND
+)
+
+NETWORK_STRESS_AGENT = ExperimentConfig(
+    programming_language="C",
+    project_type="FACT",
+    build_script=C_FACT_BUILD_SCRIPT,
+    package_name="experiment",
+    commit_files={
+        "exercise.c": C_CORRECT
+    }
+    , identifier="network_stress_agent"
+    , remote_command=NETWORK_STRESS_COMMAND
+    , execute_after_seconds=30
+    , timeout_experiment=60 * 15
+)
+
+CPU_STRESS_AGENT = ExperimentConfig(
+    programming_language="C",
+    project_type="FACT",
+    build_script=C_FACT_BUILD_SCRIPT,
+    package_name="experiment",
+    commit_files={
+        "exercise.c": C_CORRECT
+    }
+    , identifier="cpu_stress_agent"
+    , remote_command=CPU_STRESS_COMMAND
+    , execute_after_seconds=30
+    , timeout_experiment=60 * 15
+)
+
+NETWORK_STRESS_CORE = ExperimentConfig(
+    programming_language="C",
+    project_type="FACT",
+    build_script=C_FACT_BUILD_SCRIPT,
+    package_name="experiment",
+    commit_files={
+        "exercise.c": C_CORRECT
+    }
+    , identifier="network_stress_agent"
+    , remote_command=NETWORK_STRESS_COMMAND
+    , execute_after_seconds=30
+    , timeout_experiment=60 * 15
+    , target_node_type=NodeTargetType.CORE
+)
+
+CPU_STRESS_NODE = ExperimentConfig(
+    programming_language="C",
+    project_type="FACT",
+    build_script=C_FACT_BUILD_SCRIPT,
+    package_name="experiment",
+    commit_files={
+        "exercise.c": C_CORRECT
+    }
+    , identifier="cpu_stress_agent"
+    , remote_command=CPU_STRESS_COMMAND
+    , execute_after_seconds=30
+    , timeout_experiment=60 * 15
+    , target_node_type=NodeTargetType.CORE
 )

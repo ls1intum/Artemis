@@ -17,6 +17,7 @@ from admin_operations import (
     get_queued_build_jobs_for_course,
     get_running_build_jobs_for_course,
     get_server_artemis_version_info,
+    get_server_info,
     get_submissions_for_exercise,
     get_all_results,
     log_build_agent_summaries,
@@ -311,7 +312,7 @@ class ExperimentRunner:
 
         return course
 
-    def run_experiment(self, experiment_config: ExperimentConfig, number_of_commits: int = 1, remote_node_execute: str | None = None):
+    def run_experiment(self, experiment_config: ExperimentConfig, number_of_commits: int = 1):
         """Run the experiment with students participating."""
         version_info = get_server_artemis_version_info(self.admin_session)
         initial_sleep = 10
@@ -328,6 +329,7 @@ class ExperimentRunner:
                 commits=number_of_commits,
             )
             remote_future = None
+            remote_node_execute = experiment_config.get_target_node_address()
             if remote_node_execute:
                 remote_future = executor.submit(self.execute_remote_command, experiment_config, remote_node_execute)
 
@@ -400,6 +402,8 @@ class ExperimentRunner:
             with open(filename_base + "_stats.json", 'a') as f:
                 json.dump(stats, f, indent=2)
         if experiment_config:
+            info = get_server_info(self.admin_session)
+            profiles = info.get("activeProfiles", [])
             with open(filename_base + "_timing_info.json", 'a') as f:
                 json.dump({
                     "start_time": start,
@@ -407,7 +411,8 @@ class ExperimentRunner:
                     "initial_sleep": initial_sleep,
                     "injected_command_at": self.executed_remote_command_at,
                     "injected_command": experiment_config.remote_command,
-                    "injected_command_after": experiment_config.execute_after_seconds
+                    "injected_command_after": experiment_config.execute_after_seconds,
+                    "serverProfiles": profiles
                 }, f)
        
         return json_filename

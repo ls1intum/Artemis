@@ -22,11 +22,11 @@ SPAMMY_BUILD_GRADLE = """
     set -e
 
     spam_logs() {
-        log_line="This is a test log message meant to spam the output."
-        for ((i = 1; i <= 500000; i++)); do
+        log_line="📣 This is a test log message meant to spam the output. 📣"
+        for ((i = 1; i <= 100000; i++)); do
             printf "Log line %d: %s\n" "$i" "$log_line"
         done
-    echo "✅ Finished printing log lines."
+    exit 1
     }
 
     gradle_build() {
@@ -221,3 +221,5 @@ STOP_ARTEMIS_COMMAND = "sudo systemctl stop artemis.service"
 START_DOCKER_COMMAND = "sudo systemctl start docker.service"
 STOP_DOCKER_SOCKET_COMMAND = "sudo systemctl stop docker.socket"
 STOP_DOCKER_SERVICE_COMMAND = "sudo systemctl stop docker.service"
+NETWORK_STRESS_COMMAND = "docker run --rm -it --network host --name stress-ng alpinelinux/stress-ng stress-ng --tcp 2 --udp 2 --timeout 60s"
+CPU_STRESS_COMMAND = "docker run --rm -it alpinelinux/stress-ng stress-ng --cpu 4 --timeout 60s"
