@@ -9,6 +9,10 @@ artemis:
         enabled: true
     tutorialgroup:
         enabled: true
+    nebula:
+        enabled: false
+
+
 
     user-management:
         passkey:
