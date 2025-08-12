@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
 // Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
@@ -164,8 +165,13 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
 
-    @Value("${artemis.version-control.url}")
     protected URI localVCBaseUri;
+
+    @Value("${artemis.version-control.url}")
+    public void setLocalVCBaseUri(URI localVCBaseUri) {
+        this.localVCBaseUri = localVCBaseUri;
+        ProgrammingExerciseFactory.localVCBaseUri = localVCBaseUri; // Set the static field in ProgrammingExerciseFactory for convenience
+    }
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     protected Path localVCBasePath;

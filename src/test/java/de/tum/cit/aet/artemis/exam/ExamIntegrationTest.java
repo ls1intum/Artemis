@@ -91,7 +91,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
@@ -1947,7 +1947,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private void setupMocks() {
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(anyString(), anyString());
-        doReturn(new VcsRepositoryUri()).when(versionControlService).copyRepositoryWithHistory(anyString(), anyString(), anyString(), anyString(), anyString(), isNull());
+        doReturn(new LocalVCRepositoryUri(localVCBaseUri, "projectkey", "repositoryslug")).when(versionControlService).copyRepositoryWithHistory(anyString(), anyString(),
+                anyString(), anyString(), anyString(), isNull());
         doNothing().when(continuousIntegrationService).createProjectForExercise(any(ProgrammingExercise.class));
         doReturn("build plan").when(continuousIntegrationService).copyBuildPlan(any(ProgrammingExercise.class), anyString(), any(ProgrammingExercise.class), anyString(),
                 anyString(), anyBoolean());

@@ -51,10 +51,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
 import { Subject, of, throwError } from 'rxjs';
 import { MockExamParticipationLiveEventsService } from 'test/helpers/mocks/service/mock-exam-participation-live-events.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -124,7 +122,6 @@ describe('ExamParticipationComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: WebsocketService, useClass: MockWebsocketService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
                 {
                     provide: ActivatedRoute,
                     useValue: setupActivatedRouteMock(),

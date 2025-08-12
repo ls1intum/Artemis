@@ -3,8 +3,8 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 import { FeedbackAnalysisService } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 
-import { LocalStorageService } from 'ngx-webstorage';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 export interface FilterData {
     tasks: string[];
@@ -20,7 +20,7 @@ export interface FilterData {
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackFilterModalComponent {
-    private localStorage = inject(LocalStorageService);
+    private localStorageService = inject(LocalStorageService);
     private activeModal = inject(NgbActiveModal);
 
     filterApplied = output<FilterData>();
@@ -45,19 +45,19 @@ export class FeedbackFilterModalComponent {
     };
 
     applyFilter(): void {
-        this.localStorage.store(this.FILTER_TASKS_KEY, this.filters.tasks);
-        this.localStorage.store(this.FILTER_TEST_CASES_KEY, this.filters.testCases);
-        this.localStorage.store(this.FILTER_OCCURRENCE_KEY, this.filters.occurrence);
-        this.localStorage.store(this.FILTER_ERROR_CATEGORIES_KEY, this.filters.errorCategories);
+        this.localStorageService.store(this.FILTER_TASKS_KEY, this.filters.tasks);
+        this.localStorageService.store(this.FILTER_TEST_CASES_KEY, this.filters.testCases);
+        this.localStorageService.store(this.FILTER_OCCURRENCE_KEY, this.filters.occurrence);
+        this.localStorageService.store(this.FILTER_ERROR_CATEGORIES_KEY, this.filters.errorCategories);
         this.filterApplied.emit(this.filters);
         this.activeModal.close();
     }
 
     clearFilter(): void {
-        this.localStorage.clear(this.FILTER_TASKS_KEY);
-        this.localStorage.clear(this.FILTER_TEST_CASES_KEY);
-        this.localStorage.clear(this.FILTER_OCCURRENCE_KEY);
-        this.localStorage.clear(this.FILTER_ERROR_CATEGORIES_KEY);
+        this.localStorageService.remove(this.FILTER_TASKS_KEY);
+        this.localStorageService.remove(this.FILTER_TEST_CASES_KEY);
+        this.localStorageService.remove(this.FILTER_OCCURRENCE_KEY);
+        this.localStorageService.remove(this.FILTER_ERROR_CATEGORIES_KEY);
         this.filters = {
             tasks: [],
             testCases: [],

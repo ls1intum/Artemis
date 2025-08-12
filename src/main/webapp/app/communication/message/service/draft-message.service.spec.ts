@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { DraftService } from './draft-message.service';
-import { LocalStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { DraftData, DraftService } from './draft-message.service';
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -11,7 +10,7 @@ describe('DraftService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [DraftService, { provide: LocalStorageService, useClass: MockSyncStorage }],
+            providers: [DraftService, LocalStorageService],
         });
         draftService = TestBed.inject(DraftService);
         localStorageService = TestBed.inject(LocalStorageService);
@@ -30,17 +29,13 @@ describe('DraftService', () => {
     });
 
     it('should clear draft if content is empty', () => {
-        const clearSpy = jest.spyOn(localStorageService, 'clear');
+        const clearSpy = jest.spyOn(localStorageService, 'remove');
         draftService.clearDraft('key');
         expect(clearSpy).toHaveBeenCalledWith('key');
     });
 
     it('should load draft if it was saved within the last 7 days', () => {
-        const now = Date.now();
-        const recentTimestamp = now - 6 * 24 * 60 * 60 * 1000; // 6 days ago
-        const draftData = JSON.stringify({ content: 'recent draft', timestamp: recentTimestamp });
-
-        jest.spyOn(localStorageService, 'retrieve').mockReturnValue(draftData);
+        draftService.saveDraft('key', 'recent draft');
         const result = draftService.loadDraft('key');
         expect(result).toBe('recent draft');
     });
@@ -48,11 +43,13 @@ describe('DraftService', () => {
     it('should not load draft if it is older than 7 days', () => {
         const now = Date.now();
         const expiredTimestamp = now - 8 * 24 * 60 * 60 * 1000; // 8 days ago
-        const draftData = JSON.stringify({ content: 'expired draft', timestamp: expiredTimestamp });
+        const draftData: DraftData = {
+            content: 'expired draft',
+            timestamp: expiredTimestamp,
+        };
+        localStorageService.store<DraftData>('key', draftData);
 
-        const clearSpy = jest.spyOn(localStorageService, 'clear');
-        jest.spyOn(localStorageService, 'retrieve').mockReturnValue(draftData);
-
+        const clearSpy = jest.spyOn(localStorageService, 'remove');
         const result = draftService.loadDraft('key');
         expect(result).toBeUndefined();
         expect(clearSpy).toHaveBeenCalledWith('key');
@@ -61,23 +58,25 @@ describe('DraftService', () => {
     it('should treat draft saved just after 7 days ago as expired', () => {
         const now = Date.now();
         const justOver7DaysAgo = now - SEVEN_DAYS_MS - 1;
-        const draftData = JSON.stringify({ content: 'expired draft', timestamp: justOver7DaysAgo });
+        const draftData: DraftData = {
+            content: 'expired draft',
+            timestamp: justOver7DaysAgo,
+        };
+        localStorageService.store<DraftData>('key', draftData);
 
-        const clearSpy = jest.spyOn(localStorageService, 'clear');
-        jest.spyOn(localStorageService, 'retrieve').mockReturnValue(draftData);
-
+        const clearSpy = jest.spyOn(localStorageService, 'remove');
         const result = draftService.loadDraft('key');
         expect(result).toBeUndefined();
         expect(clearSpy).toHaveBeenCalledWith('key');
     });
 
     it('should fallback to plain string if JSON parse fails but content is valid', () => {
-        jest.spyOn(localStorageService, 'retrieve').mockReturnValue('legacy string draft');
+        localStorageService.store<string>('key', 'some draft');
         const result = draftService.loadDraft('key');
-        expect(result).toBe('legacy string draft');
+        expect(result).toBe('some draft');
     });
 
-    it('should return undefined if retrieved raw value is empty string', () => {
+    it('should return undefined if retrieved value is empty string', () => {
         jest.spyOn(localStorageService, 'retrieve').mockReturnValue('');
         const clearSpy = jest.spyOn(localStorageService, 'clear');
         const result = draftService.loadDraft('key');
@@ -85,7 +84,7 @@ describe('DraftService', () => {
         expect(clearSpy).not.toHaveBeenCalled();
     });
 
-    it('should fallback to legacy string if JSON parse fails', () => {
+    it('should fallback to string if JSON parse fails', () => {
         jest.spyOn(localStorageService, 'retrieve').mockReturnValue('{ invalid json');
         const result = draftService.loadDraft('key');
         expect(result).toBe('{ invalid json');
