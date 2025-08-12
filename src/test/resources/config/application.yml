@@ -97,6 +97,9 @@ artemis:
     licenses:
         matlab:
             license-server: "1234@license-server"
+    nebula:
+        enabled: true
+
 
 spring:
     application:
