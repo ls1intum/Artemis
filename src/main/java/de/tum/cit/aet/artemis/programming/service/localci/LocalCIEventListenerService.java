@@ -9,6 +9,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -62,6 +63,9 @@ public class LocalCIEventListenerService {
     private final UserService userService;
 
     private final MailService mailService;
+
+    @Value("${artemis.continuous-integration.concurrent-result-processing-size:1}")
+    private int concurrentResultProcessingSize;
 
     public LocalCIEventListenerService(DistributedDataAccessService distributedDataAccessService, LocalCIQueueWebsocketService localCIQueueWebsocketService,
             BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, LocalCIResultProcessingService localCIResultProcessingService,
@@ -136,23 +140,26 @@ public class LocalCIEventListenerService {
     /**
      * Processes the queued results from the distributed build result queue every minute.
      * This is a fallback mechanism to ensure that no results are left unprocessed in the queue e.g. if listener events are lost
-     * under high system load or network hiccups
+     * under high system load or network hiccups.
+     * Runs every minute so results are not stuck int the queue so long that they appear to be lost.
      */
-    @Scheduled(fixedDelay = 60 * 1000)
+    @Scheduled(fixedRate = 60 * 1000)
     public void processQueuedResults() {
+        var startTime = System.currentTimeMillis();
         final int initialSize = distributedDataAccessService.getResultQueueSize();
-        log.debug("Processing up to {} queued results from the distributed build result queue", initialSize);
-        for (int i = 0; i < initialSize; i++) {
+        log.debug("{} queued results in the distributed build result queue. Processing up to {} results.", initialSize, Math.min(concurrentResultProcessingSize, initialSize));
+        for (int i = 0; i < concurrentResultProcessingSize; i++) {
             if (distributedDataAccessService.getDistributedBuildResultQueue().peek() == null) {
                 break;
             }
             try {
-                localCIResultProcessingService.processResult();
+                localCIResultProcessingService.processResultAsync();
             }
             catch (Exception ex) {
                 log.warn("Processing a queued result failed. Continuing with remaining items", ex);
             }
         }
+        log.debug("Result queue processing schedule completed in {} ms", System.currentTimeMillis() - startTime);
     }
 
     private boolean checkIfBuildJobIsStillBuilding(List<String> processingJobIds, String buildJobId) {
