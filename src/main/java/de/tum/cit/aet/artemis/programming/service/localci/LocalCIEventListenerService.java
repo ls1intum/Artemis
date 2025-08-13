@@ -143,8 +143,9 @@ public class LocalCIEventListenerService {
         var startTime = System.currentTimeMillis();
         log.debug("Scheduled processing of queued results started");
         final int initialSize = distributedDataAccessService.getResultQueueSize();
-        log.debug("Processing up to {} queued results from the distributed build result queue", initialSize);
-        for (int i = 0; i < initialSize; i++) {
+        final int processMax = Math.min(initialSize, 5);
+        log.debug("Processing up to {} queued results from the distributed build result queue", processMax);
+        for (int i = 0; i < processMax; i++) {
             if (distributedDataAccessService.getDistributedBuildResultQueue().peek() == null) {
                 break;
             }
