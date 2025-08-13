@@ -2020,8 +2020,8 @@ public class ProgrammingExerciseIntegrationTestService {
         request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.UNPROCESSABLE_ENTITY, File.class);
     }
 
-    void testExportAuxiliaryRepositoryExerciseNotFound() throws Exception {
-        request.get(defaultExportInstructorAuxiliaryRepository(-1L, 1L), HttpStatus.NOT_FOUND, File.class);
+    void testExportAuxiliaryRepositoryExerciseAccessForbidden() throws Exception {
+        request.get(defaultExportInstructorAuxiliaryRepository(-1L, 1L), HttpStatus.FORBIDDEN, File.class);
     }
 
     void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
