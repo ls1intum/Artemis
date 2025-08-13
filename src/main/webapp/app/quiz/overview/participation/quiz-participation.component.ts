@@ -26,7 +26,7 @@ import { QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
-import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
@@ -967,11 +967,22 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @param questionIndex
      */
     navigateToQuestion(questionIndex: number): void {
-        document.getElementById('question' + questionIndex)!.scrollIntoView({
+        const questionElement = document.getElementById('question' + questionIndex)!;
+        questionElement.scrollIntoView({
             behavior: 'smooth',
             block: 'nearest',
             inline: 'start',
         });
+
+        const questionToBeHighlighted: QuizQuestion | undefined = this.quizExercise.quizQuestions ? this.quizExercise.quizQuestions[questionIndex] : undefined;
+        if (!questionToBeHighlighted) {
+            return;
+        }
+
+        questionToBeHighlighted.isHighlighted = true;
+        setTimeout(() => {
+            questionToBeHighlighted.isHighlighted = false;
+        }, 1500); // remove highlight after 1.5 seconds
     }
 
     /**
