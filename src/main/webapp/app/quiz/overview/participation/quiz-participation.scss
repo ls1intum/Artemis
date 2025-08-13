@@ -86,18 +86,17 @@
     animation: highlightPulse 1.5s ease-in-out;
 }
 
-//TODO adjust how the color is defined
 @keyframes highlightPulse {
     0% {
         background-color: transparent;
-        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4);
+        box-shadow: 0 0 0 0 transparentize($primary, 0.6);
     }
     50% {
-        background-color: rgba(0, 123, 255, 0.05);
-        box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.2);
+        background-color: transparentize($primary, 0.95);
+        box-shadow: 0 0 0 4px transparentize($primary, 0.8);
     }
     100% {
         background-color: transparent;
-        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+        box-shadow: 0 0 0 4px transparentize($primary, 1);
     }
 }
