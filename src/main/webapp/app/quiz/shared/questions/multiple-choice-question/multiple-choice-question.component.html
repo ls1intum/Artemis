@@ -11,8 +11,7 @@
     }
     @if (!isSingleChoice) {
         <h6 jhiTranslate="artemisApp.quizQuestion.allOptions"></h6>
-    }
-    @if (isSingleChoice) {
+    } @else {
         <h6 jhiTranslate="artemisApp.quizQuestion.singleOption"></h6>
     }
     @if (question.hint || (question.explanation && showResult)) {
