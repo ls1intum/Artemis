@@ -226,35 +226,33 @@ public class SecurityConfiguration {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // Configures authorization for various URL patterns. The patterns are considered in order.
             .authorizeHttpRequests(requests -> {
-                requests
-                    // NOTE: Always have a look at {@link de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter} to see which URLs are forwarded to the SPA
-                    // Client related URLs and publicly accessible information (allowed for everyone).
-                    .requestMatchers("/", "/index.html", "/public/**").permitAll()
-                    .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
-                    .requestMatchers("/manifest.webapp", "/robots.txt").permitAll()
-                    .requestMatchers("/content/**", "/i18n/*.json", "/logo/*").permitAll()
-                    // Information and health endpoints do not need authentication
-                    .requestMatchers("/management/info", "/management/health").permitAll()
-                    // Admin area requires specific authority.
-                    .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
-                    // Publicly accessible API endpoints (allowed for everyone).
-                    .requestMatchers("/api/*/public/**").permitAll()
-                    .requestMatchers("/login/webauthn").permitAll()
-                    // Websocket and other specific endpoints allowed without authentication.
-                    .requestMatchers("/websocket/**").permitAll()
-                    .requestMatchers("/.well-known/jwks.json").permitAll()
-                    .requestMatchers("/.well-known/assetlinks.json").permitAll()
-                    .requestMatchers("/.well-known/apple-app-site-association").permitAll()
-                    // Prometheus endpoint protected by IP address.
-                    .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
-                    .requestMatchers(("/api-docs")).permitAll()
-                    .requestMatchers(("/api-docs.yaml")).permitAll()
-                    .requestMatchers("/swagger-ui/**").permitAll();
-                    // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
-                    if (profileService.isLocalVCActive()) {
-
-                        requests.requestMatchers("/git/**").permitAll();
-                    }
+                    requests
+                        // NOTE: Always have a look at {@link de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter} to see which URLs are forwarded to the SPA
+                        // Client related URLs and publicly accessible information (allowed for everyone).
+                        .requestMatchers("/", "/index.html", "/public/**").permitAll()
+                        .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
+                        .requestMatchers("/manifest.webapp", "/robots.txt").permitAll()
+                        .requestMatchers("/content/**", "/i18n/*.json", "/logo/*").permitAll()
+                        // Information and health endpoints do not need authentication
+                        .requestMatchers("/management/info", "/management/health").permitAll()
+                        // Admin area requires specific authority.
+                        .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
+                        // Publicly accessible API endpoints (allowed for everyone).
+                        .requestMatchers("/api/*/public/**").permitAll()
+                        .requestMatchers("/login/webauthn").permitAll()
+                        // Websocket and other specific endpoints allowed without authentication.
+                        .requestMatchers("/websocket/**").permitAll()
+                        .requestMatchers("/.well-known/jwks.json").permitAll()
+                        .requestMatchers("/.well-known/assetlinks.json").permitAll()
+                        .requestMatchers("/.well-known/apple-app-site-association").permitAll()
+                        // Prometheus endpoint protected by IP address.
+                        .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
+                        .requestMatchers(("/api-docs")).permitAll()
+                        .requestMatchers(("/api-docs.yaml")).permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll();
+                    // `/git/**` endpoints (JGit servlet + LocalVC filters) are only registered under the `localvc` profile
+                    // LocalVCFetchFilter/LocalVCPushFilter handle auth
+                    requests.requestMatchers("/git/**").permitAll();
 
                     // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
                     requests.requestMatchers("/**").authenticated();
@@ -265,7 +263,7 @@ public class SecurityConfiguration {
 
         // Configure WebAuthn passkey if enabled
         if(passkeyEnabled){
-        passkeyWebAuthnConfigurer.orElseThrow(()->new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
+            passkeyWebAuthnConfigurer.orElseThrow(()->new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
         }
 
         // @formatter:on
