@@ -1,5 +1,4 @@
 import { Component, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { ExamRoomAdminOverviewDTO, ExamRoomDTO, ExamRoomDeletionSummaryDTO, ExamRoomUploadInformationDTO } from 'app/core/admin/exam-rooms/exam-rooms.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
@@ -8,6 +7,7 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExamRoomsService } from 'app/core/admin/exam-rooms/exam-rooms.service';
 
 // privately used interfaces, i.e., not sent from the server like this
 export interface ExamRoomDTOExtended extends ExamRoomDTO {
@@ -21,7 +21,8 @@ export interface ExamRoomDTOExtended extends ExamRoomDTO {
     imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ExamRoomsComponent {
-    private http: HttpClient = inject(HttpClient);
+    // injected
+    private examRoomsService: ExamRoomsService = inject(ExamRoomsService);
     private sortService: SortService = inject(SortService);
 
     // Writeable signals
@@ -89,9 +90,9 @@ export class ExamRoomsComponent {
      * Makes a REST request to fetch a new exam room overview and displays it
      */
     loadExamRoomOverview(): void {
-        this.http.get<ExamRoomAdminOverviewDTO>('/api/exam/admin/exam-rooms/admin-overview').subscribe({
-            next: (response) => {
-                this.overview.set(response);
+        this.examRoomsService.getAdminOverview().subscribe({
+            next: (examRoomAdminOverview) => {
+                this.overview.set(examRoomAdminOverview);
             },
             error: () => {
                 this.overview.set(undefined);
@@ -124,16 +125,13 @@ export class ExamRoomsComponent {
         const file = this.selectedFile();
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append('file', file);
-
         this.actionStatus.set('uploading');
 
-        this.http.post('/api/exam/admin/exam-rooms/upload', formData).subscribe({
-            next: (uploadInformation) => {
+        this.examRoomsService.uploadRoomDataZipFile(file).subscribe({
+            next: (uploadInformationResponse) => {
                 this.actionStatus.set('uploadSuccess');
                 this.selectedFile.set(undefined);
-                this.actionInformation.set(uploadInformation as ExamRoomUploadInformationDTO);
+                this.actionInformation.set(uploadInformationResponse.body as ExamRoomUploadInformationDTO);
             },
             error: () => {
                 this.actionStatus.set('uploadError');
@@ -154,7 +152,7 @@ export class ExamRoomsComponent {
 
         this.actionStatus.set('deleting');
 
-        this.http.delete<void>('/api/exam/admin/exam-rooms').subscribe({
+        this.examRoomsService.deleteAllExamRooms().subscribe({
             next: () => {
                 this.actionStatus.set('deletionSuccess');
                 alert('All exam rooms deleted.');
@@ -178,9 +176,9 @@ export class ExamRoomsComponent {
     deleteOutdatedAndUnusedExamRooms(): void {
         this.actionStatus.set('deleting');
 
-        this.http.delete<ExamRoomDeletionSummaryDTO>('/api/exam/admin/exam-rooms/outdated-and-unused').subscribe({
-            next: (summary) => {
-                this.actionInformation.set(summary as ExamRoomDeletionSummaryDTO);
+        this.examRoomsService.deleteOutdatedAndUnusedExamRooms().subscribe({
+            next: (examRoomDeletionSummaryResponse) => {
+                this.actionInformation.set(examRoomDeletionSummaryResponse.body as ExamRoomDeletionSummaryDTO);
                 this.actionStatus.set('deletionSuccess');
             },
             error: () => {
